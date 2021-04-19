@@ -55,6 +55,7 @@
                           float  Tc;                // Output: reference phase-c switching function
                     } SVGENDQ;
     extern SVGENDQ svgen1;
+    void SVGEN_Drive(SVGENDQ* ptrV);
 /* Hardware Peripherals Configuration -----------------------------------------------------------------------------------*/
     //extern QEP qep1;
     extern BOOL AD_offset_flag;
