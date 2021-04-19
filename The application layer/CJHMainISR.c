@@ -30,7 +30,8 @@ void voltage_commands_to_pwm(){
 //REAL offset_Udc = 20.0; // 180 V 409-1300
 //REAL offset_Udc = 12.0; // 180 V 413-0844
 //REAL offset_Udc = 9.0; // 180 V 414-0809
-REAL offset_Udc = 18.0; // 80 V 416-1600
+//REAL offset_Udc = 18.0; // 80 V 416-1600
+REAL offset_Udc = 8.0; // 80 V 419-0948
 void measurement(){
 
     // 电压测量
@@ -137,12 +138,14 @@ void slow_speed_reversal(){
 }
 
 void low_speed_operation_init(){
+    pid1_spd.OutLimit = 10;
+
     //    CTRL.motor->KE = 0.104; // ZFY: 0.1A
     //    CTRL.motor->KE = 0.112;  // ZFY: 2.0A
     //    CTRL.motor->KE = 0.15;  // ZFY: 2.0A Slow speed reversal at 100 rpm @ Udc=180V (offset_Udc 14V)
     CTRL.motor->KE = 0.10;  // ZFY: 2.0A Slow speed reversal at 100 rpm @ Udc=80V (offset_Udc 12V)
 }
-void low_speed_operation_tuning(){
+void slow_speed_reversal_tuning(){
 
     /* 失去磁场定向后起到锁定转子的作用 */
     // need to also set id cmd according to speed cmd
@@ -151,13 +154,6 @@ void low_speed_operation_tuning(){
     }else{
         Set_maunal_current_id = 0;
     }
-
-    /* Steady state error */
-    //    if(Set_maunal_rpm<0){
-    //        CTRL.motor->KE = 0.075; // 4.2A
-    //    }else{
-    //        CTRL.motor->KE = 0.12; // 4.2A
-    //    }
 
     /* Steady state error */
     if(Set_maunal_rpm<-10){
@@ -173,7 +169,31 @@ void low_speed_operation_tuning(){
         CTRL.motor->KE=0.1;
     }
 }
-void low_speed_operation(){
+void zero_speed_stopping_tuning(){
+
+    /* 失去磁场定向后起到锁定转子的作用 */
+    // need to also set id cmd according to speed cmd
+    if(fabs(Set_maunal_rpm) < 50){ // 5 or 50?
+        Set_maunal_current_id = 2;
+    }else{
+        //Set_maunal_current_id = 0;
+    }
+
+    /* Steady state error */
+    if(Set_maunal_rpm<-5){
+        CTRL.motor->KE = 0.082; //2.1A
+    }else if (Set_maunal_rpm>5){
+        CTRL.motor->KE = 0.118; // 2.1A
+    }else{
+        CTRL.motor->KE = 0.10;
+    }
+
+    /* 防手贱 */
+    if(CTRL.motor->KE > 0.2){
+        CTRL.motor->KE=0.1;
+    }
+}
+void zero_speed_stopping(){
     #define RPM1 100
     #define BIAS 0
     if(CTRL.timebase<1){ // note 1 sec is not enough for stator flux to reach steady state.
@@ -297,10 +317,13 @@ if(AD_offset_flag==FALSE)
         G.Offset_V = G.Offset_V / 100000;
         AD_offset_flag=TRUE;
     }
-    //TODO 需要多次取平均
-    //    offsetA=(AdcaResultRegs.ADCRESULT1);
-    //    offsetB=(AdcaResultRegs.ADCRESULT3);
-    //    offsetC=(AdcaResultRegs.ADCRESULT0)*0;
+
+    // 来不及完成偏置检测，采用默认值
+    if(Enable_STOP_FLAG==FALSE){
+        G.Offset_W = 0.0;
+        G.Offset_V = 0.0;
+        AD_offset_flag = TRUE;
+    }
 }
 
 
@@ -337,10 +360,14 @@ else
     if(ENABLE_COMMISSIONING==FALSE){
         #ifdef NSOAF_LOW_SPEED_OPERATION
             /* Low Speed Operation*/
-            low_speed_operation(); // also include zero stopping
+        if(TRUE){
+            zero_speed_stopping();
+            zero_speed_stopping_tuning();
             //short_stopping_at_zero_speed();
-            //slow_speed_reversal();
-            low_speed_operation_tuning();
+        }else{
+            slow_speed_reversal();
+            slow_speed_reversal_tuning();
+        }
         #endif
         #ifdef NSOAF_HIGH_SPEED_OPERATION
             /* High Speed Operation */
