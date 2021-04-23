@@ -12,7 +12,7 @@ float Current_U=0.0, Current_V=0.0, Current_W=0.0, Voltage_DC_BUS=0.0;
 int Enable_START_FLAG;     // 电机模式标志位
 int Enable_STOP_FLAG;  // 电机模式标志位
 Uint16 Rotor_angle_selection=SYSTEM_QEP_ROTOR_ANGLE;
-float Set_maunal_current_iq=0,Set_maunal_current_id=0,Set_maunal_rpm=300;
+float Set_maunal_current_iq=0,Set_maunal_current_id=0,Set_maunal_rpm=-1200;
 float offsetA=2027.2,offsetB=2045.5,offsetC=-30;//ADC offset
 int DAC_MAX5307_FLAG=0;
 BOOL AD_offset_flag=FALSE;

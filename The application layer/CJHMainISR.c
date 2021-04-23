@@ -31,7 +31,8 @@ void voltage_commands_to_pwm(){
 //REAL offset_Udc = 12.0; // 180 V 413-0844
 //REAL offset_Udc = 9.0; // 180 V 414-0809
 //REAL offset_Udc = 18.0; // 80 V 416-1600
-REAL offset_Udc = 8.0; // 80 V 419-0948
+//REAL offset_Udc = 8.0; // 80 V 419-0948
+REAL offset_Udc = 1.0; // 180 V 419-1121
 void measurement(){
 
     // 电压测量
@@ -292,7 +293,8 @@ void high_speed_operation(){
     #undef BIAS
 }
 
-#define NSOAF_LOW_SPEED_OPERATION
+#define AS_LOAD_MOTOR
+//#define NSOAF_LOW_SPEED_OPERATION
 //#define NSOAF_HIGW_SPEED_OPERATION
 
 interrupt void CJHMainISR(void)
@@ -333,8 +335,11 @@ if(Enable_STOP_FLAG) //&&button_isr==1)
     DSP_2EPWM_DISABLE
 
     experiment_init();
+    #ifdef AS_LOAD_MOTOR
+        pid1_spd.OutLimit = 0.01;
+    #endif
 
-    #ifdef NSOAF_LOW_SPEED_OPERATION
+            #ifdef NSOAF_LOW_SPEED_OPERATION
     low_speed_operation_init();
     #endif
     #ifdef NSOAF_HIGH_SPEED_OPERATION
@@ -358,6 +363,23 @@ else
 
     // 根据指令，产生控制输出（电压）
     if(ENABLE_COMMISSIONING==FALSE){
+        #ifdef AS_LOAD_MOTOR
+        CTRL.S->go_sensorless = 0;
+        if(CTRL.timebase < 0.4){
+            pid1_spd.OutLimit = 4.2;
+        }else if(CTRL.timebase < 0.4 + 0.1){
+            pid1_spd.OutLimit -= CL_TS * 4.2 / 0.1;
+        }else{
+            pid1_spd.OutLimit = 0.01;
+        }
+        //        if(CTRL.timebase < 0.4){
+        //            pid1_spd.OutLimit += CL_TS * 4.2 / 0.4;
+        //        }else if(CTRL.timebase < 1.0){
+        //            pid1_spd.OutLimit = 4.2;
+        //        }else{
+        //            pid1_spd.OutLimit = 0.01;
+        //        }
+        #endif
         #ifdef NSOAF_LOW_SPEED_OPERATION
             /* Low Speed Operation*/
         if(TRUE){
