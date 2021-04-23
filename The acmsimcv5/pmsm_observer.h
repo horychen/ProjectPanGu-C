@@ -34,9 +34,6 @@ struct Chen20_NSO_AF{
     REAL active_flux_ab[2];
     REAL theta_d;
 
-    REAL load_torque_pid_output;
-    REAL q_axis_voltage;
-
     REAL output_error; // \tilde i_q
 
     REAL active_power_real;
@@ -46,6 +43,11 @@ struct Chen20_NSO_AF{
     // REAL gamma_TL;
     REAL active_flux_ampl;
     REAL xTem;
+
+    /* Select Signals from Block Diagram*/
+    REAL LoadTorquePI;
+    REAL load_torque_pid_output;
+    REAL q_axis_voltage;
 
     /* Active Flux Estimator */
     REAL afest_states[4];

@@ -3,7 +3,7 @@
 #if MACHINE_TYPE == PM_SYNCHRONOUS_MACHINE
 
 /********************************************
- * Natural Speed Observer for IPMSM with Active Flux Concept (Chen 2020)
+/* Natural Speed Observer for IPMSM with Active Flux Concept (Chen 2020)
  ********************************************/
 #define NS 3
 REAL one_over_six = 1.0/6.0;
@@ -81,7 +81,7 @@ void rhf_NSOAF_Dynamics(REAL t, REAL *x, REAL *fx){
 
     /* State Observer */
     // xIq
-    fx[0] = MOTOR.Lq_inv * (uQ_now - MOTOR.R * xIq - xOmg*(MOTOR.KE + MOTOR.Ld*iDQ_now[0]));
+    fx[0] = MOTOR.Lq_inv * (uQ_now - MOTOR.R * xIq - xOmg*(MOTOR.KE + MOTOR.Ld*iDQ_now[0])) - nsoaf.KD*nsoaf.active_power_error;
     // xOmg
     REAL KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * iDQ_now[0];
     nsoaf.xTem = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * KActive * xIq;
@@ -90,6 +90,7 @@ void rhf_NSOAF_Dynamics(REAL t, REAL *x, REAL *fx){
     /* Parameter Adaptation */
     // xTL
     fx[2] = nsoaf.KI * nsoaf.active_power_error;
+
 }
 /* Main Observer */
 void nsoaf_chen2020(){
@@ -163,7 +164,8 @@ void nsoaf_chen2020(){
     // nsoaf.xOmg     = nsoaf.xBest[1];
     // nsoaf.xTL      = nsoaf.xBest[2];
     /* Post-observer calculations */
-    ;
+    /* Selecting Signals From Block Diagram */
+    nsoaf.LoadTorquePI = nsoaf.xTL + nsoaf.KP*nsoaf.active_power_error;
     
     /* 备份这个采样点的数据供下次使用。所以，观测的和实际的相比，是延迟一个采样周期的。 */
     // US_P(0) = US_C(0); // 由于没有测量电压，所以当前步电压是伪概念，在这里更新是无意义的
@@ -578,7 +580,7 @@ void cjheemf_init(){
 
 
 /********************************************
- * Harnefor 2006
+/* Harnefor 2006
  ********************************************/
 void harnefors_init(){
     // harnefors.theta_d = 0.0;
@@ -840,7 +842,7 @@ void the_active_flux_estimator(){
 
 
 /********************************************
- * COMMON *
+/* COMMON *
  ********************************************/
 void rk4_init(){
     int i;

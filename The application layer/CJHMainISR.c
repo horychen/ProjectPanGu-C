@@ -229,12 +229,11 @@ void high_speed_operation_tuning(){
         //        nsoaf.KP = 1;
         //    }
     if(fabs(Set_maunal_rpm) > 1000){
-        nsoaf.KP = 2;
+        nsoaf.KP = 4; //2;
         nsoaf.ActiveFlux_KP = 1;
     }else if(fabs(Set_maunal_rpm) > 500){
-        nsoaf.KP = 1.5;
+        nsoaf.KP = 2; //1.5;
         nsoaf.ActiveFlux_KP = 0.5;
-        //nsoaf.ActiveFlux_KP float   0.100000001 0x0000AA9E@Data
     }else if(fabs(Set_maunal_rpm) > 300){
         nsoaf.KP = 1;
         nsoaf.ActiveFlux_KP = 0.2;
@@ -251,9 +250,9 @@ void high_speed_operation_tuning(){
 
     /* Steady state rpm error when ZFY speed command is at 2000 rpm. */
     if(Set_maunal_rpm > 0){
-        CTRL.motor->KE = 0.092; // positive spinning with load motor@2000 rpm 2.1A
+        CTRL.motor->KE = 0.103; // positive spinning with load motor@2000 rpm 2.1A
     }else{
-        CTRL.motor->KE=0.096;  // negative positive spinning with load motor@2000 rpm 2.1A
+        CTRL.motor->KE=0.087;  // negative positive spinning with load motor@2000 rpm 2.1A
     }
 
     /* ∑¿÷π ÷º˙ ‰¥Ì¡À÷µ */
@@ -293,9 +292,9 @@ void high_speed_operation(){
     #undef BIAS
 }
 
-#define AS_LOAD_MOTOR
+//#define AS_LOAD_MOTOR
 //#define NSOAF_LOW_SPEED_OPERATION
-//#define NSOAF_HIGW_SPEED_OPERATION
+#define NSOAF_HIGH_SPEED_OPERATION
 
 interrupt void CJHMainISR(void)
 {
@@ -337,6 +336,7 @@ if(Enable_STOP_FLAG) //&&button_isr==1)
     experiment_init();
     #ifdef AS_LOAD_MOTOR
         pid1_spd.OutLimit = 0.01;
+        Set_maunal_rpm = -1200;
     #endif
 
             #ifdef NSOAF_LOW_SPEED_OPERATION
