@@ -23,13 +23,13 @@ REAL dac_watch[30];
 //int channels[4]={10,11,20,21}; // 磁链和位置观测实验
 //int channels[4]={6,7,20,21}; // 低速运行实验
 
-int channels[NO_OF_CHANNELS]={5,23,20,21,6,7}; // 低速运行实验
 //int channels[NO_OF_CHANNELS]={5,23,4,21,6,7}; // 低速运行实验
+//int channels[NO_OF_CHANNELS]={5,23,20,21,6,7}; // 低速运行实验
 
 
 //int channels[4]={26,27,5,22}; // 高速运行实验
 //int channels[NO_OF_CHANNELS]={5,23,26,27,22,19}; // 高速运行实验
-//int channels[NO_OF_CHANNELS]={5,23,26,27,12,22}; // 高速运行实验
+int channels[NO_OF_CHANNELS]={5,23,26,27,12,22}; // 高速运行实验
 
 REAL dac_time = 0;
 REAL temp_xOmg = 0.0;
@@ -54,7 +54,8 @@ void write_DAC_buffer(){
         dac_watch[2] = CTRL.I->iab[0]*0.2;
         dac_watch[3] = CTRL.I->iab[1]*0.2;
         dac_watch[4] = CTRL.I->idq[0]*0.2;
-        dac_watch[5] = CTRL.I->idq[1]*0.2; // 5 A for low speed // 20 A for high speed reversal
+        //dac_watch[5] = CTRL.I->idq[1]*0.2; // 5 A for low speed
+        dac_watch[5] = CTRL.I->idq[1]*0.05; // 20 A for high speed reversal
         dac_watch[6] = CTRL.I->rpm*0.002;
         dac_watch[7] = nsoaf.xOmg*ELEC_RAD_PER_SEC_2_RPM*0.002;
         dac_watch[8] = EQep1Regs.QPOSCNT*0.0001; // [0, 10000]
@@ -80,8 +81,9 @@ void write_DAC_buffer(){
         dac_watch[20] = ENC.theta_d_elec*0.1;
         dac_watch[21] = ELECTRICAL_POSITION_FEEDBACK*0.1;
 
-        dac_watch[22] = nsoaf.xTL*0.25;
-        dac_watch[23] = nsoaf.xIq*0.2; // 5 A for low speed // 20 A for high speed reversal
+        dac_watch[22] = nsoaf.LoadTorquePI*0.25;
+        //dac_watch[23] = nsoaf.xIq*0.2; // 5 A for low speed
+        dac_watch[23] = nsoaf.xIq*0.05; // 20 A for high speed reversal
 
         dac_watch[26] = CTRL.I->rpm*0.0005;
         dac_watch[27] = nsoaf.xOmg*ELEC_RAD_PER_SEC_2_RPM*0.0005;

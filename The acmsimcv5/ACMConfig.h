@@ -56,11 +56,11 @@
 #define LOAD_TORQUE     2
 #define VISCOUS_COEFF   0.0007
 
-#define CURRENT_KP (18.7173)
+#define CURRENT_KP (6.39955)
 #define CURRENT_KI (237.845)
 #define CURRENT_KI_CODE (CURRENT_KI*CURRENT_KP*CL_TS)
-#define SPEED_KP (0.0482073)
-#define SPEED_KI (16.7819)
+#define SPEED_KP (0.0380362)
+#define SPEED_KI (30.5565)
 #define SPEED_KI_CODE (SPEED_KI*SPEED_KP*VL_TS)
 
 /* Encoder QEP */
@@ -81,7 +81,7 @@
     // #define NSOAF_SPMSM // use AP Error
     #define NSOAF_IPMSM // use only OE
     #define NSOAF_TL_P (1) // 1 for experimental starting // 4 for 1500 rpm // 2 for 800 rpm
-    #define NSOAF_TL_I (6)
+    #define NSOAF_TL_I (20)
     #define NSOAF_TL_D (0)
     #define OUTPUT_ERROR_CLEST_GAIN_KP (0.1) // (0.5) // (2*5)
     #define OUTPUT_ERROR_CLEST_GAIN_KI (0.02) // 0.02 for 10 rpm // 0.1 for 40 rpm //(2.0) for 300 rpm
@@ -132,5 +132,5 @@
 #define SWEEP_FREQ_C2V FALSE
 #define SWEEP_FREQ_C2C FALSE
 
-#define DATA_FILE_NAME "../dat/PMSM_NTUMotor-601-1000-12-859.dat"
+#define DATA_FILE_NAME "../dat/PMSM_NTUMotor-205-1000-10-1982.dat"
 #endif
