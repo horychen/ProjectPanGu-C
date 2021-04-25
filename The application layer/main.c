@@ -13,10 +13,10 @@ int Enable_START_FLAG;     // 电机模式标志位
 int Enable_STOP_FLAG;  // 电机模式标志位
 Uint16 Rotor_angle_selection=SYSTEM_QEP_ROTOR_ANGLE;
 float Set_maunal_current_iq=0,Set_maunal_current_id=0,Set_maunal_rpm=300;
-float offsetA=2027.2,offsetB=2045.5,offsetC=-30;//ADC offset
+float offsetU=0,offsetV=0,offsetW=0;//ADC offset
 int DAC_MAX5307_FLAG=0;
 BOOL AD_offset_flag=FALSE;
-
+void eQEP_initialize(int m);
 
 void main(void){
 

@@ -59,7 +59,7 @@
 /* Hardware Peripherals Configuration -----------------------------------------------------------------------------------*/
     //extern QEP qep1;
     extern BOOL AD_offset_flag;
-    extern float offsetA,offsetB,offsetC;//ADC offset
+    extern float offsetU,offsetV,offsetW;//ADC offset
     //extern float Controller_sample_Ts,Rated_elec_frequency,Rated_Angular_elec_speed;
     void PWM_1ch_UpDwnCnt_CNF(int16 n, Uint16 period, int16 db);
     void ePWM_initialize(void);

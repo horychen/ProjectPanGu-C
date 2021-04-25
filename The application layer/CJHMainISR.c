@@ -40,16 +40,23 @@ void measurement(){
     US_P(1) = CTRL.O->uab_cmd[1]; // 后缀_C表示当前步的电压，C = Current
 
     // 母线电压测量
-    Voltage_DC_BUS=((AdcaResultRegs.ADCRESULT0)-offsetC)*AD_scale_VDC + offset_Udc;//
+    Voltage_DC_BUS=((AdcaResultRegs.ADCRESULT0))*AD_scale_VDC + offset_Udc;//
 
     // 电流接口
-    Current_W=((AdcaResultRegs.ADCRESULT1)-offsetA)*AD_scale_W;// ADC A1-> Phase W Current  //-11.8-11.8A
-    Current_V=((AdcaResultRegs.ADCRESULT3)-offsetB)*AD_scale_V;// ADC A1-> Phase V Current  //-11.8-11.8A
-    if(AD_offset_flag==TRUE){
+    Current_W=((AdcaResultRegs.ADCRESULT1)-offsetU)*AD_scale_W;// ADC A1-> Phase W Current  //-11.8-11.8A
+    Current_V=((AdcaResultRegs.ADCRESULT3)-offsetV)*AD_scale_V;// ADC A1-> Phase V Current  //-11.8-11.8A
+    Current_U=((AdcaResultRegs.ADCRESULT2)-offsetW)*AD_scale_V;// ADC A1-> Phase V Current  //-11.8-11.8A
+     if(AD_offset_flag==TRUE){
         Current_W = Current_W - G.Offset_W;
         Current_V = Current_V - G.Offset_V;
+        Current_U = Current_U - G.Offset_U;
     }
-    Current_U=-(Current_W+Current_V);
+    if(AdcaResultRegs.ADCRESULT1==0){
+        Current_W=-(Current_U+Current_V);
+    }
+    if(AdcaResultRegs.ADCRESULT2==0){
+        Current_U=-(Current_W+Current_V);
+    }
     REAL adc_ial = UV2A_AI(Current_U, Current_V);
     REAL adc_ibe = UV2B_AI(Current_U, Current_V);
 
@@ -294,7 +301,8 @@ void high_speed_operation(){
 
 //#define AS_LOAD_MOTOR
 //#define NSOAF_LOW_SPEED_OPERATION
-#define NSOAF_HIGH_SPEED_OPERATION
+//#define NSOAF_HIGH_SPEED_OPERATION
+#define XCUBE_DEBUG_MODE
 
 interrupt void CJHMainISR(void)
 {
@@ -313,9 +321,11 @@ if(AD_offset_flag==FALSE)
     G.Offset_Counter += 1;
     G.Offset_W += Current_W;
     G.Offset_V += Current_V;
+    G.Offset_U += Current_U;
     if(G.Offset_Counter>100000){
         G.Offset_W = G.Offset_W / 100000;
         G.Offset_V = G.Offset_V / 100000;
+        G.Offset_U = G.Offset_U / 100000;
         AD_offset_flag=TRUE;
     }
 
@@ -402,7 +412,19 @@ else
         commissioning();
     }
 
+    #ifdef XCUBE_DEBUG_MODE
+    if(svgen1.Ta>0.6) svgen1.Ta=0.6;
+    if(svgen1.Ta<0.4) svgen1.Ta=0.4;
+    if(svgen1.Tb>0.6) svgen1.Tb=0.6;
+    if(svgen1.Tb<0.4) svgen1.Tb=0.4;
+    if(svgen1.Tc>0.6) svgen1.Tc=0.6;
+    if(svgen1.Tc<0.4) svgen1.Tc=0.4;
+    EPwm1Regs.CMPA.bit.CMPA = svgen1.Ta*50000000*CL_TS;
+    EPwm2Regs.CMPA.bit.CMPA = svgen1.Tb*50000000*CL_TS;
+    EPwm3Regs.CMPA.bit.CMPA = svgen1.Tc*50000000*CL_TS;
+    #else
     voltage_commands_to_pwm();
+    #endif
 
     #if NUMBER_OF_DSP_CORES == 1
         single_core_dac();

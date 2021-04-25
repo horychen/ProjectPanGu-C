@@ -120,6 +120,7 @@ typedef struct {
     REAL Offset_Counter;
     REAL Offset_W;
     REAL Offset_V;
+    REAL Offset_U;
     REAL dac_offset[8];
 } st_global_variables;
 struct ControllerForExperiment{
