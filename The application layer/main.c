@@ -9,13 +9,14 @@
 
 SVGENDQ svgen1;
 float Current_U=0.0, Current_V=0.0, Current_W=0.0, Voltage_DC_BUS=0.0;
-int Enable_START_FLAG;     // 电机模式标志位
-int Enable_STOP_FLAG;  // 电机模式标志位
+int FLAG_ENABLE_PWM_OUTPUT; // 电机模式标志位
+//int Enable_STOP_FLAG;  // 电机模式标志位
 Uint16 Rotor_angle_selection=SYSTEM_QEP_ROTOR_ANGLE;
 float Set_maunal_current_iq=0,Set_maunal_current_id=0,Set_maunal_rpm=300;
-float offsetU=0,offsetV=0,offsetW=0;//ADC offset
+float offsetU=2070,offsetV=2088,offsetW=2055; // ADC offset. U, V, W corresponds to ADCRESULT2, ADCRESULT3, ADCRESULT1.
 int DAC_MAX5307_FLAG=0;
-BOOL AD_offset_flag=FALSE;
+//BOOL AD_offset_flag = FALSE;
+BOOL AD_offset_flag2 = FALSE;
 void eQEP_initialize(int m);
 
 void main(void){
@@ -114,16 +115,18 @@ void main(void){
         //#define Motor_mode_START    GpioDataRegs.GPADAT.bit.GPIO26          //DI Start Button
         if (Motor_mode_START==1)
         {
-            Enable_START_FLAG=1;
-            Enable_STOP_FLAG=0;
+            FLAG_ENABLE_PWM_OUTPUT = 1;
+            //Enable_START_FLAG=1;
+            //Enable_STOP_FLAG=0;
             START_LED1
             START_LED2
-         }else if (Motor_mode_START==0){
-            Enable_START_FLAG=0;
-            Enable_STOP_FLAG=1;
+        }else if (Motor_mode_START==0){
+            FLAG_ENABLE_PWM_OUTPUT = 0;
+            //Enable_START_FLAG=0;
+            //Enable_STOP_FLAG=1;
             STOP_LED1
             STOP_LED2
-         }
+        }
 
 
         #if NUMBER_OF_DSP_CORES == 2
