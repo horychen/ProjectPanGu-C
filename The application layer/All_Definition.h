@@ -21,8 +21,7 @@
 /* Logic  -----------------------------------------------------------------------------------*/
     //#include "Logic.h"                //逻辑库 包括故障代码，DI,状态机
     //extern int _gExpState;
-    extern int Enable_START_FLAG;
-    extern int Enable_STOP_FLAG;
+    extern int FLAG_ENABLE_PWM_OUTPUT;
     extern int VoltageOVER_FLAG;
     struct Trip_Variables
     {
@@ -58,7 +57,7 @@
     void SVGEN_Drive(SVGENDQ* ptrV);
 /* Hardware Peripherals Configuration -----------------------------------------------------------------------------------*/
     //extern QEP qep1;
-    extern BOOL AD_offset_flag;
+    extern BOOL AD_offset_flag2;
     extern float offsetU,offsetV,offsetW;//ADC offset
     //extern float Controller_sample_Ts,Rated_elec_frequency,Rated_Angular_elec_speed;
     void PWM_1ch_UpDwnCnt_CNF(int16 n, Uint16 period, int16 db);
@@ -85,8 +84,13 @@
     #define SYSTEM_QEP_SWAP_ENABLE              1     //正方向计数
     #define SYSTEM_QEP_SWAP_DISABLE             0     //反方向计数
     //ADC CONFIGURATION
-    #define AD_scale_W                       0.005491759 //0.00558484 //0.0057316444 // -11.8—11.8 A // 0.0062421972 //-12-12A
-    #define AD_scale_V                       0.005491759 //0.00558484 //0.0056072670 // -11.8—11.8 A // 0.0061728395 //-12-12A
+    //    #define AD_scale_W                       0.005491759 //0.00558484     //0.0057316444 // -11.8—11.8 A // 0.0062421972 //-12-12A
+    //    #define AD_scale_V                       0.005491759 //0.00558484     //0.0056072670 // -11.8—11.8 A // 0.0061728395 //-12-12A
+    //    #define AD_scale_U                       0.005491759
+    // test condition, Ta=0.5, Tb=0.4, Tc=0.6, W=1.708, V=-1.693.
+    #define AD_scale_W                       0.001002814052101 // 0.001050801473 / (1.708/1.63)   // 120 Ohm: 0.0057316444 / (120/22)
+    #define AD_scale_V                       0.000989745002067 // 0.001027998950 / (1.693 / 1.63) //  120 Ohm: 0.0056072670 / (120/22)
+    #define AD_scale_U                       (AD_scale_V*0.2)
     #define AD_scale_VDC                     0.1897533207 // 0—800 V
     //TRIP CONFIGURATION
     #define MAX_CURRENT_N                      -11.8      //-12A  // Set your negative current trip threshold here in [0, 4095]

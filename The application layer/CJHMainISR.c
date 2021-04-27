@@ -32,7 +32,8 @@ void voltage_commands_to_pwm(){
 //REAL offset_Udc = 9.0; // 180 V 414-0809
 //REAL offset_Udc = 18.0; // 80 V 416-1600
 //REAL offset_Udc = 8.0; // 80 V 419-0948
-REAL offset_Udc = 1.0; // 180 V 419-1121
+//REAL offset_Udc = 1.0; // 180 V 419-1121
+REAL offset_Udc = 0.0; // 180 V 427-1401 @ XCUBE-II
 void measurement(){
 
     // 电压测量
@@ -43,20 +44,21 @@ void measurement(){
     Voltage_DC_BUS=((AdcaResultRegs.ADCRESULT0))*AD_scale_VDC + offset_Udc;//
 
     // 电流接口
-    Current_W=((AdcaResultRegs.ADCRESULT1)-offsetU)*AD_scale_W;// ADC A1-> Phase W Current  //-11.8-11.8A
+    Current_W=((AdcaResultRegs.ADCRESULT1)-offsetW)*AD_scale_W;// ADC A1-> Phase W Current  //-11.8-11.8A
     Current_V=((AdcaResultRegs.ADCRESULT3)-offsetV)*AD_scale_V;// ADC A1-> Phase V Current  //-11.8-11.8A
-    Current_U=((AdcaResultRegs.ADCRESULT2)-offsetW)*AD_scale_V;// ADC A1-> Phase V Current  //-11.8-11.8A
-     if(AD_offset_flag==TRUE){
+    //Current_U=((AdcaResultRegs.ADCRESULT2)-offsetU)*AD_scale_U;// ADC A1-> Phase V Current  //-11.8-11.8A
+     if(AD_offset_flag2==TRUE){
         Current_W = Current_W - G.Offset_W;
         Current_V = Current_V - G.Offset_V;
-        Current_U = Current_U - G.Offset_U;
+        //Current_U = Current_U - G.Offset_U;
     }
-    if(AdcaResultRegs.ADCRESULT1==0){
-        Current_W=-(Current_U+Current_V);
-    }
-    if(AdcaResultRegs.ADCRESULT2==0){
-        Current_U=-(Current_W+Current_V);
-    }
+    //    if(AdcaResultRegs.ADCRESULT1==0){
+    //        Current_W=-(Current_U+Current_V);
+    //    }
+    //    if(AdcaResultRegs.ADCRESULT2==0){
+    //        Current_U=-(Current_W+Current_V);
+    //    }
+    Current_U=-(Current_W+Current_V);
     REAL adc_ial = UV2A_AI(Current_U, Current_V);
     REAL adc_ibe = UV2B_AI(Current_U, Current_V);
 
@@ -300,9 +302,9 @@ void high_speed_operation(){
 }
 
 //#define AS_LOAD_MOTOR
-//#define NSOAF_LOW_SPEED_OPERATION
+#define NSOAF_LOW_SPEED_OPERATION
 //#define NSOAF_HIGH_SPEED_OPERATION
-#define XCUBE_DEBUG_MODE
+//#define XCUBE_DEBUG_MODE
 
 interrupt void CJHMainISR(void)
 {
@@ -316,29 +318,39 @@ DELAY_US(2); // wait for adc conversion TODO: check adc eoc flag?
 measurement();
 
 // 电流采样ADC温飘校准
-if(AD_offset_flag==FALSE)
+if(AD_offset_flag2==FALSE)
 {
     G.Offset_Counter += 1;
     G.Offset_W += Current_W;
     G.Offset_V += Current_V;
     G.Offset_U += Current_U;
-    if(G.Offset_Counter>100000){
-        G.Offset_W = G.Offset_W / 100000;
-        G.Offset_V = G.Offset_V / 100000;
-        G.Offset_U = G.Offset_U / 100000;
-        AD_offset_flag=TRUE;
+    if(G.Offset_Counter>5000){
+        G.Offset_W = G.Offset_W / 5000;
+        G.Offset_V = G.Offset_V / 5000;
+        G.Offset_U = G.Offset_U / 5000;
+        AD_offset_flag2 = TRUE;
     }
 
-    // 来不及完成偏置检测，采用默认值
-    if(Enable_STOP_FLAG==FALSE){
+    // 来不及完成偏置检测（比如刚上电数字开关就是开的），采用默认值
+    /* 427-1401：添加开关信号滤波。今天发现在刚上电的时候，XCUBE-II的前两个中断里，数字开关是打开的，然后才变成关闭。*/
+    if(FLAG_ENABLE_PWM_OUTPUT && G.Offset_Counter>100){
         G.Offset_W = 0.0;
         G.Offset_V = 0.0;
-        AD_offset_flag = TRUE;
+        G.Offset_U = 0.0;
+        AD_offset_flag2 = TRUE;
+    }
+
+    // 上电的时候，电机可能在转，此时根据电流判断是否还要额外进行偏置补偿。
+    if(fabs(Current_W)>0.05 || fabs(Current_V)>0.05 || fabs(Current_U)>0.05){
+        G.Offset_W = 0.0;
+        G.Offset_V = 0.0;
+        G.Offset_U = 0.0;
+        AD_offset_flag2 = TRUE;
     }
 }
 
 
-if(Enable_STOP_FLAG) //&&button_isr==1)
+if(!FLAG_ENABLE_PWM_OUTPUT) //&&button_isr==1)
 {
     DSP_EPWM_DISABLE
     DSP_2EPWM_DISABLE
@@ -348,12 +360,11 @@ if(Enable_STOP_FLAG) //&&button_isr==1)
         pid1_spd.OutLimit = 0.01;
         Set_maunal_rpm = -1200;
     #endif
-
-            #ifdef NSOAF_LOW_SPEED_OPERATION
-    low_speed_operation_init();
+    #ifdef NSOAF_LOW_SPEED_OPERATION
+        low_speed_operation_init();
     #endif
     #ifdef NSOAF_HIGH_SPEED_OPERATION
-    high_speed_operation_init();
+        high_speed_operation_init();
     #endif
 
     // for debug
@@ -413,12 +424,13 @@ else
     }
 
     #ifdef XCUBE_DEBUG_MODE
-    if(svgen1.Ta>0.6) svgen1.Ta=0.6;
-    if(svgen1.Ta<0.4) svgen1.Ta=0.4;
-    if(svgen1.Tb>0.6) svgen1.Tb=0.6;
-    if(svgen1.Tb<0.4) svgen1.Tb=0.4;
-    if(svgen1.Tc>0.6) svgen1.Tc=0.6;
-    if(svgen1.Tc<0.4) svgen1.Tc=0.4;
+    //if(svgen1.Ta>0.6) svgen1.Ta=0.6;
+    //if(svgen1.Ta<0.4) svgen1.Ta=0.4;
+    svgen1.Ta = 0.5;
+    if(svgen1.Tb>0.7) svgen1.Tb=0.7;
+    if(svgen1.Tb<0.3) svgen1.Tb=0.3;
+    if(svgen1.Tc>0.7) svgen1.Tc=0.7;
+    if(svgen1.Tc<0.3) svgen1.Tc=0.3;
     EPwm1Regs.CMPA.bit.CMPA = svgen1.Ta*50000000*CL_TS;
     EPwm2Regs.CMPA.bit.CMPA = svgen1.Tb*50000000*CL_TS;
     EPwm3Regs.CMPA.bit.CMPA = svgen1.Tc*50000000*CL_TS;
