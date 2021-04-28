@@ -75,7 +75,7 @@
     #define SYSTEM_PWM_AQ_SET                 0x2     //AQ_SET;    OTHERWISE, REVERSE!
     #define SYSTEM_PWM_AQ_CLEAR               0x1     //AQ_CLEAR;
     //QEP CONFIGURATION
-    #define SYSTEM_QEP_CALIBRATED_ANGLE     -2668     // CALIBRATED_ANGLE
+    //#define SYSTEM_QEP_CALIBRATED_ANGLE     -2668     // CALIBRATED_ANGLE
     #define SYSTEM_QEP_LINE                  2500     //encoder line
     #define SYSTEM_QEP_POLE_PAIRS               4     //pairs
     #define SYSTEM_QEP_UNITTIME_ISR          0.001    //1K ,1ms     time_out timer   isr_time
