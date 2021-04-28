@@ -295,6 +295,9 @@ void commissioning(){
     if(CTRL.S->PSD_Done == FALSE){
         doPSD();
         return;
+    // }else{
+    //     CTRL.O->uab_cmd_to_inverter[0] = 0;
+    //     CTRL.O->uab_cmd_to_inverter[1] = 0;
     }
 
     /* IPD */

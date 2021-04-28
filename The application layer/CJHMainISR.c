@@ -302,7 +302,7 @@ void high_speed_operation(){
 }
 
 //#define AS_LOAD_MOTOR
-#define NSOAF_LOW_SPEED_OPERATION
+//#define NSOAF_LOW_SPEED_OPERATION
 //#define NSOAF_HIGH_SPEED_OPERATION
 //#define XCUBE_DEBUG_MODE
 
@@ -356,6 +356,11 @@ if(!FLAG_ENABLE_PWM_OUTPUT) //&&button_isr==1)
     DSP_2EPWM_DISABLE
 
     experiment_init();
+
+    /* 750W MOTOR1 (wo/ hall) */
+    CTRL.motor->KE = 0.095;
+    //pid1_spd.OutLimit = 10;
+
     #ifdef AS_LOAD_MOTOR
         pid1_spd.OutLimit = 0.01;
         Set_maunal_rpm = -1200;
