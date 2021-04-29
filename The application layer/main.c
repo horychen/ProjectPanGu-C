@@ -13,7 +13,9 @@ int FLAG_ENABLE_PWM_OUTPUT; // 电机模式标志位
 //int Enable_STOP_FLAG;  // 电机模式标志位
 Uint16 Rotor_angle_selection=SYSTEM_QEP_ROTOR_ANGLE;
 float Set_maunal_current_iq=0,Set_maunal_current_id=0,Set_maunal_rpm=300;
-float offsetU=2070,offsetV=2088,offsetW=2055; // ADC offset. U, V, W corresponds to ADCRESULT2, ADCRESULT3, ADCRESULT1.
+//float offsetU=2070,offsetV=2088,offsetW=2055; // ADC offset. U, V, W corresponds to ADCRESULT2, ADCRESULT3, ADCRESULT1.
+float offsetU=2070,offsetV=2051.74,offsetW=2030.49; // ADC offset. U, V, W corresponds to ADCRESULT2, ADCRESULT3, ADCRESULT1.
+float offsetUDC=1432;
 int DAC_MAX5307_FLAG=0;
 //BOOL AD_offset_flag = FALSE;
 BOOL AD_offset_flag2 = FALSE;
