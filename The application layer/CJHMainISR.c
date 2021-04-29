@@ -41,7 +41,7 @@ void measurement(){
     US_P(1) = CTRL.O->uab_cmd[1]; // 后缀_C表示当前步的电压，C = Current
 
     // 母线电压测量
-    Voltage_DC_BUS=((AdcaResultRegs.ADCRESULT0))*AD_scale_VDC + offset_Udc;//
+    Voltage_DC_BUS=((AdcaResultRegs.ADCRESULT0)-offsetUDC)*AD_scale_VDC + offset_Udc;//
 
     // 电流接口
     Current_W=((AdcaResultRegs.ADCRESULT1)-offsetW)*AD_scale_W;// ADC A1-> Phase W Current  //-11.8-11.8A
