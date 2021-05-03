@@ -94,6 +94,12 @@ typedef struct {
     REAL dist_ub;
     REAL dist_uc;
 
+    /* DOB for stationary voltage */
+    REAL iab_lpf[2];
+    REAL iab_hpf[2];
+    REAL filter_pole;
+    REAL uab_DOB[2];
+
     /* Park.Sul-2012 */
     REAL gamma_theta_trapezoidal;
     REAL Vsat; // = 4*td*Udc/(pi*Ts)

@@ -8,14 +8,18 @@
 #include <All_Definition.h>
 
 SVGENDQ svgen1;
-float Current_U=0.0, Current_V=0.0, Current_W=0.0, Voltage_DC_BUS=0.0;
+float Current_U=0.0, Current_V=0.0, Current_W=0.0, Current_Not_Used=0.0, Voltage_DC_BUS=0.0;
 int FLAG_ENABLE_PWM_OUTPUT; // 电机模式标志位
 //int Enable_STOP_FLAG;  // 电机模式标志位
 Uint16 Rotor_angle_selection=SYSTEM_QEP_ROTOR_ANGLE;
 float Set_maunal_current_iq=0,Set_maunal_current_id=0,Set_maunal_rpm=300;
-//float offsetU=2070,offsetV=2088,offsetW=2055; // ADC offset. U, V, W corresponds to ADCRESULT2, ADCRESULT3, ADCRESULT1.
-float offsetU=2070,offsetV=2051.74,offsetW=2030.49; // ADC offset. U, V, W corresponds to ADCRESULT2, ADCRESULT3, ADCRESULT1.
-float offsetUDC=1432;
+#ifdef _XCUBE1
+    float offsetU=2044,offsetV=2050,offsetW=2031; // ADC offset. U, V, W corresponds to ADCRESULT2, ADCRESULT3, ADCRESULT1.
+    float offsetUDC=1430;
+#else
+    float offsetU=2072,offsetV=2062,offsetW=2046; // ADC offset. U, V, W corresponds to ADCRESULT2, ADCRESULT3, ADCRESULT1.
+    float offsetUDC=0;
+#endif
 int DAC_MAX5307_FLAG=0;
 //BOOL AD_offset_flag = FALSE;
 BOOL AD_offset_flag2 = FALSE;

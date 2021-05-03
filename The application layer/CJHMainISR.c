@@ -34,6 +34,7 @@ void voltage_commands_to_pwm(){
 //REAL offset_Udc = 8.0; // 80 V 419-0948
 //REAL offset_Udc = 1.0; // 180 V 419-1121
 REAL offset_Udc = 0.0; // 180 V 427-1401 @ XCUBE-II
+REAL OverwriteSpeedOutLimit = 2;
 void measurement(){
 
     // 电压测量
@@ -44,21 +45,27 @@ void measurement(){
     Voltage_DC_BUS=((AdcaResultRegs.ADCRESULT0)-offsetUDC)*AD_scale_VDC + offset_Udc;//
 
     // 电流接口
-    Current_W=((AdcaResultRegs.ADCRESULT1)-offsetW)*AD_scale_W;// ADC A1-> Phase W Current  //-11.8-11.8A
-    Current_V=((AdcaResultRegs.ADCRESULT3)-offsetV)*AD_scale_V;// ADC A1-> Phase V Current  //-11.8-11.8A
-    //Current_U=((AdcaResultRegs.ADCRESULT2)-offsetU)*AD_scale_U;// ADC A1-> Phase V Current  //-11.8-11.8A
-     if(AD_offset_flag2==TRUE){
-        Current_W = Current_W - G.Offset_W;
-        Current_V = Current_V - G.Offset_V;
-        //Current_U = Current_U - G.Offset_U;
-    }
-    //    if(AdcaResultRegs.ADCRESULT1==0){
-    //        Current_W=-(Current_U+Current_V);
-    //    }
-    //    if(AdcaResultRegs.ADCRESULT2==0){
-    //        Current_U=-(Current_W+Current_V);
-    //    }
-    Current_U=-(Current_W+Current_V);
+    #ifdef _XCUBE1
+        Current_Not_Used=((AdcaResultRegs.ADCRESULT1)-offsetW)*AD_scale_W;// ADC A1-> Phase W Current  //-11.8-11.8A
+        Current_V       =((AdcaResultRegs.ADCRESULT3)-offsetV)*AD_scale_V;// ADC A1-> Phase V Current  //-11.8-11.8A
+        Current_U       =((AdcaResultRegs.ADCRESULT2)-offsetU)*AD_scale_U;// ADC A1-> Phase U Current  //-11.8-11.8A
+        if(AD_offset_flag2==TRUE){
+            Current_Not_Used = Current_Not_Used - G.Offset_W;
+            Current_V = Current_V - G.Offset_V;
+            Current_U = Current_U - G.Offset_U;
+        }
+        Current_W=-(Current_V+Current_U);
+    #else
+        Current_W       =((AdcaResultRegs.ADCRESULT1)-offsetW)*AD_scale_W;// ADC A1-> Phase W Current  //-11.8-11.8A
+        Current_V       =((AdcaResultRegs.ADCRESULT3)-offsetV)*AD_scale_V;// ADC A1-> Phase V Current  //-11.8-11.8A
+        Current_Not_Used=((AdcaResultRegs.ADCRESULT2)-offsetU)*AD_scale_U;// ADC A1-> Phase U Current  //-11.8-11.8A
+        if(AD_offset_flag2==TRUE){
+            Current_W = Current_W - G.Offset_W;
+            Current_V = Current_V - G.Offset_V;
+            Current_Not_Used = Current_Not_Used - G.Offset_U;
+        }
+        Current_U=-(Current_W+Current_V);
+    #endif
     REAL adc_ial = UV2A_AI(Current_U, Current_V);
     REAL adc_ibe = UV2B_AI(Current_U, Current_V);
 
@@ -360,6 +367,8 @@ if(!FLAG_ENABLE_PWM_OUTPUT) //&&button_isr==1)
     /* 750W MOTOR1 (wo/ hall) */
     CTRL.motor->KE = 0.095;
     //pid1_spd.OutLimit = 10;
+
+    pid1_spd.OutLimit = OverwriteSpeedOutLimit;
 
     #ifdef AS_LOAD_MOTOR
         pid1_spd.OutLimit = 0.01;

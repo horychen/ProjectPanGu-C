@@ -34,6 +34,9 @@ void CTRL_init(){
     // ENC.sum_qepPosCnt = 0.0;
     // ENC.cursor = 0;
 
+    /* Inverter */
+    CTRL.inv->filter_pole = 3000*2*M_PI;
+
     /* Controller quantities */
     // commands
     // CTRL.I->idq_cmd[0] = 0.0;
