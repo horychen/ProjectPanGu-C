@@ -840,6 +840,27 @@ void the_active_flux_estimator(){
 }
 
 
+/* DOB Stationary Voltage that is valid for SPMSM only */
+void stationary_voltage_DOB(){
+    // CTRL.I->iab[0]
+    // CTRL.I->iab[1]
+
+    CTRL.inv->iab_lpf[0] = _lpf(CTRL.I->iab[0], CTRL.inv->iab_lpf[0], CTRL.inv->filter_pole);
+    CTRL.inv->iab_lpf[1] = _lpf(CTRL.I->iab[1], CTRL.inv->iab_lpf[1], CTRL.inv->filter_pole);
+
+    CTRL.inv->iab_hpf[0] = CTRL.I->iab[0] - CTRL.inv->iab_lpf[0];
+    CTRL.inv->iab_hpf[1] = CTRL.I->iab[1] - CTRL.inv->iab_lpf[1];
+
+    CTRL.inv->uab_DOB[0] = - CTRL.motor->R * CTRL.inv->iab_lpf[0] - CTRL.motor->Ld * CTRL.inv->iab_lpf[0];
+    CTRL.inv->uab_DOB[1] = - CTRL.motor->R * CTRL.inv->iab_lpf[1] - CTRL.motor->Ld * CTRL.inv->iab_lpf[1];
+
+    // add back emf
+    // CTRL.inv->uab_DOB[0] += CTRL.I->omg_elec * CTRL.motor->KE * -sin(CTRL.I->theta_d_elec);
+    // CTRL.inv->uab_DOB[1] += CTRL.I->omg_elec * CTRL.motor->KE *  cos(CTRL.I->theta_d_elec);
+}
+
+
+
 
 /********************************************
 /* COMMON *
@@ -864,6 +885,8 @@ void rk4_init(){
     }
 }
 void pmsm_observers(){
+    stationary_voltage_DOB();
+
     /* Cascaded Flux Estimator */
     the_active_flux_estimator();
 

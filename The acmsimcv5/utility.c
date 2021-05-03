@@ -3,9 +3,9 @@
 
 #if PC_SIMULATION
 // 写变量名到文件
-#define DATA_FORMAT "%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g\n"
-#define DATA_LABELS "ACM.rpm_cmd,CTRL.I->rpm,nsoaf.xOmg*ELEC_RAD_PER_SEC_2_RPM,ACM.x[3]/M_PI*180,nsoaf.theta_d/M_PI*180,ACM.theta_d_activeFlux/M_PI*180,ENC.theta_d_elec/M_PI*180,ACM.psi_stator[0],ACM.psi_stator[1],ACM.psi_active[0],nsoaf.active_flux_ab[0],ACM.psi_active[1],nsoaf.active_flux_ab[1],CTRL.I->idq[1],nsoaf.xIq,nsoaf.active_power_real,nsoaf.active_power_est,nsoaf.active_power_error,nsoaf.output_error,ACM.TLoad,nsoaf.xTL,nsoaf.LoadTorquePI,nsoaf.psi_1[0],nsoaf.psi_1[1],nsoaf.u_offset[0],nsoaf.u_offset[1],ACM.ube,CTRL.O->uab_cmd[1],CTRL.O->uab_cmd_to_inverter[1],CTRL.O->uab_cmd_to_inverter[1]-CTRL.O->uab_cmd[1],CTRL.O->uab_cmd_to_inverter[1]-CTRL.O->uab_cmd[1],(REAL)ENC.encoder_incremental_cnt,(REAL)ENC.encoder_abs_cnt\n"
-#define DATA_DETAILS ACM.rpm_cmd,CTRL.I->rpm,nsoaf.xOmg*ELEC_RAD_PER_SEC_2_RPM,ACM.x[3]/M_PI*180,nsoaf.theta_d/M_PI*180,ACM.theta_d_activeFlux/M_PI*180,ENC.theta_d_elec/M_PI*180,ACM.psi_stator[0],ACM.psi_stator[1],ACM.psi_active[0],nsoaf.active_flux_ab[0],ACM.psi_active[1],nsoaf.active_flux_ab[1],CTRL.I->idq[1],nsoaf.xIq,nsoaf.active_power_real,nsoaf.active_power_est,nsoaf.active_power_error,nsoaf.output_error,ACM.TLoad,nsoaf.xTL,nsoaf.LoadTorquePI,nsoaf.psi_1[0],nsoaf.psi_1[1],nsoaf.u_offset[0],nsoaf.u_offset[1],ACM.ube,CTRL.O->uab_cmd[1],CTRL.O->uab_cmd_to_inverter[1],CTRL.O->uab_cmd_to_inverter[1]-CTRL.O->uab_cmd[1],CTRL.O->uab_cmd_to_inverter[1]-CTRL.O->uab_cmd[1],(REAL)ENC.encoder_incremental_cnt,(REAL)ENC.encoder_abs_cnt
+#define DATA_FORMAT "%g,%g,%g,%g,%g,%g,%g,%g,%g\n"
+#define DATA_LABELS "ACM.rpm_cmd,CTRL.I->rpm,nsoaf.xOmg*ELEC_RAD_PER_SEC_2_RPM,CTRL.inv->uab_DOB[0],ACM.dist_al,CTRL.inv->uab_DOB[1],ACM.dist_be,nsoaf.u_offset[0],nsoaf.u_offset[1]\n"
+#define DATA_DETAILS ACM.rpm_cmd,CTRL.I->rpm,nsoaf.xOmg*ELEC_RAD_PER_SEC_2_RPM,CTRL.inv->uab_DOB[0],ACM.dist_al,CTRL.inv->uab_DOB[1],ACM.dist_be,nsoaf.u_offset[0],nsoaf.u_offset[1]
 
 void write_header_to_file(FILE *fw){
     printf("%s\n", DATA_FILE_NAME);
@@ -59,8 +59,13 @@ int isNumber(double x){
 
 
 //低通滤波器：测量值，上一步的滤波器输出，时间常数的倒数
-REAL _lpf(REAL x, REAL y_tminus1, REAL time_const_inv){
-    return y_tminus1 + CL_TS * time_const_inv * (x - y_tminus1);
+REAL _lpf(REAL x, REAL y, REAL tau_inv){
+    return y + CL_TS * tau_inv * (x - y);
+}
+//高通滤波器：测量值，上一步的低通滤波器输出的地址，时间常数的倒数
+REAL _hpf(REAL x, REAL *lpf_y, REAL tau_inv){
+    *lpf_y = _lpf(x, *lpf_y, tau_inv);
+    return x - *lpf_y;
 }
 
 // #define MA_SEQUENCE_LENGTH         20 // 20 * CL_TS = window of moving average in seconds

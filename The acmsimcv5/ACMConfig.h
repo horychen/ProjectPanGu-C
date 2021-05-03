@@ -36,7 +36,7 @@
 #define NUMBER_OF_STEPS 250000
 #define DOWN_SAMPLE 1
 #define USE_QEP_RAW TRUE
-#define VOLTAGE_CURRENT_DECOUPLING_CIRCUIT TRUE
+#define VOLTAGE_CURRENT_DECOUPLING_CIRCUIT FALSE
 #define SATURATED_MAGNETIC_CIRCUIT FALSE
 #define CL_TS          (0.0001)
 #define CL_TS_INVERSE  (10000)
@@ -49,26 +49,30 @@
 // 经常要修改的
 #define SENSORLESS_CONTROL_HFSI FALSE
 #define SENSORLESS_CONTROL FALSE
-#define INVERTER_NONLINEARITY              TRUE
-#define INVERTER_NONLINEARITY_COMPENSATION TRUE
+#define INVERTER_NONLINEARITY_COMPENSATION FALSE
+#define INVERTER_NONLINEARITY              FALSE
 
 #define LOAD_INERTIA    0.0
 #define LOAD_TORQUE     2
 #define VISCOUS_COEFF   0.0007
 
-#define CURRENT_KP (3.34244)
+#define CURRENT_KP (6.39955)
 #define CURRENT_KI (237.845)
 #define CURRENT_KI_CODE (CURRENT_KI*CURRENT_KP*CL_TS)
-#define SPEED_KP (0.0198661)
-#define SPEED_KI (15.9595)
+#define SPEED_KP (0.0380362)
+#define SPEED_KI (30.5565)
 #define SPEED_KI_CODE (SPEED_KI*SPEED_KP*VL_TS)
 
 /* Encoder QEP */
 #define SYSTEM_QEP_PULSES_PER_REV  (10000)
 #define SYSTEM_QEP_REV_PER_PULSE  (1e-4)
 #define CNT_2_ELEC_RAD (SYSTEM_QEP_REV_PER_PULSE * 2*M_PI * MOTOR_NUMBER_OF_POLE_PAIRS)
-// #define SYSTEM_QEP_CALIBRATED_ANGLE -976 //-2668 // for MOTOR2 (w/ hall sensor) // -968 for MOTOR1
-#define SYSTEM_QEP_CALIBRATED_ANGLE -2668
+#ifdef _XCUBE1
+    #define SYSTEM_QEP_CALIBRATED_ANGLE -2668 // for MOTOR2
+#else
+    #define SYSTEM_QEP_CALIBRATED_ANGLE -2668 // for MOTOR2
+    // #define SYSTEM_QEP_CALIBRATED_ANGLE -976 // for MOTOR1 (w/ hall sensor) // -968 for MOTOR1
+#endif
 
 #if MACHINE_TYPE % 10 == 2
 
@@ -83,7 +87,7 @@
     #define NSOAF_TL_P (1) // 1 for experimental starting // 4 for 1500 rpm // 2 for 800 rpm
     #define NSOAF_TL_I (20)
     #define NSOAF_TL_D (0)
-    #define OUTPUT_ERROR_CLEST_GAIN_KP (0.1) // (0.5) // (2*5)
+    #define OUTPUT_ERROR_CLEST_GAIN_KP  (0.1) // (0.5) // (2*5)
     #define OUTPUT_ERROR_CLEST_GAIN_KI (0.02) // 0.02 for 10 rpm // 0.1 for 40 rpm //(2.0) for 300 rpm
     /* Farza 2009 for EMMF */
     #define FARZA09_HGO_EEMF_VARTHETA 10
@@ -132,5 +136,5 @@
 #define SWEEP_FREQ_C2V FALSE
 #define SWEEP_FREQ_C2C FALSE
 
-#define DATA_FILE_NAME "../dat/PMSM_NTUMotor-107-1000-5-1982.dat"
+#define DATA_FILE_NAME "../dat/PMSM_NTUMotor-205-1000-10-1982.dat"
 #endif

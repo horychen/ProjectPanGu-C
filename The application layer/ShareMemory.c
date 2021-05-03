@@ -29,7 +29,9 @@ REAL dac_watch[30];
 
 //int channels[4]={26,27,5,22}; // 高速运行实验
 //int channels[NO_OF_CHANNELS]={5,23,26,27,22,19}; // 高速运行实验
-int channels[NO_OF_CHANNELS]={5,23,26,27,12,22}; // 高速运行实验
+//int channels[NO_OF_CHANNELS]={5,23,26,27,12,22}; // 高速运行实验
+
+int channels[NO_OF_CHANNELS]={0,1,2,27,12,22};
 
 REAL dac_time = 0;
 REAL temp_xOmg = 0.0;
@@ -48,14 +50,20 @@ void write_DAC_buffer(){
     if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
 
         // 所有曾经看过的变量都在列在这里，记得有效范围是 [-1, 1]。
-        dac_watch[0] = Current_U*0.2;
-        dac_watch[1] = Current_V*0.2;
-        //dac_watch[10] = Current_W*0.2;
-        dac_watch[2] = CTRL.I->iab[0]*0.2;
+        #ifdef _XCUBE1
+            dac_watch[0] = Current_U*0.2;
+            dac_watch[1] = Current_V*0.2;
+            dac_watch[2] = Current_Not_Used*0.2;
+        #else
+            dac_watch[0] = Current_W*0.2;
+            dac_watch[1] = Current_V*0.2;
+            dac_watch[2] = Current_Not_Used*0.2;
+        #endif
+        //dac_watch[2] = CTRL.I->iab[0]*0.2;
         dac_watch[3] = CTRL.I->iab[1]*0.2;
         dac_watch[4] = CTRL.I->idq[0]*0.2;
-        //dac_watch[5] = CTRL.I->idq[1]*0.2; // 5 A for low speed
-        dac_watch[5] = CTRL.I->idq[1]*0.05; // 20 A for high speed reversal
+        dac_watch[5] = CTRL.I->idq[1]*0.2; // 5 A for low speed
+        //dac_watch[5] = CTRL.I->idq[1]*0.05; // 20 A for high speed reversal
         dac_watch[6] = CTRL.I->rpm*0.002;
         dac_watch[7] = nsoaf.xOmg*ELEC_RAD_PER_SEC_2_RPM*0.002;
         dac_watch[8] = EQep1Regs.QPOSCNT*0.0001; // [0, 10000]
@@ -82,8 +90,8 @@ void write_DAC_buffer(){
         dac_watch[21] = ELECTRICAL_POSITION_FEEDBACK*0.1;
 
         dac_watch[22] = nsoaf.LoadTorquePI*0.25;
-        //dac_watch[23] = nsoaf.xIq*0.2; // 5 A for low speed
-        dac_watch[23] = nsoaf.xIq*0.05; // 20 A for high speed reversal
+        dac_watch[23] = nsoaf.xIq*0.2; // 5 A for low speed
+        //dac_watch[23] = nsoaf.xIq*0.05; // 20 A for high speed reversal
 
         dac_watch[26] = CTRL.I->rpm*0.0005;
         dac_watch[27] = nsoaf.xOmg*ELEC_RAD_PER_SEC_2_RPM*0.0005;
