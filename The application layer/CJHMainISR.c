@@ -35,6 +35,8 @@ void voltage_commands_to_pwm(){
 //REAL offset_Udc = 1.0; // 180 V 419-1121
 REAL offset_Udc = 0.0; // 180 V 427-1401 @ XCUBE-II
 REAL OverwriteSpeedOutLimit = 2;
+REAL Overwrite_Voltage_DC_BUS = 180;
+int flag_overwite_voltage_dc_bus = FALSE;
 void measurement(){
 
     // 电压测量
@@ -46,15 +48,29 @@ void measurement(){
 
     // 电流接口
     #ifdef _XCUBE1
-        Current_Not_Used=((AdcaResultRegs.ADCRESULT1)-offsetW)*AD_scale_W;// ADC A1-> Phase W Current  //-11.8-11.8A
-        Current_V       =((AdcaResultRegs.ADCRESULT3)-offsetV)*AD_scale_V;// ADC A1-> Phase V Current  //-11.8-11.8A
-        Current_U       =((AdcaResultRegs.ADCRESULT2)-offsetU)*AD_scale_U;// ADC A1-> Phase U Current  //-11.8-11.8A
-        if(AD_offset_flag2==TRUE){
-            Current_Not_Used = Current_Not_Used - G.Offset_W;
-            Current_V = Current_V - G.Offset_V;
-            Current_U = Current_U - G.Offset_U;
+        //        Current_Not_Used=((AdcaResultRegs.ADCRESULT1)-offsetW)*AD_scale_W;// ADC A1-> Phase W Current  //-11.8-11.8A
+        //        Current_V       =((AdcaResultRegs.ADCRESULT3)-offsetV)*AD_scale_V;// ADC A1-> Phase V Current  //-11.8-11.8A
+        //        Current_U       =((AdcaResultRegs.ADCRESULT2)-offsetU)*AD_scale_U;// ADC A1-> Phase U Current  //-11.8-11.8A
+        //        if(AD_offset_flag2==TRUE){
+        //            Current_Not_Used = Current_Not_Used - G.Offset_W;
+        //            Current_V = Current_V - G.Offset_V;
+        //            Current_U = Current_U - G.Offset_U;
+        //        }
+        //        Current_W=-(Current_V+Current_U);
+
+        if(flag_overwite_voltage_dc_bus){
+            Voltage_DC_BUS = Overwrite_Voltage_DC_BUS;
         }
-        Current_W=-(Current_V+Current_U);
+        Current_W       =((AdcaResultRegs.ADCRESULT1)-offsetW)*AD_scale_W;// ADC A1-> Phase W Current  //-11.8-11.8A
+        Current_V       =((AdcaResultRegs.ADCRESULT3)-offsetV)*AD_scale_V;// ADC A1-> Phase V Current  //-11.8-11.8A
+        Current_Not_Used=((AdcaResultRegs.ADCRESULT2)-offsetU)*AD_scale_U;// ADC A1-> Phase U Current  //-11.8-11.8A
+        if(AD_offset_flag2==TRUE){
+            Current_W = Current_W - G.Offset_W;
+            Current_V = Current_V - G.Offset_V;
+            Current_Not_Used = Current_Not_Used - G.Offset_U;
+        }
+        Current_U=-(Current_W+Current_V);
+
     #else
         Current_W       =((AdcaResultRegs.ADCRESULT1)-offsetW)*AD_scale_W;// ADC A1-> Phase W Current  //-11.8-11.8A
         Current_V       =((AdcaResultRegs.ADCRESULT3)-offsetV)*AD_scale_V;// ADC A1-> Phase V Current  //-11.8-11.8A

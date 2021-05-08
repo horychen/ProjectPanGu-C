@@ -53,14 +53,16 @@ void write_DAC_buffer(){
         #ifdef _XCUBE1
             dac_watch[0] = Current_U*0.2;
             dac_watch[1] = Current_V*0.2;
-            dac_watch[2] = Current_Not_Used*0.2;
+            dac_watch[2] = Current_W*0.2;
+            dac_watch[3] = Current_Not_Used*0.2;
         #else
-            dac_watch[0] = Current_W*0.2;
+            dac_watch[0] = Current_U*0.2;
             dac_watch[1] = Current_V*0.2;
-            dac_watch[2] = Current_Not_Used*0.2;
+            dac_watch[2] = Current_W*0.2;
+            dac_watch[3] = Current_Not_Used*0.2;
         #endif
         //dac_watch[2] = CTRL.I->iab[0]*0.2;
-        dac_watch[3] = CTRL.I->iab[1]*0.2;
+        //dac_watch[3] = CTRL.I->iab[1]*0.2;
         dac_watch[4] = CTRL.I->idq[0]*0.2;
         dac_watch[5] = CTRL.I->idq[1]*0.2; // 5 A for low speed
         //dac_watch[5] = CTRL.I->idq[1]*0.05; // 20 A for high speed reversal
