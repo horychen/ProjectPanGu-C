@@ -16,6 +16,10 @@ float Set_maunal_current_iq=0,Set_maunal_current_id=0,Set_maunal_rpm=300;
 #ifdef _XCUBE1
     float offsetU=2044,offsetV=2050,offsetW=2031; // ADC offset. U, V, W corresponds to ADCRESULT2, ADCRESULT3, ADCRESULT1.
     float offsetUDC=1430;
+
+/* 借用Sensor Board的电流传感器 */
+//float offsetU=2045,offsetV=2047,offsetW=2030; // ADC offset. U, V, W corresponds to ADCRESULT2, ADCRESULT3, ADCRESULT1.
+
 #else
     float offsetU=2072,offsetV=2062,offsetW=2046; // ADC offset. U, V, W corresponds to ADCRESULT2, ADCRESULT3, ADCRESULT1.
     float offsetUDC=0;
