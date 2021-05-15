@@ -35,32 +35,91 @@ void eQEP_initialize(int m);
     // InitECapture - Initialize ECAP1 configurations
     void InitECapture()
     {
-       ECap1Regs.ECEINT.all = 0x0000;          // Disable all capture __interrupts
-       ECap1Regs.ECCLR.all = 0xFFFF;           // Clear all CAP __interrupt flags
-       ECap1Regs.ECCTL1.bit.CAPLDEN = 0;       // Disable CAP1-CAP4 register loads
-       ECap1Regs.ECCTL2.bit.TSCTRSTOP = 0;     // Make sure the counter is stopped
 
-       //
-       // Configure peripheral registers
-       //
-       ECap1Regs.ECCTL2.bit.CONT_ONESHT = 1;   // One-shot
-       ECap1Regs.ECCTL2.bit.STOP_WRAP = 3;     // Stop at 4 events
-       ECap1Regs.ECCTL1.bit.CAP1POL = 1;       // Falling edge
-       ECap1Regs.ECCTL1.bit.CAP2POL = 0;       // Rising edge
-       ECap1Regs.ECCTL1.bit.CAP3POL = 1;       // Falling edge
-       ECap1Regs.ECCTL1.bit.CAP4POL = 0;       // Rising edge
-       ECap1Regs.ECCTL1.bit.CTRRST1 = 1;       // Difference operation
-       ECap1Regs.ECCTL1.bit.CTRRST2 = 1;       // Difference operation
-       ECap1Regs.ECCTL1.bit.CTRRST3 = 1;       // Difference operation
-       ECap1Regs.ECCTL1.bit.CTRRST4 = 1;       // Difference operation
-       ECap1Regs.ECCTL2.bit.SYNCI_EN = 1;      // Enable sync in
-       ECap1Regs.ECCTL2.bit.SYNCO_SEL = 0;     // Pass through
-       ECap1Regs.ECCTL1.bit.CAPLDEN = 1;       // Enable capture units
+        /*ECAP 1*/
+        ECap1Regs.ECEINT.all = 0x0000;          // Disable all capture __interrupts
+        ECap1Regs.ECCLR.all = 0xFFFF;           // Clear all CAP __interrupt flags
+        ECap1Regs.ECCTL1.bit.CAPLDEN = 0;       // Disable CAP1-CAP4 register loads
+        ECap1Regs.ECCTL2.bit.TSCTRSTOP = 0;     // Make sure the counter is stopped
 
-       ECap1Regs.ECCTL2.bit.TSCTRSTOP = 1;     // Start Counter
-       ECap1Regs.ECCTL2.bit.REARM = 1;         // arm one-shot
-       ECap1Regs.ECCTL1.bit.CAPLDEN = 1;       // Enable CAP1-CAP4 register loads
-       ECap1Regs.ECEINT.bit.CEVT4 = 1;         // 4 events = __interrupt
+        //
+        // Configure peripheral registers
+        //
+        ECap1Regs.ECCTL2.bit.CONT_ONESHT = 1;   // One-shot
+        ECap1Regs.ECCTL2.bit.STOP_WRAP = 3;     // Stop at 4 events
+        ECap1Regs.ECCTL1.bit.CAP1POL = 1;       // Falling edge
+        ECap1Regs.ECCTL1.bit.CAP2POL = 0;       // Rising edge
+        ECap1Regs.ECCTL1.bit.CAP3POL = 1;       // Falling edge
+        ECap1Regs.ECCTL1.bit.CAP4POL = 0;       // Rising edge
+        ECap1Regs.ECCTL1.bit.CTRRST1 = 1;       // Difference operation
+        ECap1Regs.ECCTL1.bit.CTRRST2 = 1;       // Difference operation
+        ECap1Regs.ECCTL1.bit.CTRRST3 = 1;       // Difference operation
+        ECap1Regs.ECCTL1.bit.CTRRST4 = 1;       // Difference operation
+        ECap1Regs.ECCTL2.bit.SYNCI_EN = 1;      // Enable sync in
+        ECap1Regs.ECCTL2.bit.SYNCO_SEL = 0;     // Pass through
+        ECap1Regs.ECCTL1.bit.CAPLDEN = 1;       // Enable capture units
+
+        ECap1Regs.ECCTL2.bit.TSCTRSTOP = 1;     // Start Counter
+        ECap1Regs.ECCTL2.bit.REARM = 1;         // arm one-shot
+        ECap1Regs.ECCTL1.bit.CAPLDEN = 1;       // Enable CAP1-CAP4 register loads
+        ECap1Regs.ECEINT.bit.CEVT4 = 1;         // 4 events = __interrupt
+
+
+        /*ECAP 2*/
+        ECap2Regs.ECEINT.all = 0x0000;          // Disable all capture __interrupts
+        ECap2Regs.ECCLR.all = 0xFFFF;           // Clear all CAP __interrupt flags
+        ECap2Regs.ECCTL1.bit.CAPLDEN = 0;       // Disable CAP1-CAP4 register loads
+        ECap2Regs.ECCTL2.bit.TSCTRSTOP = 0;     // Make sure the counter is stopped
+
+        //
+        // Configure peripheral registers
+        //
+        ECap2Regs.ECCTL2.bit.CONT_ONESHT = 1;   // One-shot
+        ECap2Regs.ECCTL2.bit.STOP_WRAP = 3;     // Stop at 4 events
+        ECap2Regs.ECCTL1.bit.CAP1POL = 1;       // Falling edge
+        ECap2Regs.ECCTL1.bit.CAP2POL = 0;       // Rising edge
+        ECap2Regs.ECCTL1.bit.CAP3POL = 1;       // Falling edge
+        ECap2Regs.ECCTL1.bit.CAP4POL = 0;       // Rising edge
+        ECap2Regs.ECCTL1.bit.CTRRST1 = 1;       // Difference operation
+        ECap2Regs.ECCTL1.bit.CTRRST2 = 1;       // Difference operation
+        ECap2Regs.ECCTL1.bit.CTRRST3 = 1;       // Difference operation
+        ECap2Regs.ECCTL1.bit.CTRRST4 = 1;       // Difference operation
+        ECap2Regs.ECCTL2.bit.SYNCI_EN = 1;      // Enable sync in
+        ECap2Regs.ECCTL2.bit.SYNCO_SEL = 0;     // Pass through
+        ECap2Regs.ECCTL1.bit.CAPLDEN = 1;       // Enable capture units
+
+        ECap2Regs.ECCTL2.bit.TSCTRSTOP = 1;     // Start Counter
+        ECap2Regs.ECCTL2.bit.REARM = 1;         // arm one-shot
+        ECap2Regs.ECCTL1.bit.CAPLDEN = 1;       // Enable CAP1-CAP4 register loads
+        ECap2Regs.ECEINT.bit.CEVT4 = 1;         // 4 events = __interrupt
+
+        /*ECAP 3*/
+        ECap3Regs.ECEINT.all = 0x0000;          // Disable all capture __interrupts
+        ECap3Regs.ECCLR.all = 0xFFFF;           // Clear all CAP __interrupt flags
+        ECap3Regs.ECCTL1.bit.CAPLDEN = 0;       // Disable CAP1-CAP4 register loads
+        ECap3Regs.ECCTL2.bit.TSCTRSTOP = 0;     // Make sure the counter is stopped
+
+        //
+        // Configure peripheral registers
+        //
+        ECap3Regs.ECCTL2.bit.CONT_ONESHT = 1;   // One-shot
+        ECap3Regs.ECCTL2.bit.STOP_WRAP = 3;     // Stop at 4 events
+        ECap3Regs.ECCTL1.bit.CAP1POL = 1;       // Falling edge
+        ECap3Regs.ECCTL1.bit.CAP2POL = 0;       // Rising edge
+        ECap3Regs.ECCTL1.bit.CAP3POL = 1;       // Falling edge
+        ECap3Regs.ECCTL1.bit.CAP4POL = 0;       // Rising edge
+        ECap3Regs.ECCTL1.bit.CTRRST1 = 1;       // Difference operation
+        ECap3Regs.ECCTL1.bit.CTRRST2 = 1;       // Difference operation
+        ECap3Regs.ECCTL1.bit.CTRRST3 = 1;       // Difference operation
+        ECap3Regs.ECCTL1.bit.CTRRST4 = 1;       // Difference operation
+        ECap3Regs.ECCTL2.bit.SYNCI_EN = 1;      // Enable sync in
+        ECap3Regs.ECCTL2.bit.SYNCO_SEL = 0;     // Pass through
+        ECap3Regs.ECCTL1.bit.CAPLDEN = 1;       // Enable capture units
+
+        ECap3Regs.ECCTL2.bit.TSCTRSTOP = 1;     // Start Counter
+        ECap3Regs.ECCTL2.bit.REARM = 1;         // arm one-shot
+        ECap3Regs.ECCTL1.bit.CAPLDEN = 1;       // Enable CAP1-CAP4 register loads
+        ECap3Regs.ECEINT.bit.CEVT4 = 1;         // 4 events = __interrupt
     }
 
     // ECCTL1 (ECAP Control Reg 1)
@@ -169,6 +228,39 @@ void eQEP_initialize(int m);
         ECap1Regs.ECCTL2.bit.SYNCI_EN = EC_DISABLE;
         ECap1Regs.ECCTL2.bit.TSCTRSTOP = EC_RUN;
 
+        // ECAP module 2 config
+        ECap2Regs.ECCTL1.bit.CAP1POL = EC_RISING;
+        ECap2Regs.ECCTL1.bit.CAP2POL = EC_FALLING;
+        ECap2Regs.ECCTL1.bit.CAP3POL = EC_RISING;
+        ECap2Regs.ECCTL1.bit.CAP4POL = EC_FALLING;
+        ECap2Regs.ECCTL1.bit.CTRRST1 = EC_DELTA_MODE;
+        ECap2Regs.ECCTL1.bit.CTRRST2 = EC_DELTA_MODE;
+        ECap2Regs.ECCTL1.bit.CTRRST3 = EC_DELTA_MODE;
+        ECap2Regs.ECCTL1.bit.CTRRST4 = EC_DELTA_MODE;
+        ECap2Regs.ECCTL1.bit.CAPLDEN = EC_ENABLE;
+        ECap2Regs.ECCTL1.bit.PRESCALE = EC_DIV1;
+        ECap2Regs.ECCTL2.bit.CAP_APWM = EC_CAP_MODE;
+        ECap2Regs.ECCTL2.bit.CONT_ONESHT = EC_CONTINUOUS;
+        ECap2Regs.ECCTL2.bit.SYNCO_SEL = EC_SYNCO_DIS;
+        ECap2Regs.ECCTL2.bit.SYNCI_EN = EC_DISABLE;
+        ECap2Regs.ECCTL2.bit.TSCTRSTOP = EC_RUN;
+
+        // ECAP module 3 config
+        ECap3Regs.ECCTL1.bit.CAP1POL = EC_RISING;
+        ECap3Regs.ECCTL1.bit.CAP2POL = EC_FALLING;
+        ECap3Regs.ECCTL1.bit.CAP3POL = EC_RISING;
+        ECap3Regs.ECCTL1.bit.CAP4POL = EC_FALLING;
+        ECap3Regs.ECCTL1.bit.CTRRST1 = EC_DELTA_MODE;
+        ECap3Regs.ECCTL1.bit.CTRRST2 = EC_DELTA_MODE;
+        ECap3Regs.ECCTL1.bit.CTRRST3 = EC_DELTA_MODE;
+        ECap3Regs.ECCTL1.bit.CTRRST4 = EC_DELTA_MODE;
+        ECap3Regs.ECCTL1.bit.CAPLDEN = EC_ENABLE;
+        ECap3Regs.ECCTL1.bit.PRESCALE = EC_DIV1;
+        ECap3Regs.ECCTL2.bit.CAP_APWM = EC_CAP_MODE;
+        ECap3Regs.ECCTL2.bit.CONT_ONESHT = EC_CONTINUOUS;
+        ECap3Regs.ECCTL2.bit.SYNCO_SEL = EC_SYNCO_DIS;
+        ECap3Regs.ECCTL2.bit.SYNCI_EN = EC_DISABLE;
+        ECap3Regs.ECCTL2.bit.TSCTRSTOP = EC_RUN;
     }
 #endif
 

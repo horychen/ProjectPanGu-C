@@ -503,8 +503,10 @@ void Gpio_initialize(void)
 	GPIO_SetupPinOptions(106, GPIO_OUTPUT, GPIO_SYNC);//
 	GPIO_SetupPinMux(106,0,0);//
 
-
+	//	ECAP Xbar GPIO Assignment
 	InitECap1Gpio(69);
+    InitECap2Gpio(70);
+    InitECap3Gpio(71);
 
     // Ë«ºËÅäÖÃÀý×Ó£º
     // Give GPIO31 Control to CPU02
