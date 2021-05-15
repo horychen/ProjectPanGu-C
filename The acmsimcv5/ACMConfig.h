@@ -33,7 +33,7 @@
 	#define NULL_D_AXIS_CURRENT_CONTROL -1
 	#define MTPA -2 // not supported
 #define CONTROL_STRATEGY NULL_D_AXIS_CURRENT_CONTROL
-#define NUMBER_OF_STEPS 250000
+#define NUMBER_OF_STEPS 300000
 #define DOWN_SAMPLE 1
 #define USE_QEP_RAW TRUE
 #define VOLTAGE_CURRENT_DECOUPLING_CIRCUIT FALSE
@@ -49,11 +49,13 @@
 // 经常要修改的
 #define SENSORLESS_CONTROL_HFSI FALSE
 #define SENSORLESS_CONTROL FALSE
-#define INVERTER_NONLINEARITY_COMPENSATION FALSE
-#define INVERTER_NONLINEARITY              FALSE
+#define INVERTER_NONLINEARITY_COMPENSATION 1 // 1:ParkSul12, 2:Sigmoid, 3:LUT
+#define INVERTER_NONLINEARITY              3 // 1:ModelSul96, 2:ModelExpSigmoid, 3: ModelExpLUT
+/* ParkSul2012 梯形波 */
+#define GAIN_THETA_TRAPEZOIDAL (40) //(500) // 20
 
 #define LOAD_INERTIA    0.0
-#define LOAD_TORQUE     2
+#define LOAD_TORQUE     0
 #define VISCOUS_COEFF   0.0007
 
 #define CURRENT_KP (6.39955)
@@ -70,8 +72,8 @@
 #ifdef _XCUBE1
     #define SYSTEM_QEP_CALIBRATED_ANGLE -2668 // for MOTOR2
 #else
-    #define SYSTEM_QEP_CALIBRATED_ANGLE -2668 // for MOTOR2
-    // #define SYSTEM_QEP_CALIBRATED_ANGLE -976 // for MOTOR1 (w/ hall sensor) // -968 for MOTOR1
+    // #define SYSTEM_QEP_CALIBRATED_ANGLE -2668 // for MOTOR2
+    #define SYSTEM_QEP_CALIBRATED_ANGLE -976 // for MOTOR1 (w/ hall sensor) // -968 for MOTOR1
 #endif
 
 #if MACHINE_TYPE % 10 == 2
@@ -87,8 +89,8 @@
     #define NSOAF_TL_P (1) // 1 for experimental starting // 4 for 1500 rpm // 2 for 800 rpm
     #define NSOAF_TL_I (20)
     #define NSOAF_TL_D (0)
-    #define OUTPUT_ERROR_CLEST_GAIN_KP  (0.1) // (0.5) // (2*5)
-    #define OUTPUT_ERROR_CLEST_GAIN_KI (0.02) // 0.02 for 10 rpm // 0.1 for 40 rpm //(2.0) for 300 rpm
+    #define OUTPUT_ERROR_CLEST_GAIN_KP (1.0*0.1) // (0.5) // (2*5)
+    #define OUTPUT_ERROR_CLEST_GAIN_KI (1.0*0.02) // 0.02 for 10 rpm // 0.1 for 40 rpm //(2.0) for 300 rpm
     /* Farza 2009 for EMMF */
     #define FARZA09_HGO_EEMF_VARTHETA 10
     #define FARZA09_HGO_EEMF_GAMMA_OMEGA_INITIAL_VALUE 10

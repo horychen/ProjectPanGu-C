@@ -57,8 +57,10 @@ typedef struct {
     REAL Js;
     REAL Js_inv;    
 } st_pmsm_parameters;
-#define MA_SEQUENCE_LENGTH         20 // 20 * CL_TS = window of moving average in seconds
-#define MA_SEQUENCE_LENGTH_INVERSE 0.05
+// #define MA_SEQUENCE_LENGTH         20 // 20 * CL_TS = window of moving average in seconds
+// #define MA_SEQUENCE_LENGTH_INVERSE 0.05 // 20 MA gives speed resolution of 3 rpm for 2500 ppr encoder
+#define MA_SEQUENCE_LENGTH         80
+#define MA_SEQUENCE_LENGTH_INVERSE 0.0125
 typedef struct {
     // Moving Average for speed calculation
     REAL MA_qepPosCnt[MA_SEQUENCE_LENGTH];
@@ -118,6 +120,10 @@ typedef struct {
     REAL iQ_atA;
     REAL I5_plus_I7; // Magnitude of 6th harmonic in syn. speed frame
     REAL I5_plus_I7_LPF; // lpf'd version of I5_plus_I7
+    REAL I11_plus_I13;
+    REAL I11_plus_I13_LPF;
+    REAL I17_plus_I19;
+    REAL I17_plus_I19_LPF;
     REAL theta_trapezoidal; // theta_t defined by Park.Sul-2012
 } st_InverterNonlinearity;
 typedef struct {
@@ -183,7 +189,7 @@ void get_distorted_voltage_via_LUT(REAL ual, REAL ube, REAL ial, REAL ibe, REAL 
 void get_distorted_voltage_via_CurveFitting(REAL ual, REAL ube, REAL ial, REAL ibe, REAL *ualbe_dist);
 
 /* ParkSul2012 梯形波 */
-#define GAIN_THETA_TRAPEZOIDAL (0*2) // 20
+// #define GAIN_THETA_TRAPEZOIDAL (20) // 20
 void inverterNonlinearity_Initialization();
 REAL u_comp_per_phase(REAL Vsat, REAL thetaA, REAL theta_trapezoidal, REAL oneOver_theta_trapezoidal);
 REAL lpf1(REAL x, REAL y_tminus1);
