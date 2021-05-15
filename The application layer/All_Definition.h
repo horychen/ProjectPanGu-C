@@ -107,7 +107,8 @@
         #define AD_scale_W                       0.0057316444
         #define AD_scale_V                       0.0056072670
         #define AD_scale_U                       (AD_scale_W*0.2)
-        #define AD_scale_VDC                     0.1897533207
+        //#define AD_scale_VDC                     0.1897533207
+        #define AD_scale_VDC                     (0.5*0.1897533207) // 短上一个470R再补上一个470R
     #endif
 
     //TRIP CONFIGURATION
