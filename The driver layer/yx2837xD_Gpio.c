@@ -488,7 +488,7 @@ void Gpio_initialize(void)
         GPIO_SetupPinMux(33,GPIO_MUX_CPU2,0);//
     #endif
 
-    // DI-1
+    // DI-1 (Digital Input)
 	GPIO_SetupPinOptions(26, GPIO_INPUT, GPIO_SYNC);//
 	GPIO_SetupPinMux(26,0,0);//
     // DSP_ENPWM
@@ -499,10 +499,12 @@ void Gpio_initialize(void)
     // Inverter_error signal
 	GPIO_SetupPinOptions(104, GPIO_INPUT, GPIO_SYNC);//
 	GPIO_SetupPinMux(104,0,0);//
-    // /QEP_IO
+    // QEP_IO
 	GPIO_SetupPinOptions(106, GPIO_OUTPUT, GPIO_SYNC);//
 	GPIO_SetupPinMux(106,0,0);//
 
+
+	InitECap1Gpio(69);
 
     // Ë«ºËÅäÖÃÀý×Ó£º
     // Give GPIO31 Control to CPU02

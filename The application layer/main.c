@@ -22,12 +22,155 @@ float Set_maunal_current_iq=0,Set_maunal_current_id=0,Set_maunal_rpm=300;
 
 #else
     float offsetU=2072,offsetV=2062,offsetW=2046; // ADC offset. U, V, W corresponds to ADCRESULT2, ADCRESULT3, ADCRESULT1.
-    float offsetUDC=0;
+    float offsetUDC=5;
 #endif
 int DAC_MAX5307_FLAG=0;
 //BOOL AD_offset_flag = FALSE;
 BOOL AD_offset_flag2 = FALSE;
 void eQEP_initialize(int m);
+
+
+#if 1
+    // From: D:\ti\controlSUITE\device_support\F2837xS\v210\F2837xS_examples_Cpu1\ecap_capture_pwm\cpu01\ECap_Capture_Pwm_cpu01.c
+    // InitECapture - Initialize ECAP1 configurations
+    void InitECapture()
+    {
+       ECap1Regs.ECEINT.all = 0x0000;          // Disable all capture __interrupts
+       ECap1Regs.ECCLR.all = 0xFFFF;           // Clear all CAP __interrupt flags
+       ECap1Regs.ECCTL1.bit.CAPLDEN = 0;       // Disable CAP1-CAP4 register loads
+       ECap1Regs.ECCTL2.bit.TSCTRSTOP = 0;     // Make sure the counter is stopped
+
+       //
+       // Configure peripheral registers
+       //
+       ECap1Regs.ECCTL2.bit.CONT_ONESHT = 1;   // One-shot
+       ECap1Regs.ECCTL2.bit.STOP_WRAP = 3;     // Stop at 4 events
+       ECap1Regs.ECCTL1.bit.CAP1POL = 1;       // Falling edge
+       ECap1Regs.ECCTL1.bit.CAP2POL = 0;       // Rising edge
+       ECap1Regs.ECCTL1.bit.CAP3POL = 1;       // Falling edge
+       ECap1Regs.ECCTL1.bit.CAP4POL = 0;       // Rising edge
+       ECap1Regs.ECCTL1.bit.CTRRST1 = 1;       // Difference operation
+       ECap1Regs.ECCTL1.bit.CTRRST2 = 1;       // Difference operation
+       ECap1Regs.ECCTL1.bit.CTRRST3 = 1;       // Difference operation
+       ECap1Regs.ECCTL1.bit.CTRRST4 = 1;       // Difference operation
+       ECap1Regs.ECCTL2.bit.SYNCI_EN = 1;      // Enable sync in
+       ECap1Regs.ECCTL2.bit.SYNCO_SEL = 0;     // Pass through
+       ECap1Regs.ECCTL1.bit.CAPLDEN = 1;       // Enable capture units
+
+       ECap1Regs.ECCTL2.bit.TSCTRSTOP = 1;     // Start Counter
+       ECap1Regs.ECCTL2.bit.REARM = 1;         // arm one-shot
+       ECap1Regs.ECCTL1.bit.CAPLDEN = 1;       // Enable CAP1-CAP4 register loads
+       ECap1Regs.ECEINT.bit.CEVT4 = 1;         // 4 events = __interrupt
+    }
+
+    // ECCTL1 (ECAP Control Reg 1)
+    //==========================
+    // CAPxPOL bits
+    #define EC_RISING 0x0
+    #define EC_FALLING 0x1
+    // CTRRSTx bits
+    #define EC_ABS_MODE 0x0
+    #define EC_DELTA_MODE 0x1
+    // PRESCALE bits
+    #define EC_BYPASS 0x0
+    #define EC_DIV1 0x0
+    #define EC_DIV2 0x1
+    #define EC_DIV4 0x2
+    #define EC_DIV6 0x3
+    #define EC_DIV8 0x4
+    #define EC_DIV10 0x5
+    // ECCTL2 ( ECAP Control Reg 2)
+    //==========================
+    // CONT/ONESHOT bit
+    #define EC_CONTINUOUS 0x0
+    #define EC_ONESHOT 0x1
+    // STOPVALUE bit
+    #define EC_EVENT1 0x0
+    #define EC_EVENT2 0x1
+    #define EC_EVENT3 0x2
+    #define EC_EVENT4 0x3
+    // RE-ARM bit
+    #define EC_ARM 0x1
+    // TSCTRSTOP bit
+    #define EC_FREEZE 0x0
+    #define EC_RUN 0x1
+    // SYNCO_SEL bit
+    #define EC_SYNCIN 0x0
+    #define EC_CTR_PRD 0x1
+    #define EC_SYNCO_DIS 0x2
+    // CAP/APWM mode bit
+    #define EC_CAP_MODE 0x0
+    #define EC_APWM_MODE 0x1
+    // APWMPOL bit
+    #define EC_ACTV_HI 0x0
+    #define EC_ACTV_LO 0x1
+    // Generic
+    #define EC_DISABLE 0x0
+    #define EC_ENABLE 0x1
+    #define EC_FORCE 0x1
+    void InitECaptureContinuousMode(){
+        InitECapture();
+
+        //        16.6.1
+        // ECAP module 1 config
+        //        ECap1Regs.ECCTL1.bit.CAP1POL = EC_RISING;
+        //        ECap1Regs.ECCTL1.bit.CAP2POL = EC_RISING;
+        //        ECap1Regs.ECCTL1.bit.CAP3POL = EC_RISING;
+        //        ECap1Regs.ECCTL1.bit.CAP4POL = EC_RISING;
+        //        ECap1Regs.ECCTL1.bit.CTRRST1 = EC_ABS_MODE;
+        //        ECap1Regs.ECCTL1.bit.CTRRST2 = EC_ABS_MODE;
+        //        ECap1Regs.ECCTL1.bit.CTRRST3 = EC_ABS_MODE;
+        //        ECap1Regs.ECCTL1.bit.CTRRST4 = EC_ABS_MODE;
+        //        ECap1Regs.ECCTL1.bit.CAPLDEN = EC_ENABLE;
+        //        ECap1Regs.ECCTL1.bit.PRESCALE = EC_DIV1;
+        //        ECap1Regs.ECCTL2.bit.CAP_APWM = EC_CAP_MODE;
+        //        ECap1Regs.ECCTL2.bit.CONT_ONESHT = EC_CONTINUOUS;
+        //        ECap1Regs.ECCTL2.bit.SYNCO_SEL = EC_SYNCO_DIS;
+        //        ECap1Regs.ECCTL2.bit.SYNCI_EN = EC_DISABLE;
+        //        ECap1Regs.ECCTL2.bit.TSCTRSTOP = EC_RUN;
+
+        //        16.6.2
+        // ECAP module 1 config
+        //        ECap1Regs.ECCTL1.bit.CAP1POL = EC_RISING;
+        //        ECap1Regs.ECCTL1.bit.CAP2POL = EC_FALLING;
+        //        ECap1Regs.ECCTL1.bit.CAP3POL = EC_RISING;
+        //        ECap1Regs.ECCTL1.bit.CAP4POL = EC_FALLING;
+        //        ECap1Regs.ECCTL1.bit.CTRRST1 = EC_ABS_MODE;
+        //        ECap1Regs.ECCTL1.bit.CTRRST2 = EC_ABS_MODE;
+        //        ECap1Regs.ECCTL1.bit.CTRRST3 = EC_ABS_MODE;
+        //        ECap1Regs.ECCTL1.bit.CTRRST4 = EC_ABS_MODE;
+        //        ECap1Regs.ECCTL1.bit.CAPLDEN = EC_ENABLE;
+        //        ECap1Regs.ECCTL1.bit.PRESCALE = EC_DIV1;
+        //        ECap1Regs.ECCTL2.bit.CAP_APWM = EC_CAP_MODE;
+        //        ECap1Regs.ECCTL2.bit.CONT_ONESHT = EC_CONTINUOUS;
+        //        ECap1Regs.ECCTL2.bit.SYNCO_SEL = EC_SYNCO_DIS;
+        //        ECap1Regs.ECCTL2.bit.SYNCI_EN = EC_DISABLE;
+        //        ECap1Regs.ECCTL2.bit.TSCTRSTOP = EC_RUN;
+
+        //        16.6.4
+        // Code snippet for CAP mode Delta Time, Rising and Falling
+        // edge triggers
+        // Initialization Time
+        //=======================
+        // ECAP module 1 config
+        ECap1Regs.ECCTL1.bit.CAP1POL = EC_RISING;
+        ECap1Regs.ECCTL1.bit.CAP2POL = EC_FALLING;
+        ECap1Regs.ECCTL1.bit.CAP3POL = EC_RISING;
+        ECap1Regs.ECCTL1.bit.CAP4POL = EC_FALLING;
+        ECap1Regs.ECCTL1.bit.CTRRST1 = EC_DELTA_MODE;
+        ECap1Regs.ECCTL1.bit.CTRRST2 = EC_DELTA_MODE;
+        ECap1Regs.ECCTL1.bit.CTRRST3 = EC_DELTA_MODE;
+        ECap1Regs.ECCTL1.bit.CTRRST4 = EC_DELTA_MODE;
+        ECap1Regs.ECCTL1.bit.CAPLDEN = EC_ENABLE;
+        ECap1Regs.ECCTL1.bit.PRESCALE = EC_DIV1;
+        ECap1Regs.ECCTL2.bit.CAP_APWM = EC_CAP_MODE;
+        ECap1Regs.ECCTL2.bit.CONT_ONESHT = EC_CONTINUOUS;
+        ECap1Regs.ECCTL2.bit.SYNCO_SEL = EC_SYNCO_DIS;
+        ECap1Regs.ECCTL2.bit.SYNCI_EN = EC_DISABLE;
+        ECap1Regs.ECCTL2.bit.TSCTRSTOP = EC_RUN;
+
+    }
+#endif
 
 void main(void){
 
@@ -56,6 +199,7 @@ void main(void){
     ePWM_initialize();
     ADC_initialize();
     eQEP_initialize(0);
+    InitECaptureContinuousMode();
     experiment_init();
     #if NUMBER_OF_DSP_CORES == 1
         // GPIO≈‰÷√
