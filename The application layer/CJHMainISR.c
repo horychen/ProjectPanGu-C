@@ -10,6 +10,7 @@ void voltage_commands_to_pwm(){
     // ----------------------------SVGENÉú³É-------------------------------------------------
     svgen1.Ualpha= CTRL.O->uab_cmd_to_inverter[0];
     svgen1.Ubeta = CTRL.O->uab_cmd_to_inverter[1];
+    //    Deadtime_compensation_selection();
     SVGEN_Drive(&svgen1);
     //SPWM_Drive(&svgen1);
 

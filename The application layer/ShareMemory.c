@@ -14,7 +14,7 @@ struct IPC_MEMORY_READ Read;
 #pragma DATA_SECTION(Write, "SHARERAMGS1"); // GS1 is write
 #pragma DATA_SECTION( Read, "SHARERAMGS0");
 
-REAL dac_watch[40];
+REAL dac_watch[50];
 #define NO_OF_CHANNELS 6
 //int channels[4]={2,3,14,15}; // 自整定
 //int channels[4]={2,3,14,16}; // 自整定
@@ -34,7 +34,7 @@ REAL dac_watch[40];
 
 //int channels[NO_OF_CHANNELS]={0,1,4,5,6,7};
 //int channels[NO_OF_CHANNELS]={0,1,32,34,33,35};
-int channels[NO_OF_CHANNELS]={0,1,32,33,32,33};
+int channels[NO_OF_CHANNELS]={0,1,4,38,32,33};
 
 REAL dac_time = 0;
 REAL temp_xOmg = 0.0;
@@ -127,6 +127,9 @@ void write_DAC_buffer(){
 
         dac_watch[36] = dac_watch[34] - dac_watch[32];
         dac_watch[37] = dac_watch[35] - dac_watch[33];
+
+        dac_watch[38] = CTRL.inv->theta_trapezoidal / M_PI_OVER_180 * 0.025;
+        dac_watch[39] = INV.I5_plus_I7_LPF * 0.2;
 
         // information from d-axis voltage equation
         //temp_xOmg = (CTRL.O->udq_cmd[0] - CTRL.motor->R * CTRL.I->idq[0] ) / -CTRL.motor->Lq*CTRL.I->idq[1];

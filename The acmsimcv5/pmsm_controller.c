@@ -110,18 +110,18 @@ void null_d_control(REAL set_iq_cmd, REAL set_id_cmd){
         // CTRL.I->idq_cmd[0] = CTRL.I->cmd_rotor_flux_Wb / MOTOR.Ld;
 
         #if PC_SIMULATION == TRUE
-            REAL IMIN = 1; //2;
-            if(CTRL.timebase>23){
-                IMIN = 8;
-            }else if(CTRL.timebase>20){
-                IMIN = 6;
-            }else if(CTRL.timebase>15){
-                IMIN = 5;
-            }else if(CTRL.timebase>10){
-                IMIN = 3;
-            }else if(CTRL.timebase>5){
-                IMIN = 2;
-            }
+            REAL IMIN = 2;
+            // if(CTRL.timebase>23){
+            //     IMIN = 8;
+            // }else if(CTRL.timebase>20){
+            //     IMIN = 6;
+            // }else if(CTRL.timebase>15){
+            //     IMIN = 5;
+            // }else if(CTRL.timebase>10){
+            //     IMIN = 3;
+            // }else if(CTRL.timebase>5){
+            //     IMIN = 2;
+            // }
         #else
             REAL IMIN = 2; //2;
         #endif
@@ -730,10 +730,27 @@ void Modified_ParkSul_Compensation(void){
         if(INV.theta_trapezoidal >= 25*M_PI_OVER_180){ // 17
             INV.theta_trapezoidal = 25*M_PI_OVER_180; // 17
         }
-        if(INV.theta_trapezoidal<=5*M_PI_OVER_180){
-            INV.theta_trapezoidal = 5*M_PI_OVER_180;
+        if(INV.theta_trapezoidal <= 0.223*M_PI_OVER_180){
+            INV.theta_trapezoidal = 0.223*M_PI_OVER_180;
         }
     }
+
+
+    #if PC_SIMULATION == TRUE
+        // 用偏小的Vsat，观察theta_t的收敛是否直达下界？
+        if(CTRL.timebase>23){
+            INV.Vsat = 9.0/6.0 * 16.0575341/2;
+        }else if(CTRL.timebase>20){
+            INV.Vsat = 7.0/6.0 * 16.0575341/2;
+        }else if(CTRL.timebase>15){
+            INV.Vsat = 6.0/6.0 * 16.0575341/2;
+        }else if(CTRL.timebase>10){
+            INV.Vsat = 5.0/6.0 * 16.0575341/2;
+        }else if(CTRL.timebase>5){
+            INV.Vsat = 4.0/6.0 * 16.0575341/2;
+        }
+    #endif
+
 
     #if INVERTER_NONLINEARITY == 3 // [ModelLUT]
         // INV.Vsat = 6.67054;
