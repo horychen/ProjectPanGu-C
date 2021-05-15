@@ -328,10 +328,63 @@ void high_speed_operation(){
 //#define AS_LOAD_MOTOR
 //#define NSOAF_LOW_SPEED_OPERATION
 //#define NSOAF_HIGH_SPEED_OPERATION
-//#define XCUBE_DEBUG_MODE
+#define XCUBE_DEBUG_MODE
 
+REAL TSt1, TSt2, TSt3, TSt4, Period1, Period2, Period3, DutyOnTime1, DutyOffTime1, DutyOnTime2, DutyOffTime2;
 interrupt void CJHMainISR(void)
 {
+
+    //        16.6.1
+    //    // Run Time (CEVT4 triggered ISR call)
+    //    //==========================================
+    //    TSt1 = ECap1Regs.CAP1;
+    //    // Fetch Time-Stamp captured at t1
+    //    TSt2 = ECap1Regs.CAP2;
+    //    // Fetch Time-Stamp captured at t2
+    //    TSt3 = ECap1Regs.CAP3;
+    //    // Fetch Time-Stamp captured at t3
+    //    TSt4 = ECap1Regs.CAP4;
+    //    // Fetch Time-Stamp captured at t4
+    //    Period1 = TSt2-TSt1;
+    //    // Calculate 1st period
+    //    Period2 = TSt3-TSt2;
+    //    // Calculate 2nd period
+    //    Period3 = TSt4-TSt3;
+    //    // Calculate 3rd period
+
+    //        16.6.2
+    //    // Run Time (CEVT4 triggered ISR call)
+    //    //==========================================
+    //    TSt1 = ECap1Regs.CAP1;
+    //    // Fetch Time-Stamp captured at t1
+    //    TSt2 = ECap1Regs.CAP2;
+    //    // Fetch Time-Stamp captured at t2
+    //    TSt3 = ECap1Regs.CAP3;
+    //    // Fetch Time-Stamp captured at t3
+    //    TSt4 = ECap1Regs.CAP4;
+    //    // Fetch Time-Stamp captured at t4
+    //    Period1 = TSt3-TSt1;
+    //    // Calculate 1st period
+    //    DutyOnTime1 = TSt2-TSt1;
+    //    // Calculate On time
+    //    DutyOffTime1 = TSt3-TSt2;
+    //    // Calculate Off time
+
+    //        16.6.4
+    //==========================================
+    //
+    //Note: here Time-stamp directly represents the Duty cycle values.
+    DutyOnTime1 = ECap1Regs.CAP2;
+    // Fetch Time-Stamp captured at T2
+    DutyOffTime1 = ECap1Regs.CAP3;
+    // Fetch Time-Stamp captured at T3
+    DutyOnTime2 = ECap1Regs.CAP4;
+    // Fetch Time-Stamp captured at T4
+    DutyOffTime2 = ECap1Regs.CAP1;
+    // Fetch Time-Stamp captured at T1
+    Period1 = DutyOnTime1 + DutyOffTime1;
+    Period2 = DutyOnTime2 + DutyOffTime2;
+
 #if NUMBER_OF_DSP_CORES == 2
     write_DAC_buffer();
 #endif
@@ -457,7 +510,8 @@ else
     #ifdef XCUBE_DEBUG_MODE
     //if(svgen1.Ta>0.6) svgen1.Ta=0.6;
     //if(svgen1.Ta<0.4) svgen1.Ta=0.4;
-    svgen1.Ta = 0.5;
+    if(svgen1.Ta>0.7) svgen1.Ta=0.7;
+    if(svgen1.Ta<0.3) svgen1.Ta=0.3;
     if(svgen1.Tb>0.7) svgen1.Tb=0.7;
     if(svgen1.Tb<0.3) svgen1.Tb=0.3;
     if(svgen1.Tc>0.7) svgen1.Tc=0.7;
