@@ -330,7 +330,10 @@ void high_speed_operation(){
 //#define NSOAF_HIGH_SPEED_OPERATION
 #define XCUBE_DEBUG_MODE
 
-REAL TSt1, TSt2, TSt3, TSt4, Period1, Period2, Period3, DutyOnTime1, DutyOffTime1, DutyOnTime2, DutyOffTime2;
+struct TestECapture {
+    REAL TSt1, TSt2, TSt3, TSt4, Period1, Period2, Period3, DutyOnTime1, DutyOffTime1, DutyOnTime2, DutyOffTime2;
+} ecapU, ecapV, ecapW;
+
 interrupt void CJHMainISR(void)
 {
 
@@ -374,16 +377,41 @@ interrupt void CJHMainISR(void)
     //==========================================
     //
     //Note: here Time-stamp directly represents the Duty cycle values.
-    DutyOnTime1 = ECap1Regs.CAP2;
+    /*U*/
+    ecapU.DutyOnTime1 = ECap1Regs.CAP2;
     // Fetch Time-Stamp captured at T2
-    DutyOffTime1 = ECap1Regs.CAP3;
+    ecapU.DutyOffTime1 = ECap1Regs.CAP3;
     // Fetch Time-Stamp captured at T3
-    DutyOnTime2 = ECap1Regs.CAP4;
+    ecapU.DutyOnTime2 = ECap1Regs.CAP4;
     // Fetch Time-Stamp captured at T4
-    DutyOffTime2 = ECap1Regs.CAP1;
+    ecapU.DutyOffTime2 = ECap1Regs.CAP1;
     // Fetch Time-Stamp captured at T1
-    Period1 = DutyOnTime1 + DutyOffTime1;
-    Period2 = DutyOnTime2 + DutyOffTime2;
+    ecapU.Period1 = ecapU.DutyOnTime1 + ecapU.DutyOffTime1;
+    ecapU.Period2 = ecapU.DutyOnTime2 + ecapU.DutyOffTime2;
+
+    /*V*/
+    ecapV.DutyOnTime1 = ECap2Regs.CAP2;
+    // Fetch Time-Stamp captured at T2
+    ecapV.DutyOffTime1 = ECap2Regs.CAP3;
+    // Fetch Time-Stamp captured at T3
+    ecapV.DutyOnTime2 = ECap2Regs.CAP4;
+    // Fetch Time-Stamp captured at T4
+    ecapV.DutyOffTime2 = ECap2Regs.CAP1;
+    // Fetch Time-Stamp captured at T1
+    ecapV.Period1 = ecapV.DutyOnTime1 + ecapV.DutyOffTime1;
+    ecapV.Period2 = ecapV.DutyOnTime2 + ecapV.DutyOffTime2;
+
+    /*W*/
+    ecapW.DutyOnTime1 = ECap3Regs.CAP2;
+    // Fetch Time-Stamp captured at T2
+    ecapW.DutyOffTime1 = ECap3Regs.CAP3;
+    // Fetch Time-Stamp captured at T3
+    ecapW.DutyOnTime2 = ECap3Regs.CAP4;
+    // Fetch Time-Stamp captured at T4
+    ecapW.DutyOffTime2 = ECap3Regs.CAP1;
+    // Fetch Time-Stamp captured at T1
+    ecapW.Period1 = ecapW.DutyOnTime1 + ecapW.DutyOffTime1;
+    ecapW.Period2 = ecapW.DutyOnTime2 + ecapW.DutyOffTime2;
 
 #if NUMBER_OF_DSP_CORES == 2
     write_DAC_buffer();
