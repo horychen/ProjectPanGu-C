@@ -14,7 +14,7 @@ struct IPC_MEMORY_READ Read;
 #pragma DATA_SECTION(Write, "SHARERAMGS1"); // GS1 is write
 #pragma DATA_SECTION( Read, "SHARERAMGS0");
 
-REAL dac_watch[30];
+REAL dac_watch[40];
 #define NO_OF_CHANNELS 6
 //int channels[4]={2,3,14,15}; // 自整定
 //int channels[4]={2,3,14,16}; // 自整定
@@ -31,7 +31,10 @@ REAL dac_watch[30];
 //int channels[NO_OF_CHANNELS]={5,23,26,27,22,19}; // 高速运行实验
 //int channels[NO_OF_CHANNELS]={5,23,26,27,12,22}; // 高速运行实验
 
-int channels[NO_OF_CHANNELS]={0,1,2,27,12,22};
+
+//int channels[NO_OF_CHANNELS]={0,1,4,5,6,7};
+//int channels[NO_OF_CHANNELS]={0,1,32,34,33,35};
+int channels[NO_OF_CHANNELS]={0,1,32,33,32,33};
 
 REAL dac_time = 0;
 REAL temp_xOmg = 0.0;
@@ -44,6 +47,12 @@ REAL d;
 
 //REAL temp_xOmg2 = 0.0;
 //REAL temp_xOmg_filtered2 = 0.0;
+
+#ifdef _XCUBE1
+REAL dac_watch_stator_resistance = 1.34971502;
+#else
+REAL dac_watch_stator_resistance = 1.50469916;
+#endif
 
 void write_DAC_buffer(){
     dac_time += 1e-4;
@@ -61,15 +70,18 @@ void write_DAC_buffer(){
             dac_watch[2] = Current_W*0.2;
             dac_watch[3] = Current_Not_Used*0.2;
         #endif
-        //dac_watch[2] = CTRL.I->iab[0]*0.2;
-        //dac_watch[3] = CTRL.I->iab[1]*0.2;
         dac_watch[4] = CTRL.I->idq[0]*0.2;
         dac_watch[5] = CTRL.I->idq[1]*0.2; // 5 A for low speed
         //dac_watch[5] = CTRL.I->idq[1]*0.05; // 20 A for high speed reversal
         dac_watch[6] = CTRL.I->rpm*0.002;
         dac_watch[7] = nsoaf.xOmg*ELEC_RAD_PER_SEC_2_RPM*0.002;
+
         dac_watch[8] = EQep1Regs.QPOSCNT*0.0001; // [0, 10000]
+
         dac_watch[9] = Current_U - CTRL.I->iab[0];
+
+        //dac_watch[2] = CTRL.I->iab[0]*0.2;
+        //dac_watch[9] = CTRL.I->iab[1]*0.2;
 
         //dac_watch[11] = COMM.current_sum*0.05/(float32)COMM.counterSS;
         //dac_watch[12] = COMM.voltage_sum*0.05/(float32)COMM.counterSS;
@@ -98,6 +110,23 @@ void write_DAC_buffer(){
         dac_watch[26] = CTRL.I->rpm*0.0005;
         dac_watch[27] = nsoaf.xOmg*ELEC_RAD_PER_SEC_2_RPM*0.0005;
 
+
+        REAL ual_dist = MT2A(pid1_iM.Out, pid1_iT.Out, CTRL.S->cosT, CTRL.S->sinT);
+        REAL ube_dist = MT2B(pid1_iM.Out, pid1_iT.Out, CTRL.S->cosT, CTRL.S->sinT);
+        dac_watch[28] = pid1_iM.Out*0.02;
+        dac_watch[29] = pid1_iT.Out*0.02;
+
+        dac_watch[30] = ual_dist*0.02;
+        dac_watch[31] = ube_dist*0.02;
+
+        dac_watch[32] = INV.ual_comp*0.02;
+        dac_watch[33] = INV.ube_comp*0.02;
+
+        dac_watch[34] = (CTRL.O->uab_cmd_to_inverter[0] - dac_watch_stator_resistance * CTRL.I->iab[0])*0.02;
+        dac_watch[35] = (CTRL.O->uab_cmd_to_inverter[1] - dac_watch_stator_resistance * CTRL.I->iab[1])*0.02;
+
+        dac_watch[36] = dac_watch[34] - dac_watch[32];
+        dac_watch[37] = dac_watch[35] - dac_watch[33];
 
         // information from d-axis voltage equation
         //temp_xOmg = (CTRL.O->udq_cmd[0] - CTRL.motor->R * CTRL.I->idq[0] ) / -CTRL.motor->Lq*CTRL.I->idq[1];
