@@ -50,12 +50,12 @@
 #define SENSORLESS_CONTROL_HFSI FALSE
 #define SENSORLESS_CONTROL FALSE
 #define INVERTER_NONLINEARITY_COMPENSATION 1 // 1:ParkSul12, 2:Sigmoid, 3:LUT
-#define INVERTER_NONLINEARITY              3 // 1:ModelSul96, 2:ModelExpSigmoid, 3: ModelExpLUT
+#define INVERTER_NONLINEARITY              2 // 1:ModelSul96, 2:ModelExpSigmoid, 3: ModelExpLUT
 /* ParkSul2012 梯形波 */
 #define GAIN_THETA_TRAPEZOIDAL (40) //(500) // 20
 
 #define LOAD_INERTIA    0.0
-#define LOAD_TORQUE     0
+#define LOAD_TORQUE     2
 #define VISCOUS_COEFF   0.0007
 
 #define CURRENT_KP (6.39955)
