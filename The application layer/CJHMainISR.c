@@ -48,9 +48,9 @@ void measurement(){
     Voltage_DC_BUS=((AdcaResultRegs.ADCRESULT0)-offsetUDC)*AD_scale_VDC + offset_Udc;//
 
     // 相电压测量（基于占空比和母线电压）
-    CTRL.I->ecap_terminal_voltage[0] = (CTRL.I->ecap_terminal_DutyOnRatio[0]-0.5) * 2 * Voltage_DC_BUS * 0.5; // -0.5 means referring to the center of dc bus capacitor.
-    CTRL.I->ecap_terminal_voltage[1] = (CTRL.I->ecap_terminal_DutyOnRatio[1]-0.5) * 2 * Voltage_DC_BUS * 0.5;
-    CTRL.I->ecap_terminal_voltage[2] = (CTRL.I->ecap_terminal_DutyOnRatio[2]-0.5) * 2 * Voltage_DC_BUS * 0.5;
+    CTRL.I->ecap_terminal_voltage[0] = (CTRL.I->ecap_terminal_DutyOnRatio[0]) * Voltage_DC_BUS - Voltage_DC_BUS * 0.5; // -0.5 means referring to the center of dc bus capacitor.
+    CTRL.I->ecap_terminal_voltage[1] = (CTRL.I->ecap_terminal_DutyOnRatio[1]) * Voltage_DC_BUS - Voltage_DC_BUS * 0.5;
+    CTRL.I->ecap_terminal_voltage[2] = (CTRL.I->ecap_terminal_DutyOnRatio[2]) * Voltage_DC_BUS - Voltage_DC_BUS * 0.5;
 
     CTRL.I->ecap_line_to_line_voltage[0] = CTRL.I->ecap_terminal_voltage[0] - CTRL.I->ecap_terminal_voltage[1];
     CTRL.I->ecap_line_to_line_voltage[1] = CTRL.I->ecap_terminal_voltage[1] - CTRL.I->ecap_terminal_voltage[2];
@@ -371,7 +371,7 @@ void do_enhanced_capture(){    // Section 16.6.4 // The 32 bit counter is stored
     ecapW.Period1 = ecapW.DutyOnTime1 + ecapW.DutyOffTime1;
     ecapW.Period2 = ecapW.DutyOnTime2 + ecapW.DutyOffTime2;
 
-    /*API to global variable CTRL*/
+    /*API to global variable CTRL with two point moving average*/
     CTRL.I->ecap_terminal_DutyOnRatio[0] = 0.5*(ecapU.DutyOnTime1 + ecapU.DutyOnTime2) * SYSTEM_PWM_MAX_COUNT_INVERSE;
     CTRL.I->ecap_terminal_DutyOnRatio[1] = 0.5*(ecapV.DutyOnTime1 + ecapV.DutyOnTime2) * SYSTEM_PWM_MAX_COUNT_INVERSE;
     CTRL.I->ecap_terminal_DutyOnRatio[2] = 0.5*(ecapW.DutyOnTime1 + ecapW.DutyOnTime2) * SYSTEM_PWM_MAX_COUNT_INVERSE; // / (0.5*(ecapW.Period1+ecapW.Period2))
