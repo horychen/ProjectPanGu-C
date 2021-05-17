@@ -47,6 +47,19 @@ void measurement(){
     // 母线电压测量
     Voltage_DC_BUS=((AdcaResultRegs.ADCRESULT0)-offsetUDC)*AD_scale_VDC + offset_Udc;//
 
+    // 相电压测量（基于占空比和母线电压）
+    CTRL.I->ecap_terminal_voltage[0] = (CTRL.I->ecap_terminal_DutyOnRatio[0]-0.5) * 2 * Voltage_DC_BUS * 0.5; // -0.5 means referring to the center of dc bus capacitor.
+    CTRL.I->ecap_terminal_voltage[1] = (CTRL.I->ecap_terminal_DutyOnRatio[1]-0.5) * 2 * Voltage_DC_BUS * 0.5;
+    CTRL.I->ecap_terminal_voltage[2] = (CTRL.I->ecap_terminal_DutyOnRatio[2]-0.5) * 2 * Voltage_DC_BUS * 0.5;
+
+    CTRL.I->ecap_line_to_line_voltage[0] = CTRL.I->ecap_terminal_voltage[0] - CTRL.I->ecap_terminal_voltage[1];
+    CTRL.I->ecap_line_to_line_voltage[1] = CTRL.I->ecap_terminal_voltage[1] - CTRL.I->ecap_terminal_voltage[2];
+    CTRL.I->ecap_line_to_line_voltage[2] = CTRL.I->ecap_terminal_voltage[2] - CTRL.I->ecap_terminal_voltage[0];
+
+    CTRL.I->ecap_uab0[0] = 0.33333 * (2*CTRL.I->ecap_terminal_voltage[0] - CTRL.I->ecap_terminal_voltage[1] - CTRL.I->ecap_terminal_voltage[2]);
+    CTRL.I->ecap_uab0[1] = 0.57735 * (                                     CTRL.I->ecap_terminal_voltage[1] - CTRL.I->ecap_terminal_voltage[2]);
+    CTRL.I->ecap_uab0[2] = 0.33333 * (  CTRL.I->ecap_terminal_voltage[0] + CTRL.I->ecap_terminal_voltage[1] + CTRL.I->ecap_terminal_voltage[2]);
+
     // 电流接口
     #ifdef _XCUBE1
         //        Current_Not_Used=((AdcaResultRegs.ADCRESULT1)-offsetW)*AD_scale_W;// ADC A1-> Phase W Current  //-11.8-11.8A
@@ -328,124 +341,51 @@ void high_speed_operation(){
 //#define AS_LOAD_MOTOR
 //#define NSOAF_LOW_SPEED_OPERATION
 //#define NSOAF_HIGH_SPEED_OPERATION
-#define XCUBE_DEBUG_MODE
+//#define XCUBE_DEBUG_MODE
 
 struct TestECapture {
     REAL TSt1, TSt2, TSt3, TSt4, Period1, Period2, Period3, DutyOnTime1, DutyOffTime1, DutyOnTime2, DutyOffTime2;
 } ecapU, ecapV, ecapW;
-int global_same_count=0;
-int global_ECFLG[4];
-
-
-interrupt void CJHMainISR(void)
-{
-
-    //        16.6.1
-    //    // Run Time (CEVT4 triggered ISR call)
-    //    //==========================================
-    //    TSt1 = ECap1Regs.CAP1;
-    //    // Fetch Time-Stamp captured at t1
-    //    TSt2 = ECap1Regs.CAP2;
-    //    // Fetch Time-Stamp captured at t2
-    //    TSt3 = ECap1Regs.CAP3;
-    //    // Fetch Time-Stamp captured at t3
-    //    TSt4 = ECap1Regs.CAP4;
-    //    // Fetch Time-Stamp captured at t4
-    //    Period1 = TSt2-TSt1;
-    //    // Calculate 1st period
-    //    Period2 = TSt3-TSt2;
-    //    // Calculate 2nd period
-    //    Period3 = TSt4-TSt3;
-    //    // Calculate 3rd period
-
-    //        16.6.2
-    //    // Run Time (CEVT4 triggered ISR call)
-    //    //==========================================
-    //    TSt1 = ECap1Regs.CAP1;
-    //    // Fetch Time-Stamp captured at t1
-    //    TSt2 = ECap1Regs.CAP2;
-    //    // Fetch Time-Stamp captured at t2
-    //    TSt3 = ECap1Regs.CAP3;
-    //    // Fetch Time-Stamp captured at t3
-    //    TSt4 = ECap1Regs.CAP4;
-    //    // Fetch Time-Stamp captured at t4
-    //    Period1 = TSt3-TSt1;
-    //    // Calculate 1st period
-    //    DutyOnTime1 = TSt2-TSt1;
-    //    // Calculate On time
-    //    DutyOffTime1 = TSt3-TSt2;
-    //    // Calculate Off time
-
-    //        16.6.4
-    //==========================================
-    //
-    //Note: here Time-stamp directly represents the Duty cycle values.
+void do_enhanced_capture(){    // Section 16.6.4 // The 32 bit counter is stored in ECap1Regs.TSCTR
     /*U*/
     ecapU.DutyOnTime1 = ECap1Regs.CAP2;
-    // Fetch Time-Stamp captured at T2
     ecapU.DutyOffTime1 = ECap1Regs.CAP3;
-    // Fetch Time-Stamp captured at T3
     ecapU.DutyOnTime2 = ECap1Regs.CAP4;
-    // Fetch Time-Stamp captured at T4
     ecapU.DutyOffTime2 = ECap1Regs.CAP1;
-    // Fetch Time-Stamp captured at T1
     ecapU.Period1 = ecapU.DutyOnTime1 + ecapU.DutyOffTime1;
     ecapU.Period2 = ecapU.DutyOnTime2 + ecapU.DutyOffTime2;
 
-
     /*V*/
-        int same_count = 0;
-        if(ECap2Regs.CAP2 == ecapV.DutyOnTime1)
-            same_count+=1;
-        if(ecapV.DutyOffTime1 == ECap2Regs.CAP3)
-            same_count+=1;
-        if(ecapV.DutyOnTime2 == ECap2Regs.CAP4)
-            same_count+=1;
-        if(ecapV.DutyOffTime2 == ECap2Regs.CAP1)
-            same_count+=1;
-        global_same_count = same_count;
-
     ecapV.DutyOnTime1 = ECap2Regs.CAP2;
-    // Fetch Time-Stamp captured at T2
     ecapV.DutyOffTime1 = ECap2Regs.CAP3;
-    // Fetch Time-Stamp captured at T3
     ecapV.DutyOnTime2 = ECap2Regs.CAP4;
-    // Fetch Time-Stamp captured at T4
     ecapV.DutyOffTime2 = ECap2Regs.CAP1;
-    // Fetch Time-Stamp captured at T1
     ecapV.Period1 = ecapV.DutyOnTime1 + ecapV.DutyOffTime1;
     ecapV.Period2 = ecapV.DutyOnTime2 + ecapV.DutyOffTime2;
 
     /*W*/
     ecapW.DutyOnTime1 = ECap3Regs.CAP2;
-    // Fetch Time-Stamp captured at T2
     ecapW.DutyOffTime1 = ECap3Regs.CAP3;
-    // Fetch Time-Stamp captured at T3
     ecapW.DutyOnTime2 = ECap3Regs.CAP4;
-    // Fetch Time-Stamp captured at T4
     ecapW.DutyOffTime2 = ECap3Regs.CAP1;
-    // Fetch Time-Stamp captured at T1
     ecapW.Period1 = ecapW.DutyOnTime1 + ecapW.DutyOffTime1;
     ecapW.Period2 = ecapW.DutyOnTime2 + ecapW.DutyOffTime2;
 
-    global_ECFLG[0] = ECap2Regs.ECFLG.bit.CEVT1;
-    global_ECFLG[1] = ECap2Regs.ECFLG.bit.CEVT2;
-    global_ECFLG[2] = ECap2Regs.ECFLG.bit.CEVT3;
-    global_ECFLG[3] = ECap2Regs.ECFLG.bit.CEVT4;
-    ECap2Regs.ECFLG.bit.CEVT1 = FALSE;
-    ECap2Regs.ECFLG.bit.CEVT2 = FALSE; // read only!
-    ECap2Regs.ECFLG.bit.CEVT3 = FALSE;
-    ECap2Regs.ECFLG.bit.CEVT4 = FALSE;
+    /*API to global variable CTRL*/
+    CTRL.I->ecap_terminal_DutyOnRatio[0] = 0.5*(ecapU.DutyOnTime1 + ecapU.DutyOnTime2) * SYSTEM_PWM_MAX_COUNT_INVERSE;
+    CTRL.I->ecap_terminal_DutyOnRatio[1] = 0.5*(ecapV.DutyOnTime1 + ecapV.DutyOnTime2) * SYSTEM_PWM_MAX_COUNT_INVERSE;
+    CTRL.I->ecap_terminal_DutyOnRatio[2] = 0.5*(ecapW.DutyOnTime1 + ecapW.DutyOnTime2) * SYSTEM_PWM_MAX_COUNT_INVERSE; // / (0.5*(ecapW.Period1+ecapW.Period2))
+    CTRL.I->ecap_pwm_time = 0.5*(ecapU.Period1 + ecapU.Period2);
+}
 
-    //    ECap1Regs.ECCTL2.bit.REARM = TRUE;
-    //    ECap2Regs.ECCTL2.bit.REARM = TRUE;
-    //    ECap3Regs.ECCTL2.bit.REARM = TRUE;
+interrupt void CJHMainISR(void)
+{
 
 #if NUMBER_OF_DSP_CORES == 2
     write_DAC_buffer();
 #endif
 
-DELAY_US(2); // wait for adc conversion TODO: check adc eoc flag?
+do_enhanced_capture(); //DELAY_US(2); // wait for adc conversion TODO: check adc eoc flag?
 
 // 采样，包括DSP中的ADC采样等
 measurement();
@@ -564,7 +504,7 @@ else
     }
 
     #ifdef XCUBE_DEBUG_MODE
-        svgen1.Ta = 0.6; svgen1.Tb = 0.4; svgen1.Tc = 0.5;
+//        svgen1.Ta = 0.6; svgen1.Tb = 0.4; svgen1.Tc = 0.5;
         if(svgen1.Ta>0.7) svgen1.Ta=0.7;
         if(svgen1.Ta<0.3) svgen1.Ta=0.3;
         if(svgen1.Tb>0.7) svgen1.Tb=0.7;

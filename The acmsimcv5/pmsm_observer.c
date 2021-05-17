@@ -90,7 +90,6 @@ void rhf_NSOAF_Dynamics(REAL t, REAL *x, REAL *fx){
     /* Parameter Adaptation */
     // xTL
     fx[2] = nsoaf.KI * nsoaf.active_power_error;
-
 }
 /* Main Observer */
 void nsoaf_chen2020(){

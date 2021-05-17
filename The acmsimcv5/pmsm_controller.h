@@ -18,6 +18,12 @@ typedef struct {
     REAL idq[2];
     REAL psi_mu[2];
     REAL Tem;
+    // ECAP support
+    REAL ecap_terminal_DutyOnRatio[3];
+    REAL ecap_terminal_voltage[3];
+    REAL ecap_line_to_line_voltage[3]; // uv, vw, wu
+    REAL ecap_pwm_time;
+    REAL ecap_uab0[3];
 } st_controller_inputs;
 typedef struct {
     // controller strategy
@@ -88,7 +94,6 @@ typedef struct {
     int direction;
 } st_psd;
 typedef struct {
-
     REAL ia;
     REAL ib;
     REAL ic;
