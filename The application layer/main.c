@@ -21,7 +21,7 @@ float Set_maunal_current_iq=0,Set_maunal_current_id=0,Set_maunal_rpm=300;
 //float offsetU=2045,offsetV=2047,offsetW=2030; // ADC offset. U, V, W corresponds to ADCRESULT2, ADCRESULT3, ADCRESULT1.
 
 #else
-    float offsetU=2072,offsetV=2062,offsetW=2046; // ADC offset. U, V, W corresponds to ADCRESULT2, ADCRESULT3, ADCRESULT1.
+    float offsetU=2075,offsetV=2062,offsetW=2049; // ADC offset. U, V, W corresponds to ADCRESULT2, ADCRESULT3, ADCRESULT1.
     float offsetUDC=5;
 #endif
 int DAC_MAX5307_FLAG=0;

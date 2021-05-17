@@ -564,14 +564,14 @@ void get_distorted_voltage_via_CurveFitting(REAL ual, REAL ube, REAL ial, REAL i
     ic = 1 * (-0.5 * ial - SIN_2PI_SLASH_3      * ibe );
 
     // offline sigmoid
-    // REAL dist_ua = sigmoid(ia);
-    // REAL dist_ub = sigmoid(ib);
-    // REAL dist_uc = sigmoid(ic);
+    REAL dist_ua = sigmoid(ia);
+    REAL dist_ub = sigmoid(ib);
+    REAL dist_uc = sigmoid(ic);
 
-    // online tunable sigmoid
-    REAL dist_ua = sigmoid_online(ia, INV.Vsat, 17.59278688 * sigmoid_a3_tune); //INV.theta_trapezoidal);
-    REAL dist_ub = sigmoid_online(ib, INV.Vsat, 17.59278688 * sigmoid_a3_tune); //INV.theta_trapezoidal);
-    REAL dist_uc = sigmoid_online(ic, INV.Vsat, 17.59278688 * sigmoid_a3_tune); //INV.theta_trapezoidal);
+    // online tunable sigmoid (experimental)
+    // REAL dist_ua = sigmoid_online(ia, INV.Vsat, 17.59278688 * sigmoid_a3_tune); //INV.theta_trapezoidal);
+    // REAL dist_ub = sigmoid_online(ib, INV.Vsat, 17.59278688 * sigmoid_a3_tune); //INV.theta_trapezoidal);
+    // REAL dist_uc = sigmoid_online(ic, INV.Vsat, 17.59278688 * sigmoid_a3_tune); //INV.theta_trapezoidal);
 
 
     // Clarke transformation（三分之二，0.5倍根号三）

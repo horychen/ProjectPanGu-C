@@ -25,11 +25,11 @@
     #define IGBT_VCE0_VOLTAGE                   0                    // IGBT VCE0 INITIAL VALUE (V)
     #define IGBT_DIODE0_VOLTAGE                 0                  // IGBT Diode Forward Voltage INITIAL VALUE(V)
     //PI CONFIGURATION
-    #define SYSTEM_PI_SPD_KP                 0.4               //KP     SPEED
-    #define SYSTEM_PI_SPD_KI                 10.01               //Ki     SPEED
-    #define SYSTEM_PI_SPD_UMAX                6              //1-1A   Saturate
-    #define SYSTEM_PI_IQ_UMAX                  180             //30V   Saturate
-    #define SYSTEM_PI_ID_UMAX                  180              //30V   Saturate
+    //    #define SYSTEM_PI_SPD_KP                 0.4               //KP     SPEED
+    //    #define SYSTEM_PI_SPD_KI                 10.01               //Ki     SPEED
+    //    #define SYSTEM_PI_SPD_UMAX                6              //1-1A   Saturate
+    //    #define SYSTEM_PI_IQ_UMAX                  180             //30V   Saturate
+    //    #define SYSTEM_PI_ID_UMAX                  180              //30V   Saturate
 
 /* Code Selection */
     //program mode selection parameter_compute_program and main_program
@@ -41,7 +41,8 @@
         #define SYSTEM_PWM_FREQUENCY               10             // KHz  Define the ISR timr  10K
     #elif SYSTEM_PROGRAM_MODE==223
         #define SYSTEM_PROGRAM                CJHMainISR 
-        #define SYSTEM_PWM_FREQUENCY               10    
+        #define SYSTEM_PWM_FREQUENCY               10
+        #define SYSTEM_PWM_MAX_COUNT_INVERSE       5e-5 // = 1 / 20000
     #endif
 
 #endif
