@@ -333,6 +333,9 @@ void high_speed_operation(){
 struct TestECapture {
     REAL TSt1, TSt2, TSt3, TSt4, Period1, Period2, Period3, DutyOnTime1, DutyOffTime1, DutyOnTime2, DutyOffTime2;
 } ecapU, ecapV, ecapW;
+int global_same_count=0;
+int global_ECFLG[4];
+
 
 interrupt void CJHMainISR(void)
 {
@@ -389,7 +392,19 @@ interrupt void CJHMainISR(void)
     ecapU.Period1 = ecapU.DutyOnTime1 + ecapU.DutyOffTime1;
     ecapU.Period2 = ecapU.DutyOnTime2 + ecapU.DutyOffTime2;
 
+
     /*V*/
+        int same_count = 0;
+        if(ECap2Regs.CAP2 == ecapV.DutyOnTime1)
+            same_count+=1;
+        if(ecapV.DutyOffTime1 == ECap2Regs.CAP3)
+            same_count+=1;
+        if(ecapV.DutyOnTime2 == ECap2Regs.CAP4)
+            same_count+=1;
+        if(ecapV.DutyOffTime2 == ECap2Regs.CAP1)
+            same_count+=1;
+        global_same_count = same_count;
+
     ecapV.DutyOnTime1 = ECap2Regs.CAP2;
     // Fetch Time-Stamp captured at T2
     ecapV.DutyOffTime1 = ECap2Regs.CAP3;
@@ -412,6 +427,19 @@ interrupt void CJHMainISR(void)
     // Fetch Time-Stamp captured at T1
     ecapW.Period1 = ecapW.DutyOnTime1 + ecapW.DutyOffTime1;
     ecapW.Period2 = ecapW.DutyOnTime2 + ecapW.DutyOffTime2;
+
+    global_ECFLG[0] = ECap2Regs.ECFLG.bit.CEVT1;
+    global_ECFLG[1] = ECap2Regs.ECFLG.bit.CEVT2;
+    global_ECFLG[2] = ECap2Regs.ECFLG.bit.CEVT3;
+    global_ECFLG[3] = ECap2Regs.ECFLG.bit.CEVT4;
+    ECap2Regs.ECFLG.bit.CEVT1 = FALSE;
+    ECap2Regs.ECFLG.bit.CEVT2 = FALSE; // read only!
+    ECap2Regs.ECFLG.bit.CEVT3 = FALSE;
+    ECap2Regs.ECFLG.bit.CEVT4 = FALSE;
+
+    //    ECap1Regs.ECCTL2.bit.REARM = TRUE;
+    //    ECap2Regs.ECCTL2.bit.REARM = TRUE;
+    //    ECap3Regs.ECCTL2.bit.REARM = TRUE;
 
 #if NUMBER_OF_DSP_CORES == 2
     write_DAC_buffer();
@@ -536,19 +564,18 @@ else
     }
 
     #ifdef XCUBE_DEBUG_MODE
-    //if(svgen1.Ta>0.6) svgen1.Ta=0.6;
-    //if(svgen1.Ta<0.4) svgen1.Ta=0.4;
-    if(svgen1.Ta>0.7) svgen1.Ta=0.7;
-    if(svgen1.Ta<0.3) svgen1.Ta=0.3;
-    if(svgen1.Tb>0.7) svgen1.Tb=0.7;
-    if(svgen1.Tb<0.3) svgen1.Tb=0.3;
-    if(svgen1.Tc>0.7) svgen1.Tc=0.7;
-    if(svgen1.Tc<0.3) svgen1.Tc=0.3;
-    EPwm1Regs.CMPA.bit.CMPA = svgen1.Ta*50000000*CL_TS;
-    EPwm2Regs.CMPA.bit.CMPA = svgen1.Tb*50000000*CL_TS;
-    EPwm3Regs.CMPA.bit.CMPA = svgen1.Tc*50000000*CL_TS;
+        svgen1.Ta = 0.6; svgen1.Tb = 0.4; svgen1.Tc = 0.5;
+        if(svgen1.Ta>0.7) svgen1.Ta=0.7;
+        if(svgen1.Ta<0.3) svgen1.Ta=0.3;
+        if(svgen1.Tb>0.7) svgen1.Tb=0.7;
+        if(svgen1.Tb<0.3) svgen1.Tb=0.3;
+        if(svgen1.Tc>0.7) svgen1.Tc=0.7;
+        if(svgen1.Tc<0.3) svgen1.Tc=0.3;
+        EPwm1Regs.CMPA.bit.CMPA = svgen1.Ta*50000000*CL_TS;
+        EPwm2Regs.CMPA.bit.CMPA = svgen1.Tb*50000000*CL_TS;
+        EPwm3Regs.CMPA.bit.CMPA = svgen1.Tc*50000000*CL_TS;
     #else
-    voltage_commands_to_pwm();
+        voltage_commands_to_pwm();
     #endif
 
     #if NUMBER_OF_DSP_CORES == 1
