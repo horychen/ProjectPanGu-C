@@ -38,11 +38,8 @@ REAL offset_Udc = 0.0; // 180 V 427-1401 @ XCUBE-II
 REAL OverwriteSpeedOutLimit = 2;
 REAL Overwrite_Voltage_DC_BUS = 180;
 int flag_overwite_voltage_dc_bus = FALSE;
+int flag_use_ecap_voltage = 2;
 void measurement(){
-
-    // 电压测量
-    US_P(0) = CTRL.O->uab_cmd[0]; // 后缀_P表示上一步的电压，P = Previous
-    US_P(1) = CTRL.O->uab_cmd[1]; // 后缀_C表示当前步的电压，C = Current
 
     // 母线电压测量
     Voltage_DC_BUS=((AdcaResultRegs.ADCRESULT0)-offsetUDC)*AD_scale_VDC + offset_Udc;//
@@ -59,6 +56,34 @@ void measurement(){
     CTRL.I->ecap_uab0[0] = 0.33333 * (2*CTRL.I->ecap_terminal_voltage[0] - CTRL.I->ecap_terminal_voltage[1] - CTRL.I->ecap_terminal_voltage[2]);
     CTRL.I->ecap_uab0[1] = 0.57735 * (                                     CTRL.I->ecap_terminal_voltage[1] - CTRL.I->ecap_terminal_voltage[2]);
     CTRL.I->ecap_uab0[2] = 0.33333 * (  CTRL.I->ecap_terminal_voltage[0] + CTRL.I->ecap_terminal_voltage[1] + CTRL.I->ecap_terminal_voltage[2]);
+    if(flag_use_ecap_voltage==2){
+        US_P(0) = CTRL.I->ecap_uab0[0];
+        US_P(1) = CTRL.I->ecap_uab0[1];
+    }
+
+    CTRL.I->ecap_dq[0] =  CTRL.S->cosT*CTRL.I->ecap_uab0[0] + CTRL.S->sinT*CTRL.I->ecap_uab0[1];
+    CTRL.I->ecap_dq[1] = -CTRL.S->sinT*CTRL.I->ecap_uab0[0] + CTRL.S->cosT*CTRL.I->ecap_uab0[1];
+    CTRL.I->ecap_dq_lpf[0] = _lpf(CTRL.I->ecap_dq[0], CTRL.I->ecap_dq_lpf[0], 1000);
+    CTRL.I->ecap_dq_lpf[1] = _lpf(CTRL.I->ecap_dq[1], CTRL.I->ecap_dq_lpf[1], 1000);
+    CTRL.I->ecap_uab0[0] = CTRL.S->cosT*CTRL.I->ecap_dq_lpf[0] - CTRL.S->sinT*CTRL.I->ecap_dq_lpf[1];
+    CTRL.I->ecap_uab0[1] = CTRL.S->sinT*CTRL.I->ecap_dq_lpf[0] + CTRL.S->cosT*CTRL.I->ecap_dq_lpf[1];
+
+    // Mismatch between ecap measurement and command to inverter
+    CTRL.O->udq_cmd_to_inverter[0] = CTRL.S->cosT*CTRL.O->uab_cmd_to_inverter[0] + CTRL.S->sinT*CTRL.O->uab_cmd_to_inverter[1];
+    CTRL.O->udq_cmd_to_inverter[1] =-CTRL.S->sinT*CTRL.O->uab_cmd_to_inverter[0] + CTRL.S->cosT*CTRL.O->uab_cmd_to_inverter[1];
+    CTRL.I->ecap_dq_mismatch[0] = CTRL.O->udq_cmd_to_inverter[0] - CTRL.I->ecap_dq[0];
+    CTRL.I->ecap_dq_mismatch[1] = CTRL.O->udq_cmd_to_inverter[1] - CTRL.I->ecap_dq[1];
+
+    // 电压测量
+    if(flag_use_ecap_voltage==1){
+        US_P(0) = CTRL.I->ecap_uab0[0];
+        US_P(1) = CTRL.I->ecap_uab0[1];
+    }
+
+    if(flag_use_ecap_voltage==0){
+        US_P(0) = CTRL.O->uab_cmd[0]; // 后缀_P表示上一步的电压，P = Previous
+        US_P(1) = CTRL.O->uab_cmd[1]; // 后缀_C表示当前步的电压，C = Current
+    }
 
     // 电流接口
     #ifdef _XCUBE1
