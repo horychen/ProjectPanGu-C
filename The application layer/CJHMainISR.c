@@ -87,14 +87,14 @@ void measurement(){
 
     #else
         Current_W       =((AdcaResultRegs.ADCRESULT1)-offsetW)*AD_scale_W;// ADC A1-> Phase W Current  //-11.8-11.8A
-        Current_V       =((AdcaResultRegs.ADCRESULT3)-offsetV)*AD_scale_V;// ADC A1-> Phase V Current  //-11.8-11.8A
-        Current_Not_Used=((AdcaResultRegs.ADCRESULT2)-offsetU)*AD_scale_U;// ADC A1-> Phase U Current  //-11.8-11.8A
+        Current_Not_Used=((AdcaResultRegs.ADCRESULT3)-offsetV)*AD_scale_V;// ADC A1-> Phase V Current  //-11.8-11.8A
+        Current_U       =((AdcaResultRegs.ADCRESULT2)-offsetU)*AD_scale_U;// ADC A1-> Phase U Current  //-11.8-11.8A
         if(AD_offset_flag2==TRUE){
             Current_W = Current_W - G.Offset_W;
-            Current_V = Current_V - G.Offset_V;
-            Current_Not_Used = Current_Not_Used - G.Offset_U;
+            Current_Not_Used = Current_Not_Used - G.Offset_V;
+            Current_U = Current_U - G.Offset_U;
         }
-        Current_U=-(Current_W+Current_V);
+        Current_V=-(Current_W+Current_U);
     #endif
     REAL adc_ial = UV2A_AI(Current_U, Current_V);
     REAL adc_ibe = UV2B_AI(Current_U, Current_V);
