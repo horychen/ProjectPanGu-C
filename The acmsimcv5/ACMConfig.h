@@ -89,8 +89,8 @@
     #define NSOAF_TL_P (1) // 1 for experimental starting // 4 for 1500 rpm // 2 for 800 rpm
     #define NSOAF_TL_I (20)
     #define NSOAF_TL_D (0)
-    #define OUTPUT_ERROR_CLEST_GAIN_KP (1.0*0.1) // (0.5) // (2*5)
-    #define OUTPUT_ERROR_CLEST_GAIN_KI (1.0*0.02) // 0.02 for 10 rpm // 0.1 for 40 rpm //(2.0) for 300 rpm
+    #define OUTPUT_ERROR_CLEST_GAIN_KP (10*0.1) // (0.5) // (2*5)
+    #define OUTPUT_ERROR_CLEST_GAIN_KI (10*0.02) // 0.02 for 10 rpm // 0.1 for 40 rpm //(2.0) for 300 rpm
     /* Farza 2009 for EMMF */
     #define FARZA09_HGO_EEMF_VARTHETA 10
     #define FARZA09_HGO_EEMF_GAMMA_OMEGA_INITIAL_VALUE 10
