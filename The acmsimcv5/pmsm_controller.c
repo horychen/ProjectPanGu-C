@@ -632,6 +632,8 @@ void inverterNonlinearity_Initialization(){
     INV.Vsat = 6.74233802;
     #endif
 
+    INV.gain_Vsat = 10;
+
     INV.thetaA=0;
     INV.cos_thetaA=1;
     INV.sin_thetaA=0;
@@ -722,7 +724,7 @@ void Modified_ParkSul_Compensation(void){
     INV.theta_trapezoidal += CL_TS * INV.gamma_theta_trapezoidal \
                             // *fabs(CTRL.I->cmd_speed_rpm)
                             *(      INV.I5_plus_I7_LPF 
-                                + 0*INV.I11_plus_I13_LPF
+                                + 1*INV.I11_plus_I13_LPF
                                 + 0*INV.I17_plus_I19_LPF
                              );
 
@@ -754,6 +756,14 @@ void Modified_ParkSul_Compensation(void){
             INV.Vsat = 4.0/6.0 * 16.0575341/2;
         }
     #endif
+
+    /* Adaptive Vsat based on position error */
+    INV.Vsat += CL_TS * INV.gain_Vsat * sin(ENC.theta_d_elec - ELECTRICAL_POSITION_FEEDBACK) * sign(ENC.omg_elec);
+    if (INV.Vsat>15){
+        INV.Vsat = 15;
+    }else if(INV.Vsat<0){
+        INV.Vsat = 0;
+    }
 
 
     #if INVERTER_NONLINEARITY == 3 // [ModelLUT]

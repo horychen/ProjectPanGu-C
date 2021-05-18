@@ -40,7 +40,9 @@ REAL dac_watch[50];
 // NSOAF-Rev1
 //int channels[NO_OF_CHANNELS]={6,7,20,21,5,23};
 //int channels[NO_OF_CHANNELS]={6,7,40,42,41,43};
-int channels[NO_OF_CHANNELS]={6,7,44,45,46,47};
+//int channels[NO_OF_CHANNELS]={6,7,44,45,46,47};
+//int channels[NO_OF_CHANNELS]={6,7,30,32,31,33};
+int channels[NO_OF_CHANNELS]={6,7,20,21,32,33};
 
 REAL dac_time_that_cannot_be_modified = 0;
 //REAL if_you_define_an_extra_global_variable_here_you_cannot_modify_dac_time_anymore = 0;

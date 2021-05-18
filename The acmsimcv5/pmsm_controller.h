@@ -105,6 +105,9 @@ typedef struct {
     REAL dist_ub;
     REAL dist_uc;
 
+    /* Adaptive Vsat */
+    REAL gain_Vsat;
+
     /* DOB for stationary voltage */
     REAL iab_lpf[2];
     REAL iab_hpf[2];
