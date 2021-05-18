@@ -38,10 +38,12 @@ REAL dac_watch[50];
 //int channels[NO_OF_CHANNELS]={0,1,4,38,32,33};
 
 // NSOAF-Rev1
-int channels[NO_OF_CHANNELS]={6,7,20,21,5,23};
+//int channels[NO_OF_CHANNELS]={6,7,20,21,5,23};
+//int channels[NO_OF_CHANNELS]={6,7,40,42,41,43};
+int channels[NO_OF_CHANNELS]={6,7,44,45,46,47};
 
 REAL dac_time_that_cannot_be_modified = 0;
-REAL if_you_define_an_extra_global_variable_here_you_cannot_modify_dac_time_anymore = 0;
+//REAL if_you_define_an_extra_global_variable_here_you_cannot_modify_dac_time_anymore = 0;
 
 #ifdef _XCUBE1
 REAL dac_watch_stator_resistance = 1.34971502;
@@ -53,17 +55,11 @@ void write_DAC_buffer(){
     if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
 
         // 所有曾经看过的变量都在列在这里，记得有效范围是 [-1, 1]。
-        #ifdef _XCUBE1
-            dac_watch[0] = Current_U*0.2;
-            dac_watch[1] = Current_V*0.2;
-            dac_watch[2] = Current_W*0.2;
-            dac_watch[3] = Current_Not_Used*0.2;
-        #else
-            dac_watch[0] = Current_U*0.2;
-            dac_watch[1] = Current_V*0.2;
-            dac_watch[2] = Current_W*0.2;
-            dac_watch[3] = Current_Not_Used*0.2;
-        #endif
+        dac_watch[0] = Current_U*0.2;
+        dac_watch[1] = Current_V*0.2;
+        dac_watch[2] = Current_W*0.2;
+        dac_watch[3] = Current_Not_Used*0.2;
+
         dac_watch[4] = CTRL.I->idq[0]*0.2;
         dac_watch[5] = CTRL.I->idq[1]*0.2; // 5 A for low speed
         //dac_watch[5] = CTRL.I->idq[1]*0.05; // 20 A for high speed reversal
@@ -72,10 +68,8 @@ void write_DAC_buffer(){
 
         dac_watch[8] = EQep1Regs.QPOSCNT*0.0001; // [0, 10000]
 
-        dac_watch[9] = Current_U - CTRL.I->iab[0];
-
         //dac_watch[2] = CTRL.I->iab[0]*0.2;
-        //dac_watch[9] = CTRL.I->iab[1]*0.2;
+        dac_watch[9] = CTRL.I->iab[1]*0.2;
 
         //dac_watch[11] = COMM.current_sum*0.05/(float32)COMM.counterSS;
         //dac_watch[12] = COMM.voltage_sum*0.05/(float32)COMM.counterSS;
@@ -124,6 +118,19 @@ void write_DAC_buffer(){
 
         dac_watch[38] = CTRL.inv->theta_trapezoidal / M_PI_OVER_180 * 0.025;
         dac_watch[39] = INV.I5_plus_I7_LPF * 0.2;
+
+
+        dac_watch[40] = (CTRL.O->udq_cmd_to_inverter[0] - CTRL.O->udq_cmd[0])*0.02;
+        dac_watch[41] = (CTRL.O->udq_cmd_to_inverter[1] - CTRL.O->udq_cmd[1])*0.02;
+        dac_watch[42] = (CTRL.I->ecap_dq[0]             - CTRL.O->udq_cmd[0])*0.02;
+        dac_watch[43] = (CTRL.I->ecap_dq[1]             - CTRL.O->udq_cmd[1])*0.02;
+
+        dac_watch[44] = (CTRL.O->udq_cmd_to_inverter[0])*0.02;
+        dac_watch[45] = (CTRL.O->udq_cmd_to_inverter[1])*0.02;
+        dac_watch[46] = (CTRL.I->ecap_dq[0]            )*0.02;
+        dac_watch[47] = (CTRL.I->ecap_dq[1]            )*0.02;
+
+
 
         // information from d-axis voltage equation
         //temp_xOmg = (CTRL.O->udq_cmd[0] - CTRL.motor->R * CTRL.I->idq[0] ) / -CTRL.motor->Lq*CTRL.I->idq[1];

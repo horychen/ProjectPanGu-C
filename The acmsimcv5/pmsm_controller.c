@@ -626,7 +626,11 @@ void get_distorted_voltage_via_LUT(REAL ual, REAL ube, REAL ial, REAL ibe, REAL 
 /* ParkSul2012 梯形波 */
 void inverterNonlinearity_Initialization(){
     INV.gamma_theta_trapezoidal = GAIN_THETA_TRAPEZOIDAL;
+    #ifdef _XCUBE1
     INV.Vsat = 16.0575341/2; //6.67054; // 180 V SiC
+    #else
+    INV.Vsat = 6.74233802;
+    #endif
 
     INV.thetaA=0;
     INV.cos_thetaA=1;

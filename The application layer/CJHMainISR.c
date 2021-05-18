@@ -35,10 +35,21 @@ void voltage_commands_to_pwm(){
 //REAL offset_Udc = 8.0; // 80 V 419-0948
 //REAL offset_Udc = 1.0; // 180 V 419-1121
 REAL offset_Udc = 0.0; // 180 V 427-1401 @ XCUBE-II
+
 REAL OverwriteSpeedOutLimit = 2;
+
 REAL Overwrite_Voltage_DC_BUS = 180;
 int flag_overwite_voltage_dc_bus = FALSE;
+
 int flag_use_ecap_voltage = 2;
+#define ECAP_MA_ARRAY_LENGTH 10
+struct st_ecap_ma{
+    REAL sum;
+    int cursor;
+    REAL Array[ECAP_MA_ARRAY_LENGTH];
+    int length;
+} eCapMA1, eCapMA2;
+
 void measurement(){
 
     // 母线电压测量
@@ -57,14 +68,57 @@ void measurement(){
     CTRL.I->ecap_uab0[1] = 0.57735 * (                                     CTRL.I->ecap_terminal_voltage[1] - CTRL.I->ecap_terminal_voltage[2]);
     CTRL.I->ecap_uab0[2] = 0.33333 * (  CTRL.I->ecap_terminal_voltage[0] + CTRL.I->ecap_terminal_voltage[1] + CTRL.I->ecap_terminal_voltage[2]);
     if(flag_use_ecap_voltage==2){
+        /*Use original ecap measured voltage*/
         US_P(0) = CTRL.I->ecap_uab0[0];
         US_P(1) = CTRL.I->ecap_uab0[1];
     }
 
+
     CTRL.I->ecap_dq[0] =  CTRL.S->cosT*CTRL.I->ecap_uab0[0] + CTRL.S->sinT*CTRL.I->ecap_uab0[1];
     CTRL.I->ecap_dq[1] = -CTRL.S->sinT*CTRL.I->ecap_uab0[0] + CTRL.S->cosT*CTRL.I->ecap_uab0[1];
-    CTRL.I->ecap_dq_lpf[0] = _lpf(CTRL.I->ecap_dq[0], CTRL.I->ecap_dq_lpf[0], 1000);
-    CTRL.I->ecap_dq_lpf[1] = _lpf(CTRL.I->ecap_dq[1], CTRL.I->ecap_dq_lpf[1], 1000);
+
+
+    if(flag_use_ecap_voltage==3){
+        REAL ud, uq;
+        /*Use moving-average ecap measured voltage*/
+        /*ALPHA*/
+        eCapMA1.sum -= eCapMA1.Array[eCapMA1.cursor];
+        eCapMA1.sum +=                  CTRL.I->ecap_dq[0];
+        eCapMA1.Array[eCapMA1.cursor] = CTRL.I->ecap_dq[0];
+        eCapMA1.cursor+=1;
+        if(eCapMA1.length==0 || eCapMA1.length>ECAP_MA_ARRAY_LENGTH){
+            if(eCapMA1.cursor>=5){
+                eCapMA1.cursor=0;
+            }
+            ud = eCapMA1.sum*0.2;
+        }else{
+            if(eCapMA1.cursor>=eCapMA1.length){
+                eCapMA1.cursor=0;
+            }
+            ud = eCapMA1.sum/eCapMA1.length;
+        }
+        /*BETA*/
+        eCapMA2.sum -= eCapMA2.Array[eCapMA2.cursor];
+        eCapMA2.sum +=                  CTRL.I->ecap_dq[1];
+        eCapMA2.Array[eCapMA2.cursor] = CTRL.I->ecap_dq[1];
+        eCapMA2.cursor+=1;
+        if(eCapMA2.length==0 || eCapMA2.length>ECAP_MA_ARRAY_LENGTH){
+            if(eCapMA2.cursor>=5){
+                eCapMA2.cursor=0;
+            }
+            uq = eCapMA2.sum*0.2;
+        }else{
+            if(eCapMA2.cursor>=eCapMA2.length){
+                eCapMA2.cursor=0;
+            }
+            uq = eCapMA2.sum/eCapMA2.length;
+        }
+        US_P(0) = CTRL.S->cosT*ud - CTRL.S->sinT*uq;
+        US_P(1) = CTRL.S->sinT*ud + CTRL.S->cosT*uq;
+    }
+
+    CTRL.I->ecap_dq_lpf[0] = _lpf(CTRL.I->ecap_dq[0], CTRL.I->ecap_dq_lpf[0], 800);
+    CTRL.I->ecap_dq_lpf[1] = _lpf(CTRL.I->ecap_dq[1], CTRL.I->ecap_dq_lpf[1], 800);
     CTRL.I->ecap_uab0[0] = CTRL.S->cosT*CTRL.I->ecap_dq_lpf[0] - CTRL.S->sinT*CTRL.I->ecap_dq_lpf[1];
     CTRL.I->ecap_uab0[1] = CTRL.S->sinT*CTRL.I->ecap_dq_lpf[0] + CTRL.S->cosT*CTRL.I->ecap_dq_lpf[1];
 
@@ -76,6 +130,7 @@ void measurement(){
 
     // 电压测量
     if(flag_use_ecap_voltage==1){
+        /*Use lpf ecap measured voltage*/
         US_P(0) = CTRL.I->ecap_uab0[0];
         US_P(1) = CTRL.I->ecap_uab0[1];
     }
