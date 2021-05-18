@@ -24,6 +24,9 @@ typedef struct {
     REAL ecap_line_to_line_voltage[3]; // uv, vw, wu
     REAL ecap_pwm_time;
     REAL ecap_uab0[3];
+    REAL ecap_dq[2];
+    REAL ecap_dq_lpf[2];
+    REAL ecap_dq_mismatch[2];
 } st_controller_inputs;
 typedef struct {
     // controller strategy
@@ -38,7 +41,7 @@ typedef struct {
     st_pid_regulator *iT;
     st_pid_regulator *pos;
     st_pid_regulator *spd;
-    int vc_count;
+    int the_vc_count;
     // Status of Detection
     int PSD_Done;
     int IPD_Done;
@@ -48,6 +51,7 @@ typedef struct {
     REAL uab_cmd[2];
     REAL uab_cmd_to_inverter[2]; // foc control output + inverter nonlinearity compensation
     REAL udq_cmd[2];
+    REAL udq_cmd_to_inverter[2];
 } st_controller_outputs;
 typedef struct {
     // electrical 
@@ -139,6 +143,10 @@ typedef struct {
     REAL Offset_V;
     REAL Offset_U;
     REAL dac_offset[8];
+    //
+    REAL    dac_time;
+    Uint32  test_integer;
+    REAL    test_float;
 } st_global_variables;
 struct ControllerForExperiment{
 

@@ -728,9 +728,9 @@ void COMM_PMFluxId(REAL id_fb, REAL iq_fb, REAL omg_elec_fb){
 
     if(TRUE){ // PI Speed Regulator
 
-        static int vc_count = 0;
-        if(vc_count++ == SPEED_LOOP_CEILING){
-            vc_count = 0;
+        static int pmsm_comm_vc_count = 0;
+        if(pmsm_comm_vc_count++ == SPEED_LOOP_CEILING){
+            pmsm_comm_vc_count = 0;
 
             bool_tuning = FALSE;
 
@@ -760,10 +760,10 @@ void COMM_PMFluxId(REAL id_fb, REAL iq_fb, REAL omg_elec_fb){
 
         REAL Tload_est = slidingModeObserver(omg_elec_fb, MOTOR_NUMBER_OF_POLE_PAIRS/MOTOR_BACK_EMF_CONSTANT, iq_fb);
 
-        static int vc_count = 0;
-        if(vc_count++ == SPEED_LOOP_CEILING){
+        static int sm_vc_count = 0;
+        if(sm_vc_count++ == SPEED_LOOP_CEILING){
             // velocity control loop execution frequency is 40 times slower than current control loop execution frequency
-            vc_count = 0;
+            sm_vc_count = 0;
 
             REAL torque_cmd = slidingModeControl(error, Tload_est);
 

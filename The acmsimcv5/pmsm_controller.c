@@ -57,7 +57,7 @@ void CTRL_init(){
     CTRL.S->cosT = 1.0;
     CTRL.S->sinT = 0.0;
     // CTRL.S->omega_syn = 0.0;
-    CTRL.S->vc_count = 1; // starts from 1
+    CTRL.S->the_vc_count = 1; // starts from 1
 
     CTRL.S->ctrl_strategy = CONTROL_STRATEGY;
     CTRL.S->go_sensorless = SENSORLESS_CONTROL;
@@ -95,8 +95,8 @@ void null_d_control(REAL set_iq_cmd, REAL set_id_cmd){
     #define MOTOR  (*CTRL.motor)
 
     /// 5. 转速环（使用反馈转速）
-    if(CTRL.S->vc_count++ == SPEED_LOOP_CEILING){
-        CTRL.S->vc_count = 1;
+    if(CTRL.S->the_vc_count++ == SPEED_LOOP_CEILING){
+        CTRL.S->the_vc_count = 1;
 
         pid1_spd.Ref = CTRL.I->cmd_speed_rpm*RPM_2_ELEC_RAD_PER_SEC;
         pid1_spd.Fbk = CTRL.I->omg_elec;

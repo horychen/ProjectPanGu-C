@@ -32,21 +32,16 @@ REAL dac_watch[50];
 //int channels[NO_OF_CHANNELS]={5,23,26,27,12,22}; // 高速运行实验
 
 
+// ECAP
 //int channels[NO_OF_CHANNELS]={0,1,4,5,6,7};
 //int channels[NO_OF_CHANNELS]={0,1,32,34,33,35};
-int channels[NO_OF_CHANNELS]={0,1,4,38,32,33};
+//int channels[NO_OF_CHANNELS]={0,1,4,38,32,33};
 
-REAL dac_time = 0;
-REAL temp_xOmg = 0.0;
-REAL temp_xOmg_filtered = 0.0;
+// NSOAF-Rev1
+int channels[NO_OF_CHANNELS]={6,7,20,21,5,23};
 
-Uint32 e;
-Uint32 b;
-Uint32 c;
-REAL d;
-
-//REAL temp_xOmg2 = 0.0;
-//REAL temp_xOmg_filtered2 = 0.0;
+REAL dac_time_that_cannot_be_modified = 0;
+REAL if_you_define_an_extra_global_variable_here_you_cannot_modify_dac_time_anymore = 0;
 
 #ifdef _XCUBE1
 REAL dac_watch_stator_resistance = 1.34971502;
@@ -55,7 +50,6 @@ REAL dac_watch_stator_resistance = 1.50469916;
 #endif
 
 void write_DAC_buffer(){
-    dac_time += 1e-4;
     if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
 
         // 所有曾经看过的变量都在列在这里，记得有效范围是 [-1, 1]。
@@ -144,7 +138,9 @@ void write_DAC_buffer(){
         Write.dac_buffer[4] = dac_watch[channels[4]] + G.dac_offset[4];
         Write.dac_buffer[5] = dac_watch[channels[5]] + G.dac_offset[5];
 
-        if(dac_time<10){
+        dac_time_that_cannot_be_modified += CL_TS;
+        G.dac_time += CL_TS;
+        if((G.dac_time)<10){
             G.dac_offset[0] =-0.003;
             G.dac_offset[1] = 0.003;
             G.dac_offset[2] = 0.0055;
@@ -159,8 +155,8 @@ void write_DAC_buffer(){
             Write.dac_buffer[4] = G.dac_offset[4];
             Write.dac_buffer[5] = G.dac_offset[5];
 
-            e+=1;
-            b+=1;c+=1;d=dac_time;
+            G.test_integer += 1;
+            G.test_float   +=CL_TS;
         }
 
         IPCLtoRFlagSet(IPC_FLAG7);
