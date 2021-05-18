@@ -48,7 +48,7 @@ void measurement(){
     Voltage_DC_BUS=((AdcaResultRegs.ADCRESULT0)-offsetUDC)*AD_scale_VDC + offset_Udc;//
 
     // 相电压测量（基于占空比和母线电压）
-    CTRL.I->ecap_terminal_voltage[0] = (CTRL.I->ecap_terminal_DutyOnRatio[0]) * Voltage_DC_BUS - Voltage_DC_BUS * 0.5; // -0.5 means referring to the center of dc bus capacitor.
+    CTRL.I->ecap_terminal_voltage[0] = (CTRL.I->ecap_terminal_DutyOnRatio[0]) * Voltage_DC_BUS - Voltage_DC_BUS * 0.5; // -0.5 is due to duty ratio calculation; - Voltage_DC_BUS * 0.5 is referring to the center of dc bus capacitor.
     CTRL.I->ecap_terminal_voltage[1] = (CTRL.I->ecap_terminal_DutyOnRatio[1]) * Voltage_DC_BUS - Voltage_DC_BUS * 0.5;
     CTRL.I->ecap_terminal_voltage[2] = (CTRL.I->ecap_terminal_DutyOnRatio[2]) * Voltage_DC_BUS - Voltage_DC_BUS * 0.5;
 
@@ -341,7 +341,7 @@ void high_speed_operation(){
 //#define AS_LOAD_MOTOR
 //#define NSOAF_LOW_SPEED_OPERATION
 //#define NSOAF_HIGH_SPEED_OPERATION
-//#define XCUBE_DEBUG_MODE
+//#define XCUBE_TaTbTc_DEBUG_MODE
 
 struct TestECapture {
     REAL TSt1, TSt2, TSt3, TSt4, Period1, Period2, Period3, DutyOnTime1, DutyOffTime1, DutyOnTime2, DutyOffTime2;
@@ -503,7 +503,7 @@ else
         commissioning();
     }
 
-    #ifdef XCUBE_DEBUG_MODE
+    #ifdef XCUBE_TaTbTc_DEBUG_MODE
 //        svgen1.Ta = 0.6; svgen1.Tb = 0.4; svgen1.Tc = 0.5;
         if(svgen1.Ta>0.7) svgen1.Ta=0.7;
         if(svgen1.Ta<0.3) svgen1.Ta=0.3;

@@ -104,9 +104,9 @@
         //        #define AD_scale_U                       0.0057316444
         //        #define AD_scale_VDC                     0.3546099
 
-        #define AD_scale_W                       0.0056653759 // 0.00867354 // 0.0096392 // 0.0057316444
+        #define AD_scale_W                       0.0058002658 // 0.00867354 // 0.0096392 // 0.0057316444
         #define AD_scale_V                       0.0064003544 // 0.01027935 //0.0094433 // 0.0056072670
-        #define AD_scale_U                       0.0065566
+        #define AD_scale_U                       0.006300196648
         #define AD_scale_VDC                     (0.5*0.1897533207) // 短上一个470R再补上一个470R
         //#define AD_scale_VDC                     0.1897533207
     #endif
