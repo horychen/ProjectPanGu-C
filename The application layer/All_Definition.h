@@ -20,8 +20,6 @@
     #include "ACMSim.h"
 /* Logic  -----------------------------------------------------------------------------------*/
     //#include "Logic.h"                //逻辑库 包括故障代码，DI,状态机
-    //extern int _gExpState;
-    extern int FLAG_ENABLE_PWM_OUTPUT;
     extern int VoltageOVER_FLAG;
     struct Trip_Variables
     {
@@ -36,6 +34,7 @@
     void System_Checking(void);
 /* Driver -----------------------------------------------------------------------------------*/
     #include "DAC_MAX5307.h"
+    #include "ECaptureVoltage.h"
     #include "F2837xD_Ipc_drivers.h" // 双核通讯
     #include "F2837xD_struct.h"
     #include "F2837xD_sdfm_drivers.h"
@@ -43,25 +42,13 @@
     void MemCopy(Uint16 *SourceAddr, Uint16* SourceEndAddr, Uint16* DestAddr);//flash
 /*  Motor Library file-----------------------------------------------------------------------------------*/
     //未来需要修改成结构体
-    interrupt void CJHMainISR(void);
+    interrupt void EPWM1ISR(void);
     interrupt void EQEP_UTO_INT(void);
-    extern float Current_W,Current_V,Current_U,Current_Not_Used,Voltage_DC_BUS,Controller_sample_Ts;
-    extern float Set_maunal_current_iq,Set_maunal_current_id,Set_maunal_rpm;
-    typedef struct     { float  Ualpha;            // Input: reference alpha-axis phase voltage
-                          float  Ubeta;         // Input: reference beta-axis phase voltage
-                          float  Ta;                // Output: reference phase-a switching function
-                          float  Tb;                // Output: reference phase-b switching function
-                          float  Tc;                // Output: reference phase-c switching function
-                    } SVGENDQ;
-    extern SVGENDQ svgen1;
     void SVGEN_Drive(SVGENDQ* ptrV);
 /* Hardware Peripherals Configuration -----------------------------------------------------------------------------------*/
-    //extern QEP qep1;
-    extern BOOL AD_offset_flag2;
-    extern float offsetU,offsetV,offsetW,offsetUDC; //ADC offset
-    //extern float Controller_sample_Ts,Rated_elec_frequency,Rated_Angular_elec_speed;
     void PWM_1ch_UpDwnCnt_CNF(int16 n, Uint16 period, int16 db);
     void ePWM_initialize(void);
+    void eQEP_initialize(int m);
     void Gpio_initialize(void);
     void ADC_initialize(void);
     #define DSP_ENPWM  GpioDataRegs.GPDSET.bit.GPIO105=1;     //SD置高，封波

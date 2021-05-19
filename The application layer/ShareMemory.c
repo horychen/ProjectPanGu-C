@@ -14,7 +14,7 @@ struct IPC_MEMORY_READ Read;
 #pragma DATA_SECTION(Write, "SHARERAMGS1"); // GS1 is write
 #pragma DATA_SECTION( Read, "SHARERAMGS0");
 
-REAL dac_watch[50];
+//REAL G.dac_watch[50];
 #define NO_OF_CHANNELS 6
 //int channels[4]={2,3,14,15}; // 自整定
 //int channels[4]={2,3,14,16}; // 自整定
@@ -39,113 +39,151 @@ REAL dac_watch[50];
 
 // NSOAF-Rev1
 //int channels[NO_OF_CHANNELS]={6,7,20,21,5,23};
+//int channels[NO_OF_CHANNELS]={6,7,30,32,31,33};
+//int channels[NO_OF_CHANNELS]={6,7,20,21,32,33};
+
+// ECAP
 //int channels[NO_OF_CHANNELS]={6,7,40,42,41,43};
 //int channels[NO_OF_CHANNELS]={6,7,44,45,46,47};
-//int channels[NO_OF_CHANNELS]={6,7,30,32,31,33};
-int channels[NO_OF_CHANNELS]={6,7,20,21,32,33};
+//int channels[NO_OF_CHANNELS]={46,47,20,21,6,7};
+
+int channels[NO_OF_CHANNELS]={38,39,40,41,42,43};
+
+int channels_preset = 0;
 
 REAL dac_time_that_cannot_be_modified = 0;
 //REAL if_you_define_an_extra_global_variable_here_you_cannot_modify_dac_time_anymore = 0;
 
-#ifdef _XCUBE1
-REAL dac_watch_stator_resistance = 1.34971502;
-#else
-REAL dac_watch_stator_resistance = 1.50469916;
-#endif
+
 
 void write_DAC_buffer(){
     if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
 
         // 所有曾经看过的变量都在列在这里，记得有效范围是 [-1, 1]。
-        dac_watch[0] = Current_U*0.2;
-        dac_watch[1] = Current_V*0.2;
-        dac_watch[2] = Current_W*0.2;
-        dac_watch[3] = Current_Not_Used*0.2;
+        G.dac_watch[0] = G.Current_U*0.2;
+        G.dac_watch[1] = G.Current_V*0.2;
+        G.dac_watch[2] = G.Current_W*0.2;
+        G.dac_watch[3] = G.Current_Not_Used*0.2;
 
-        dac_watch[4] = CTRL.I->idq[0]*0.2;
-        dac_watch[5] = CTRL.I->idq[1]*0.2; // 5 A for low speed
-        //dac_watch[5] = CTRL.I->idq[1]*0.05; // 20 A for high speed reversal
-        dac_watch[6] = CTRL.I->rpm*0.002;
-        dac_watch[7] = nsoaf.xOmg*ELEC_RAD_PER_SEC_2_RPM*0.002;
+        G.dac_watch[4] = CTRL.I->idq[0]*0.2;
+        G.dac_watch[5] = CTRL.I->idq[1]*0.2; // 5 A for low speed
+        //G.dac_watch[5] = CTRL.I->idq[1]*0.05; // 20 A for high speed reversal
+        G.dac_watch[6] = CTRL.I->rpm*0.002;
+        G.dac_watch[7] = nsoaf.xOmg*ELEC_RAD_PER_SEC_2_RPM*0.002;
 
-        dac_watch[8] = EQep1Regs.QPOSCNT*0.0001; // [0, 10000]
+        G.dac_watch[8] = EQep1Regs.QPOSCNT*0.0001; // [0, 10000]
 
-        //dac_watch[2] = CTRL.I->iab[0]*0.2;
-        dac_watch[9] = CTRL.I->iab[1]*0.2;
+        //G.dac_watch[2] = CTRL.I->iab[0]*0.2;
+        G.dac_watch[9] = CTRL.I->iab[1]*0.2;
 
-        //dac_watch[11] = COMM.current_sum*0.05/(float32)COMM.counterSS;
-        //dac_watch[12] = COMM.voltage_sum*0.05/(float32)COMM.counterSS;
-        //dac_watch[13] = COMM.counterSS*0.001;
+        //G.dac_watch[11] = COMM.current_sum*0.05/(float32)COMM.counterSS;
+        //G.dac_watch[12] = COMM.voltage_sum*0.05/(float32)COMM.counterSS;
+        //G.dac_watch[13] = COMM.counterSS*0.001;
 
-        dac_watch[10] = nsoaf.active_flux_ab[0];
-        dac_watch[11] = nsoaf.active_flux_ab[1];
-        dac_watch[12] = nsoaf.afest_states[0];
-        dac_watch[13] = nsoaf.afest_states[1];
+        G.dac_watch[10] = nsoaf.active_flux_ab[0];
+        G.dac_watch[11] = nsoaf.active_flux_ab[1];
+        G.dac_watch[12] = nsoaf.afest_states[0];
+        G.dac_watch[13] = nsoaf.afest_states[1];
 
-        dac_watch[14] = CTRL.O->uab_cmd_to_inverter[0]*0.01;
-        dac_watch[15] = CTRL.O->uab_cmd_to_inverter[1]*0.01;
-        dac_watch[16] = CTRL.O->uab_cmd[0]*0.01;
-        dac_watch[17] = CTRL.O->uab_cmd[1]*0.01;
+        G.dac_watch[14] = CTRL.O->uab_cmd_to_inverter[0]*0.01;
+        G.dac_watch[15] = CTRL.O->uab_cmd_to_inverter[1]*0.01;
+        G.dac_watch[16] = CTRL.O->uab_cmd[0]*0.01;
+        G.dac_watch[17] = CTRL.O->uab_cmd[1]*0.01;
 
-        dac_watch[18] = CTRL.O->udq_cmd[0]*0.01;
-        dac_watch[19] = CTRL.O->udq_cmd[1]*0.01;
+        G.dac_watch[18] = CTRL.O->udq_cmd[0]*0.01;
+        G.dac_watch[19] = CTRL.O->udq_cmd[1]*0.01;
 
-        dac_watch[20] = ENC.theta_d_elec*0.1;
-        dac_watch[21] = ELECTRICAL_POSITION_FEEDBACK*0.1;
+        G.dac_watch[20] = ENC.theta_d_elec*0.1;
+        G.dac_watch[21] = ELECTRICAL_POSITION_FEEDBACK*0.1;
 
-        dac_watch[22] = nsoaf.LoadTorquePI*0.25;
-        dac_watch[23] = nsoaf.xIq*0.2; // 5 A for low speed
-        //dac_watch[23] = nsoaf.xIq*0.05; // 20 A for high speed reversal
+        G.dac_watch[22] = nsoaf.LoadTorquePI*0.25;
+        G.dac_watch[23] = nsoaf.xIq*0.2; // 5 A for low speed
+        //G.dac_watch[23] = nsoaf.xIq*0.05; // 20 A for high speed reversal
 
-        dac_watch[26] = CTRL.I->rpm*0.0005;
-        dac_watch[27] = nsoaf.xOmg*ELEC_RAD_PER_SEC_2_RPM*0.0005;
+        G.dac_watch[26] = CTRL.I->rpm*0.0005;
+        G.dac_watch[27] = nsoaf.xOmg*ELEC_RAD_PER_SEC_2_RPM*0.0005;
 
 
         REAL ual_dist = MT2A(pid1_iM.Out, pid1_iT.Out, CTRL.S->cosT, CTRL.S->sinT);
         REAL ube_dist = MT2B(pid1_iM.Out, pid1_iT.Out, CTRL.S->cosT, CTRL.S->sinT);
-        dac_watch[28] = pid1_iM.Out*0.02;
-        dac_watch[29] = pid1_iT.Out*0.02;
+        G.dac_watch[28] = pid1_iM.Out*0.02;
+        G.dac_watch[29] = pid1_iT.Out*0.02;
 
-        dac_watch[30] = ual_dist*0.02;
-        dac_watch[31] = ube_dist*0.02;
+        G.dac_watch[30] = ual_dist*0.02;
+        G.dac_watch[31] = ube_dist*0.02;
 
-        dac_watch[32] = INV.ual_comp*0.02;
-        dac_watch[33] = INV.ube_comp*0.02;
+        G.dac_watch[32] = INV.ual_comp*0.02;
+        G.dac_watch[33] = INV.ube_comp*0.02;
 
-        dac_watch[34] = (CTRL.O->uab_cmd_to_inverter[0] - dac_watch_stator_resistance * CTRL.I->iab[0])*0.02;
-        dac_watch[35] = (CTRL.O->uab_cmd_to_inverter[1] - dac_watch_stator_resistance * CTRL.I->iab[1])*0.02;
+        G.dac_watch[34] = (CTRL.O->uab_cmd_to_inverter[0] - G.dac_watch_stator_resistance * CTRL.I->iab[0])*0.02;
+        G.dac_watch[35] = (CTRL.O->uab_cmd_to_inverter[1] - G.dac_watch_stator_resistance * CTRL.I->iab[1])*0.02;
 
-        dac_watch[36] = dac_watch[34] - dac_watch[32];
-        dac_watch[37] = dac_watch[35] - dac_watch[33];
+        G.dac_watch[36] = G.dac_watch[34] - G.dac_watch[32];
+        G.dac_watch[37] = G.dac_watch[35] - G.dac_watch[33];
 
-        dac_watch[38] = CTRL.inv->theta_trapezoidal / M_PI_OVER_180 * 0.025;
-        dac_watch[39] = INV.I5_plus_I7_LPF * 0.2;
+//        G.dac_watch[38] = CTRL.inv->theta_trapezoidal / M_PI_OVER_180 * 0.025;
+//        G.dac_watch[39] = INV.I5_plus_I7_LPF * 0.2;
 
+//        G.dac_watch[40] = (CTRL.O->udq_cmd_to_inverter[0] - CTRL.O->udq_cmd[0])*0.02;
+//        G.dac_watch[41] = (CTRL.O->udq_cmd_to_inverter[1] - CTRL.O->udq_cmd[1])*0.02;
+//        G.dac_watch[42] = (CTRL.I->ecap_dq[0]             - CTRL.O->udq_cmd[0])*0.02;
+//        G.dac_watch[43] = (CTRL.I->ecap_dq[1]             - CTRL.O->udq_cmd[1])*0.02;
 
-        dac_watch[40] = (CTRL.O->udq_cmd_to_inverter[0] - CTRL.O->udq_cmd[0])*0.02;
-        dac_watch[41] = (CTRL.O->udq_cmd_to_inverter[1] - CTRL.O->udq_cmd[1])*0.02;
-        dac_watch[42] = (CTRL.I->ecap_dq[0]             - CTRL.O->udq_cmd[0])*0.02;
-        dac_watch[43] = (CTRL.I->ecap_dq[1]             - CTRL.O->udq_cmd[1])*0.02;
+        G.dac_watch[38] = (ecapU.Period1) * 0.25e-4;
+        G.dac_watch[39] = (ecapV.Period1) * 0.25e-4;
+        G.dac_watch[40] = (ecapW.Period1) * 0.25e-4;
+        G.dac_watch[41] = (ecapU.Period2) * 0.25e-4;
+        G.dac_watch[42] = (ecapV.Period2) * 0.25e-4;
+        G.dac_watch[43] = (ecapW.Period2) * 0.25e-4;
 
-        dac_watch[44] = (CTRL.O->udq_cmd_to_inverter[0])*0.02;
-        dac_watch[45] = (CTRL.O->udq_cmd_to_inverter[1])*0.02;
-        dac_watch[46] = (CTRL.I->ecap_dq[0]            )*0.02;
-        dac_watch[47] = (CTRL.I->ecap_dq[1]            )*0.02;
+        G.dac_watch[44] = (CTRL.O->udq_cmd_to_inverter[0])*0.02;
+        G.dac_watch[45] = (CTRL.O->udq_cmd_to_inverter[1])*0.02;
+        G.dac_watch[46] = (CTRL.I->ecap_dq[0]            )*0.02;
+        G.dac_watch[47] = (CTRL.I->ecap_dq[1]            )*0.02;
 
+        G.dac_watch[48] = (ecapU.DutyOnTime1)  * 0.25e-4;
+        G.dac_watch[49] = (ecapU.DutyOffTime1) * 0.25e-4;
+        G.dac_watch[50] = (ecapU.DutyOnTime2)  * 0.25e-4;
+        G.dac_watch[51] = (ecapU.DutyOffTime2) * 0.25e-4;
 
 
         // information from d-axis voltage equation
         //temp_xOmg = (CTRL.O->udq_cmd[0] - CTRL.motor->R * CTRL.I->idq[0] ) / -CTRL.motor->Lq*CTRL.I->idq[1];
         //temp_xOmg_filtered = _lpf(temp_xOmg, temp_xOmg_filtered, 20.0);
 
+        if(channels_preset==1){channels_preset=0;
+            /*Sensorless using ECAP*/
+            channels[0] = 46;
+            channels[1] = 47;
+            channels[2] = 20;
+            channels[3] = 21;
+            channels[4] =  6;
+            channels[5] =  7;
+        }else if(channels_preset==2){channels_preset=0;
+            /*ECAP Periods*/
+            channels[0] = 38;
+            channels[1] = 39;
+            channels[2] = 40;
+            channels[3] = 41;
+            channels[4] = 42;
+            channels[5] = 43;
+        }else if(channels_preset==3){channels_preset=0;
+            /*ECAP U phase on/off 1/2*/
+            channels[0] = 48;
+            channels[1] = 49;
+            channels[2] = 50;
+            channels[3] = 51;
+            channels[4] = 46;
+            channels[5] = 47;
+        }
 
-        // 四通道DAC输出，请修改channels数组来确定具体输出哪些dac_watch数组中的变量。
-        Write.dac_buffer[0] = dac_watch[channels[0]] + G.dac_offset[0];
-        Write.dac_buffer[1] = dac_watch[channels[1]] + G.dac_offset[1];
-        Write.dac_buffer[2] = dac_watch[channels[2]] + G.dac_offset[2];
-        Write.dac_buffer[3] = dac_watch[channels[3]] + G.dac_offset[3];
-        Write.dac_buffer[4] = dac_watch[channels[4]] + G.dac_offset[4];
-        Write.dac_buffer[5] = dac_watch[channels[5]] + G.dac_offset[5];
+        // 四通道DAC输出，请修改channels数组来确定具体输出哪些G.dac_watch数组中的变量。
+        Write.dac_buffer[0] = G.dac_watch[channels[0]] + G.dac_offset[0];
+        Write.dac_buffer[1] = G.dac_watch[channels[1]] + G.dac_offset[1];
+        Write.dac_buffer[2] = G.dac_watch[channels[2]] + G.dac_offset[2];
+        Write.dac_buffer[3] = G.dac_watch[channels[3]] + G.dac_offset[3];
+        Write.dac_buffer[4] = G.dac_watch[channels[4]] + G.dac_offset[4];
+        Write.dac_buffer[5] = G.dac_watch[channels[5]] + G.dac_offset[5];
 
         dac_time_that_cannot_be_modified += CL_TS;
         G.dac_time += CL_TS;
@@ -173,39 +211,38 @@ void write_DAC_buffer(){
 }
 
 
-extern int DAC_MAX5307_FLAG;
 void single_core_dac(){
-    DAC_MAX5307_FLAG++;
-    if (DAC_MAX5307_FLAG==1)
+    G.DAC_MAX5307_FLAG++;
+    if (G.DAC_MAX5307_FLAG==1)
     {
-        DAC_MAX5307(1, Current_V*0.1 );//71us 10khz
+        DAC_MAX5307(1, G.Current_V*0.1 );//71us 10khz
     }
-    if (DAC_MAX5307_FLAG==2)
+    if (G.DAC_MAX5307_FLAG==2)
     {
-        DAC_MAX5307(2, Current_W*0.1 );
+        DAC_MAX5307(2, G.Current_W*0.1 );
     }
-    if (DAC_MAX5307_FLAG==3)
+    if (G.DAC_MAX5307_FLAG==3)
     {
-        DAC_MAX5307(3, Current_W*0.1 );//phase w
+        DAC_MAX5307(3, G.Current_W*0.1 );//phase w
     }
-    if (DAC_MAX5307_FLAG==4)
+    if (G.DAC_MAX5307_FLAG==4)
     {
         DAC_MAX5307(4, 0.1 );//Id
     }
-    if (DAC_MAX5307_FLAG==5)
+    if (G.DAC_MAX5307_FLAG==5)
     {
         DAC_MAX5307(5, 0.1 );
     }
-    if (DAC_MAX5307_FLAG==6)
+    if (G.DAC_MAX5307_FLAG==6)
     {
         DAC_MAX5307(6, 0.1 );//iq
-        DAC_MAX5307_FLAG=2;//4 means from 3 to 6;
+        G.DAC_MAX5307_FLAG=2;//4 means from 3 to 6;
     }
-    if (DAC_MAX5307_FLAG==7)
+    if (G.DAC_MAX5307_FLAG==7)
     {
         DAC_MAX5307(7, 0.1 );
     }
-    if (DAC_MAX5307_FLAG==8)
+    if (G.DAC_MAX5307_FLAG==8)
     {
         DAC_MAX5307(8, 0.1 );
     }    

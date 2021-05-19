@@ -49,7 +49,7 @@
 // 经常要修改的
 #define SENSORLESS_CONTROL_HFSI FALSE
 #define SENSORLESS_CONTROL FALSE
-#define INVERTER_NONLINEARITY_COMPENSATION 1 // 1:ParkSul12, 2:Sigmoid, 3:LUT
+#define INVERTER_NONLINEARITY_COMPENSATION 0 // 1:ParkSul12, 2:Sigmoid, 3:LUT
 #define INVERTER_NONLINEARITY              3 // 1:ModelSul96, 2:ModelExpSigmoid, 3: ModelExpLUT
 /* ParkSul2012 梯形波 */
 #define GAIN_THETA_TRAPEZOIDAL (40) //(500) // 20

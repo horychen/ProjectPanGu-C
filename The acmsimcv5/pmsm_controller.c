@@ -10,7 +10,7 @@ void experiment_init(){
     pmsm_observers_init(); // 永磁电机观测器初始化
         // harnefors_init(); // harnefors结构体初始化
         // cjheemf_init(); // cjheemf 结构体初始化
-    // COMM_init(); // 参数自整定初始化
+        // COMM_init(); // 参数自整定初始化
 }
 
 // 初始化函数
@@ -18,10 +18,24 @@ void CTRL_init(){
 
     allocate_CTRL(&CTRL);
 
-    /* Basic quantities */
+/* Basic quantities */
     CTRL.timebase = 0.0;
 
-    /* Peripheral configurations */
+/* Machine parameters */
+    // elec
+    CTRL.motor->R  = PMSM_RESISTANCE;
+    CTRL.motor->KE = PMSM_PERMANENT_MAGNET_FLUX_LINKAGE; // * (0.1/0.1342); // 【实验编号：】
+    CTRL.motor->Ld = PMSM_D_AXIS_INDUCTANCE;
+    CTRL.motor->Lq = PMSM_Q_AXIS_INDUCTANCE;
+    CTRL.motor->Lq_inv = 1.0/CTRL.motor->Lq;
+    CTRL.motor->DeltaL = CTRL.motor->Ld - CTRL.motor->Lq; // for IPMSM
+    // mech
+    CTRL.motor->npp     = MOTOR_NUMBER_OF_POLE_PAIRS;
+    CTRL.motor->npp_inv = 1.0 / CTRL.motor->npp;
+    CTRL.motor->Js      = MOTOR_SHAFT_INERTIA * (1.0+LOAD_INERTIA);
+    CTRL.motor->Js_inv  = 1.0 / CTRL.motor->Js;
+
+/* Peripheral configurations */
     #if PC_SIMULATION
         CTRL.enc->OffsetCountBetweenIndexAndUPhaseAxis = 0;
     #else
@@ -33,10 +47,67 @@ void CTRL_init(){
     // ENC.sum_qepPosCnt = 0.0;
     // ENC.cursor = 0;
 
-    /* Inverter */
+/* Inverter */
     CTRL.inv->filter_pole = 3000*2*M_PI;
+    inverterNonlinearity_Initialization();
 
-    /* Controller quantities */
+/* Console */
+    // Mode Changing During Experiment
+    CTRL.g->OverwriteSpeedOutLimit = 2;
+    CTRL.g->Overwrite_Voltage_DC_BUS = 180;
+    CTRL.g->flag_overwite_voltage_dc_bus = FALSE;
+    CTRL.g->flag_use_ecap_voltage = 0;
+
+    // G.Rotor_angle_selection=SYSTEM_QEP_ROTOR_ANGLE; // delete?
+
+    CTRL.g->Set_manual_rpm = 300;
+    CTRL.g->DAC_MAX5307_FLAG = FALSE;
+    CTRL.g->AD_offset_flag2 = FALSE;
+
+    #ifdef _XCUBE1
+    G.offsetU=2044;
+    G.offsetV=2047;
+    G.offsetW=2032; // ADC offset. U, V, W corresponds to ADCRESULT2, ADCRESULT3, ADCRESULT1.
+    G.offsetUDC=1430;
+    // /* 借用Sensor Board的电流传感器 */
+    // G.offsetU=2045;
+    // G.offsetV=2047;
+    // G.offsetW=2030;
+    #else
+    G.offsetU=2072;
+    G.offsetV=2062;
+    G.offsetW=2049; // ADC offset. U, V, W corresponds to ADCRESULT2, ADCRESULT3, ADCRESULT1.
+    G.offsetUDC=2; // 5.18
+    #endif
+
+    //REAL offset_Udc = 6.0; // 80 V
+    //REAL offset_Udc = 14.0; // 80 V 408-0800
+    //REAL offset_Udc = 18.0; // 80 V 409-0900
+    //REAL offset_Udc = 20.0; // 180 V 409-1300
+    //REAL offset_Udc = 12.0; // 180 V 413-0844
+    //REAL offset_Udc = 9.0; // 180 V 414-0809
+    //REAL offset_Udc = 18.0; // 80 V 416-1600
+    //REAL offset_Udc = 8.0; // 80 V 419-0948
+    //REAL offset_Udc = 1.0; // 180 V 419-1121
+    //REAL offset_Udc = 0.0; // 180 V 427-1401 @ XCUBE-II
+
+    #ifdef _XCUBE1
+    G.dac_watch_stator_resistance = 1.34971502;
+    #else
+    G.dac_watch_stator_resistance = 1.50469916;
+    #endif
+
+/* Black Box Model | Controller quantities */
+
+    // PID调谐
+    ACMSIMC_PIDTuner();
+
+    // PID regulators
+    CTRL.S->iM  = &pid1_iM;
+    CTRL.S->iT  = &pid1_iT;
+    CTRL.S->pos = &pid1_pos;
+    CTRL.S->spd = &pid1_spd;
+
     // commands
     // CTRL.I->idq_cmd[0] = 0.0;
     // CTRL.I->idq_cmd[1] = 0.0;
@@ -62,30 +133,6 @@ void CTRL_init(){
     CTRL.S->ctrl_strategy = CONTROL_STRATEGY;
     CTRL.S->go_sensorless = SENSORLESS_CONTROL;
 
-    inverterNonlinearity_Initialization();
-
-    /* Machine parameters */
-    // elec
-    CTRL.motor->R  = PMSM_RESISTANCE;
-    CTRL.motor->KE = PMSM_PERMANENT_MAGNET_FLUX_LINKAGE; // * (0.1/0.1342); // 【实验编号：】
-    CTRL.motor->Ld = PMSM_D_AXIS_INDUCTANCE;
-    CTRL.motor->Lq = PMSM_Q_AXIS_INDUCTANCE;
-    CTRL.motor->Lq_inv = 1.0/CTRL.motor->Lq;
-    CTRL.motor->DeltaL = CTRL.motor->Ld - CTRL.motor->Lq; // for IPMSM
-    // mech
-    CTRL.motor->npp     = MOTOR_NUMBER_OF_POLE_PAIRS;
-    CTRL.motor->npp_inv = 1.0 / CTRL.motor->npp;
-    CTRL.motor->Js      = MOTOR_SHAFT_INERTIA * (1.0+LOAD_INERTIA);
-    CTRL.motor->Js_inv  = 1.0 / CTRL.motor->Js;
-
-    // PID调谐
-    ACMSIMC_PIDTuner();
-
-    // PID regulators
-    CTRL.S->iM  = &pid1_iM;
-    CTRL.S->iT  = &pid1_iT;
-    CTRL.S->pos = &pid1_pos;
-    CTRL.S->spd = &pid1_spd;
 }
 
 /* id=0控制 */
@@ -398,7 +445,7 @@ REAL look_up_phase_current(REAL current, REAL *lut_voltage, REAL *lut_current, i
     return 0.0;
 }
 REAL trapezoidal_voltage_by_phase_current(REAL current, REAL Vsat, REAL theta_trapezoidal){
-    theta_trapezoidal;
+    // theta_trapezoidal;
     return 0.0;
 }
 REAL sigmoid_a3_tune = 1.0;
@@ -453,7 +500,7 @@ void get_distorted_voltage_via_LUT(REAL ual, REAL ube, REAL ial, REAL ibe, REAL 
         ualbe_dist[1] = 0.66666667 * 0.8660254 * ( dist_ub -     dist_uc); // 0.5773502695534
     }else{
         /* AB2U_AI 这宏假设了零序分量为零，即ia+ib+ic=0，但是电压并不一定满足吧，所以还是得用上面的？ */
-        REAL ia,ib,ic;
+        REAL ia,ib;//,ic;
         ia = AB2U_AI(ial, ibe); // ia = 1 * (       ial                              );
         ib = AB2V_AI(ial, ibe); // ib = 1 * (-0.5 * ial - SIN_DASH_2PI_SLASH_3 * ibe );
         // ic = AB2W_AI(ial, ibe); // ic = 1 * (-0.5 * ial - SIN_2PI_SLASH_3      * ibe );

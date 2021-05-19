@@ -2,7 +2,7 @@
 
 #if MACHINE_TYPE == PM_SYNCHRONOUS_MACHINE
 
-/********************************************
+/********************************************/
 /* Natural Speed Observer for IPMSM with Active Flux Concept (Chen 2020)
  ********************************************/
 #define NS 3
@@ -186,8 +186,8 @@ void nsoaf_init(){
 #undef NS
 
 
-/********************************************
- * EEMF-Speed-Adaptive-High-Gain-Observer-Farza-2009
+/********************************************/
+/* EEMF-Speed-Adaptive-High-Gain-Observer-Farza-2009
  ********************************************/
 /* The 10th-order dynamic system */
 #define NS 10
@@ -364,8 +364,8 @@ void hgo4eemf_init(){
 
 
 
-/********************************************
- * EEMF-Error-Dynamics-based-AO-Design
+/********************************************/
+/* EEMF-Error-Dynamics-based-AO-Design
  ********************************************/
 /* The 13th-order dynamic system */
 #define NS 13
@@ -578,7 +578,7 @@ void cjheemf_init(){
 
 
 
-/********************************************
+/********************************************/
 /* Harnefor 2006
  ********************************************/
 void harnefors_init(){
@@ -861,7 +861,7 @@ void stationary_voltage_DOB(){
 
 
 
-/********************************************
+/********************************************/
 /* COMMON *
  ********************************************/
 void rk4_init(){
