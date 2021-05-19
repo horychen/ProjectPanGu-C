@@ -1,6 +1,7 @@
 #ifndef PMSM_COMMISSIONING_H
 #define PMSM_COMMISSIONING_H
 #if MACHINE_TYPE == PM_SYNCHRONOUS_MACHINE
+#if ENABLE_COMMISSIONING
 
 #define COMM_IV_SIZE_R1 50
 #define COMM_IV_SIZE_L1 30
@@ -88,4 +89,5 @@ void StepByStepCommissioning();
 //             }
 
 //             /* End *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
+#endif
 #endif

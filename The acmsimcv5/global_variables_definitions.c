@@ -1,5 +1,21 @@
 #include "ACMSim.h"
 
+#if PC_SIMULATION == FALSE
+#pragma DATA_SECTION(CTRL       ,"MYGLOBALS");
+#pragma DATA_SECTION(t_motor    ,"MYGLOBALS");
+#pragma DATA_SECTION(t_enc      ,"MYGLOBALS");
+#pragma DATA_SECTION(t_psd      ,"MYGLOBALS");
+#pragma DATA_SECTION(t_I        ,"MYGLOBALS");
+#pragma DATA_SECTION(t_S        ,"MYGLOBALS");
+#pragma DATA_SECTION(t_O        ,"MYGLOBALS");
+#pragma DATA_SECTION(t_inv      ,"MYGLOBALS");
+#pragma DATA_SECTION(t_g        ,"MYGLOBALS");
+#pragma DATA_SECTION(pid1_iM    ,"MYGLOBALS");
+#pragma DATA_SECTION(pid1_iT    ,"MYGLOBALS");
+#pragma DATA_SECTION(pid1_pos   ,"MYGLOBALS");
+#pragma DATA_SECTION(pid1_spd   ,"MYGLOBALS");
+#endif
+
 // 定义顶级结构体（指针的集合）
 struct ControllerForExperiment CTRL;
 // 定义内存空间（结构体）
@@ -17,6 +33,10 @@ st_pid_regulator      pid1_iM  = st_pid_regulator_DEFAULTS;
 st_pid_regulator      pid1_iT  = st_pid_regulator_DEFAULTS;
 st_pid_regulator      pid1_pos = st_pid_regulator_DEFAULTS;
 st_pid_regulator      pid1_spd = st_pid_regulator_DEFAULTS;
+
+
+
+
 // 初始化顶级结构体指针，指向定义好的内存空间
 void allocate_CTRL(struct ControllerForExperiment *p){
     /* My attemp to use calloc with TI's compiler in CCS has failed. */

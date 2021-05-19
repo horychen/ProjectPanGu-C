@@ -13,17 +13,17 @@
 
 /*  USER Configuration -----------------------------------------------------------------------------------*/
     //MOTOR parameter page
-    #define MOTOR_POLE                          4              // motor 4
-    #define MOTOR_RS                            1.1            // motor_RS ohm
-    #define MOTOR_LS                            5.7             // motor_LS mH
-    #define MOTOR_FLUXR                         0.092            // motor_fluxr wb
-    #define MOTOR_RATED_SPEED                   3000              // motor_ speed 2500r/min
-    #define MOTOR_INERTIA                       0.00162          // motor INERTIA kg/m3
+    //    #define MOTOR_POLE                          4              // motor 4
+    //    #define MOTOR_RS                            1.1            // motor_RS ohm
+    //    #define MOTOR_LS                            5.7             // motor_LS mH
+    //    #define MOTOR_FLUXR                         0.092            // motor_fluxr wb
+    //    #define MOTOR_RATED_SPEED                   3000              // motor_ speed 2500r/min
+    //    #define MOTOR_INERTIA                       0.00162          // motor INERTIA kg/m3
     //INVERTER parameter page
-    #define IGBT_PWM_TON                        0.038                 // IGBT TURN ON-DELAY(us)
-    #define IGBT_PWM_TOFF                       0.07                  // IGBT TURN OFF-DELAY(us)
-    #define IGBT_VCE0_VOLTAGE                   0                    // IGBT VCE0 INITIAL VALUE (V)
-    #define IGBT_DIODE0_VOLTAGE                 0                  // IGBT Diode Forward Voltage INITIAL VALUE(V)
+    //    #define IGBT_PWM_TON                        0.038                 // IGBT TURN ON-DELAY(us)
+    //    #define IGBT_PWM_TOFF                       0.07                  // IGBT TURN OFF-DELAY(us)
+    //    #define IGBT_VCE0_VOLTAGE                   0                    // IGBT VCE0 INITIAL VALUE (V)
+    //    #define IGBT_DIODE0_VOLTAGE                 0                  // IGBT Diode Forward Voltage INITIAL VALUE(V)
     //PI CONFIGURATION
     //    #define SYSTEM_PI_SPD_KP                 0.4               //KP     SPEED
     //    #define SYSTEM_PI_SPD_KI                 10.01               //Ki     SPEED

@@ -1,6 +1,165 @@
 // https://stackoverflow.com/questions/1591361/understanding-typedefs-for-function-pointers-in-c
 #include "ACMSim.h"
 #if MACHINE_TYPE == PM_SYNCHRONOUS_MACHINE
+#if ENABLE_COMMISSIONING
+
+
+
+/* Initial Position Detection needs position update rate is at 1/CL_TS. */
+void doIPD(){
+    // 帕克变换（使用反馈位置）
+    CTRL.S->cosT = cos(ENC.excitation_angle_deg/180.0*M_PI); // CTRL.I->theta_d_elec
+    CTRL.S->sinT = sin(ENC.excitation_angle_deg/180.0*M_PI); // CTRL.I->theta_d_elec
+    CTRL.I->idq[0] = AB2M(CTRL.I->iab[0], CTRL.I->iab[1], CTRL.S->cosT, CTRL.S->sinT);
+    CTRL.I->idq[1] = AB2T(CTRL.I->iab[0], CTRL.I->iab[1], CTRL.S->cosT, CTRL.S->sinT);
+
+    #define CURRENT_COMMAND_VALUE (0.5*MOTOR_RATED_CURRENT_RMS)
+
+    /* 根据CL_TS周期更新的位置反馈信息去辨识一个 */
+    static int number_of_excitation_times = 0;
+    pid1_id.Ref += CL_TS * 3;
+    /* Stage 1 */
+    if(number_of_excitation_times==0){
+        // if reached then reset
+        if( pid1_id.Ref > CURRENT_COMMAND_VALUE ){
+            pid1_id.Ref = 0.0;
+            number_of_excitation_times = 1;
+        }
+        // identify the offset angle (fast)
+        if(CTRL.I->theta_d_elec > CTRL.I->theta_d_elec_previous){
+            ENC.excitation_angle_deg -= CL_TS*3600;
+        }else if(CTRL.I->theta_d_elec < CTRL.I->theta_d_elec_previous){
+            ENC.excitation_angle_deg += CL_TS*3600;
+        }
+    /* Stage 2 */
+    }else if(number_of_excitation_times==1){
+        // if reached then reset
+        if( pid1_id.Ref > 2*CURRENT_COMMAND_VALUE ){
+            pid1_id.Ref = 0.0;
+            number_of_excitation_times = 2;
+        }
+        // identify the offset angle (medium fast)
+        if(CTRL.I->theta_d_elec > CTRL.I->theta_d_elec_previous){
+            ENC.excitation_angle_deg -= CL_TS*300;
+        }else if(CTRL.I->theta_d_elec < CTRL.I->theta_d_elec_previous){
+            ENC.excitation_angle_deg += CL_TS*300;
+        }
+    /* Stage 3 */
+    }else if(number_of_excitation_times==2){
+        pid1_id.Ref = CURRENT_COMMAND_VALUE;
+        // identify the offset angle (slow)
+        if(CTRL.I->theta_d_elec > CTRL.I->theta_d_elec_previous){
+            ENC.excitation_angle_deg -= CL_TS*100;
+        }else if(CTRL.I->theta_d_elec < CTRL.I->theta_d_elec_previous){
+            ENC.excitation_angle_deg += CL_TS*100;
+        }
+        static Uint32 count=0;
+        if(count++>5000){
+            number_of_excitation_times = 3;
+        }
+    /* Stage 4 */
+    }else{
+        pid1_id.Ref = CURRENT_COMMAND_VALUE;
+        static Uint32 count=0;
+        if(count++>2000){
+            ENC.theta_d_offset = -(CTRL.I->theta_d_elec - ENC.excitation_angle_deg/180.0*M_PI);
+            CTRL.S->IPD_Done = TRUE;
+            pid1_id.I_Term = 0.0; //
+            pid1_iq.I_Term = 0.0; //
+            CTRL.O->uab_cmd[0] = 0.0;
+            CTRL.O->uab_cmd[1] = 0.0;
+            return;
+        }
+    }
+
+    pid1_id.Fbk = CTRL.I->idq[0];
+    pid1_id.calc(&pid1_id);
+    CTRL.O->uab_cmd[0] = MT2A(pid1_id.Out, 0.0, CTRL.S->cosT, CTRL.S->sinT);
+    CTRL.O->uab_cmd[1] = MT2B(pid1_id.Out, 0.0, CTRL.S->cosT, CTRL.S->sinT);
+}
+
+/* Phase Sequence Detection */
+void doPSD(){
+    // 帕克变换（使用反馈位置）
+    CTRL.S->cosT = cos(PSD.theta_excitation); // CTRL.I->theta_d_elec
+    CTRL.S->sinT = sin(PSD.theta_excitation); // CTRL.I->theta_d_elec
+    CTRL.I->idq[0] = AB2M(CTRL.I->iab[0], CTRL.I->iab[1], CTRL.S->cosT, CTRL.S->sinT);
+    CTRL.I->idq[1] = AB2T(CTRL.I->iab[0], CTRL.I->iab[1], CTRL.S->cosT, CTRL.S->sinT);
+
+    #define CURRENT_COMMAND_VALUE (0.5*MOTOR_RATED_CURRENT_RMS)
+
+    pid1_id.Ref = CURRENT_COMMAND_VALUE;
+    pid1_id.Fbk = CTRL.I->idq[0];
+    pid1_id.calc(&pid1_id);
+    CTRL.O->uab_cmd[0] = MT2A(pid1_id.Out, 0.0, CTRL.S->cosT, CTRL.S->sinT);
+    CTRL.O->uab_cmd[1] = MT2B(pid1_id.Out, 0.0, CTRL.S->cosT, CTRL.S->sinT);
+    CTRL.O->uab_cmd_to_inverter[0] = CTRL.O->uab_cmd[0];
+    CTRL.O->uab_cmd_to_inverter[1] = CTRL.O->uab_cmd[1];
+
+    if(CTRL.timebase>2.0){
+        CTRL.S->PSD_Done = TRUE;
+        PSD.theta_excitation = 0.0;
+        PSD.theta_d_elec_entered = 0.0;
+        PSD.countEntered = 0;
+    }else if(CTRL.timebase>1.75){ // EXCITE_BETA_AXIS==TRUE: 1.75 else 1.5
+        // Reverse the rotation of current vector
+        PSD.theta_excitation -= CL_TS*1.0*M_PI; // EXCITE_BETA_AXIS==TRUE: -CL_TS* else CL_TS*
+    }else if(CTRL.timebase>1){
+        // Rotate current vector
+        PSD.theta_excitation += CL_TS*1.0*M_PI; // EXCITE_BETA_AXIS==TRUE: -CL_TS* else CL_TS*
+
+        // 第一次进来
+        if(PSD.countEntered++==0){
+            // 以当前位置角为d轴位置进行初始位置补偿。
+            ENC.theta_d_offset = - ENC.theta_d__state;
+            PSD.theta_d_elec_entered = 0.0;
+        }
+
+        // 转到中途的时候，在开始反转之前，赶快判断一下旋转的方向
+        if(fabs(CTRL.timebase-1.49)<CL_TS){
+            if( CTRL.I->theta_d_elec > PSD.theta_d_elec_entered)
+                PSD.direction = 1;
+            else{
+                PSD.direction = -1;
+            }
+        }
+    }else{
+        // Excite constant current vector and wait for alignment
+    }
+}
+
+
+/* Main */
+void commissioning(){
+    /* PSD */
+    if(CTRL.S->PSD_Done == FALSE){
+        doPSD();
+        return;
+    // }else{
+    //     CTRL.O->uab_cmd_to_inverter[0] = 0;
+    //     CTRL.O->uab_cmd_to_inverter[1] = 0;
+    }
+
+    /* IPD */
+    // if(CTRL.S->IPD_Done == FALSE){
+    //     doIPD();
+    //     inverter_voltage_command();
+    //     return;
+    // }
+
+    /* SC */
+    // 帕克变换（使用反馈位置）
+    CTRL.S->cosT = cos(CTRL.I->theta_d_elec); // CTRL.I->theta_d_elec
+    CTRL.S->sinT = sin(CTRL.I->theta_d_elec); // CTRL.I->theta_d_elec
+    CTRL.I->idq[0] = AB2M(CTRL.I->iab[0], CTRL.I->iab[1], CTRL.S->cosT, CTRL.S->sinT);
+    CTRL.I->idq[1] = AB2T(CTRL.I->iab[0], CTRL.I->iab[1], CTRL.S->cosT, CTRL.S->sinT);
+    // 参数自整定
+    StepByStepCommissioning();
+    inverter_voltage_command();
+}
+
+
+
 
 // 声明参数自整定结构体变量
 struct CommissioningDataStruct COMM;
@@ -1067,4 +1226,5 @@ void StepByStepCommissioning(){
 
     /* End *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/      
 }
+#endif
 #endif
