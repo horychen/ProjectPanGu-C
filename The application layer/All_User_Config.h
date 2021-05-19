@@ -8,8 +8,8 @@
 /*  SYSTEM Configuration -----------------------------------------------------------------------------------*/
     #define NUMBER_OF_DSP_CORES 2  // 1 or 2
     #define SYSTEM_PROGRAM_MODE 223  //223 for CJHMainISR //0 stands for MainISR ,1 stands for Motor_Parameter_Compute_ISR
-    #define SYSTEM_QEP_ROTOR_ANGLE              1      //  MEASURE_QEP_D_AXIS:0;       REAL_QEP_ROTOR_ANGLE:1       VIRTUAL_QEP_ROTOR_ANGLE:2;
-    #define SYSTEM_CURRENT_LOOP                 0 //    1 Means current loop;   0 Means speed loop;
+//    #define SYSTEM_QEP_ROTOR_ANGLE              1      //  MEASURE_QEP_D_AXIS:0;       REAL_QEP_ROTOR_ANGLE:1       VIRTUAL_QEP_ROTOR_ANGLE:2;
+//    #define SYSTEM_CURRENT_LOOP                 0 //    1 Means current loop;   0 Means speed loop;
 
 /*  USER Configuration -----------------------------------------------------------------------------------*/
     //MOTOR parameter page
@@ -31,6 +31,12 @@
     //    #define SYSTEM_PI_IQ_UMAX                  180             //30V   Saturate
     //    #define SYSTEM_PI_ID_UMAX                  180              //30V   Saturate
 
+
+// #define CURRENT_CLARKE       clarke1
+// #define CURRENT_PARK         park1
+// #define VOLTAGE_INVERSE_PARK ipark1
+// #define VOLTAGE_PARK         park2
+
 /* Code Selection */
     //program mode selection parameter_compute_program and main_program
     #if SYSTEM_PROGRAM_MODE==0
@@ -40,9 +46,11 @@
         #define SYSTEM_PROGRAM                Motor_Parameter_ISR //   Motor_Parameter_Compute_ISR
         #define SYSTEM_PWM_FREQUENCY               10             // KHz  Define the ISR timr  10K
     #elif SYSTEM_PROGRAM_MODE==223
-        #define SYSTEM_PROGRAM                CJHMainISR 
+        #define SYSTEM_PROGRAM                EPWM1ISR
         #define SYSTEM_PWM_FREQUENCY               10
         #define SYSTEM_PWM_MAX_COUNT_INVERSE       5e-5 // = 1 / 20000
+        #define SYSTEM_PWM_MAX_COUNT               20000
+        #define SYSTEM_HALF_PWM_MAX_COUNT          10000
     #endif
 
 #endif

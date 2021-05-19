@@ -1,291 +1,29 @@
-/*
- * main.c
- * Author: yuanxin and jiahao
- * 2021.01.11
- * @NTU-IQMATH
- */
-
 #include <All_Definition.h>
-
-SVGENDQ svgen1;
-float Current_U=0.0, Current_V=0.0, Current_W=0.0, Current_Not_Used=0.0, Voltage_DC_BUS=0.0;
-int FLAG_ENABLE_PWM_OUTPUT; // 电机模式标志位
-//int Enable_STOP_FLAG;  // 电机模式标志位
-Uint16 Rotor_angle_selection=SYSTEM_QEP_ROTOR_ANGLE;
-float Set_maunal_current_iq=0,Set_maunal_current_id=0,Set_maunal_rpm=300;
-#ifdef _XCUBE1
-    float offsetU=2044,offsetV=2047,offsetW=2032; // ADC offset. U, V, W corresponds to ADCRESULT2, ADCRESULT3, ADCRESULT1.
-    float offsetUDC=1430;
-
-/* 借用Sensor Board的电流传感器 */
-//float offsetU=2045,offsetV=2047,offsetW=2030; // ADC offset. U, V, W corresponds to ADCRESULT2, ADCRESULT3, ADCRESULT1.
-
-#else
-    float offsetU=2072,offsetV=2062,offsetW=2049; // ADC offset. U, V, W corresponds to ADCRESULT2, ADCRESULT3, ADCRESULT1.
-    float offsetUDC=2; // 5.18
-#endif
-int DAC_MAX5307_FLAG=0;
-//BOOL AD_offset_flag = FALSE;
-BOOL AD_offset_flag2 = FALSE;
-void eQEP_initialize(int m);
-
-
-#if 1
-    // From: D:\ti\controlSUITE\device_support\F2837xS\v210\F2837xS_examples_Cpu1\ecap_capture_pwm\cpu01\ECap_Capture_Pwm_cpu01.c
-    // InitECapture - Initialize ECAP1 configurations
-    void InitECapture()
-    {
-
-        /*ECAP 1*/
-        ECap1Regs.ECEINT.all = 0x0000;          // Disable all capture __interrupts
-        ECap1Regs.ECCLR.all = 0xFFFF;           // Clear all CAP __interrupt flags
-        ECap1Regs.ECCTL1.bit.CAPLDEN = 0;       // Disable CAP1-CAP4 register loads
-        ECap1Regs.ECCTL2.bit.TSCTRSTOP = 0;     // Make sure the counter is stopped
-
-        //
-        // Configure peripheral registers
-        //
-        ECap1Regs.ECCTL2.bit.CONT_ONESHT = 1;   // One-shot
-        ECap1Regs.ECCTL2.bit.STOP_WRAP = 3;     // Stop at 4 events
-        ECap1Regs.ECCTL1.bit.CAP1POL = 1;       // Falling edge
-        ECap1Regs.ECCTL1.bit.CAP2POL = 0;       // Rising edge
-        ECap1Regs.ECCTL1.bit.CAP3POL = 1;       // Falling edge
-        ECap1Regs.ECCTL1.bit.CAP4POL = 0;       // Rising edge
-        ECap1Regs.ECCTL1.bit.CTRRST1 = 1;       // Difference operation
-        ECap1Regs.ECCTL1.bit.CTRRST2 = 1;       // Difference operation
-        ECap1Regs.ECCTL1.bit.CTRRST3 = 1;       // Difference operation
-        ECap1Regs.ECCTL1.bit.CTRRST4 = 1;       // Difference operation
-        ECap1Regs.ECCTL2.bit.SYNCI_EN = 1;      // Enable sync in
-        ECap1Regs.ECCTL2.bit.SYNCO_SEL = 0;     // Pass through
-        ECap1Regs.ECCTL1.bit.CAPLDEN = 1;       // Enable capture units
-
-        ECap1Regs.ECCTL2.bit.TSCTRSTOP = 1;     // Start Counter
-        ECap1Regs.ECCTL2.bit.REARM = 1;         // arm one-shot
-        ECap1Regs.ECCTL1.bit.CAPLDEN = 1;       // Enable CAP1-CAP4 register loads
-        ECap1Regs.ECEINT.bit.CEVT4 = 1;         // 4 events = __interrupt
-
-
-        /*ECAP 2*/
-        ECap2Regs.ECEINT.all = 0x0000;          // Disable all capture __interrupts
-        ECap2Regs.ECCLR.all = 0xFFFF;           // Clear all CAP __interrupt flags
-        ECap2Regs.ECCTL1.bit.CAPLDEN = 0;       // Disable CAP1-CAP4 register loads
-        ECap2Regs.ECCTL2.bit.TSCTRSTOP = 0;     // Make sure the counter is stopped
-
-        //
-        // Configure peripheral registers
-        //
-        ECap2Regs.ECCTL2.bit.CONT_ONESHT = 1;   // One-shot
-        ECap2Regs.ECCTL2.bit.STOP_WRAP = 3;     // Stop at 4 events
-        ECap2Regs.ECCTL1.bit.CAP1POL = 1;       // Falling edge
-        ECap2Regs.ECCTL1.bit.CAP2POL = 0;       // Rising edge
-        ECap2Regs.ECCTL1.bit.CAP3POL = 1;       // Falling edge
-        ECap2Regs.ECCTL1.bit.CAP4POL = 0;       // Rising edge
-        ECap2Regs.ECCTL1.bit.CTRRST1 = 1;       // Difference operation
-        ECap2Regs.ECCTL1.bit.CTRRST2 = 1;       // Difference operation
-        ECap2Regs.ECCTL1.bit.CTRRST3 = 1;       // Difference operation
-        ECap2Regs.ECCTL1.bit.CTRRST4 = 1;       // Difference operation
-        ECap2Regs.ECCTL2.bit.SYNCI_EN = 1;      // Enable sync in
-        ECap2Regs.ECCTL2.bit.SYNCO_SEL = 0;     // Pass through
-        ECap2Regs.ECCTL1.bit.CAPLDEN = 1;       // Enable capture units
-
-        ECap2Regs.ECCTL2.bit.TSCTRSTOP = 1;     // Start Counter
-        ECap2Regs.ECCTL2.bit.REARM = 1;         // arm one-shot
-        ECap2Regs.ECCTL1.bit.CAPLDEN = 1;       // Enable CAP1-CAP4 register loads
-        ECap2Regs.ECEINT.bit.CEVT4 = 1;         // 4 events = __interrupt
-
-        /*ECAP 3*/
-        ECap3Regs.ECEINT.all = 0x0000;          // Disable all capture __interrupts
-        ECap3Regs.ECCLR.all = 0xFFFF;           // Clear all CAP __interrupt flags
-        ECap3Regs.ECCTL1.bit.CAPLDEN = 0;       // Disable CAP1-CAP4 register loads
-        ECap3Regs.ECCTL2.bit.TSCTRSTOP = 0;     // Make sure the counter is stopped
-
-        //
-        // Configure peripheral registers
-        //
-        ECap3Regs.ECCTL2.bit.CONT_ONESHT = 1;   // One-shot
-        ECap3Regs.ECCTL2.bit.STOP_WRAP = 3;     // Stop at 4 events
-        ECap3Regs.ECCTL1.bit.CAP1POL = 1;       // Falling edge
-        ECap3Regs.ECCTL1.bit.CAP2POL = 0;       // Rising edge
-        ECap3Regs.ECCTL1.bit.CAP3POL = 1;       // Falling edge
-        ECap3Regs.ECCTL1.bit.CAP4POL = 0;       // Rising edge
-        ECap3Regs.ECCTL1.bit.CTRRST1 = 1;       // Difference operation
-        ECap3Regs.ECCTL1.bit.CTRRST2 = 1;       // Difference operation
-        ECap3Regs.ECCTL1.bit.CTRRST3 = 1;       // Difference operation
-        ECap3Regs.ECCTL1.bit.CTRRST4 = 1;       // Difference operation
-        ECap3Regs.ECCTL2.bit.SYNCI_EN = 1;      // Enable sync in
-        ECap3Regs.ECCTL2.bit.SYNCO_SEL = 0;     // Pass through
-        ECap3Regs.ECCTL1.bit.CAPLDEN = 1;       // Enable capture units
-
-        ECap3Regs.ECCTL2.bit.TSCTRSTOP = 1;     // Start Counter
-        ECap3Regs.ECCTL2.bit.REARM = 1;         // arm one-shot
-        ECap3Regs.ECCTL1.bit.CAPLDEN = 1;       // Enable CAP1-CAP4 register loads
-        ECap3Regs.ECEINT.bit.CEVT4 = 1;         // 4 events = __interrupt
-    }
-
-    // ECCTL1 (ECAP Control Reg 1)
-    //==========================
-    // CAPxPOL bits
-    #define EC_RISING 0x0
-    #define EC_FALLING 0x1
-    // CTRRSTx bits
-    #define EC_ABS_MODE 0x0
-    #define EC_DELTA_MODE 0x1
-    // PRESCALE bits
-    #define EC_BYPASS 0x0
-    #define EC_DIV1 0x0
-    #define EC_DIV2 0x1
-    #define EC_DIV4 0x2
-    #define EC_DIV6 0x3
-    #define EC_DIV8 0x4
-    #define EC_DIV10 0x5
-    // ECCTL2 ( ECAP Control Reg 2)
-    //==========================
-    // CONT/ONESHOT bit
-    #define EC_CONTINUOUS 0x0
-    #define EC_ONESHOT 0x1
-    // STOPVALUE bit
-    #define EC_EVENT1 0x0
-    #define EC_EVENT2 0x1
-    #define EC_EVENT3 0x2
-    #define EC_EVENT4 0x3
-    // RE-ARM bit
-    #define EC_ARM 0x1
-    // TSCTRSTOP bit
-    #define EC_FREEZE 0x0
-    #define EC_RUN 0x1
-    // SYNCO_SEL bit
-    #define EC_SYNCIN 0x0
-    #define EC_CTR_PRD 0x1
-    #define EC_SYNCO_DIS 0x2
-    // CAP/APWM mode bit
-    #define EC_CAP_MODE 0x0
-    #define EC_APWM_MODE 0x1
-    // APWMPOL bit
-    #define EC_ACTV_HI 0x0
-    #define EC_ACTV_LO 0x1
-    // Generic
-    #define EC_DISABLE 0x0
-    #define EC_ENABLE 0x1
-    #define EC_FORCE 0x1
-    void InitECaptureContinuousMode(){
-        InitECapture();
-
-        //        16.6.1
-        // ECAP module 1 config
-        //        ECap1Regs.ECCTL1.bit.CAP1POL = EC_RISING;
-        //        ECap1Regs.ECCTL1.bit.CAP2POL = EC_RISING;
-        //        ECap1Regs.ECCTL1.bit.CAP3POL = EC_RISING;
-        //        ECap1Regs.ECCTL1.bit.CAP4POL = EC_RISING;
-        //        ECap1Regs.ECCTL1.bit.CTRRST1 = EC_ABS_MODE;
-        //        ECap1Regs.ECCTL1.bit.CTRRST2 = EC_ABS_MODE;
-        //        ECap1Regs.ECCTL1.bit.CTRRST3 = EC_ABS_MODE;
-        //        ECap1Regs.ECCTL1.bit.CTRRST4 = EC_ABS_MODE;
-        //        ECap1Regs.ECCTL1.bit.CAPLDEN = EC_ENABLE;
-        //        ECap1Regs.ECCTL1.bit.PRESCALE = EC_DIV1;
-        //        ECap1Regs.ECCTL2.bit.CAP_APWM = EC_CAP_MODE;
-        //        ECap1Regs.ECCTL2.bit.CONT_ONESHT = EC_CONTINUOUS;
-        //        ECap1Regs.ECCTL2.bit.SYNCO_SEL = EC_SYNCO_DIS;
-        //        ECap1Regs.ECCTL2.bit.SYNCI_EN = EC_DISABLE;
-        //        ECap1Regs.ECCTL2.bit.TSCTRSTOP = EC_RUN;
-
-        //        16.6.2
-        // ECAP module 1 config
-        //        ECap1Regs.ECCTL1.bit.CAP1POL = EC_RISING;
-        //        ECap1Regs.ECCTL1.bit.CAP2POL = EC_FALLING;
-        //        ECap1Regs.ECCTL1.bit.CAP3POL = EC_RISING;
-        //        ECap1Regs.ECCTL1.bit.CAP4POL = EC_FALLING;
-        //        ECap1Regs.ECCTL1.bit.CTRRST1 = EC_ABS_MODE;
-        //        ECap1Regs.ECCTL1.bit.CTRRST2 = EC_ABS_MODE;
-        //        ECap1Regs.ECCTL1.bit.CTRRST3 = EC_ABS_MODE;
-        //        ECap1Regs.ECCTL1.bit.CTRRST4 = EC_ABS_MODE;
-        //        ECap1Regs.ECCTL1.bit.CAPLDEN = EC_ENABLE;
-        //        ECap1Regs.ECCTL1.bit.PRESCALE = EC_DIV1;
-        //        ECap1Regs.ECCTL2.bit.CAP_APWM = EC_CAP_MODE;
-        //        ECap1Regs.ECCTL2.bit.CONT_ONESHT = EC_CONTINUOUS;
-        //        ECap1Regs.ECCTL2.bit.SYNCO_SEL = EC_SYNCO_DIS;
-        //        ECap1Regs.ECCTL2.bit.SYNCI_EN = EC_DISABLE;
-        //        ECap1Regs.ECCTL2.bit.TSCTRSTOP = EC_RUN;
-
-        //        16.6.4
-        // Code snippet for CAP mode Delta Time, Rising and Falling
-        // edge triggers
-        // Initialization Time
-        //=======================
-        // ECAP module 1 config
-        ECap1Regs.ECCTL1.bit.CAP1POL = EC_RISING;
-        ECap1Regs.ECCTL1.bit.CAP2POL = EC_FALLING;
-        ECap1Regs.ECCTL1.bit.CAP3POL = EC_RISING;
-        ECap1Regs.ECCTL1.bit.CAP4POL = EC_FALLING;
-        ECap1Regs.ECCTL1.bit.CTRRST1 = EC_DELTA_MODE;
-        ECap1Regs.ECCTL1.bit.CTRRST2 = EC_DELTA_MODE;
-        ECap1Regs.ECCTL1.bit.CTRRST3 = EC_DELTA_MODE;
-        ECap1Regs.ECCTL1.bit.CTRRST4 = EC_DELTA_MODE;
-        ECap1Regs.ECCTL1.bit.CAPLDEN = EC_ENABLE;
-        ECap1Regs.ECCTL1.bit.PRESCALE = EC_DIV1;
-        ECap1Regs.ECCTL2.bit.CAP_APWM = EC_CAP_MODE;
-        ECap1Regs.ECCTL2.bit.CONT_ONESHT = EC_CONTINUOUS;
-        ECap1Regs.ECCTL2.bit.SYNCO_SEL = EC_SYNCO_DIS;
-        ECap1Regs.ECCTL2.bit.SYNCI_EN = EC_DISABLE;
-        ECap1Regs.ECCTL2.bit.TSCTRSTOP = EC_RUN;
-
-        // ECAP module 2 config
-        ECap2Regs.ECCTL1.bit.CAP1POL = EC_RISING;
-        ECap2Regs.ECCTL1.bit.CAP2POL = EC_FALLING;
-        ECap2Regs.ECCTL1.bit.CAP3POL = EC_RISING;
-        ECap2Regs.ECCTL1.bit.CAP4POL = EC_FALLING;
-        ECap2Regs.ECCTL1.bit.CTRRST1 = EC_DELTA_MODE;
-        ECap2Regs.ECCTL1.bit.CTRRST2 = EC_DELTA_MODE;
-        ECap2Regs.ECCTL1.bit.CTRRST3 = EC_DELTA_MODE;
-        ECap2Regs.ECCTL1.bit.CTRRST4 = EC_DELTA_MODE;
-        ECap2Regs.ECCTL1.bit.CAPLDEN = EC_ENABLE;
-        ECap2Regs.ECCTL1.bit.PRESCALE = EC_DIV1;
-        ECap2Regs.ECCTL2.bit.CAP_APWM = EC_CAP_MODE;
-        ECap2Regs.ECCTL2.bit.CONT_ONESHT = EC_CONTINUOUS;
-        ECap2Regs.ECCTL2.bit.SYNCO_SEL = EC_SYNCO_DIS;
-        ECap2Regs.ECCTL2.bit.SYNCI_EN = EC_DISABLE;
-        ECap2Regs.ECCTL2.bit.TSCTRSTOP = EC_RUN;
-
-        // ECAP module 3 config
-        ECap3Regs.ECCTL1.bit.CAP1POL = EC_RISING;
-        ECap3Regs.ECCTL1.bit.CAP2POL = EC_FALLING;
-        ECap3Regs.ECCTL1.bit.CAP3POL = EC_RISING;
-        ECap3Regs.ECCTL1.bit.CAP4POL = EC_FALLING;
-        ECap3Regs.ECCTL1.bit.CTRRST1 = EC_DELTA_MODE;
-        ECap3Regs.ECCTL1.bit.CTRRST2 = EC_DELTA_MODE;
-        ECap3Regs.ECCTL1.bit.CTRRST3 = EC_DELTA_MODE;
-        ECap3Regs.ECCTL1.bit.CTRRST4 = EC_DELTA_MODE;
-        ECap3Regs.ECCTL1.bit.CAPLDEN = EC_ENABLE;
-        ECap3Regs.ECCTL1.bit.PRESCALE = EC_DIV1;
-        ECap3Regs.ECCTL2.bit.CAP_APWM = EC_CAP_MODE;
-        ECap3Regs.ECCTL2.bit.CONT_ONESHT = EC_CONTINUOUS;
-        ECap3Regs.ECCTL2.bit.SYNCO_SEL = EC_SYNCO_DIS;
-        ECap3Regs.ECCTL2.bit.SYNCI_EN = EC_DISABLE;
-        ECap3Regs.ECCTL2.bit.TSCTRSTOP = EC_RUN;
-    }
-#endif
-
+__interrupt void ecap1_isr(void);
+__interrupt void ecap2_isr(void);
+__interrupt void ecap3_isr(void);
 void main(void){
 
     InitSysCtrl();
     DINT;                 // Disable CPU interrupts
     InitPieCtrl();        // Initialize the PIE control registers to their default state. The default state is all PIE interrupts disabled and flags are cleared.
-    IER = 0x0000;
-    IFR = 0x0000;         // Disable CPU interrupts and clear all CPU interrupt flags
+    IER = 0x0000;         // Disable CPU __interrupts and clear all CPU __interrupt flags
+    IFR = 0x0000;         // Disable CPU __interrupts and clear all CPU __interrupt flags
     InitPieVectTable();   // Initialize the PIE vector table with pointers to the shell Interrupt Service Routines (ISR).
     #if NUMBER_OF_DSP_CORES == 2
         IPCBootCPU2(C1C2_BROM_BOOTMODE_BOOT_FROM_FLASH);
     #endif
-            //    #ifdef _STANDALONE
-            //    #ifdef _FLASH
-            //        // 当你需要离线断电再上电运行时用这个：
-            //        //  Send boot command to allow the CPU02 application to begin execution
-            //        IPCBootCPU2(C1C2_BROM_BOOTMODE_BOOT_FROM_FLASH);
-            //    #else
-            //        //  Send boot command to allow the CPU02 application to begin execution
-            //        // 这句话我不知道什么意义，可能还是不要比较好。
-            //        //IPCBootCPU2(C1C2_BROM_BOOTMODE_BOOT_FROM_RAM);
-            //    #endif
-            //    #endif
+    #ifdef _STANDALONE
+    #ifdef _FLASH
+        // 当你需要离线断电再上电运行时用这个：
+        //  Send boot command to allow the CPU02 application to begin execution
+        IPCBootCPU2(C1C2_BROM_BOOTMODE_BOOT_FROM_FLASH);
+    #else
+        //  Send boot command to allow the CPU02 application to begin execution
+        // 这句话我不知道什么意义，可能还是不要比较好。
+        //IPCBootCPU2(C1C2_BROM_BOOTMODE_BOOT_FROM_RAM);
+    #endif
+    #endif
 
     Gpio_initialize();
     ePWM_initialize();
@@ -316,30 +54,41 @@ void main(void){
         }
     #endif
 
-    EALLOW;
+    /* PIE Vector Table */
+    EALLOW; // This is needed to write to EALLOW protected registers
     PieVectTable.EPWM1_INT = &SYSTEM_PROGRAM;     //&MainISR;      // PWM主中断 10kKHz
+    PieVectTable.ECAP1_INT = &ecap1_isr;
+//    PieVectTable.ECAP2_INT = &ecap2_isr;
+//    PieVectTable.ECAP3_INT = &ecap3_isr;
     #if SYSTEM_PROGRAM_MODE != 223
     PieVectTable.EQEP1_INT = &EQEP_UTO_INT;      // eqep
     #endif
-    EDIS;
-    PieCtrlRegs.PIEIER3.bit.INTx1 = 1;      //PWM1 interrupt
+    EDIS; // This is needed to disable write to EALLOW protected registers
+
+    /* PIE Control */
+    PieCtrlRegs.PIEIER3.bit.INTx1 = 1;      // PWM1 interrupt (Interrupt 3.1)
+    PieCtrlRegs.PIEIER4.bit.INTx1 = 1;      // Enable eCAP INTn in the PIE: Group 3 __interrupt 1--6 (Interrupt 4.1)
+    PieCtrlRegs.PIEIER4.bit.INTx2 = 1;      // 1 Enable for Interrupt 4.2
+    PieCtrlRegs.PIEIER4.bit.INTx3 = 1;      // 2 Enable for Interrupt 4.3
+
     #if SYSTEM_PROGRAM_MODE != 223
     PieCtrlRegs.PIEIER5.bit.INTx1 = 1;      //QEP interrupt
     #endif
 
-    IER |= M_INT5;
-    IER |= M_INT3;                          // EPWM1_INT
-    EINT;
-    ERTM;
+    /* CPU Interrupt Enable Register (IER) */
+    IER |= M_INT3;  // EPWM1_INT
+//    IER |= M_INT4;  // ECAP1_INT // CPU INT4 which is connected to ECAP1-4 INT
+    IER |= M_INT5;  // EQEP1_INT???
 
-    //_gExpState=EXP_START_SYSTEM;
+    EINT;   // Enable Global __interrupt INTM
+    ERTM;   // Enable Global realtime __interrupt DBGM
 
     STOP_LED1;
     STOP_LED2;
-
     DSP_ENPWM;
     DSP_2ENPWM;
 
+    /* Test IPC to CPU02 */
     #if NUMBER_OF_DSP_CORES == 2
         Write.dac_buffer[0] = 0.5;
         Write.dac_buffer[1] = 0.5;
@@ -361,13 +110,13 @@ void main(void){
         //#define Motor_mode_START    GpioDataRegs.GPADAT.bit.GPIO26          //DI Start Button
         if (Motor_mode_START==1)
         {
-            FLAG_ENABLE_PWM_OUTPUT = 1;
+            G.FLAG_ENABLE_PWM_OUTPUT = 1;
             //Enable_START_FLAG=1;
             //Enable_STOP_FLAG=0;
             START_LED1
             START_LED2
         }else if (Motor_mode_START==0){
-            FLAG_ENABLE_PWM_OUTPUT = 0;
+            G.FLAG_ENABLE_PWM_OUTPUT = 0;
             //Enable_START_FLAG=0;
             //Enable_STOP_FLAG=1;
             STOP_LED1
@@ -383,4 +132,85 @@ void main(void){
             }
         #endif
     }
+}
+
+
+Uint32 good_capture_counter_U[4] = {0,0,0,0};
+Uint32 good_capture_counter_V[4] = {0,0,0,0};
+Uint32 good_capture_counter_W[4] = {0,0,0,0};
+Uint64 ECap1IntCount=0;
+/*U*/
+u_bad_value_on1  = 0;
+u_bad_value_off1 = 0;
+u_bad_value_on2  = 0;
+u_bad_value_off2 = 0;
+__interrupt void ecap1_isr(void){
+
+// 如果采用下面这个代码，不能保证EPWM1中断来的时候已经采集到了当前的电压，更新频率也不够快！
+// 所以应该把ECAP中断改成一个脉冲中断一次，并检查其优先级。
+
+    ECap1IntCount++;
+
+    REAL CAP1, CAP2, CAP3, CAP4;
+    CAP1 = good_capture_counter_U[3];
+    CAP2 = good_capture_counter_U[4];
+    CAP3 = ECap1Regs.CAP1;
+    CAP4 = ECap1Regs.CAP2;
+
+    REAL DutyOnTime1  = CAP2;
+    REAL DutyOffTime1 = CAP3;
+    REAL DutyOnTime2  = CAP4;
+    REAL DutyOffTime2 = CAP1;
+    REAL Period1 = DutyOnTime1 + DutyOffTime1;
+    REAL Period2 = DutyOnTime2 + DutyOffTime2;
+
+    /* This is not the real period, if we use symmetric PWM,
+     * the center location of the square wave high
+     * to the next center location of the square wave high
+     * is the period. */
+
+    //if(Period1 < SYSTEM_HALF_PWM_MAX_COUNT){
+    //if(Period2 < SYSTEM_HALF_PWM_MAX_COUNT){
+
+    // On1 Off1 一起跌落(CAP2 and CAP3)
+    if( DutyOnTime1 + DutyOffTime1 < SYSTEM_HALF_PWM_MAX_COUNT ){
+        // This clause should never be entered when ECap1Regs.ECEINT.bit.CEVT2 = 1;
+        u_bad_value_on1  = 0;
+        u_bad_value_off1 = 0;
+    }
+    // On2 Off2 一起跌落(CAP4 and CAP1)
+    if( DutyOnTime2 + DutyOffTime2 < SYSTEM_HALF_PWM_MAX_COUNT ){
+        u_bad_value_on2  = 0;
+        u_bad_value_off2 = 0;
+    }
+
+    //    // 第一个脉冲的下降沿和第二个脉冲的上升，如果两者加起来特别小，则说明是跌落尖峰
+    //    if(ECap1Regs.CAP2 + ECap1Regs.CAP3 < SYSTEM_HALF_PWM_MAX_COUNT){
+    //        // 高电平时出现跌落尖峰，这两个CAP2/3作废，
+    //        // 但是此时的CAP1和4实际上是真正的CAP1和CAP2，而真正的CAP3和CAP4并没有被抓到。
+    //        good_capture_counter_U[0] = ECap1Regs.CAP1;
+    //        good_capture_counter_U[1] = ECap1Regs.CAP4;
+    //    }else{
+    //        // 有效
+    //        good_capture_counter_U[1] = ECap1Regs.CAP2;
+    //        good_capture_counter_U[2] = ECap1Regs.CAP3;
+    //    }
+    //    // 第二个脉冲的下降沿和第一二个脉冲的上升，如果两者加起来特别小，则说明是突升尖峰
+    //    if(ECap1Regs.CAP4 + ECap1Regs.CAP1 < SYSTEM_HALF_PWM_MAX_COUNT){
+    //        // 低高电平时出现突升尖峰，这两个CAP4/1作废
+    //    }else{
+    //        // 有效
+    //        good_capture_counter_U[3] = ECap1Regs.CAP4;
+    //        good_capture_counter_U[0] = ECap1Regs.CAP1;
+    //    }
+
+    //    do_enhanced_capture();
+
+    //ECap1Regs.ECCLR.bit.CEVT4 = 1; // 4 events == __interrupt
+    ECap1Regs.ECCLR.bit.CEVT2 = 1; // 2 events == __interrupt
+    ECap1Regs.ECCLR.bit.INT = 1;
+    ECap1Regs.ECCTL2.bit.REARM = 1;
+
+    // Acknowledge this __interrupt to receive more __interrupts from group 4
+    PieCtrlRegs.PIEACK.all = PIEACK_GROUP4;
 }

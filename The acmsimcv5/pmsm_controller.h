@@ -1,6 +1,13 @@
 #ifndef PMSM_CONTROLLER_H
 #define PMSM_CONTROLLER_H
 #if MACHINE_TYPE == 2
+typedef struct { 
+    float  Ualpha; // Input: reference alpha-axis phase voltage
+    float  Ubeta;  // Input: reference beta-axis phase voltage
+    float  Ta;     // Output: reference phase-a switching function
+    float  Tb;     // Output: reference phase-b switching function
+    float  Tc;     // Output: reference phase-c switching function
+} SVGENDQ;
 
 typedef struct {
     // commands
@@ -139,17 +146,37 @@ typedef struct {
     REAL theta_trapezoidal; // theta_t defined by Park.Sul-2012
 } st_InverterNonlinearity;
 typedef struct {
-    // REAL temp_xOmg;
-    // REAL temp_xOmg_filtered;
-    REAL Offset_Counter;
-    REAL Offset_W;
-    REAL Offset_V;
-    REAL Offset_U;
+    // ADC Offset
+        // Automatic Offset Removing
+        REAL Offset_Counter;
+        REAL Offset_W;
+        REAL Offset_V;
+        REAL Offset_U;
+        REAL Offset_Udc;
+        // Raw
+        REAL offsetU,offsetV,offsetW,offsetUDC; // ADC offset. U, V, W corresponds to ADCRESULT2, ADCRESULT3, ADCRESULT1.
+    // DAC
     REAL dac_offset[8];
-    //
-    REAL    dac_time;
+    REAL dac_time;
+    REAL dac_watch[60];
+    REAL dac_watch_stator_resistance;
+    // REAL type is not very accurate 64 missing by counting 1e-4 sec to 10 sec.
     Uint32  test_integer;
     REAL    test_float;
+    // Raw measurment for easy access
+    REAL Current_U, Current_V, Current_W, Current_Not_Used, Voltage_DC_BUS;
+    // Mode Changing During Experiment
+    int FLAG_ENABLE_PWM_OUTPUT; // 电机模式标志位
+    Uint16 Rotor_angle_selection; // delete?
+    REAL Set_manual_current_iq,Set_manual_current_id,Set_manual_rpm;
+    int DAC_MAX5307_FLAG; // for single core case
+    int AD_offset_flag2;
+    int bool_comm_status;
+    // Mode Changing During Experiment Debug
+    REAL OverwriteSpeedOutLimit; // = 2;
+    REAL Overwrite_Voltage_DC_BUS; // = 180;
+    int flag_overwite_voltage_dc_bus; // = FALSE;
+    int flag_use_ecap_voltage; // = 0;
 } st_global_variables;
 struct ControllerForExperiment{
 
@@ -163,11 +190,14 @@ struct ControllerForExperiment{
     st_enc *enc;
     st_psd *psd; // phase sequence detection
 
-    /* Controller parameters */
+    /* Inverter */
     st_InverterNonlinearity *inv;
+    SVGENDQ svgen1;
+
+    /* Console */
     st_global_variables *g;
 
-    /* Black Box Model */
+    /* Black Box Model | Controller quantities */
     st_controller_inputs  *I;
     st_controller_states  *S;
     st_controller_outputs *O;
