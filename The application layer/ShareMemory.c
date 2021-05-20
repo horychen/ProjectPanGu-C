@@ -15,7 +15,7 @@ struct IPC_MEMORY_READ Read;
 #pragma DATA_SECTION( Read, "SHARERAMGS0");
 
 //REAL G.dac_watch[50];
-#define NO_OF_CHANNELS 6
+#define NO_OF_CHANNELS 8
 //int channels[4]={2,3,14,15}; // 自整定
 //int channels[4]={2,3,14,16}; // 自整定
 //int channels[4]={4,5,6,7};
@@ -47,7 +47,7 @@ struct IPC_MEMORY_READ Read;
 //int channels[NO_OF_CHANNELS]={6,7,44,45,46,47};
 //int channels[NO_OF_CHANNELS]={46,47,20,21,6,7};
 
-int channels[NO_OF_CHANNELS]={38,39,40,41,42,43};
+int channels[NO_OF_CHANNELS]={46,47,20,21,6,7,59,59};
 int channels_preset = 0;
 
 REAL dac_time_that_cannot_be_modified = 0;
@@ -145,6 +145,8 @@ void write_DAC_buffer(){
         G.dac_watch[50] = (CAP.ecapU.DutyOnTime2)  * 0.25e-4;
         G.dac_watch[51] = (CAP.ecapU.DutyOffTime2) * 0.25e-4;
 
+        G.dac_watch[59] = sin(ENC.theta_d_elec - ELECTRICAL_POSITION_FEEDBACK);
+
 
         // information from d-axis voltage equation
         //temp_xOmg = (CTRL.O->udq_cmd[0] - CTRL.motor->R * CTRL.I->idq[0] ) / -CTRL.motor->Lq*CTRL.I->idq[1];
@@ -158,6 +160,7 @@ void write_DAC_buffer(){
             channels[3] = 21;
             channels[4] =  6;
             channels[5] =  7;
+            channels[6] = 59;
         }else if(channels_preset==2){channels_preset=0;
             /*ECAP Periods*/
             channels[0] = 38;
@@ -176,13 +179,15 @@ void write_DAC_buffer(){
             channels[5] = 47;
         }
 
-        // 四通道DAC输出，请修改channels数组来确定具体输出哪些G.dac_watch数组中的变量。
+        // 八通道DAC输出，请修改channels数组来确定具体输出哪些G.dac_watch数组中的变量。
         Write.dac_buffer[0] = G.dac_watch[channels[0]] + G.dac_offset[0];
         Write.dac_buffer[1] = G.dac_watch[channels[1]] + G.dac_offset[1];
         Write.dac_buffer[2] = G.dac_watch[channels[2]] + G.dac_offset[2];
         Write.dac_buffer[3] = G.dac_watch[channels[3]] + G.dac_offset[3];
         Write.dac_buffer[4] = G.dac_watch[channels[4]] + G.dac_offset[4];
         Write.dac_buffer[5] = G.dac_watch[channels[5]] + G.dac_offset[5];
+        Write.dac_buffer[6] = G.dac_watch[channels[6]] + G.dac_offset[6];
+        Write.dac_buffer[7] = G.dac_watch[channels[7]] + G.dac_offset[7];
 
         dac_time_that_cannot_be_modified += CL_TS;
         G.dac_time += CL_TS;
@@ -193,6 +198,8 @@ void write_DAC_buffer(){
             G.dac_offset[3] = 0.0087;
             G.dac_offset[4] = 0.006;
             G.dac_offset[5] = 0.002;
+            G.dac_offset[6] = 0.0;
+            G.dac_offset[7] = 0.0;
 
             Write.dac_buffer[0] = G.dac_offset[0];
             Write.dac_buffer[1] = G.dac_offset[1];
@@ -200,6 +207,8 @@ void write_DAC_buffer(){
             Write.dac_buffer[3] = G.dac_offset[3];
             Write.dac_buffer[4] = G.dac_offset[4];
             Write.dac_buffer[5] = G.dac_offset[5];
+            Write.dac_buffer[6] = G.dac_offset[6];
+            Write.dac_buffer[7] = G.dac_offset[7];
 
             G.test_integer += 1;
             G.test_float   +=CL_TS;

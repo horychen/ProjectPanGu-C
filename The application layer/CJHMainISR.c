@@ -205,7 +205,8 @@ void CJHMainISR(void){
         experiment_init();
 
         /* 750W MOTOR1 (wo/ hall) */
-        //CTRL.motor->KE = 0.095;
+        //CTRL.motor->R = 1.6;
+        CTRL.motor->KE = 0.095;
         //pid1_spd.OutLimit = 10;
 
         pid1_spd.OutLimit = G.OverwriteSpeedOutLimit;
@@ -299,9 +300,10 @@ void CJHMainISR(void){
 
 Uint64 EPWM1IntCount=0;
 __interrupt void EPWM1ISR(void){
-    CAP.password_isr_nesting = 178; // only if you can stop EPWM ISR, or else you won't know the value of password_isr_nesting.
     EPWM1IntCount += 1;
 
+#if USE_ECAP_CEVT2_INTERRUPT == 1
+    CAP.password_isr_nesting = 178; // only if you can stop EPWM ISR, or else you won't know the value of password_isr_nesting.
     /* Step 1. [eCAP] Set the global priority */
     // Set global priority by adjusting IER, so as to allow PIE group 4 to send interrupt flag to CPU stage.
     IER |= M_INT4; // Modify IER to allow CPU interrupts from PIE group 4 to be serviced. Part 1
@@ -316,18 +318,21 @@ __interrupt void EPWM1ISR(void){
     PieCtrlRegs.PIEACK.all = 0xFFFF;      // Enable PIE interrupts by writing all 1¡¯s to the PIEACK register
     asm("       NOP");                    // Wait at least one cycle
     EINT;                                 // Enable global interrupts by clearing INTM
+#endif
 
     /* Step 4. [ePWM] Execute EPWM ISR */
     CJHMainISR();
 
+#if USE_ECAP_CEVT2_INTERRUPT == 1
     /* Step 5. [eCAP] Disable interrupts */
     DINT;
 
     /* Step 6. [eCAP] Restore the PIEIERx register */
     PieCtrlRegs.PIEIER4.all = TempPIEIER4;
+    CAP.password_isr_nesting = 0;
+#endif
 
     /* Step 7. [ePWM] Exit EPWM1 ISR */
-    CAP.password_isr_nesting = 0;
     EPwm1Regs.ETCLR.bit.INT = 1;
     PieCtrlRegs.PIEACK.all |= PIEACK_GROUP3;
 }
