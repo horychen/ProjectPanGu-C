@@ -48,7 +48,6 @@ struct IPC_MEMORY_READ Read;
 //int channels[NO_OF_CHANNELS]={46,47,20,21,6,7};
 
 int channels[NO_OF_CHANNELS]={38,39,40,41,42,43};
-
 int channels_preset = 0;
 
 REAL dac_time_that_cannot_be_modified = 0;

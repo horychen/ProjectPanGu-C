@@ -300,35 +300,37 @@ void CJHMainISR(void){
 
 int down_freq_ecap_counter = 1;
 Uint64 EPWM1IntCount=0;
+int password_isr_nesting = 0;
 __interrupt void EPWM1ISR(void){
-
+    password_isr_nesting = 178; // only if you can stop EPWM ISR, or else you won't know the value of password_isr_nesting.
     EPWM1IntCount += 1;
 
-//    /* Step 1. Set the global priority */
-//    // Set global priority by adjusting IER, so as to allow PIE group 4 to send interrupt flag to CPU stage.
-//    IER |= M_INT4; // Modify IER to allow CPU interrupts from PIE group 4 to be serviced. Part 1
-//    IER &= M_INT4; // Modify IER to allow CPU interrupts from PIE group 4 to be serviced. Part 2
-//
-//    /* Step 2. Set the group priority */
-//    uint16_t TempPIEIER4;
-//    TempPIEIER4 = PieCtrlRegs.PIEIER2.all; // Save PIEIER register for later
-//    PieCtrlRegs.PIEIER4.all &= 0x7;        // Set group priority by adjusting PIEIER4 to allow INT4.1, 4.2, 4.3 to interrupt current ISR
-//
-//    /* Step 3. Enable interrupts */
-//    PieCtrlRegs.PIEACK.all = 0xFFFF;      // Enable PIE interrupts by writing all 1¡¯s to the PIEACK register
-//    asm("       NOP");                    // Wait at least one cycle
-//    EINT;                                 // Enable global interrupts by clearing INTM
+    /* Step 1. [eCAP] Set the global priority */
+    // Set global priority by adjusting IER, so as to allow PIE group 4 to send interrupt flag to CPU stage.
+    IER |= M_INT4; // Modify IER to allow CPU interrupts from PIE group 4 to be serviced. Part 1
+    IER &= M_INT4; // Modify IER to allow CPU interrupts from PIE group 4 to be serviced. Part 2
 
-    /* Step 4. Execute EPWM ISR */
+    /* Step 2. [eCAP] Set the group priority */
+    uint16_t TempPIEIER4;
+    TempPIEIER4 = PieCtrlRegs.PIEIER4.all; // Save PIEIER register for later
+    PieCtrlRegs.PIEIER4.all &= 0x7;        // Set group priority by adjusting PIEIER4 to allow INT4.1, 4.2, 4.3 to interrupt current ISR
+
+    /* Step 3. [eCAP] Enable interrupts */
+    PieCtrlRegs.PIEACK.all = 0xFFFF;      // Enable PIE interrupts by writing all 1¡¯s to the PIEACK register
+    asm("       NOP");                    // Wait at least one cycle
+    EINT;                                 // Enable global interrupts by clearing INTM
+
+    /* Step 4. [ePWM] Execute EPWM ISR */
     CJHMainISR();
 
-//    /* Step 5. Disable interrupts */
-//    DINT;
-//
-//    /* Step 6. Restore the PIEIERx register */
-//    PieCtrlRegs.PIEIER4.all = TempPIEIER4;
+    /* Step 5. [eCAP] Disable interrupts */
+    DINT;
 
-    /* Step 7. Exit EPWM1 ISR */
+    /* Step 6. [eCAP] Restore the PIEIERx register */
+    PieCtrlRegs.PIEIER4.all = TempPIEIER4;
+
+    /* Step 7. [ePWM] Exit EPWM1 ISR */
+    password_isr_nesting = 0;
     EPwm1Regs.ETCLR.bit.INT = 1;
     PieCtrlRegs.PIEACK.all |= PIEACK_GROUP3;
 }
