@@ -112,9 +112,11 @@ void InitECapture()
     ECap1Regs.ECCTL2.bit.TSCTRSTOP = 1;     // Start Counter
     ECap1Regs.ECCTL2.bit.REARM = 1;         // arm one-shot
     ECap1Regs.ECCTL1.bit.CAPLDEN = 1;       // Enable CAP1-CAP4 register loads
-    //ECap1Regs.ECEINT.bit.CEVT4 = 1;         // 4 events = __interrupt
+    #if USE_ECAP_CEVT2_INTERRUPT == 1
     ECap1Regs.ECEINT.bit.CEVT2 = 1;         // 2 events = __interrupt
-
+    #else
+    ECap1Regs.ECEINT.bit.CEVT4 = 1;         // 4 events = __interrupt
+    #endif
 
     /*ECAP 2*/
     ECap2Regs.ECEINT.all = 0x0000;          // Disable all capture __interrupts
@@ -131,8 +133,11 @@ void InitECapture()
     ECap2Regs.ECCTL2.bit.TSCTRSTOP = 1;     // Start Counter
     ECap2Regs.ECCTL2.bit.REARM = 1;         // arm one-shot
     ECap2Regs.ECCTL1.bit.CAPLDEN = 1;       // Enable CAP1-CAP4 register loads
-    //ECap2Regs.ECEINT.bit.CEVT4 = 1;         // 4 events = __interrupt
+    #if USE_ECAP_CEVT2_INTERRUPT == 1
     ECap2Regs.ECEINT.bit.CEVT2 = 1;         // 2 events = __interrupt
+    #else
+    ECap2Regs.ECEINT.bit.CEVT4 = 1;         // 4 events = __interrupt
+    #endif
 
     /*ECAP 3*/
     ECap3Regs.ECEINT.all = 0x0000;          // Disable all capture __interrupts
@@ -149,8 +154,11 @@ void InitECapture()
     ECap3Regs.ECCTL2.bit.TSCTRSTOP = 1;     // Start Counter
     ECap3Regs.ECCTL2.bit.REARM = 1;         // arm one-shot
     ECap3Regs.ECCTL1.bit.CAPLDEN = 1;       // Enable CAP1-CAP4 register loads
-    //ECap3Regs.ECEINT.bit.CEVT4 = 1;         // 4 events = __interrupt
+    #if USE_ECAP_CEVT2_INTERRUPT == 1
     ECap3Regs.ECEINT.bit.CEVT2 = 1;         // 2 events = __interrupt
+    #else
+    ECap3Regs.ECEINT.bit.CEVT4 = 1;         // 4 events = __interrupt
+    #endif
 }
 
 // ECCTL1 (ECAP Control Reg 1)
@@ -249,8 +257,13 @@ void InitECaptureContinuousMode(){
     ECap1Regs.ECCTL1.bit.CAP4POL = EC_FALLING;
     ECap1Regs.ECCTL1.bit.CTRRST1 = EC_DELTA_MODE;
     ECap1Regs.ECCTL1.bit.CTRRST2 = EC_DELTA_MODE;
-    ECap1Regs.ECCTL1.bit.CTRRST3 = EC_ABS_MODE; // CEVT2
-    ECap1Regs.ECCTL1.bit.CTRRST4 = EC_ABS_MODE; // CEVT2
+    #if USE_ECAP_CEVT2_INTERRUPT == 1
+        ECap1Regs.ECCTL1.bit.CTRRST3 = EC_ABS_MODE; // CEVT2
+        ECap1Regs.ECCTL1.bit.CTRRST4 = EC_ABS_MODE; // CEVT2
+    #else
+        ECap1Regs.ECCTL1.bit.CTRRST3 = EC_DELTA_MODE; // CEVT4
+        ECap1Regs.ECCTL1.bit.CTRRST4 = EC_DELTA_MODE; // CEVT4
+    #endif
     ECap1Regs.ECCTL1.bit.CAPLDEN = EC_ENABLE;
     ECap1Regs.ECCTL1.bit.PRESCALE = EC_DIV1;
     ECap1Regs.ECCTL2.bit.CAP_APWM = EC_CAP_MODE;
@@ -266,8 +279,13 @@ void InitECaptureContinuousMode(){
     ECap2Regs.ECCTL1.bit.CAP4POL = EC_FALLING;
     ECap2Regs.ECCTL1.bit.CTRRST1 = EC_DELTA_MODE;
     ECap2Regs.ECCTL1.bit.CTRRST2 = EC_DELTA_MODE;
-    ECap2Regs.ECCTL1.bit.CTRRST3 = EC_ABS_MODE; // CEVT2
-    ECap2Regs.ECCTL1.bit.CTRRST4 = EC_ABS_MODE; // CEVT2
+    #if USE_ECAP_CEVT2_INTERRUPT == 1
+        ECap2Regs.ECCTL1.bit.CTRRST3 = EC_ABS_MODE; // CEVT2
+        ECap2Regs.ECCTL1.bit.CTRRST4 = EC_ABS_MODE; // CEVT2
+    #else
+        ECap2Regs.ECCTL1.bit.CTRRST3 = EC_DELTA_MODE; // CEVT4
+        ECap2Regs.ECCTL1.bit.CTRRST4 = EC_DELTA_MODE; // CEVT4
+    #endif
     ECap2Regs.ECCTL1.bit.CAPLDEN = EC_ENABLE;
     ECap2Regs.ECCTL1.bit.PRESCALE = EC_DIV1;
     ECap2Regs.ECCTL2.bit.CAP_APWM = EC_CAP_MODE;
@@ -283,8 +301,13 @@ void InitECaptureContinuousMode(){
     ECap3Regs.ECCTL1.bit.CAP4POL = EC_FALLING;
     ECap3Regs.ECCTL1.bit.CTRRST1 = EC_DELTA_MODE;
     ECap3Regs.ECCTL1.bit.CTRRST2 = EC_DELTA_MODE;
-    ECap3Regs.ECCTL1.bit.CTRRST3 = EC_ABS_MODE; // CEVT2
-    ECap3Regs.ECCTL1.bit.CTRRST4 = EC_ABS_MODE; // CEVT2
+    #if USE_ECAP_CEVT2_INTERRUPT == 1
+        ECap3Regs.ECCTL1.bit.CTRRST3 = EC_ABS_MODE; // CEVT2
+        ECap3Regs.ECCTL1.bit.CTRRST4 = EC_ABS_MODE; // CEVT2
+    #else
+        ECap3Regs.ECCTL1.bit.CTRRST3 = EC_DELTA_MODE; // CEVT4
+        ECap3Regs.ECCTL1.bit.CTRRST4 = EC_DELTA_MODE; // CEVT4
+    #endif
     ECap3Regs.ECCTL1.bit.CAPLDEN = EC_ENABLE;
     ECap3Regs.ECCTL1.bit.PRESCALE = EC_DIV1;
     ECap3Regs.ECCTL2.bit.CAP_APWM = EC_CAP_MODE;
