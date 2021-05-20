@@ -249,8 +249,8 @@ void InitECaptureContinuousMode(){
     ECap1Regs.ECCTL1.bit.CAP4POL = EC_FALLING;
     ECap1Regs.ECCTL1.bit.CTRRST1 = EC_DELTA_MODE;
     ECap1Regs.ECCTL1.bit.CTRRST2 = EC_DELTA_MODE;
-    ECap1Regs.ECCTL1.bit.CTRRST3 = EC_DELTA_MODE;
-    ECap1Regs.ECCTL1.bit.CTRRST4 = EC_DELTA_MODE;
+    ECap1Regs.ECCTL1.bit.CTRRST3 = EC_ABS_MODE; // CEVT2
+    ECap1Regs.ECCTL1.bit.CTRRST4 = EC_ABS_MODE; // CEVT2
     ECap1Regs.ECCTL1.bit.CAPLDEN = EC_ENABLE;
     ECap1Regs.ECCTL1.bit.PRESCALE = EC_DIV1;
     ECap1Regs.ECCTL2.bit.CAP_APWM = EC_CAP_MODE;
@@ -266,8 +266,8 @@ void InitECaptureContinuousMode(){
     ECap2Regs.ECCTL1.bit.CAP4POL = EC_FALLING;
     ECap2Regs.ECCTL1.bit.CTRRST1 = EC_DELTA_MODE;
     ECap2Regs.ECCTL1.bit.CTRRST2 = EC_DELTA_MODE;
-    ECap2Regs.ECCTL1.bit.CTRRST3 = EC_DELTA_MODE;
-    ECap2Regs.ECCTL1.bit.CTRRST4 = EC_DELTA_MODE;
+    ECap2Regs.ECCTL1.bit.CTRRST3 = EC_ABS_MODE; // CEVT2
+    ECap2Regs.ECCTL1.bit.CTRRST4 = EC_ABS_MODE; // CEVT2
     ECap2Regs.ECCTL1.bit.CAPLDEN = EC_ENABLE;
     ECap2Regs.ECCTL1.bit.PRESCALE = EC_DIV1;
     ECap2Regs.ECCTL2.bit.CAP_APWM = EC_CAP_MODE;
@@ -283,8 +283,8 @@ void InitECaptureContinuousMode(){
     ECap3Regs.ECCTL1.bit.CAP4POL = EC_FALLING;
     ECap3Regs.ECCTL1.bit.CTRRST1 = EC_DELTA_MODE;
     ECap3Regs.ECCTL1.bit.CTRRST2 = EC_DELTA_MODE;
-    ECap3Regs.ECCTL1.bit.CTRRST3 = EC_DELTA_MODE;
-    ECap3Regs.ECCTL1.bit.CTRRST4 = EC_DELTA_MODE;
+    ECap3Regs.ECCTL1.bit.CTRRST3 = EC_ABS_MODE; // CEVT2
+    ECap3Regs.ECCTL1.bit.CTRRST4 = EC_ABS_MODE; // CEVT2
     ECap3Regs.ECCTL1.bit.CAPLDEN = EC_ENABLE;
     ECap3Regs.ECCTL1.bit.PRESCALE = EC_DIV1;
     ECap3Regs.ECCTL2.bit.CAP_APWM = EC_CAP_MODE;
@@ -361,8 +361,8 @@ __interrupt void ecap1_isr(void){
     CAP4 = ECap1Regs.CAP2;
 
     Uint32 DutyOnTime1  = CAP2;
-    Uint32 DutyOffTime1 = CAP3;
-    Uint32 DutyOnTime2  = CAP4;
+    Uint32 DutyOffTime1 = CAP3; // if OnTime2 is 0, then OffTime2 becomes 20000.
+    Uint32 DutyOnTime2  = CAP4; // if OnTime2 is 0, then OffTime2 becomes 20000.
     Uint32 DutyOffTime2 = CAP1;
 
         //Uint32 Period1 = DutyOnTime1 + DutyOffTime1;
@@ -377,19 +377,23 @@ __interrupt void ecap1_isr(void){
     // On1 Off1 一起跌落(CAP2 and CAP3) 
     // 用4444这么大的数字，而不是444，是因为我发现有时候V相测量得到的ON1和OFF1分别为9000+和9000+，加起来小于19000，判断为bad，但是这应该是属于正常的捕获。
     // 棘手的是，V相的CAP1有时候会读为20000+，这尼玛是为什么？
-    if( ( (DutyOnTime1+DutyOffTime1<SYSTEM_PWM_MAX_COUNT-4444) || (DutyOnTime1+DutyOffTime1>SYSTEM_PWM_MAX_COUNT+4444) )
-        || // and or or? 
-        ( DutyOnTime1<50 || DutyOffTime1<50 ) ){
+    if( ( (DutyOnTime1+DutyOffTime1<SYSTEM_PWM_MAX_COUNT-4444) || (DutyOnTime1+DutyOffTime1>SYSTEM_PWM_MAX_COUNT+4444) ) ){
+        // || // and or or? 
+        // ( DutyOnTime1<50 || DutyOffTime1<50 ) ){
         // This clause should never be entered when ECap1Regs.ECEINT.bit.CEVT2 = 1;
-        CAP.u_ecap_bad.on1  = DutyOnTime1;
-        CAP.u_ecap_bad.off1 = DutyOffTime1;
+        CAP.u_ecap_bad1.on1  = DutyOnTime1;
+        CAP.u_ecap_bad1.off1 = DutyOffTime1;
+        CAP.u_ecap_bad1.on2  = DutyOnTime2;
+        CAP.u_ecap_bad1.off2 = DutyOffTime2;
     }
     // On2 Off2 一起跌落(CAP4 and CAP1)
-    else if( ( (DutyOnTime2+DutyOffTime2<SYSTEM_PWM_MAX_COUNT-4444) || (DutyOnTime2+DutyOffTime2>SYSTEM_PWM_MAX_COUNT+4444) )
-        || // and or or? 
-        ( DutyOnTime2<50 || DutyOffTime2<50 ) ){
-        CAP.u_ecap_bad.on2  = DutyOnTime2;
-        CAP.u_ecap_bad.off2 = DutyOffTime2;
+    else if( ( (DutyOnTime2+DutyOffTime2<SYSTEM_PWM_MAX_COUNT-4444) || (DutyOnTime2+DutyOffTime2>SYSTEM_PWM_MAX_COUNT+4444) ) ){
+        // || // and or or? 
+        // ( DutyOnTime2<50 || DutyOffTime2<50 ) ){
+        CAP.u_ecap_bad2.on1  = DutyOnTime1;
+        CAP.u_ecap_bad2.off1 = DutyOffTime1;
+        CAP.u_ecap_bad2.on2  = DutyOnTime2;
+        CAP.u_ecap_bad2.off2 = DutyOffTime2;
     }
     // Everything is good?
     else{
@@ -458,19 +462,23 @@ __interrupt void ecap2_isr(void){
     Uint32 DutyOffTime2 = CAP1;
 
     // On1 Off1 一起跌落(CAP2 and CAP3)
-    if( ( (DutyOnTime1+DutyOffTime1<SYSTEM_PWM_MAX_COUNT-4444) || (DutyOnTime1+DutyOffTime1>SYSTEM_PWM_MAX_COUNT+4444) )
-        || // and or or? 
-        ( DutyOnTime1<50 || DutyOffTime1<50 ) ){
+    if( ( (DutyOnTime1+DutyOffTime1<SYSTEM_PWM_MAX_COUNT-4444) || (DutyOnTime1+DutyOffTime1>SYSTEM_PWM_MAX_COUNT+4444) ) ){
+        // || // and or or? 
+        // ( DutyOnTime1<50 || DutyOffTime1<50 ) ){
         // This clause should never be entered when ECap1Regs.ECEINT.bit.CEVT2 = 1;
-        CAP.v_ecap_bad.on1  = DutyOnTime1;
-        CAP.v_ecap_bad.off1 = DutyOffTime1;
+        CAP.v_ecap_bad1.on1  = DutyOnTime1;
+        CAP.v_ecap_bad1.off1 = DutyOffTime1;
+        CAP.v_ecap_bad1.on2  = DutyOnTime2;
+        CAP.v_ecap_bad1.off2 = DutyOffTime2;
     }
     // On2 Off2 一起跌落(CAP4 and CAP1)
-    else if( ( (DutyOnTime2+DutyOffTime2<SYSTEM_PWM_MAX_COUNT-4444) || (DutyOnTime2+DutyOffTime2>SYSTEM_PWM_MAX_COUNT+4444) )
-        || // and or or? 
-        ( DutyOnTime2<50 || DutyOffTime2<50 ) ){
-        CAP.v_ecap_bad.on2  = DutyOnTime2;
-        CAP.v_ecap_bad.off2 = DutyOffTime2;
+    else if( ( (DutyOnTime2+DutyOffTime2<SYSTEM_PWM_MAX_COUNT-4444) || (DutyOnTime2+DutyOffTime2>SYSTEM_PWM_MAX_COUNT+4444) ) ){
+        // || // and or or? 
+        // ( DutyOnTime2<50 || DutyOffTime2<50 ) ){
+        CAP.v_ecap_bad2.on1  = DutyOnTime1;
+        CAP.v_ecap_bad2.off1 = DutyOffTime1;
+        CAP.v_ecap_bad2.on2  = DutyOnTime2;
+        CAP.v_ecap_bad2.off2 = DutyOffTime2;
     }
     // Everything is good?
     else{
@@ -510,19 +518,23 @@ __interrupt void ecap3_isr(void){
     Uint32 DutyOffTime2 = CAP1;
 
     // On1 Off1 一起跌落(CAP2 and CAP3)
-    if( ( (DutyOnTime1+DutyOffTime1<SYSTEM_PWM_MAX_COUNT-4444) || (DutyOnTime1+DutyOffTime1>SYSTEM_PWM_MAX_COUNT+4444) )
-        || // and or or? 
-        ( DutyOnTime1<50 || DutyOffTime1<50 ) ){
+    if( ( (DutyOnTime1+DutyOffTime1<SYSTEM_PWM_MAX_COUNT-4444) || (DutyOnTime1+DutyOffTime1>SYSTEM_PWM_MAX_COUNT+4444) ) ){
+        // || // and or or? 
+        // ( DutyOnTime1<50 || DutyOffTime1<50 ) ){
         // This clause should never be entered when ECap1Regs.ECEINT.bit.CEVT2 = 1;
-        CAP.w_ecap_bad.on1  = DutyOnTime1;
-        CAP.w_ecap_bad.off1 = DutyOffTime1;
+        CAP.w_ecap_bad1.on1  = DutyOnTime1;
+        CAP.w_ecap_bad1.off1 = DutyOffTime1;
+        CAP.w_ecap_bad1.on2  = DutyOnTime2;
+        CAP.w_ecap_bad1.off2 = DutyOffTime2;
     }
     // On2 Off2 一起跌落(CAP4 and CAP1)
-    else if( ( (DutyOnTime2+DutyOffTime2<SYSTEM_PWM_MAX_COUNT-4444) || (DutyOnTime2+DutyOffTime2>SYSTEM_PWM_MAX_COUNT+4444) )
-        || // and or or? 
-        ( DutyOnTime2<50 || DutyOffTime2<50 ) ){
-        CAP.w_ecap_bad.on2  = DutyOnTime2;
-        CAP.w_ecap_bad.off2 = DutyOffTime2;
+    else if( ( (DutyOnTime2+DutyOffTime2<SYSTEM_PWM_MAX_COUNT-4444) || (DutyOnTime2+DutyOffTime2>SYSTEM_PWM_MAX_COUNT+4444) ) ){
+        // || // and or or? 
+        // ( DutyOnTime2<50 || DutyOffTime2<50 ) ){
+        CAP.w_ecap_bad2.on1  = DutyOnTime1;
+        CAP.w_ecap_bad2.off1 = DutyOffTime1;
+        CAP.w_ecap_bad2.on2  = DutyOnTime2;
+        CAP.w_ecap_bad2.off2 = DutyOffTime2;
     }
     // Everything is good?
     else{
