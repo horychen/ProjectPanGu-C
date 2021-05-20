@@ -6,16 +6,11 @@
 #define ALL_DEFINITATION_H
 #include "math.h"
 //#include "IQmathLib.h"            //硬件库 StepAngle
-/* DSP system Configuration-----------------------------------------------------------------------------------*/
+/* DSP system Configuration------------------------------------------------------------------*/
     #include "F2837xD_Cla_typedefs.h"  // F2837xD CLA Type definitions
     #include "F2837xD_device.h"        // F2837xD Headerfile Include File
     #include "F2837xD_Examples.h"      // F2837xD Examples Include File
-/* 宏定义布尔类型 */
-    #define BOOL int
-    #define TRUE 1
-    #define FALSE 0
 /* 经常需要修改的宏定义声明文件 */
-    #include <All_User_Config.h>
     #include "ACMConfig.h"
     #include "ACMSim.h"
 /* Logic  -----------------------------------------------------------------------------------*/
@@ -40,12 +35,15 @@
     #include "F2837xD_sdfm_drivers.h"
     #include "ShareMemory.h"
     void MemCopy(Uint16 *SourceAddr, Uint16* SourceEndAddr, Uint16* DestAddr);//flash
-/*  Motor Library file-----------------------------------------------------------------------------------*/
+/* Motor Library file------------------------------------------------------------------------*/
     //未来需要修改成结构体
-    interrupt void EPWM1ISR(void);
-    interrupt void EQEP_UTO_INT(void);
+    __interrupt void EPWM1ISR(void);
+    __interrupt void ecap1_isr(void);
+    __interrupt void ecap2_isr(void);
+    __interrupt void ecap3_isr(void);
+    __interrupt void EQEP_UTO_INT(void);
     void SVGEN_Drive(SVGENDQ* ptrV);
-/* Hardware Peripherals Configuration -----------------------------------------------------------------------------------*/
+/* Hardware Peripherals Configuration -------------------------------------------------------*/
     void PWM_1ch_UpDwnCnt_CNF(int16 n, Uint16 period, int16 db);
     void ePWM_initialize(void);
     void eQEP_initialize(int m);

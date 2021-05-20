@@ -6,100 +6,93 @@
  */
 #include <All_Definition.h>
 
-struct TestECapture ecapU, ecapV, ecapW;
-int flag_nonlinear_filtering = FALSE;
-int flag_bad_U_capture = FALSE;
-int flag_bad_V_capture = FALSE;
-int flag_bad_W_capture = FALSE;
-extern Uint32 good_capture_U[4];
-extern Uint32 good_capture_V[4];
-extern Uint32 good_capture_W[4];
+
 #define USE_ECAP_CEVT2_INTERRUPT 1
 void do_enhanced_capture(){    // Section 16.6.4 // The 32 bit counter is stored in ECap1Regs.TSCTR
     /*UVW*/
     #if USE_ECAP_CEVT2_INTERRUPT == 1
-        ecapU.DutyOnTime1  = good_capture_U[1];
-        ecapU.DutyOffTime1 = good_capture_U[2];
-        ecapU.DutyOnTime2  = good_capture_U[3];
-        ecapU.DutyOffTime2 = good_capture_U[0];
-        ecapV.DutyOnTime1  = good_capture_V[1];
-        ecapV.DutyOffTime1 = good_capture_V[2];
-        ecapV.DutyOnTime2  = good_capture_V[3];
-        ecapV.DutyOffTime2 = good_capture_V[0];
-        ecapW.DutyOnTime1  = good_capture_W[1];
-        ecapW.DutyOffTime1 = good_capture_W[2];
-        ecapW.DutyOnTime2  = good_capture_W[3];
-        ecapW.DutyOffTime2 = good_capture_W[0];
+        CAP.ecapU.DutyOnTime1  = CAP.good_capture_U[1];
+        CAP.ecapU.DutyOffTime1 = CAP.good_capture_U[2];
+        CAP.ecapU.DutyOnTime2  = CAP.good_capture_U[3];
+        CAP.ecapU.DutyOffTime2 = CAP.good_capture_U[0];
+        CAP.ecapV.DutyOnTime1  = CAP.good_capture_V[1];
+        CAP.ecapV.DutyOffTime1 = CAP.good_capture_V[2];
+        CAP.ecapV.DutyOnTime2  = CAP.good_capture_V[3];
+        CAP.ecapV.DutyOffTime2 = CAP.good_capture_V[0];
+        CAP.ecapW.DutyOnTime1  = CAP.good_capture_W[1];
+        CAP.ecapW.DutyOffTime1 = CAP.good_capture_W[2];
+        CAP.ecapW.DutyOnTime2  = CAP.good_capture_W[3];
+        CAP.ecapW.DutyOffTime2 = CAP.good_capture_W[0];
     #else
-        ecapU.DutyOnTime1  = ECap1Regs.CAP2;
-        ecapU.DutyOffTime1 = ECap1Regs.CAP3;
-        ecapU.DutyOnTime2  = ECap1Regs.CAP4;
-        ecapU.DutyOffTime2 = ECap1Regs.CAP1;
-        ecapV.DutyOnTime1  = ECap2Regs.CAP2;
-        ecapV.DutyOffTime1 = ECap2Regs.CAP3;
-        ecapV.DutyOnTime2  = ECap2Regs.CAP4;
-        ecapV.DutyOffTime2 = ECap2Regs.CAP1;
-        ecapW.DutyOnTime1  = ECap3Regs.CAP2;
-        ecapW.DutyOffTime1 = ECap3Regs.CAP3;
-        ecapW.DutyOnTime2  = ECap3Regs.CAP4;
-        ecapW.DutyOffTime2 = ECap3Regs.CAP1;
+        CAP.ecapU.DutyOnTime1  = ECap1Regs.CAP2;
+        CAP.ecapU.DutyOffTime1 = ECap1Regs.CAP3;
+        CAP.ecapU.DutyOnTime2  = ECap1Regs.CAP4;
+        CAP.ecapU.DutyOffTime2 = ECap1Regs.CAP1;
+        CAP.ecapV.DutyOnTime1  = ECap2Regs.CAP2;
+        CAP.ecapV.DutyOffTime1 = ECap2Regs.CAP3;
+        CAP.ecapV.DutyOnTime2  = ECap2Regs.CAP4;
+        CAP.ecapV.DutyOffTime2 = ECap2Regs.CAP1;
+        CAP.ecapW.DutyOnTime1  = ECap3Regs.CAP2;
+        CAP.ecapW.DutyOffTime1 = ECap3Regs.CAP3;
+        CAP.ecapW.DutyOnTime2  = ECap3Regs.CAP4;
+        CAP.ecapW.DutyOffTime2 = ECap3Regs.CAP1;
     #endif
-    ecapU.Period1 = ecapU.DutyOnTime1 + ecapU.DutyOffTime1;
-    ecapU.Period2 = ecapU.DutyOnTime2 + ecapU.DutyOffTime2;
-    ecapV.Period1 = ecapV.DutyOnTime1 + ecapV.DutyOffTime1;
-    ecapV.Period2 = ecapV.DutyOnTime2 + ecapV.DutyOffTime2;
-    ecapW.Period1 = ecapW.DutyOnTime1 + ecapW.DutyOffTime1;
-    ecapW.Period2 = ecapW.DutyOnTime2 + ecapW.DutyOffTime2;
+    CAP.ecapU.Period1 = CAP.ecapU.DutyOnTime1 + CAP.ecapU.DutyOffTime1;
+    CAP.ecapU.Period2 = CAP.ecapU.DutyOnTime2 + CAP.ecapU.DutyOffTime2;
+    CAP.ecapV.Period1 = CAP.ecapV.DutyOnTime1 + CAP.ecapV.DutyOffTime1;
+    CAP.ecapV.Period2 = CAP.ecapV.DutyOnTime2 + CAP.ecapV.DutyOffTime2;
+    CAP.ecapW.Period1 = CAP.ecapW.DutyOnTime1 + CAP.ecapW.DutyOffTime1;
+    CAP.ecapW.Period2 = CAP.ecapW.DutyOnTime2 + CAP.ecapW.DutyOffTime2;
 
     /* Nonlinear Filtering of the disturbance */
-    flag_bad_U_capture = FALSE;
-    flag_bad_V_capture = FALSE;
-    flag_bad_W_capture = FALSE;
-    if(flag_nonlinear_filtering){
+    CAP.flag_bad_U_capture = FALSE;
+    CAP.flag_bad_V_capture = FALSE;
+    CAP.flag_bad_W_capture = FALSE;
+    if(CAP.flag_nonlinear_filtering){
         /*U 注意Uiint32不能做减法（非常容易出错）！*/
-        if( fabs((double)SYSTEM_PWM_MAX_COUNT - (double)ecapU.DutyOnTime1 - (double)ecapU.DutyOffTime1) > 4444.0 ||
-            fabs((double)SYSTEM_PWM_MAX_COUNT - (double)ecapU.DutyOnTime2 - (double)ecapU.DutyOffTime2) > 4444.0
+        if( fabs((double)SYSTEM_PWM_MAX_COUNT - (double)CAP.ecapU.DutyOnTime1 - (double)CAP.ecapU.DutyOffTime1) > 4444.0 ||
+            fabs((double)SYSTEM_PWM_MAX_COUNT - (double)CAP.ecapU.DutyOnTime2 - (double)CAP.ecapU.DutyOffTime2) > 4444.0
           ){
-            flag_bad_U_capture = TRUE;
+            CAP.flag_bad_U_capture = TRUE;
         }
 
         /*V*/
-        if( fabs((double)SYSTEM_PWM_MAX_COUNT - (double)ecapV.DutyOnTime1 - (double)ecapV.DutyOffTime1) > 4444.0 ||
-            fabs((double)SYSTEM_PWM_MAX_COUNT - (double)ecapV.DutyOnTime2 - (double)ecapV.DutyOffTime2) > 4444.0
+        if( fabs((double)SYSTEM_PWM_MAX_COUNT - (double)CAP.ecapV.DutyOnTime1 - (double)CAP.ecapV.DutyOffTime1) > 4444.0 ||
+            fabs((double)SYSTEM_PWM_MAX_COUNT - (double)CAP.ecapV.DutyOnTime2 - (double)CAP.ecapV.DutyOffTime2) > 4444.0
           ){
-            flag_bad_V_capture = TRUE;
+            CAP.flag_bad_V_capture = TRUE;
         }
 
         /*W*/
-        if( fabs((double)SYSTEM_PWM_MAX_COUNT - (double)ecapW.DutyOnTime1 - (double)ecapW.DutyOffTime1) > 4444.0 ||
-            fabs((double)SYSTEM_PWM_MAX_COUNT - (double)ecapW.DutyOnTime2 - (double)ecapW.DutyOffTime2) > 4444.0
+        if( fabs((double)SYSTEM_PWM_MAX_COUNT - (double)CAP.ecapW.DutyOnTime1 - (double)CAP.ecapW.DutyOffTime1) > 4444.0 ||
+            fabs((double)SYSTEM_PWM_MAX_COUNT - (double)CAP.ecapW.DutyOnTime2 - (double)CAP.ecapW.DutyOffTime2) > 4444.0
           ){
-            flag_bad_W_capture = TRUE;
+            CAP.flag_bad_W_capture = TRUE;
         }
 
-        if(!flag_bad_U_capture){
-            CTRL.I->ecap_terminal_DutyOnRatio[0] = 0.5*(ecapU.DutyOnTime1 + ecapU.DutyOnTime2) * SYSTEM_PWM_MAX_COUNT_INVERSE;
-            CTRL.I->ecap_pwm_time = 0.5*(ecapU.Period1 + ecapU.Period2);
+        if(!CAP.flag_bad_U_capture){
+            CAP.terminal_DutyOnRatio[0] = 0.5*(CAP.ecapU.DutyOnTime1 + CAP.ecapU.DutyOnTime2) * SYSTEM_PWM_MAX_COUNT_INVERSE;
+            CAP.pwm_time = 0.5*(CAP.ecapU.Period1 + CAP.ecapU.Period2);
         }
-        if(!flag_bad_V_capture){
-            CTRL.I->ecap_terminal_DutyOnRatio[1] = 0.5*(ecapV.DutyOnTime1 + ecapV.DutyOnTime2) * SYSTEM_PWM_MAX_COUNT_INVERSE;
+        if(!CAP.flag_bad_V_capture){
+            CAP.terminal_DutyOnRatio[1] = 0.5*(CAP.ecapV.DutyOnTime1 + CAP.ecapV.DutyOnTime2) * SYSTEM_PWM_MAX_COUNT_INVERSE;
         }
-        if(!flag_bad_W_capture){
-            CTRL.I->ecap_terminal_DutyOnRatio[2] = 0.5*(ecapW.DutyOnTime1 + ecapW.DutyOnTime2) * SYSTEM_PWM_MAX_COUNT_INVERSE;
+        if(!CAP.flag_bad_W_capture){
+            CAP.terminal_DutyOnRatio[2] = 0.5*(CAP.ecapW.DutyOnTime1 + CAP.ecapW.DutyOnTime2) * SYSTEM_PWM_MAX_COUNT_INVERSE;
         }
 
     }else{
 
         //    TODO: accuracy can be further improve by replacing SYSTEM_PWM_MAX_COUNT_INVERSE with actual period measured? No, the period is not accurate as the duty ratio is chaning.
         /*API to global variable CTRL with two point moving average*/
-        CTRL.I->ecap_terminal_DutyOnRatio[0] = 0.5*(ecapU.DutyOnTime1 + ecapU.DutyOnTime2) * SYSTEM_PWM_MAX_COUNT_INVERSE;
-        CTRL.I->ecap_terminal_DutyOnRatio[1] = 0.5*(ecapV.DutyOnTime1 + ecapV.DutyOnTime2) * SYSTEM_PWM_MAX_COUNT_INVERSE;
-        CTRL.I->ecap_terminal_DutyOnRatio[2] = 0.5*(ecapW.DutyOnTime1 + ecapW.DutyOnTime2) * SYSTEM_PWM_MAX_COUNT_INVERSE; // / (0.5*(ecapW.Period1+ecapW.Period2))
-        CTRL.I->ecap_pwm_time = 0.5*(ecapU.Period1 + ecapU.Period2);
+        CAP.terminal_DutyOnRatio[0] = 0.5*(CAP.ecapU.DutyOnTime1 + CAP.ecapU.DutyOnTime2) * SYSTEM_PWM_MAX_COUNT_INVERSE;
+        CAP.terminal_DutyOnRatio[1] = 0.5*(CAP.ecapV.DutyOnTime1 + CAP.ecapV.DutyOnTime2) * SYSTEM_PWM_MAX_COUNT_INVERSE;
+        CAP.terminal_DutyOnRatio[2] = 0.5*(CAP.ecapW.DutyOnTime1 + CAP.ecapW.DutyOnTime2) * SYSTEM_PWM_MAX_COUNT_INVERSE; // / (0.5*(CAP.ecapW.Period1+CAP.ecapW.Period2))
+        CAP.pwm_time = 0.5*(CAP.ecapU.Period1 + CAP.ecapU.Period2);
     }
 }
 
-// From: D:\ti\controlSUITE\device_support\F2837xS\v210\F2837xS_examples_Cpu1\ecap_capture_pwm\cpu01\ECap_Capture_Pwm_cpu01.c
+// From: D:\ti\controlSUITE\device_support\F2837xS\v210\F2837xS_examples_Cpu1\eCAPture_pwm\cpu01\ECAPture_Pwm_cpu01.c
 // InitECapture - Initialize ECAP1 configurations
 void InitECapture()
 {
@@ -302,6 +295,7 @@ void InitECaptureContinuousMode(){
 }
 
 
+#if 0
 #define ECAP_MA_ARRAY_LENGTH 10
 struct st_ecap_ma{
     REAL sum;
@@ -315,8 +309,8 @@ void ecap_moving_average(){
     /*Use moving-average ecap measured voltage*/
     /*D*/
     eCapMA1.sum -= eCapMA1.Array[eCapMA1.cursor];
-    eCapMA1.sum +=                  CTRL.I->ecap_dq[0];
-    eCapMA1.Array[eCapMA1.cursor] = CTRL.I->ecap_dq[0];
+    eCapMA1.sum +=                  CAP.dq[0];
+    eCapMA1.Array[eCapMA1.cursor] = CAP.dq[0];
     eCapMA1.cursor+=1;
     if(eCapMA1.length==0 || eCapMA1.length>ECAP_MA_ARRAY_LENGTH){
         if(eCapMA1.cursor>=5){
@@ -331,8 +325,8 @@ void ecap_moving_average(){
     }
     /*Q*/
     eCapMA2.sum -= eCapMA2.Array[eCapMA2.cursor];
-    eCapMA2.sum +=                  CTRL.I->ecap_dq[1];
-    eCapMA2.Array[eCapMA2.cursor] = CTRL.I->ecap_dq[1];
+    eCapMA2.sum +=                  CAP.dq[1];
+    eCapMA2.Array[eCapMA2.cursor] = CAP.dq[1];
     eCapMA2.cursor+=1;
     if(eCapMA2.length==0 || eCapMA2.length>ECAP_MA_ARRAY_LENGTH){
         if(eCapMA2.cursor>=5){
@@ -348,4 +342,201 @@ void ecap_moving_average(){
     US_P(0) = CTRL.S->cosT*ud - CTRL.S->sinT*uq;
     US_P(1) = CTRL.S->sinT*ud + CTRL.S->cosT*uq;
 }
+#endif
 
+
+
+/*U*/
+__interrupt void ecap1_isr(void){
+
+    // isr nesting test
+    CAP.decipher_password[0] = CAP.password_isr_nesting + 21;
+
+    CAP.ECapIntCount[0]++;
+
+    Uint32 CAP1, CAP2, CAP3, CAP4;
+    CAP1 = CAP.good_capture_U[2];
+    CAP2 = CAP.good_capture_U[3];
+    CAP3 = ECap1Regs.CAP1;
+    CAP4 = ECap1Regs.CAP2;
+
+    Uint32 DutyOnTime1  = CAP2;
+    Uint32 DutyOffTime1 = CAP3;
+    Uint32 DutyOnTime2  = CAP4;
+    Uint32 DutyOffTime2 = CAP1;
+
+        //Uint32 Period1 = DutyOnTime1 + DutyOffTime1;
+        //Uint32 Period2 = DutyOnTime2 + DutyOffTime2;
+        /* This is not the actual period, if we use symmetric PWM,
+         * the center location of the square wave high
+         * to the next center location of the square wave high
+         * is the period. */
+        //if(Period1 < SYSTEM_HALF_PWM_MAX_COUNT){ Wrong! Period1 can be larger than 10000
+        //if(Period2 < SYSTEM_HALF_PWM_MAX_COUNT){
+
+    // On1 Off1 一起跌落(CAP2 and CAP3) 
+    // 用4444这么大的数字，而不是444，是因为我发现有时候V相测量得到的ON1和OFF1分别为9000+和9000+，加起来小于19000，判断为bad，但是这应该是属于正常的捕获。
+    // 棘手的是，V相的CAP1有时候会读为20000+，这尼玛是为什么？
+    if( ( (DutyOnTime1+DutyOffTime1<SYSTEM_PWM_MAX_COUNT-4444) || (DutyOnTime1+DutyOffTime1>SYSTEM_PWM_MAX_COUNT+4444) )
+        || // and or or? 
+        ( DutyOnTime1<50 || DutyOffTime1<50 ) ){
+        // This clause should never be entered when ECap1Regs.ECEINT.bit.CEVT2 = 1;
+        CAP.u_ecap_bad.on1  = DutyOnTime1;
+        CAP.u_ecap_bad.off1 = DutyOffTime1;
+    }
+    // On2 Off2 一起跌落(CAP4 and CAP1)
+    else if( ( (DutyOnTime2+DutyOffTime2<SYSTEM_PWM_MAX_COUNT-4444) || (DutyOnTime2+DutyOffTime2>SYSTEM_PWM_MAX_COUNT+4444) )
+        || // and or or? 
+        ( DutyOnTime2<50 || DutyOffTime2<50 ) ){
+        CAP.u_ecap_bad.on2  = DutyOnTime2;
+        CAP.u_ecap_bad.off2 = DutyOffTime2;
+    }
+    // Everything is good?
+    else{
+        CAP.ECapPassCount[0] += 1;
+        CAP.good_capture_U[0] = CAP1;
+        CAP.good_capture_U[1] = CAP2;
+        CAP.good_capture_U[2] = CAP3;
+        CAP.good_capture_U[3] = CAP4;
+    }
+
+        /* For ECap1Regs.ECEINT.bit.CEVT4 = 1; */
+        // 如果采用下面这个代码，不能保证EPWM1中断来的时候已经采集到了当前的电压，更新频率也不够快！
+        // 所以应该把ECAP中断改成一个脉冲中断一次，并检查其优先级。
+
+        //    // 第一个脉冲的下降沿和第二个脉冲的上升，如果两者加起来特别小，则说明是跌落尖峰
+        //    if(ECap1Regs.CAP2 + ECap1Regs.CAP3 < SYSTEM_HALF_PWM_MAX_COUNT){
+        //        // 高电平时出现跌落尖峰，这两个CAP2/3作废，
+        //        // 但是此时的CAP1和4实际上是真正的CAP1和CAP2，而真正的CAP3和CAP4并没有被抓到。
+        //        good_capture_counter_U[0] = ECap1Regs.CAP1;
+        //        good_capture_counter_U[1] = ECap1Regs.CAP4;
+        //    }else{
+        //        // 有效
+        //        good_capture_counter_U[1] = ECap1Regs.CAP2;
+        //        good_capture_counter_U[2] = ECap1Regs.CAP3;
+        //    }
+        //    // 第二个脉冲的下降沿和第一二个脉冲的上升，如果两者加起来特别小，则说明是突升尖峰
+        //    if(ECap1Regs.CAP4 + ECap1Regs.CAP1 < SYSTEM_HALF_PWM_MAX_COUNT){
+        //        // 低高电平时出现突升尖峰，这两个CAP4/1作废
+        //    }else{
+        //        // 有效
+        //        good_capture_counter_U[3] = ECap1Regs.CAP4;
+        //        good_capture_counter_U[0] = ECap1Regs.CAP1;
+        //    }
+
+        //    do_enhanced_capture();
+
+        //ECap1Regs.ECCLR.bit.CEVT4 = 1; // 4 events == __interrupt
+
+    ECap1Regs.ECCLR.bit.CEVT2 = 1; // 2 events == __interrupt
+    ECap1Regs.ECCLR.bit.INT = 1;
+    ECap1Regs.ECCTL2.bit.REARM = 1;
+
+    // Acknowledge this __interrupt to receive more __interrupts from group 4
+    PieCtrlRegs.PIEACK.all = PIEACK_GROUP4;
+}
+
+
+
+/*V*/
+__interrupt void ecap2_isr(void){
+
+    // isr nesting test
+    CAP.decipher_password[1] = CAP.password_isr_nesting + 22;
+
+    CAP.ECapIntCount[1]++;
+
+    Uint32 CAP1, CAP2, CAP3, CAP4;
+    CAP1 = CAP.good_capture_V[2];
+    CAP2 = CAP.good_capture_V[3];
+    CAP3 = ECap2Regs.CAP1;
+    CAP4 = ECap2Regs.CAP2;
+
+    Uint32 DutyOnTime1  = CAP2;
+    Uint32 DutyOffTime1 = CAP3;
+    Uint32 DutyOnTime2  = CAP4;
+    Uint32 DutyOffTime2 = CAP1;
+
+    // On1 Off1 一起跌落(CAP2 and CAP3)
+    if( ( (DutyOnTime1+DutyOffTime1<SYSTEM_PWM_MAX_COUNT-4444) || (DutyOnTime1+DutyOffTime1>SYSTEM_PWM_MAX_COUNT+4444) )
+        || // and or or? 
+        ( DutyOnTime1<50 || DutyOffTime1<50 ) ){
+        // This clause should never be entered when ECap1Regs.ECEINT.bit.CEVT2 = 1;
+        CAP.v_ecap_bad.on1  = DutyOnTime1;
+        CAP.v_ecap_bad.off1 = DutyOffTime1;
+    }
+    // On2 Off2 一起跌落(CAP4 and CAP1)
+    else if( ( (DutyOnTime2+DutyOffTime2<SYSTEM_PWM_MAX_COUNT-4444) || (DutyOnTime2+DutyOffTime2>SYSTEM_PWM_MAX_COUNT+4444) )
+        || // and or or? 
+        ( DutyOnTime2<50 || DutyOffTime2<50 ) ){
+        CAP.v_ecap_bad.on2  = DutyOnTime2;
+        CAP.v_ecap_bad.off2 = DutyOffTime2;
+    }
+    // Everything is good?
+    else{
+        CAP.ECapPassCount[1] += 1;
+        CAP.good_capture_V[0] = CAP1;
+        CAP.good_capture_V[1] = CAP2;
+        CAP.good_capture_V[2] = CAP3;
+        CAP.good_capture_V[3] = CAP4;
+    }
+
+    ECap2Regs.ECCLR.bit.CEVT2 = 1; // 2 events == __interrupt
+    ECap2Regs.ECCLR.bit.INT = 1;
+    ECap2Regs.ECCTL2.bit.REARM = 1;
+
+    // Acknowledge this __interrupt to receive more __interrupts from group 4
+    PieCtrlRegs.PIEACK.all = PIEACK_GROUP4;
+}
+
+
+/*W*/
+__interrupt void ecap3_isr(void){
+
+    // isr nesting test
+    CAP.decipher_password[2] = CAP.password_isr_nesting + 23;
+
+    CAP.ECapIntCount[2]++;
+
+    Uint32 CAP1, CAP2, CAP3, CAP4;
+    CAP1 = CAP.good_capture_W[2];
+    CAP2 = CAP.good_capture_W[3];
+    CAP3 = ECap3Regs.CAP1;
+    CAP4 = ECap3Regs.CAP2;
+
+    Uint32 DutyOnTime1  = CAP2;
+    Uint32 DutyOffTime1 = CAP3;
+    Uint32 DutyOnTime2  = CAP4;
+    Uint32 DutyOffTime2 = CAP1;
+
+    // On1 Off1 一起跌落(CAP2 and CAP3)
+    if( ( (DutyOnTime1+DutyOffTime1<SYSTEM_PWM_MAX_COUNT-4444) || (DutyOnTime1+DutyOffTime1>SYSTEM_PWM_MAX_COUNT+4444) )
+        || // and or or? 
+        ( DutyOnTime1<50 || DutyOffTime1<50 ) ){
+        // This clause should never be entered when ECap1Regs.ECEINT.bit.CEVT2 = 1;
+        CAP.w_ecap_bad.on1  = DutyOnTime1;
+        CAP.w_ecap_bad.off1 = DutyOffTime1;
+    }
+    // On2 Off2 一起跌落(CAP4 and CAP1)
+    else if( ( (DutyOnTime2+DutyOffTime2<SYSTEM_PWM_MAX_COUNT-4444) || (DutyOnTime2+DutyOffTime2>SYSTEM_PWM_MAX_COUNT+4444) )
+        || // and or or? 
+        ( DutyOnTime2<50 || DutyOffTime2<50 ) ){
+        CAP.w_ecap_bad.on2  = DutyOnTime2;
+        CAP.w_ecap_bad.off2 = DutyOffTime2;
+    }
+    // Everything is good?
+    else{
+        CAP.ECapPassCount[2] += 1;
+        CAP.good_capture_W[0] = CAP1;
+        CAP.good_capture_W[1] = CAP2;
+        CAP.good_capture_W[2] = CAP3;
+        CAP.good_capture_W[3] = CAP4;
+    }
+
+    ECap3Regs.ECCLR.bit.CEVT2 = 1; // 2 events == __interrupt
+    ECap3Regs.ECCLR.bit.INT = 1;
+    ECap3Regs.ECCTL2.bit.REARM = 1;
+
+    // Acknowledge this __interrupt to receive more __interrupts from group 4
+    PieCtrlRegs.PIEACK.all = PIEACK_GROUP4;
+}

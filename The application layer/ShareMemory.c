@@ -125,25 +125,25 @@ void write_DAC_buffer(){
 
 //        G.dac_watch[40] = (CTRL.O->udq_cmd_to_inverter[0] - CTRL.O->udq_cmd[0])*0.02;
 //        G.dac_watch[41] = (CTRL.O->udq_cmd_to_inverter[1] - CTRL.O->udq_cmd[1])*0.02;
-//        G.dac_watch[42] = (CTRL.I->ecap_dq[0]             - CTRL.O->udq_cmd[0])*0.02;
-//        G.dac_watch[43] = (CTRL.I->ecap_dq[1]             - CTRL.O->udq_cmd[1])*0.02;
+//        G.dac_watch[42] = (CAP.dq[0]             - CTRL.O->udq_cmd[0])*0.02;
+//        G.dac_watch[43] = (CAP.dq[1]             - CTRL.O->udq_cmd[1])*0.02;
 
-        G.dac_watch[38] = (ecapU.Period1) * 0.25e-4;
-        G.dac_watch[39] = (ecapV.Period1) * 0.25e-4;
-        G.dac_watch[40] = (ecapW.Period1) * 0.25e-4;
-        G.dac_watch[41] = (ecapU.Period2) * 0.25e-4;
-        G.dac_watch[42] = (ecapV.Period2) * 0.25e-4;
-        G.dac_watch[43] = (ecapW.Period2) * 0.25e-4;
+        G.dac_watch[38] = (CAP.ecapU.Period1) * 0.25e-4;
+        G.dac_watch[39] = (CAP.ecapV.Period1) * 0.25e-4;
+        G.dac_watch[40] = (CAP.ecapW.Period1) * 0.25e-4;
+        G.dac_watch[41] = (CAP.ecapU.Period2) * 0.25e-4;
+        G.dac_watch[42] = (CAP.ecapV.Period2) * 0.25e-4;
+        G.dac_watch[43] = (CAP.ecapW.Period2) * 0.25e-4;
 
         G.dac_watch[44] = (CTRL.O->udq_cmd_to_inverter[0])*0.02;
         G.dac_watch[45] = (CTRL.O->udq_cmd_to_inverter[1])*0.02;
-        G.dac_watch[46] = (CTRL.I->ecap_dq[0]            )*0.02;
-        G.dac_watch[47] = (CTRL.I->ecap_dq[1]            )*0.02;
+        G.dac_watch[46] = (CAP.dq[0]            )*0.02;
+        G.dac_watch[47] = (CAP.dq[1]            )*0.02;
 
-        G.dac_watch[48] = (ecapU.DutyOnTime1)  * 0.25e-4;
-        G.dac_watch[49] = (ecapU.DutyOffTime1) * 0.25e-4;
-        G.dac_watch[50] = (ecapU.DutyOnTime2)  * 0.25e-4;
-        G.dac_watch[51] = (ecapU.DutyOffTime2) * 0.25e-4;
+        G.dac_watch[48] = (CAP.ecapU.DutyOnTime1)  * 0.25e-4;
+        G.dac_watch[49] = (CAP.ecapU.DutyOffTime1) * 0.25e-4;
+        G.dac_watch[50] = (CAP.ecapU.DutyOnTime2)  * 0.25e-4;
+        G.dac_watch[51] = (CAP.ecapU.DutyOffTime2) * 0.25e-4;
 
 
         // information from d-axis voltage equation
