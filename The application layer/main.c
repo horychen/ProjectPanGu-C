@@ -58,8 +58,8 @@ void main(void){
     EALLOW; // This is needed to write to EALLOW protected registers
     PieVectTable.EPWM1_INT = &SYSTEM_PROGRAM;     //&MainISR;      // PWM主中断 10kKHz
     PieVectTable.ECAP1_INT = &ecap1_isr;
-//    PieVectTable.ECAP2_INT = &ecap2_isr;
-//    PieVectTable.ECAP3_INT = &ecap3_isr;
+    PieVectTable.ECAP2_INT = &ecap2_isr;
+    PieVectTable.ECAP3_INT = &ecap3_isr;
     #if SYSTEM_PROGRAM_MODE != 223
     PieVectTable.EQEP1_INT = &EQEP_UTO_INT;      // eqep
     #endif
@@ -77,7 +77,7 @@ void main(void){
 
     /* CPU Interrupt Enable Register (IER) */
     IER |= M_INT3;  // EPWM1_INT
-//    IER |= M_INT4;  // ECAP1_INT // CPU INT4 which is connected to ECAP1-4 INT
+    IER |= M_INT4;  // ECAP1_INT // CPU INT4 which is connected to ECAP1-4 INT
     IER |= M_INT5;  // EQEP1_INT???
 
     EINT;   // Enable Global __interrupt INTM
@@ -135,81 +135,209 @@ void main(void){
 }
 
 
-Uint32 good_capture_counter_U[4] = {0,0,0,0};
-Uint32 good_capture_counter_V[4] = {0,0,0,0};
-Uint32 good_capture_counter_W[4] = {0,0,0,0};
-Uint64 ECap1IntCount=0;
+Uint32 good_capture_U[4] = {0,0,10000,10000};
+Uint32 good_capture_V[4] = {0,0,10000,10000};
+Uint32 good_capture_W[4] = {0,0,10000,10000};
+struct bad_values {
+    Uint32 on1, off1, on2, off2;
+} u_ecap_bad, v_ecap_bad, w_ecap_bad;
+
+Uint64 ECapIntCount[3]={0,0,0};
+Uint64 ECapPassCount[3]={0,0,0};
+
+extern int password_isr_nesting;
+int decipher_password[3]={0,0,0};
+
 /*U*/
-u_bad_value_on1  = 0;
-u_bad_value_off1 = 0;
-u_bad_value_on2  = 0;
-u_bad_value_off2 = 0;
 __interrupt void ecap1_isr(void){
 
-// 如果采用下面这个代码，不能保证EPWM1中断来的时候已经采集到了当前的电压，更新频率也不够快！
-// 所以应该把ECAP中断改成一个脉冲中断一次，并检查其优先级。
+    // isr nesting test
+    decipher_password[0] = password_isr_nesting + 21;
 
-    ECap1IntCount++;
+    ECapIntCount[0]++;
 
-    REAL CAP1, CAP2, CAP3, CAP4;
-    CAP1 = good_capture_counter_U[3];
-    CAP2 = good_capture_counter_U[4];
+    Uint32 CAP1, CAP2, CAP3, CAP4;
+    CAP1 = good_capture_U[2];
+    CAP2 = good_capture_U[3];
     CAP3 = ECap1Regs.CAP1;
     CAP4 = ECap1Regs.CAP2;
 
-    REAL DutyOnTime1  = CAP2;
-    REAL DutyOffTime1 = CAP3;
-    REAL DutyOnTime2  = CAP4;
-    REAL DutyOffTime2 = CAP1;
-    REAL Period1 = DutyOnTime1 + DutyOffTime1;
-    REAL Period2 = DutyOnTime2 + DutyOffTime2;
+    Uint32 DutyOnTime1  = CAP2;
+    Uint32 DutyOffTime1 = CAP3;
+    Uint32 DutyOnTime2  = CAP4;
+    Uint32 DutyOffTime2 = CAP1;
 
-    /* This is not the real period, if we use symmetric PWM,
-     * the center location of the square wave high
-     * to the next center location of the square wave high
-     * is the period. */
+        //Uint32 Period1 = DutyOnTime1 + DutyOffTime1;
+        //Uint32 Period2 = DutyOnTime2 + DutyOffTime2;
+        /* This is not the actual period, if we use symmetric PWM,
+         * the center location of the square wave high
+         * to the next center location of the square wave high
+         * is the period. */
+        //if(Period1 < SYSTEM_HALF_PWM_MAX_COUNT){ Wrong! Period1 can be larger than 10000
+        //if(Period2 < SYSTEM_HALF_PWM_MAX_COUNT){
 
-    //if(Period1 < SYSTEM_HALF_PWM_MAX_COUNT){
-    //if(Period2 < SYSTEM_HALF_PWM_MAX_COUNT){
-
-    // On1 Off1 一起跌落(CAP2 and CAP3)
-    if( DutyOnTime1 + DutyOffTime1 < SYSTEM_HALF_PWM_MAX_COUNT ){
+    // On1 Off1 一起跌落(CAP2 and CAP3) 
+    // 用4444这么大的数字，而不是444，是因为我发现有时候V相测量得到的ON1和OFF1分别为9000+和9000+，加起来小于19000，判断为bad，但是这应该是属于正常的捕获。
+    // 棘手的是，V相的CAP1有时候会读为20000+，这尼玛是为什么？
+    if( ( (DutyOnTime1+DutyOffTime1<SYSTEM_PWM_MAX_COUNT-4444) || (DutyOnTime1+DutyOffTime1>SYSTEM_PWM_MAX_COUNT+4444) )
+        || // and or or? 
+        ( DutyOnTime1<50 || DutyOffTime1<50 ) ){
         // This clause should never be entered when ECap1Regs.ECEINT.bit.CEVT2 = 1;
-        u_bad_value_on1  = 0;
-        u_bad_value_off1 = 0;
+        u_ecap_bad.on1  = DutyOnTime1;
+        u_ecap_bad.off1 = DutyOffTime1;
     }
     // On2 Off2 一起跌落(CAP4 and CAP1)
-    if( DutyOnTime2 + DutyOffTime2 < SYSTEM_HALF_PWM_MAX_COUNT ){
-        u_bad_value_on2  = 0;
-        u_bad_value_off2 = 0;
+    else if( ( (DutyOnTime2+DutyOffTime2<SYSTEM_PWM_MAX_COUNT-4444) || (DutyOnTime2+DutyOffTime2>SYSTEM_PWM_MAX_COUNT+4444) )
+        || // and or or? 
+        ( DutyOnTime2<50 || DutyOffTime2<50 ) ){
+        u_ecap_bad.on2  = DutyOnTime2;
+        u_ecap_bad.off2 = DutyOffTime2;
+    }
+    // Everything is good?
+    else{
+        ECapPassCount[0] += 1;
+        good_capture_U[0] = CAP1;
+        good_capture_U[1] = CAP2;
+        good_capture_U[2] = CAP3;
+        good_capture_U[3] = CAP4;
     }
 
-    //    // 第一个脉冲的下降沿和第二个脉冲的上升，如果两者加起来特别小，则说明是跌落尖峰
-    //    if(ECap1Regs.CAP2 + ECap1Regs.CAP3 < SYSTEM_HALF_PWM_MAX_COUNT){
-    //        // 高电平时出现跌落尖峰，这两个CAP2/3作废，
-    //        // 但是此时的CAP1和4实际上是真正的CAP1和CAP2，而真正的CAP3和CAP4并没有被抓到。
-    //        good_capture_counter_U[0] = ECap1Regs.CAP1;
-    //        good_capture_counter_U[1] = ECap1Regs.CAP4;
-    //    }else{
-    //        // 有效
-    //        good_capture_counter_U[1] = ECap1Regs.CAP2;
-    //        good_capture_counter_U[2] = ECap1Regs.CAP3;
-    //    }
-    //    // 第二个脉冲的下降沿和第一二个脉冲的上升，如果两者加起来特别小，则说明是突升尖峰
-    //    if(ECap1Regs.CAP4 + ECap1Regs.CAP1 < SYSTEM_HALF_PWM_MAX_COUNT){
-    //        // 低高电平时出现突升尖峰，这两个CAP4/1作废
-    //    }else{
-    //        // 有效
-    //        good_capture_counter_U[3] = ECap1Regs.CAP4;
-    //        good_capture_counter_U[0] = ECap1Regs.CAP1;
-    //    }
+        /* For ECap1Regs.ECEINT.bit.CEVT4 = 1; */
+        // 如果采用下面这个代码，不能保证EPWM1中断来的时候已经采集到了当前的电压，更新频率也不够快！
+        // 所以应该把ECAP中断改成一个脉冲中断一次，并检查其优先级。
 
-    //    do_enhanced_capture();
+        //    // 第一个脉冲的下降沿和第二个脉冲的上升，如果两者加起来特别小，则说明是跌落尖峰
+        //    if(ECap1Regs.CAP2 + ECap1Regs.CAP3 < SYSTEM_HALF_PWM_MAX_COUNT){
+        //        // 高电平时出现跌落尖峰，这两个CAP2/3作废，
+        //        // 但是此时的CAP1和4实际上是真正的CAP1和CAP2，而真正的CAP3和CAP4并没有被抓到。
+        //        good_capture_counter_U[0] = ECap1Regs.CAP1;
+        //        good_capture_counter_U[1] = ECap1Regs.CAP4;
+        //    }else{
+        //        // 有效
+        //        good_capture_counter_U[1] = ECap1Regs.CAP2;
+        //        good_capture_counter_U[2] = ECap1Regs.CAP3;
+        //    }
+        //    // 第二个脉冲的下降沿和第一二个脉冲的上升，如果两者加起来特别小，则说明是突升尖峰
+        //    if(ECap1Regs.CAP4 + ECap1Regs.CAP1 < SYSTEM_HALF_PWM_MAX_COUNT){
+        //        // 低高电平时出现突升尖峰，这两个CAP4/1作废
+        //    }else{
+        //        // 有效
+        //        good_capture_counter_U[3] = ECap1Regs.CAP4;
+        //        good_capture_counter_U[0] = ECap1Regs.CAP1;
+        //    }
 
-    //ECap1Regs.ECCLR.bit.CEVT4 = 1; // 4 events == __interrupt
+        //    do_enhanced_capture();
+
+        //ECap1Regs.ECCLR.bit.CEVT4 = 1; // 4 events == __interrupt
+
     ECap1Regs.ECCLR.bit.CEVT2 = 1; // 2 events == __interrupt
     ECap1Regs.ECCLR.bit.INT = 1;
     ECap1Regs.ECCTL2.bit.REARM = 1;
+
+    // Acknowledge this __interrupt to receive more __interrupts from group 4
+    PieCtrlRegs.PIEACK.all = PIEACK_GROUP4;
+}
+
+
+
+/*V*/
+__interrupt void ecap2_isr(void){
+
+    // isr nesting test
+    decipher_password[1] = password_isr_nesting + 22;
+
+    ECapIntCount[1]++;
+
+    Uint32 CAP1, CAP2, CAP3, CAP4;
+    CAP1 = good_capture_V[2];
+    CAP2 = good_capture_V[3];
+    CAP3 = ECap2Regs.CAP1;
+    CAP4 = ECap2Regs.CAP2;
+
+    Uint32 DutyOnTime1  = CAP2;
+    Uint32 DutyOffTime1 = CAP3;
+    Uint32 DutyOnTime2  = CAP4;
+    Uint32 DutyOffTime2 = CAP1;
+
+    // On1 Off1 一起跌落(CAP2 and CAP3)
+    if( ( (DutyOnTime1+DutyOffTime1<SYSTEM_PWM_MAX_COUNT-4444) || (DutyOnTime1+DutyOffTime1>SYSTEM_PWM_MAX_COUNT+4444) )
+        || // and or or? 
+        ( DutyOnTime1<50 || DutyOffTime1<50 ) ){
+        // This clause should never be entered when ECap1Regs.ECEINT.bit.CEVT2 = 1;
+        v_ecap_bad.on1  = DutyOnTime1;
+        v_ecap_bad.off1 = DutyOffTime1;
+    }
+    // On2 Off2 一起跌落(CAP4 and CAP1)
+    else if( ( (DutyOnTime2+DutyOffTime2<SYSTEM_PWM_MAX_COUNT-4444) || (DutyOnTime2+DutyOffTime2>SYSTEM_PWM_MAX_COUNT+4444) )
+        || // and or or? 
+        ( DutyOnTime2<50 || DutyOffTime2<50 ) ){
+        v_ecap_bad.on2  = DutyOnTime2;
+        v_ecap_bad.off2 = DutyOffTime2;
+    }
+    // Everything is good?
+    else{
+        ECapPassCount[1] += 1;
+        good_capture_V[0] = CAP1;
+        good_capture_V[1] = CAP2;
+        good_capture_V[2] = CAP3;
+        good_capture_V[3] = CAP4;
+    }
+
+    ECap2Regs.ECCLR.bit.CEVT2 = 1; // 2 events == __interrupt
+    ECap2Regs.ECCLR.bit.INT = 1;
+    ECap2Regs.ECCTL2.bit.REARM = 1;
+
+    // Acknowledge this __interrupt to receive more __interrupts from group 4
+    PieCtrlRegs.PIEACK.all = PIEACK_GROUP4;
+}
+
+
+/*W*/
+__interrupt void ecap3_isr(void){
+
+    // isr nesting test
+    decipher_password[2] = password_isr_nesting + 23;
+
+    ECapIntCount[2]++;
+
+    Uint32 CAP1, CAP2, CAP3, CAP4;
+    CAP1 = good_capture_W[2];
+    CAP2 = good_capture_W[3];
+    CAP3 = ECap3Regs.CAP1;
+    CAP4 = ECap3Regs.CAP2;
+
+    Uint32 DutyOnTime1  = CAP2;
+    Uint32 DutyOffTime1 = CAP3;
+    Uint32 DutyOnTime2  = CAP4;
+    Uint32 DutyOffTime2 = CAP1;
+
+    // On1 Off1 一起跌落(CAP2 and CAP3)
+    if( ( (DutyOnTime1+DutyOffTime1<SYSTEM_PWM_MAX_COUNT-4444) || (DutyOnTime1+DutyOffTime1>SYSTEM_PWM_MAX_COUNT+4444) )
+        || // and or or? 
+        ( DutyOnTime1<50 || DutyOffTime1<50 ) ){
+        // This clause should never be entered when ECap1Regs.ECEINT.bit.CEVT2 = 1;
+        w_ecap_bad.on1  = DutyOnTime1;
+        w_ecap_bad.off1 = DutyOffTime1;
+    }
+    // On2 Off2 一起跌落(CAP4 and CAP1)
+    else if( ( (DutyOnTime2+DutyOffTime2<SYSTEM_PWM_MAX_COUNT-4444) || (DutyOnTime2+DutyOffTime2>SYSTEM_PWM_MAX_COUNT+4444) )
+        || // and or or? 
+        ( DutyOnTime2<50 || DutyOffTime2<50 ) ){
+        w_ecap_bad.on2  = DutyOnTime2;
+        w_ecap_bad.off2 = DutyOffTime2;
+    }
+    // Everything is good?
+    else{
+        ECapPassCount[2] += 1;
+        good_capture_W[0] = CAP1;
+        good_capture_W[1] = CAP2;
+        good_capture_W[2] = CAP3;
+        good_capture_W[3] = CAP4;
+    }
+
+    ECap3Regs.ECCLR.bit.CEVT2 = 1; // 2 events == __interrupt
+    ECap3Regs.ECCLR.bit.INT = 1;
+    ECap3Regs.ECCTL2.bit.REARM = 1;
 
     // Acknowledge this __interrupt to receive more __interrupts from group 4
     PieCtrlRegs.PIEACK.all = PIEACK_GROUP4;
