@@ -151,7 +151,9 @@ typedef struct {
     // [Internal variables]
         // Run TI's example
         struct TestECapture {
-            REAL TSt1, TSt2, TSt3, TSt4, Period1, Period2, Period3, DutyOnTime1, DutyOffTime1, DutyOnTime2, DutyOffTime2;
+            // REAL TSt1, TSt2, TSt3, TSt4;
+            REAL Period1, Period2, Period3;
+            REAL DutyOnTime1, DutyOffTime1, DutyOnTime2, DutyOffTime2;
         }ecapU, ecapV, ecapW;
         // On-demand ECAP decode with nonlinear filtering out disturbance. This mode gives raw ECAP values
         int flag_nonlinear_filtering;
@@ -164,7 +166,7 @@ typedef struct {
         Uint32 good_capture_W[4];
         struct bad_values {
             Uint32 on1, off1, on2, off2;
-        } u_ecap_bad, v_ecap_bad, w_ecap_bad;
+        } u_ecap_bad1, v_ecap_bad1, w_ecap_bad1, u_ecap_bad2, v_ecap_bad2, w_ecap_bad2;
         // ISR counting
         Uint64 ECapIntCount[3];
         Uint64 ECapPassCount[3];

@@ -205,7 +205,7 @@ void CJHMainISR(void){
         experiment_init();
 
         /* 750W MOTOR1 (wo/ hall) */
-        CTRL.motor->KE = 0.095;
+        //CTRL.motor->KE = 0.095;
         //pid1_spd.OutLimit = 10;
 
         pid1_spd.OutLimit = G.OverwriteSpeedOutLimit;
