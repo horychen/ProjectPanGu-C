@@ -82,6 +82,7 @@ typedef float32 REAL;
 // Everthing that is configurable is in here
 #include "ACMConfig.h"
 #include "pid_regulator.h"
+#include "shared_flux_estimator.h"
 #include "pmsm_controller.h"
 #include "pmsm_observer.h"
 #include "pmsm_comm.h"
@@ -94,6 +95,7 @@ double sign(double x);
 double fabs(double x);
 REAL _lpf(REAL x, REAL y_tminus1, REAL time_const_inv);
 REAL PostionSpeedMeasurement_MovingAvergage(Uint32 QPOSCNT);
+extern REAL one_over_six;
 
 struct GlobalWatch
 {

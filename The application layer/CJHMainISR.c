@@ -143,7 +143,7 @@ void measurement(){
     //    }
 
 
-    // 电流采样ADC温飘校准
+    // 电流采样ADC温飘校准 // TODO 改成用ADC Raw Results校准。
     if(G.AD_offset_flag2==FALSE)
     {
         G.Offset_Counter += 1;
