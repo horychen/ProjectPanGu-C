@@ -25,15 +25,6 @@ typedef struct {
     REAL idq[2];
     REAL psi_mu[2];
     REAL Tem;
-    // ECAP support
-    REAL ecap_terminal_DutyOnRatio[3];
-    REAL ecap_terminal_voltage[3];
-    REAL ecap_line_to_line_voltage[3]; // uv, vw, wu
-    REAL ecap_pwm_time;
-    REAL ecap_uab0[3];
-    REAL ecap_dq[2];
-    REAL ecap_dq_lpf[2];
-    REAL ecap_dq_mismatch[2];
 } st_controller_inputs;
 typedef struct {
     // controller strategy
@@ -74,6 +65,7 @@ typedef struct {
     REAL Js;
     REAL Js_inv;    
 } st_pmsm_parameters;
+
 // #define MA_SEQUENCE_LENGTH         20 // 20 * CL_TS = window of moving average in seconds
 // #define MA_SEQUENCE_LENGTH_INVERSE 0.05 // 20 MA gives speed resolution of 3 rpm for 2500 ppr encoder
 #define MA_SEQUENCE_LENGTH         80
@@ -97,13 +89,14 @@ typedef struct {
     REAL rpm;
     REAL omg_elec;
     REAL theta_d_elec;
-} st_enc;
+} st_enc; // encoder
+
 typedef struct {
     REAL theta_excitation; // in rad
     REAL theta_d_elec_entered;
     Uint32 countEntered;
     int direction;
-} st_psd;
+} st_psd; // phase sequence detection
 typedef struct {
     REAL ia;
     REAL ib;
@@ -144,7 +137,41 @@ typedef struct {
     REAL I17_plus_I19;
     REAL I17_plus_I19_LPF;
     REAL theta_trapezoidal; // theta_t defined by Park.Sul-2012
-} st_InverterNonlinearity;
+} st_InverterNonlinearity; // inverter
+typedef struct {
+    // ECAP support (i.e., the API)
+    REAL terminal_DutyOnRatio[3];
+    REAL terminal_voltage[3];
+    REAL line_to_line_voltage[3]; // uv, vw, wu
+    REAL pwm_time;
+    REAL uab0[3];
+    REAL dq[2];
+    REAL dq_lpf[2];
+    REAL dq_mismatch[2];
+    // [Internal variables]
+        // Run TI's example
+        struct TestECapture {
+            REAL TSt1, TSt2, TSt3, TSt4, Period1, Period2, Period3, DutyOnTime1, DutyOffTime1, DutyOnTime2, DutyOffTime2;
+        }ecapU, ecapV, ecapW;
+        // On-demand ECAP decode with nonlinear filtering out disturbance. This mode gives raw ECAP values
+        int flag_nonlinear_filtering;
+        int flag_bad_U_capture;
+        int flag_bad_V_capture;
+        int flag_bad_W_capture;
+        // On-interrupt ECAP decode. This mode gives ECAP values that are already free of disturbance.
+        Uint32 good_capture_U[4];
+        Uint32 good_capture_V[4];
+        Uint32 good_capture_W[4];
+        struct bad_values {
+            Uint32 on1, off1, on2, off2;
+        } u_ecap_bad, v_ecap_bad, w_ecap_bad;
+        // ISR counting
+        Uint64 ECapIntCount[3];
+        Uint64 ECapPassCount[3];
+        // ISR nesting
+        int password_isr_nesting; // set to 178 in EPWM1 ISR
+        int decipher_password[3];
+} st_capture; // eCapture
 typedef struct {
     // ADC Offset
         // Automatic Offset Removing
@@ -177,7 +204,8 @@ typedef struct {
     REAL Overwrite_Voltage_DC_BUS; // = 180;
     int flag_overwite_voltage_dc_bus; // = FALSE;
     int flag_use_ecap_voltage; // = 0;
-} st_global_variables;
+} st_global_variables; // globals
+
 struct ControllerForExperiment{
 
     /* Basic quantities */
@@ -193,6 +221,9 @@ struct ControllerForExperiment{
     /* Inverter */
     st_InverterNonlinearity *inv;
     SVGENDQ svgen1;
+
+    /* Capture */
+    st_capture *cap;
 
     /* Console */
     st_global_variables *g;
@@ -211,6 +242,7 @@ extern struct ControllerForExperiment CTRL;
 #define STATE   (*CTRL.S)
 #define OUT     (*CTRL.O)
 #define INV     (*CTRL.inv)
+#define CAP     (*CTRL.cap)
 #define G       (*CTRL.g)
     // extern st_InverterNonlinearity t_inv;
     // #define INV     t_inv

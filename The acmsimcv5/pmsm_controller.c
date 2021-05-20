@@ -51,6 +51,30 @@ void CTRL_init(){
     CTRL.inv->filter_pole = 3000*2*M_PI;
     inverterNonlinearity_Initialization();
 
+/* Capture */
+    CTRL.cap->flag_nonlinear_filtering = FALSE;
+    CTRL.cap->flag_bad_U_capture = FALSE;
+    CTRL.cap->flag_bad_V_capture = FALSE;
+    CTRL.cap->flag_bad_W_capture = FALSE;
+    CTRL.cap->good_capture_U[0] = SYSTEM_HALF_PWM_MAX_COUNT;
+    CTRL.cap->good_capture_U[1] = SYSTEM_HALF_PWM_MAX_COUNT;
+    CTRL.cap->good_capture_U[2] = SYSTEM_HALF_PWM_MAX_COUNT;
+    CTRL.cap->good_capture_U[3] = SYSTEM_HALF_PWM_MAX_COUNT;
+    CTRL.cap->good_capture_V[0] = SYSTEM_HALF_PWM_MAX_COUNT;
+    CTRL.cap->good_capture_V[1] = SYSTEM_HALF_PWM_MAX_COUNT;
+    CTRL.cap->good_capture_V[2] = SYSTEM_HALF_PWM_MAX_COUNT;
+    CTRL.cap->good_capture_V[3] = SYSTEM_HALF_PWM_MAX_COUNT;
+    CTRL.cap->good_capture_W[0] = SYSTEM_HALF_PWM_MAX_COUNT;
+    CTRL.cap->good_capture_W[1] = SYSTEM_HALF_PWM_MAX_COUNT;
+    CTRL.cap->good_capture_W[2] = SYSTEM_HALF_PWM_MAX_COUNT;
+    CTRL.cap->good_capture_W[3] = SYSTEM_HALF_PWM_MAX_COUNT;
+    CTRL.cap->ECapIntCount[0] = 0;
+    CTRL.cap->ECapIntCount[1] = 0;
+    CTRL.cap->ECapIntCount[2] = 0;
+    CTRL.cap->ECapPassCount[0]= 0;
+    CTRL.cap->ECapPassCount[1]= 0;
+    CTRL.cap->ECapPassCount[2]= 0;
+
 /* Console */
     // Mode Changing During Experiment
     CTRL.g->OverwriteSpeedOutLimit = 2;

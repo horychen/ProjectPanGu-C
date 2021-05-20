@@ -6,6 +6,19 @@
 #include "stdlib.h"
 #define printf DoNotCallPrintFunctionInDSP
 
+#if PC_SIMULATION == FALSE
+/*  SYSTEM Configuration -----------------------------------------------------------------------------------*/
+    #define NUMBER_OF_DSP_CORES 2  // 1 or 2
+    #define SYSTEM_PROGRAM_MODE 223  //223 for CJHMainISR //0 stands for MainISR ,1 stands for Motor_Parameter_Compute_ISR
+    #if SYSTEM_PROGRAM_MODE==223
+        #define SYSTEM_PROGRAM                     EPWM1ISR
+        #define SYSTEM_PWM_FREQUENCY               10
+        #define SYSTEM_PWM_MAX_COUNT_INVERSE       5e-5 // = 1 / 20000
+        #define SYSTEM_PWM_MAX_COUNT               20000
+        #define SYSTEM_HALF_PWM_MAX_COUNT          10000
+    #endif
+#endif
+
 // 重定义变量类型
 #ifndef DSP28_DATA_TYPES
 #define DSP28_DATA_TYPES
@@ -45,6 +58,10 @@ typedef float32 REAL;
 #define AB2W_PI(A, B) ( 0.816496580927726 * ( A*-0.5 + B*-0.8660254037844385 ) )
 
 /* General Constants */
+#define PHASE_NUMBER 3 // three phase machine
+#ifndef BOOL
+#define BOOL int
+#endif
 #ifndef TRUE
 #define TRUE  (1)
 #endif
@@ -61,9 +78,6 @@ typedef float32 REAL;
 #define ELEC_RAD_PER_SEC_2_RPM ( 60.0/(2*M_PI*CTRL.motor->npp) )
 #define RPM_2_ELEC_RAD_PER_SEC ( (2*M_PI*CTRL.motor->npp)/60.0 )
 #define M_PI_OVER_180   0.017453292519943295
-
-#define PHASE_NUMBER 3 // three phase machine
-
 
 // Everthing that is configurable is in here
 #include "ACMConfig.h"

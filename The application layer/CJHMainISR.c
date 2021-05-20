@@ -18,69 +18,67 @@ void voltage_commands_to_pwm(){
 
 
 
-extern int flag_bad_U_capture;
-extern int flag_bad_V_capture;
-extern int flag_bad_W_capture;
+//extern int CAP.flag_bad_U_capture;
+//extern int CAP.flag_bad_V_capture;
+//extern int CAP.flag_bad_W_capture;
 void measurement(){
 
     // 母线电压测量
     G.Voltage_DC_BUS=((AdcaResultRegs.ADCRESULT0)-G.offsetUDC)*AD_scale_VDC + G.Offset_Udc;//
 
     // 相电压测量（基于占空比和母线电压）
-    CTRL.I->ecap_terminal_voltage[0] = (CTRL.I->ecap_terminal_DutyOnRatio[0]) * G.Voltage_DC_BUS - G.Voltage_DC_BUS * 0.5; // -0.5 is due to duty ratio calculation; - Voltage_DC_BUS * 0.5 is referring to the center of dc bus capacitor.
-    CTRL.I->ecap_terminal_voltage[1] = (CTRL.I->ecap_terminal_DutyOnRatio[1]) * G.Voltage_DC_BUS - G.Voltage_DC_BUS * 0.5;
-    CTRL.I->ecap_terminal_voltage[2] = (CTRL.I->ecap_terminal_DutyOnRatio[2]) * G.Voltage_DC_BUS - G.Voltage_DC_BUS * 0.5;
+    CAP.terminal_voltage[0] = (CAP.terminal_DutyOnRatio[0]) * G.Voltage_DC_BUS - G.Voltage_DC_BUS * 0.5; // -0.5 is due to duty ratio calculation; - Voltage_DC_BUS * 0.5 is referring to the center of dc bus capacitor.
+    CAP.terminal_voltage[1] = (CAP.terminal_DutyOnRatio[1]) * G.Voltage_DC_BUS - G.Voltage_DC_BUS * 0.5;
+    CAP.terminal_voltage[2] = (CAP.terminal_DutyOnRatio[2]) * G.Voltage_DC_BUS - G.Voltage_DC_BUS * 0.5;
 
-    CTRL.I->ecap_line_to_line_voltage[0] = CTRL.I->ecap_terminal_voltage[0] - CTRL.I->ecap_terminal_voltage[1];
-    CTRL.I->ecap_line_to_line_voltage[1] = CTRL.I->ecap_terminal_voltage[1] - CTRL.I->ecap_terminal_voltage[2];
-    CTRL.I->ecap_line_to_line_voltage[2] = CTRL.I->ecap_terminal_voltage[2] - CTRL.I->ecap_terminal_voltage[0];
+    CAP.line_to_line_voltage[0] = CAP.terminal_voltage[0] - CAP.terminal_voltage[1];
+    CAP.line_to_line_voltage[1] = CAP.terminal_voltage[1] - CAP.terminal_voltage[2];
+    CAP.line_to_line_voltage[2] = CAP.terminal_voltage[2] - CAP.terminal_voltage[0];
 
-    if(flag_bad_U_capture==FALSE && flag_bad_V_capture==FALSE && flag_bad_W_capture==FALSE){
+    if(CAP.flag_bad_U_capture==FALSE && CAP.flag_bad_V_capture==FALSE && CAP.flag_bad_W_capture==FALSE){
         // Use ecap feedback
-        CTRL.I->ecap_uab0[0] = 0.33333 * (2*CTRL.I->ecap_terminal_voltage[0] - CTRL.I->ecap_terminal_voltage[1] - CTRL.I->ecap_terminal_voltage[2]);
-        CTRL.I->ecap_uab0[1] = 0.57735 * (                                     CTRL.I->ecap_terminal_voltage[1] - CTRL.I->ecap_terminal_voltage[2]);
-        CTRL.I->ecap_uab0[2] = 0.33333 * (  CTRL.I->ecap_terminal_voltage[0] + CTRL.I->ecap_terminal_voltage[1] + CTRL.I->ecap_terminal_voltage[2]);
-        CTRL.I->ecap_dq[0] =  CTRL.S->cosT*CTRL.I->ecap_uab0[0] + CTRL.S->sinT*CTRL.I->ecap_uab0[1];
-        CTRL.I->ecap_dq[1] = -CTRL.S->sinT*CTRL.I->ecap_uab0[0] + CTRL.S->cosT*CTRL.I->ecap_uab0[1];
+        CAP.uab0[0] = 0.33333 * (2*CAP.terminal_voltage[0] - CAP.terminal_voltage[1] - CAP.terminal_voltage[2]);
+        CAP.uab0[1] = 0.57735 * (                                     CAP.terminal_voltage[1] - CAP.terminal_voltage[2]);
+        CAP.uab0[2] = 0.33333 * (  CAP.terminal_voltage[0] + CAP.terminal_voltage[1] + CAP.terminal_voltage[2]);
+        CAP.dq[0] =  CTRL.S->cosT*CAP.uab0[0] + CTRL.S->sinT*CAP.uab0[1];
+        CAP.dq[1] = -CTRL.S->sinT*CAP.uab0[0] + CTRL.S->cosT*CAP.uab0[1];
 
     }else{
         // Assume the voltage vector is rtoating at a constant speed when ecap measurement is disturbed.
-        CTRL.I->ecap_uab0[0] = CTRL.S->cosT*CTRL.I->ecap_dq[0] - CTRL.S->sinT*CTRL.I->ecap_dq[1];
-        CTRL.I->ecap_uab0[1] = CTRL.S->sinT*CTRL.I->ecap_dq[0] + CTRL.S->cosT*CTRL.I->ecap_dq[1];
+        CAP.uab0[0] = CTRL.S->cosT*CAP.dq[0] - CTRL.S->sinT*CAP.dq[1];
+        CAP.uab0[1] = CTRL.S->sinT*CAP.dq[0] + CTRL.S->cosT*CAP.dq[1];
     }
-
-    if(G.flag_use_ecap_voltage==2){
-        /*Use original ecap measured voltage*/
-        US_P(0) = CTRL.I->ecap_uab0[0];
-        US_P(1) = CTRL.I->ecap_uab0[1];
-    }
-
-    if(G.flag_use_ecap_voltage==3){
-        ecap_moving_average();
-    }
-
-    CTRL.I->ecap_dq_lpf[0] = _lpf(CTRL.I->ecap_dq[0], CTRL.I->ecap_dq_lpf[0], 800);
-    CTRL.I->ecap_dq_lpf[1] = _lpf(CTRL.I->ecap_dq[1], CTRL.I->ecap_dq_lpf[1], 800);
-    CTRL.I->ecap_uab0[0] = CTRL.S->cosT*CTRL.I->ecap_dq_lpf[0] - CTRL.S->sinT*CTRL.I->ecap_dq_lpf[1];
-    CTRL.I->ecap_uab0[1] = CTRL.S->sinT*CTRL.I->ecap_dq_lpf[0] + CTRL.S->cosT*CTRL.I->ecap_dq_lpf[1];
-
-    // Mismatch between ecap measurement and command to inverter
-        CTRL.O->udq_cmd_to_inverter[0] = CTRL.S->cosT*CTRL.O->uab_cmd_to_inverter[0] + CTRL.S->sinT*CTRL.O->uab_cmd_to_inverter[1];
-        CTRL.O->udq_cmd_to_inverter[1] =-CTRL.S->sinT*CTRL.O->uab_cmd_to_inverter[0] + CTRL.S->cosT*CTRL.O->uab_cmd_to_inverter[1];
-        CTRL.I->ecap_dq_mismatch[0] = CTRL.O->udq_cmd_to_inverter[0] - CTRL.I->ecap_dq[0];
-        CTRL.I->ecap_dq_mismatch[1] = CTRL.O->udq_cmd_to_inverter[1] - CTRL.I->ecap_dq[1];
 
     // 电压测量
+    if(G.flag_use_ecap_voltage==2){
+        /*Use original ecap measured voltage*/
+        US_P(0) = CAP.uab0[0];
+        US_P(1) = CAP.uab0[1];
+    }
+    //    else if(G.flag_use_ecap_voltage==3){
+    //        ecap_moving_average();
+    //    }
     if(G.flag_use_ecap_voltage==1){
+
         /*Use lpf ecap measured voltage*/
-        US_P(0) = CTRL.I->ecap_uab0[0];
-        US_P(1) = CTRL.I->ecap_uab0[1];
+        CAP.dq_lpf[0] = _lpf(CAP.dq[0], CAP.dq_lpf[0], 800);
+        CAP.dq_lpf[1] = _lpf(CAP.dq[1], CAP.dq_lpf[1], 800);
+        CAP.uab0[0] = CTRL.S->cosT*CAP.dq_lpf[0] - CTRL.S->sinT*CAP.dq_lpf[1];
+        CAP.uab0[1] = CTRL.S->sinT*CAP.dq_lpf[0] + CTRL.S->cosT*CAP.dq_lpf[1];
+        US_P(0) = CAP.uab0[0];
+        US_P(1) = CAP.uab0[1];
 
     }else if(G.flag_use_ecap_voltage==0){
         /*Use command voltage for feedback*/
         US_P(0) = CTRL.O->uab_cmd[0]; // 后缀_P表示上一步的电压，P = Previous
         US_P(1) = CTRL.O->uab_cmd[1]; // 后缀_C表示当前步的电压，C = Current
     }
+
+    // (for watch only) Mismatch between ecap measurement and command to inverter
+    CTRL.O->udq_cmd_to_inverter[0] = CTRL.S->cosT*CTRL.O->uab_cmd_to_inverter[0] + CTRL.S->sinT*CTRL.O->uab_cmd_to_inverter[1];
+    CTRL.O->udq_cmd_to_inverter[1] =-CTRL.S->sinT*CTRL.O->uab_cmd_to_inverter[0] + CTRL.S->cosT*CTRL.O->uab_cmd_to_inverter[1];
+    CAP.dq_mismatch[0] = CTRL.O->udq_cmd_to_inverter[0] - CAP.dq[0];
+    CAP.dq_mismatch[1] = CTRL.O->udq_cmd_to_inverter[1] - CAP.dq[1];
 
     // 电流接口
     #ifdef _XCUBE1
@@ -185,6 +183,7 @@ void measurement(){
 //#define NSOAF_HIGH_SPEED_OPERATION
 //#define XCUBE_TaTbTc_DEBUG_MODE
 
+// int down_freq_ecap_counter = 1;
 void CJHMainISR(void){
     #if NUMBER_OF_DSP_CORES == 2
         write_DAC_buffer();
@@ -298,11 +297,9 @@ void CJHMainISR(void){
     }
 }
 
-int down_freq_ecap_counter = 1;
 Uint64 EPWM1IntCount=0;
-int password_isr_nesting = 0;
 __interrupt void EPWM1ISR(void){
-    password_isr_nesting = 178; // only if you can stop EPWM ISR, or else you won't know the value of password_isr_nesting.
+    CAP.password_isr_nesting = 178; // only if you can stop EPWM ISR, or else you won't know the value of password_isr_nesting.
     EPWM1IntCount += 1;
 
     /* Step 1. [eCAP] Set the global priority */
@@ -330,7 +327,7 @@ __interrupt void EPWM1ISR(void){
     PieCtrlRegs.PIEIER4.all = TempPIEIER4;
 
     /* Step 7. [ePWM] Exit EPWM1 ISR */
-    password_isr_nesting = 0;
+    CAP.password_isr_nesting = 0;
     EPwm1Regs.ETCLR.bit.INT = 1;
     PieCtrlRegs.PIEACK.all |= PIEACK_GROUP3;
 }
