@@ -27,12 +27,12 @@ struct Chen20_NSO_AF{
     REAL KI;
     REAL KD;
 
-    REAL ActiveFlux_KP;
-    REAL ActiveFlux_KI;
+    // REAL ActiveFlux_KP;
+    // REAL ActiveFlux_KI;
 
-    // output
-    REAL active_flux_ab[2];
-    REAL theta_d;
+    // // output
+    // REAL active_flux_ab[2];
+    // REAL theta_d;
 
     REAL output_error; // \tilde i_q
 
@@ -41,7 +41,7 @@ struct Chen20_NSO_AF{
     REAL active_power_error;
 
     // REAL gamma_TL;
-    REAL active_flux_ampl;
+    // REAL active_flux_ampl;
     REAL xTem;
 
     /* Select Signals from Block Diagram*/
@@ -49,12 +49,12 @@ struct Chen20_NSO_AF{
     REAL load_torque_pid_output;
     REAL q_axis_voltage;
 
-    /* Active Flux Estimator */
-    REAL afest_states[4];
-    REAL psi_1[2];
-    REAL u_offset[2];
-    REAL cosT;
-    REAL sinT;
+    // /* Active Flux Estimator */
+    // REAL afest_states[4];
+    // REAL psi_1[2];
+    // REAL u_offset[2];
+    // REAL cosT;
+    // REAL sinT;
 };
 extern struct Chen20_NSO_AF nsoaf;
 void hgo4eemf_init();

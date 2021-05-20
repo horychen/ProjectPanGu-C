@@ -6,7 +6,6 @@
 /* Natural Speed Observer for IPMSM with Active Flux Concept (Chen 2020)
  ********************************************/
 #define NS 3
-REAL one_over_six = 1.0/6.0;
 typedef void (*pointer_to_dynamics)(REAL t, REAL *x, REAL *fx);
 void general_NS_states_rk4_solver(pointer_to_dynamics fp, REAL t, REAL *x, REAL hs){
     REAL k1[NS], k2[NS], k3[NS], k4[NS], xk[NS];
@@ -56,9 +55,9 @@ void rhf_NSOAF_Dynamics(REAL t, REAL *x, REAL *fx){
     /* Know Signals */
     #define MOTOR (*CTRL.motor)
     REAL iDQ_now[2];
-    iDQ_now[0]  = AB2M(IS(0), IS(1), nsoaf.cosT, nsoaf.sinT);
-    iDQ_now[1]  = AB2T(IS(0), IS(1), nsoaf.cosT, nsoaf.sinT);
-    REAL uQ_now = AB2T(US(0), US(1), nsoaf.cosT, nsoaf.sinT);
+    iDQ_now[0]  = AB2M(IS(0), IS(1), AFE_USED.cosT, AFE_USED.sinT);
+    iDQ_now[1]  = AB2T(IS(0), IS(1), AFE_USED.cosT, AFE_USED.sinT);
+    REAL uQ_now = AB2T(US(0), US(1), AFE_USED.cosT, AFE_USED.sinT);
     nsoaf.q_axis_voltage = uQ_now;
 
     /* Filter */
@@ -104,9 +103,9 @@ void nsoaf_chen2020(){
     /* Know Signals */
     #define MOTOR (*CTRL.motor)
     REAL iDQ_now[2];
-    iDQ_now[0]  = AB2M(IS_P(0), IS_P(1), nsoaf.cosT, nsoaf.sinT);
-    iDQ_now[1]  = AB2T(IS_P(0), IS_P(1), nsoaf.cosT, nsoaf.sinT);
-    REAL uQ_now = AB2T(US_P(0), US_P(1), nsoaf.cosT, nsoaf.sinT);
+    iDQ_now[0]  = AB2M(IS_P(0), IS_P(1), AFE_USED.cosT, AFE_USED.sinT);
+    iDQ_now[1]  = AB2T(IS_P(0), IS_P(1), AFE_USED.cosT, AFE_USED.sinT);
+    REAL uQ_now = AB2T(US_P(0), US_P(1), AFE_USED.cosT, AFE_USED.sinT);
     nsoaf.q_axis_voltage = uQ_now;
 
     /* Output Error = \tilde i_q (scalar) */
@@ -176,12 +175,6 @@ void nsoaf_init(){
     nsoaf.KP = NSOAF_TL_P;
     nsoaf.KI = NSOAF_TL_I;
     nsoaf.KD = NSOAF_TL_D;
-
-    nsoaf.afest_states[0] = PMSM_PERMANENT_MAGNET_FLUX_LINKAGE; // TODO：这里假设了初始位置是alpha轴对着d轴的
-    nsoaf.afest_states[1] = 0.0;
-
-    nsoaf.ActiveFlux_KP = OUTPUT_ERROR_CLEST_GAIN_KP;
-    nsoaf.ActiveFlux_KI = OUTPUT_ERROR_CLEST_GAIN_KI;
 }
 #undef NS
 
@@ -722,82 +715,6 @@ void harnefors_scvm(){
 
 
 
-/* Active Flux Estimator */
-#if PC_SIMULATION == TRUE
-    #define OFFSET_VOLTAGE_ALPHA (0*0.05*-0.1 *(CTRL.timebase>3)) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
-    #define OFFSET_VOLTAGE_BETA  (0*0.05*+0.1 *(CTRL.timebase>3)) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
-#else
-    #define OFFSET_VOLTAGE_ALPHA 0
-    #define OFFSET_VOLTAGE_BETA  0
-#endif
-/* 8. C. Output Error Closed-loop Flux Estimator */
-void rhf_ActiveFluxEstimator_Dynamics(REAL t, REAL *x, REAL *fx){
-    // x[0], x[1]: stator flux in ab frame
-    // x[2]: \psi_{d\mu}
-    // x[3], x[4]: integral action compensating offset voltage
-
-    #define MOTOR (*CTRL.motor)
-
-    nsoaf.active_flux_ab[0] = x[0] - MOTOR.Lq * IS(0);
-    nsoaf.active_flux_ab[1] = x[1] - MOTOR.Lq * IS(1);
-    nsoaf.active_flux_ampl = sqrt(nsoaf.active_flux_ab[0]*nsoaf.active_flux_ab[0] + nsoaf.active_flux_ab[1]*nsoaf.active_flux_ab[1]);
-    REAL active_flux_ampl_inv=0.0;
-    if(nsoaf.active_flux_ampl!=0){
-        active_flux_ampl_inv = 1.0/nsoaf.active_flux_ampl;
-    } 
-    REAL cosT = nsoaf.active_flux_ab[0] * active_flux_ampl_inv;
-    REAL sinT = nsoaf.active_flux_ab[1] * active_flux_ampl_inv;
-
-    REAL iDQ_at_current_step[2];
-    iDQ_at_current_step[0] = AB2M(IS(0), IS(1), cosT, sinT);
-    iDQ_at_current_step[1] = AB2T(IS(0), IS(1), cosT, sinT);
-
-    REAL current_estimate[2];
-    REAL KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * iDQ_at_current_step[0];
-    current_estimate[0] = MOTOR.Lq_inv * (x[0] - KActive*cosT);
-    current_estimate[1] = MOTOR.Lq_inv * (x[1] - KActive*sinT);
-
-    REAL current_error[2];
-    current_error[0] = IS(0) - current_estimate[0];
-    current_error[1] = IS(1) - current_estimate[1];
-
-    REAL emf[2];
-    emf[0] = US(0) - MOTOR.R*IS(0) + 1*OFFSET_VOLTAGE_ALPHA;
-    emf[1] = US(1) - MOTOR.R*IS(1) + 1*OFFSET_VOLTAGE_BETA ;
-    fx[0] = emf[0] \
-        /*P*/+ nsoaf.ActiveFlux_KP * current_error[0] \
-        /*I*/+ x[2];
-    fx[1] = emf[1] \
-        /*P*/+ nsoaf.ActiveFlux_KP * current_error[1] \
-        /*I*/+ x[3];
-
-    fx[2] = nsoaf.ActiveFlux_KI * current_error[0];
-    fx[3] = nsoaf.ActiveFlux_KI * current_error[1];
-}
-void the_active_flux_estimator(){
-    /* Proposed closed loop estimator AB frame + ODE4 */
-    // stator flux and integral states update
-    general_4states_rk4_solver(&rhf_ActiveFluxEstimator_Dynamics, CTRL.timebase, nsoaf.afest_states, CL_TS);
-    // Unpack x
-    nsoaf.psi_1[0]    = nsoaf.afest_states[0];
-    nsoaf.psi_1[1]    = nsoaf.afest_states[1];
-    nsoaf.u_offset[0] = nsoaf.afest_states[2];
-    nsoaf.u_offset[1] = nsoaf.afest_states[3];
-
-    // active flux
-    nsoaf.active_flux_ab[0] = nsoaf.afest_states[0] - CTRL.motor->Lq * IS(0);
-    nsoaf.active_flux_ab[1] = nsoaf.afest_states[1] - CTRL.motor->Lq * IS(1);
-    nsoaf.active_flux_ampl = sqrt(nsoaf.active_flux_ab[0]*nsoaf.active_flux_ab[0] + nsoaf.active_flux_ab[1]*nsoaf.active_flux_ab[1]);
-    REAL active_flux_ampl_inv=0.0;
-    if(nsoaf.active_flux_ampl!=0){
-        active_flux_ampl_inv = 1.0/nsoaf.active_flux_ampl;
-    } 
-    nsoaf.cosT = nsoaf.active_flux_ab[0] * active_flux_ampl_inv;
-    nsoaf.sinT = nsoaf.active_flux_ab[1] * active_flux_ampl_inv;
-
-    nsoaf.theta_d = atan2(nsoaf.active_flux_ab[1], nsoaf.active_flux_ab[0]);
-}
-
 
 /* DOB Stationary Voltage that is valid for SPMSM only */
 void stationary_voltage_DOB(){
@@ -847,7 +764,8 @@ void pmsm_observers(){
     stationary_voltage_DOB();
 
     /* Cascaded Flux Estimator */
-    the_active_flux_estimator();
+    test_flux_estimators();
+    // nsoaf.theta_d = AFE_USED.theta_d;
 
     /* Speed and Position Estimator */
     // harnefors_scvm();
@@ -856,6 +774,9 @@ void pmsm_observers(){
     nsoaf_chen2020();
 }
 void pmsm_observers_init(){
+
+    afe_init();
+
     harnefors_init();
     cjheemf_init();
     hgo4eemf_init();
