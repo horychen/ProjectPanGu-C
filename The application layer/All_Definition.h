@@ -13,20 +13,15 @@
 /* 经常需要修改的宏定义声明文件 */
     #include "ACMConfig.h"
     #include "ACMSim.h"
-/* Logic  -----------------------------------------------------------------------------------*/
-    //#include "Logic.h"                //逻辑库 包括故障代码，DI,状态机
-    extern int VoltageOVER_FLAG;
-    struct Trip_Variables
-    {
-        BOOL VoltageOVER_FLAG;
-        BOOL CurrentOVER_FLAG;
-    };
-    extern struct Trip_Variables trip;//trip flag
-    #define Motor_mode_START    GpioDataRegs.GPADAT.bit.GPIO26          //DI Start Button
-    int Motor_MODE_START(void);
-    int Motor_MODE_STOP(void);
-    int Motor_MODE_REVERSE(void);
-    void System_Checking(void);
+/* Motor Library file------------------------------------------------------------------------*/
+    //未来需要修改成结构体
+    __interrupt void EPWM1ISR(void);
+    #define USE_ECAP_CEVT2_INTERRUPT 1
+    __interrupt void ecap1_isr(void);
+    __interrupt void ecap2_isr(void);
+    __interrupt void ecap3_isr(void);
+    __interrupt void EQEP_UTO_INT(void);
+    void SVGEN_Drive(SVGENDQ* ptrV);
 /* Driver -----------------------------------------------------------------------------------*/
     #include "DAC_MAX5307.h"
     #include "ECaptureVoltage.h"
@@ -35,14 +30,6 @@
     #include "F2837xD_sdfm_drivers.h"
     #include "ShareMemory.h"
     void MemCopy(Uint16 *SourceAddr, Uint16* SourceEndAddr, Uint16* DestAddr);//flash
-/* Motor Library file------------------------------------------------------------------------*/
-    //未来需要修改成结构体
-    __interrupt void EPWM1ISR(void);
-    __interrupt void ecap1_isr(void);
-    __interrupt void ecap2_isr(void);
-    __interrupt void ecap3_isr(void);
-    __interrupt void EQEP_UTO_INT(void);
-    void SVGEN_Drive(SVGENDQ* ptrV);
 /* Hardware Peripherals Configuration -------------------------------------------------------*/
     void PWM_1ch_UpDwnCnt_CNF(int16 n, Uint16 period, int16 db);
     void ePWM_initialize(void);
@@ -113,4 +100,19 @@
     #define DSP_2EPWM_DISABLE       GpioDataRegs.GPASET.bit.GPIO27=1;
     #define DSP_2EPWM_ENABLE        GpioDataRegs.GPACLEAR.bit.GPIO27=1;
     #define INVERTER_FLT_FAULT      GpioDataRegs.GPDDAT.bit.GPIO104  //Inverter_error signal
+
+/* Logic  -----------------------------------------------------------------------------------*/
+    //#include "Logic.h"                //逻辑库 包括故障代码，DI,状态机
+    extern int VoltageOVER_FLAG;
+    struct Trip_Variables
+    {
+        BOOL VoltageOVER_FLAG;
+        BOOL CurrentOVER_FLAG;
+    };
+    extern struct Trip_Variables trip;//trip flag
+    #define Motor_mode_START    GpioDataRegs.GPADAT.bit.GPIO26          //DI Start Button
+    int Motor_MODE_START(void);
+    int Motor_MODE_STOP(void);
+    int Motor_MODE_REVERSE(void);
+    void System_Checking(void);
 #endif

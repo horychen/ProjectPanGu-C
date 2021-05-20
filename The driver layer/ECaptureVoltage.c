@@ -7,7 +7,6 @@
 #include <All_Definition.h>
 
 
-#define USE_ECAP_CEVT2_INTERRUPT 1
 void do_enhanced_capture(){    // Section 16.6.4 // The 32 bit counter is stored in ECap1Regs.TSCTR
     /*UVW*/
     #if USE_ECAP_CEVT2_INTERRUPT == 1

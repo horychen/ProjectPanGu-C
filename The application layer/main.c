@@ -57,24 +57,25 @@ void main(void){
     PieVectTable.ECAP1_INT = &ecap1_isr;
     PieVectTable.ECAP2_INT = &ecap2_isr;
     PieVectTable.ECAP3_INT = &ecap3_isr;
-    #if SYSTEM_PROGRAM_MODE != 223
     PieVectTable.EQEP1_INT = &EQEP_UTO_INT;      // eqep
-    #endif
     EDIS; // This is needed to disable write to EALLOW protected registers
 
     /* PIE Control */
     PieCtrlRegs.PIEIER3.bit.INTx1 = 1;      // PWM1 interrupt (Interrupt 3.1)
+#if USE_ECAP_CEVT2_INTERRUPT == 1
     PieCtrlRegs.PIEIER4.bit.INTx1 = 1;      // Enable eCAP INTn in the PIE: Group 3 __interrupt 1--6 (Interrupt 4.1)
     PieCtrlRegs.PIEIER4.bit.INTx2 = 1;      // 1 Enable for Interrupt 4.2
     PieCtrlRegs.PIEIER4.bit.INTx3 = 1;      // 2 Enable for Interrupt 4.3
-
-    #if SYSTEM_PROGRAM_MODE != 223
-    PieCtrlRegs.PIEIER5.bit.INTx1 = 1;      //QEP interrupt
-    #endif
+#endif
+#if SYSTEM_PROGRAM_MODE != 223
+    PieCtrlRegs.PIEIER5.bit.INTx1 = 1;      // QEP interrupt
+#endif
 
     /* CPU Interrupt Enable Register (IER) */
     IER |= M_INT3;  // EPWM1_INT
+#if USE_ECAP_CEVT2_INTERRUPT == 1
     IER |= M_INT4;  // ECAP1_INT // CPU INT4 which is connected to ECAP1-4 INT
+#endif
     IER |= M_INT5;  // EQEP1_INT???
 
     EINT;   // Enable Global __interrupt INTM
