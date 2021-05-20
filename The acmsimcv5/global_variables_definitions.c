@@ -9,6 +9,7 @@
 #pragma DATA_SECTION(t_S        ,"MYGLOBALS");
 #pragma DATA_SECTION(t_O        ,"MYGLOBALS");
 #pragma DATA_SECTION(t_inv      ,"MYGLOBALS");
+#pragma DATA_SECTION(t_cap      ,"MYGLOBALS");
 #pragma DATA_SECTION(t_g        ,"MYGLOBALS");
 #pragma DATA_SECTION(pid1_iM    ,"MYGLOBALS");
 #pragma DATA_SECTION(pid1_iT    ,"MYGLOBALS");
@@ -19,15 +20,15 @@
 // 定义顶级结构体（指针的集合）
 struct ControllerForExperiment CTRL;
 // 定义内存空间（结构体）
-st_pmsm_parameters    t_motor={0};
-st_enc                t_enc={0};
-st_psd                t_psd={0};
-st_controller_inputs  t_I={0};
-st_controller_states  t_S={0};
-st_controller_outputs t_O={0};
-// extern st_InverterNonlinearity t_inv; // Because of the sv_count bug, I cannot declare t_inv in this .c file.
-st_InverterNonlinearity t_inv; // Because of the sv_count bug, I cannot declare t_inv in this .c file.
-st_global_variables   t_g={0};
+st_pmsm_parameters      t_motor={0};
+st_enc                  t_enc={0};
+st_psd                  t_psd={0};
+st_controller_inputs    t_I={0};
+st_controller_states    t_S={0};
+st_controller_outputs   t_O={0};
+st_InverterNonlinearity t_inv={0}; // Because of the sv_count bug, I cannot declare t_inv in this .c file. // extern st_InverterNonlinearity t_inv; 
+st_capture              t_cap={0};
+st_global_variables     t_g={0};
 
 st_pid_regulator      pid1_iM  = st_pid_regulator_DEFAULTS;
 st_pid_regulator      pid1_iT  = st_pid_regulator_DEFAULTS;
@@ -51,6 +52,7 @@ void allocate_CTRL(struct ControllerForExperiment *p){
     p->S     = &t_S;
     p->O     = &t_O;
     p->inv   = &t_inv;
+    p->cap   = &t_cap;
     p->g     = &t_g;
 
     p->S->iM  = &pid1_iM;

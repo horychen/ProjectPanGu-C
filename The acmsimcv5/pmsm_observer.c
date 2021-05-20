@@ -730,46 +730,6 @@ void harnefors_scvm(){
     #define OFFSET_VOLTAGE_ALPHA 0
     #define OFFSET_VOLTAGE_BETA  0
 #endif
-typedef void (*pointer_flux_estimator_dynamics)(REAL t, REAL *x, REAL *fx);
-void general_4states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REAL *x, REAL hs){
-    #define NS 4
-    REAL k1[NS], k2[NS], k3[NS], k4[NS], xk[NS];
-    REAL fx[NS];
-    int i;
-
-    US(0) = US_P(0);
-    US(1) = US_P(1);
-    IS(0) = IS_P(0);
-    IS(1) = IS_P(1);
-    (*fp)(t, x, fx); // timer.t,
-    for(i=0;i<NS;++i){
-        k1[i] = fx[i] * hs;
-        xk[i] = x[i] + k1[i]*0.5;
-    }
-
-    IS(0) = 0.5*(IS_P(0)+IS_C(0));
-    IS(1) = 0.5*(IS_P(1)+IS_C(1));
-    (*fp)(t, xk, fx); // timer.t+hs/2.,
-    for(i=0;i<NS;++i){
-        k2[i] = fx[i] * hs;
-        xk[i] = x[i] + k2[i]*0.5;
-    }
-
-    (*fp)(t, xk, fx); // timer.t+hs/2.,
-    for(i=0;i<NS;++i){
-        k3[i] = fx[i] * hs;
-        xk[i] = x[i] + k3[i];
-    }
-
-    IS(0) = IS_C(0);
-    IS(1) = IS_C(1);
-    (*fp)(t, xk, fx); // timer.t+hs,
-    for(i=0;i<NS;++i){
-        k4[i] = fx[i] * hs;
-        x[i] = x[i] + (k1[i] + 2*(k2[i] + k3[i]) + k4[i])*one_over_six;
-    }
-    #undef NS
-}
 /* 8. C. Output Error Closed-loop Flux Estimator */
 void rhf_ActiveFluxEstimator_Dynamics(REAL t, REAL *x, REAL *fx){
     // x[0], x[1]: stator flux in ab frame
