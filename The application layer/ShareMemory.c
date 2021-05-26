@@ -191,7 +191,7 @@ void write_DAC_buffer(){
 
         dac_time_that_cannot_be_modified += CL_TS;
         G.dac_time += CL_TS;
-        if((G.dac_time)<10){
+        if((G.dac_time)<3){
             G.dac_offset[0] =-0.003;
             G.dac_offset[1] = 0.003;
             G.dac_offset[2] = 0.0055;

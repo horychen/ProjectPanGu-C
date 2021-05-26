@@ -1152,17 +1152,17 @@ void pmsm_observers(){
     #endif
 
     if(G.Select_algorithm == 1){
-        ELECTRICAL_SPEED_FEEDBACK    =  nsoaf.xOmg;
-        ELECTRICAL_POSITION_FEEDBACK =  AFE_USED.theta_d;
+        G.omg_elec = nsoaf.xOmg;
+        G.theta_d  = AFE_USED.theta_d;
     }else if(G.Select_algorithm == 2){
-        ELECTRICAL_SPEED_FEEDBACK    = parksul.xOmg;
-        ELECTRICAL_POSITION_FEEDBACK = parksul.theta_d;
+        G.omg_elec = parksul.xOmg;
+        G.theta_d  = parksul.theta_d;
     }else if(G.Select_algorithm == 3){
-        ELECTRICAL_SPEED_FEEDBACK    = chixu.xOmg;
-        ELECTRICAL_POSITION_FEEDBACK = chixu.theta_d;
+        G.omg_elec = chixu.xOmg;
+        G.theta_d  = chixu.theta_d;
     }else if(G.Select_algorithm == 4){
-        ELECTRICAL_SPEED_FEEDBACK    = qiaoxia.xOmg;
-        ELECTRICAL_POSITION_FEEDBACK = qiaoxia.theta_d;
+        G.omg_elec = qiaoxia.xOmg;
+        G.theta_d  = qiaoxia.theta_d;
     }
 
 
