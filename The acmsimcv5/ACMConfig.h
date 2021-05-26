@@ -1,9 +1,9 @@
 #ifndef ACMCONFIG_H
 #define ACMCONFIG_H
 /* 经常要修改的 */
-#define INVERTER_NONLINEARITY_COMPENSATION 2 // 1:ParkSul12, 2:Sigmoid, 3:LUT
+#define INVERTER_NONLINEARITY_COMPENSATION 1 // 1:ParkSul12, 2:Sigmoid, 3:LUT
 #define INVERTER_NONLINEARITY              2 // 1:ModelSul96, 2:ModelExpSigmoid, 3: ModelExpLUT
-#define SENSORLESS_CONTROL TRUE
+#define SENSORLESS_CONTROL FALSE
 #define SENSORLESS_CONTROL_HFSI FALSE
 /* ParkSul2012 梯形波 */
 #define GAIN_THETA_TRAPEZOIDAL (40) //(500) // 20
@@ -38,8 +38,8 @@
     /* Select Algorithms 1 */
     #define AFE_USED AFEOE
     #define SELECT_ALGORITHM 1
-    #define ELECTRICAL_SPEED_FEEDBACK    G.omg_elec
-    #define ELECTRICAL_POSITION_FEEDBACK G.theta_d
+    // #define ELECTRICAL_SPEED_FEEDBACK    G.omg_elec
+    // #define ELECTRICAL_POSITION_FEEDBACK G.theta_d
 
     // #define ELECTRICAL_SPEED_FEEDBACK    parksul.xOmg
     // #define ELECTRICAL_POSITION_FEEDBACK parksul.theta_d
@@ -50,8 +50,8 @@
     // #define ELECTRICAL_SPEED_FEEDBACK    qiaoxia.xOmg
     // #define ELECTRICAL_POSITION_FEEDBACK qiaoxia.theta_d
 
-    // #define ELECTRICAL_SPEED_FEEDBACK    nsoaf.xOmg // harnefors.omg_elec
-    // #define ELECTRICAL_POSITION_FEEDBACK AFE_USED.theta_d // harnefors.theta_d
+    #define ELECTRICAL_SPEED_FEEDBACK    nsoaf.xOmg // harnefors.omg_elec
+    #define ELECTRICAL_POSITION_FEEDBACK AFE_USED.theta_d // harnefors.theta_d
     // #define ELECTRICAL_POSITION_FEEDBACK CTRL.I->theta_d_elec
 
     /* Park.Sul 2014 FADO in replace of CM */
