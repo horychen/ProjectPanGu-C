@@ -187,27 +187,31 @@ typedef struct {
         // Raw
         REAL offsetU,offsetV,offsetW,offsetUDC; // ADC offset. U, V, W corresponds to ADCRESULT2, ADCRESULT3, ADCRESULT1.
     // DAC
-    REAL dac_offset[8];
-    REAL dac_time;
-    REAL dac_watch[60];
-    REAL dac_watch_stator_resistance;
-    // REAL type is not very accurate 64 missing by counting 1e-4 sec to 10 sec.
-    Uint32  test_integer;
-    REAL    test_float;
+        REAL dac_offset[8];
+        REAL dac_time;
+        REAL dac_watch[60];
+        REAL dac_watch_stator_resistance;
+    // To show that REAL type is not very accurate 64 missing by counting 1e-4 sec to 10 sec.
+        Uint32  test_integer;
+        REAL    test_float;
     // Raw measurment for easy access
-    REAL Current_U, Current_V, Current_W, Current_Not_Used, Voltage_DC_BUS;
+        REAL Current_U, Current_V, Current_W, Current_Not_Used, Voltage_DC_BUS;
     // Mode Changing During Experiment
-    int FLAG_ENABLE_PWM_OUTPUT; // 电机模式标志位
-    Uint16 Rotor_angle_selection; // delete?
-    REAL Set_manual_current_iq,Set_manual_current_id,Set_manual_rpm;
-    int DAC_MAX5307_FLAG; // for single core case
-    int AD_offset_flag2;
-    int bool_comm_status;
+        int FLAG_ENABLE_PWM_OUTPUT; // 电机模式标志位
+        Uint16 Rotor_angle_selection; // delete?
+        REAL Set_manual_current_iq,Set_manual_current_id,Set_manual_rpm;
+        int DAC_MAX5307_FLAG; // for single core case
+        int AD_offset_flag2;
+        int bool_comm_status;
     // Mode Changing During Experiment Debug
-    REAL OverwriteSpeedOutLimit; // = 2;
-    REAL Overwrite_Voltage_DC_BUS; // = 180;
-    int flag_overwite_voltage_dc_bus; // = FALSE;
-    int flag_use_ecap_voltage; // = 0;
+        REAL OverwriteSpeedOutLimit; // = 2;
+        REAL Overwrite_Voltage_DC_BUS; // = 180;
+        int flag_overwite_voltage_dc_bus; // = FALSE;
+        int flag_use_ecap_voltage; // = 0;
+    // Select Algorithm
+        int Select_algorithm;
+        REAL omg_elec;
+        REAL theta_d;
 } st_global_variables; // globals
 
 struct ControllerForExperiment{

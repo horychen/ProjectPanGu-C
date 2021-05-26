@@ -259,6 +259,6 @@ void init_afe(){
     AFEOE.ActiveFlux_KI = AFEOE_KI;
     AFEOE.set_omega_est = AFEOE_OMEGA_ESTIMATOR;
     AFEOE.omega_est = AFEOE.set_omega_est;
-    afe_one_parameter_tuning(AFEOE.omega_est);
+    // afe_one_parameter_tuning(AFEOE.omega_est);
 }
 

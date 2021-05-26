@@ -87,11 +87,11 @@ void Main_nsoaf_chen2020(){
     MOTOR.KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * MOTOR.Lq*CTRL.I->idq_cmd[0];
 
     // TODO: when id changes, the gain should also change.
-    if(nsoaf.set_omega_ob != nsoaf.omega_ob){
-        nsoaf.omega_ob = nsoaf.set_omega_ob;
-        nso_one_parameter_tuning(nsoaf.omega_ob);
-        // afe_one_parameter_tuning(nsoaf.omega_ob);
-    }
+    // if(nsoaf.set_omega_ob != nsoaf.omega_ob){
+    //     nsoaf.omega_ob = nsoaf.set_omega_ob;
+    //     nso_one_parameter_tuning(nsoaf.omega_ob);
+    //     // afe_one_parameter_tuning(nsoaf.omega_ob);
+    // }
 
     /* Unpack States */
     nsoaf.xIq      = nsoaf.xBest[0];
@@ -163,12 +163,6 @@ void Main_nsoaf_chen2020(){
     /* Post-observer calculations */
     /* Selecting Signals From Block Diagram */
     nsoaf.LoadTorquePI = nsoaf.xTL + nsoaf.KP*nsoaf.active_power_error;
-    
-    /* 备份这个采样点的数据供下次使用。所以，观测的和实际的相比，是延迟一个采样周期的。 */
-    // US_P(0) = US_C(0); // 由于没有测量电压，所以当前步电压是伪概念，在这里更新是无意义的
-    // US_P(1) = US_C(1); // 由于没有测量电压，所以当前步电压是伪概念，在这里更新是无意义的
-    IS_P(0) = IS_C(0);
-    IS_P(1) = IS_C(1);
 }
 void init_nsoaf(){
 
@@ -179,7 +173,7 @@ void init_nsoaf(){
 
     MOTOR.KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * MOTOR.Lq*CTRL.I->idq[0];
     nsoaf.omega_ob = nsoaf.set_omega_ob;
-    nso_one_parameter_tuning(nsoaf.omega_ob);
+    // nso_one_parameter_tuning(nsoaf.omega_ob);
 }
 #undef NS
 
@@ -340,12 +334,6 @@ void Main_cjh_eemfhgo_farza09(){
 
     /* OBSERVATION */
     hgo4eemf_dedicated_rk4_solver(1*CL_TS);
-
-    /* 备份这个采样点的数据供下次使用。所以，观测的和实际的相比，是延迟一个采样周期的。 */
-    // US_P(0) = US_C(0); // 由于没有测量电压，所以当前步电压是伪概念，在这里更新是无意义的
-    // US_P(1) = US_C(1); // 由于没有测量电压，所以当前步电压是伪概念，在这里更新是无意义的
-    IS_P(0) = IS_C(0);
-    IS_P(1) = IS_C(1);
 }
 void init_hgo4eemf(){
     hgo4eemf.vartheta  = FARZA09_HGO_EEMF_VARTHETA;
@@ -560,12 +548,6 @@ void Main_cjh_eemfao(){
 
     /* OBSERVATION */
     eemf_ao_dedicated_rk4_solver(1*CL_TS);
-
-    /* 备份这个采样点的数据供下次使用。所以，观测的和实际的相比，是延迟一个采样周期的。 */
-    // US_P(0) = US_C(0); // 由于没有测量电压，所以当前步电压是伪概念，在这里更新是无意义的
-    // US_P(1) = US_C(1); // 由于没有测量电压，所以当前步电压是伪概念，在这里更新是无意义的
-    IS_P(0) = IS_C(0);
-    IS_P(1) = IS_C(1);
 }
 void init_cjheemf(){
     cjheemf.k1        = CJH_EEMF_K1;
@@ -796,14 +778,7 @@ void Main_QiaoXia2013_emfSMO(){
     // }
 
     /* Post-observer calculations */
-    /* Selecting Signals From Block Diagram */
-
-    
-    /* 备份这个采样点的数据供下次使用。所以，观测的和实际的相比，是延迟一个采样周期的。 */
-    // US_P(0) = US_C(0); // 由于没有测量电压，所以当前步电压是伪概念，在这里更新是无意义的
-    // US_P(1) = US_C(1); // 由于没有测量电压，所以当前步电压是伪概念，在这里更新是无意义的
-    IS_P(0) = IS_C(0);
-    IS_P(1) = IS_C(1);
+    /* Selecting Signals From Block Diagram */    
 }
 
 
@@ -911,11 +886,6 @@ void Main_ChiXu2009_emfSMO(){
     /* Post-observer calculations */
     /* Selecting Signals From Block Diagram */
     
-    /* 备份这个采样点的数据供下次使用。所以，观测的和实际的相比，是延迟一个采样周期的。 */
-    // US_P(0) = US_C(0); // 由于没有测量电压，所以当前步电压是伪概念，在这里更新是无意义的
-    // US_P(1) = US_C(1); // 由于没有测量电压，所以当前步电压是伪概念，在这里更新是无意义的
-    IS_P(0) = IS_C(0);
-    IS_P(1) = IS_C(1);
 }
 #endif
 
@@ -1102,12 +1072,6 @@ void Main_parksul2014_FADO(){
         // Park Sul 2014 uses this
         parksul.theta_d = parksul.xT2S_1[1]; // x[7]
     }
-
-    /* 备份这个采样点的数据供下次使用。所以，观测的和实际的相比，是延迟一个采样周期的。 */
-    // US_P(0) = US_C(0); // 由于没有测量电压，所以当前步电压是伪概念，在这里更新是无意义的
-    // US_P(1) = US_C(1); // 由于没有测量电压，所以当前步电压是伪概念，在这里更新是无意义的
-    IS_P(0) = IS_C(0);
-    IS_P(1) = IS_C(1);
 }
 #endif
 
@@ -1160,18 +1124,53 @@ void init_rk4(){
 void pmsm_observers(){
     // stationary_voltage_DOB();
 
-    /* Cascaded Flux Estimator */
-    test_flux_estimators();
-    // nsoaf.theta_d = AFE_USED.theta_d;
+    #if PC_SIMULATION
+        /* Cascaded Flux Estimator */
+        test_flux_estimators();
+        // nsoaf.theta_d = AFE_USED.theta_d;
 
-    /* Speed and Position Estimator */
-    // harnefors_scvm();
-    // cjh_eemfao();
-    // cjh_eemfhgo_farza09();
-    Main_nsoaf_chen2020();
-    // Main_QiaoXia2013_emfSMO();
-    Main_ChiXu2009_emfSMO();
-    Main_parksul2014_FADO();
+        /* Speed and Position Estimator */
+        // harnefors_scvm();
+        // cjh_eemfao();
+        // cjh_eemfhgo_farza09();
+        Main_nsoaf_chen2020();
+        // Main_QiaoXia2013_emfSMO();
+        Main_ChiXu2009_emfSMO();
+        Main_parksul2014_FADO();
+    #else
+        /* 资源有限 */
+        if(G.Select_algorithm == 1){
+            test_flux_estimators();
+            Main_nsoaf_chen2020();
+        }else if(G.Select_algorithm == 2){
+            Main_parksul2014_FADO();
+        }else if(G.Select_algorithm == 3){
+            Main_ChiXu2009_emfSMO();
+        }else if(G.Select_algorithm == 4){
+            Main_QiaoXia2013_emfSMO();
+        }
+    #endif
+
+    if(G.Select_algorithm == 1){
+        ELECTRICAL_SPEED_FEEDBACK    =  nsoaf.xOmg;
+        ELECTRICAL_POSITION_FEEDBACK =  AFE_USED.theta_d;
+    }else if(G.Select_algorithm == 2){
+        ELECTRICAL_SPEED_FEEDBACK    = parksul.xOmg;
+        ELECTRICAL_POSITION_FEEDBACK = parksul.theta_d;
+    }else if(G.Select_algorithm == 3){
+        ELECTRICAL_SPEED_FEEDBACK    = chixu.xOmg;
+        ELECTRICAL_POSITION_FEEDBACK = chixu.theta_d;
+    }else if(G.Select_algorithm == 4){
+        ELECTRICAL_SPEED_FEEDBACK    = qiaoxia.xOmg;
+        ELECTRICAL_POSITION_FEEDBACK = qiaoxia.theta_d;
+    }
+
+
+    /* 备份这个采样点的数据供下次使用。所以，观测的和实际的相比，是延迟一个采样周期的。 */
+    // US_P(0) = US_C(0); // 由于没有测量电压，所以当前步电压是伪概念，在这里更新是无意义的
+    // US_P(1) = US_C(1); // 由于没有测量电压，所以当前步电压是伪概念，在这里更新是无意义的
+    IS_P(0) = IS_C(0);
+    IS_P(1) = IS_C(1);
 }
 void init_pmsm_observers(){
     init_rk4();     // 龙格库塔法结构体初始化
