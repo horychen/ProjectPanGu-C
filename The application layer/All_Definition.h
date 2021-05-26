@@ -1,4 +1,4 @@
-/*
+/*  All experimental definitions Header File
  *  Created on: 2021年1月15日
  *      Author: yuanxin and jiahao
  *       */
@@ -14,7 +14,6 @@
     #include "ACMConfig.h"
     #include "ACMSim.h"
 /* Motor Library file------------------------------------------------------------------------*/
-    //未来需要修改成结构体
     __interrupt void EPWM1ISR(void);
     #define USE_ECAP_CEVT2_INTERRUPT 1
     __interrupt void ecap1_isr(void);

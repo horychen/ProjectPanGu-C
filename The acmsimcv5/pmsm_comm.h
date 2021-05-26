@@ -44,7 +44,7 @@ extern int16 bool_comm_status;
 
 void COMM_PI_tuning(REAL LL, REAL RR, REAL BW_current, REAL delta, REAL JJ, REAL KE, REAL npp);
 
-void COMM_init();
+void init_COMM();
 void COMM_resistanceId(REAL id_fb, REAL iq_fb);
 
 void COMM_inductanceId(REAL id_fb, REAL iq_fb);

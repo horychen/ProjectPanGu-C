@@ -202,7 +202,7 @@ void CJHMainISR(void){
 
         DSP_EPWM_DISABLE
         DSP_2EPWM_DISABLE
-        experiment_init();
+        init_experiment();
 
         /* 750W MOTOR1 (wo/ hall) */
         //CTRL.motor->R = 1.6;

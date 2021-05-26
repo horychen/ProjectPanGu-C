@@ -13,6 +13,7 @@ typedef struct {
     // commands
     REAL cmd_position_rad;  // mechanical
     REAL cmd_speed_rpm;     // mechanical
+    REAL cmd_omg_elec;      // electrical
     REAL cmd_rotor_flux_Wb;
     REAL idq_cmd[2];
     REAL Tem_cmd;
@@ -59,6 +60,7 @@ typedef struct {
     REAL Lq;
     REAL Lq_inv;
     REAL DeltaL; // Ld - Lq for IPMSM
+    REAL KActive;
     // mechanical
     REAL npp;
     REAL npp_inv;
@@ -250,8 +252,8 @@ extern struct ControllerForExperiment CTRL;
     // #define INV     t_inv
 
 
-void experiment_init();
-void CTRL_init();
+void init_experiment();
+void init_CTRL();
 void commissioning();
 void controller(REAL rpm_speed_command, REAL set_iq_cmd, REAL set_id_cmd);
 void allocate_CTRL(struct ControllerForExperiment *CTRL);

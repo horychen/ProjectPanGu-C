@@ -3,9 +3,9 @@
 
 #if PC_SIMULATION
 // 写变量名到文件
-#define DATA_FORMAT "%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g\n"
-#define DATA_LABELS "ACM.rpm_cmd,CTRL.I->rpm,nsoaf.xOmg*ELEC_RAD_PER_SEC_2_RPM,ENC.theta_d_elec,AFE_USED.theta_d,sin(ENC.theta_d_elec - AFE_USED.theta_d),INV.theta_trapezoidal/M_PI_OVER_180,INV.Vsat,INV.I5_plus_I7,INV.I11_plus_I13,INV.I17_plus_I19,INV.I5_plus_I7_LPF,INV.I11_plus_I13_LPF,INV.I17_plus_I19_LPF,INV.iD_atA,INV.iQ_atA,INV.uDcomp_atA,INV.uQcomp_atA,INV.ual_comp,ACM.dist_al,INV.ual_comp - ACM.dist_al,INV.ube_comp,ACM.dist_be,INV.ube_comp - ACM.dist_be,ACM.ial,ACM.ibe,sqrt(ACM.ial*ACM.ial+ACM.ibe*ACM.ibe),CTRL.O->udq_cmd[0],CTRL.O->udq_cmd[1],CTRL.I->idq_cmd[0],CTRL.I->idq_cmd[1],CTRL.I->idq[0],CTRL.I->idq[1],ACM.TLoad\n"
-#define DATA_DETAILS ACM.rpm_cmd,CTRL.I->rpm,nsoaf.xOmg*ELEC_RAD_PER_SEC_2_RPM,ENC.theta_d_elec,AFE_USED.theta_d,sin(ENC.theta_d_elec - AFE_USED.theta_d),INV.theta_trapezoidal/M_PI_OVER_180,INV.Vsat,INV.I5_plus_I7,INV.I11_plus_I13,INV.I17_plus_I19,INV.I5_plus_I7_LPF,INV.I11_plus_I13_LPF,INV.I17_plus_I19_LPF,INV.iD_atA,INV.iQ_atA,INV.uDcomp_atA,INV.uQcomp_atA,INV.ual_comp,ACM.dist_al,INV.ual_comp - ACM.dist_al,INV.ube_comp,ACM.dist_be,INV.ube_comp - ACM.dist_be,ACM.ial,ACM.ibe,sqrt(ACM.ial*ACM.ial+ACM.ibe*ACM.ibe),CTRL.O->udq_cmd[0],CTRL.O->udq_cmd[1],CTRL.I->idq_cmd[0],CTRL.I->idq_cmd[1],CTRL.I->idq[0],CTRL.I->idq[1],ACM.TLoad
+#define DATA_FORMAT "%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g\n"
+#define DATA_LABELS "ACM.rpm_cmd,CTRL.I->rpm,parksul.xOmg*ELEC_RAD_PER_SEC_2_RPM,CTRL.I->theta_d_elec,parksul.theta_d,parksul.xTheta_d,sin(CTRL.I->theta_d_elec - parksul.theta_d),sin(CTRL.I->theta_d_elec - parksul.xTheta_d),parksul.xPsi2[0],parksul.xPsi2_Limited[0],parksul.xPsi2[1],parksul.xPsi2_Limited[1],parksul.output_error[0],parksul.output_error[1],parksul.internal_error[0],parksul.internal_error[1],parksul.x[0],parksul.x[2],parksul.x[1],parksul.x[3],parksul.xD[0],parksul.xD[1],parksul.x[6],parksul.x[8],parksul.x[7],parksul.x[9],parksul.limiter_Flag\n"
+#define DATA_DETAILS ACM.rpm_cmd,CTRL.I->rpm,parksul.xOmg*ELEC_RAD_PER_SEC_2_RPM,CTRL.I->theta_d_elec,parksul.theta_d,parksul.xTheta_d,sin(CTRL.I->theta_d_elec - parksul.theta_d),sin(CTRL.I->theta_d_elec - parksul.xTheta_d),parksul.xPsi2[0],parksul.xPsi2_Limited[0],parksul.xPsi2[1],parksul.xPsi2_Limited[1],parksul.output_error[0],parksul.output_error[1],parksul.internal_error[0],parksul.internal_error[1],parksul.x[0],parksul.x[2],parksul.x[1],parksul.x[3],parksul.xD[0],parksul.xD[1],parksul.x[6],parksul.x[8],parksul.x[7],parksul.x[9],parksul.limiter_Flag
 
 void write_header_to_file(FILE *fw){
     printf("%s\n", DATA_FILE_NAME);
@@ -112,3 +112,29 @@ REAL PostionSpeedMeasurement_MovingAvergage(Uint32 QPOSCNT){
 }
 
 
+
+double difference_between_two_angles(double first, double second){
+    while(first>2*M_PI){
+        first-=2*M_PI;
+    }
+    while(second>2*M_PI){
+        second-=2*M_PI;
+    }
+
+    while(first<0.0){
+        first+=2*M_PI;
+    }
+    while(second<0.0){
+        second+=2*M_PI;
+    }
+
+    if(fabs(first-second)<M_PI){
+        return first-second;
+    }else{
+        if(first>second){
+            return first-2*M_PI-second;
+        }else{                
+            return first+2*M_PI-second;
+        }
+    }
+}

@@ -1,20 +1,16 @@
 #include "ACMSim.h"
 
-// sv_count bug
-// st_InverterNonlinearity t_inv = {0};
-
 #if MACHINE_TYPE == 2
-void experiment_init(){
-    CTRL_init();    // 控制器结构体初始化
-    rk4_init();     // 龙格库塔法结构体初始化
-    pmsm_observers_init(); // 永磁电机观测器初始化
-        // harnefors_init(); // harnefors结构体初始化
-        // cjheemf_init(); // cjheemf 结构体初始化
-        // COMM_init(); // 参数自整定初始化
+void init_experiment(){
+    init_CTRL(); // 控制器结构体初始化
+    #if ENABLE_COMMISSIONING
+        init_COMM(); // 参数自整定初始化
+    #endif
+    init_pmsm_observers(); // 永磁电机观测器初始化
 }
 
 // 初始化函数
-void CTRL_init(){
+void init_CTRL(){
 
     allocate_CTRL(&CTRL);
 
@@ -29,6 +25,7 @@ void CTRL_init(){
     CTRL.motor->Lq = PMSM_Q_AXIS_INDUCTANCE;
     CTRL.motor->Lq_inv = 1.0/CTRL.motor->Lq;
     CTRL.motor->DeltaL = CTRL.motor->Ld - CTRL.motor->Lq; // for IPMSM
+    CTRL.motor->KActive = CTRL.motor->KE; // TODO
     // mech
     CTRL.motor->npp     = MOTOR_NUMBER_OF_POLE_PAIRS;
     CTRL.motor->npp_inv = 1.0 / CTRL.motor->npp;
@@ -197,8 +194,10 @@ void null_d_control(REAL set_iq_cmd, REAL set_id_cmd){
             REAL IMIN = 2; //2;
         #endif
         /* 逆变器非线性在线校正更新theta_t需要空载时电流不为零 */
-        if(CTRL.I->idq_cmd[1]<IMIN){
+        if(fabs(CTRL.I->idq_cmd[1])<IMIN){
             CTRL.I->idq_cmd[0] = IMIN;
+        }else{
+            CTRL.I->idq_cmd[0] = 0;
         }
 
         /* Overwrite if set_id_cmd is set [Both are POSITIVE] */
@@ -277,6 +276,7 @@ void controller(REAL set_rpm_speed_command, REAL set_iq_cmd, REAL set_id_cmd){
     /// 1. 生成转速指令
     CTRL.I->cmd_position_rad    = 0.0;  // mechanical
     CTRL.I->cmd_speed_rpm       = set_rpm_speed_command;     // mechanical
+    CTRL.I->cmd_omg_elec        = CTRL.I->cmd_speed_rpm * RPM_2_ELEC_RAD_PER_SEC; // electrical
 
     /// 2. 生成磁链指令
     if(Set_maunal_current_id==0.0){
@@ -673,6 +673,14 @@ void Modified_ParkSul_Compensation(void){
         //     INV.Vsat = 5.0/6.0 * 16.0575341/2;
         // }else if(CTRL.timebase>5){
         //     INV.Vsat = 4.0/6.0 * 16.0575341/2;
+        // }
+
+        // /* Adaptive Vsat based on position error */
+        // INV.Vsat += CL_TS * INV.gain_Vsat * sin(ENC.theta_d_elec - ELECTRICAL_POSITION_FEEDBACK) * sign(ENC.omg_elec);
+        // if (INV.Vsat>15){
+        //     INV.Vsat = 15;
+        // }else if(INV.Vsat<0){
+        //     INV.Vsat = 0;
         // }
     #else
         /* Adaptive Vsat based on position error */

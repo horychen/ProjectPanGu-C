@@ -4,13 +4,19 @@
 
 typedef void (*pointer_flux_estimator_dynamics)(REAL t, REAL *x, REAL *fx);
 void general_2states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REAL *x, REAL hs);
+void general_3states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REAL *x, REAL hs);
 void general_4states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REAL *x, REAL hs);
 void general_5states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REAL *x, REAL hs);
+void general_6states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REAL *x, REAL hs);
+void general_8states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REAL *x, REAL hs);
+void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REAL *x, REAL hs);
 
 struct ActiveFluxEstimator{
     /* Coefficients */
     REAL ActiveFlux_KP;
     REAL ActiveFlux_KI;
+    REAL omega_est;
+    REAL set_omega_est;
     /* Output */
     REAL active_flux_ampl;
     REAL theta_d;
@@ -27,6 +33,6 @@ extern struct ActiveFluxEstimator AFEOE;
 
 
 void test_flux_estimators();
-void afe_init();
+void init_afe();
 
 #endif

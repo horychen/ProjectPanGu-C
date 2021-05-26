@@ -70,12 +70,16 @@ struct GlobalWatch watch;
 
 /* Structs for Algorithm */
 #if MACHINE_TYPE == PM_SYNCHRONOUS_MACHINE
+
+    struct ObserverForExperiment OBSV;
+
     // 游离在顶级之外的算法结构体
-    struct RK4_DATA rk4;
-    struct Harnefors2006 harnefors={0};
-    struct CJH_EEMF_AO_Design cjheemf={0};
-    struct FARZA09_EEMF_HGO hgo4eemf={0};
-    struct Chen20_NSO_AF nsoaf={0};
+    // struct RK4_DATA rk4;
+    // struct Harnefors2006 harnefors={0};
+    // struct CJH_EEMF_AO_Design cjheemf={0};
+    // struct FARZA09_EEMF_HGO hgo4eemf={0};
+    // struct Chen20_NSO_AF nsoaf={0};
+
 #else
     // 游离在顶级之外的算法结构体
     struct RK4_DATA rk4;

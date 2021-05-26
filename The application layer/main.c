@@ -27,7 +27,7 @@ void main(void){
     ADC_initialize();
     eQEP_initialize(0);
     InitECaptureContinuousMode();
-    experiment_init();
+    init_experiment();
     #if NUMBER_OF_DSP_CORES == 1
         // GPIO≈‰÷√
         InitSpiaGpio();

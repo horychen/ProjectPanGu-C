@@ -1,15 +1,14 @@
 #ifndef ACMCONFIG_H
 #define ACMCONFIG_H
-// 经常要修改的
-#define AFE_USED AFEOE
+/* 经常要修改的 */
+#define INVERTER_NONLINEARITY_COMPENSATION 0//1 // 1:ParkSul12, 2:Sigmoid, 3:LUT
+#define INVERTER_NONLINEARITY              0//2 // 1:ModelSul96, 2:ModelExpSigmoid, 3: ModelExpLUT
+#define SENSORLESS_CONTROL TRUE
 #define SENSORLESS_CONTROL_HFSI FALSE
-#define SENSORLESS_CONTROL FALSE
-#define INVERTER_NONLINEARITY_COMPENSATION 1 // 1:ParkSul12, 2:Sigmoid, 3:LUT
-#define INVERTER_NONLINEARITY              3 // 1:ModelSul96, 2:ModelExpSigmoid, 3: ModelExpLUT
 /* ParkSul2012 梯形波 */
 #define GAIN_THETA_TRAPEZOIDAL (40) //(500) // 20
 
-// 电机类型（TODO：饱和模型里面用的还是 IM.rr 而不是 IM.rreq）
+/* 电机类型 */ //（TODO：饱和模型里面用的还是 IM.rr 而不是 IM.rreq）
     #define INDUCTION_MACHINE_CLASSIC_MODEL 1
     #define INDUCTION_MACHINE_FLUX_ONLY_MODEL 11
     #define PM_SYNCHRONOUS_MACHINE 2
@@ -31,30 +30,75 @@
 		#define MISMATCH_LQ  100
 		#define MISMATCH_KE  100
 
+/* Algorithms */
 #if MACHINE_TYPE % 10 == 2
 
     #define ENABLE_COMMISSIONING FALSE
 
+    /* Select Algorithms 1 */
+    #define AFE_USED AFEOE
+
+    /* Select Algorithms 2 */
+    // #define ELECTRICAL_SPEED_FEEDBACK    parksul.xOmg
+    // #define ELECTRICAL_POSITION_FEEDBACK parksul.theta_d
+
+    // #define ELECTRICAL_SPEED_FEEDBACK    chixu.xOmg
+    // #define ELECTRICAL_POSITION_FEEDBACK chixu.theta_d
+
+    // #define ELECTRICAL_SPEED_FEEDBACK    qiaoxia.xOmg
+    // #define ELECTRICAL_POSITION_FEEDBACK qiaoxia.theta_d
+
     #define ELECTRICAL_SPEED_FEEDBACK    nsoaf.xOmg // harnefors.omg_elec
     #define ELECTRICAL_POSITION_FEEDBACK AFE_USED.theta_d // harnefors.theta_d
+    // #define ELECTRICAL_POSITION_FEEDBACK CTRL.I->theta_d_elec
+
+    /* Park.Sul 2014 FADO in replace of CM */
+    #define PARK_SUL_OPT_1 (2*M_PI*60)
+    #define PARK_SUL_OPT_2 (2*M_PI*35)
+        #define PARK_SUL_T2S_1_KP (PARK_SUL_OPT_1*2)
+        #define PARK_SUL_T2S_1_KI (PARK_SUL_OPT_1*PARK_SUL_OPT_1)
+        #define PARK_SUL_T2S_2_KP (PARK_SUL_OPT_2*2)
+        #define PARK_SUL_T2S_2_KI (PARK_SUL_OPT_2*PARK_SUL_OPT_2)
+    #define PARK_SUL_CM_OPT 5 // [rad/s] pole placement
+        #define PARK_SUL_CM_KP (PARK_SUL_CM_OPT*2)
+        #define PARK_SUL_CM_KI (PARK_SUL_CM_OPT*PARK_SUL_CM_OPT)
+
+    /* Chi.Xu 2009 SMO for EMF of SPMSM (Coupled position estimation via MRAS) */
+    #define CHI_XU_SIGMOID_COEFF  500
+    #define CHI_XU_SMO_GAIN       5
+    #define CHI_XU_SPEED_PLL_KP (500*2.0) // [rad/s]
+    #define CHI_XU_SPEED_PLL_KI (500*500.0)
+    #define CHI_XU_LPF_4_ZEQ    10.0
+
+    /* Qiao.Xia 2013 SMO for EMF of SPMSM */
+    #define QIAO_XIA_SIGMOID_COEFF  5000 //200 // 20
+    #define QIAO_XIA_SMO_GAIN       1.5 //1.5     // 1.5
+    #define QIAO_XIA_MRAS_GAIN      500 //500       // 50
+    #define QIAO_XIA_ADAPT_GAIN     500 //2000 // 250 // 100
 
     /* CHEN 2020 NSO with Active Flux Concept */
-    // #define NSOAF_SPMSM // use AP Error
-    #define NSOAF_IPMSM // use only OE
-    #define NSOAF_TL_P (1) // 1 for experimental starting // 4 for 1500 rpm // 2 for 800 rpm
-    #define NSOAF_TL_I (20)
-    #define NSOAF_TL_D (0)
-    #define AFEOE_KP (1*0.1) // (0.5) // (2*5)
-    #define AFEOE_KI (1*0.02) // 0.02 for 10 rpm // 0.1 for 40 rpm //(2.0) for 300 rpm
+    #define NSOAF_SPMSM // use AP Error
+    // #define NSOAF_IPMSM // use only OE
+    #define TUNING_IGNORE_UQ TRUE
+    #define NSOAF_OMEGA_OBSERVER 100 // [rad/s] // cnanot be too small (e.g., 10, KP will be negative)
+        #define NSOAF_TL_P (1) // 1 for experimental starting // 4 for 1500 rpm // 2 for 800 rpm
+        #define NSOAF_TL_I (20)
+        #define NSOAF_TL_D (0)
+
+    #define AFEOE_OMEGA_ESTIMATOR 5 // [rad/s] //0.5 // 5 for slow reversal
+        #define AFEOE_KP (1*0.1) // (0.5) // (2*5)
+        #define AFEOE_KI (1*0.02) // 0.02 for 10 rpm // 0.1 for 40 rpm //(2.0) for 300 rpm
+
     /* Farza 2009 for EMMF */
     #define FARZA09_HGO_EEMF_VARTHETA 10
     #define FARZA09_HGO_EEMF_GAMMA_OMEGA_INITIAL_VALUE 10
+
     /* CJH EEMF AO Design */
     #define CJH_EEMF_K1 (100)
     #define CJH_EEMF_K2 (CJH_EEMF_K1*CJH_EEMF_K1*0.25) // see my TCST paper@(18)
     #define CJH_EEMF_GAMMA_OMEGA (5e6)
-    /* Harnefors 2006 */
 
+    /* Harnefors 2006 */
 #elif MACHINE_TYPE % 10 == 1
     // Marino05 调参 /// default: (17143), (2700.0), (1000), (1), (0)
     #define GAMMA_INV_xTL 17142.85714285714
@@ -85,33 +129,45 @@
     #define GAIN_HARNEFORS_LAMBDA 2
 #endif
 
-// 控制策略
+/* 控制策略 */
 	#define NULL_D_AXIS_CURRENT_CONTROL -1
 	#define MTPA -2 // not supported
 #define CONTROL_STRATEGY NULL_D_AXIS_CURRENT_CONTROL
 #define NUMBER_OF_STEPS 300000
-#define DOWN_SAMPLE 1
-#define USE_QEP_RAW TRUE
-#define VOLTAGE_CURRENT_DECOUPLING_CIRCUIT FALSE
-#define SATURATED_MAGNETIC_CIRCUIT FALSE
+    #define DOWN_SAMPLE 1
+    #define USE_QEP_RAW TRUE
+    #define VOLTAGE_CURRENT_DECOUPLING_CIRCUIT FALSE
+    #define SATURATED_MAGNETIC_CIRCUIT FALSE
 #define CL_TS          (0.0001)
 #define CL_TS_INVERSE  (10000)
-#define TS_UPSAMPLING_FREQ_EXE 1.0 //0.5
-#define TS_UPSAMPLING_FREQ_EXE_INVERSE 1 //2
+    #define TS_UPSAMPLING_FREQ_EXE 1.0 //0.5
+    #define TS_UPSAMPLING_FREQ_EXE_INVERSE 1 //2
 #define VL_TS          (0.0005)
-#define PL_TS VL_TS
-#define SPEED_LOOP_CEILING (4)
+    #define PL_TS VL_TS
+    #define SPEED_LOOP_CEILING (4)
+    #define MACHINE_TS         (CL_TS*TS_UPSAMPLING_FREQ_EXE)
+    #define MACHINE_TS_INVERSE (CL_TS_INVERSE*TS_UPSAMPLING_FREQ_EXE_INVERSE)
 
 #define LOAD_INERTIA    0.0
-#define LOAD_TORQUE     2
+#define LOAD_TORQUE     4
 #define VISCOUS_COEFF   0.0007
 
 #define CURRENT_KP (6.39955)
 #define CURRENT_KI (237.845)
-#define CURRENT_KI_CODE (CURRENT_KI*CURRENT_KP*CL_TS)
+    #define CURRENT_KI_CODE (CURRENT_KI*CURRENT_KP*CL_TS)
+#define CURRENT_LOOP_LIMIT_VOLTS (110)
+
 #define SPEED_KP (0.0380362)
 #define SPEED_KI (30.5565)
-#define SPEED_KI_CODE (SPEED_KI*SPEED_KP*VL_TS)
+    #define SPEED_KI_CODE (SPEED_KI*SPEED_KP*VL_TS)
+    #define SPEED_LOOP_LIMIT_NEWTON_METER (2.0*MOTOR_RATED_TORQUE)
+    #define SPEED_LOOP_LIMIT_AMPERE (2.0*1.414*MOTOR_RATED_CURRENT_RMS)
+
+    #define MOTOR_RATED_TORQUE ( MOTOR_RATED_POWER_WATT / (MOTOR_RATED_SPEED_RPM/60.0*2*3.1415926) )
+    #define MOTOR_TORQUE_CONSTANT ( MOTOR_RATED_TORQUE / (MOTOR_RATED_CURRENT_RMS*1.414) )
+    #define MOTOR_BACK_EMF_CONSTANT ( MOTOR_TORQUE_CONSTANT / 1.5 / MOTOR_NUMBER_OF_POLE_PAIRS )
+    #define MOTOR_BACK_EMF_CONSTANT_mV_PER_RPM ( MOTOR_BACK_EMF_CONSTANT * 1e3 / (1.0/MOTOR_NUMBER_OF_POLE_PAIRS/2/3.1415926*60) )
+
 
 /* Encoder QEP */
 #define SYSTEM_QEP_PULSES_PER_REV  (10000)
@@ -124,7 +180,7 @@
     #define SYSTEM_QEP_CALIBRATED_ANGLE -976 // for MOTOR1 (w/ hall sensor) // -968 for MOTOR1
 #endif
 
-// 指令类型
+/* 指令类型 */
     #define EXCITATION_POSITION 0
     #define EXCITATION_VELOCITY 1
     #define EXCITATION_SWEEP_FREQUENCY 2
