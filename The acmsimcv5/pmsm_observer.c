@@ -1173,15 +1173,18 @@ void pmsm_observers(){
     IS_P(1) = IS_C(1);
 }
 void init_pmsm_observers(){
+    // RK4
     init_rk4();     // 龙格库塔法结构体初始化
 
+    // FE
+    init_FE();
+
+    // OBSV
+    init_harnefors(); // harnefors结构体初始化
+    init_cjheemf(); // cjheemf 结构体初始化
     init_parksul2014();
     init_QiaoXia2013();
     init_ChiXu2009();
-    init_afe();
     init_nsoaf();
-
-    init_harnefors(); // harnefors结构体初始化
-    init_cjheemf(); // cjheemf 结构体初始化
 }
 #endif

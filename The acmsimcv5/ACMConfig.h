@@ -1,8 +1,8 @@
 #ifndef ACMCONFIG_H
 #define ACMCONFIG_H
 /* 经常要修改的 */
-#define INVERTER_NONLINEARITY_COMPENSATION 1 // 1:ParkSul12, 2:Sigmoid, 3:LUT
-#define INVERTER_NONLINEARITY              2 // 1:ModelSul96, 2:ModelExpSigmoid, 3: ModelExpLUT
+#define INVERTER_NONLINEARITY_COMPENSATION 0 //1 // 1:ParkSul12, 2:Sigmoid, 3:LUT
+#define INVERTER_NONLINEARITY              0 //2 // 1:ModelSul96, 2:ModelExpSigmoid, 3: ModelExpLUT
 #define SENSORLESS_CONTROL FALSE
 #define SENSORLESS_CONTROL_HFSI FALSE
 /* ParkSul2012 梯形波 */
@@ -35,8 +35,19 @@
 
     #define ENABLE_COMMISSIONING FALSE
 
-    /* Select Algorithms 1 */
+    /* Select Algorithm 1 */
     #define AFE_USED AFEOE
+    #define AFEOE_OMEGA_ESTIMATOR 5 // [rad/s] //0.5 // 5 for slow reversal
+        #define AFEOE_KP (1*0.1) // (0.5) // (2*5)
+        #define AFEOE_KI (1*0.02) // 0.02 for 10 rpm // 0.1 for 40 rpm //(2.0) for 300 rpm
+
+    #define AFE_21_HUWU_TAU_1_INVERSE 0.5 // [rad/s] //0.5 // 5 for slow reversal
+    #define AFE_21_HUWU_KP (0.1) //[rad/s]
+    #define AFE_21_HUWU_KI (0.25) //[rad/s]
+
+
+
+    /* Select Algorithm 2*/
     #define SELECT_ALGORITHM 1
     // #define ELECTRICAL_SPEED_FEEDBACK    G.omg_elec
     // #define ELECTRICAL_POSITION_FEEDBACK G.theta_d
@@ -86,10 +97,6 @@
         #define NSOAF_TL_P (1) // 1 for experimental starting // 4 for 1500 rpm // 2 for 800 rpm
         #define NSOAF_TL_I (20)
         #define NSOAF_TL_D (0)
-
-    #define AFEOE_OMEGA_ESTIMATOR 5 // [rad/s] //0.5 // 5 for slow reversal
-        #define AFEOE_KP (1*0.1) // (0.5) // (2*5)
-        #define AFEOE_KI (1*0.02) // 0.02 for 10 rpm // 0.1 for 40 rpm //(2.0) for 300 rpm
 
     /* Farza 2009 for EMMF */
     #define FARZA09_HGO_EEMF_VARTHETA 10
