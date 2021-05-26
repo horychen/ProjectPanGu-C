@@ -1,19 +1,4 @@
 #include "ACMSim.h"
-#define AFE_11_OHTANI_1992 0
-#define AFE_12_HOLTZ_QUAN_2002 0
-#define AFE_13_LASCU_ANDREESCUS_2006 0
-#define AFE_14_MY_PROPOSED 0
-#define AFE_21_HU_WU_1998 0
-#define AFE_22_STOJIC_2015 0
-#define AFE_23_SCVM_HARNEFORS_2003 0
-#define AFE_24_OE 0
-#define AFE_25_VM_CM_FUSION 1 // See ParkSul2014Follower2020
-#define AFE_31_HOLT_QUAN_2003_LPF_ORIGINIAL 0
-#define AFE_32_HOLT_QUAN_2003_INTEGRATOR 0
-#define AFE_33_EXACT_OFFSET_COMPENSATION 0
-#define AFE_34_ADAPTIVE_LIMIT 0
-#define AFE_35_SATURATION_TIME_DIFFERENCE 0
-#define AFE_36_TOP_BUTT_EXACT_COMPENSATION 0
 
 /*****************************/
 /* Shared Solver and typedef */
@@ -125,20 +110,89 @@ void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REA
 #endif
 #if AFE_14_MY_PROPOSED 
 #endif
-#if AFE_21_HU_WU_1998 
-/**/
+#if AFE_21_HU_WU_1998
+    void init_huwu(){
+        huwu.tau_1_inv = AFE_21_HUWU_TAU_1_INVERSE;
+        huwu.KP = AFE_21_HUWU_KP;
+        huwu.KI = AFE_21_HUWU_KI;
+
+        huwu.x[0] = MOTOR.KE;
+    }
+    void rhf_HuWu_1998_Dynamics(REAL t, REAL *x, REAL *fx){
+        // x[0], x[1]: stator flux in ab frame
+        // x[2], x[3]: compensation flux (integral part)
+
+        #define xPsi1(X)  x[0+X]
+        #define xPsi_Comp x[2]
+
+        /* Output: Flux amplitude */
+        REAL temp = 0.0; 
+        huwu.stator_flux_ampl = sqrt(xPsi1(0)*xPsi1(0) + xPsi1(1)*xPsi1(1));
+        if(huwu.stator_flux_ampl!=0){
+            temp = 1.0 / huwu.stator_flux_ampl;
+        }
+
+        REAL emf[2];
+        emf[0] = US(0) - MOTOR.R*IS(0);
+        emf[1] = US(1) - MOTOR.R*IS(1);
+
+        huwu.inner_product_normalized = (emf[0] * xPsi1(0) + emf[1] * xPsi1(1)) * temp;
+
+        /* Compensation term is a flux amplitude going through an inverse Park transformation */
+        fx[0] = emf[0] + huwu.tau_1_inv * ( (/*P*/+ huwu.KP * huwu.inner_product_normalized \
+                                             /*I*/+ xPsi_Comp \
+                                            ) * xPsi1(0) * temp - xPsi1(0) );
+        fx[1] = emf[1] + huwu.tau_1_inv * ( (/*P*/+ huwu.KP * huwu.inner_product_normalized \
+                                             /*I*/+ xPsi_Comp \
+                                            ) * xPsi1(1) * temp - xPsi1(1) );
+
+        /* State: disturbance/offset estimated by an integrator */
+        fx[2] = huwu.KI * huwu.inner_product_normalized;
+    }
+    void MainFE_HuWu_1998(){
+        // stator flux and integral states update
+        general_3states_rk4_solver(&rhf_HuWu_1998_Dynamics, CTRL.timebase, huwu.x, CL_TS);
+        // Unpack x
+        huwu.psi_1[0] = huwu.x[0];
+        huwu.psi_1[1] = huwu.x[1];
+        huwu.psi_comp = huwu.x[2];
+
+        // active flux and position
+        huwu.psi_2[0] = huwu.x[0] - CTRL.motor->Lq * IS(0);
+        huwu.psi_2[1] = huwu.x[1] - CTRL.motor->Lq * IS(1);
+        huwu.theta_d = atan2(huwu.psi_2[1], huwu.psi_2[0]);
+    }
 #endif
 #if AFE_22_STOJIC_2015 
 #endif
 #if AFE_23_SCVM_HARNEFORS_2003 
 #endif
 #if AFE_24_OE || AFE_25_VM_CM_FUSION // See ParkSul2014Follower2020
-    struct ActiveFluxEstimator AFEOE;
+    void afe_one_parameter_tuning(REAL omega_est){
+        AFEOE.ActiveFlux_KP = 2* omega_est;
+        AFEOE.ActiveFlux_KI = omega_est*omega_est;
+
+        #if PC_SIMULATION
+        printf("Init AFEOE:\n");
+        printf("\tomega_est=%g\n", omega_est);
+        printf("\tAFEOE.ActiveFlux_KP=%g\n", AFEOE.ActiveFlux_KP);
+        printf("\tAFEOE.ActiveFlux_KI=%g\n", AFEOE.ActiveFlux_KI);
+        #endif
+    }
+    void init_afe(){
+        AFEOE.x[0] = PMSM_PERMANENT_MAGNET_FLUX_LINKAGE; // TODO：这里假设了初始位置是alpha轴对着d轴的
+        AFEOE.x[1] = 0.0;    
+        AFEOE.ActiveFlux_KP = AFEOE_KP;
+        AFEOE.ActiveFlux_KI = AFEOE_KI;
+        AFEOE.set_omega_est = AFEOE_OMEGA_ESTIMATOR;
+        AFEOE.omega_est = AFEOE.set_omega_est;
+        #if AFE_25_VM_CM_FUSION
+            afe_one_parameter_tuning(AFEOE.omega_est);
+        #endif
+    }
     void rhf_ActiveFluxEstimator_Dynamics(REAL t, REAL *x, REAL *fx){
         // x[0], x[1]: stator flux in ab frame
         // x[2], x[3]: integral action compensating offset voltage
-
-        #define MOTOR (*CTRL.motor)
 
         /* Calculate psi_2 from psi_1, Lq and i_ab */
         AFEOE.psi_2[0] = x[0] - MOTOR.Lq * IS(0);
@@ -208,9 +262,12 @@ void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REA
         REAL active_flux_ampl_inv=0.0;
         if(AFEOE.active_flux_ampl!=0){
             active_flux_ampl_inv = 1.0/AFEOE.active_flux_ampl;
-        } 
-        AFEOE.cosT = AFEOE.psi_2[0] * active_flux_ampl_inv;
-        AFEOE.sinT = AFEOE.psi_2[1] * active_flux_ampl_inv;
+            AFEOE.cosT = AFEOE.psi_2[0] * active_flux_ampl_inv;
+            AFEOE.sinT = AFEOE.psi_2[1] * active_flux_ampl_inv;
+        }else{
+            AFEOE.cosT = 1.0;
+            AFEOE.sinT = 0.0;
+        }
 
         AFEOE.theta_d = atan2(AFEOE.psi_2[1], AFEOE.psi_2[0]);
     }
@@ -228,37 +285,13 @@ void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REA
 #if AFE_36_TOP_BUTT_EXACT_COMPENSATION 
 #endif
 
-
-
-
-
-
-
 void test_flux_estimators(){
     Main_the_active_flux_estimator();
+    MainFE_HuWu_1998();
 }
 
-
-
-
-void afe_one_parameter_tuning(REAL omega_est){
-    AFEOE.ActiveFlux_KP = 2* omega_est;
-    AFEOE.ActiveFlux_KI = omega_est*omega_est;
-
-    #if PC_SIMULATION
-    printf("Init AFEOE:\n");
-    printf("\tomega_est=%g\n", omega_est);
-    printf("\tAFEOE.ActiveFlux_KP=%g\n", AFEOE.ActiveFlux_KP);
-    printf("\tAFEOE.ActiveFlux_KI=%g\n", AFEOE.ActiveFlux_KI);
-    #endif
-}
-void init_afe(){
-    AFEOE.x[0] = PMSM_PERMANENT_MAGNET_FLUX_LINKAGE; // TODO：这里假设了初始位置是alpha轴对着d轴的
-    AFEOE.x[1] = 0.0;    
-    AFEOE.ActiveFlux_KP = AFEOE_KP;
-    AFEOE.ActiveFlux_KI = AFEOE_KI;
-    AFEOE.set_omega_est = AFEOE_OMEGA_ESTIMATOR;
-    AFEOE.omega_est = AFEOE.set_omega_est;
-    afe_one_parameter_tuning(AFEOE.omega_est);
+void init_FE(){
+    init_huwu();
+    init_afe();
 }
 

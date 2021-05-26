@@ -72,6 +72,7 @@ struct GlobalWatch watch;
 #if MACHINE_TYPE == PM_SYNCHRONOUS_MACHINE
 
     struct ObserverForExperiment OBSV;
+    struct SharedFluxEstimatorForExperiment FE;
 
     // 游离在顶级之外的算法结构体
     // struct RK4_DATA rk4;

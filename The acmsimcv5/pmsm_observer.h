@@ -222,7 +222,6 @@ void init_rk4();
 void pmsm_observers();
 void init_pmsm_observers();
 
-
 /* Macros for using SVF in Harnefors 2006 */
     // void init_harnefors();
     // void harnefors_scvm();
