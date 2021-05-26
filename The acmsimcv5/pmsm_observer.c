@@ -5,45 +5,6 @@
 /********************************************/
 /* Natural Speed Observer for IPMSM with Active Flux Concept (Chen 2020)
  ********************************************/
-#define NS 3
-typedef void (*pointer_to_dynamics)(REAL t, REAL *x, REAL *fx);
-void general_NS_states_rk4_solver(pointer_to_dynamics fp, REAL t, REAL *x, REAL hs){
-    REAL k1[NS], k2[NS], k3[NS], k4[NS], xk[NS];
-    REAL fx[NS];
-    int i;
-
-    US(0) = US_P(0);
-    US(1) = US_P(1);
-    IS(0) = IS_P(0);
-    IS(1) = IS_P(1);
-    (*fp)(t, x, fx); // timer.t,
-    for(i=0;i<NS;++i){
-        k1[i] = fx[i] * hs;
-        xk[i] = x[i] + k1[i]*0.5;
-    }
-
-    IS(0) = 0.5*(IS_P(0)+IS_C(0));
-    IS(1) = 0.5*(IS_P(1)+IS_C(1));
-    (*fp)(t, xk, fx); // timer.t+hs/2.,
-    for(i=0;i<NS;++i){
-        k2[i] = fx[i] * hs;
-        xk[i] = x[i] + k2[i]*0.5;
-    }
-
-    (*fp)(t, xk, fx); // timer.t+hs/2.,
-    for(i=0;i<NS;++i){
-        k3[i] = fx[i] * hs;
-        xk[i] = x[i] + k3[i];
-    }
-
-    IS(0) = IS_C(0);
-    IS(1) = IS_C(1);
-    (*fp)(t, xk, fx); // timer.t+hs,
-    for(i=0;i<NS;++i){
-        k4[i] = fx[i] * hs;
-        x[i] = x[i] + (k1[i] + 2*(k2[i] + k3[i]) + k4[i])*one_over_six;
-    }
-}
 /* The 3rd-order dynamic system */
 void rhf_NSOAF_Dynamics(REAL t, REAL *x, REAL *fx){
 
@@ -90,10 +51,47 @@ void rhf_NSOAF_Dynamics(REAL t, REAL *x, REAL *fx){
     // xTL
     fx[2] = nsoaf.KI * nsoaf.active_power_error;
 }
+
 /* Main Observer */
-void nsoaf_chen2020(){
+void nso_one_parameter_tuning(REAL omega_ob){
+
+    REAL one_over__npp_divided_by_Js__times__Lq_id_plus_KActive = 1.0 \
+        / ( MOTOR.npp 
+            * MOTOR.Js_inv 
+            * (MOTOR.Lq*CTRL.I->idq_cmd[0] + MOTOR.KActive)
+          );
+    REAL uq_inv = 1.0 / CTRL.O->udq_cmd[1];
+    #if TUNING_IGNORE_UQ
+        uq_inv = 1.0; // this is 1.#INF when init
+    #endif
+
+    nsoaf.KD = 3*omega_ob                        * one_over__npp_divided_by_Js__times__Lq_id_plus_KActive                                 * uq_inv;
+    nsoaf.KP = ( (3*omega_ob*omega_ob - MOTOR.R) * one_over__npp_divided_by_Js__times__Lq_id_plus_KActive - 1.5*MOTOR.npp*MOTOR.KActive ) * uq_inv;
+    nsoaf.KI = omega_ob*omega_ob*omega_ob        * one_over__npp_divided_by_Js__times__Lq_id_plus_KActive                                 * uq_inv;
+
+    #if PC_SIMULATION
+    #if TUNING_IGNORE_UQ
+    printf("Init NSOAF:\n");
+    printf("\tIgnore uq.\n");
+    #endif
+    printf("\tomega_ob=%g\n", omega_ob);
+    printf("\t1.5*MOTOR.npp*MOTOR.KActive=%g\n", 1.5*MOTOR.npp*MOTOR.KActive);
+    printf("\tone_over__npp_divided_by_Js__times__Lq_id_plus_KActive=%g\n", one_over__npp_divided_by_Js__times__Lq_id_plus_KActive);
+    printf("\tKD=%g\n\tKP=%g\n\tKI=%g\n", nsoaf.KD, nsoaf.KP, nsoaf.KI);
+    #endif
+}
+void Main_nsoaf_chen2020(){
 
     /* OBSERVATION */
+
+    MOTOR.KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * MOTOR.Lq*CTRL.I->idq_cmd[0];
+
+    // TODO: when id changes, the gain should also change.
+    if(nsoaf.set_omega_ob != nsoaf.omega_ob){
+        nsoaf.omega_ob = nsoaf.set_omega_ob;
+        nso_one_parameter_tuning(nsoaf.omega_ob);
+        // afe_one_parameter_tuning(nsoaf.omega_ob);
+    }
 
     /* Unpack States */
     nsoaf.xIq      = nsoaf.xBest[0];
@@ -141,7 +139,7 @@ void nsoaf_chen2020(){
         //     nsoaf.KP = (j+1) * 0.2 * NSOAF_TL_P*0;
         //     nsoaf.KI = (j+1) * 0.2 * NSOAF_TL_I;
         //     nsoaf.KD = (j+1) * 0.2 * NSOAF_TL_D;
-        //     general_NS_states_rk4_solver(&rhf_NSOAF_Dynamics, CTRL.timebase, (nsoaf.x+j*NS), CL_TS);
+        //     general_3_states_rk4_solver(&rhf_NSOAF_Dynamics, CTRL.timebase, (nsoaf.x+j*NS), CL_TS);
         //     nsoaf.output_error = iQ_C - *(nsoaf.x+j*NS);
         //     if(fabs(nsoaf.output_error) < fabs(best_output_error)){
         //         best_output_error = nsoaf.output_error;
@@ -155,7 +153,8 @@ void nsoaf_chen2020(){
         // DEBUG
         // nsoaf.xBest[1] = ACM.omg_elec;
 
-    general_NS_states_rk4_solver(&rhf_NSOAF_Dynamics, CTRL.timebase, nsoaf.xBest, CL_TS);
+    general_3states_rk4_solver(&rhf_NSOAF_Dynamics, CTRL.timebase, nsoaf.xBest, CL_TS);
+
 
     /* Unpack x (for the best) */
     // nsoaf.xIq      = nsoaf.xBest[0];
@@ -171,10 +170,16 @@ void nsoaf_chen2020(){
     IS_P(0) = IS_C(0);
     IS_P(1) = IS_C(1);
 }
-void nsoaf_init(){
+void init_nsoaf(){
+
     nsoaf.KP = NSOAF_TL_P;
     nsoaf.KI = NSOAF_TL_I;
     nsoaf.KD = NSOAF_TL_D;
+    nsoaf.set_omega_ob = NSOAF_OMEGA_OBSERVER;
+
+    MOTOR.KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * MOTOR.Lq*CTRL.I->idq[0];
+    nsoaf.omega_ob = nsoaf.set_omega_ob;
+    nso_one_parameter_tuning(nsoaf.omega_ob);
 }
 #undef NS
 
@@ -331,7 +336,7 @@ void hgo4eemf_dedicated_rk4_solver(REAL hs){
                            );
 }
 /* Main Observer */
-void cjh_eemfhgo_farza09(){
+void Main_cjh_eemfhgo_farza09(){
 
     /* OBSERVATION */
     hgo4eemf_dedicated_rk4_solver(1*CL_TS);
@@ -342,7 +347,7 @@ void cjh_eemfhgo_farza09(){
     IS_P(0) = IS_C(0);
     IS_P(1) = IS_C(1);
 }
-void hgo4eemf_init(){
+void init_hgo4eemf(){
     hgo4eemf.vartheta  = FARZA09_HGO_EEMF_VARTHETA;
     if(hgo4eemf.vartheta==0.0){
         #if PC_SIMULATION
@@ -551,7 +556,7 @@ void eemf_ao_dedicated_rk4_solver(REAL hs){
                            );
 }
 /* Main Observer */
-void cjh_eemfao(){
+void Main_cjh_eemfao(){
 
     /* OBSERVATION */
     eemf_ao_dedicated_rk4_solver(1*CL_TS);
@@ -562,7 +567,7 @@ void cjh_eemfao(){
     IS_P(0) = IS_C(0);
     IS_P(1) = IS_C(1);
 }
-void cjheemf_init(){
+void init_cjheemf(){
     cjheemf.k1        = CJH_EEMF_K1;
     cjheemf.k2        = CJH_EEMF_K2;
     cjheemf.gamma_omg = CJH_EEMF_GAMMA_OMEGA;
@@ -574,7 +579,7 @@ void cjheemf_init(){
 /********************************************/
 /* Harnefor 2006
  ********************************************/
-void harnefors_init(){
+void init_harnefors(){
     // harnefors.theta_d = 0.0;
     // harnefors.omg_elec = 0.0;
 
@@ -644,7 +649,7 @@ void state_variable_filter(REAL hs){
 // Harnefors 2003: mu=-1, lambda=sqrt(2)
 // Harnefors 2006
 #define LAMBDA 2
-void harnefors_scvm(){
+void Main_harnefors_scvm(){
 
     // 这一组参数很适合伺尔沃的400W，也可以用于100W和200W（delta=6.5，VLBW=50Hz）
         // #define CJH_TUNING_A  25 // low voltage servo motor (<48 Vdc)
@@ -713,6 +718,398 @@ void harnefors_scvm(){
 }
 
 
+/********************************************/
+/* Qiao.Xia 2013 emfSMO with Sigmoid (Also Hongryel Kim 2011) as Nonlinear
+ ********************************************/
+REAL sm_sigmoid(REAL x, REAL a){
+    return 2.0 / (1.0 + exp(-a*x)) - 1.0;
+}
+void init_QiaoXia2013(){
+    qiaoxia.smo_gain      = 0.0; // time varying gain
+    qiaoxia.sigmoid_coeff = QIAO_XIA_SIGMOID_COEFF;   // 17
+    qiaoxia.adapt_gain    = QIAO_XIA_ADAPT_GAIN; // this is fixed to be 1 in the paper
+    qiaoxia.mras_gain     = QIAO_XIA_MRAS_GAIN;
+}
+void rhf_QiaoXia2013_Dynamics(REAL t, REAL *x, REAL *fx){
+
+    /* Unpack States */
+    REAL xIa   = x[0];
+    REAL xIb   = x[1];
+    REAL xEmfa = x[2];
+    REAL xEmfb = x[3];
+    REAL xOmg  = x[4];
+
+    /* Know Signals */
+    // #define MOTOR (*CTRL.motor)
+
+    /* Output Error = \tilde i_q (scalar) */
+    qiaoxia.output_error[0] = IS(0) - xIa;
+    qiaoxia.output_error[1] = IS(1) - xIb;
+
+    /* Sliding Mode Switching Term*/
+    qiaoxia.xEmf_raw[0] = qiaoxia.smo_gain * sm_sigmoid(qiaoxia.output_error[0], qiaoxia.sigmoid_coeff);
+    qiaoxia.xEmf_raw[1] = qiaoxia.smo_gain * sm_sigmoid(qiaoxia.output_error[1], qiaoxia.sigmoid_coeff);
+    // qiaoxia.xEmf_raw[0] = qiaoxia.smo_gain * sign(qiaoxia.output_error[0]);
+    // qiaoxia.xEmf_raw[1] = qiaoxia.smo_gain * sign(qiaoxia.output_error[1]);
+
+    /* State Observer */
+    // xIab
+    fx[0] = MOTOR.Lq_inv * (US(0) - MOTOR.R * xIa + qiaoxia.xEmf_raw[0]);
+    fx[1] = MOTOR.Lq_inv * (US(1) - MOTOR.R * xIb + qiaoxia.xEmf_raw[1]);
+    // xEmf
+    #define OMG_USED xOmg //CTRL.I->omg_elec // 
+    fx[2] = -OMG_USED*xEmfb + qiaoxia.mras_gain * (qiaoxia.xEmf_raw[0] - xEmfa);
+    fx[3] =  OMG_USED*xEmfa + qiaoxia.mras_gain * (qiaoxia.xEmf_raw[1] - xEmfb);
+    // xOmg
+    fx[4] = qiaoxia.adapt_gain * (qiaoxia.xEmf_raw[0] - xEmfa)*-xEmfb + (qiaoxia.xEmf_raw[1] - xEmfb)*xEmfa;
+}
+void Main_QiaoXia2013_emfSMO(){
+
+    /* Time-varying gains */
+    qiaoxia.smo_gain = QIAO_XIA_SMO_GAIN * fabs(CTRL.I->cmd_omg_elec) * MOTOR.KE;
+    // qiaoxia.smo_gain = QIAO_XIA_SMO_GAIN * 70 * MOTOR.KE;
+
+    general_5states_rk4_solver(&rhf_QiaoXia2013_Dynamics, CTRL.timebase, qiaoxia.x, CL_TS);
+
+    /* Unpack x (for the best) */
+    qiaoxia.xIab[0] = qiaoxia.x[0];
+    qiaoxia.xIab[1] = qiaoxia.x[1];
+    qiaoxia.xEmf[0] = qiaoxia.x[2];
+    qiaoxia.xEmf[1] = qiaoxia.x[3];
+    qiaoxia.xOmg    = qiaoxia.x[4];
+    // REAL temp = -atan2( qiaoxia.xEmf[0]*-sign(CTRL.I->cmd_speed_rpm),   // qiaoxia.xOmg
+    //                     qiaoxia.xEmf[1]*-sign(CTRL.I->cmd_speed_rpm) ); // qiaoxia.xOmg
+    REAL temp = -atan2( qiaoxia.xEmf[0]*sign(-qiaoxia.xOmg),   // qiaoxia.xOmg
+                        qiaoxia.xEmf[1]*sign(-qiaoxia.xOmg) ); // qiaoxia.xOmg
+    // REAL temp = -atan2( qiaoxia.xEmf[0],   // qiaoxia.xOmg
+                        // qiaoxia.xEmf[1] ); // qiaoxia.xOmg
+    qiaoxia.theta_d = temp;
+    // if(temp>0){
+    //     qiaoxia.theta_d = temp - M_PI;
+    // }else{
+    //     qiaoxia.theta_d = temp + M_PI;
+    // }
+    // if(qiaoxia.theta_d>M_PI){
+    //     qiaoxia.theta_d -= M_PI;
+    // }else if(qiaoxia.theta_d<-M_PI){
+    //     qiaoxia.theta_d += M_PI;
+    // }
+
+    /* Post-observer calculations */
+    /* Selecting Signals From Block Diagram */
+
+    
+    /* 备份这个采样点的数据供下次使用。所以，观测的和实际的相比，是延迟一个采样周期的。 */
+    // US_P(0) = US_C(0); // 由于没有测量电压，所以当前步电压是伪概念，在这里更新是无意义的
+    // US_P(1) = US_C(1); // 由于没有测量电压，所以当前步电压是伪概念，在这里更新是无意义的
+    IS_P(0) = IS_C(0);
+    IS_P(1) = IS_C(1);
+}
+
+
+
+/********************************************/
+/* SongChi.LongyaXu 2009 emfSMO 
+ */
+#if TRUE
+void init_ChiXu2009(){
+    chixu.smo_gain      = 0.0; // time varying gain
+    chixu.sigmoid_coeff = CHI_XU_SIGMOID_COEFF;   // 17
+    chixu.PLL_KP        = CHI_XU_SPEED_PLL_KP;
+    chixu.PLL_KI        = CHI_XU_SPEED_PLL_KI;
+    chixu.ell4xZeq      = -0.5; // -0.5 for low speed and 1.0 for high speed
+    chixu.omega_lpf_4_xZeq = CHI_XU_LPF_4_ZEQ;
+}
+REAL get_theta_d_from_xZeq(REAL xZeq_a, REAL xZeq_b){
+    REAL temp = -atan2( xZeq_a, xZeq_b) + M_PI*0.5;
+    if(temp>0){
+        temp = temp - M_PI;
+    }else{
+        temp = temp + M_PI;
+    }
+    return temp;
+}
+void rhf_ChiXu2009_Dynamics(REAL t, REAL *x, REAL *fx){
+
+    /* Unpack States */
+    #define xIab(X) x[0+X]
+    #define xZeq(X) x[2+X]
+    #define xOmg     x[4]
+    #define xTheta_d x[5]
+
+    /* Know Signals */
+    // #define MOTOR (*CTRL.motor)
+
+    /* Output Error = \tilde i_q (scalar) */
+    chixu.output_error[0] = IS(0) - xIab(0);
+    chixu.output_error[1] = IS(1) - xIab(1);
+
+    /* Sliding Mode Switching Term*/
+    // TODO: need to change sigmoid to saturation function 
+    chixu.xEmf_raw[0] = chixu.smo_gain * sm_sigmoid(chixu.output_error[0], chixu.sigmoid_coeff);
+    chixu.xEmf_raw[1] = chixu.smo_gain * sm_sigmoid(chixu.output_error[1], chixu.sigmoid_coeff);
+
+    // xZeq
+    fx[2] = chixu.omega_lpf_4_xZeq * (chixu.xEmf_raw[0] - xZeq(0));
+    fx[3] = chixu.omega_lpf_4_xZeq * (chixu.xEmf_raw[1] - xZeq(1));
+
+    //
+    chixu.theta_d = get_theta_d_from_xZeq(chixu.xZeq[0], chixu.xZeq[1]);
+
+    /* State Observer */
+    // xIab
+    fx[0] = MOTOR.Lq_inv * (US(0) - MOTOR.R * xIab(0) + chixu.ell4xZeq * xZeq(0) + chixu.xEmf_raw[0]);
+    fx[1] = MOTOR.Lq_inv * (US(1) - MOTOR.R * xIab(1) + chixu.ell4xZeq * xZeq(1) + chixu.xEmf_raw[1]);
+
+    // PLL for xOmg
+    if(TRUE){
+        // xOmg
+        fx[4] = (chixu.PLL_KI        * sin(chixu.theta_d - xTheta_d));
+        // xTheta_d
+        fx[5] = (xOmg + chixu.PLL_KP * sin(chixu.theta_d - xTheta_d));
+    }else{
+        // xOmg
+        fx[4] = (chixu.PLL_KI        * difference_between_two_angles(chixu.theta_d, xTheta_d));
+        // xTheta_d
+        fx[5] = (xOmg + chixu.PLL_KP * difference_between_two_angles(chixu.theta_d, xTheta_d));
+    }
+
+
+    #undef xIab
+    #undef xZeq
+    #undef xOmg
+    #undef xTheta_d
+}
+void Main_ChiXu2009_emfSMO(){
+
+    /* Time-varying gains */
+    chixu.smo_gain = CHI_XU_SMO_GAIN * fabs(CTRL.I->cmd_omg_elec) * MOTOR.KE;
+
+    if(fabs(CTRL.I->cmd_speed_rpm)>500){
+        chixu.ell4xZeq = 1.0;
+    }else{
+        chixu.ell4xZeq = -0.5;
+    }
+
+    general_6states_rk4_solver(&rhf_ChiXu2009_Dynamics, CTRL.timebase, chixu.x, CL_TS);
+
+    /* Unpack x (for the best) */
+    chixu.xIab[0]  = chixu.x[0];
+    chixu.xIab[1]  = chixu.x[1];
+    chixu.xZeq[0]  = chixu.x[2];
+    chixu.xZeq[1]  = chixu.x[3];
+    chixu.xOmg     = chixu.x[4];
+    chixu.xTheta_d = chixu.x[5];
+    if(TRUE){
+        // use xZeq
+        chixu.theta_d = get_theta_d_from_xZeq(chixu.xZeq[0], chixu.xZeq[1]);
+    }else{
+        // use PLL output
+        chixu.theta_d = chixu.xTheta_d; 
+    }
+
+    /* Post-observer calculations */
+    /* Selecting Signals From Block Diagram */
+    
+    /* 备份这个采样点的数据供下次使用。所以，观测的和实际的相比，是延迟一个采样周期的。 */
+    // US_P(0) = US_C(0); // 由于没有测量电压，所以当前步电压是伪概念，在这里更新是无意义的
+    // US_P(1) = US_C(1); // 由于没有测量电压，所以当前步电压是伪概念，在这里更新是无意义的
+    IS_P(0) = IS_C(0);
+    IS_P(1) = IS_C(1);
+}
+#endif
+
+
+/********************************************/
+/* Park.Sul 2014 FADO in replace of CM 
+ */
+#if TRUE
+void init_parksul2014(){
+    parksul.T2S_1_KP = PARK_SUL_T2S_1_KP;
+    parksul.T2S_1_KI = PARK_SUL_T2S_1_KI;
+    parksul.T2S_2_KP = PARK_SUL_T2S_2_KP;
+    parksul.T2S_2_KI = PARK_SUL_T2S_2_KI;
+
+    parksul.CM_KP = PARK_SUL_CM_KP;
+    parksul.CM_KI = PARK_SUL_CM_KI;
+
+    parksul.limiter_KE = 1.15 * MOTOR.KE;
+
+    parksul.x[0] = MOTOR.KE;
+    parksul.x[2] = MOTOR.KE;
+    parksul.xPsi2[0] = MOTOR.KE;
+}
+void rhf_parksul2014_Dynamics(REAL t, REAL *x, REAL *fx){
+
+    /* Unpack States */
+    #define xPsi1(X)    x[0+X]
+    #define xHatPsi1(X) x[2+X]
+    #define xD(X)       x[4+X]
+    #define xT2S_1(X)   x[6+X]
+    #define xT2S_2(X)   x[8+X]
+    // #define xTheta_d    x[7]
+    // #define xOmg        x[8]
+
+    /* Know Signals */
+    parksul.omega_f = x[8]; // In addition, it is evident in Fig. 3 that all the integrations in the proposed observer are stopped when ω f is zero, which coincides with the natural property of stator flux at standstill.
+
+    /* Pre-calculation */
+    parksul.internal_error[0] = xPsi1(0) - xHatPsi1(0);
+    parksul.internal_error[1] = xPsi1(1) - xHatPsi1(1);
+
+    parksul.xPsi2[0] = xPsi1(0) - MOTOR.Lq*IS(0);
+    parksul.xPsi2[1] = xPsi1(1) - MOTOR.Lq*IS(1);
+    parksul.theta_d = atan2(parksul.xPsi2[1], parksul.xPsi2[0]);
+
+    /* The amplitude limiter */
+    parksul.xPsi2_Amplitude = sqrt(parksul.xPsi2[0]*parksul.xPsi2[0] + parksul.xPsi2[1]*parksul.xPsi2[1]);
+    if(parksul.xPsi2_Amplitude > parksul.limiter_KE){
+        REAL temp = 1.0/parksul.xPsi2_Amplitude;
+        parksul.xPsi2_Limited[0] = parksul.limiter_KE*parksul.xPsi2[0]*temp;
+        parksul.xPsi2_Limited[1] = parksul.limiter_KE*parksul.xPsi2[1]*temp;
+    }else{
+        parksul.xPsi2_Limited[0] = parksul.xPsi2[0];
+        parksul.xPsi2_Limited[1] = parksul.xPsi2[1];
+    }
+
+    /* Modified: Add output error (CM correction) to Park.Sul2014 */
+    #define TRY_CM_VM_FUSION_IN_REPLACE_OF_K_DF
+    #ifdef  TRY_CM_VM_FUSION_IN_REPLACE_OF_K_DF
+        /* State: Cosine and Sine of the flux angle */
+
+        // 我们已经有角度了，直接求三角函数就可以了
+        // REAL temp, cosT, sinT;
+        // if(parksul.active_flux_ampl!=0){
+        //     temp = 1.0/parksul.xPsi2_Amplitude;
+        //     cosT = parksul.xPsi2[0] * temp;
+        //     sinT = parksul.xPsi2[1] * temp;
+        // }else{
+        //     cosT = 1.0;
+        //     sinT = 0.0;
+        // }
+
+        REAL cosT = cos(parksul.theta_d);
+        REAL sinT = sin(parksul.theta_d);
+
+        /* Input: Current at dq frame and KActive */
+        REAL iDQ_at_current_step[2];
+        iDQ_at_current_step[0] = AB2M(IS(0), IS(1), cosT, sinT);
+        iDQ_at_current_step[1] = AB2T(IS(0), IS(1), cosT, sinT);
+        REAL KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * iDQ_at_current_step[0];
+
+        /* Output: Flux mismatch to KActive (CM) */
+        parksul.output_error[0] = KActive*cosT - parksul.xPsi2[0];
+        parksul.output_error[1] = KActive*sinT - parksul.xPsi2[1];
+    #endif
+
+    /* Flux Estimator */
+    REAL emf[2];
+    emf[0] = US(0) - MOTOR.R*IS(0);
+    emf[1] = US(1) - MOTOR.R*IS(1);
+    // xPsi1
+    fx[0] = emf[0] \
+        /*k_df*/- parksul.k_df*xD(0) \
+        /*k_af*/- parksul.k_af*(parksul.xPsi2[0] - parksul.xPsi2_Limited[0]) \
+        /*CM-I*/+ x[10] \
+        /*CM-P*/+ parksul.CM_KP * parksul.output_error[0];
+    fx[10] =      parksul.CM_KI * parksul.output_error[0];
+    fx[1] = emf[1] \
+        /*k_df*/- parksul.k_df*xD(1) \
+        /*k_af*/- parksul.k_af*(parksul.xPsi2[1] - parksul.xPsi2_Limited[1]) \
+        /*CM-I*/+ x[11] \
+        /*CM-P*/+ parksul.CM_KP * parksul.output_error[1];
+    fx[11] =      parksul.CM_KI * parksul.output_error[1];
+
+    /* State: disturbance/offset estimated by an integrator */
+    // xHatPsi1
+    fx[2] = -parksul.omega_f * (xPsi1(1)-xD(1)) + 2*fabs(parksul.omega_f)*parksul.internal_error[0];
+    fx[3] = +parksul.omega_f * (xPsi1(0)-xD(0)) + 2*fabs(parksul.omega_f)*parksul.internal_error[1];
+    // xD
+    fx[4] = -parksul.omega_f * parksul.internal_error[1];
+    fx[5] = +parksul.omega_f * parksul.internal_error[0];
+
+    /* T2S-1 for position */
+    parksul.t2s_1_sin_error = sin(parksul.theta_d - x[7]);
+    fx[6] =        parksul.T2S_1_KI * parksul.t2s_1_sin_error;
+    fx[7] = x[6] + parksul.T2S_1_KP * parksul.t2s_1_sin_error;
+
+    /* T2S-2 for speed */
+    parksul.t2s_2_sin_error = sin(parksul.theta_d - x[9]);
+    fx[8] =        parksul.T2S_2_KI * parksul.t2s_2_sin_error;
+    fx[9] = x[8] + parksul.T2S_2_KP * parksul.t2s_2_sin_error;
+
+    #undef xPsi1
+    #undef xHatPsi1
+    #undef xD
+    #undef xT2S_1
+    #undef xT2S_2
+}
+void Main_parksul2014_FADO(){
+
+    /* Time-varying gains */
+    if(fabs(parksul.xOmg)        *MOTOR.npp_inv*ONE_OVER_2PI<1.5){ // [Hz]
+    // if(fabs(CTRL.I->cmd_omg_elec)*MOTOR.npp_inv*ONE_OVER_2PI<1.5){ // [Hz]
+        parksul.k_df = 0.0;
+        parksul.k_af = 2*M_PI*100;
+        parksul.limiter_Flag = TRUE;
+    }else{
+        parksul.k_df = 0.50;
+        parksul.k_af = 0.0;
+        parksul.limiter_Flag = FALSE;
+    }
+
+    // debug: turn off k_df/k_af
+    parksul.k_df = 0.0;
+    // parksul.k_af = 0.0;
+    // parksul.CM_KP = 0.0;
+    // parksul.CM_KI = 0.0;
+
+    general_10states_rk4_solver(&rhf_parksul2014_Dynamics, CTRL.timebase, parksul.x, CL_TS);
+
+    /* Unpack x (for the best) */
+    if(parksul.x[7]>M_PI){
+        parksul.x[7]     -= 2*M_PI;
+    }else if(parksul.x[7]<-M_PI){
+        parksul.x[7]     += 2*M_PI;
+    }
+    if(parksul.x[9]>M_PI){
+        parksul.x[9]     -= 2*M_PI;
+    }else if(parksul.x[9]<-M_PI){
+        parksul.x[9]     += 2*M_PI;
+    }
+    parksul.xPsi1[0]     = parksul.x[0];
+    parksul.xPsi1[1]     = parksul.x[1];
+    parksul.xHatPsi1[0]  = parksul.x[2]; // aux
+    parksul.xHatPsi1[1]  = parksul.x[3]; // aux
+    parksul.xD[0]        = parksul.x[4];
+    parksul.xD[1]        = parksul.x[5];
+    parksul.xT2S_1[0]    = parksul.x[6]; // speed
+    parksul.xT2S_1[1]    = parksul.x[7]; // position
+    parksul.xT2S_2[0]    = parksul.x[8]; // speed
+    parksul.xT2S_2[1]    = parksul.x[9]; // position
+    parksul.xCM_state[0] = parksul.x[10]; // CM-correction-alpha
+    parksul.xCM_state[1] = parksul.x[11]; // CM-correction-beta
+
+    parksul.xTheta_d     = parksul.x[7]; // parksul2014 uses this instead of atan2(parksul.xPsi2[1], parksul.xPsi2[0]);
+    parksul.xOmg         = parksul.x[8];
+
+    /* Post-observer calculations */
+    parksul.xPsi2[0] = parksul.xPsi1[0] - MOTOR.Lq*IS_C(0);
+    parksul.xPsi2[1] = parksul.xPsi1[1] - MOTOR.Lq*IS_C(1);
+    if(TRUE){
+        parksul.theta_d = atan2(parksul.xPsi2[1], parksul.xPsi2[0]);
+    }else{
+        // Park Sul 2014 uses this
+        parksul.theta_d = parksul.xT2S_1[1]; // x[7]
+    }
+
+    /* 备份这个采样点的数据供下次使用。所以，观测的和实际的相比，是延迟一个采样周期的。 */
+    // US_P(0) = US_C(0); // 由于没有测量电压，所以当前步电压是伪概念，在这里更新是无意义的
+    // US_P(1) = US_C(1); // 由于没有测量电压，所以当前步电压是伪概念，在这里更新是无意义的
+    IS_P(0) = IS_C(0);
+    IS_P(1) = IS_C(1);
+}
+#endif
 
 
 
@@ -741,7 +1138,7 @@ void stationary_voltage_DOB(){
 /********************************************/
 /* COMMON *
  ********************************************/
-void rk4_init(){
+void init_rk4(){
     int i;
     for(i=0; i<2; ++i){
         rk4.us[i] = 0;
@@ -761,7 +1158,7 @@ void rk4_init(){
     }
 }
 void pmsm_observers(){
-    stationary_voltage_DOB();
+    // stationary_voltage_DOB();
 
     /* Cascaded Flux Estimator */
     test_flux_estimators();
@@ -771,15 +1168,21 @@ void pmsm_observers(){
     // harnefors_scvm();
     // cjh_eemfao();
     // cjh_eemfhgo_farza09();
-    nsoaf_chen2020();
+    Main_nsoaf_chen2020();
+    // Main_QiaoXia2013_emfSMO();
+    Main_ChiXu2009_emfSMO();
+    Main_parksul2014_FADO();
 }
-void pmsm_observers_init(){
+void init_pmsm_observers(){
+    init_rk4();     // 龙格库塔法结构体初始化
 
-    afe_init();
+    init_parksul2014();
+    init_QiaoXia2013();
+    init_ChiXu2009();
+    init_afe();
+    init_nsoaf();
 
-    harnefors_init();
-    cjheemf_init();
-    hgo4eemf_init();
-    nsoaf_init();
+    init_harnefors(); // harnefors结构体初始化
+    init_cjheemf(); // cjheemf 结构体初始化
 }
 #endif

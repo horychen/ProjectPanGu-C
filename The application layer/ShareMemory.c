@@ -68,7 +68,7 @@ void write_DAC_buffer(){
         G.dac_watch[5] = CTRL.I->idq[1]*0.2; // 5 A for low speed
         //G.dac_watch[5] = CTRL.I->idq[1]*0.05; // 20 A for high speed reversal
         G.dac_watch[6] = CTRL.I->rpm*0.002;
-        G.dac_watch[7] = nsoaf.xOmg*ELEC_RAD_PER_SEC_2_RPM*0.002;
+        G.dac_watch[7] = ELECTRICAL_SPEED_FEEDBACK*ELEC_RAD_PER_SEC_2_RPM*0.002;
 
         G.dac_watch[8] = EQep1Regs.QPOSCNT*0.0001; // [0, 10000]
 
@@ -79,10 +79,10 @@ void write_DAC_buffer(){
         //G.dac_watch[12] = COMM.voltage_sum*0.05/(float32)COMM.counterSS;
         //G.dac_watch[13] = COMM.counterSS*0.001;
 
-        G.dac_watch[10] = nsoaf.active_flux_ab[0];
-        G.dac_watch[11] = nsoaf.active_flux_ab[1];
-        G.dac_watch[12] = nsoaf.afest_states[0];
-        G.dac_watch[13] = nsoaf.afest_states[1];
+        G.dac_watch[10] = AFEOE.psi_2[0];
+        G.dac_watch[11] = AFEOE.psi_2[1];
+        G.dac_watch[12] = AFEOE.psi_1[0];
+        G.dac_watch[13] = AFEOE.psi_1[1];
 
         G.dac_watch[14] = CTRL.O->uab_cmd_to_inverter[0]*0.01;
         G.dac_watch[15] = CTRL.O->uab_cmd_to_inverter[1]*0.01;

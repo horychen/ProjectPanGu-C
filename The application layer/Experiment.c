@@ -143,8 +143,8 @@ void zero_speed_stopping(){
 void high_speed_operation_init(){
     pid1_spd.OutLimit = 10; // sensorless needs higher bounds (does not work well with nonlinear controller gain)
     CTRL.motor->KE = 0.095;
-    nsoaf.ActiveFlux_KP = 0.2; // nsoaf.ActiveFlux_KP取0.5及以上的时候，300rpm会出现active flux马鞍波的现象
-    nsoaf.ActiveFlux_KI = 2.0;
+    AFEOE.ActiveFlux_KP = 0.2; // nsoaf.ActiveFlux_KP取0.5及以上的时候，300rpm会出现active flux马鞍波的现象
+    AFEOE.ActiveFlux_KI = 2.0;
 }
 void high_speed_operation_tuning(){
 
@@ -155,15 +155,15 @@ void high_speed_operation_tuning(){
         //    }
     if(fabs(G.Set_manual_rpm) > 1000){
         nsoaf.KP = 4; //2;
-        nsoaf.ActiveFlux_KP = 1;
+        AFEOE.ActiveFlux_KP = 1;
     }else if(fabs(G.Set_manual_rpm) > 500){
         nsoaf.KP = 2; //1.5;
-        nsoaf.ActiveFlux_KP = 0.5;
+        AFEOE.ActiveFlux_KP = 0.5;
     }else if(fabs(G.Set_manual_rpm) > 300){
         nsoaf.KP = 1;
-        nsoaf.ActiveFlux_KP = 0.2;
+        AFEOE.ActiveFlux_KP = 0.2;
     }else{
-        nsoaf.ActiveFlux_KP = 0.1;
+        AFEOE.ActiveFlux_KP = 0.1;
     }
 
     /* Steady state rpm error when ZFY speed command is at 0 rpm (load sudden change when speed command sign changes) */

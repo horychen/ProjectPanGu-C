@@ -177,7 +177,7 @@ int16 bool_PL_tuned = FALSE;
 
 
 // 自整定初始化
-void COMM_init(){
+void init_COMM(){
     COMM.timebase = 0.0;
 
     // KE
@@ -1171,7 +1171,7 @@ void StepByStepCommissioning(){
     // commissioning();
     if(bool_comm_status == 0){
         // 初始化
-        COMM_init();
+        init_COMM();
 
     }else if(bool_comm_status == 1){
         // 电阻辨识
