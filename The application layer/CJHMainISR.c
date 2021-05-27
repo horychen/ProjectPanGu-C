@@ -201,35 +201,41 @@ void CJHMainISR(void){
 
         DSP_EPWM_DISABLE
         DSP_2EPWM_DISABLE
-        init_experiment();
 
-        /* 750W MOTOR1 (wo/ hall) */
-        //CTRL.motor->R = 1.6;
-        CTRL.motor->KE = 0.095;
-        //pid1_spd.OutLimit = 10;
+        /* Only init once for easy debug */
+        if(!G.flag_experimental_initialized){
+            G.flag_experimental_initialized = TRUE;
 
-        pid1_spd.OutLimit = G.OverwriteSpeedOutLimit;
+            init_experiment();
 
-        #ifdef AS_LOAD_MOTOR
-            pid1_spd.OutLimit = 0.01;
-            G.Set_manual_rpm = -1200;
-        #endif
-        #ifdef NSOAF_LOW_SPEED_OPERATION
-            low_speed_operation_init();
-        #endif
-        #ifdef NSOAF_HIGH_SPEED_OPERATION
-            high_speed_operation_init();
-        #endif
+            /* 750W MOTOR1 (wo/ hall) */
+            //CTRL.motor->R = 1.6;
+            CTRL.motor->KE = 0.095;
+            //pid1_spd.OutLimit = 10;
 
-        // for debug
-        CTRL.S->PSD_Done = FALSE;
-        G.bool_comm_status = 0;
+            pid1_spd.OutLimit = G.OverwriteSpeedOutLimit;
+
+            #ifdef AS_LOAD_MOTOR
+                pid1_spd.OutLimit = 0.01;
+                G.Set_manual_rpm = -1200;
+            #endif
+            #ifdef NSOAF_LOW_SPEED_OPERATION
+                low_speed_operation_init();
+            #endif
+            #ifdef NSOAF_HIGH_SPEED_OPERATION
+                high_speed_operation_init();
+            #endif
+
+            // for debug
+            CTRL.S->PSD_Done = FALSE;
+            G.bool_comm_status = 0;
+        }
 
         DELAY_US(11);
         GpioDataRegs.GPDCLEAR.bit.GPIO106=1;
 
     }else{
-
+        G.flag_experimental_initialized = FALSE;
         DSP_EPWM_ENABLE
         DSP_2EPWM_ENABLE
 
