@@ -14,7 +14,6 @@ void rhf_NSOAF_Dynamics(REAL t, REAL *x, REAL *fx){
     REAL xTL  = x[2];
 
     /* Know Signals */
-    #define MOTOR (*CTRL.motor)
     REAL iDQ_now[2];
     iDQ_now[0]  = AB2M(IS(0), IS(1), AFE_USED.cosT, AFE_USED.sinT);
     iDQ_now[1]  = AB2T(IS(0), IS(1), AFE_USED.cosT, AFE_USED.sinT);
@@ -51,8 +50,6 @@ void rhf_NSOAF_Dynamics(REAL t, REAL *x, REAL *fx){
     // xTL
     fx[2] = nsoaf.KI * nsoaf.active_power_error;
 }
-
-/* Main Observer */
 void nso_one_parameter_tuning(REAL omega_ob){
 
     REAL one_over__npp_divided_by_Js__times__Lq_id_plus_KActive = 1.0 \
@@ -175,7 +172,6 @@ void init_nsoaf(){
     nsoaf.omega_ob = nsoaf.set_omega_ob;
     // nso_one_parameter_tuning(nsoaf.omega_ob);
 }
-#undef NS
 
 
 /********************************************/
