@@ -47,7 +47,8 @@ struct IPC_MEMORY_READ Read;
 //int channels[NO_OF_CHANNELS]={6,7,44,45,46,47};
 //int channels[NO_OF_CHANNELS]={46,47,20,21,6,7};
 
-int channels[NO_OF_CHANNELS]={46,47,20,21,6,7,59,59};
+//int channels[NO_OF_CHANNELS]={46,47,20,21,6,7,59,59}; // ecap dq
+int channels[NO_OF_CHANNELS]={10,11,20,21,6,7,59,59}; // psi_2
 int channels_preset = 0;
 
 REAL dac_time_that_cannot_be_modified = 0;
