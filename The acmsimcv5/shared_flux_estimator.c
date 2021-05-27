@@ -246,6 +246,13 @@ void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REA
         fx[3] = AFEOE.ActiveFlux_KI * AFEOE.output_error[1];
     }
     void Main_the_active_flux_estimator(){
+
+        /* OPT for AFE */
+        if(AFEOE.omega_est != AFEOE.set_omega_est){
+            AFEOE.omega_est = AFEOE.set_omega_est;
+            afe_one_parameter_tuning(AFEOE.omega_est);
+        }
+
         /* Proposed closed loop estimator AB frame + ODE4 */
         // stator flux and integral states update
         general_4states_rk4_solver(&rhf_ActiveFluxEstimator_Dynamics, CTRL.timebase, AFE_USED.x, CL_TS);

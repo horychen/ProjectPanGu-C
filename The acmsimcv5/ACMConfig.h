@@ -1,9 +1,9 @@
 #ifndef ACMCONFIG_H
 #define ACMCONFIG_H
 /* 经常要修改的 */
-#define INVERTER_NONLINEARITY_COMPENSATION 0 // 2 // 1:ParkSul12, 2:Sigmoid, 3:LUT
-#define INVERTER_NONLINEARITY              0 // 2 // 1:ModelSul96, 2:ModelExpSigmoid, 3: ModelExpLUT
-#define SENSORLESS_CONTROL FALSE
+#define INVERTER_NONLINEARITY_COMPENSATION 2 // 1:ParkSul12, 2:Sigmoid, 3:LUT
+#define INVERTER_NONLINEARITY              2 // 1:ModelSul96, 2:ModelExpSigmoid, 3: ModelExpLUT
+#define SENSORLESS_CONTROL TRUE
 #define SENSORLESS_CONTROL_HFSI FALSE
 /* ParkSul2012 梯形波 */
 #define GAIN_THETA_TRAPEZOIDAL (40) //(500) // 20
@@ -61,10 +61,10 @@
     // #define ELECTRICAL_SPEED_FEEDBACK    qiaoxia.xOmg
     // #define ELECTRICAL_POSITION_FEEDBACK qiaoxia.theta_d
 
-    // #define ELECTRICAL_SPEED_FEEDBACK    nsoaf.xOmg // harnefors.omg_elec
+    #define ELECTRICAL_SPEED_FEEDBACK    nsoaf.xOmg // harnefors.omg_elec
     #define ELECTRICAL_POSITION_FEEDBACK AFE_USED.theta_d // harnefors.theta_d
 
-    #define ELECTRICAL_SPEED_FEEDBACK    CTRL.I->omg_elec
+    // #define ELECTRICAL_SPEED_FEEDBACK    CTRL.I->omg_elec
     // #define ELECTRICAL_POSITION_FEEDBACK CTRL.I->theta_d_elec
 
     /* Park.Sul 2014 FADO in replace of CM */
@@ -95,7 +95,7 @@
     // #define NSOAF_SPMSM // use AP Error
     #define NSOAF_IPMSM // use only OE
     #define TUNING_IGNORE_UQ TRUE
-    #define NSOAF_OMEGA_OBSERVER 100 // [rad/s] // cnanot be too small (e.g., 10, KP will be negative)
+    #define NSOAF_OMEGA_OBSERVER 25 // >12 [rad/s] // cannot be too small (e.g., 10, KP will be negative), 
         #define NSOAF_TL_P (1) // 1 for experimental starting // 4 for 1500 rpm // 2 for 800 rpm
         #define NSOAF_TL_I (20)
         #define NSOAF_TL_D (0)

@@ -84,11 +84,11 @@ void Main_nsoaf_chen2020(){
     MOTOR.KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * MOTOR.Lq*CTRL.I->idq_cmd[0];
 
     // TODO: when id changes, the gain should also change.
-    // if(nsoaf.set_omega_ob != nsoaf.omega_ob){
-    //     nsoaf.omega_ob = nsoaf.set_omega_ob;
-    //     nso_one_parameter_tuning(nsoaf.omega_ob);
-    //     // afe_one_parameter_tuning(nsoaf.omega_ob);
-    // }
+    if(nsoaf.set_omega_ob != nsoaf.omega_ob){
+        nsoaf.omega_ob = nsoaf.set_omega_ob;
+        nso_one_parameter_tuning(nsoaf.omega_ob);
+        // afe_one_parameter_tuning(nsoaf.omega_ob);
+    }
 
     /* Unpack States */
     nsoaf.xIq      = nsoaf.xBest[0];
@@ -170,7 +170,7 @@ void init_nsoaf(){
 
     MOTOR.KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * MOTOR.Lq*CTRL.I->idq[0];
     nsoaf.omega_ob = nsoaf.set_omega_ob;
-    // nso_one_parameter_tuning(nsoaf.omega_ob);
+    nso_one_parameter_tuning(nsoaf.omega_ob);
 }
 
 
