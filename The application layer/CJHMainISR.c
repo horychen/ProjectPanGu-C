@@ -177,9 +177,9 @@ void measurement(){
 
 
 
-#define AS_LOAD_MOTOR_CONST
+//#define AS_LOAD_MOTOR_CONST
 //#define AS_LOAD_MOTOR_RAMP
-//#define NSOAF_LOW_SPEED_OPERATION
+#define NSOAF_LOW_SPEED_OPERATION
 //#define NSOAF_HIGH_SPEED_OPERATION
 //#define XCUBE_TaTbTc_DEBUG_MODE
 

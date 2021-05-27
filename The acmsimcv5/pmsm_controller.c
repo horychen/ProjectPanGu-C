@@ -196,11 +196,11 @@ void null_d_control(REAL set_iq_cmd, REAL set_id_cmd){
             REAL IMIN = 2; //2;
         #endif
         /* 逆变器非线性在线校正更新theta_t需要空载时电流不为零 */
-        if(fabs(CTRL.I->idq_cmd[1])<IMIN){
-            CTRL.I->idq_cmd[0] = IMIN;
+        // if(fabs(CTRL.I->idq_cmd[1])<IMIN){
+        //     CTRL.I->idq_cmd[0] = IMIN;
         // }else{
         //     CTRL.I->idq_cmd[0] = 0;
-        }
+        // }
 
         /* Overwrite if set_id_cmd is set [Both are POSITIVE] */
         if(set_id_cmd!=0){

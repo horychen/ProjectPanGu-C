@@ -184,11 +184,19 @@
 #define SYSTEM_QEP_PULSES_PER_REV  (10000)
 #define SYSTEM_QEP_REV_PER_PULSE  (1e-4)
 #define CNT_2_ELEC_RAD (SYSTEM_QEP_REV_PER_PULSE * 2*M_PI * MOTOR_NUMBER_OF_POLE_PAIRS)
-#ifdef _XCUBE1
-    #define SYSTEM_QEP_CALIBRATED_ANGLE -2668 // for MOTOR2
+#define USE_ORIGINAL_PAIR
+#ifdef USE_ORIGINAL_PAIR
+    #ifdef _XCUBE1
+        #define SYSTEM_QEP_CALIBRATED_ANGLE -2668 // for MOTOR2
+    #else
+        #define SYSTEM_QEP_CALIBRATED_ANGLE -976 // for MOTOR1 (w/ hall sensor) // -968 for MOTOR1
+    #endif
 #else
-    // #define SYSTEM_QEP_CALIBRATED_ANGLE -2668 // for MOTOR2
-    #define SYSTEM_QEP_CALIBRATED_ANGLE -976 // for MOTOR1 (w/ hall sensor) // -968 for MOTOR1
+    #ifdef _XCUBE1
+        #define SYSTEM_QEP_CALIBRATED_ANGLE -976 // for MOTOR1 (w/ hall sensor) // -968 for MOTOR1
+    #else
+        #define SYSTEM_QEP_CALIBRATED_ANGLE -2668 // for MOTOR2
+    #endif
 #endif
 
 /* 指令类型 */
