@@ -1,8 +1,8 @@
 #ifndef ACMCONFIG_H
 #define ACMCONFIG_H
 /* 经常要修改的 */
-#define INVERTER_NONLINEARITY_COMPENSATION 0 //1 // 1:ParkSul12, 2:Sigmoid, 3:LUT
-#define INVERTER_NONLINEARITY              0 //2 // 1:ModelSul96, 2:ModelExpSigmoid, 3: ModelExpLUT
+#define INVERTER_NONLINEARITY_COMPENSATION 0 // 2 // 1:ParkSul12, 2:Sigmoid, 3:LUT
+#define INVERTER_NONLINEARITY              0 // 2 // 1:ModelSul96, 2:ModelExpSigmoid, 3: ModelExpLUT
 #define SENSORLESS_CONTROL FALSE
 #define SENSORLESS_CONTROL_HFSI FALSE
 /* ParkSul2012 梯形波 */
@@ -42,8 +42,8 @@
         #define AFEOE_KI (1*0.02) // 0.02 for 10 rpm // 0.1 for 40 rpm //(2.0) for 300 rpm
 
     #define AFE_21_HUWU_TAU_1_INVERSE 0.5 // [rad/s] //0.5 // 5 for slow reversal
-    #define AFE_21_HUWU_KP (0.1) //[rad/s]
-    #define AFE_21_HUWU_KI (0.25) //[rad/s]
+    #define AFE_21_HUWU_KP (2.0*0.1) //[rad/s]
+    #define AFE_21_HUWU_KI (2.0*0.25) //[rad/s]
 
 
 
@@ -61,8 +61,10 @@
     // #define ELECTRICAL_SPEED_FEEDBACK    qiaoxia.xOmg
     // #define ELECTRICAL_POSITION_FEEDBACK qiaoxia.theta_d
 
-    #define ELECTRICAL_SPEED_FEEDBACK    nsoaf.xOmg // harnefors.omg_elec
+    // #define ELECTRICAL_SPEED_FEEDBACK    nsoaf.xOmg // harnefors.omg_elec
     #define ELECTRICAL_POSITION_FEEDBACK AFE_USED.theta_d // harnefors.theta_d
+
+    #define ELECTRICAL_SPEED_FEEDBACK    CTRL.I->omg_elec
     // #define ELECTRICAL_POSITION_FEEDBACK CTRL.I->theta_d_elec
 
     /* Park.Sul 2014 FADO in replace of CM */
@@ -90,8 +92,8 @@
     #define QIAO_XIA_ADAPT_GAIN     500 //2000 // 250 // 100
 
     /* CHEN 2020 NSO with Active Flux Concept */
-    #define NSOAF_SPMSM // use AP Error
-    // #define NSOAF_IPMSM // use only OE
+    // #define NSOAF_SPMSM // use AP Error
+    #define NSOAF_IPMSM // use only OE
     #define TUNING_IGNORE_UQ TRUE
     #define NSOAF_OMEGA_OBSERVER 100 // [rad/s] // cnanot be too small (e.g., 10, KP will be negative)
         #define NSOAF_TL_P (1) // 1 for experimental starting // 4 for 1500 rpm // 2 for 800 rpm

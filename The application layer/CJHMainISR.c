@@ -50,7 +50,7 @@ void measurement(){
     }
 
     // µÁ—π≤‚¡ø
-    if(G.flag_use_ecap_voltage==2){
+    if(G.flag_use_ecap_voltage==2 || G.flag_use_ecap_voltage==1){
         /*Use original ecap measured voltage*/
         US_P(0) = CAP.uab0[0];
         US_P(1) = CAP.uab0[1];
@@ -58,7 +58,7 @@ void measurement(){
     //    else if(G.flag_use_ecap_voltage==3){
     //        ecap_moving_average();
     //    }
-    if(G.flag_use_ecap_voltage==1){
+    if(G.flag_use_ecap_voltage==10){
         /*Use lpf ecap measured voltage*/
         CAP.dq_lpf[0] = _lpf(CAP.dq[0], CAP.dq_lpf[0], 800);
         CAP.dq_lpf[1] = _lpf(CAP.dq[1], CAP.dq_lpf[1], 800);
