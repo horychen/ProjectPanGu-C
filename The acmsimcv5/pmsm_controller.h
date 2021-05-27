@@ -208,6 +208,7 @@ typedef struct {
         REAL Overwrite_Voltage_DC_BUS; // = 180;
         int flag_overwite_voltage_dc_bus; // = FALSE;
         int flag_use_ecap_voltage; // = 0;
+        int flag_experimental_initialized; 
     // Select Algorithm
         int Select_algorithm;
         REAL omg_elec;

@@ -91,13 +91,13 @@ void measurement(){
         //        }
         //        G.Current_W=-(G.Current_V+G.Current_U);
 
-        if(flag_overwite_voltage_dc_bus){
-            Voltage_DC_BUS = Overwrite_Voltage_DC_BUS;
+        if(G.flag_overwite_voltage_dc_bus){
+            G.Voltage_DC_BUS = G.Overwrite_Voltage_DC_BUS;
         }
-        G.Current_W       =((AdcaResultRegs.ADCRESULT1)-offsetW)*AD_scale_W;// ADC A1-> Phase W Current  //-11.8-11.8A
-        G.Current_V       =((AdcaResultRegs.ADCRESULT3)-offsetV)*AD_scale_V;// ADC A1-> Phase V Current  //-11.8-11.8A
-        G.Current_Not_Used=((AdcaResultRegs.ADCRESULT2)-offsetU)*AD_scale_U;// ADC A1-> Phase U Current  //-11.8-11.8A
-        if(AD_offset_flag2==TRUE){
+        G.Current_W       =((AdcaResultRegs.ADCRESULT1)-G.offsetW)*AD_scale_W;// ADC A1-> Phase W Current  //-11.8-11.8A
+        G.Current_V       =((AdcaResultRegs.ADCRESULT3)-G.offsetV)*AD_scale_V;// ADC A1-> Phase V Current  //-11.8-11.8A
+        G.Current_Not_Used=((AdcaResultRegs.ADCRESULT2)-G.offsetU)*AD_scale_U;// ADC A1-> Phase U Current  //-11.8-11.8A
+        if(G.AD_offset_flag2==TRUE){
             G.Current_W = G.Current_W - G.Offset_W;
             G.Current_V = G.Current_V - G.Offset_V;
             G.Current_Not_Used = G.Current_Not_Used - G.Offset_U;
@@ -177,7 +177,8 @@ void measurement(){
 
 
 
-//#define AS_LOAD_MOTOR
+#define AS_LOAD_MOTOR_CONST
+//#define AS_LOAD_MOTOR_RAMP
 //#define NSOAF_LOW_SPEED_OPERATION
 //#define NSOAF_HIGH_SPEED_OPERATION
 //#define XCUBE_TaTbTc_DEBUG_MODE
@@ -215,7 +216,11 @@ void CJHMainISR(void){
 
             pid1_spd.OutLimit = G.OverwriteSpeedOutLimit;
 
-            #ifdef AS_LOAD_MOTOR
+            #ifdef AS_LOAD_MOTOR_CONST
+                pid1_spd.OutLimit = 2.0;
+                G.Set_manual_rpm = -300;
+            #endif
+            #ifdef AS_LOAD_MOTOR_RAMP
                 pid1_spd.OutLimit = 0.01;
                 G.Set_manual_rpm = -1200;
             #endif
@@ -244,7 +249,15 @@ void CJHMainISR(void){
 
         // 根据指令，产生控制输出（电压）
         #if ENABLE_COMMISSIONING == FALSE
-            #ifdef AS_LOAD_MOTOR
+            #ifdef AS_LOAD_MOTOR_CONST
+                CTRL.S->go_sensorless = 0;
+                if(CTRL.timebase < 2){
+                    pid1_spd.OutLimit = 0.1;
+                }else{
+                    pid1_spd.OutLimit = 2.0;
+                }
+            #endif
+            #ifdef AS_LOAD_MOTOR_RAMP
                 CTRL.S->go_sensorless = 0;
                 if(CTRL.timebase < 0.4){
                     pid1_spd.OutLimit = 4.2;
@@ -263,7 +276,7 @@ void CJHMainISR(void){
             #endif
             #ifdef NSOAF_LOW_SPEED_OPERATION
                 /* Low Speed Operation*/
-                if(TRUE){
+                if(FALSE){
                     zero_speed_stopping();
                     zero_speed_stopping_tuning();
                     //short_stopping_at_zero_speed();
