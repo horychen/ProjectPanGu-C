@@ -1,6 +1,6 @@
 #include "ACMSim.h"
 
-#define INCREMENTAL_PID FALSE
+#define INCREMENTAL_PID TRUE
 #if INCREMENTAL_PID
 void PID_calc(st_pid_regulator *r){
 
@@ -35,8 +35,8 @@ void PID_calc(st_pid_regulator *r){
         // dynamic clamping
         if( r->I_Term > r->OutLimit - r->Out)
             r->I_Term = r->OutLimit - r->Out;
-        else if( r->I_Term < -r->OutLimit + r->Out)
-            r->I_Term = -r->OutLimit + r->Out;
+        else if( r->I_Term < -r->OutLimit - r->Out)
+            r->I_Term =      -r->OutLimit - r->Out; // OutLimit is a positive constant
     #else
         // static clamping
         if( r->I_Term > r->OutLimit)

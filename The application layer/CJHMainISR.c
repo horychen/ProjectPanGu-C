@@ -2,6 +2,13 @@
 #include "Experiment.h"
 #if SYSTEM_PROGRAM_MODE==223
 
+//#define AS_LOAD_MOTOR_CONST
+//#define AS_LOAD_MOTOR_RAMP
+//#define NSOAF_LOW_SPEED_OPERATION
+//#define NSOAF_HIGH_SPEED_OPERATION
+//#define XCUBE_TaTbTc_DEBUG_MODE
+
+
 void voltage_commands_to_pwm(){
     // ----------------------------SVGENÉú³É-------------------------------------------------
     CTRL.svgen1.Ualpha= CTRL.O->uab_cmd_to_inverter[0];
@@ -177,12 +184,6 @@ void measurement(){
 
 
 
-//#define AS_LOAD_MOTOR_CONST
-//#define AS_LOAD_MOTOR_RAMP
-//#define NSOAF_LOW_SPEED_OPERATION
-//#define NSOAF_HIGH_SPEED_OPERATION
-//#define XCUBE_TaTbTc_DEBUG_MODE
-
 // int down_freq_ecap_counter = 1;
 void CJHMainISR(void){
     #if NUMBER_OF_DSP_CORES == 2
@@ -208,32 +209,7 @@ void CJHMainISR(void){
             G.flag_experimental_initialized = TRUE;
 
             init_experiment();
-
-            /* 750W MOTOR1 (wo/ hall) */
-            //CTRL.motor->R = 1.6;
-            CTRL.motor->KE = 0.095;
-            //pid1_spd.OutLimit = 10;
-
-            pid1_spd.OutLimit = G.OverwriteSpeedOutLimit;
-
-            #ifdef AS_LOAD_MOTOR_CONST
-                pid1_spd.OutLimit = 2.0;
-                G.Set_manual_rpm = -300;
-            #endif
-            #ifdef AS_LOAD_MOTOR_RAMP
-                pid1_spd.OutLimit = 0.01;
-                G.Set_manual_rpm = -1200;
-            #endif
-            #ifdef NSOAF_LOW_SPEED_OPERATION
-                low_speed_operation_init();
-            #endif
-            #ifdef NSOAF_HIGH_SPEED_OPERATION
-                high_speed_operation_init();
-            #endif
-
-            // for debug
-            CTRL.S->PSD_Done = FALSE;
-            G.bool_comm_status = 0;
+            init_experiment_overwrite();
         }
 
         DELAY_US(11);

@@ -3,7 +3,7 @@
 #if MACHINE_TYPE == PM_SYNCHRONOUS_MACHINE
 #if ENABLE_COMMISSIONING
 
-#define COMM_IV_SIZE_R1 300 // 300
+#define COMM_IV_SIZE_R1 100 // 300
 #define COMM_IV_SIZE_L1 30
 struct CommissioningDataStruct{
 

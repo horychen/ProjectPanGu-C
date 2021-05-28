@@ -46,7 +46,20 @@
     #define SYSTEM_PWM_AQ_SET                 0x2     //AQ_SET;    OTHERWISE, REVERSE!
     #define SYSTEM_PWM_AQ_CLEAR               0x1     //AQ_CLEAR;
     //QEP CONFIGURATION
-    //#define SYSTEM_QEP_CALIBRATED_ANGLE     -2668     // CALIBRATED_ANGLE
+    #define USE_ORIGINAL_INVERTER_MOTOR_PAIR
+    #ifdef USE_ORIGINAL_INVERTER_MOTOR_PAIR
+        #ifdef _XCUBE1
+            #define SYSTEM_QEP_CALIBRATED_ANGLE -2668 // for MOTOR2
+        #else
+            #define SYSTEM_QEP_CALIBRATED_ANGLE -976 // for MOTOR1 (w/ hall sensor) // -968 for MOTOR1
+        #endif
+    #else
+        #ifdef _XCUBE1
+            #define SYSTEM_QEP_CALIBRATED_ANGLE -976 // for MOTOR1 (w/ hall sensor) // -968 for MOTOR1
+        #else
+            #define SYSTEM_QEP_CALIBRATED_ANGLE -2668 // for MOTOR2
+        #endif
+    #endif
     #define SYSTEM_QEP_LINE                  2500     //encoder line
     #define SYSTEM_QEP_POLE_PAIRS               4     //pairs
     #define SYSTEM_QEP_UNITTIME_ISR          0.001    //1K ,1ms     time_out timer   isr_time
@@ -59,26 +72,26 @@
     //    #define AD_scale_V                       0.005491759 //0.00558484     //0.0056072670 // -11.8—11.8 A // 0.0061728395 //-12-12A
     //    #define AD_scale_U                       0.005491759
     #ifdef _XCUBE1
-//        #define AD_scale_U                       0.0109649
-//        #define AD_scale_V                       0.009809628544893137 // (degaussed CP030A) // 0.01125872551 (YX)
-//        #define AD_scale_W                       0.009592536539804648 // (degaussed CP030A) // 0.01134558656 (YX)
-//        #define AD_scale_VDC                     0.3546099
-
-/* 借用Sensor Board的电流传感器 */
-//#define AD_scale_W                       0.0057316444
-//#define AD_scale_V                       0.0056072670
-
-    #else
-        // test condition, Ta=0.5, Tb=0.4, Tc=0.6, W=1.708, V=-1.693.
-        //        #define AD_scale_W                       0.001002814052101 // 0.001050801473 / (1.708/1.63)   // 120 Ohm: 0.0057316444 / (120/22)
-        //        #define AD_scale_V                       0.000989745002067 // 0.001027998950 / (1.693 / 1.63) //  120 Ohm: 0.0056072670 / (120/22)
-        //        #define AD_scale_U                       0.0057316444
+        //        #define AD_scale_U                       0.0109649
+        //        #define AD_scale_V                       0.009809628544893137 // (degaussed CP030A) // 0.01125872551 (YX)
+        //        #define AD_scale_W                       0.009592536539804648 // (degaussed CP030A) // 0.01134558656 (YX)
         //        #define AD_scale_VDC                     0.3546099
 
-//        #define AD_scale_W                       0.0058002658 // 0.00867354 // 0.0096392 // 0.0057316444
-//        #define AD_scale_V                       0.0064003544 // 0.01027935 //0.0094433 // 0.0056072670
-//        #define AD_scale_U                       0.006300196648
-//        #define AD_scale_VDC                     (0.5*0.1897533207) // 短上一个470R再补上一个470R
+        /* 借用Sensor Board的电流传感器 */
+        //#define AD_scale_W                       0.0057316444
+        //#define AD_scale_V                       0.0056072670
+
+            #else
+                // test condition, Ta=0.5, Tb=0.4, Tc=0.6, W=1.708, V=-1.693.
+                //        #define AD_scale_W                       0.001002814052101 // 0.001050801473 / (1.708/1.63)   // 120 Ohm: 0.0057316444 / (120/22)
+                //        #define AD_scale_V                       0.000989745002067 // 0.001027998950 / (1.693 / 1.63) //  120 Ohm: 0.0056072670 / (120/22)
+                //        #define AD_scale_U                       0.0057316444
+                //        #define AD_scale_VDC                     0.3546099
+
+        //        #define AD_scale_W                       0.0058002658 // 0.00867354 // 0.0096392 // 0.0057316444
+        //        #define AD_scale_V                       0.0064003544 // 0.01027935 //0.0094433 // 0.0056072670
+        //        #define AD_scale_U                       0.006300196648
+        //        #define AD_scale_VDC                     (0.5*0.1897533207) // 短上一个470R再补上一个470R
     #endif
 
     //TRIP CONFIGURATION
