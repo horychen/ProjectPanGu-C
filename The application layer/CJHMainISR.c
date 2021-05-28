@@ -203,6 +203,7 @@ void CJHMainISR(void){
             G.flag_experimental_initialized = TRUE;
 
             init_experiment();
+            //G.Seletc_exp_operation = 3; // fixed
             init_experiment_overwrite(G.Seletc_exp_operation);
         }
 

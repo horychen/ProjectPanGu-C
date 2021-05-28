@@ -51,6 +51,8 @@ typedef struct {
     REAL uab_cmd_to_inverter[2]; // foc control output + inverter nonlinearity compensation
     REAL udq_cmd[2];
     REAL udq_cmd_to_inverter[2];
+    // current commands
+    REAL iab_cmd[2];
 } st_controller_outputs;
 typedef struct {
     // electrical 
