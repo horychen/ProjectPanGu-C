@@ -82,13 +82,13 @@ void slow_speed_reversal_tuning(){
     }
 
     /* Steady state error */
-    if(G.Set_manual_rpm<-10){
-        CTRL.motor->KE = 0.085; //2.1A
-    }else if (G.Set_manual_rpm>10){
-        CTRL.motor->KE = 0.11; // 2.1A
-    }else{
-        CTRL.motor->KE = 0.10;
-    }
+//    if(G.Set_manual_rpm<-10){
+//        CTRL.motor->KE = 0.085; //2.1A
+//    }else if (G.Set_manual_rpm>10){
+//        CTRL.motor->KE = 0.11; // 2.1A
+//    }else{
+//        CTRL.motor->KE = 0.10;
+//    }
 
     /* ·ÀÊÖ¼ú */
     if(CTRL.motor->KE > 0.2){

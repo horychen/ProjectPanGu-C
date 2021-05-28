@@ -20,14 +20,15 @@ void rhf_NSOAF_Dynamics(REAL t, REAL *x, REAL *fx){
     REAL uQ_now = AB2T(US(0), US(1), AFE_USED.cosT, AFE_USED.sinT);
     nsoaf.q_axis_voltage = uQ_now;
 
-    /* Filter */
-    static REAL uQ_now_filtered = 0.0;
-    uQ_now_filtered = _lpf(uQ_now, uQ_now_filtered, 30); // 越大滤越狠
-    // uQ_now_filtered = uQ_now;
-
     /* Output Error = \tilde i_q (scalar) */
     nsoaf.output_error = iDQ_now[1] - xIq;
     #ifdef NSOAF_SPMSM
+
+        /* Filter (TODO: 不能把欧拉法放到龙贝格法里面来啊！) */
+        static REAL uQ_now_filtered = 0.0;
+        uQ_now_filtered = _lpf(uQ_now, uQ_now_filtered, 30); // 越大滤越狠
+        // uQ_now_filtered = uQ_now;
+
         nsoaf.active_power_real  = + fabs(uQ_now_filtered) * iDQ_now[1];
         nsoaf.active_power_est   = + fabs(uQ_now_filtered) * xIq;
         nsoaf.active_power_error = + fabs(uQ_now_filtered) * nsoaf.output_error; 
@@ -179,7 +180,7 @@ void init_nsoaf(){
  ********************************************/
 /* The 10th-order dynamic system */
 #define NS 10
-void rhs_func_hgoeemf(REAL *increment_n, REAL *xPsi, REAL *xEemf, 
+void rhf_func_hgoeemf(REAL *increment_n, REAL *xPsi, REAL *xEemf, 
                       REAL xOmg, REAL xGammaOmg, 
                       REAL *xPhi, REAL hs){
     // pointer to increment_n: state increment at n-th stage of RK4, where n=1,2,3,4.
@@ -243,8 +244,8 @@ void hgo4eemf_dedicated_rk4_solver(REAL hs){
     static REAL x_temp[NS];
     static REAL *p_x_temp=x_temp;
 
-    /* Theoritically speaking, rhs_func should be time-varing like rhs_func(.,t).
-       To apply codes in DSP, we do time-varing updating of IS(0) and IS(1) outside rhs_func(.) to save time. */
+    /* Theoritically speaking, rhf_func should be time-varing like rhf_func(.,t).
+       To apply codes in DSP, we do time-varing updating of IS(0) and IS(1) outside rhf_func(.) to save time. */
 
     /* 
      * Begin RK4 
@@ -254,7 +255,7 @@ void hgo4eemf_dedicated_rk4_solver(REAL hs){
     US(1) = US_P(1);
     IS(0) = IS_P(0);
     IS(1) = IS_P(1);
-    rhs_func_hgoeemf( increment_1, hgo4eemf.xPsi, hgo4eemf.xEemf, 
+    rhf_func_hgoeemf( increment_1, hgo4eemf.xPsi, hgo4eemf.xEemf, 
                       hgo4eemf.xOmg, hgo4eemf.xGammaOmg,
                       hgo4eemf.xPhi, hs); 
     x_temp[0]  = hgo4eemf.xPsi[0]        + increment_1[0]*0.5;
@@ -271,7 +272,7 @@ void hgo4eemf_dedicated_rk4_solver(REAL hs){
     // time instant t+hs/2
     IS(0) = 0.5*(IS_P(0)+IS_C(0));
     IS(1) = 0.5*(IS_P(1)+IS_C(1));
-    rhs_func_hgoeemf( increment_2, p_x_temp+0, p_x_temp+2, 
+    rhf_func_hgoeemf( increment_2, p_x_temp+0, p_x_temp+2, 
                     *(p_x_temp+4), *(p_x_temp+5),
                       p_x_temp+6, hs );
     x_temp[0]  = hgo4eemf.xPsi[0]        + increment_2[0]*0.5;
@@ -286,7 +287,7 @@ void hgo4eemf_dedicated_rk4_solver(REAL hs){
     x_temp[9]  = hgo4eemf.xPhi[3]        + increment_2[9]*0.5;
 
     // time instant t+hs/2
-    rhs_func_hgoeemf( increment_3, p_x_temp+0, p_x_temp+2, 
+    rhf_func_hgoeemf( increment_3, p_x_temp+0, p_x_temp+2, 
                     *(p_x_temp+4), *(p_x_temp+5),
                       p_x_temp+6, hs );
     x_temp[0]  = hgo4eemf.xPsi[0]        + increment_3[0];
@@ -303,7 +304,7 @@ void hgo4eemf_dedicated_rk4_solver(REAL hs){
     // time instant t+hs
     IS(0) = IS_C(0);
     IS(1) = IS_C(1);
-    rhs_func_hgoeemf( increment_4, p_x_temp+0, p_x_temp+2, 
+    rhf_func_hgoeemf( increment_4, p_x_temp+0, p_x_temp+2, 
                     *(p_x_temp+4), *(p_x_temp+5),
                       p_x_temp+6, hs );
     // \+=[^\n]*1\[(\d+)\][^\n]*2\[(\d+)\][^\n]*3\[(\d+)\][^\n]*4\[(\d+)\][^\n]*/ ([\d]+)
@@ -351,7 +352,7 @@ void init_hgo4eemf(){
  ********************************************/
 /* The 13th-order dynamic system */
 #define NS 13
-void rhs_func_eemfaod(REAL *increment_n, REAL *xPsi, REAL *xChi, REAL xOmg, 
+void rhf_func_eemfaod(REAL *increment_n, REAL *xPsi, REAL *xChi, REAL xOmg, 
                       REAL *xEta,
                       REAL *xVarsigma,
                       REAL *xUpsilon,
@@ -428,8 +429,8 @@ void eemf_ao_dedicated_rk4_solver(REAL hs){
     static REAL x_temp[NS];
     static REAL *p_x_temp=x_temp;
 
-    /* Theoritically speaking, rhs_func should be time-varing like rhs_func(.,t).
-       To apply codes in DSP, we do time-varing updating of IS(0) and IS(1) outside rhs_func(.) to save time. */
+    /* Theoritically speaking, rhf_func should be time-varing like rhf_func(.,t).
+       To apply codes in DSP, we do time-varing updating of IS(0) and IS(1) outside rhf_func(.) to save time. */
 
     /* 
      * Begin RK4 
@@ -439,7 +440,7 @@ void eemf_ao_dedicated_rk4_solver(REAL hs){
     US(1) = US_P(1);
     IS(0) = IS_P(0);
     IS(1) = IS_P(1);
-    rhs_func_eemfaod( increment_1, cjheemf.xPsi, cjheemf.xChi, cjheemf.xOmg,
+    rhf_func_eemfaod( increment_1, cjheemf.xPsi, cjheemf.xChi, cjheemf.xOmg,
                       cjheemf.xEta,
                       cjheemf.xVarsigma,
                       cjheemf.xUpsilon,
@@ -462,7 +463,7 @@ void eemf_ao_dedicated_rk4_solver(REAL hs){
     // time instant t+hs/2
     IS(0) = 0.5*(IS_P(0)+IS_C(0));
     IS(1) = 0.5*(IS_P(1)+IS_C(1));
-    rhs_func_eemfaod( increment_2, p_x_temp+0, p_x_temp+2, *(p_x_temp+4), 
+    rhf_func_eemfaod( increment_2, p_x_temp+0, p_x_temp+2, *(p_x_temp+4), 
                       p_x_temp+5, 
                       p_x_temp+7, 
                       p_x_temp+9, 
@@ -483,7 +484,7 @@ void eemf_ao_dedicated_rk4_solver(REAL hs){
     x_temp[12]  = cjheemf.xZeta[1]       + increment_2[12]*0.5;
 
     // time instant t+hs/2
-    rhs_func_eemfaod( increment_3, p_x_temp+0, p_x_temp+2, *(p_x_temp+4), 
+    rhf_func_eemfaod( increment_3, p_x_temp+0, p_x_temp+2, *(p_x_temp+4), 
                       p_x_temp+5, 
                       p_x_temp+7, 
                       p_x_temp+9, 
@@ -506,7 +507,7 @@ void eemf_ao_dedicated_rk4_solver(REAL hs){
     // time instant t+hs
     IS(0) = IS_C(0);
     IS(1) = IS_C(1);
-    rhs_func_eemfaod( increment_4, p_x_temp+0, p_x_temp+2, *(p_x_temp+4), 
+    rhf_func_eemfaod( increment_4, p_x_temp+0, p_x_temp+2, *(p_x_temp+4), 
                       p_x_temp+5, 
                       p_x_temp+7, 
                       p_x_temp+9, 

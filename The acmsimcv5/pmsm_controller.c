@@ -203,9 +203,9 @@ void null_d_control(REAL set_iq_cmd, REAL set_id_cmd){
         // }
 
         /* Overwrite if set_id_cmd is set [Both are POSITIVE] */
-        if(set_id_cmd!=0){
-            CTRL.I->idq_cmd[0] = set_id_cmd;
-        }
+        // if(set_id_cmd!=0){
+        //     CTRL.I->idq_cmd[0] = set_id_cmd;
+        // }
     #else
         CTRL.I->cmd_rotor_flux_Wb = MOTOR.Ld * set_id_cmd;
         CTRL.I->idq_cmd[0] = set_id_cmd;
