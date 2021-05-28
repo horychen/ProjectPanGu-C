@@ -450,9 +450,9 @@ void COMM_resistanceId_v2(REAL id_fb, REAL iq_fb){
             // COMM_PI_tuning(7e-3, 0.8, 2*3.1415926*CL_TS_INVERSE * 0.025, 20, MOTOR_SHAFT_INERTIA, MOTOR_BACK_EMF_CONSTANT, MOTOR_NUMBER_OF_POLE_PAIRS);
     }
 
-    // #define RS_ID_NUMBER_OF_STAIRS ((int)(0.5*COMM_IV_SIZE_R1))
-    #define RS_ID_NUMBER_OF_STAIRS 40
-    #define RS_ID_MAXIMUM_CURRENT (1.0*(REAL)MOTOR_RATED_CURRENT_RMS)
+    #define RS_ID_NUMBER_OF_STAIRS (COMM_IV_SIZE_R1*0.5-3)
+    // #define RS_ID_NUMBER_OF_STAIRS 40
+    #define RS_ID_MAXIMUM_CURRENT (1.0) /* [A] This is inverter related */ // *(REAL)MOTOR_RATED_CURRENT_RMS
     REAL current_increase_per_step = RS_ID_MAXIMUM_CURRENT / (REAL)RS_ID_NUMBER_OF_STAIRS;
 
     if(COMM.i>=RS_ID_NUMBER_OF_STAIRS){
@@ -474,7 +474,9 @@ void COMM_resistanceId_v2(REAL id_fb, REAL iq_fb){
     #endif
 
     REGULATOR.Fbk = FEEDBACK;
-    REGULATOR.Ref = COMM.current_command; // 改为从正到负
+    REGULATOR.Ref = COMM.current_command; /* 改为从正到负 */
+    if(G.FLAG_TUNING_CURRENT_SCALE_FACTOR)
+        REGULATOR.Ref = 3;
     REGULATOR.calc(&REGULATOR);
 
     #if EXCITE_BETA_AXIS_AND_MEASURE_PHASE_B
@@ -1190,8 +1192,11 @@ void StepByStepCommissioning(){
 
     }else if(bool_comm_status == 1){
         // 电阻辨识
-        // COMM_resistanceId(IS_C(0), IS_C(1));
-        COMM_resistanceId_v2(IS_C(0), IS_C(1)); // v2 is intended only for better inverter nonlinearity identification considering the rotor movement issue (starting from negative maximal current value to force align)
+        if(G.flag_do_inverter_characteristics){
+            COMM_resistanceId_v2(IS_C(0), IS_C(1)); // v2 is intended only for better inverter nonlinearity identification considering the rotor movement issue (starting from negative maximal current value to force align)
+        }else{
+            COMM_resistanceId(IS_C(0), IS_C(1));
+        }
 
     }else if(bool_comm_status == 2){
         // 电感辨识（阶跃）

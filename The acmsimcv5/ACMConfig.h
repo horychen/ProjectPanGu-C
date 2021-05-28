@@ -163,12 +163,12 @@
     #define TS_UPSAMPLING_FREQ_EXE_INVERSE 1 //2
 #define VL_TS          (0.0005)
     #define PL_TS VL_TS
-    #define SPEED_LOOP_CEILING (4)
+    #define SPEED_LOOP_CEILING ((int)(VL_TS*CL_TS_INVERSE))
     #define MACHINE_TS         (CL_TS*TS_UPSAMPLING_FREQ_EXE)
     #define MACHINE_TS_INVERSE (CL_TS_INVERSE*TS_UPSAMPLING_FREQ_EXE_INVERSE)
 
 #define LOAD_INERTIA    0.0
-#define LOAD_TORQUE     3.5
+#define LOAD_TORQUE     5
 #define VISCOUS_COEFF   0.0007
 
 #define CURRENT_KP (6.39955)

@@ -59,10 +59,10 @@
     //    #define AD_scale_V                       0.005491759 //0.00558484     //0.0056072670 // -11.8—11.8 A // 0.0061728395 //-12-12A
     //    #define AD_scale_U                       0.005491759
     #ifdef _XCUBE1
-        #define AD_scale_U                       0.0109649
-        #define AD_scale_V                       0.01125872551
-        #define AD_scale_W                       0.01134558656
-        #define AD_scale_VDC                     0.3546099
+//        #define AD_scale_U                       0.0109649
+//        #define AD_scale_V                       0.009809628544893137 // (degaussed CP030A) // 0.01125872551 (YX)
+//        #define AD_scale_W                       0.009592536539804648 // (degaussed CP030A) // 0.01134558656 (YX)
+//        #define AD_scale_VDC                     0.3546099
 
 /* 借用Sensor Board的电流传感器 */
 //#define AD_scale_W                       0.0057316444
@@ -75,11 +75,10 @@
         //        #define AD_scale_U                       0.0057316444
         //        #define AD_scale_VDC                     0.3546099
 
-        #define AD_scale_W                       0.0058002658 // 0.00867354 // 0.0096392 // 0.0057316444
-        #define AD_scale_V                       0.0064003544 // 0.01027935 //0.0094433 // 0.0056072670
-        #define AD_scale_U                       0.006300196648
-        #define AD_scale_VDC                     (0.5*0.1897533207) // 短上一个470R再补上一个470R
-        //#define AD_scale_VDC                     0.1897533207
+//        #define AD_scale_W                       0.0058002658 // 0.00867354 // 0.0096392 // 0.0057316444
+//        #define AD_scale_V                       0.0064003544 // 0.01027935 //0.0094433 // 0.0056072670
+//        #define AD_scale_U                       0.006300196648
+//        #define AD_scale_VDC                     (0.5*0.1897533207) // 短上一个470R再补上一个470R
     #endif
 
     //TRIP CONFIGURATION

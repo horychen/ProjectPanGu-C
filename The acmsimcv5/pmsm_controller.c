@@ -2,14 +2,19 @@
 
 #if MACHINE_TYPE == 2
 void init_experiment(){
-    init_CTRL(); // 控制器结构体初始化
+
     #if ENABLE_COMMISSIONING
-        init_COMM(); // 参数自整定初始化
+        // init_COMM(); // 参数自整定初始化，不要在这里做！
     #endif
+
+    init_CTRL(); // 控制器结构体初始化
     init_pmsm_observers(); // 永磁电机观测器初始化
 }
 
 // 初始化函数
+#if PC_SIMULATION
+    void init_experiment_offset(); // this is defined in main.c for experiment
+#endif
 void init_CTRL(){
 
     allocate_CTRL(&CTRL);
@@ -87,32 +92,7 @@ void init_CTRL(){
     CTRL.g->DAC_MAX5307_FLAG = FALSE;
     CTRL.g->AD_offset_flag2 = FALSE;
 
-    #ifdef _XCUBE1
-    G.offsetU=2044;
-    G.offsetV=2047;
-    G.offsetW=2032; // ADC offset. U, V, W corresponds to ADCRESULT2, ADCRESULT3, ADCRESULT1.
-    G.offsetUDC=1430;
-    // /* 借用Sensor Board的电流传感器 */
-    // G.offsetU=2045;
-    // G.offsetV=2047;
-    // G.offsetW=2030;
-    #else
-    G.offsetU=2072;
-    G.offsetV=2062;
-    G.offsetW=2049; // ADC offset. U, V, W corresponds to ADCRESULT2, ADCRESULT3, ADCRESULT1.
-    G.offsetUDC=2; // 5.18
-    #endif
-
-    //REAL offset_Udc = 6.0; // 80 V
-    //REAL offset_Udc = 14.0; // 80 V 408-0800
-    //REAL offset_Udc = 18.0; // 80 V 409-0900
-    //REAL offset_Udc = 20.0; // 180 V 409-1300
-    //REAL offset_Udc = 12.0; // 180 V 413-0844
-    //REAL offset_Udc = 9.0; // 180 V 414-0809
-    //REAL offset_Udc = 18.0; // 80 V 416-1600
-    //REAL offset_Udc = 8.0; // 80 V 419-0948
-    //REAL offset_Udc = 1.0; // 180 V 419-1121
-    //REAL offset_Udc = 0.0; // 180 V 427-1401 @ XCUBE-II
+    init_experiment_offset();
 
     #ifdef _XCUBE1
     G.dac_watch_stator_resistance = 1.34971502;
@@ -165,7 +145,7 @@ void null_d_control(REAL set_iq_cmd, REAL set_id_cmd){
     #define MOTOR  (*CTRL.motor)
 
     /// 5. 转速环（使用反馈转速）
-    if(CTRL.S->the_vc_count++ == SPEED_LOOP_CEILING){
+    if(CTRL.S->the_vc_count++ >= SPEED_LOOP_CEILING){
         CTRL.S->the_vc_count = 1;
 
         pid1_spd.Ref = CTRL.I->cmd_speed_rpm*RPM_2_ELEC_RAD_PER_SEC;
@@ -343,9 +323,14 @@ REAL sigmoid(REAL x){
 
     #ifdef _XCUBE1
         // b-phase @180 V Mini6PhaseIPMInverter
-        REAL a1 = 0.0; //1.34971502
-        REAL a2 = 16.0575341;  // yuefei tuning gives a2' = 9.2*2
-        REAL a3 = 17.59278688; // yuefei tuning gives a3' = a3*5
+        // REAL a1 = 0.0; //1.34971502
+        // REAL a2 = 16.0575341;  // yuefei tuning gives a2' = 9.2*2
+        // REAL a3 = 17.59278688; // yuefei tuning gives a3' = a3*5
+
+        // b-phase @80 V Mini6PhaseIPMInverter
+        REAL a1 = 0.0; //2.10871359 ;
+        REAL a2 = 7.36725304;
+        REAL a3 = 62.98712805;
     #else
         // b-phase @20 V
         // REAL a1 = 0.0; //1.25991178;
