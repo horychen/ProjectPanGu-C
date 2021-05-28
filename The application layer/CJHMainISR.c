@@ -2,12 +2,6 @@
 #include "Experiment.h"
 #if SYSTEM_PROGRAM_MODE==223
 
-//#define AS_LOAD_MOTOR_CONST
-//#define AS_LOAD_MOTOR_RAMP
-//#define NSOAF_LOW_SPEED_OPERATION
-//#define NSOAF_HIGH_SPEED_OPERATION
-//#define XCUBE_TaTbTc_DEBUG_MODE
-
 
 void voltage_commands_to_pwm(){
     // ----------------------------SVGEN生成-------------------------------------------------
@@ -209,7 +203,7 @@ void CJHMainISR(void){
             G.flag_experimental_initialized = TRUE;
 
             init_experiment();
-            init_experiment_overwrite();
+            init_experiment_overwrite(G.Seletc_exp_operation);
         }
 
         DELAY_US(11);
@@ -225,54 +219,14 @@ void CJHMainISR(void){
 
         // 根据指令，产生控制输出（电压）
         #if ENABLE_COMMISSIONING == FALSE
-            #ifdef AS_LOAD_MOTOR_CONST
-                CTRL.S->go_sensorless = 0;
-                if(CTRL.timebase < 2){
-                    pid1_spd.OutLimit = 0.1;
-                }else{
-                    pid1_spd.OutLimit = 2.0;
-                }
-            #endif
-            #ifdef AS_LOAD_MOTOR_RAMP
-                CTRL.S->go_sensorless = 0;
-                if(CTRL.timebase < 0.4){
-                    pid1_spd.OutLimit = 4.2;
-                }else if(CTRL.timebase < 0.4 + 0.1){
-                    pid1_spd.OutLimit -= CL_TS * 4.2 / 0.1;
-                }else{
-                    pid1_spd.OutLimit = 0.01;
-                }
-                //        if(CTRL.timebase < 0.4){
-                //            pid1_spd.OutLimit += CL_TS * 4.2 / 0.4;
-                //        }else if(CTRL.timebase < 1.0){
-                //            pid1_spd.OutLimit = 4.2;
-                //        }else{
-                //            pid1_spd.OutLimit = 0.01;
-                //        }
-            #endif
-            #ifdef NSOAF_LOW_SPEED_OPERATION
-                /* Low Speed Operation*/
-                if(FALSE){
-                    zero_speed_stopping();
-                    zero_speed_stopping_tuning();
-                    //short_stopping_at_zero_speed();
-                }else{
-                    slow_speed_reversal();
-                    slow_speed_reversal_tuning();
-                }
-            #endif
-            #ifdef NSOAF_HIGH_SPEED_OPERATION
-                /* High Speed Operation */
-                high_speed_operation();
-                high_speed_operation_tuning();
-            #endif
+            runtime_command_and_tuning(G.Seletc_exp_operation);
             controller(G.Set_manual_rpm, G.Set_manual_current_iq, G.Set_manual_current_id);
         #else
             commissioning();
         #endif
 
-        #ifdef XCUBE_TaTbTc_DEBUG_MODE
-    //        CTRL.svgen1.Ta = 0.6; CTRL.svgen1.Tb = 0.4; CTRL.svgen1.Tc = 0.5;
+        if(G.Seletc_exp_operation == XCUBE_TaTbTc_DEBUG_MODE){
+            //   CTRL.svgen1.Ta = 0.6; CTRL.svgen1.Tb = 0.4; CTRL.svgen1.Tc = 0.5;
             if(CTRL.svgen1.Ta>0.7) CTRL.svgen1.Ta=0.7;
             if(CTRL.svgen1.Ta<0.3) CTRL.svgen1.Ta=0.3;
             if(CTRL.svgen1.Tb>0.7) CTRL.svgen1.Tb=0.7;
@@ -282,9 +236,9 @@ void CJHMainISR(void){
             EPwm1Regs.CMPA.bit.CMPA = CTRL.svgen1.Ta*50000000*CL_TS;
             EPwm2Regs.CMPA.bit.CMPA = CTRL.svgen1.Tb*50000000*CL_TS;
             EPwm3Regs.CMPA.bit.CMPA = CTRL.svgen1.Tc*50000000*CL_TS;
-        #else
+        }
+        else
             voltage_commands_to_pwm();
-        #endif
 
         #if NUMBER_OF_DSP_CORES == 1
             single_core_dac();

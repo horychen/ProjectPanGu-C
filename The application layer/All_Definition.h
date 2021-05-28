@@ -13,6 +13,7 @@
 /* 经常需要修改的宏定义声明文件 */
     #include "ACMConfig.h"
     #include "ACMSim.h"
+    #include "Experiment.h"
 /* Motor Library file------------------------------------------------------------------------*/
     __interrupt void EPWM1ISR(void);
     #define USE_ECAP_CEVT2_INTERRUPT 1
