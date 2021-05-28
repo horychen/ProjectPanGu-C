@@ -1144,6 +1144,7 @@ void pmsm_observers(){
     #else
         /* 资源有限 */
         #if SELECT_ALGORITHM == ALG_NSOAF
+            test_flux_estimators();
             Main_nsoaf_chen2020();
         #elif SELECT_ALGORITHM == ALG_Farza_2009
             Main_cjh_eemfhgo_farza09();

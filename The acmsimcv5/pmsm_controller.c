@@ -17,7 +17,7 @@ void init_experiment(){
 void init_experiment_offset(){
     /* Peripheral configurations */
     CTRL.enc->OffsetCountBetweenIndexAndUPhaseAxis = 0;
-    CTRL.enc->theta_d_offset = SYSTEM_QEP_CALIBRATED_ANGLE * CNT_2_ELEC_RAD;
+    CTRL.enc->theta_d_offset = CTRL.enc->OffsetCountBetweenIndexAndUPhaseAxis * CNT_2_ELEC_RAD;
 
     // 这个在仿真中是要一直运行的，不要清零！
     // ENC.sum_qepPosCnt = 0.0;
@@ -230,10 +230,6 @@ void null_d_control(REAL set_iq_cmd, REAL set_id_cmd){
     #endif
     CTRL.O->udq_cmd[0] = decoupled_d_axis_voltage;
     CTRL.O->udq_cmd[1] = decoupled_q_axis_voltage;
-
-    /// 7. 反帕克变换
-    CTRL.O->uab_cmd[0] = MT2A(CTRL.O->udq_cmd[0], CTRL.O->udq_cmd[1], CTRL.S->cosT, CTRL.S->sinT);
-    CTRL.O->uab_cmd[1] = MT2B(CTRL.O->udq_cmd[0], CTRL.O->udq_cmd[1], CTRL.S->cosT, CTRL.S->sinT);
 }
 
 
@@ -293,6 +289,13 @@ void controller(REAL set_rpm_speed_command, REAL set_iq_cmd, REAL set_id_cmd){
         null_d_control(set_iq_cmd, set_id_cmd);
     #endif
 
+    /// 7. 反帕克变换
+    CTRL.O->uab_cmd[0] = MT2A(CTRL.O->udq_cmd[0], CTRL.O->udq_cmd[1], CTRL.S->cosT, CTRL.S->sinT);
+    CTRL.O->uab_cmd[1] = MT2B(CTRL.O->udq_cmd[0], CTRL.O->udq_cmd[1], CTRL.S->cosT, CTRL.S->sinT);
+    CTRL.O->iab_cmd[0] = MT2A(CTRL.I->idq_cmd[0], CTRL.I->idq_cmd[1], CTRL.S->cosT, CTRL.S->sinT);
+    CTRL.O->iab_cmd[1] = MT2B(CTRL.I->idq_cmd[0], CTRL.I->idq_cmd[1], CTRL.S->cosT, CTRL.S->sinT);
+
+
     /// 8. 补偿逆变器非线性
     inverter_voltage_command();
 
@@ -327,9 +330,13 @@ REAL sigmoid(REAL x){
         // REAL a3 = 17.59278688; // yuefei tuning gives a3' = a3*5
 
         // b-phase @80 V Mini6PhaseIPMInverter
-        REAL a1 = 0.0; //2.10871359 ;
-        REAL a2 = 7.36725304;
-        REAL a3 = 62.98712805;
+        // REAL a1 = 0.0; //2.10871359 ;
+        // REAL a2 = 7.36725304;
+        // REAL a3 = 62.98712805;
+        REAL a1 = 0.0; //(1.705, 
+        REAL a2 = 7.705938744542915;
+        REAL a3 = 67.0107635483658; //1.2*55.84230295697151; 
+        
     #else
         // b-phase @20 V
         // REAL a1 = 0.0; //1.25991178;
@@ -357,13 +364,15 @@ REAL sigmoid_online(REAL x, REAL Vsat, REAL a3){
 }
 
 void inverter_voltage_command(){
+    /* We use iab_cmd instead of iab to look-up */
+
     #if INVERTER_NONLINEARITY_COMPENSATION == 0
         CTRL.O->uab_cmd_to_inverter[0] = CTRL.O->uab_cmd[0];
         CTRL.O->uab_cmd_to_inverter[1] = CTRL.O->uab_cmd[1];
 
         /* For scope only */
         REAL ualbe_dist[2];
-        get_distorted_voltage_via_CurveFitting( CTRL.O->uab_cmd[0], CTRL.O->uab_cmd[1], CTRL.I->iab[0], CTRL.I->iab[1], ualbe_dist);
+        get_distorted_voltage_via_CurveFitting( CTRL.O->uab_cmd[0], CTRL.O->uab_cmd[1], CTRL.I->iab_cmd[0], CTRL.I->iab_cmd[1], ualbe_dist);
         INV.ual_comp = ualbe_dist[0];
         INV.ube_comp = ualbe_dist[1];
 
@@ -408,14 +417,14 @@ void inverter_voltage_command(){
         REAL lut_voltage_ctrl[LENGTH_OF_LUT] = {-5.75434, -5.74721, -5.72803, -5.70736, -5.68605, -5.66224, -5.63274, -5.59982, -5.56391, -5.52287, -5.47247, -5.40911, -5.33464, -5.25019, -5.14551, -5.00196, -4.80021, -4.48369, -3.90965, -2.47845, -0.382101, 2.02274, 3.7011, 4.35633, 4.71427, 4.94376, 5.10356, 5.22256, 5.31722, 5.39868, 5.46753, 5.5286, 5.57507, 5.62385, 5.66235, 5.70198, 5.73617, 5.76636, 5.79075, 5.81737, 5.83632};
 
         REAL ualbe_dist[2];
-        get_distorted_voltage_via_LUT( CTRL.O->uab_cmd[0], CTRL.O->uab_cmd[1], CTRL.I->iab[0], CTRL.I->iab[1], ualbe_dist, lut_voltage_ctrl, lut_current_ctrl, LENGTH_OF_LUT);
+        get_distorted_voltage_via_LUT( CTRL.O->uab_cmd[0], CTRL.O->uab_cmd[1], CTRL.O->iab_cmd[0], CTRL.O->iab_cmd[1], ualbe_dist, lut_voltage_ctrl, lut_current_ctrl, LENGTH_OF_LUT);
         CTRL.O->uab_cmd_to_inverter[0] = CTRL.O->uab_cmd[0] + ualbe_dist[0];
         CTRL.O->uab_cmd_to_inverter[1] = CTRL.O->uab_cmd[1] + ualbe_dist[1];
 
     #elif INVERTER_NONLINEARITY_COMPENSATION == 2
         /* 拟合法-补偿 */
         REAL ualbe_dist[2] = {0.0, 0.0};
-        get_distorted_voltage_via_CurveFitting( CTRL.O->uab_cmd[0], CTRL.O->uab_cmd[1], CTRL.I->iab[0], CTRL.I->iab[1], ualbe_dist);
+        get_distorted_voltage_via_CurveFitting( CTRL.O->uab_cmd[0], CTRL.O->uab_cmd[1], CTRL.O->iab_cmd[0], CTRL.O->iab_cmd[1], ualbe_dist);
         CTRL.O->uab_cmd_to_inverter[0] = CTRL.O->uab_cmd[0] + ualbe_dist[0];
         CTRL.O->uab_cmd_to_inverter[1] = CTRL.O->uab_cmd[1] + ualbe_dist[1];
 
