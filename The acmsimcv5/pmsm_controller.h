@@ -214,6 +214,7 @@ typedef struct {
         int flag_experimental_initialized; 
         int FLAG_TUNING_CURRENT_SCALE_FACTOR; // for comm
         int flag_do_inverter_characteristics; // for comm
+        int Seletc_exp_operation; // for exp
     // Select Algorithm
         // int Select_algorithm;
         REAL omg_elec;

@@ -8,8 +8,14 @@
 #ifndef THE_DRIVER_LAYER_EXPERIMENT_H_
 #define THE_DRIVER_LAYER_EXPERIMENT_H_
 
+#define AS_LOAD_MOTOR_CONST 1
+#define AS_LOAD_MOTOR_RAMP  2
+#define NSOAF_LOW_SPEED_OPERATION  3
+#define NSOAF_HIGH_SPEED_OPERATION 4
+#define XCUBE_TaTbTc_DEBUG_MODE    5
 
 void init_experiment_overwrite();
+void runtime_command_and_tuning();
 
 /* NSOAF */
 

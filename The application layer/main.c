@@ -35,7 +35,7 @@ void init_experiment_offset(){
 
     /* eQEP OFFSET */
     CTRL.enc->OffsetCountBetweenIndexAndUPhaseAxis = SYSTEM_QEP_CALIBRATED_ANGLE;
-    CTRL.enc->theta_d_offset = SYSTEM_QEP_CALIBRATED_ANGLE * CNT_2_ELEC_RAD;
+    CTRL.enc->theta_d_offset = CTRL.enc->OffsetCountBetweenIndexAndUPhaseAxis * CNT_2_ELEC_RAD;
 }
 void main(void){
 

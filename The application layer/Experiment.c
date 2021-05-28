@@ -1,39 +1,83 @@
 #include <All_Definition.h>
 
-void init_experiment_overwrite(){
+void init_experiment_overwrite(int Seletc_exp_operation){
     /* 750W MOTOR1 (wo/ hall) */
     //CTRL.motor->R = 1.6;
     CTRL.motor->KE = 0.095;
     //pid1_spd.OutLimit = 10;
 
     #ifdef _XCUBE1
-                                 // no DT comp, comp, comp, comp
-    CTRL.motor->R = 1.4;      // 1.39377081; 1.57862532; 1.41320038, 1.40607429
-    CTRL.motor->KE = 0.10378; // 0.122107916; 0.103980549, 0.103777379, 0.103794798
-    CTRL.motor->Js = 0.0007460128; // 0.000751407992; 0.000751283951, 0.000746554753, 0.000740199641
-    CTRL.motor->Ld = CTRL.motor->Lq = 0.0108864028;
+                                     // no DT comp, comp, comp, comp
+        CTRL.motor->R = 1.4;      // 1.39377081; 1.57862532; 1.41320038, 1.40607429
+        CTRL.motor->KE = 0.10378; // 0.122107916; 0.103980549, 0.103777379, 0.103794798
+        CTRL.motor->Js = 0.0007460128; // 0.000751407992; 0.000751283951, 0.000746554753, 0.000740199641
+        CTRL.motor->Ld = CTRL.motor->Lq = 0.0108864028;
     #endif
 
     pid1_spd.OutLimit = G.OverwriteSpeedOutLimit;
 
-    #ifdef AS_LOAD_MOTOR_CONST
+    if(Seletc_exp_operation == AS_LOAD_MOTOR_CONST){
         pid1_spd.OutLimit = 2.0;
         G.Set_manual_rpm = -300;
-    #endif
-    #ifdef AS_LOAD_MOTOR_RAMP
+    }
+    if(Seletc_exp_operation == AS_LOAD_MOTOR_RAMP){
         pid1_spd.OutLimit = 0.01;
         G.Set_manual_rpm = -1200;
-    #endif
-    #ifdef NSOAF_LOW_SPEED_OPERATION
+    }
+    if(Seletc_exp_operation == NSOAF_LOW_SPEED_OPERATION){
         low_speed_operation_init();
-    #endif
-    #ifdef NSOAF_HIGH_SPEED_OPERATION
+    }
+    if(Seletc_exp_operation == NSOAF_HIGH_SPEED_OPERATION){
         high_speed_operation_init();
-    #endif
+    }
 
     // for debug
     CTRL.S->PSD_Done = FALSE;
     G.bool_comm_status = 0;
+}
+
+void runtime_command_and_tuning(int Seletc_exp_operation){
+    if(Seletc_exp_operation == AS_LOAD_MOTOR_CONST){
+        CTRL.S->go_sensorless = 0;
+        if(CTRL.timebase < 2){
+            pid1_spd.OutLimit = 0.1;
+        }else{
+            pid1_spd.OutLimit = 2.0;
+        }
+    }
+    if(Seletc_exp_operation == AS_LOAD_MOTOR_RAMP){
+        CTRL.S->go_sensorless = 0;
+        if(CTRL.timebase < 0.4){
+            pid1_spd.OutLimit = 4.2;
+        }else if(CTRL.timebase < 0.4 + 0.1){
+            pid1_spd.OutLimit -= CL_TS * 4.2 / 0.1;
+        }else{
+            pid1_spd.OutLimit = 0.01;
+        }
+        //        if(CTRL.timebase < 0.4){
+        //            pid1_spd.OutLimit += CL_TS * 4.2 / 0.4;
+        //        }else if(CTRL.timebase < 1.0){
+        //            pid1_spd.OutLimit = 4.2;
+        //        }else{
+        //            pid1_spd.OutLimit = 0.01;
+        //        }
+    }
+    if(Seletc_exp_operation == NSOAF_LOW_SPEED_OPERATION){
+        /* Low Speed Operation*/
+        if(FALSE){
+            zero_speed_stopping();
+            zero_speed_stopping_tuning();
+            //short_stopping_at_zero_speed();
+        }else{
+            slow_speed_reversal();
+            slow_speed_reversal_tuning();
+        }
+    }
+    if(Seletc_exp_operation == NSOAF_HIGH_SPEED_OPERATION){
+        /* High Speed Operation */
+        high_speed_operation();
+        high_speed_operation_tuning();
+    }
 }
 
 
