@@ -189,6 +189,9 @@ void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REA
         #if AFE_25_VM_CM_FUSION
             afe_one_parameter_tuning(AFEOE.omega_est);
         #endif
+
+        AFEOE.limiter_KE = 1.15 * MOTOR.KE;
+        AFEOE.k_af = 0.0 * 100 * 2 * M_PI;
     }
     void rhf_ActiveFluxEstimator_Dynamics(REAL t, REAL *x, REAL *fx){
         // x[0], x[1]: stator flux in ab frame
@@ -230,14 +233,28 @@ void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REA
             AFEOE.output_error[1] = KActive*sinT - AFEOE.psi_2[1];
         #endif
 
+        #define AFE_25_FLUX_LIMITER
+        #ifdef AFE_25_FLUX_LIMITER
+            /* The amplitude limiter */
+            if(AFEOE.active_flux_ampl > AFEOE.limiter_KE){
+                parksul.xPsi2_Limited[0] = parksul.limiter_KE*parksul.xPsi2[0]*active_flux_ampl_inv;
+                parksul.xPsi2_Limited[1] = parksul.limiter_KE*parksul.xPsi2[1]*active_flux_ampl_inv;
+            }else{
+                parksul.xPsi2_Limited[0] = parksul.xPsi2[0];
+                parksul.xPsi2_Limited[1] = parksul.xPsi2[1];
+            }
+        #endif
+
         /* State: stator emf as the derivative of staotr flux, psi_1 */
         REAL emf[2];
         emf[0] = US(0) - MOTOR.R*IS(0) + 1*OFFSET_VOLTAGE_ALPHA;
         emf[1] = US(1) - MOTOR.R*IS(1) + 1*OFFSET_VOLTAGE_BETA ;
         fx[0] = emf[0] \
+            /*k_af*/- AFEOE.k_af*(AFEOE.psi_2[0] - AFEOE.psi_2_limited[0]) \
             /*P*/+ AFEOE.ActiveFlux_KP * AFEOE.output_error[0] \
             /*I*/+ x[2];
         fx[1] = emf[1] \
+            /*k_af*/- AFEOE.k_af*(AFEOE.psi_2[1] - AFEOE.psi_2_limited[1]) \
             /*P*/+ AFEOE.ActiveFlux_KP * AFEOE.output_error[1] \
             /*I*/+ x[3];
 
@@ -252,6 +269,15 @@ void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REA
             AFEOE.omega_est = AFEOE.set_omega_est;
             afe_one_parameter_tuning(AFEOE.omega_est);
         }
+
+        /* Time-varying gains */
+        // if(fabs(CTRL.I->cmd_omg_elec)*MOTOR.npp_inv*ONE_OVER_2PI<1.5){ // [Hz]
+        //     AFEOE.k_af = 2*M_PI*100;
+        //     AFEOE.limiter_Flag = TRUE;
+        // }else{
+        //     AFEOE.k_af = 0.0;
+        //     AFEOE.limiter_Flag = FALSE;
+        // }
 
         /* Proposed closed loop estimator AB frame + ODE4 */
         // stator flux and integral states update

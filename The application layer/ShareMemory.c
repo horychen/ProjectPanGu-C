@@ -121,13 +121,14 @@ void write_DAC_buffer(){
         G.dac_watch[36] = G.dac_watch[34] - G.dac_watch[32];
         G.dac_watch[37] = G.dac_watch[35] - G.dac_watch[33];
 
-//        G.dac_watch[38] = CTRL.inv->theta_trapezoidal / M_PI_OVER_180 * 0.025;
-//        G.dac_watch[39] = INV.I5_plus_I7_LPF * 0.2;
+        G.dac_watch[38] = CTRL.inv->theta_trapezoidal / M_PI_OVER_180 * 0.025;
+        G.dac_watch[39] = CTRL.inv->Vsat* 0.05;
+        //G.dac_watch[39] = INV.I5_plus_I7_LPF * 0.2;
 
-//        G.dac_watch[40] = (CTRL.O->udq_cmd_to_inverter[0] - CTRL.O->udq_cmd[0])*0.02;
-//        G.dac_watch[41] = (CTRL.O->udq_cmd_to_inverter[1] - CTRL.O->udq_cmd[1])*0.02;
-//        G.dac_watch[42] = (CAP.dq[0]             - CTRL.O->udq_cmd[0])*0.02;
-//        G.dac_watch[43] = (CAP.dq[1]             - CTRL.O->udq_cmd[1])*0.02;
+        G.dac_watch[40] = (CTRL.O->udq_cmd_to_inverter[0] - CTRL.O->udq_cmd[0])*0.02;
+        G.dac_watch[41] = (CTRL.O->udq_cmd_to_inverter[1] - CTRL.O->udq_cmd[1])*0.02;
+        G.dac_watch[42] = (CAP.dq[0]             - CTRL.O->udq_cmd[0])*0.02;
+        G.dac_watch[43] = (CAP.dq[1]             - CTRL.O->udq_cmd[1])*0.02;
 
         G.dac_watch[38] = (CAP.ecapU.Period1) * 0.25e-4;
         G.dac_watch[39] = (CAP.ecapV.Period1) * 0.25e-4;

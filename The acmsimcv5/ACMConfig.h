@@ -1,9 +1,9 @@
 #ifndef ACMCONFIG_H
 #define ACMCONFIG_H
 /* 经常要修改的 */
-#define INVERTER_NONLINEARITY_COMPENSATION 2 // 1:ParkSul12, 2:Sigmoid, 3:LUT
-#define INVERTER_NONLINEARITY              2 // 1:ModelSul96, 2:ModelExpSigmoid, 3: ModelExpLUT
-#define SENSORLESS_CONTROL TRUE
+#define INVERTER_NONLINEARITY_COMPENSATION 0 //1 // 1:ParkSul12, 2:Sigmoid, 3:LUT
+#define INVERTER_NONLINEARITY              0 //2 // 1:ModelSul96, 2:ModelExpSigmoid, 3: ModelExpLUT
+#define SENSORLESS_CONTROL FALSE
 #define SENSORLESS_CONTROL_HFSI FALSE
 /* ParkSul2012 梯形波 */
 #define GAIN_THETA_TRAPEZOIDAL (40) //(500) // 20
@@ -20,7 +20,7 @@
 	#define PMSM_PERMANENT_MAGNET_FLUX_LINKAGE 0.1342
 	// 铭牌值
 	#define MOTOR_NUMBER_OF_POLE_PAIRS         4
-	#define MOTOR_RATED_CURRENT_RMS            4.2
+	#define MOTOR_RATED_CURRENT_RMS            3
 	#define MOTOR_RATED_POWER_WATT             750
 	#define MOTOR_RATED_SPEED_RPM              1500
 	#define MOTOR_SHAFT_INERTIA                0.0006168
@@ -31,21 +31,19 @@
 		#define MISMATCH_KE  100
 
 /* Algorithms */
-#if MACHINE_TYPE % 10 == 2
+#if /* PM Motor */ MACHINE_TYPE % 10 == 2
 
-    #define ENABLE_COMMISSIONING FALSE
+    #define ENABLE_COMMISSIONING TRUE
 
     /* Select Algorithm 1 */
     #define AFE_USED AFEOE
-    #define AFEOE_OMEGA_ESTIMATOR 5 // [rad/s] //0.5 // 5 for slow reversal
+    #define AFEOE_OMEGA_ESTIMATOR 10 // [rad/s] //0.5 // 5 for slow reversal
         #define AFEOE_KP (1*0.1) // (0.5) // (2*5)
         #define AFEOE_KI (1*0.02) // 0.02 for 10 rpm // 0.1 for 40 rpm //(2.0) for 300 rpm
 
     #define AFE_21_HUWU_TAU_1_INVERSE 0.5 // [rad/s] //0.5 // 5 for slow reversal
     #define AFE_21_HUWU_KP (2.0*0.1) //[rad/s]
     #define AFE_21_HUWU_KI (2.0*0.25) //[rad/s]
-
-
 
     /* Select Algorithm 2*/
     #define SELECT_ALGORITHM 1
@@ -61,10 +59,10 @@
     // #define ELECTRICAL_SPEED_FEEDBACK    qiaoxia.xOmg
     // #define ELECTRICAL_POSITION_FEEDBACK qiaoxia.theta_d
 
-    #define ELECTRICAL_SPEED_FEEDBACK    nsoaf.xOmg // harnefors.omg_elec
+    // #define ELECTRICAL_SPEED_FEEDBACK    nsoaf.xOmg // harnefors.omg_elec
     #define ELECTRICAL_POSITION_FEEDBACK AFE_USED.theta_d // harnefors.theta_d
 
-    // #define ELECTRICAL_SPEED_FEEDBACK    CTRL.I->omg_elec
+    #define ELECTRICAL_SPEED_FEEDBACK    CTRL.I->omg_elec
     // #define ELECTRICAL_POSITION_FEEDBACK CTRL.I->theta_d_elec
 
     /* Park.Sul 2014 FADO in replace of CM */
@@ -110,7 +108,7 @@
     #define CJH_EEMF_GAMMA_OMEGA (5e6)
 
     /* Harnefors 2006 */
-#elif MACHINE_TYPE % 10 == 1
+#elif /* Induction Motor */ MACHINE_TYPE % 10 == 1
     // Marino05 调参 /// default: (17143), (2700.0), (1000), (1), (0)
     #define GAMMA_INV_xTL 17142.85714285714
     #define LAMBDA_INV_xOmg 2700.0
@@ -184,7 +182,7 @@
 #define SYSTEM_QEP_PULSES_PER_REV  (10000)
 #define SYSTEM_QEP_REV_PER_PULSE  (1e-4)
 #define CNT_2_ELEC_RAD (SYSTEM_QEP_REV_PER_PULSE * 2*M_PI * MOTOR_NUMBER_OF_POLE_PAIRS)
-#define USE_ORIGINAL_PAIR
+// #define USE_ORIGINAL_PAIR
 #ifdef USE_ORIGINAL_PAIR
     #ifdef _XCUBE1
         #define SYSTEM_QEP_CALIBRATED_ANGLE -2668 // for MOTOR2
