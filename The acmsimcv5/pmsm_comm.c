@@ -450,7 +450,8 @@ void COMM_resistanceId_v2(REAL id_fb, REAL iq_fb){
             // COMM_PI_tuning(7e-3, 0.8, 2*3.1415926*CL_TS_INVERSE * 0.025, 20, MOTOR_SHAFT_INERTIA, MOTOR_BACK_EMF_CONSTANT, MOTOR_NUMBER_OF_POLE_PAIRS);
     }
 
-    #define RS_ID_NUMBER_OF_STAIRS ((int)(0.5*COMM_IV_SIZE_R1))
+    // #define RS_ID_NUMBER_OF_STAIRS ((int)(0.5*COMM_IV_SIZE_R1))
+    #define RS_ID_NUMBER_OF_STAIRS 40
     #define RS_ID_MAXIMUM_CURRENT (1.0*(REAL)MOTOR_RATED_CURRENT_RMS)
     REAL current_increase_per_step = RS_ID_MAXIMUM_CURRENT / (REAL)RS_ID_NUMBER_OF_STAIRS;
 
@@ -465,11 +466,11 @@ void COMM_resistanceId_v2(REAL id_fb, REAL iq_fb){
     #if EXCITE_BETA_AXIS_AND_MEASURE_PHASE_B
         #define REGULATOR pid1_iq
         #define FEEDBACK  iq_fb
-        pid1_id.Ref = 0.0;
+        // pid1_id.Ref = 0.0;
     #else
         #define REGULATOR pid1_id
         #define FEEDBACK  id_fb
-        pid1_iq.Ref = 0.0;
+        // pid1_iq.Ref = 0.0;
     #endif
 
     REGULATOR.Fbk = FEEDBACK;

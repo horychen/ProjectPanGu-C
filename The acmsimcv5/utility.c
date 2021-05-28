@@ -3,9 +3,9 @@
 
 #if PC_SIMULATION
 // 写变量名到文件
-#define DATA_FORMAT "%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g\n"
-#define DATA_LABELS "ACM.rpm_cmd,CTRL.I->rpm,CTRL.I->theta_d_elec,huwu.theta_d,huwu.x[0],huwu.x[1],huwu.x[2],huwu.inner_product_normalized,CTRL.I->idq_cmd[0],CTRL.I->idq[0],CTRL.I->idq_cmd[1],CTRL.I->idq[1]\n"
-#define DATA_DETAILS ACM.rpm_cmd,CTRL.I->rpm,CTRL.I->theta_d_elec,huwu.theta_d,huwu.x[0],huwu.x[1],huwu.x[2],huwu.inner_product_normalized,CTRL.I->idq_cmd[0],CTRL.I->idq[0],CTRL.I->idq_cmd[1],CTRL.I->idq[1]
+#define DATA_FORMAT "%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g\n"
+#define DATA_LABELS "ACM.rpm_cmd,CTRL.I->rpm,nsoaf.xOmg*ELEC_RAD_PER_SEC_2_RPM,ENC.theta_d_elec,AFE_USED.theta_d,sin(ENC.theta_d_elec - AFE_USED.theta_d),INV.theta_trapezoidal/M_PI_OVER_180,INV.Vsat,INV.I5_plus_I7,INV.I11_plus_I13,INV.I17_plus_I19,INV.I5_plus_I7_LPF,INV.I11_plus_I13_LPF,INV.I17_plus_I19_LPF,INV.iD_atA,INV.iQ_atA,INV.uDcomp_atA,INV.uQcomp_atA,INV.ual_comp,ACM.dist_al,INV.ual_comp - ACM.dist_al,INV.ube_comp,ACM.dist_be,INV.ube_comp - ACM.dist_be,ACM.ial,ACM.ibe,sqrt(ACM.ial*ACM.ial+ACM.ibe*ACM.ibe),CTRL.O->udq_cmd[0],CTRL.O->udq_cmd[1],CTRL.I->idq_cmd[0],CTRL.I->idq[0],CTRL.I->idq_cmd[1],CTRL.I->idq[1],ACM.TLoad,pid1_spd.OutLimit,pid1_spd.Out,pid1_spd.Err,pid1_spd.I_Term,ACM.Tem,ACM.TLoad,pid1_iM.OutLimit,pid1_iM.Out,pid1_iT.OutLimit,pid1_iT.Out\n"
+#define DATA_DETAILS ACM.rpm_cmd,CTRL.I->rpm,nsoaf.xOmg*ELEC_RAD_PER_SEC_2_RPM,ENC.theta_d_elec,AFE_USED.theta_d,sin(ENC.theta_d_elec - AFE_USED.theta_d),INV.theta_trapezoidal/M_PI_OVER_180,INV.Vsat,INV.I5_plus_I7,INV.I11_plus_I13,INV.I17_plus_I19,INV.I5_plus_I7_LPF,INV.I11_plus_I13_LPF,INV.I17_plus_I19_LPF,INV.iD_atA,INV.iQ_atA,INV.uDcomp_atA,INV.uQcomp_atA,INV.ual_comp,ACM.dist_al,INV.ual_comp - ACM.dist_al,INV.ube_comp,ACM.dist_be,INV.ube_comp - ACM.dist_be,ACM.ial,ACM.ibe,sqrt(ACM.ial*ACM.ial+ACM.ibe*ACM.ibe),CTRL.O->udq_cmd[0],CTRL.O->udq_cmd[1],CTRL.I->idq_cmd[0],CTRL.I->idq[0],CTRL.I->idq_cmd[1],CTRL.I->idq[1],ACM.TLoad,pid1_spd.OutLimit,pid1_spd.Out,pid1_spd.Err,pid1_spd.I_Term,ACM.Tem,ACM.TLoad,pid1_iM.OutLimit,pid1_iM.Out,pid1_iT.OutLimit,pid1_iT.Out
 
 void write_header_to_file(FILE *fw){
     printf("%s\n", DATA_FILE_NAME);

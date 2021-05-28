@@ -79,7 +79,7 @@ void init_CTRL(){
     CTRL.g->flag_overwite_voltage_dc_bus = FALSE;
     CTRL.g->flag_use_ecap_voltage = 0;
 
-    CTRL.g->Select_algorithm = SELECT_ALGORITHM;
+    // CTRL.g->Select_algorithm = SELECT_ALGORITHM;
 
     // G.Rotor_angle_selection=SYSTEM_QEP_ROTOR_ANGLE; // delete?
 

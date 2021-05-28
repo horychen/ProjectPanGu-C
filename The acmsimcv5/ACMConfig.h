@@ -32,8 +32,11 @@
 
 /* Algorithms */
 #if /* PM Motor */ MACHINE_TYPE % 10 == 2
-
-    #define ENABLE_COMMISSIONING TRUE
+    #if PC_SIMULATION
+        #define ENABLE_COMMISSIONING FALSE
+    #else
+        #define ENABLE_COMMISSIONING TRUE
+    #endif
 
     /* Select Algorithm 1 */
     #define AFE_USED AFEOE
@@ -46,7 +49,14 @@
     #define AFE_21_HUWU_KI (2.0*0.25) //[rad/s]
 
     /* Select Algorithm 2*/
-    #define SELECT_ALGORITHM 1
+        #define ALG_NSOAF 1
+        #define ALG_Park_Sul 2
+        #define ALG_Chi_Xu 3
+        #define ALG_Qiao_Xia 4
+        #define ALG_CJH_EEMF 5
+        #define ALG_Farza_2009 6
+        #define ALG_Harnefors_2006 7
+    #define SELECT_ALGORITHM ALG_NSOAF
     // #define ELECTRICAL_SPEED_FEEDBACK    G.omg_elec
     // #define ELECTRICAL_POSITION_FEEDBACK G.theta_d
 
@@ -158,7 +168,7 @@
     #define MACHINE_TS_INVERSE (CL_TS_INVERSE*TS_UPSAMPLING_FREQ_EXE_INVERSE)
 
 #define LOAD_INERTIA    0.0
-#define LOAD_TORQUE     4
+#define LOAD_TORQUE     3.5
 #define VISCOUS_COEFF   0.0007
 
 #define CURRENT_KP (6.39955)
@@ -168,14 +178,14 @@
 
 #define SPEED_KP (0.0380362)
 #define SPEED_KI (30.5565)
-    #define SPEED_KI_CODE (SPEED_KI*SPEED_KP*VL_TS)
-    #define SPEED_LOOP_LIMIT_NEWTON_METER (2.0*MOTOR_RATED_TORQUE)
-    #define SPEED_LOOP_LIMIT_AMPERE (2.0*1.414*MOTOR_RATED_CURRENT_RMS)
-
     #define MOTOR_RATED_TORQUE ( MOTOR_RATED_POWER_WATT / (MOTOR_RATED_SPEED_RPM/60.0*2*3.1415926) )
     #define MOTOR_TORQUE_CONSTANT ( MOTOR_RATED_TORQUE / (MOTOR_RATED_CURRENT_RMS*1.414) )
     #define MOTOR_BACK_EMF_CONSTANT ( MOTOR_TORQUE_CONSTANT / 1.5 / MOTOR_NUMBER_OF_POLE_PAIRS )
     #define MOTOR_BACK_EMF_CONSTANT_mV_PER_RPM ( MOTOR_BACK_EMF_CONSTANT * 1e3 / (1.0/MOTOR_NUMBER_OF_POLE_PAIRS/2/3.1415926*60) )
+
+    #define SPEED_KI_CODE (SPEED_KI*SPEED_KP*VL_TS)
+    #define SPEED_LOOP_LIMIT_NEWTON_METER (2.0*MOTOR_RATED_TORQUE)
+    #define SPEED_LOOP_LIMIT_AMPERE (2.0*1.414*MOTOR_RATED_CURRENT_RMS)
 
 
 /* Encoder QEP */

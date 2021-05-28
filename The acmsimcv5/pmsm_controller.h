@@ -210,7 +210,7 @@ typedef struct {
         int flag_use_ecap_voltage; // = 0;
         int flag_experimental_initialized; 
     // Select Algorithm
-        int Select_algorithm;
+        // int Select_algorithm;
         REAL omg_elec;
         REAL theta_d;
 } st_global_variables; // globals
