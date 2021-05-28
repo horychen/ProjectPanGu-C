@@ -6,6 +6,7 @@
 /* Natural Speed Observer for IPMSM with Active Flux Concept (Chen 2020)
  ********************************************/
 /* The 3rd-order dynamic system */
+#if PC_SIMULATION || SELECT_ALGORITHM == ALG_NSOAF
 void rhf_NSOAF_Dynamics(REAL t, REAL *x, REAL *fx){
 
     /* Unpack States */
@@ -173,12 +174,13 @@ void init_nsoaf(){
     nsoaf.omega_ob = nsoaf.set_omega_ob;
     nso_one_parameter_tuning(nsoaf.omega_ob);
 }
-
+#endif
 
 /********************************************/
 /* EEMF-Speed-Adaptive-High-Gain-Observer-Farza-2009
  ********************************************/
 /* The 10th-order dynamic system */
+#if PC_SIMULATION || SELECT_ALGORITHM == ALG_Farza_2009
 #define NS 10
 void rhf_func_hgoeemf(REAL *increment_n, REAL *xPsi, REAL *xEemf, 
                       REAL xOmg, REAL xGammaOmg, 
@@ -344,13 +346,14 @@ void init_hgo4eemf(){
     hgo4eemf.xGammaOmg = FARZA09_HGO_EEMF_GAMMA_OMEGA_INITIAL_VALUE;
 }
 #undef NS
-
+#endif
 
 
 /********************************************/
 /* EEMF-Error-Dynamics-based-AO-Design
  ********************************************/
 /* The 13th-order dynamic system */
+#if PC_SIMULATION || SELECT_ALGORITHM == ALG_CJH_EEMF
 #define NS 13
 void rhf_func_eemfaod(REAL *increment_n, REAL *xPsi, REAL *xChi, REAL xOmg, 
                       REAL *xEta,
@@ -552,12 +555,13 @@ void init_cjheemf(){
     cjheemf.gamma_omg = CJH_EEMF_GAMMA_OMEGA;
 }
 #undef NS
-
+#endif
 
 
 /********************************************/
 /* Harnefor 2006
  ********************************************/
+#if PC_SIMULATION || SELECT_ALGORITHM == ALG_Harnefors_2006
 void init_harnefors(){
     // harnefors.theta_d = 0.0;
     // harnefors.omg_elec = 0.0;
@@ -695,11 +699,13 @@ void Main_harnefors_scvm(){
     while(harnefors.theta_d>M_PI) harnefors.theta_d-=2*M_PI;
     while(harnefors.theta_d<-M_PI) harnefors.theta_d+=2*M_PI;
 }
+#endif
 
 
 /********************************************/
 /* Qiao.Xia 2013 emfSMO with Sigmoid (Also Hongryel Kim 2011) as Nonlinear
  ********************************************/
+#if PC_SIMULATION || SELECT_ALGORITHM == ALG_Qiao_Xia
 REAL sm_sigmoid(REAL x, REAL a){
     return 2.0 / (1.0 + exp(-a*x)) - 1.0;
 }
@@ -777,13 +783,14 @@ void Main_QiaoXia2013_emfSMO(){
     /* Post-observer calculations */
     /* Selecting Signals From Block Diagram */    
 }
+#endif
 
 
 
 /********************************************/
 /* SongChi.LongyaXu 2009 emfSMO 
  */
-#if TRUE
+#if PC_SIMULATION || SELECT_ALGORITHM == ALG_Chi_Xu
 void init_ChiXu2009(){
     chixu.smo_gain      = 0.0; // time varying gain
     chixu.sigmoid_coeff = CHI_XU_SIGMOID_COEFF;   // 17
@@ -890,7 +897,7 @@ void Main_ChiXu2009_emfSMO(){
 /********************************************/
 /* Park.Sul 2014 FADO in replace of CM 
  */
-#if TRUE
+#if PC_SIMULATION || SELECT_ALGORITHM == ALG_Park_Sul
 void init_parksul2014(){
     parksul.T2S_1_KP = PARK_SUL_T2S_1_KP;
     parksul.T2S_1_KI = PARK_SUL_T2S_1_KI;
@@ -1075,23 +1082,23 @@ void Main_parksul2014_FADO(){
 
 
 /* DOB Stationary Voltage that is valid for SPMSM only */
-void stationary_voltage_DOB(){
-    // CTRL.I->iab[0]
-    // CTRL.I->iab[1]
+// void stationary_voltage_DOB(){
+//     // CTRL.I->iab[0]
+//     // CTRL.I->iab[1]
 
-    CTRL.inv->iab_lpf[0] = _lpf(CTRL.I->iab[0], CTRL.inv->iab_lpf[0], CTRL.inv->filter_pole);
-    CTRL.inv->iab_lpf[1] = _lpf(CTRL.I->iab[1], CTRL.inv->iab_lpf[1], CTRL.inv->filter_pole);
+//     CTRL.inv->iab_lpf[0] = _lpf(CTRL.I->iab[0], CTRL.inv->iab_lpf[0], CTRL.inv->filter_pole);
+//     CTRL.inv->iab_lpf[1] = _lpf(CTRL.I->iab[1], CTRL.inv->iab_lpf[1], CTRL.inv->filter_pole);
 
-    CTRL.inv->iab_hpf[0] = CTRL.I->iab[0] - CTRL.inv->iab_lpf[0];
-    CTRL.inv->iab_hpf[1] = CTRL.I->iab[1] - CTRL.inv->iab_lpf[1];
+//     CTRL.inv->iab_hpf[0] = CTRL.I->iab[0] - CTRL.inv->iab_lpf[0];
+//     CTRL.inv->iab_hpf[1] = CTRL.I->iab[1] - CTRL.inv->iab_lpf[1];
 
-    CTRL.inv->uab_DOB[0] = - CTRL.motor->R * CTRL.inv->iab_lpf[0] - CTRL.motor->Ld * CTRL.inv->iab_lpf[0];
-    CTRL.inv->uab_DOB[1] = - CTRL.motor->R * CTRL.inv->iab_lpf[1] - CTRL.motor->Ld * CTRL.inv->iab_lpf[1];
+//     CTRL.inv->uab_DOB[0] = - CTRL.motor->R * CTRL.inv->iab_lpf[0] - CTRL.motor->Ld * CTRL.inv->iab_lpf[0];
+//     CTRL.inv->uab_DOB[1] = - CTRL.motor->R * CTRL.inv->iab_lpf[1] - CTRL.motor->Ld * CTRL.inv->iab_lpf[1];
 
-    // add back emf
-    // CTRL.inv->uab_DOB[0] += CTRL.I->omg_elec * CTRL.motor->KE * -sin(CTRL.I->theta_d_elec);
-    // CTRL.inv->uab_DOB[1] += CTRL.I->omg_elec * CTRL.motor->KE *  cos(CTRL.I->theta_d_elec);
-}
+//     // add back emf
+//     // CTRL.inv->uab_DOB[0] += CTRL.I->omg_elec * CTRL.motor->KE * -sin(CTRL.I->theta_d_elec);
+//     // CTRL.inv->uab_DOB[1] += CTRL.I->omg_elec * CTRL.motor->KE *  cos(CTRL.I->theta_d_elec);
+// }
 
 
 
@@ -1136,31 +1143,39 @@ void pmsm_observers(){
         Main_parksul2014_FADO();
     #else
         /* 资源有限 */
-        if(G.Select_algorithm == 1){
-            test_flux_estimators();
+        #if SELECT_ALGORITHM == ALG_NSOAF
             Main_nsoaf_chen2020();
-        }else if(G.Select_algorithm == 2){
-            Main_parksul2014_FADO();
-        }else if(G.Select_algorithm == 3){
-            Main_ChiXu2009_emfSMO();
-        }else if(G.Select_algorithm == 4){
+        #elif SELECT_ALGORITHM == ALG_Farza_2009
+            Main_cjh_eemfhgo_farza09();
+        #elif SELECT_ALGORITHM == ALG_CJH_EEMF
+            Main_cjh_eemfao();
+        #elif SELECT_ALGORITHM == ALG_Harnefors_2006
+            Main_harnefors_scvm();
+        #elif SELECT_ALGORITHM == ALG_Qiao_Xia
             Main_QiaoXia2013_emfSMO();
-        }
+        #elif SELECT_ALGORITHM == ALG_Chi_Xu
+            Main_ChiXu2009_emfSMO();
+        #elif SELECT_ALGORITHM == ALG_Park_Sul
+            Main_parksul2014_FADO();
+        #endif
     #endif
 
-    if(G.Select_algorithm == 1){
-        G.omg_elec = nsoaf.xOmg;
-        G.theta_d  = AFE_USED.theta_d;
-    }else if(G.Select_algorithm == 2){
-        G.omg_elec = parksul.xOmg;
-        G.theta_d  = parksul.theta_d;
-    }else if(G.Select_algorithm == 3){
-        G.omg_elec = chixu.xOmg;
-        G.theta_d  = chixu.theta_d;
-    }else if(G.Select_algorithm == 4){
-        G.omg_elec = qiaoxia.xOmg;
-        G.theta_d  = qiaoxia.theta_d;
-    }
+    G.omg_elec = ELECTRICAL_SPEED_FEEDBACK;
+    G.theta_d  = ELECTRICAL_POSITION_FEEDBACK;
+
+    // if(G.Select_algorithm == 1){
+    //     G.omg_elec = nsoaf.xOmg;
+    //     G.theta_d  = AFE_USED.theta_d;
+    // }else if(G.Select_algorithm == 2){
+    //     G.omg_elec = parksul.xOmg;
+    //     G.theta_d  = parksul.theta_d;
+    // }else if(G.Select_algorithm == 3){
+    //     G.omg_elec = chixu.xOmg;
+    //     G.theta_d  = chixu.theta_d;
+    // }else if(G.Select_algorithm == 4){
+    //     G.omg_elec = qiaoxia.xOmg;
+    //     G.theta_d  = qiaoxia.theta_d;
+    // }
 
 
     /* 备份这个采样点的数据供下次使用。所以，观测的和实际的相比，是延迟一个采样周期的。 */
@@ -1176,12 +1191,33 @@ void init_pmsm_observers(){
     // FE
     init_FE();
 
-    // OBSV
-    init_harnefors(); // harnefors结构体初始化
-    init_cjheemf(); // cjheemf 结构体初始化
-    init_parksul2014();
-    init_QiaoXia2013();
-    init_ChiXu2009();
-    init_nsoaf();
+
+    #if PC_SIMULATION
+        // OBSV
+        init_nsoaf();
+        init_hgo4eemf();
+        init_cjheemf(); // cjheemf 结构体初始化
+        init_harnefors(); // harnefors结构体初始化
+        init_QiaoXia2013();
+        init_ChiXu2009();
+        init_parksul2014();
+    #else
+        /* 资源有限 */
+        #if SELECT_ALGORITHM == ALG_NSOAF
+            init_nsoaf();
+        #elif SELECT_ALGORITHM == ALG_Farza_2009
+            init_hgo4eemf();
+        #elif SELECT_ALGORITHM == ALG_CJH_EEMF
+            init_cjheemf(); // cjheemf 结构体初始化
+        #elif SELECT_ALGORITHM == ALG_Harnefors_2006
+            init_harnefors(); // harnefors结构体初始化
+        #elif SELECT_ALGORITHM == ALG_Qiao_Xia
+            init_QiaoXia2013();
+        #elif SELECT_ALGORITHM == ALG_Chi_Xu
+            init_ChiXu2009();
+        #elif SELECT_ALGORITHM == ALG_Park_Sul
+            init_parksul2014();
+        #endif
+    #endif
 }
 #endif

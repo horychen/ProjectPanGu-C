@@ -237,12 +237,15 @@ void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REA
         #ifdef AFE_25_FLUX_LIMITER
             /* The amplitude limiter */
             if(AFEOE.active_flux_ampl > AFEOE.limiter_KE){
-                parksul.xPsi2_Limited[0] = parksul.limiter_KE*parksul.xPsi2[0]*active_flux_ampl_inv;
-                parksul.xPsi2_Limited[1] = parksul.limiter_KE*parksul.xPsi2[1]*active_flux_ampl_inv;
+                AFEOE.psi_2_limited[0] = AFEOE.limiter_KE * AFEOE.psi_2[0]*active_flux_ampl_inv;
+                AFEOE.psi_2_limited[1] = AFEOE.limiter_KE * AFEOE.psi_2[1]*active_flux_ampl_inv;
             }else{
-                parksul.xPsi2_Limited[0] = parksul.xPsi2[0];
-                parksul.xPsi2_Limited[1] = parksul.xPsi2[1];
+                AFEOE.psi_2_limited[0] = AFEOE.psi_2[0];
+                AFEOE.psi_2_limited[1] = AFEOE.psi_2[1];
             }
+        #else
+            AFEOE.psi_2_limited[0] = AFEOE.psi_2[0];
+            AFEOE.psi_2_limited[1] = AFEOE.psi_2[1];
         #endif
 
         /* State: stator emf as the derivative of staotr flux, psi_1 */
