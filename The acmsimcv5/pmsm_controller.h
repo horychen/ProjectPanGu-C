@@ -92,7 +92,6 @@ typedef struct {
     REAL omg_elec;
     REAL theta_d_elec;
 } st_enc; // encoder
-
 typedef struct {
     REAL theta_excitation; // in rad
     REAL theta_d_elec_entered;
@@ -184,6 +183,10 @@ typedef struct {
         REAL Offset_V;
         REAL Offset_U;
         REAL Offset_Udc;
+        REAL AD_scale_W;
+        REAL AD_scale_V;
+        REAL AD_scale_U;
+        REAL AD_scale_VDC;
         // Raw
         REAL offsetU,offsetV,offsetW,offsetUDC; // ADC offset. U, V, W corresponds to ADCRESULT2, ADCRESULT3, ADCRESULT1.
     // DAC
@@ -209,6 +212,8 @@ typedef struct {
         int flag_overwite_voltage_dc_bus; // = FALSE;
         int flag_use_ecap_voltage; // = 0;
         int flag_experimental_initialized; 
+        int FLAG_TUNING_CURRENT_SCALE_FACTOR; // for comm
+        int flag_do_inverter_characteristics; // for comm
     // Select Algorithm
         // int Select_algorithm;
         REAL omg_elec;
@@ -258,6 +263,7 @@ extern struct ControllerForExperiment CTRL;
 
 
 void init_experiment();
+void init_experiment_offset();
 void init_CTRL();
 void commissioning();
 void controller(REAL rpm_speed_command, REAL set_iq_cmd, REAL set_id_cmd);

@@ -35,8 +35,8 @@ void PID_calc(st_pid_regulator *r){
         // dynamic clamping
         if( r->I_Term > r->OutLimit - r->Out)
             r->I_Term = r->OutLimit - r->Out;
-        else if( r->I_Term < -r->OutLimit - r->Out)
-            r->I_Term = -r->OutLimit - r->Out;
+        else if( r->I_Term < -r->OutLimit + r->Out)
+            r->I_Term = -r->OutLimit + r->Out;
     #else
         // static clamping
         if( r->I_Term > r->OutLimit)

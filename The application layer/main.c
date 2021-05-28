@@ -1,4 +1,38 @@
 #include <All_Definition.h>
+void init_experiment_offset(){
+    /* OFFSET */
+    #ifdef _XCUBE1
+        G.offsetU=2044;
+        G.offsetV=2052;
+        G.offsetW=2032; // ADC offset. U, V, W corresponds to ADCRESULT2, ADCRESULT3, ADCRESULT1.
+        G.offsetUDC=1430;
+        // /* 借用Sensor Board的电流传感器 */
+        // G.offsetU=2045;
+        // G.offsetV=2047;
+        // G.offsetW=2030;
+    #else
+        G.offsetU=2072;
+        G.offsetV=2062;
+        G.offsetW=2049; // ADC offset. U, V, W corresponds to ADCRESULT2, ADCRESULT3, ADCRESULT1.
+        G.offsetUDC=2; // 5.18
+    #endif
+
+    /* SCALE */
+    #ifdef _XCUBE1
+        G.AD_scale_U   = 0.0109649;
+        G.AD_scale_V   = 0.00988908653610677; // (degaussed CP030A and offset ADC) // 0.01125872551 (YX)
+        G.AD_scale_W   = 0.00972075677822004; // (degaussed CP030A and offset ADC) // 0.01134558656 (YX)
+        G.AD_scale_VDC = 0.3546099;
+            /* 借用Sensor Board的电流传感器 */
+            //#define AD_scale_W                       0.0057316444
+            //#define AD_scale_V                       0.0056072670
+    #else
+        G.AD_scale_W   = 0.0058002658;       // 0.00867354 // 0.0096392 // 0.0057316444
+        G.AD_scale_V   = 0.0064003544;       // 0.01027935 //0.0094433 // 0.0056072670
+        G.AD_scale_U   = 0.006300196648;
+        G.AD_scale_VDC = (0.5*0.1897533207); // 短上一个470R再补上一个470R
+    #endif
+}
 void main(void){
 
     InitSysCtrl();

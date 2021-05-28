@@ -24,7 +24,7 @@ void voltage_commands_to_pwm(){
 void measurement(){
 
     // 母线电压测量
-    G.Voltage_DC_BUS=((AdcaResultRegs.ADCRESULT0)-G.offsetUDC)*AD_scale_VDC + G.Offset_Udc;//
+    G.Voltage_DC_BUS=((AdcaResultRegs.ADCRESULT0)-G.offsetUDC)*G.AD_scale_VDC + G.Offset_Udc;//
 
     // 相电压测量（基于占空比和母线电压）
     CAP.terminal_voltage[0] = (CAP.terminal_DutyOnRatio[0]) * G.Voltage_DC_BUS - G.Voltage_DC_BUS * 0.5; // -0.5 is due to duty ratio calculation; - Voltage_DC_BUS * 0.5 is referring to the center of dc bus capacitor.
@@ -38,7 +38,7 @@ void measurement(){
     if(CAP.flag_bad_U_capture==FALSE && CAP.flag_bad_V_capture==FALSE && CAP.flag_bad_W_capture==FALSE){
         // Use ecap feedback
         CAP.uab0[0] = 0.33333 * (2*CAP.terminal_voltage[0] - CAP.terminal_voltage[1] - CAP.terminal_voltage[2]);
-        CAP.uab0[1] = 0.57735 * (                                     CAP.terminal_voltage[1] - CAP.terminal_voltage[2]);
+        CAP.uab0[1] = 0.57735 * (                            CAP.terminal_voltage[1] - CAP.terminal_voltage[2]);
         CAP.uab0[2] = 0.33333 * (  CAP.terminal_voltage[0] + CAP.terminal_voltage[1] + CAP.terminal_voltage[2]);
         CAP.dq[0] =  CTRL.S->cosT*CAP.uab0[0] + CTRL.S->sinT*CAP.uab0[1];
         CAP.dq[1] = -CTRL.S->sinT*CAP.uab0[0] + CTRL.S->cosT*CAP.uab0[1];
@@ -94,9 +94,9 @@ void measurement(){
         if(G.flag_overwite_voltage_dc_bus){
             G.Voltage_DC_BUS = G.Overwrite_Voltage_DC_BUS;
         }
-        G.Current_W       =((AdcaResultRegs.ADCRESULT1)-G.offsetW)*AD_scale_W;// ADC A1-> Phase W Current  //-11.8-11.8A
-        G.Current_V       =((AdcaResultRegs.ADCRESULT3)-G.offsetV)*AD_scale_V;// ADC A1-> Phase V Current  //-11.8-11.8A
-        G.Current_Not_Used=((AdcaResultRegs.ADCRESULT2)-G.offsetU)*AD_scale_U;// ADC A1-> Phase U Current  //-11.8-11.8A
+        G.Current_W       =((AdcaResultRegs.ADCRESULT1)-G.offsetW)*G.AD_scale_W;// ADC A1-> Phase W Current  //-11.8-11.8A
+        G.Current_V       =((AdcaResultRegs.ADCRESULT3)-G.offsetV)*G.AD_scale_V;// ADC A1-> Phase V Current  //-11.8-11.8A
+        G.Current_Not_Used=((AdcaResultRegs.ADCRESULT2)-G.offsetU)*G.AD_scale_U;// ADC A1-> Phase U Current  //-11.8-11.8A
         if(G.AD_offset_flag2==TRUE){
             G.Current_W = G.Current_W - G.Offset_W;
             G.Current_V = G.Current_V - G.Offset_V;
