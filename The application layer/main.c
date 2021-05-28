@@ -1,6 +1,6 @@
 #include <All_Definition.h>
 void init_experiment_offset(){
-    /* OFFSET */
+    /* ADC OFFSET */
     #ifdef _XCUBE1
         G.offsetU=2044;
         G.offsetV=2052;
@@ -17,7 +17,7 @@ void init_experiment_offset(){
         G.offsetUDC=2; // 5.18
     #endif
 
-    /* SCALE */
+    /* ADC SCALE */
     #ifdef _XCUBE1
         G.AD_scale_U   = 0.0109649;
         G.AD_scale_V   = 0.00988908653610677; // (degaussed CP030A and offset ADC) // 0.01125872551 (YX)
@@ -32,6 +32,10 @@ void init_experiment_offset(){
         G.AD_scale_U   = 0.006300196648;
         G.AD_scale_VDC = (0.5*0.1897533207); // 短上一个470R再补上一个470R
     #endif
+
+    /* eQEP OFFSET */
+    CTRL.enc->OffsetCountBetweenIndexAndUPhaseAxis = SYSTEM_QEP_CALIBRATED_ANGLE;
+    CTRL.enc->theta_d_offset = SYSTEM_QEP_CALIBRATED_ANGLE * CNT_2_ELEC_RAD;
 }
 void main(void){
 

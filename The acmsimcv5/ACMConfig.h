@@ -1,8 +1,8 @@
 #ifndef ACMCONFIG_H
 #define ACMCONFIG_H
 /* 经常要修改的 */
-#define INVERTER_NONLINEARITY_COMPENSATION 0 //1 // 1:ParkSul12, 2:Sigmoid, 3:LUT
-#define INVERTER_NONLINEARITY              0 //2 // 1:ModelSul96, 2:ModelExpSigmoid, 3: ModelExpLUT
+#define INVERTER_NONLINEARITY_COMPENSATION 2 // 1:ParkSul12, 2:Sigmoid, 3:LUT
+#define INVERTER_NONLINEARITY              2 // 1:ModelSul96, 2:ModelExpSigmoid, 3: ModelExpLUT
 #define SENSORLESS_CONTROL FALSE
 #define SENSORLESS_CONTROL_HFSI FALSE
 /* ParkSul2012 梯形波 */
@@ -33,9 +33,9 @@
 /* Algorithms */
 #if /* PM Motor */ MACHINE_TYPE % 10 == 2
     #if PC_SIMULATION
-        #define ENABLE_COMMISSIONING FALSE
+        #define ENABLE_COMMISSIONING FALSE /*Simulation*/
     #else
-        #define ENABLE_COMMISSIONING TRUE
+        #define ENABLE_COMMISSIONING FALSE /*Experiment*/
     #endif
 
     /* Select Algorithm 1 */
@@ -188,24 +188,11 @@
     #define SPEED_LOOP_LIMIT_AMPERE (2.0*1.414*MOTOR_RATED_CURRENT_RMS)
 
 
-/* Encoder QEP */
+/* Encoder QEP TODO: should read from excel */
 #define SYSTEM_QEP_PULSES_PER_REV  (10000)
 #define SYSTEM_QEP_REV_PER_PULSE  (1e-4)
 #define CNT_2_ELEC_RAD (SYSTEM_QEP_REV_PER_PULSE * 2*M_PI * MOTOR_NUMBER_OF_POLE_PAIRS)
-// #define USE_ORIGINAL_PAIR
-#ifdef USE_ORIGINAL_PAIR
-    #ifdef _XCUBE1
-        #define SYSTEM_QEP_CALIBRATED_ANGLE -2668 // for MOTOR2
-    #else
-        #define SYSTEM_QEP_CALIBRATED_ANGLE -976 // for MOTOR1 (w/ hall sensor) // -968 for MOTOR1
-    #endif
-#else
-    #ifdef _XCUBE1
-        #define SYSTEM_QEP_CALIBRATED_ANGLE -976 // for MOTOR1 (w/ hall sensor) // -968 for MOTOR1
-    #else
-        #define SYSTEM_QEP_CALIBRATED_ANGLE -2668 // for MOTOR2
-    #endif
-#endif
+
 
 /* 指令类型 */
     #define EXCITATION_POSITION 0

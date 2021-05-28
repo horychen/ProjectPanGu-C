@@ -9,6 +9,8 @@
 #define THE_DRIVER_LAYER_EXPERIMENT_H_
 
 
+void init_experiment_overwrite();
+
 /* NSOAF */
 
 #define SLOW_REVERSAL_RATE 50 // Park.Sul2014

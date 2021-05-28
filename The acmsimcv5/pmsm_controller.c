@@ -13,7 +13,16 @@ void init_experiment(){
 
 // 初始化函数
 #if PC_SIMULATION
-    void init_experiment_offset(); // this is defined in main.c for experiment
+    // this is defined in main.c for experiment
+void init_experiment_offset(){
+    /* Peripheral configurations */
+    CTRL.enc->OffsetCountBetweenIndexAndUPhaseAxis = 0;
+    CTRL.enc->theta_d_offset = SYSTEM_QEP_CALIBRATED_ANGLE * CNT_2_ELEC_RAD;
+
+    // 这个在仿真中是要一直运行的，不要清零！
+    // ENC.sum_qepPosCnt = 0.0;
+    // ENC.cursor = 0;
+};
 #endif
 void init_CTRL(){
 
@@ -37,17 +46,7 @@ void init_CTRL(){
     CTRL.motor->Js      = MOTOR_SHAFT_INERTIA * (1.0+LOAD_INERTIA);
     CTRL.motor->Js_inv  = 1.0 / CTRL.motor->Js;
 
-/* Peripheral configurations */
-    #if PC_SIMULATION
-        CTRL.enc->OffsetCountBetweenIndexAndUPhaseAxis = 0;
-    #else
-        CTRL.enc->OffsetCountBetweenIndexAndUPhaseAxis = SYSTEM_QEP_CALIBRATED_ANGLE;
-    #endif
-    CTRL.enc->theta_d_offset = SYSTEM_QEP_CALIBRATED_ANGLE * CNT_2_ELEC_RAD;
-
-    // 这个在仿真中是要一直运行的，不要清零！
-    // ENC.sum_qepPosCnt = 0.0;
-    // ENC.cursor = 0;
+// /* Peripheral configurations */
 
 /* Inverter */
     CTRL.inv->filter_pole = 3000*2*M_PI;
@@ -184,7 +183,7 @@ void null_d_control(REAL set_iq_cmd, REAL set_id_cmd){
 
         /* Overwrite if set_id_cmd is set [Both are POSITIVE] */
         // if(set_id_cmd!=0){
-        //     CTRL.I->idq_cmd[0] = set_id_cmd;
+            CTRL.I->idq_cmd[0] = set_id_cmd;
         // }
     #else
         CTRL.I->cmd_rotor_flux_Wb = MOTOR.Ld * set_id_cmd;
