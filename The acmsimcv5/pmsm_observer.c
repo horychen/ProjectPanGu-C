@@ -1128,6 +1128,8 @@ void init_rk4(){
 void pmsm_observers(){
     // stationary_voltage_DOB();
 
+    CTRL.motor->KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * CTRL.I->idq_cmd[0];
+
     #if PC_SIMULATION
         /* Cascaded Flux Estimator */
         test_flux_estimators();

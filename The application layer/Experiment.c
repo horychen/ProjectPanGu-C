@@ -29,12 +29,18 @@ void init_experiment_overwrite(int Seletc_exp_operation){
         //CTRL.motor->R = 2.0;      // from low speed position error correction at 20 rpm for slow reversal. id=2
         //CTRL.motor->R = 2.4;      // from low speed position error correction at 20 rpm for slow reversal. iq=2
 
-        CTRL.motor->R = 1.85; //for negative speed
-        CTRL.motor->R = 2.20; //for positive speed
+        CTRL.motor->R = 1.85; //for negative speed [id?, iq=2 A]
+        CTRL.motor->R = 2.20; //for positive speed [id?, iq=2 A]
+
+        CTRL.motor->R = 1.95; //for negative speed [no id, iq=2 A]
+        CTRL.motor->R = 2.30; //for positive speed [no id, iq=2 A]
 
         AFEOE.ActiveFlux_KP = 50; // for R=1.7, larger KP causes larger pos error (KP=30 went unstable), but with correct R, large KP can be used.
         AFEOE.ActiveFlux_KI = 25;
+
     #endif
+
+    AFEOE.limiter_KE = 1.15 * MOTOR.KE; // this depends on KE value
 
     pid1_spd.OutLimit = G.OverwriteSpeedOutLimit;
 
@@ -147,14 +153,14 @@ void slow_speed_reversal(){
     #define BIAS 0
     if(CTRL.timebase<1){ // note 1 sec is not enough for stator flux to reach steady state.
         G.Set_manual_rpm = RPM1; // 0;
-    }else if(CTRL.timebase<4+2){
+    }else if(CTRL.timebase<4-2){
         G.Set_manual_rpm = RPM1;
-    }else if(CTRL.timebase<10+2){
+    }else if(CTRL.timebase<10-2){
         G.Set_manual_rpm += CL_TS * -SLOW_REVERSAL_RATE;
         if(G.Set_manual_rpm<-RPM1){
             G.Set_manual_rpm = -RPM1;
         }
-    }else if(CTRL.timebase<16+2){
+    }else if(CTRL.timebase<16-2){
         G.Set_manual_rpm += CL_TS * +SLOW_REVERSAL_RATE;
         if(G.Set_manual_rpm>RPM1){
             G.Set_manual_rpm = RPM1;
@@ -173,6 +179,8 @@ void low_speed_operation_init(){
     //    CTRL.motor->KE = 0.15;  // ZFY: 2.0A Slow speed reversal at 100 rpm @ Udc=180V (offset_Udc 14V)
     CTRL.motor->KE = 0.10;  // ZFY: 2.0A Slow speed reversal at 100 rpm @ Udc=80V (offset_Udc 12V)
 }
+REAL RP =2.20;
+REAL RN =2.0;
 void slow_speed_reversal_tuning(){
 
     if(CTRL.timebase<30){
@@ -188,9 +196,9 @@ void slow_speed_reversal_tuning(){
 
         /* Steady state error */
         if(G.Set_manual_rpm>0){
-            CTRL.motor->R = 2.20; //for positive speed
+            CTRL.motor->R = RP; //for positive speed
         }else{
-            CTRL.motor->R = 1.85; //for negative speed
+            CTRL.motor->R = RN; //for negative speed
         }
 
         //    if(G.Set_manual_rpm<-10){
