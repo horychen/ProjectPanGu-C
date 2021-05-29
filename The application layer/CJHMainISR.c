@@ -53,8 +53,10 @@ void measurement(){
     // 电压测量
     if(G.flag_use_ecap_voltage==2 || G.flag_use_ecap_voltage==1){
         /*Use original ecap measured voltage*/
-        US_P(0) = CAP.uab0[0];
-        US_P(1) = CAP.uab0[1];
+        US_P(0) = US_C(0);
+        US_P(1) = US_C(1);
+        US_C(0) = CAP.uab0[0];
+        US_C(1) = CAP.uab0[1];
     }
     //    else if(G.flag_use_ecap_voltage==3){
     //        ecap_moving_average();
@@ -65,13 +67,17 @@ void measurement(){
         CAP.dq_lpf[1] = _lpf(CAP.dq[1], CAP.dq_lpf[1], 800);
         CAP.uab0[0] = CTRL.S->cosT*CAP.dq_lpf[0] - CTRL.S->sinT*CAP.dq_lpf[1];
         CAP.uab0[1] = CTRL.S->sinT*CAP.dq_lpf[0] + CTRL.S->cosT*CAP.dq_lpf[1];
-        US_P(0) = CAP.uab0[0];
-        US_P(1) = CAP.uab0[1];
+        US_P(0) = US_C(0);
+        US_P(1) = US_C(1);
+        US_C(0) = CAP.uab0[0];
+        US_C(1) = CAP.uab0[1];
 
     }else if(G.flag_use_ecap_voltage==0){
         /*Use command voltage for feedback*/
         US_P(0) = CTRL.O->uab_cmd[0]; // 后缀_P表示上一步的电压，P = Previous
         US_P(1) = CTRL.O->uab_cmd[1]; // 后缀_C表示当前步的电压，C = Current
+        US_C(0) = CTRL.O->uab_cmd[0]; // 后缀_P表示上一步的电压，P = Previous
+        US_C(1) = CTRL.O->uab_cmd[1]; // 后缀_C表示当前步的电压，C = Current
     }
 
     // (for watch only) Mismatch between ecap measurement and command to inverter

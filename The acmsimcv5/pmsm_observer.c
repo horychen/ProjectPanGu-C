@@ -100,9 +100,9 @@ void Main_nsoaf_chen2020(){
     /* Know Signals */
     #define MOTOR (*CTRL.motor)
     REAL iDQ_now[2];
-    iDQ_now[0]  = AB2M(IS_P(0), IS_P(1), AFE_USED.cosT, AFE_USED.sinT);
-    iDQ_now[1]  = AB2T(IS_P(0), IS_P(1), AFE_USED.cosT, AFE_USED.sinT);
-    REAL uQ_now = AB2T(US_P(0), US_P(1), AFE_USED.cosT, AFE_USED.sinT);
+    iDQ_now[0]  = AB2M(IS_C(0), IS_C(1), AFE_USED.cosT, AFE_USED.sinT);
+    iDQ_now[1]  = AB2T(IS_C(0), IS_C(1), AFE_USED.cosT, AFE_USED.sinT);
+    REAL uQ_now = AB2T(US_C(0), US_C(1), AFE_USED.cosT, AFE_USED.sinT);
     nsoaf.q_axis_voltage = uQ_now;
 
     /* Output Error = \tilde i_q (scalar) */

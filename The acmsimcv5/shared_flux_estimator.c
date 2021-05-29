@@ -16,6 +16,8 @@ REAL one_over_six = 1.0/6.0;
                                                                          \
     IS(0) = 0.5*(IS_P(0)+IS_C(0));                                       \
     IS(1) = 0.5*(IS_P(1)+IS_C(1));                                       \
+    US(0) = 0.5*(US_P(0)+US_C(0));                                       \
+    US(1) = 0.5*(US_P(1)+US_C(1));                                       \
     (*fp)(t, xk, fx);                                                    \
     for(i=0;i<NS;++i){                                                   \
         k2[i] = fx[i] * hs;                                              \
@@ -30,6 +32,8 @@ REAL one_over_six = 1.0/6.0;
                                                                          \
     IS(0) = IS_C(0);                                                     \
     IS(1) = IS_C(1);                                                     \
+    US(0) = US_C(0);                                                     \
+    US(1) = US_C(1);                                                     \
     (*fp)(t, xk, fx);                                                    \
     for(i=0;i<NS;++i){                                                   \
         k4[i] = fx[i] * hs;                                              \

@@ -93,13 +93,14 @@ void init_CTRL(){
 
     init_experiment_offset();
 
+    CTRL.g->FLAG_INVERTER_NONLINEARITY_COMPENSATION = INVERTER_NONLINEARITY_COMPENSATION_INIT;
 
     #ifdef _XCUBE1
         CTRL.g->Seletc_exp_operation = 1; //AS_LOAD_MOTOR_CONST;
         G.dac_watch_stator_resistance = 1.703;
     #else
         CTRL.g->Seletc_exp_operation = 3; //NSOAF_LOW_SPEED_OPERATION;
-        G.dac_watch_stator_resistance = 1.4;
+        G.dac_watch_stator_resistance = 1.69;
     #endif
 
 /* Black Box Model | Controller quantities */
@@ -388,7 +389,8 @@ void inverter_voltage_command(int bool_use_iab_cmd){
 
     /* We use iab_cmd instead of iab to look-up */
 
-    #if INVERTER_NONLINEARITY_COMPENSATION == 0
+    if(G.FLAG_INVERTER_NONLINEARITY_COMPENSATION == 0){
+
         CTRL.O->uab_cmd_to_inverter[0] = CTRL.O->uab_cmd[0];
         CTRL.O->uab_cmd_to_inverter[1] = CTRL.O->uab_cmd[1];
 
@@ -400,7 +402,7 @@ void inverter_voltage_command(int bool_use_iab_cmd){
             INV.ube_comp = ualbe_dist[1];
         #endif
 
-    #elif INVERTER_NONLINEARITY_COMPENSATION == 3
+    }else if(G.FLAG_INVERTER_NONLINEARITY_COMPENSATION == 3){
         /* 查表法-补偿 */
         // // Measured in Simulation when the inverter is modelled according to the experimental measurements
         // #define LENGTH_OF_LUT  19
@@ -444,8 +446,8 @@ void inverter_voltage_command(int bool_use_iab_cmd){
         get_distorted_voltage_via_LUT( CTRL.O->uab_cmd[0], CTRL.O->uab_cmd[1], Ia, Ib, ualbe_dist, lut_voltage_ctrl, lut_current_ctrl, LENGTH_OF_LUT);
         CTRL.O->uab_cmd_to_inverter[0] = CTRL.O->uab_cmd[0] + ualbe_dist[0];
         CTRL.O->uab_cmd_to_inverter[1] = CTRL.O->uab_cmd[1] + ualbe_dist[1];
-
-    #elif INVERTER_NONLINEARITY_COMPENSATION == 2
+    
+    }if(G.FLAG_INVERTER_NONLINEARITY_COMPENSATION == 2){
         /* 拟合法-补偿 */
         REAL ualbe_dist[2] = {0.0, 0.0};
         get_distorted_voltage_via_CurveFitting( CTRL.O->uab_cmd[0], CTRL.O->uab_cmd[1], Ia, Ib, ualbe_dist);
@@ -454,15 +456,14 @@ void inverter_voltage_command(int bool_use_iab_cmd){
 
         /* For scope only */
         INV.ual_comp = ualbe_dist[0];
-        INV.ube_comp = ualbe_dist[1];
+        INV.ube_comp = ualbe_dist[1];        
 
-    #elif INVERTER_NONLINEARITY_COMPENSATION == 1
+    }if(G.FLAG_INVERTER_NONLINEARITY_COMPENSATION == 1){
         /* 梯形波自适应 */
         Modified_ParkSul_Compensation();
         CTRL.O->uab_cmd_to_inverter[0] = CTRL.O->uab_cmd[0] + INV.ual_comp;
         CTRL.O->uab_cmd_to_inverter[1] = CTRL.O->uab_cmd[1] + INV.ube_comp;
-
-    #endif
+    }
 }
 
 /* 查表法 */

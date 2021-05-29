@@ -8,7 +8,7 @@ struct ObserverForExperiment{
     struct RK4_DATA{
         REAL us[2];
         REAL is[2];
-        // REAL us_curr[2];
+        REAL us_curr[2];
         REAL is_curr[2];
         REAL us_prev[2];
         REAL is_prev[2];
@@ -245,7 +245,7 @@ void init_rk4();
 /* Macro for External Access Interface */
 #define US(X)   rk4.us[X]
 #define IS(X)   rk4.is[X]
-// #define US_C(X) rk4.us_curr[X] // 当前步电压是伪概念，测量的时候，没有电压传感器，所以也测量不到当前电压；就算有电压传感器，由于PWM比较寄存器没有更新，输出电压也是没有变化的。
+#define US_C(X) rk4.us_curr[X] // 当前步电压是伪概念，测量的时候，没有电压传感器，所以也测量不到当前电压；就算有电压传感器，由于PWM比较寄存器没有更新，输出电压也是没有变化的。
 #define IS_C(X) rk4.is_curr[X]
 #define US_P(X) rk4.us_prev[X]
 #define IS_P(X) rk4.is_prev[X]

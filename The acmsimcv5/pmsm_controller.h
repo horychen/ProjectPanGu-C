@@ -218,6 +218,7 @@ typedef struct {
         int flag_do_inverter_characteristics; // for comm
         int Seletc_exp_operation; // for exp
         int flag_auto_id_cmd; // for slow reversal
+        int FLAG_INVERTER_NONLINEARITY_COMPENSATION;
     // Select Algorithm
         // int Select_algorithm;
         REAL omg_elec;
