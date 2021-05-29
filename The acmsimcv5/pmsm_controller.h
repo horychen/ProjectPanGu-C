@@ -217,6 +217,7 @@ typedef struct {
         int FLAG_TUNING_CURRENT_SCALE_FACTOR; // for comm
         int flag_do_inverter_characteristics; // for comm
         int Seletc_exp_operation; // for exp
+        int flag_auto_id_cmd; // for slow reversal
     // Select Algorithm
         // int Select_algorithm;
         REAL omg_elec;
@@ -280,7 +281,7 @@ void cmd_slow_speed_reversal(REAL timebase, REAL instant, REAL interval, REAL rp
 
 /* 逆变器非线性 */
 /* 查表法 */
-void inverter_voltage_command();
+void inverter_voltage_command(int bool_use_iab_cmd);
 void get_distorted_voltage_via_LUT(REAL ual, REAL ube, REAL ial, REAL ibe, REAL *ualbe_dist, REAL *lut_voltage, REAL *lut_current, int length_of_lut);
 void get_distorted_voltage_via_CurveFitting(REAL ual, REAL ube, REAL ial, REAL ibe, REAL *ualbe_dist);
 

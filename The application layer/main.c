@@ -11,9 +11,9 @@ void init_experiment_offset(){
         // G.offsetV=2047;
         // G.offsetW=2030;
     #else
-        G.offsetU=2072;
+        G.offsetU=2075;
         G.offsetV=2062;
-        G.offsetW=2049; // ADC offset. U, V, W corresponds to ADCRESULT2, ADCRESULT3, ADCRESULT1.
+        G.offsetW=2046; // ADC offset. U, V, W corresponds to ADCRESULT2, ADCRESULT3, ADCRESULT1.
         G.offsetUDC=2; // 5.18
     #endif
 
@@ -27,9 +27,9 @@ void init_experiment_offset(){
             //#define AD_scale_W                       0.0057316444
             //#define AD_scale_V                       0.0056072670
     #else
-        G.AD_scale_W   = 0.0058002658;       // 0.00867354 // 0.0096392 // 0.0057316444
-        G.AD_scale_V   = 0.0064003544;       // 0.01027935 //0.0094433 // 0.0056072670
-        G.AD_scale_U   = 0.006300196648;
+        G.AD_scale_W   = 0.0049418264616;
+        G.AD_scale_V   = 0.0064003544;
+        G.AD_scale_U   = 0.005325766233109334;
         G.AD_scale_VDC = (0.5*0.1897533207); // 短上一个470R再补上一个470R
     #endif
 

@@ -36,11 +36,12 @@
         #define ENABLE_COMMISSIONING FALSE /*Simulation*/
     #else
         #define ENABLE_COMMISSIONING FALSE /*Experiment*/
+        /*As we use CTRL.O->iab_cmd for look up, now dead-time compensation during ENABLE_COMMISSIONING is not active*/
     #endif
 
     /* Select Algorithm 1 */
     #define AFE_USED AFEOE
-    #define AFEOE_OMEGA_ESTIMATOR 10 // [rad/s] //0.5 // 5 for slow reversal
+    #define AFEOE_OMEGA_ESTIMATOR 5 // [rad/s] //0.5 // 5 for slow reversal
         #define AFEOE_KP (1*0.1) // (0.5) // (2*5)
         #define AFEOE_KI (1*0.02) // 0.02 for 10 rpm // 0.1 for 40 rpm //(2.0) for 300 rpm
 
@@ -69,10 +70,10 @@
     // #define ELECTRICAL_SPEED_FEEDBACK    qiaoxia.xOmg
     // #define ELECTRICAL_POSITION_FEEDBACK qiaoxia.theta_d
 
-    // #define ELECTRICAL_SPEED_FEEDBACK    nsoaf.xOmg // harnefors.omg_elec
+    #define ELECTRICAL_SPEED_FEEDBACK    nsoaf.xOmg // harnefors.omg_elec
     #define ELECTRICAL_POSITION_FEEDBACK AFE_USED.theta_d // harnefors.theta_d
 
-    #define ELECTRICAL_SPEED_FEEDBACK    CTRL.I->omg_elec
+    // #define ELECTRICAL_SPEED_FEEDBACK    CTRL.I->omg_elec
     // #define ELECTRICAL_POSITION_FEEDBACK CTRL.I->theta_d_elec
 
     /* Park.Sul 2014 FADO in replace of CM */

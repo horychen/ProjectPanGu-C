@@ -155,7 +155,7 @@ void commissioning(){
     CTRL.I->idq[1] = AB2T(CTRL.I->iab[0], CTRL.I->iab[1], CTRL.S->cosT, CTRL.S->sinT);
     // 参数自整定
     StepByStepCommissioning();
-    inverter_voltage_command();
+    inverter_voltage_command(0);
 }
 
 
@@ -442,6 +442,7 @@ void COMM_resistanceId(REAL id_fb, REAL iq_fb){
     #undef REGULATOR
     #undef FEEDBACK
 }
+// 1a: 逆变器特性辨识
 void COMM_resistanceId_v2(REAL id_fb, REAL iq_fb){
     ++COMM.counterEntered;
     if(COMM.counterEntered<=1){
@@ -452,7 +453,11 @@ void COMM_resistanceId_v2(REAL id_fb, REAL iq_fb){
 
     #define RS_ID_NUMBER_OF_STAIRS (COMM_IV_SIZE_R1*0.5-3)
     // #define RS_ID_NUMBER_OF_STAIRS 40
-    #define RS_ID_MAXIMUM_CURRENT (1.0) /* [A] This is inverter related */ // *(REAL)MOTOR_RATED_CURRENT_RMS
+    #ifdef _XCUBE1
+        #define RS_ID_MAXIMUM_CURRENT (1.0) /* [A] This is inverter related */ // *(REAL)MOTOR_RATED_CURRENT_RMS
+    #else
+        #define RS_ID_MAXIMUM_CURRENT (3.0) /* [A] This is inverter related */ 
+    #endif
     REAL current_increase_per_step = RS_ID_MAXIMUM_CURRENT / (REAL)RS_ID_NUMBER_OF_STAIRS;
 
     if(COMM.i>=RS_ID_NUMBER_OF_STAIRS){

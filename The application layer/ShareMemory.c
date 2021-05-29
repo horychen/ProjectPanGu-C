@@ -48,7 +48,8 @@ struct IPC_MEMORY_READ Read;
 //int channels[NO_OF_CHANNELS]={46,47,20,21,6,7};
 
 //int channels[NO_OF_CHANNELS]={46,47,20,21,6,7,59,59}; // ecap dq
-int channels[NO_OF_CHANNELS]={10,11,20,21,6,7,59,59}; // psi_2
+//int channels[NO_OF_CHANNELS]={10,11,20,21,6,7,59,59}; // psi_2
+int channels[NO_OF_CHANNELS]={10,11,20,21,6,39,59,59}; // park trapezoidal
 int channels_preset = 0;
 
 REAL dac_time_that_cannot_be_modified = 0;
@@ -81,7 +82,7 @@ void write_DAC_buffer(){
         //G.dac_watch[13] = COMM.counterSS*0.001;
 
         G.dac_watch[10] = AFEOE.psi_2[0];
-        G.dac_watch[11] = AFEOE.psi_2[1];
+        G.dac_watch[11] = MOTOR.KActive; //AFEOE.psi_2[1];
         G.dac_watch[12] = AFEOE.psi_1[0];
         G.dac_watch[13] = AFEOE.psi_1[1];
 
@@ -124,28 +125,27 @@ void write_DAC_buffer(){
         G.dac_watch[38] = CTRL.inv->theta_trapezoidal / M_PI_OVER_180 * 0.025;
         G.dac_watch[39] = CTRL.inv->Vsat* 0.05;
         //G.dac_watch[39] = INV.I5_plus_I7_LPF * 0.2;
-
         G.dac_watch[40] = (CTRL.O->udq_cmd_to_inverter[0] - CTRL.O->udq_cmd[0])*0.02;
         G.dac_watch[41] = (CTRL.O->udq_cmd_to_inverter[1] - CTRL.O->udq_cmd[1])*0.02;
         G.dac_watch[42] = (CAP.dq[0]             - CTRL.O->udq_cmd[0])*0.02;
         G.dac_watch[43] = (CAP.dq[1]             - CTRL.O->udq_cmd[1])*0.02;
 
-        G.dac_watch[38] = (CAP.ecapU.Period1) * 0.25e-4;
-        G.dac_watch[39] = (CAP.ecapV.Period1) * 0.25e-4;
-        G.dac_watch[40] = (CAP.ecapW.Period1) * 0.25e-4;
-        G.dac_watch[41] = (CAP.ecapU.Period2) * 0.25e-4;
-        G.dac_watch[42] = (CAP.ecapV.Period2) * 0.25e-4;
-        G.dac_watch[43] = (CAP.ecapW.Period2) * 0.25e-4;
+        //        G.dac_watch[38] = (CAP.ecapU.Period1) * 0.25e-4;
+        //        G.dac_watch[39] = (CAP.ecapV.Period1) * 0.25e-4;
+        //        G.dac_watch[40] = (CAP.ecapW.Period1) * 0.25e-4;
+        //        G.dac_watch[41] = (CAP.ecapU.Period2) * 0.25e-4;
+        //        G.dac_watch[42] = (CAP.ecapV.Period2) * 0.25e-4;
+        //        G.dac_watch[43] = (CAP.ecapW.Period2) * 0.25e-4;
 
         G.dac_watch[44] = (CTRL.O->udq_cmd_to_inverter[0])*0.02;
         G.dac_watch[45] = (CTRL.O->udq_cmd_to_inverter[1])*0.02;
         G.dac_watch[46] = (CAP.dq[0]            )*0.02;
         G.dac_watch[47] = (CAP.dq[1]            )*0.02;
 
-        G.dac_watch[48] = (CAP.ecapU.DutyOnTime1)  * 0.25e-4;
-        G.dac_watch[49] = (CAP.ecapU.DutyOffTime1) * 0.25e-4;
-        G.dac_watch[50] = (CAP.ecapU.DutyOnTime2)  * 0.25e-4;
-        G.dac_watch[51] = (CAP.ecapU.DutyOffTime2) * 0.25e-4;
+        //        G.dac_watch[48] = (CAP.ecapU.DutyOnTime1)  * 0.25e-4;
+        //        G.dac_watch[49] = (CAP.ecapU.DutyOffTime1) * 0.25e-4;
+        //        G.dac_watch[50] = (CAP.ecapU.DutyOnTime2)  * 0.25e-4;
+        //        G.dac_watch[51] = (CAP.ecapU.DutyOffTime2) * 0.25e-4;
 
         G.dac_watch[59] = sin(ENC.theta_d_elec - ELECTRICAL_POSITION_FEEDBACK);
 
