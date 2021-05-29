@@ -179,8 +179,8 @@ void low_speed_operation_init(){
     //    CTRL.motor->KE = 0.15;  // ZFY: 2.0A Slow speed reversal at 100 rpm @ Udc=180V (offset_Udc 14V)
     CTRL.motor->KE = 0.10;  // ZFY: 2.0A Slow speed reversal at 100 rpm @ Udc=80V (offset_Udc 12V)
 }
-REAL RP =2.20;
-REAL RN =2.0;
+REAL RP =2.20; // 2.15 for cold motor
+REAL RN =2.00; // 1.95 for cold motor
 void slow_speed_reversal_tuning(){
 
     if(CTRL.timebase<30){
