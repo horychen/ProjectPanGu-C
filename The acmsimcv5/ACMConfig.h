@@ -1,9 +1,9 @@
 #ifndef ACMCONFIG_H
 #define ACMCONFIG_H
 /* 经常要修改的 */
-#define INVERTER_NONLINEARITY_COMPENSATION 2 // 1:ParkSul12, 2:Sigmoid, 3:LUT
-#define INVERTER_NONLINEARITY              2 // 1:ModelSul96, 2:ModelExpSigmoid, 3: ModelExpLUT
-#define SENSORLESS_CONTROL FALSE
+#define INVERTER_NONLINEARITY_COMPENSATION_INIT 2 // 1:ParkSul12, 2:Sigmoid, 3:LUT
+#define INVERTER_NONLINEARITY                   2 // 1:ModelSul96, 2:ModelExpSigmoid, 3: ModelExpLUT
+#define SENSORLESS_CONTROL TRUE
 #define SENSORLESS_CONTROL_HFSI FALSE
 /* ParkSul2012 梯形波 */
 #define GAIN_THETA_TRAPEZOIDAL (40) //(500) // 20

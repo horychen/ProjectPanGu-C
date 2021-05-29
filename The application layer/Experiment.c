@@ -195,10 +195,20 @@ void slow_speed_reversal_tuning(){
         }
 
         /* Steady state error */
-        if(G.Set_manual_rpm>0){
-            CTRL.motor->R = RP; //for positive speed
+        if(CTRL.g->flag_use_ecap_voltage==0){
+            if(G.Set_manual_rpm>0){
+                CTRL.motor->R = RP; //for positive speed
+            }else{
+                CTRL.motor->R = RN; //for negative speed
+            }
         }else{
-            CTRL.motor->R = RN; //for negative speed
+            RP = 2.20;
+            RN = 1.80;
+            if(G.Set_manual_rpm>0){
+                CTRL.motor->R = RP; //for positive speed
+            }else{
+                CTRL.motor->R = RN; //for negative speed
+            }
         }
 
         //    if(G.Set_manual_rpm<-10){
