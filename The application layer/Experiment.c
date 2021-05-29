@@ -35,6 +35,12 @@ void init_experiment_overwrite(int Seletc_exp_operation){
         CTRL.motor->R = 1.95; //for negative speed [no id, iq=2 A]
         CTRL.motor->R = 2.30; //for positive speed [no id, iq=2 A]
 
+        /* Tuning tips:
+         * 1. KP cannot be smaller than 50, for example, KP=40 will make sensorless system unstable at 400 rpm with load.
+         * 2. KP can be as large as 150 without any issue at 400 rpm wiht load.
+         * 3. KI can be changed in a wide range without any impact on sensorless performance.
+         * 4. KP has Speed dependency: lower than 100 rpm, KP can be as low as 20, and the sensorless system is stable with slow reversal.
+         * */
         AFEOE.ActiveFlux_KP = 50; // for R=1.7, larger KP causes larger pos error (KP=30 went unstable), but with correct R, large KP can be used.
         AFEOE.ActiveFlux_KI = 25;
 
