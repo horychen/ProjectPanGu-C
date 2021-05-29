@@ -93,10 +93,13 @@ void init_CTRL(){
 
     init_experiment_offset();
 
+
     #ifdef _XCUBE1
-    G.dac_watch_stator_resistance = 1.34971502;
+        CTRL.g->Seletc_exp_operation = 1; //AS_LOAD_MOTOR_CONST;
+        G.dac_watch_stator_resistance = 1.703;
     #else
-    G.dac_watch_stator_resistance = 1.50469916;
+        CTRL.g->Seletc_exp_operation = 3; //NSOAF_LOW_SPEED_OPERATION;
+        G.dac_watch_stator_resistance = 1.4;
     #endif
 
 /* Black Box Model | Controller quantities */
@@ -297,7 +300,7 @@ void controller(REAL set_rpm_speed_command, REAL set_iq_cmd, REAL set_id_cmd){
 
 
     /// 8. 补偿逆变器非线性
-    inverter_voltage_command();
+    inverter_voltage_command(1);
 
     /// 9. 结束
     #if PC_SIMULATION
@@ -344,9 +347,13 @@ REAL sigmoid(REAL x){
         // REAL a3 = 12.93721814;
 
         // b-phase @80 V
-        REAL a1 = 0.0; //1.28430164;
-        REAL a2 = 7.78857441;
-        REAL a3 = 6.20979077;
+            // REAL a1 = 0.0; //1.28430164;
+            // REAL a2 = 7.78857441;
+            // REAL a3 = 6.20979077;
+        REAL a1 = 0.0; //1.6997103;
+        REAL a2 = 6.67159129;
+        REAL a3 = 8.42010418;
+
 
         // b-phase @180 V
         // REAL a1 = 0.0; //1.50469916;
@@ -363,7 +370,17 @@ REAL sigmoid_online(REAL x, REAL Vsat, REAL a3){
     return a2 / (1.0 + exp(-a3 * x)) - a2*0.5;
 }
 
-void inverter_voltage_command(){
+void inverter_voltage_command(int bool_use_iab_cmd){
+    REAL Ia, Ib;
+
+    if(bool_use_iab_cmd){
+        Ia = CTRL.O->iab_cmd[0];
+        Ib = CTRL.O->iab_cmd[1];
+    }else{
+        Ia = CTRL.I->iab[0];
+        Ib = CTRL.I->iab[1];        
+    }
+
     /* We use iab_cmd instead of iab to look-up */
 
     #if INVERTER_NONLINEARITY_COMPENSATION == 0
@@ -371,10 +388,12 @@ void inverter_voltage_command(){
         CTRL.O->uab_cmd_to_inverter[1] = CTRL.O->uab_cmd[1];
 
         /* For scope only */
-        REAL ualbe_dist[2];
-        get_distorted_voltage_via_CurveFitting( CTRL.O->uab_cmd[0], CTRL.O->uab_cmd[1], CTRL.I->iab_cmd[0], CTRL.I->iab_cmd[1], ualbe_dist);
-        INV.ual_comp = ualbe_dist[0];
-        INV.ube_comp = ualbe_dist[1];
+        #if PC_SIMULATION
+            REAL ualbe_dist[2];
+            get_distorted_voltage_via_CurveFitting( CTRL.O->uab_cmd[0], CTRL.O->uab_cmd[1], Ia, Ib, ualbe_dist);
+            INV.ual_comp = ualbe_dist[0];
+            INV.ube_comp = ualbe_dist[1];
+        #endif
 
     #elif INVERTER_NONLINEARITY_COMPENSATION == 3
         /* 查表法-补偿 */
@@ -417,14 +436,14 @@ void inverter_voltage_command(){
         REAL lut_voltage_ctrl[LENGTH_OF_LUT] = {-5.75434, -5.74721, -5.72803, -5.70736, -5.68605, -5.66224, -5.63274, -5.59982, -5.56391, -5.52287, -5.47247, -5.40911, -5.33464, -5.25019, -5.14551, -5.00196, -4.80021, -4.48369, -3.90965, -2.47845, -0.382101, 2.02274, 3.7011, 4.35633, 4.71427, 4.94376, 5.10356, 5.22256, 5.31722, 5.39868, 5.46753, 5.5286, 5.57507, 5.62385, 5.66235, 5.70198, 5.73617, 5.76636, 5.79075, 5.81737, 5.83632};
 
         REAL ualbe_dist[2];
-        get_distorted_voltage_via_LUT( CTRL.O->uab_cmd[0], CTRL.O->uab_cmd[1], CTRL.O->iab_cmd[0], CTRL.O->iab_cmd[1], ualbe_dist, lut_voltage_ctrl, lut_current_ctrl, LENGTH_OF_LUT);
+        get_distorted_voltage_via_LUT( CTRL.O->uab_cmd[0], CTRL.O->uab_cmd[1], Ia, Ib, ualbe_dist, lut_voltage_ctrl, lut_current_ctrl, LENGTH_OF_LUT);
         CTRL.O->uab_cmd_to_inverter[0] = CTRL.O->uab_cmd[0] + ualbe_dist[0];
         CTRL.O->uab_cmd_to_inverter[1] = CTRL.O->uab_cmd[1] + ualbe_dist[1];
 
     #elif INVERTER_NONLINEARITY_COMPENSATION == 2
         /* 拟合法-补偿 */
         REAL ualbe_dist[2] = {0.0, 0.0};
-        get_distorted_voltage_via_CurveFitting( CTRL.O->uab_cmd[0], CTRL.O->uab_cmd[1], CTRL.O->iab_cmd[0], CTRL.O->iab_cmd[1], ualbe_dist);
+        get_distorted_voltage_via_CurveFitting( CTRL.O->uab_cmd[0], CTRL.O->uab_cmd[1], Ia, Ib, ualbe_dist);
         CTRL.O->uab_cmd_to_inverter[0] = CTRL.O->uab_cmd[0] + ualbe_dist[0];
         CTRL.O->uab_cmd_to_inverter[1] = CTRL.O->uab_cmd[1] + ualbe_dist[1];
 
@@ -679,6 +698,9 @@ void Modified_ParkSul_Compensation(void){
         // }
     #else
         /* Adaptive Vsat based on position error */
+        /* TO use this, you muast have a large enough stator current */
+        /* TO use this, you muast have a large enough stator current */
+        /* TO use this, you muast have a large enough stator current */
         INV.Vsat += CL_TS * INV.gain_Vsat * sin(ENC.theta_d_elec - ELECTRICAL_POSITION_FEEDBACK) * sign(ENC.omg_elec);
         if (INV.Vsat>15){
             INV.Vsat = 15;

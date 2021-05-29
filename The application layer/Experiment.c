@@ -12,6 +12,28 @@ void init_experiment_overwrite(int Seletc_exp_operation){
         CTRL.motor->KE = 0.10378; // 0.122107916; 0.103980549, 0.103777379, 0.103794798
         CTRL.motor->Js = 0.0007460128; // 0.000751407992; 0.000751283951, 0.000746554753, 0.000740199641
         CTRL.motor->Ld = CTRL.motor->Lq = 0.0108864028;
+
+
+        // tune at 10 rpm sensored
+        CTRL.motor->R = 1.7;      // from fitting
+        AFEOE.ActiveFlux_KP = 200; // too small, CM correction not effective hence steady state position error; too large, no effect.
+        AFEOE.ActiveFlux_KI = 200; // too small, no stable; too large causes steady state position error.
+        CTRL.motor->KE = 0.103; // this is effective to tune steady state position error but position speed and negative speed have two different optimal values.
+        //CTRL.motor->KE = 0.14; // for negative speed
+    #else
+
+        CTRL.motor->R = 1.69;      // from fitting
+        CTRL.motor->KE = 0.0968527496;
+        CTRL.motor->Js = 0.000767020276;
+
+        //CTRL.motor->R = 2.0;      // from low speed position error correction at 20 rpm for slow reversal. id=2
+        //CTRL.motor->R = 2.4;      // from low speed position error correction at 20 rpm for slow reversal. iq=2
+
+        CTRL.motor->R = 1.85; //for negative speed
+        CTRL.motor->R = 2.20; //for positive speed
+
+        AFEOE.ActiveFlux_KP = 50; // for R=1.7, larger KP causes larger pos error (KP=30 went unstable), but with correct R, large KP can be used.
+        AFEOE.ActiveFlux_KI = 25;
     #endif
 
     pid1_spd.OutLimit = G.OverwriteSpeedOutLimit;
@@ -124,15 +146,15 @@ void slow_speed_reversal(){
     #define RPM1 100
     #define BIAS 0
     if(CTRL.timebase<1){ // note 1 sec is not enough for stator flux to reach steady state.
-        G.Set_manual_rpm = 0;
-    }else if(CTRL.timebase<4){
+        G.Set_manual_rpm = RPM1; // 0;
+    }else if(CTRL.timebase<4+2){
         G.Set_manual_rpm = RPM1;
-    }else if(CTRL.timebase<10){
+    }else if(CTRL.timebase<10+2){
         G.Set_manual_rpm += CL_TS * -SLOW_REVERSAL_RATE;
         if(G.Set_manual_rpm<-RPM1){
             G.Set_manual_rpm = -RPM1;
         }
-    }else if(CTRL.timebase<16){
+    }else if(CTRL.timebase<16+2){
         G.Set_manual_rpm += CL_TS * +SLOW_REVERSAL_RATE;
         if(G.Set_manual_rpm>RPM1){
             G.Set_manual_rpm = RPM1;
@@ -153,22 +175,38 @@ void low_speed_operation_init(){
 }
 void slow_speed_reversal_tuning(){
 
-    /* 失去磁场定向后起到锁定转子的作用 */
-    // need to also set id cmd according to speed cmd
-    if(fabs(G.Set_manual_rpm) < 50){ // 5 or 50?
-        G.Set_manual_current_id = 2;
-    }else{
-        G.Set_manual_current_id = 0;
-    }
+    if(CTRL.timebase<30){
+        /* 失去磁场定向后起到锁定转子的作用 */
+        if(G.flag_auto_id_cmd == TRUE){
+            // need to also set id cmd according to speed cmd
+            if(fabs(G.Set_manual_rpm) < 50){ // 5 or 50?
+                G.Set_manual_current_id = 2;
+            }else{
+                G.Set_manual_current_id = 0;
+            }
+        }
 
-    /* Steady state error */
-//    if(G.Set_manual_rpm<-10){
-//        CTRL.motor->KE = 0.085; //2.1A
-//    }else if (G.Set_manual_rpm>10){
-//        CTRL.motor->KE = 0.11; // 2.1A
-//    }else{
-//        CTRL.motor->KE = 0.10;
-//    }
+        /* Steady state error */
+        if(G.Set_manual_rpm>0){
+            CTRL.motor->R = 2.20; //for positive speed
+        }else{
+            CTRL.motor->R = 1.85; //for negative speed
+        }
+
+        //    if(G.Set_manual_rpm<-10){
+        //
+        //        CTRL.motor->KE = 0.14; // for negative speed
+        //        //CTRL.motor->KE = 0.085; //2.1A
+        //
+        //    }else if (G.Set_manual_rpm>10){
+        //
+        //        CTRL.motor->KE = 0.103; // this is effective to tune steady state position error but position speed and negative speed have two different optimal values.
+        //        //CTRL.motor->KE = 0.11; // 2.1A
+        //
+        //    }else{
+        //        CTRL.motor->KE = 0.103;
+        //    }
+    }
 
     /* 防手贱 */
     if(CTRL.motor->KE > 0.2){
