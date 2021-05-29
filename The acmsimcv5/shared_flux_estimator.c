@@ -265,6 +265,7 @@ void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REA
         fx[2] = AFEOE.ActiveFlux_KI * AFEOE.output_error[0];
         fx[3] = AFEOE.ActiveFlux_KI * AFEOE.output_error[1];
     }
+    REAL k_af_speed_Hz = 1.5;
     void Main_the_active_flux_estimator(){
 
         /* OPT for AFE */
@@ -274,13 +275,13 @@ void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REA
         }
 
         /* Time-varying gains */
-        // if(fabs(CTRL.I->cmd_omg_elec)*MOTOR.npp_inv*ONE_OVER_2PI<1.5){ // [Hz]
-        //     AFEOE.k_af = 2*M_PI*100;
-        //     AFEOE.limiter_Flag = TRUE;
-        // }else{
-        //     AFEOE.k_af = 0.0;
-        //     AFEOE.limiter_Flag = FALSE;
-        // }
+        if(fabs(CTRL.I->cmd_omg_elec)*MOTOR.npp_inv*ONE_OVER_2PI<k_af_speed_Hz){ // [Hz]
+            AFEOE.k_af = 2*M_PI*100;
+            AFEOE.limiter_Flag = TRUE;
+        }else{
+            AFEOE.k_af = 0.0;
+            AFEOE.limiter_Flag = FALSE;
+        }
 
         /* Proposed closed loop estimator AB frame + ODE4 */
         // stator flux and integral states update
