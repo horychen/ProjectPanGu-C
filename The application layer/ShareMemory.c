@@ -50,7 +50,8 @@ struct IPC_MEMORY_READ Read;
 //int channels[NO_OF_CHANNELS]={46,47,20,21,6,7,59,59}; // ecap dq
 //int channels[NO_OF_CHANNELS]={10,11,20,21,6,7,59,59}; // psi_2
 //int channels[NO_OF_CHANNELS]={10,11,20,21,6,39,39,59}; // park trapezoidal
-int channels[NO_OF_CHANNELS]={10,11,20,21,6,7,39,59}; // park trapezoidal
+//int channels[NO_OF_CHANNELS]={10,11,20,21,6,7,39,59}; // park trapezoidal
+int channels[NO_OF_CHANNELS]={10,11,20,21,6,7,5,23}; // rev1 sensorless slow reversal
 int channels_preset = 0;
 
 REAL dac_time_that_cannot_be_modified = 0;
@@ -83,7 +84,7 @@ void write_DAC_buffer(){
         //G.dac_watch[13] = COMM.counterSS*0.001;
 
         G.dac_watch[10] = AFEOE.psi_2[0];
-        G.dac_watch[11] = MOTOR.KActive; //AFEOE.psi_2[1];
+        G.dac_watch[11] = AFEOE.psi_2[1]; // MOTOR.KActive; //AFEOE.psi_2[1];
         G.dac_watch[12] = AFEOE.psi_1[0];
         G.dac_watch[13] = AFEOE.psi_1[1];
 
