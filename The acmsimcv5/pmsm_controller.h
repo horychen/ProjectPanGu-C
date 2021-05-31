@@ -44,6 +44,8 @@ typedef struct {
     // Status of Detection
     int PSD_Done;
     int IPD_Done;
+    // State of Operation
+    int Motor_or_Gnerator;
 } st_controller_states;
 typedef struct {
     // voltage commands

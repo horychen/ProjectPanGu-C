@@ -226,6 +226,7 @@ void CJHMainISR(void){
 
         // 根据指令，产生控制输出（电压）
         #if ENABLE_COMMISSIONING == FALSE
+            CTRL.S->Motor_or_Gnerator = sign(CTRL.I->idq_cmd[1]) == sign(ENC.rpm); // sign(CTRL.I->idq_cmd[1]) != sign(CTRL.I->cmd_speed_rpm))
             runtime_command_and_tuning(G.Seletc_exp_operation);
             controller(G.Set_manual_rpm, G.Set_manual_current_iq, G.Set_manual_current_id);
         #else
