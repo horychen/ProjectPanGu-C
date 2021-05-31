@@ -52,7 +52,7 @@ void init_experiment_overwrite(int Seletc_exp_operation){
 
     if(Seletc_exp_operation == AS_LOAD_MOTOR_CONST){
         pid1_spd.OutLimit = 2.0;
-        G.Set_manual_rpm = -300;
+        G.Set_manual_rpm = 300;
     }
     if(Seletc_exp_operation == AS_LOAD_MOTOR_RAMP){
         pid1_spd.OutLimit = 0.01;
@@ -185,8 +185,15 @@ void low_speed_operation_init(){
     //    CTRL.motor->KE = 0.15;  // ZFY: 2.0A Slow speed reversal at 100 rpm @ Udc=180V (offset_Udc 14V)
     CTRL.motor->KE = 0.10;  // ZFY: 2.0A Slow speed reversal at 100 rpm @ Udc=80V (offset_Udc 12V)
 }
-REAL RP =2.15; // 2.15 for cold motor, 2.20 for hot motor
-REAL RN =1.95; // 1.95 for cold motor, 2.00 for hot motor
+
+/*when AS_LOAD_MOTOR_CONST use G.Set_manual_rpm =-300; [rpm], iq is negative*/
+//REAL RP =2.15; // 2.15 for cold motor, 2.20 for hot motor
+//REAL RN =1.95; // 1.95 for cold motor, 2.00 for hot motor
+/*when AS_LOAD_MOTOR_CONST use G.Set_manual_rpm = 300; [rpm], iq is positive*/
+//REAL RSmall =1.95; // motoring is smaller
+//REAL RLarge =2.15; // regenerating
+REAL RSmall =2.00; // motoring is smaller
+REAL RLarge =2.20; // regenerating
 void slow_speed_reversal_tuning(){
 
     if(CTRL.timebase<30){
@@ -201,20 +208,26 @@ void slow_speed_reversal_tuning(){
         }
 
         /* Steady state error */
-        if(CTRL.g->flag_use_ecap_voltage==0){
-            if(G.Set_manual_rpm>0){
-                CTRL.motor->R = RP; //for positive speed
-            }else{
-                CTRL.motor->R = RN; //for negative speed
-            }
+        //        if(CTRL.g->flag_use_ecap_voltage==0){
+        //            if(G.Set_manual_rpm>0){
+        //                CTRL.motor->R = RP; //for positive speed
+        //            }else{
+        //                CTRL.motor->R = RN; //for negative speed
+        //            }
+        //        }else{
+        //            RP = 2.20;
+        //            RN = 1.80;
+        //            if(G.Set_manual_rpm>0){
+        //                CTRL.motor->R = RP; //for positive speed
+        //            }else{
+        //                CTRL.motor->R = RN; //for negative speed
+        //            }
+        //        }
+
+        if(CTRL.S->Motor_or_Gnerator){
+            CTRL.motor->R = RSmall; //for positive speed
         }else{
-            RP = 2.20;
-            RN = 1.80;
-            if(G.Set_manual_rpm>0){
-                CTRL.motor->R = RP; //for positive speed
-            }else{
-                CTRL.motor->R = RN; //for negative speed
-            }
+            CTRL.motor->R = RLarge; //for negative speed
         }
 
         //    if(G.Set_manual_rpm<-10){
