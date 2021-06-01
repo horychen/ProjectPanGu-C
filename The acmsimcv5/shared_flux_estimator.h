@@ -45,16 +45,21 @@ struct SharedFluxEstimatorForExperiment{
         REAL psi_comp; // flux amplitude for compensation
         REAL cosT;
         REAL sinT;
+        REAL psi_2_limited[2]; // Active flux limited 
         /* Coefficients */
-        REAL KP;
-        REAL KI;
+        REAL KP; // alg 3
+        REAL KI; // alg 3
         REAL tau_1_inv;
+        REAL limiter_KE; // alg 2
         /* Output */
-        REAL stator_flux_ampl;
         REAL theta_d;
         REAL inner_product_normalized;
         REAL output_error[2]; // \tilde i_q
         REAL psi_2[2]; // Active Flux Estimate
+        REAL stator_flux_ampl;
+        REAL stator_flux_ampl_limited;
+        REAL active_flux_ampl;
+        REAL active_flux_ampl_limited;
     } huwu;
 #endif
 #if AFE_22_STOJIC_2015 
@@ -107,8 +112,11 @@ extern struct SharedFluxEstimatorForExperiment FE;
 
 
 void test_flux_estimators();
-void init_afe();
+    void Main_the_active_flux_estimator();
+    void MainFE_HuWu_1998();
 
+
+void init_afe();
 void init_FE();
 
 #endif

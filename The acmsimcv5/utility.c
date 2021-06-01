@@ -3,9 +3,9 @@
 
 #if PC_SIMULATION
 // 写变量名到文件
-#define DATA_FORMAT "%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g\n"
-#define DATA_LABELS "ACM.rpm_cmd,CTRL.I->rpm,chixu.xOmg*ELEC_RAD_PER_SEC_2_RPM,CTRL.I->theta_d_elec,chixu.theta_d,sin(CTRL.I->theta_d_elec - chixu.theta_d),CTRL.I->iab[0],chixu.xIab[0],CTRL.I->iab[0] - chixu.xIab[0],CTRL.I->iab[1] - chixu.xIab[1],chixu.xZeq[0],chixu.xZeq[1],chixu.xEmf_raw[0],chixu.xEmf_raw[1],chixu.output_error[0],chixu.output_error[1],chixu.smo_gain,chixu.x[4],chixu.x[5]\n"
-#define DATA_DETAILS ACM.rpm_cmd,CTRL.I->rpm,chixu.xOmg*ELEC_RAD_PER_SEC_2_RPM,CTRL.I->theta_d_elec,chixu.theta_d,sin(CTRL.I->theta_d_elec - chixu.theta_d),CTRL.I->iab[0],chixu.xIab[0],CTRL.I->iab[0] - chixu.xIab[0],CTRL.I->iab[1] - chixu.xIab[1],chixu.xZeq[0],chixu.xZeq[1],chixu.xEmf_raw[0],chixu.xEmf_raw[1],chixu.output_error[0],chixu.output_error[1],chixu.smo_gain,chixu.x[4],chixu.x[5]
+#define DATA_FORMAT "%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g\n"
+#define DATA_LABELS "ACM.rpm_cmd,CTRL.I->rpm,CTRL.I->theta_d_elec,huwu.theta_d,sin(CTRL.I->theta_d_elec-huwu.theta_d),huwu.x[0],huwu.x[1],huwu.x[2],huwu.inner_product_normalized,CTRL.I->idq_cmd[0],CTRL.I->idq[0],CTRL.I->idq_cmd[1],CTRL.I->idq[1],huwu.stator_flux_ampl_limited,huwu.active_flux_ampl_limited\n"
+#define DATA_DETAILS ACM.rpm_cmd,CTRL.I->rpm,CTRL.I->theta_d_elec,huwu.theta_d,sin(CTRL.I->theta_d_elec-huwu.theta_d),huwu.x[0],huwu.x[1],huwu.x[2],huwu.inner_product_normalized,CTRL.I->idq_cmd[0],CTRL.I->idq[0],CTRL.I->idq_cmd[1],CTRL.I->idq[1],huwu.stator_flux_ampl_limited,huwu.active_flux_ampl_limited
 
 void write_header_to_file(FILE *fw){
     printf("%s\n", DATA_FILE_NAME);

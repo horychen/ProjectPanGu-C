@@ -40,15 +40,18 @@
     #endif
 
     /* Select Algorithm 1 */
-    #define AFE_USED AFEOE
+    // #define AFE_USED AFEOE
+    #define AFE_USED huwu
 
         /* AFEOE or CM-VM Fusion */
         #define AFEOE_OMEGA_ESTIMATOR 5 // [rad/s] //0.5 // 5 for slow reversal
             #define AFEOE_KP (1*0.1) // (0.5) // (2*5)
             #define AFEOE_KI (1*0.02) // 0.02 for 10 rpm // 0.1 for 40 rpm //(2.0) for 300 rpm
 
-        /* Hu Wu 1998 */
-        #define AFE_21_HUWU_TAU_1_INVERSE (15*0.5) // [rad/s] // increase this will reduce the transient converging time
+        /* Hu Wu 1998 recomends tau_1_inv=20 rad/s */
+        #define AFE_21_HUWU_TAU_1_INVERSE (20)
+        // #define AFE_21_HUWU_TAU_1_INVERSE (0.9) // [rad/s] Alg 2: 0.1 rad/s gives better performance near zero speed, but the converging rate is slower comapred to 0.9 rad/s.
+        // #define AFE_21_HUWU_TAU_1_INVERSE (7.5) // [rad/s] Alg 3: increase this will reduce the transient converging time
         #define AFE_21_HUWU_KP (0.2)  //[rad/s]
         #define AFE_21_HUWU_KI (0.5) //[rad/s]
 
@@ -61,20 +64,22 @@
         #define ALG_Farza_2009 6
         #define ALG_Harnefors_2006 7
     #define SELECT_ALGORITHM ALG_NSOAF
+    // #define SELECT_ALGORITHM ALG_Chi_Xu
+
     // #define ELECTRICAL_SPEED_FEEDBACK    G.omg_elec
     // #define ELECTRICAL_POSITION_FEEDBACK G.theta_d
 
     // #define ELECTRICAL_SPEED_FEEDBACK    parksul.xOmg
     // #define ELECTRICAL_POSITION_FEEDBACK parksul.theta_d
 
-    #define ELECTRICAL_SPEED_FEEDBACK    chixu.xOmg
-    #define ELECTRICAL_POSITION_FEEDBACK chixu.theta_d
+    // #define ELECTRICAL_SPEED_FEEDBACK    chixu.xOmg
+    // #define ELECTRICAL_POSITION_FEEDBACK chixu.theta_d
 
     // #define ELECTRICAL_SPEED_FEEDBACK    qiaoxia.xOmg
     // #define ELECTRICAL_POSITION_FEEDBACK qiaoxia.theta_d
 
-    // #define ELECTRICAL_SPEED_FEEDBACK    nsoaf.xOmg // harnefors.omg_elec
-    // #define ELECTRICAL_POSITION_FEEDBACK AFE_USED.theta_d // harnefors.theta_d
+    #define ELECTRICAL_SPEED_FEEDBACK    nsoaf.xOmg // harnefors.omg_elec
+    #define ELECTRICAL_POSITION_FEEDBACK AFE_USED.theta_d // harnefors.theta_d
 
     // #define ELECTRICAL_SPEED_FEEDBACK    CTRL.I->omg_elec
     // #define ELECTRICAL_POSITION_FEEDBACK CTRL.I->theta_d_elec

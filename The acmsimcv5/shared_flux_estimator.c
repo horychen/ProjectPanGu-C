@@ -121,25 +121,72 @@ void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REA
         huwu.KI = AFE_21_HUWU_KI;
 
         huwu.x[0] = MOTOR.KE;
+        huwu.x[1] = 0.0;
+        huwu.x[2] = MOTOR.KE;
+
+        huwu.active_flux_ampl = MOTOR.KE;
+        huwu.cosT = 1.0;
+        huwu.sinT = 0.0;
+
+        huwu.limiter_KE = 1.0*MOTOR.KE; /* HuWu1998: In order to eliminate dc component at the output, the limiting level should be set at a value equal to the actual flux amplitude. */
     }
     void rhf_HuWu_1998_Dynamics(REAL t, REAL *x, REAL *fx){
         // x[0], x[1]: stator flux in ab frame
         // x[2], x[3]: compensation flux (integral part)
 
         #define xPsi1(X)  x[0+X]
-        #define xPsi_Comp x[2]
 
-        /* Output: Flux amplitude */
+        REAL emf[2];
+        emf[0] = US(0) - MOTOR.R*IS(0);
+        emf[1] = US(1) - MOTOR.R*IS(1);
+
+        /* 求定子磁链幅值的倒数 */
         REAL temp = 0.0; 
         huwu.stator_flux_ampl = sqrt(xPsi1(0)*xPsi1(0) + xPsi1(1)*xPsi1(1));
         if(huwu.stator_flux_ampl!=0){
             temp = 1.0 / huwu.stator_flux_ampl;
         }
 
-        REAL emf[2];
-        emf[0] = US(0) - MOTOR.R*IS(0);
-        emf[1] = US(1) - MOTOR.R*IS(1);
+    #define HU_WU_ALGORITHM_2
+    #ifdef HU_WU_ALGORITHM_2
+        if(TRUE){
+            /* 计算有功磁链分量 */
+            huwu.psi_2[0] = xPsi1(0) - MOTOR.Lq * IS(0);
+            huwu.psi_2[1] = xPsi1(1) - MOTOR.Lq * IS(1);
+            /* 求有功磁链幅值的倒数 */
+            huwu.active_flux_ampl = sqrt(huwu.psi_2[0]*huwu.psi_2[0] + huwu.psi_2[1]*huwu.psi_2[1]);
+            REAL active_flux_ampl_inv=0.0;
+            if(huwu.active_flux_ampl!=0){
+                active_flux_ampl_inv = 1.0/huwu.active_flux_ampl;
+            }
+            /* The amplitude limiter for active flux */
+            if(huwu.active_flux_ampl > huwu.limiter_KE){
+                huwu.active_flux_ampl_limited = huwu.limiter_KE;
+            }else{
+                huwu.active_flux_ampl_limited = huwu.active_flux_ampl;
+            }
+            /* 根据限幅后的有功磁链去求限幅后的定子磁链 */
+            REAL stator_flux_limited[2];
+            stator_flux_limited[0] = huwu.psi_2[0]*active_flux_ampl_inv * huwu.active_flux_ampl_limited + MOTOR.Lq*IS(0);
+            stator_flux_limited[1] = huwu.psi_2[1]*active_flux_ampl_inv * huwu.active_flux_ampl_limited + MOTOR.Lq*IS(1);            
+            /* 求限幅后的定子磁链幅值 */
+            huwu.stator_flux_ampl_limited = sqrt(stator_flux_limited[0]*stator_flux_limited[0] + stator_flux_limited[1]*stator_flux_limited[1]);
+        }else{
+            /* The amplitude limiter for stator flux */
+            if(huwu.stator_flux_ampl > huwu.limiter_KE){
+                huwu.stator_flux_ampl_limited = huwu.limiter_KE;
+            }else{
+                huwu.stator_flux_ampl_limited = huwu.stator_flux_ampl;
+            }
+        }
 
+        fx[0] = emf[0] + huwu.tau_1_inv * (( huwu.stator_flux_ampl_limited ) * xPsi1(0) * temp - xPsi1(0) );
+        fx[1] = emf[1] + huwu.tau_1_inv * (( huwu.stator_flux_ampl_limited ) * xPsi1(1) * temp - xPsi1(1) );
+        fx[2] = 0.0;
+
+    #else
+        #define xPsi_Comp x[2]
+        /* Algorithm 3 */
         huwu.inner_product_normalized = (emf[0] * xPsi1(0) + emf[1] * xPsi1(1)) * temp;
 
         /* Compensation term is a flux amplitude going through an inverse Park transformation */
@@ -152,6 +199,10 @@ void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REA
 
         /* State: disturbance/offset estimated by an integrator */
         fx[2] = huwu.KI * huwu.inner_product_normalized;
+
+        #undef xPsi_Comp
+    #endif
+    #undef xPsi1
     }
     void MainFE_HuWu_1998(){
         // stator flux and integral states update
@@ -164,6 +215,17 @@ void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REA
         // active flux and position
         huwu.psi_2[0] = huwu.x[0] - CTRL.motor->Lq * IS(0);
         huwu.psi_2[1] = huwu.x[1] - CTRL.motor->Lq * IS(1);
+        huwu.active_flux_ampl = sqrt(huwu.psi_2[0]*huwu.psi_2[0] + huwu.psi_2[1]*huwu.psi_2[1]);
+        REAL active_flux_ampl_inv=0.0;
+        if(huwu.active_flux_ampl!=0){
+            active_flux_ampl_inv = 1.0/huwu.active_flux_ampl;
+            huwu.cosT = huwu.psi_2[0] * active_flux_ampl_inv;
+            huwu.sinT = huwu.psi_2[1] * active_flux_ampl_inv;
+        }else{
+            huwu.cosT = 1.0;
+            huwu.sinT = 0.0;
+        }
+
         huwu.theta_d = atan2(huwu.psi_2[1], huwu.psi_2[0]);
     }
 #endif
@@ -184,8 +246,12 @@ void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REA
         #endif
     }
     void init_afe(){
+        AFEOE.active_flux_ampl = MOTOR.KE;
+        AFEOE.cosT = 1.0;
+        AFEOE.sinT = 0.0;
+
         AFEOE.x[0] = PMSM_PERMANENT_MAGNET_FLUX_LINKAGE; // TODO：这里假设了初始位置是alpha轴对着d轴的
-        AFEOE.x[1] = 0.0;    
+        AFEOE.x[1] = 0.0;
         AFEOE.ActiveFlux_KP = AFEOE_KP;
         AFEOE.ActiveFlux_KI = AFEOE_KI;
         AFEOE.set_omega_est = AFEOE_OMEGA_ESTIMATOR;
@@ -289,7 +355,7 @@ void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REA
 
         /* Proposed closed loop estimator AB frame + ODE4 */
         // stator flux and integral states update
-        general_4states_rk4_solver(&rhf_ActiveFluxEstimator_Dynamics, CTRL.timebase, AFE_USED.x, CL_TS);
+        general_4states_rk4_solver(&rhf_ActiveFluxEstimator_Dynamics, CTRL.timebase, AFEOE.x, CL_TS);
         // Unpack x
         AFEOE.psi_1[0]    = AFEOE.x[0];
         AFEOE.psi_1[1]    = AFEOE.x[1];
