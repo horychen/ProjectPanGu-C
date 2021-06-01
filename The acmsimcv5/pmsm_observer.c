@@ -705,10 +705,10 @@ void Main_harnefors_scvm(){
 /********************************************/
 /* Qiao.Xia 2013 emfSMO with Sigmoid (Also Hongryel Kim 2011) as Nonlinear
  ********************************************/
-#if PC_SIMULATION || SELECT_ALGORITHM == ALG_Qiao_Xia
 REAL sm_sigmoid(REAL x, REAL a){
     return 2.0 / (1.0 + exp(-a*x)) - 1.0;
 }
+#if PC_SIMULATION || SELECT_ALGORITHM == ALG_Qiao_Xia
 void init_QiaoXia2013(){
     qiaoxia.smo_gain      = 0.0; // time varying gain
     qiaoxia.sigmoid_coeff = QIAO_XIA_SIGMOID_COEFF;   // 17
@@ -1145,7 +1145,8 @@ void pmsm_observers(){
     #else
         /* 资源有限 */
         #if SELECT_ALGORITHM == ALG_NSOAF
-            test_flux_estimators();
+            Main_the_active_flux_estimator();
+            MainFE_HuWu_1998();
             Main_nsoaf_chen2020();
         #elif SELECT_ALGORITHM == ALG_Farza_2009
             Main_cjh_eemfhgo_farza09();

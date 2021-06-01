@@ -46,8 +46,6 @@ void init_experiment_overwrite(int Seletc_exp_operation){
 
     #endif
 
-    AFEOE.limiter_KE = 1.15 * MOTOR.KE; // this depends on KE value
-
     pid1_spd.OutLimit = G.OverwriteSpeedOutLimit;
 
     if(Seletc_exp_operation == AS_LOAD_MOTOR_CONST){
@@ -64,6 +62,16 @@ void init_experiment_overwrite(int Seletc_exp_operation){
     if(Seletc_exp_operation == NSOAF_HIGH_SPEED_OPERATION){
         high_speed_operation_init();
     }
+
+
+
+    #if TRUE
+        MOTOR.KE = 0.095;
+        huwu.limiter_KE = 1.0 * MOTOR.KE; // this depends on KE value
+    #endif
+    AFEOE.limiter_KE = 1.15 * MOTOR.KE; // this depends on KE value
+
+
 
     // for debug
     CTRL.S->PSD_Done = FALSE;
@@ -190,8 +198,12 @@ void low_speed_operation_init(){
 //REAL RP =2.15; // 2.15 for cold motor, 2.20 for hot motor
 //REAL RN =1.95; // 1.95 for cold motor, 2.00 for hot motor
 /*when AS_LOAD_MOTOR_CONST use G.Set_manual_rpm = 300; [rpm], iq is positive*/
+
+/* HUWU--SSR */
 //REAL RSmall =1.95; // motoring is smaller
 //REAL RLarge =2.15; // regenerating
+
+/* CM-VM Fusion--SSR */
 REAL RSmall =2.00; // motoring is smaller
 REAL RLarge =2.20; // regenerating
 void slow_speed_reversal_tuning(){
@@ -303,37 +315,40 @@ void high_speed_operation_init(){
 }
 void high_speed_operation_tuning(){
 
-    /* 动态性能和两个KP的值密切相关 */
-        //    nsoaf.KP = fabs(G.Set_manual_rpm) / 1500.0 * 4;
-        //    if(nsoaf.KP<1){
-        //        nsoaf.KP = 1;
+    #if SELECT_ALGORITHM == ALG_Chi_Xu
+    #elif SELECT_ALGORITHM == ALG_NSOAF
+        /* 动态性能和两个KP的值密切相关 */
+            //    nsoaf.KP = fabs(G.Set_manual_rpm) / 1500.0 * 4;
+            //    if(nsoaf.KP<1){
+            //        nsoaf.KP = 1;
+            //    }
+        if(fabs(G.Set_manual_rpm) > 1000){
+            nsoaf.KP = 4; //2;
+            AFEOE.ActiveFlux_KP = 1;
+        }else if(fabs(G.Set_manual_rpm) > 500){
+            nsoaf.KP = 2; //1.5;
+            AFEOE.ActiveFlux_KP = 0.5;
+        }else if(fabs(G.Set_manual_rpm) > 300){
+            nsoaf.KP = 1;
+            AFEOE.ActiveFlux_KP = 0.2;
+        }else{
+            AFEOE.ActiveFlux_KP = 0.1;
+        }
+
+        /* Steady state rpm error when ZFY speed command is at 0 rpm (load sudden change when speed command sign changes) */
+        //    if(G.Set_manual_rpm > 0){
+        //        CTRL.motor->KE=0.097;
+        //    }else{
+        //        CTRL.motor->KE=0.099;
         //    }
-    if(fabs(G.Set_manual_rpm) > 1000){
-        nsoaf.KP = 4; //2;
-        AFEOE.ActiveFlux_KP = 1;
-    }else if(fabs(G.Set_manual_rpm) > 500){
-        nsoaf.KP = 2; //1.5;
-        AFEOE.ActiveFlux_KP = 0.5;
-    }else if(fabs(G.Set_manual_rpm) > 300){
-        nsoaf.KP = 1;
-        AFEOE.ActiveFlux_KP = 0.2;
-    }else{
-        AFEOE.ActiveFlux_KP = 0.1;
-    }
 
-    /* Steady state rpm error when ZFY speed command is at 0 rpm (load sudden change when speed command sign changes) */
-    //    if(G.Set_manual_rpm > 0){
-    //        CTRL.motor->KE=0.097;
-    //    }else{
-    //        CTRL.motor->KE=0.099;
-    //    }
-
-    /* Steady state rpm error when ZFY speed command is at 2000 rpm. */
-    if(G.Set_manual_rpm > 0){
-        CTRL.motor->KE = 0.103; // positive spinning with load motor@2000 rpm 2.1A
-    }else{
-        CTRL.motor->KE=0.087;  // negative positive spinning with load motor@2000 rpm 2.1A
-    }
+        /* Steady state rpm error when ZFY speed command is at 2000 rpm. */
+        if(G.Set_manual_rpm > 0){
+            CTRL.motor->KE = 0.103; // positive spinning with load motor@2000 rpm 2.1A
+        }else{
+            CTRL.motor->KE=0.087;  // negative positive spinning with load motor@2000 rpm 2.1A
+        }
+    #endif
 
     /* 防止手贱输错了值 */
     if(CTRL.motor->KE > 0.2){

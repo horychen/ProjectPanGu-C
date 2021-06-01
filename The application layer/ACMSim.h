@@ -69,14 +69,17 @@ typedef float32 REAL;
 #define FALSE (0)
 #endif
 #define ONE_OVER_2PI          0.15915494309189535 // 1/(2*pi)
+#define ONE_OVER_60           0.01666666666666667
 #define TWO_PI_OVER_3         2.0943951023931953
 #define SIN_2PI_SLASH_3       0.86602540378443871 // sin(2*pi/3)
 #define SIN_DASH_2PI_SLASH_3 -0.86602540378443871 // sin(-2*pi/3)
 #define SQRT_2_SLASH_3        0.81649658092772603 // sqrt(2.0/3.0)
 #define abs                   use_fabs_instead_or_you_will_regret
 #define prinf                 dont_use_print_in_experiment_codes
-#define ELEC_RAD_PER_SEC_2_RPM ( 60.0/(2*M_PI*CTRL.motor->npp) )
-#define RPM_2_ELEC_RAD_PER_SEC ( (2*M_PI*CTRL.motor->npp)/60.0 )
+#define ELEC_RAD_PER_SEC_2_RPM ( 60.0*ONE_OVER_2PI*CTRL.motor->npp_inv )
+// #define ELEC_RAD_PER_SEC_2_RPM ( 60.0/(2*M_PI*CTRL.motor->npp) )
+#define RPM_2_ELEC_RAD_PER_SEC ( (2*M_PI*CTRL.motor->npp)*ONE_OVER_60 )
+// #define RPM_2_ELEC_RAD_PER_SEC ( (2*M_PI*CTRL.motor->npp)/60.0 )
 #define M_PI_OVER_180   0.017453292519943295
 
 #define CLARKE_TRANS_TORQUE_GAIN (1.5) // consistent with experiment
