@@ -3,7 +3,7 @@
 /* 经常要修改的 */
 #define INVERTER_NONLINEARITY_COMPENSATION_INIT 2 // 1:ParkSul12, 2:Sigmoid, 3:LUT
 #define INVERTER_NONLINEARITY                   2 // 1:ModelSul96, 2:ModelExpSigmoid, 3: ModelExpLUT
-#define SENSORLESS_CONTROL TRUE
+#define SENSORLESS_CONTROL FALSE
 #define SENSORLESS_CONTROL_HFSI FALSE
 /* ParkSul2012 梯形波 */
 #define GAIN_THETA_TRAPEZOIDAL (40) //(500) // 20
@@ -41,13 +41,16 @@
 
     /* Select Algorithm 1 */
     #define AFE_USED AFEOE
-    #define AFEOE_OMEGA_ESTIMATOR 5 // [rad/s] //0.5 // 5 for slow reversal
-        #define AFEOE_KP (1*0.1) // (0.5) // (2*5)
-        #define AFEOE_KI (1*0.02) // 0.02 for 10 rpm // 0.1 for 40 rpm //(2.0) for 300 rpm
 
-    #define AFE_21_HUWU_TAU_1_INVERSE 0.5 // [rad/s] //0.5 // 5 for slow reversal
-    #define AFE_21_HUWU_KP (2.0*0.1) //[rad/s]
-    #define AFE_21_HUWU_KI (2.0*0.25) //[rad/s]
+        /* AFEOE or CM-VM Fusion */
+        #define AFEOE_OMEGA_ESTIMATOR 5 // [rad/s] //0.5 // 5 for slow reversal
+            #define AFEOE_KP (1*0.1) // (0.5) // (2*5)
+            #define AFEOE_KI (1*0.02) // 0.02 for 10 rpm // 0.1 for 40 rpm //(2.0) for 300 rpm
+
+        /* Hu Wu 1998 */
+        #define AFE_21_HUWU_TAU_1_INVERSE (15*0.5) // [rad/s] // increase this will reduce the transient converging time
+        #define AFE_21_HUWU_KP (0.2)  //[rad/s]
+        #define AFE_21_HUWU_KI (0.5) //[rad/s]
 
     /* Select Algorithm 2*/
         #define ALG_NSOAF 1
@@ -64,61 +67,62 @@
     // #define ELECTRICAL_SPEED_FEEDBACK    parksul.xOmg
     // #define ELECTRICAL_POSITION_FEEDBACK parksul.theta_d
 
-    // #define ELECTRICAL_SPEED_FEEDBACK    chixu.xOmg
-    // #define ELECTRICAL_POSITION_FEEDBACK chixu.theta_d
+    #define ELECTRICAL_SPEED_FEEDBACK    chixu.xOmg
+    #define ELECTRICAL_POSITION_FEEDBACK chixu.theta_d
 
     // #define ELECTRICAL_SPEED_FEEDBACK    qiaoxia.xOmg
     // #define ELECTRICAL_POSITION_FEEDBACK qiaoxia.theta_d
 
-    #define ELECTRICAL_SPEED_FEEDBACK    nsoaf.xOmg // harnefors.omg_elec
-    #define ELECTRICAL_POSITION_FEEDBACK AFE_USED.theta_d // harnefors.theta_d
+    // #define ELECTRICAL_SPEED_FEEDBACK    nsoaf.xOmg // harnefors.omg_elec
+    // #define ELECTRICAL_POSITION_FEEDBACK AFE_USED.theta_d // harnefors.theta_d
 
     // #define ELECTRICAL_SPEED_FEEDBACK    CTRL.I->omg_elec
     // #define ELECTRICAL_POSITION_FEEDBACK CTRL.I->theta_d_elec
 
-    /* Park.Sul 2014 FADO in replace of CM */
-    #define PARK_SUL_OPT_1 (2*M_PI*60)
-    #define PARK_SUL_OPT_2 (2*M_PI*35)
-        #define PARK_SUL_T2S_1_KP (PARK_SUL_OPT_1*2)
-        #define PARK_SUL_T2S_1_KI (PARK_SUL_OPT_1*PARK_SUL_OPT_1)
-        #define PARK_SUL_T2S_2_KP (PARK_SUL_OPT_2*2)
-        #define PARK_SUL_T2S_2_KI (PARK_SUL_OPT_2*PARK_SUL_OPT_2)
-    #define PARK_SUL_CM_OPT 5 // [rad/s] pole placement
-        #define PARK_SUL_CM_KP (PARK_SUL_CM_OPT*2)
-        #define PARK_SUL_CM_KI (PARK_SUL_CM_OPT*PARK_SUL_CM_OPT)
+        /* Park.Sul 2014 FADO in replace of CM */
+        #define PARK_SUL_OPT_1 (2*M_PI*60)
+        #define PARK_SUL_OPT_2 (2*M_PI*35)
+            #define PARK_SUL_T2S_1_KP (PARK_SUL_OPT_1*2)
+            #define PARK_SUL_T2S_1_KI (PARK_SUL_OPT_1*PARK_SUL_OPT_1)
+            #define PARK_SUL_T2S_2_KP (PARK_SUL_OPT_2*2)
+            #define PARK_SUL_T2S_2_KI (PARK_SUL_OPT_2*PARK_SUL_OPT_2)
+        #define PARK_SUL_CM_OPT 5 // [rad/s] pole placement
+            #define PARK_SUL_CM_KP (PARK_SUL_CM_OPT*2)
+            #define PARK_SUL_CM_KI (PARK_SUL_CM_OPT*PARK_SUL_CM_OPT)
 
-    /* Chi.Xu 2009 SMO for EMF of SPMSM (Coupled position estimation via MRAS) */
-    #define CHI_XU_SIGMOID_COEFF  500
-    #define CHI_XU_SMO_GAIN       5
-    #define CHI_XU_SPEED_PLL_KP (500*2.0) // [rad/s]
-    #define CHI_XU_SPEED_PLL_KI (500*500.0)
-    #define CHI_XU_LPF_4_ZEQ    10.0
+        /* Chi.Xu 2009 SMO for EMF of SPMSM (Coupled position estimation via MRAS) */
+        #define CHI_XU_SIGMOID_COEFF  500
+        #define CHI_XU_SMO_GAIN       (5)
+        #define CHI_XU_SPEED_PLL_KP (500*2.0) // [rad/s]
+        #define CHI_XU_SPEED_PLL_KI (500*500.0)
+        #define CHI_XU_LPF_4_ZEQ    (10.0)
 
-    /* Qiao.Xia 2013 SMO for EMF of SPMSM */
-    #define QIAO_XIA_SIGMOID_COEFF  5000 //200 // 20
-    #define QIAO_XIA_SMO_GAIN       1.5 //1.5     // 1.5
-    #define QIAO_XIA_MRAS_GAIN      500 //500       // 50
-    #define QIAO_XIA_ADAPT_GAIN     500 //2000 // 250 // 100
+        /* Qiao.Xia 2013 SMO for EMF of SPMSM */
+        #define QIAO_XIA_SIGMOID_COEFF  5000 //200 // 20
+        #define QIAO_XIA_SMO_GAIN       1.5 //1.5     // 1.5
+        #define QIAO_XIA_MRAS_GAIN      500 //500       // 50
+        #define QIAO_XIA_ADAPT_GAIN     500 //2000 // 250 // 100
 
-    /* CHEN 2020 NSO with Active Flux Concept */
-    // #define NSOAF_SPMSM // use AP Error
-    #define NSOAF_IPMSM // use only OE
-    #define TUNING_IGNORE_UQ TRUE
-    #define NSOAF_OMEGA_OBSERVER 25 // >12 [rad/s] // cannot be too small (e.g., 10, KP will be negative), 
-        #define NSOAF_TL_P (1) // 1 for experimental starting // 4 for 1500 rpm // 2 for 800 rpm
-        #define NSOAF_TL_I (20)
-        #define NSOAF_TL_D (0)
+        /* CHEN 2020 NSO with Active Flux Concept */
+        // #define NSOAF_SPMSM // use AP Error
+        #define NSOAF_IPMSM // use only OE
+        #define TUNING_IGNORE_UQ TRUE
+        #define NSOAF_OMEGA_OBSERVER 25 // >12 [rad/s] // cannot be too small (e.g., 10, KP will be negative), 
+            #define NSOAF_TL_P (1) // 1 for experimental starting // 4 for 1500 rpm // 2 for 800 rpm
+            #define NSOAF_TL_I (20)
+            #define NSOAF_TL_D (0)
 
-    /* Farza 2009 for EMMF */
-    #define FARZA09_HGO_EEMF_VARTHETA 10
-    #define FARZA09_HGO_EEMF_GAMMA_OMEGA_INITIAL_VALUE 10
+        /* Farza 2009 for EMMF */
+        #define FARZA09_HGO_EEMF_VARTHETA 10
+        #define FARZA09_HGO_EEMF_GAMMA_OMEGA_INITIAL_VALUE 10
 
-    /* CJH EEMF AO Design */
-    #define CJH_EEMF_K1 (100)
-    #define CJH_EEMF_K2 (CJH_EEMF_K1*CJH_EEMF_K1*0.25) // see my TCST paper@(18)
-    #define CJH_EEMF_GAMMA_OMEGA (5e6)
+        /* CJH EEMF AO Design */
+        #define CJH_EEMF_K1 (100)
+        #define CJH_EEMF_K2 (CJH_EEMF_K1*CJH_EEMF_K1*0.25) // see my TCST paper@(18)
+        #define CJH_EEMF_GAMMA_OMEGA (5e6)
 
-    /* Harnefors 2006 */
+        /* Harnefors 2006 */
+
 #elif /* Induction Motor */ MACHINE_TYPE % 10 == 1
     // Marino05 调参 /// default: (17143), (2700.0), (1000), (1), (0)
     #define GAMMA_INV_xTL 17142.85714285714
@@ -185,9 +189,9 @@
     #define MOTOR_BACK_EMF_CONSTANT_mV_PER_RPM ( MOTOR_BACK_EMF_CONSTANT * 1e3 / (1.0/MOTOR_NUMBER_OF_POLE_PAIRS/2/3.1415926*60) )
 
     #define SPEED_KI_CODE (SPEED_KI*SPEED_KP*VL_TS)
-    #define SPEED_LOOP_LIMIT_NEWTON_METER (2.0*MOTOR_RATED_TORQUE)
-    #define SPEED_LOOP_LIMIT_AMPERE (2.0*1.414*MOTOR_RATED_CURRENT_RMS)
-
+    #define SPEED_LOOP_LIMIT_NEWTON_METER (3.0*MOTOR_RATED_TORQUE)
+    #define SPEED_LOOP_LIMIT_AMPERE       (3.0*1.414*MOTOR_RATED_CURRENT_RMS)
+    // increase to 3 times because of the bug in dynamics clamping
 
 /* Encoder QEP TODO: should read from excel */
 #define SYSTEM_QEP_PULSES_PER_REV  (10000)

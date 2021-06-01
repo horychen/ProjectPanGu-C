@@ -889,7 +889,6 @@ void Main_ChiXu2009_emfSMO(){
 
     /* Post-observer calculations */
     /* Selecting Signals From Block Diagram */
-    
 }
 #endif
 

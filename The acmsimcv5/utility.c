@@ -3,9 +3,9 @@
 
 #if PC_SIMULATION
 // 写变量名到文件
-#define DATA_FORMAT "%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g\n"
-#define DATA_LABELS "ACM.rpm_cmd,CTRL.I->rpm,nsoaf.xOmg*ELEC_RAD_PER_SEC_2_RPM,ENC.theta_d_elec,AFE_USED.theta_d,sin(ENC.theta_d_elec - AFE_USED.theta_d),ACM.ial,ACM.ibe,sqrt(ACM.ial*ACM.ial+ACM.ibe*ACM.ibe),CTRL.O->udq_cmd[0],CTRL.O->udq_cmd[1],CTRL.I->idq_cmd[0],CTRL.I->idq[0],CTRL.I->idq_cmd[1],CTRL.I->idq[1],ACM.TLoad,pid1_spd.OutLimit,pid1_spd.Out,pid1_spd.Err,pid1_spd.I_Term,ACM.Tem,ACM.TLoad,pid1_iM.OutLimit,pid1_iM.Out,pid1_iT.OutLimit,pid1_iT.Out\n"
-#define DATA_DETAILS ACM.rpm_cmd,CTRL.I->rpm,nsoaf.xOmg*ELEC_RAD_PER_SEC_2_RPM,ENC.theta_d_elec,AFE_USED.theta_d,sin(ENC.theta_d_elec - AFE_USED.theta_d),ACM.ial,ACM.ibe,sqrt(ACM.ial*ACM.ial+ACM.ibe*ACM.ibe),CTRL.O->udq_cmd[0],CTRL.O->udq_cmd[1],CTRL.I->idq_cmd[0],CTRL.I->idq[0],CTRL.I->idq_cmd[1],CTRL.I->idq[1],ACM.TLoad,pid1_spd.OutLimit,pid1_spd.Out,pid1_spd.Err,pid1_spd.I_Term,ACM.Tem,ACM.TLoad,pid1_iM.OutLimit,pid1_iM.Out,pid1_iT.OutLimit,pid1_iT.Out
+#define DATA_FORMAT "%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g\n"
+#define DATA_LABELS "ACM.rpm_cmd,CTRL.I->rpm,chixu.xOmg*ELEC_RAD_PER_SEC_2_RPM,CTRL.I->theta_d_elec,chixu.theta_d,sin(CTRL.I->theta_d_elec - chixu.theta_d),CTRL.I->iab[0],chixu.xIab[0],CTRL.I->iab[0] - chixu.xIab[0],CTRL.I->iab[1] - chixu.xIab[1],chixu.xZeq[0],chixu.xZeq[1],chixu.xEmf_raw[0],chixu.xEmf_raw[1],chixu.output_error[0],chixu.output_error[1],chixu.smo_gain,chixu.x[4],chixu.x[5]\n"
+#define DATA_DETAILS ACM.rpm_cmd,CTRL.I->rpm,chixu.xOmg*ELEC_RAD_PER_SEC_2_RPM,CTRL.I->theta_d_elec,chixu.theta_d,sin(CTRL.I->theta_d_elec - chixu.theta_d),CTRL.I->iab[0],chixu.xIab[0],CTRL.I->iab[0] - chixu.xIab[0],CTRL.I->iab[1] - chixu.xIab[1],chixu.xZeq[0],chixu.xZeq[1],chixu.xEmf_raw[0],chixu.xEmf_raw[1],chixu.output_error[0],chixu.output_error[1],chixu.smo_gain,chixu.x[4],chixu.x[5]
 
 void write_header_to_file(FILE *fw){
     printf("%s\n", DATA_FILE_NAME);

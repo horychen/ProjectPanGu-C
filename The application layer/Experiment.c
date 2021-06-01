@@ -51,7 +51,7 @@ void init_experiment_overwrite(int Seletc_exp_operation){
     pid1_spd.OutLimit = G.OverwriteSpeedOutLimit;
 
     if(Seletc_exp_operation == AS_LOAD_MOTOR_CONST){
-        pid1_spd.OutLimit = 2.0;
+        pid1_spd.OutLimit = 2.1; //2.0;
         G.Set_manual_rpm = 300;
     }
     if(Seletc_exp_operation == AS_LOAD_MOTOR_RAMP){
