@@ -328,7 +328,7 @@ void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REA
 
 void test_flux_estimators(){
     Main_the_active_flux_estimator();
-    // MainFE_HuWu_1998();
+    MainFE_HuWu_1998();
 }
 
 void init_FE(){
