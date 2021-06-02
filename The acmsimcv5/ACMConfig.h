@@ -3,7 +3,7 @@
 /* 经常要修改的 */
 #define INVERTER_NONLINEARITY_COMPENSATION_INIT 2 // 1:ParkSul12, 2:Sigmoid, 3:LUT
 #define INVERTER_NONLINEARITY                   2 // 1:ModelSul96, 2:ModelExpSigmoid, 3: ModelExpLUT
-#define SENSORLESS_CONTROL FALSE
+#define SENSORLESS_CONTROL TRUE
 #define SENSORLESS_CONTROL_HFSI FALSE
 /* ParkSul2012 梯形波 */
 #define GAIN_THETA_TRAPEZOIDAL (40) //(500) // 20
@@ -98,10 +98,10 @@
 
         /* Chi.Xu 2009 SMO for EMF of SPMSM (Coupled position estimation via MRAS) */
         #define CHI_XU_SIGMOID_COEFF  500
-        #define CHI_XU_SMO_GAIN       (5)
+        #define CHI_XU_SMO_GAIN       10 //(5)
         #define CHI_XU_SPEED_PLL_KP (500*2.0) // [rad/s]
         #define CHI_XU_SPEED_PLL_KI (500*500.0)
-        #define CHI_XU_LPF_4_ZEQ    (10.0)
+        #define CHI_XU_LPF_4_ZEQ    (5.0) /*这项过大（eg=100）会导致角度稳态误差，忘记了你就试试看，取=2，=5，=10，=100分别看看。*/
 
         /* Qiao.Xia 2013 SMO for EMF of SPMSM */
         #define QIAO_XIA_SIGMOID_COEFF  5000 //200 // 20
