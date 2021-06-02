@@ -862,7 +862,12 @@ void rhf_ChiXu2009_Dynamics(REAL t, REAL *x, REAL *fx){
 void Main_ChiXu2009_emfSMO(){
 
     /* Time-varying gains */
-    chixu.smo_gain = CHI_XU_SMO_GAIN * fabs(CTRL.I->cmd_omg_elec) * MOTOR.KE;
+    chixu.smo_gain = CHI_XU_SMO_GAIN * fabs(CTRL.I->cmd_omg_elec) * MOTOR.KE; // 根据Qiao.Xia 2013的稳定性证明增益要比反电势大。
+    if(fabs(CTRL.I->cmd_omg_elec)<5){
+        // 转速太低以后，就不要再减小滑模增益了
+        chixu.smo_gain = CHI_XU_SMO_GAIN * 5 * MOTOR.KE;
+    }
+    // chixu.smo_gain = CHI_XU_SMO_GAIN * 10;  // constant gain
 
     if(fabs(CTRL.I->cmd_speed_rpm)>500){
         chixu.ell4xZeq = 1.0;

@@ -52,8 +52,11 @@ struct IPC_MEMORY_READ Read;
 //int channels[NO_OF_CHANNELS]={10,11,20,21,6,39,39,59}; // park trapezoidal
 //int channels[NO_OF_CHANNELS]={10,11,20,21,6,7,39,59}; // park trapezoidal
 //int channels[NO_OF_CHANNELS]={10,11,20,21,6,7,5,23}; // rev1 sensorless slow reversal
+
 //int channels[NO_OF_CHANNELS]={51,52,20,21,6,7,54,59}; // test huwu 1998
-int channels[NO_OF_CHANNELS]={10,11,20,21,6,7,55,59}; // Compare to CM-VM fusion with only KP
+//int channels[NO_OF_CHANNELS]={10,11,20,21,6,7,55,59}; // Compare to CM-VM fusion with only KP
+
+int channels[NO_OF_CHANNELS]={50,9,20,21,6,7,52,59}; // Chi.Xu 2009
 
 int channels_preset = 0;
 
@@ -79,8 +82,8 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
 
     G.dac_watch[8] = EQep1Regs.QPOSCNT*0.0001; // [0, 10000]
 
-    //G.dac_watch[2] = CTRL.I->iab[0]*0.2;
-    G.dac_watch[9] = CTRL.I->iab[1]*0.2;
+    //G.dac_watch[2] = CTRL.I->iab[1]*0.2;
+    G.dac_watch[9] = CTRL.I->iab[0]*0.2;
 
     //G.dac_watch[11] = COMM.current_sum*0.05/(float32)COMM.counterSS;
     //G.dac_watch[12] = COMM.voltage_sum*0.05/(float32)COMM.counterSS;
@@ -149,14 +152,18 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
         G.dac_watch[47] = (CAP.dq[1]            )*0.02;
     #endif
 
-
-    G.dac_watch[50] = sin(CTRL.I->theta_d_elec-huwu.theta_d);
-    G.dac_watch[51] = huwu.x[0];
-    G.dac_watch[52] = huwu.x[1];
-    G.dac_watch[53] = huwu.x[2];
-    G.dac_watch[54] = huwu.limiter_KE;
+    // HU WU 1998
+    //    G.dac_watch[50] = sin(CTRL.I->theta_d_elec-huwu.theta_d);
+    //    G.dac_watch[51] = huwu.x[0];
+    //    G.dac_watch[52] = huwu.x[1];
+    //    G.dac_watch[53] = huwu.x[2];
+    //    G.dac_watch[54] = huwu.limiter_KE;
     G.dac_watch[55] = MOTOR.KE;
 
+    G.dac_watch[50] = chixu.xIab[0]*0.2;
+    G.dac_watch[51] = chixu.output_error[0]*0.2;
+    G.dac_watch[52] = chixu.xZeq[0]*0.1;
+    G.dac_watch[53] = chixu.xZeq[1]*0.1;
 
     //        G.dac_watch[48] = (CAP.ecapU.DutyOnTime1)  * 0.25e-4;
     //        G.dac_watch[49] = (CAP.ecapU.DutyOffTime1) * 0.25e-4;
