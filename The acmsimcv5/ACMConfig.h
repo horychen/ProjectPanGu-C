@@ -3,7 +3,7 @@
 /* 经常要修改的 */
 #define INVERTER_NONLINEARITY_COMPENSATION_INIT 2 // 1:ParkSul12, 2:Sigmoid, 3:LUT
 #define INVERTER_NONLINEARITY                   2 // 1:ModelSul96, 2:ModelExpSigmoid, 3: ModelExpLUT
-#define SENSORLESS_CONTROL FALSE
+#define SENSORLESS_CONTROL TRUE
 #define SENSORLESS_CONTROL_HFSI FALSE
 /* ParkSul2012 梯形波 */
 #define GAIN_THETA_TRAPEZOIDAL (40) //(500) // 20
@@ -73,14 +73,16 @@
     // #define ELECTRICAL_SPEED_FEEDBACK    parksul.xOmg
     // #define ELECTRICAL_POSITION_FEEDBACK parksul.theta_d
 
-    #define ELECTRICAL_SPEED_FEEDBACK    chixu.xOmg
-    #define ELECTRICAL_POSITION_FEEDBACK chixu.theta_d
-
     // #define ELECTRICAL_SPEED_FEEDBACK    qiaoxia.xOmg
     // #define ELECTRICAL_POSITION_FEEDBACK qiaoxia.theta_d
 
-    // #define ELECTRICAL_SPEED_FEEDBACK    nsoaf.xOmg // harnefors.omg_elec
-    // #define ELECTRICAL_POSITION_FEEDBACK AFE_USED.theta_d // harnefors.theta_d
+    #if SELECT_ALGORITHM == ALG_Chi_Xu
+        #define ELECTRICAL_SPEED_FEEDBACK    chixu.xOmg
+        #define ELECTRICAL_POSITION_FEEDBACK chixu.theta_d
+    #elif SELECT_ALGORITHM == ALG_NSOAF
+        #define ELECTRICAL_SPEED_FEEDBACK    nsoaf.xOmg // harnefors.omg_elec
+        #define ELECTRICAL_POSITION_FEEDBACK AFE_USED.theta_d // harnefors.theta_d
+    #endif
 
     // #define ELECTRICAL_SPEED_FEEDBACK    CTRL.I->omg_elec
     // #define ELECTRICAL_POSITION_FEEDBACK CTRL.I->theta_d_elec
@@ -104,6 +106,7 @@
     /* Chi.Xu 2009 SMO for EMF of SPMSM (Coupled position estimation via MRAS) */
     #define CHI_XU_SIGMOID_COEFF  500 /*比200大以后，在实验中无感速度稳态误差不会再减小了，但是会影响慢反转*/
     #if OPERATION_MODE == LOW_SPEED_OPERATION
+        /* note ell4Zeq is -0.5 */
         #if PC_SIMULATION
             #define CHI_XU_SMO_GAIN_SCALE 10.0  //2
             #define CHI_XU_LPF_4_ZEQ    5.0   //10.0
@@ -116,8 +119,9 @@
         #define CHI_XU_SPEED_PLL_KI (500*500.0)
 
     #elif OPERATION_MODE == HIGH_SPEED_OPERATION
-        #define CHI_XU_SMO_GAIN_SCALE 1.5
-        #define CHI_XU_LPF_4_ZEQ       50
+        /* note ell4Zeq will become 1 */
+        #define CHI_XU_SMO_GAIN_SCALE  3.0
+        #define CHI_XU_LPF_4_ZEQ       5.0
         #define CHI_XU_SPEED_PLL_KP (1000) // [rad/s]
         #define CHI_XU_SPEED_PLL_KI (50000)
     #endif
