@@ -798,6 +798,8 @@ void init_ChiXu2009(){
     chixu.PLL_KI        = CHI_XU_SPEED_PLL_KI;
     chixu.ell4xZeq      = -0.5; // -0.5 for low speed and 1.0 for high speed
     chixu.omega_lpf_4_xZeq = CHI_XU_LPF_4_ZEQ;
+
+    chixu.smo_gain_scale = CHI_XU_SMO_GAIN_SCALE;
 }
 REAL get_theta_d_from_xZeq(REAL xZeq_a, REAL xZeq_b){
     REAL temp = -atan2( xZeq_a, xZeq_b) + M_PI*0.5;
@@ -862,12 +864,12 @@ void rhf_ChiXu2009_Dynamics(REAL t, REAL *x, REAL *fx){
 void Main_ChiXu2009_emfSMO(){
 
     /* Time-varying gains */
-    chixu.smo_gain = CHI_XU_SMO_GAIN * fabs(CTRL.I->cmd_omg_elec) * MOTOR.KE; // 根据Qiao.Xia 2013的稳定性证明增益要比反电势大。
+    chixu.smo_gain = chixu.smo_gain_scale * fabs(CTRL.I->cmd_omg_elec) * MOTOR.KE; // 根据Qiao.Xia 2013的稳定性证明增益要比反电势大。
     if(fabs(CTRL.I->cmd_omg_elec)<5){
         // 转速太低以后，就不要再减小滑模增益了
-        chixu.smo_gain = CHI_XU_SMO_GAIN * 5 * MOTOR.KE;
+        chixu.smo_gain = chixu.smo_gain_scale * 5 * MOTOR.KE;
     }
-    // chixu.smo_gain = CHI_XU_SMO_GAIN * 10;  // constant gain
+    // chixu.smo_gain = chixu.smo_gain_scale * 10;  // constant gain
 
     if(fabs(CTRL.I->cmd_speed_rpm)>500){
         chixu.ell4xZeq = 1.0;

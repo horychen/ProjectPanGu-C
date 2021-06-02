@@ -100,6 +100,7 @@ void init_CTRL(){
         G.dac_watch_stator_resistance = 1.703;
     #else
         CTRL.g->Seletc_exp_operation = 3; //NSOAF_LOW_SPEED_OPERATION;
+        // CTRL.g->Seletc_exp_operation = 4; //NSOAF_HIGH_SPEED_OPERATION
         G.dac_watch_stator_resistance = 1.69;
     #endif
 
