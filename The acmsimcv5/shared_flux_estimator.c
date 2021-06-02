@@ -353,10 +353,12 @@ void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REA
             AFEOE.limiter_Flag = FALSE;
         }
 
-        /* DEBUG */
-        /* DEBUG */
-        /* DEBUG */
-        AFEOE.k_af = 0.0;
+        #if AFE_25_FISION__FLUX_LIMITER_AT_LOW_SPEED == TRUE
+            /* NO Need */
+            /* NO Need */
+            /* NO Need */
+            AFEOE.k_af = 0.0;
+        #endif
 
         /* Proposed closed loop estimator AB frame + ODE4 */
         // stator flux and integral states update
