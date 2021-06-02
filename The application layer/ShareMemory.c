@@ -109,10 +109,10 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
         G.dac_watch[22] = nsoaf.LoadTorquePI*0.25;
         G.dac_watch[23] = nsoaf.xIq*0.2; // 5 A for low speed
         //G.dac_watch[23] = nsoaf.xIq*0.05; // 20 A for high speed reversal
-
-        G.dac_watch[26] = CTRL.I->rpm*0.0005;
-        G.dac_watch[27] = nsoaf.xOmg*ELEC_RAD_PER_SEC_2_RPM*0.0005;
     #endif
+
+    G.dac_watch[26] = CTRL.I->rpm*0.0005;
+    G.dac_watch[27] = ELECTRICAL_SPEED_FEEDBACK*ELEC_RAD_PER_SEC_2_RPM*0.0005;
 
     #if FALSAE
         REAL ual_dist = MT2A(pid1_iM.Out, pid1_iT.Out, CTRL.S->cosT, CTRL.S->sinT);
