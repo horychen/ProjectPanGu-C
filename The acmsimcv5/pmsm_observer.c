@@ -871,7 +871,7 @@ void Main_ChiXu2009_emfSMO(){
     }
     // chixu.smo_gain = chixu.smo_gain_scale * 10;  // constant gain
 
-    if(fabs(CTRL.I->cmd_speed_rpm)>500){
+    if(fabs(CTRL.I->cmd_speed_rpm)>180){
         chixu.ell4xZeq = 1.0;
     }else{
         chixu.ell4xZeq = -0.5;
