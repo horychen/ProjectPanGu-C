@@ -47,7 +47,7 @@
         #define AFEOE_OMEGA_ESTIMATOR 5 // [rad/s] //0.5 // 5 for slow reversal
             #define AFEOE_KP (200) // ONLY KP
             #define AFEOE_KI (0.0) // ONLY KP
-        #define AFE_25_FISION__FLUX_LIMITER_AT_LOW_SPEED FALSE
+        #define AFE_25_FISION__FLUX_LIMITER_AT_LOW_SPEED FALSE // no need
 
         /* Hu Wu 1998 recomends tau_1_inv=20 rad/s */
         // #define AFE_21_HUWU_TAU_1_INVERSE (20)
@@ -85,6 +85,8 @@
     // #define ELECTRICAL_SPEED_FEEDBACK    CTRL.I->omg_elec
     // #define ELECTRICAL_POSITION_FEEDBACK CTRL.I->theta_d_elec
 
+    /* Tuning Algorithm */
+
         /* Park.Sul 2014 FADO in replace of CM */
         #define PARK_SUL_OPT_1 (2*M_PI*60)
         #define PARK_SUL_OPT_2 (2*M_PI*35)
@@ -97,11 +99,16 @@
             #define PARK_SUL_CM_KI (PARK_SUL_CM_OPT*PARK_SUL_CM_OPT)
 
         /* Chi.Xu 2009 SMO for EMF of SPMSM (Coupled position estimation via MRAS) */
-        #define CHI_XU_SIGMOID_COEFF  500
-        #define CHI_XU_SMO_GAIN       10 //(5)
+        #define CHI_XU_SIGMOID_COEFF  500 /*比200大以后，在实验中无感速度稳态误差不会再减小了，但是会影响慢反转*/
+        #if PC_SIMULATION
+            #define CHI_XU_SMO_GAIN     10.0  //2
+            #define CHI_XU_LPF_4_ZEQ    5.0   //10.0
+        #else
+            #define CHI_XU_SMO_GAIN       10 /*取2实验无感稳态不稳，取5慢反转勉强成功，取10慢反转成功*/
+            #define CHI_XU_LPF_4_ZEQ    (5.0) /*这项过大（eg=100）会导致角度稳态误差，忘记了你就试试看，取=2，=5，=10，=100分别仿！真！看看。*/
+        #endif
         #define CHI_XU_SPEED_PLL_KP (500*2.0) // [rad/s]
         #define CHI_XU_SPEED_PLL_KI (500*500.0)
-        #define CHI_XU_LPF_4_ZEQ    (5.0) /*这项过大（eg=100）会导致角度稳态误差，忘记了你就试试看，取=2，=5，=10，=100分别看看。*/
 
         /* Qiao.Xia 2013 SMO for EMF of SPMSM */
         #define QIAO_XIA_SIGMOID_COEFF  5000 //200 // 20
@@ -163,7 +170,7 @@
 	#define NULL_D_AXIS_CURRENT_CONTROL -1
 	#define MTPA -2 // not supported
 #define CONTROL_STRATEGY NULL_D_AXIS_CURRENT_CONTROL
-#define NUMBER_OF_STEPS 300000
+#define NUMBER_OF_STEPS 250000
     #define DOWN_SAMPLE 1
     #define USE_QEP_RAW TRUE
     #define VOLTAGE_CURRENT_DECOUPLING_CIRCUIT FALSE
@@ -179,7 +186,7 @@
     #define MACHINE_TS_INVERSE (CL_TS_INVERSE*TS_UPSAMPLING_FREQ_EXE_INVERSE)
 
 #define LOAD_INERTIA    0.0
-#define LOAD_TORQUE     5
+#define LOAD_TORQUE     2.5
 #define VISCOUS_COEFF   0.0007
 
 #define CURRENT_KP (6.39955)
