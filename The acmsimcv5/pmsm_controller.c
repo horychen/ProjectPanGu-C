@@ -322,8 +322,13 @@ void controller(REAL set_rpm_speed_command, REAL set_iq_cmd, REAL set_id_cmd){
 /* 拟合法 */
 #ifdef _XCUBE1
 #else
-    REAL sig_a2 = 6.67159129;
-    REAL sig_a3 = 8.42010418;
+    // 80 V
+    // REAL sig_a2 = 6.67159129;
+    // REAL sig_a3 = 8.42010418;
+
+    // 180 V
+    REAL sig_a2 = 13.36317172;
+    REAL sig_a3 = 5.81981571;
 #endif
 REAL sigmoid(REAL x){
     // beta
@@ -357,15 +362,17 @@ REAL sigmoid(REAL x){
             // REAL a1 = 0.0; //1.28430164;
             // REAL a2 = 7.78857441;
             // REAL a3 = 6.20979077;
-        REAL a1 = 0.0; //1.6997103;
-        REAL a2 = sig_a2; 6.67159129;
-        REAL a3 = sig_a3; 8.42010418;
-
+        // REAL a1 = 0.0; //1.6997103;
+        // REAL a2 = sig_a2; 6.67159129;
+        // REAL a3 = sig_a3; 8.42010418;
 
         // b-phase @180 V
-        // REAL a1 = 0.0; //1.50469916;
-        // REAL a2 = 13.48467604;
-        // REAL a3 = 5.22150403;
+            // REAL a1 = 0.0; //1.50469916;
+            // REAL a2 = 13.48467604;
+            // REAL a3 = 5.22150403;
+        REAL a1 = 0.0; //1.83573529
+        REAL a2 = sig_a2; 13.36317172;
+        REAL a3 = sig_a3; 5.81981571;
     #endif
        
     return a1 * x + a2 / (1.0 + exp(-a3 * x)) - a2*0.5;
