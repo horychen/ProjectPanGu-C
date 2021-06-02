@@ -149,40 +149,40 @@ void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REA
 
     #define HU_WU_ALGORITHM_2
     #ifdef HU_WU_ALGORITHM_2
-        if(TRUE){
-            /* 计算有功磁链分量 */
-            huwu.psi_2[0] = xPsi1(0) - MOTOR.Lq * IS(0);
-            huwu.psi_2[1] = xPsi1(1) - MOTOR.Lq * IS(1);
-            /* 求有功磁链幅值的倒数 */
-            huwu.active_flux_ampl = sqrt(huwu.psi_2[0]*huwu.psi_2[0] + huwu.psi_2[1]*huwu.psi_2[1]);
-            REAL active_flux_ampl_inv=0.0;
-            if(huwu.active_flux_ampl!=0){
-                active_flux_ampl_inv = 1.0/huwu.active_flux_ampl;
-            }
-            /* The amplitude limiter for active flux */
-            if(huwu.active_flux_ampl > huwu.limiter_KE){
-                huwu.active_flux_ampl_limited = huwu.limiter_KE;
-            }else{
-                huwu.active_flux_ampl_limited = huwu.active_flux_ampl;
-            }
+        /* 计算有功磁链分量 */
+        huwu.psi_2[0] = xPsi1(0) - MOTOR.Lq * IS(0);
+        huwu.psi_2[1] = xPsi1(1) - MOTOR.Lq * IS(1);
+        /* 求有功磁链幅值的倒数 */
+        huwu.active_flux_ampl = sqrt(huwu.psi_2[0]*huwu.psi_2[0] + huwu.psi_2[1]*huwu.psi_2[1]);
+        REAL active_flux_ampl_inv=0.0;
+        if(huwu.active_flux_ampl!=0){
+            active_flux_ampl_inv = 1.0/huwu.active_flux_ampl;
+        }
+        /* The amplitude limiter for active flux */
+        if(huwu.active_flux_ampl > huwu.limiter_KE){
+            huwu.active_flux_ampl_limited = huwu.limiter_KE;
+        }else{
+            huwu.active_flux_ampl_limited = huwu.active_flux_ampl;
+        }
+
+        if(FALSE){
             /* 根据限幅后的有功磁链去求限幅后的定子磁链 */
             REAL stator_flux_limited[2];
             stator_flux_limited[0] = huwu.psi_2[0]*active_flux_ampl_inv * huwu.active_flux_ampl_limited + MOTOR.Lq*IS(0);
             stator_flux_limited[1] = huwu.psi_2[1]*active_flux_ampl_inv * huwu.active_flux_ampl_limited + MOTOR.Lq*IS(1);            
             /* 求限幅后的定子磁链幅值 */
             huwu.stator_flux_ampl_limited = sqrt(stator_flux_limited[0]*stator_flux_limited[0] + stator_flux_limited[1]*stator_flux_limited[1]);
-        }else{
-            /* The amplitude limiter for stator flux */
-            if(huwu.stator_flux_ampl > huwu.limiter_KE){
-                huwu.stator_flux_ampl_limited = huwu.limiter_KE;
-            }else{
-                huwu.stator_flux_ampl_limited = huwu.stator_flux_ampl;
-            }
-        }
 
-        fx[0] = emf[0] + huwu.tau_1_inv * (( huwu.stator_flux_ampl_limited ) * xPsi1(0) * temp - xPsi1(0) );
-        fx[1] = emf[1] + huwu.tau_1_inv * (( huwu.stator_flux_ampl_limited ) * xPsi1(1) * temp - xPsi1(1) );
-        fx[2] = 0.0;
+            /* Correct by stator flux */
+            fx[0] = emf[0] + huwu.tau_1_inv * (( huwu.stator_flux_ampl_limited ) * xPsi1(0) * temp - xPsi1(0) );
+            fx[1] = emf[1] + huwu.tau_1_inv * (( huwu.stator_flux_ampl_limited ) * xPsi1(1) * temp - xPsi1(1) );
+            fx[2] = 0.0;
+        }else{
+            /* Simplified (Correct by rotor flux) */
+            fx[0] = emf[0] + huwu.tau_1_inv * (( huwu.active_flux_ampl_limited ) * huwu.psi_2[0] * active_flux_ampl_inv - huwu.psi_2[0] );
+            fx[1] = emf[1] + huwu.tau_1_inv * (( huwu.active_flux_ampl_limited ) * huwu.psi_2[1] * active_flux_ampl_inv - huwu.psi_2[1] );
+            fx[2] = 0.0;
+        }
 
     #else
         #define xPsi_Comp x[2]
@@ -352,6 +352,11 @@ void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REA
             AFEOE.k_af = 0.0;
             AFEOE.limiter_Flag = FALSE;
         }
+
+        /* DEBUG */
+        /* DEBUG */
+        /* DEBUG */
+        AFEOE.k_af = 0.0;
 
         /* Proposed closed loop estimator AB frame + ODE4 */
         // stator flux and integral states update

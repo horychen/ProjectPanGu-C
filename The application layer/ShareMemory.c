@@ -52,7 +52,8 @@ struct IPC_MEMORY_READ Read;
 //int channels[NO_OF_CHANNELS]={10,11,20,21,6,39,39,59}; // park trapezoidal
 //int channels[NO_OF_CHANNELS]={10,11,20,21,6,7,39,59}; // park trapezoidal
 //int channels[NO_OF_CHANNELS]={10,11,20,21,6,7,5,23}; // rev1 sensorless slow reversal
-int channels[NO_OF_CHANNELS]={51,52,20,21,6,7,54,59}; // test huwu 1998
+//int channels[NO_OF_CHANNELS]={51,52,20,21,6,7,54,59}; // test huwu 1998
+int channels[NO_OF_CHANNELS]={10,11,20,21,6,7,55,59}; // Compare to CM-VM fusion with only KP
 
 int channels_preset = 0;
 
@@ -85,10 +86,10 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
     //G.dac_watch[12] = COMM.voltage_sum*0.05/(float32)COMM.counterSS;
     //G.dac_watch[13] = COMM.counterSS*0.001;
 
-    G.dac_watch[10] = AFEOE.psi_2[0];
-    G.dac_watch[11] = AFEOE.psi_2[1]; // MOTOR.KActive; //AFEOE.psi_2[1];
-    G.dac_watch[12] = AFEOE.psi_1[0];
-    G.dac_watch[13] = AFEOE.psi_1[1];
+    G.dac_watch[10] = AFE_USED.psi_2[0];
+    G.dac_watch[11] = AFE_USED.psi_2[1]; // MOTOR.KActive; //AFEOE.psi_2[1];
+    G.dac_watch[12] = AFE_USED.psi_1[0];
+    G.dac_watch[13] = AFE_USED.psi_1[1];
 
     G.dac_watch[14] = CTRL.O->uab_cmd_to_inverter[0]*0.01;
     G.dac_watch[15] = CTRL.O->uab_cmd_to_inverter[1]*0.01;
@@ -209,14 +210,14 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
     dac_time_that_cannot_be_modified += CL_TS;
     G.dac_time += CL_TS;
     if((G.dac_time)<3){
-        G.dac_offset[0] =-0.003;
-        G.dac_offset[1] = 0.003;
+        G.dac_offset[0] = 0.0045;
+        G.dac_offset[1] = 0.004;
         G.dac_offset[2] = 0.0055;
         G.dac_offset[3] = 0.0087;
         G.dac_offset[4] = 0.006;
         G.dac_offset[5] = 0.002;
-        G.dac_offset[6] = 0.0;
-        G.dac_offset[7] = 0.0;
+        G.dac_offset[6] = 0.002;
+        G.dac_offset[7] =-0.001;
 
         Write.dac_buffer[0] = G.dac_offset[0];
         Write.dac_buffer[1] = G.dac_offset[1];
