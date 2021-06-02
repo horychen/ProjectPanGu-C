@@ -40,8 +40,8 @@
     #endif
 
     /* Select Algorithm 1 */
-    // #define AFE_USED AFEOE
-    #define AFE_USED huwu
+    #define AFE_USED AFEOE
+    // #define AFE_USED huwu
 
         /* AFEOE or CM-VM Fusion */
         #define AFEOE_OMEGA_ESTIMATOR 5 // [rad/s] //0.5 // 5 for slow reversal
@@ -49,8 +49,8 @@
             #define AFEOE_KI (1*0.02) // 0.02 for 10 rpm // 0.1 for 40 rpm //(2.0) for 300 rpm
 
         /* Hu Wu 1998 recomends tau_1_inv=20 rad/s */
-        #define AFE_21_HUWU_TAU_1_INVERSE (20)
-        // #define AFE_21_HUWU_TAU_1_INVERSE (0.9) // [rad/s] Alg 2: 0.1 rad/s gives better performance near zero speed, but the converging rate is slower comapred to 0.9 rad/s.
+        // #define AFE_21_HUWU_TAU_1_INVERSE (20)
+        #define AFE_21_HUWU_TAU_1_INVERSE (200.0) // [rad/s] Alg 2: 0.1 rad/s gives better performance near zero speed, but the converging rate is slower comapred to 0.9 rad/s.
         // #define AFE_21_HUWU_TAU_1_INVERSE (7.5) // [rad/s] Alg 3: increase this will reduce the transient converging time
         #define AFE_21_HUWU_KP (0.2)  //[rad/s]
         #define AFE_21_HUWU_KI (0.5) //[rad/s]

@@ -200,12 +200,13 @@ void low_speed_operation_init(){
 /*when AS_LOAD_MOTOR_CONST use G.Set_manual_rpm = 300; [rpm], iq is positive*/
 
 /* HUWU--SSR */
-//REAL RSmall =1.95; // motoring is smaller
-//REAL RLarge =2.15; // regenerating
+REAL RSmall =1.95; // motoring is smaller
+REAL RLarge =2.15; // regenerating
 
 /* CM-VM Fusion--SSR */
-REAL RSmall =2.00; // motoring is smaller
-REAL RLarge =2.20; // regenerating
+//REAL RSmall =2.00; // motoring is smaller
+//REAL RLarge =2.20; // regenerating
+
 void slow_speed_reversal_tuning(){
 
     if(CTRL.timebase<30){
