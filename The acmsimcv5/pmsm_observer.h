@@ -66,6 +66,7 @@ struct ObserverForExperiment{
         REAL omega_lpf_4_xZeq;
         REAL PLL_KP;
         REAL PLL_KI;
+        REAL smo_gain_scale; // 几倍反电势
     } chixu;
 #define chixu OBSV.chixu
 #endif

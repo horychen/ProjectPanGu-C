@@ -3,7 +3,7 @@
 /* 经常要修改的 */
 #define INVERTER_NONLINEARITY_COMPENSATION_INIT 2 // 1:ParkSul12, 2:Sigmoid, 3:LUT
 #define INVERTER_NONLINEARITY                   2 // 1:ModelSul96, 2:ModelExpSigmoid, 3: ModelExpLUT
-#define SENSORLESS_CONTROL TRUE
+#define SENSORLESS_CONTROL FALSE
 #define SENSORLESS_CONTROL_HFSI FALSE
 /* ParkSul2012 梯形波 */
 #define GAIN_THETA_TRAPEZOIDAL (40) //(500) // 20
@@ -86,6 +86,9 @@
     // #define ELECTRICAL_POSITION_FEEDBACK CTRL.I->theta_d_elec
 
     /* Tuning Algorithm */
+    #define LOW_SPEED_OPERATION  1
+    #define HIGH_SPEED_OPERATION 2
+    #define OPERATION_MODE HIGH_SPEED_OPERATION
 
         /* Park.Sul 2014 FADO in replace of CM */
         #define PARK_SUL_OPT_1 (2*M_PI*60)
@@ -98,17 +101,26 @@
             #define PARK_SUL_CM_KP (PARK_SUL_CM_OPT*2)
             #define PARK_SUL_CM_KI (PARK_SUL_CM_OPT*PARK_SUL_CM_OPT)
 
-        /* Chi.Xu 2009 SMO for EMF of SPMSM (Coupled position estimation via MRAS) */
-        #define CHI_XU_SIGMOID_COEFF  500 /*比200大以后，在实验中无感速度稳态误差不会再减小了，但是会影响慢反转*/
+    /* Chi.Xu 2009 SMO for EMF of SPMSM (Coupled position estimation via MRAS) */
+    #define CHI_XU_SIGMOID_COEFF  500 /*比200大以后，在实验中无感速度稳态误差不会再减小了，但是会影响慢反转*/
+    #if OPERATION_MODE == LOW_SPEED_OPERATION
         #if PC_SIMULATION
-            #define CHI_XU_SMO_GAIN     10.0  //2
+            #define CHI_XU_SMO_GAIN_SCALE 10.0  //2
             #define CHI_XU_LPF_4_ZEQ    5.0   //10.0
         #else
-            #define CHI_XU_SMO_GAIN       10 /*取2实验无感稳态不稳，取5慢反转勉强成功，取10慢反转成功*/
+            #define CHI_XU_SMO_GAIN_SCALE 10 /*取2实验无感稳态不稳，取5慢反转勉强成功，取10慢反转成功*/
             #define CHI_XU_LPF_4_ZEQ    (5.0) /*这项过大（eg=100）会导致角度稳态误差，忘记了你就试试看，取=2，=5，=10，=100分别仿！真！看看。*/
         #endif
+
         #define CHI_XU_SPEED_PLL_KP (500*2.0) // [rad/s]
         #define CHI_XU_SPEED_PLL_KI (500*500.0)
+
+    #elif OPERATION_MODE == HIGH_SPEED_OPERATION
+        #define CHI_XU_SMO_GAIN_SCALE 1.5
+        #define CHI_XU_LPF_4_ZEQ       50
+        #define CHI_XU_SPEED_PLL_KP (1000) // [rad/s]
+        #define CHI_XU_SPEED_PLL_KI (50000)
+    #endif
 
         /* Qiao.Xia 2013 SMO for EMF of SPMSM */
         #define QIAO_XIA_SIGMOID_COEFF  5000 //200 // 20

@@ -1,6 +1,6 @@
 #include "ACMSim.h"
 
-#define INCREMENTAL_PID FALSE
+#define INCREMENTAL_PID TRUE
 #if INCREMENTAL_PID
 void PID_calc(st_pid_regulator *r){
 
