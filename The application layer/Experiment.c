@@ -8,7 +8,7 @@ void init_experiment_overwrite(){
     #ifdef _XCUBE1
         CTRL.g->OverwriteSpeedOutLimit = 2;
     #else
-        CTRL.g->OverwriteSpeedOutLimit = 10;
+        CTRL.g->OverwriteSpeedOutLimit = 6;
     #endif
     CTRL.g->Overwrite_Voltage_DC_BUS = 180;
     CTRL.g->flag_overwite_voltage_dc_bus = FALSE;

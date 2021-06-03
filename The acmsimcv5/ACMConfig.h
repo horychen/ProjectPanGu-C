@@ -104,7 +104,8 @@
             #define PARK_SUL_CM_KI (PARK_SUL_CM_OPT*PARK_SUL_CM_OPT)
 
     /* Chi.Xu 2009 SMO for EMF of SPMSM (Coupled position estimation via MRAS) */
-    #define CHI_XU_SIGMOID_COEFF  500 /*比200大以后，在实验中无感速度稳态误差不会再减小了，但是会影响慢反转*/
+    #define CHI_XU_USE_CONSTANT_SMO_GAIN TRUE
+        #define CHI_XU_SIGMOID_COEFF  500 /*比200大以后，在实验中无感速度稳态误差不会再减小了，但是会影响慢反转*/
     #if OPERATION_MODE == LOW_SPEED_OPERATION
         /* note ell4Zeq is -0.5 */
         #if PC_SIMULATION
@@ -117,22 +118,21 @@
 
         #define CHI_XU_SPEED_PLL_KP (500*2.0) // [rad/s]
         #define CHI_XU_SPEED_PLL_KI (500*500.0)
-
     #elif OPERATION_MODE == HIGH_SPEED_OPERATION
         /* note ell4Zeq will become 1 */
-        #define CHI_XU_SMO_GAIN_SCALE  3.0
-        #define CHI_XU_LPF_4_ZEQ       5.0
-        #define CHI_XU_SPEED_PLL_KP (1000) // [rad/s]
-        #define CHI_XU_SPEED_PLL_KI (50000)
+        #define CHI_XU_SMO_GAIN_SCALE  1.5
+        #define CHI_XU_LPF_4_ZEQ       10.0
+        #define CHI_XU_SPEED_PLL_KP (3000) // [rad/s] 3000 = 阶跃转速不震荡，8000=阶跃转速很震荡
+        #define CHI_XU_SPEED_PLL_KI (350000)
     #endif
 
-        /* Qiao.Xia 2013 SMO for EMF of SPMSM */
+    /* Qiao.Xia 2013 SMO for EMF of SPMSM */
         #define QIAO_XIA_SIGMOID_COEFF  5000 //200 // 20
         #define QIAO_XIA_SMO_GAIN       1.5 //1.5     // 1.5
         #define QIAO_XIA_MRAS_GAIN      500 //500       // 50
         #define QIAO_XIA_ADAPT_GAIN     500 //2000 // 250 // 100
 
-        /* CHEN 2020 NSO with Active Flux Concept */
+    /* CHEN 2020 NSO with Active Flux Concept */
         // #define NSOAF_SPMSM // use AP Error
         #define NSOAF_IPMSM // use only OE
         #define TUNING_IGNORE_UQ TRUE
@@ -141,16 +141,16 @@
             #define NSOAF_TL_I (20)
             #define NSOAF_TL_D (0)
 
-        /* Farza 2009 for EMMF */
+    /* Farza 2009 for EMMF */
         #define FARZA09_HGO_EEMF_VARTHETA 10
         #define FARZA09_HGO_EEMF_GAMMA_OMEGA_INITIAL_VALUE 10
 
-        /* CJH EEMF AO Design */
+    /* CJH EEMF AO Design */
         #define CJH_EEMF_K1 (100)
         #define CJH_EEMF_K2 (CJH_EEMF_K1*CJH_EEMF_K1*0.25) // see my TCST paper@(18)
         #define CJH_EEMF_GAMMA_OMEGA (5e6)
 
-        /* Harnefors 2006 */
+    /* Harnefors 2006 */
 
 #elif /* Induction Motor */ MACHINE_TYPE % 10 == 1
     // Marino05 调参 /// default: (17143), (2700.0), (1000), (1), (0)

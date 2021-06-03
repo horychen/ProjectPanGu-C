@@ -175,6 +175,9 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
     //        G.dac_watch[50] = (CAP.ecapU.DutyOnTime2)  * 0.25e-4;
     //        G.dac_watch[51] = (CAP.ecapU.DutyOffTime2) * 0.25e-4;
 
+    G.dac_watch[56] = (CTRL.I->rpm - CTRL.I->cmd_speed_rpm)*0.01;
+    G.dac_watch[57] = (ELECTRICAL_SPEED_FEEDBACK*ELEC_RAD_PER_SEC_2_RPM - CTRL.I->cmd_speed_rpm)*0.01;
+
     G.dac_watch[59] = sin(ENC.theta_d_elec - ELECTRICAL_POSITION_FEEDBACK);
 
 
