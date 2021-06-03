@@ -59,6 +59,7 @@ struct IPC_MEMORY_READ Read;
 //int channels[NO_OF_CHANNELS]={50,9,20,21,6,7,52,59}; // Chi.Xu 2009 SSR
 //int channels[NO_OF_CHANNELS]={50,9,52,53,26,27,49,59}; // Chi.Xu 2009 High speed
 int channels[NO_OF_CHANNELS]={56,57,3,5,26,27,49,59}; // Chi.Xu 2009 High speed
+//int channels[NO_OF_CHANNELS]={56,57,3,5,26,27,23,59}; // NSOAF High Speed
 
 int channels_preset = 0;
 
@@ -155,6 +156,7 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
         G.dac_watch[47] = (CAP.dq[1]            )*0.02;
     #endif
 
+    #if SELECT_ALGORITHM == ALG_Chi_Xu
     // Chi Xu 2009
     G.dac_watch[49] = sin(ENC.theta_d_elec - chixu.xTheta_d);
     G.dac_watch[50] = chixu.xIab[0]*0.2;
@@ -163,6 +165,7 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
     G.dac_watch[53] = chixu.xZeq[1]*0.1;
     G.dac_watch[54] = chixu.xEmf_raw[0]*0.01;
     G.dac_watch[55] = chixu.xEmf_raw[1]*0.01;
+    #endif
 
     // HU WU 1998
     //    G.dac_watch[50] = sin(CTRL.I->theta_d_elec-huwu.theta_d);

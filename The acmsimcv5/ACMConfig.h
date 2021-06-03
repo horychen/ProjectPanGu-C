@@ -3,7 +3,7 @@
 /* 经常要修改的 */
 #define INVERTER_NONLINEARITY_COMPENSATION_INIT 2 // 1:ParkSul12, 2:Sigmoid, 3:LUT
 #define INVERTER_NONLINEARITY                   2 // 1:ModelSul96, 2:ModelExpSigmoid, 3: ModelExpLUT
-#define SENSORLESS_CONTROL FALSE
+#define SENSORLESS_CONTROL TRUE
 #define SENSORLESS_CONTROL_HFSI FALSE
 /* ParkSul2012 梯形波 */
 #define GAIN_THETA_TRAPEZOIDAL (40) //(500) // 20
@@ -64,8 +64,8 @@
         #define ALG_CJH_EEMF 5
         #define ALG_Farza_2009 6
         #define ALG_Harnefors_2006 7
-    // #define SELECT_ALGORITHM ALG_NSOAF
-    #define SELECT_ALGORITHM ALG_Chi_Xu
+    #define SELECT_ALGORITHM ALG_NSOAF
+    // #define SELECT_ALGORITHM ALG_Chi_Xu
 
     // #define ELECTRICAL_SPEED_FEEDBACK    G.omg_elec
     // #define ELECTRICAL_POSITION_FEEDBACK G.theta_d
