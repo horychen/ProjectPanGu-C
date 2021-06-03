@@ -12,6 +12,7 @@
 #define AS_LOAD_MOTOR_RAMP  2
 #define NSOAF_LOW_SPEED_OPERATION  3
 #define NSOAF_HIGH_SPEED_OPERATION 4
+#define NSOAF_RAMP_SPEED_OPERATION 41
 #define XCUBE_TaTbTc_DEBUG_MODE    5
 
 void init_experiment_AD_gain_and_offset();
@@ -31,6 +32,9 @@ void zero_speed_stopping();
 void high_speed_operation_init();
 void high_speed_operation_tuning();
 void high_speed_operation();
+void ramp_speed_operation_init();
+void ramp_speed_operation();
+void ramp_speed_operation_tuning();
 
 
 #endif /* THE_DRIVER_LAYER_EXPERIMENT_H_ */
