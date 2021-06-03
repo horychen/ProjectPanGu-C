@@ -1,6 +1,26 @@
 #include <All_Definition.h>
 
-void init_experiment_overwrite(int Seletc_exp_operation){
+void init_experiment_overwrite(){
+
+    // Mode Changing During Experiment
+    CTRL.g->OverwriteSpeedOutLimit = 2;
+    CTRL.g->Overwrite_Voltage_DC_BUS = 180;
+    CTRL.g->flag_overwite_voltage_dc_bus = FALSE;
+    CTRL.g->flag_use_ecap_voltage = 0;
+
+    // CTRL.g->Select_algorithm = SELECT_ALGORITHM;
+
+    // G.Rotor_angle_selection=SYSTEM_QEP_ROTOR_ANGLE; // delete?
+
+    CTRL.g->Set_manual_rpm = 300;
+    CTRL.g->DAC_MAX5307_FLAG = FALSE;
+    CTRL.g->AD_offset_flag2 = FALSE;
+
+    init_experiment_offset();
+
+    CTRL.g->FLAG_INVERTER_NONLINEARITY_COMPENSATION = INVERTER_NONLINEARITY_COMPENSATION_INIT;
+
+
     /* 750W MOTOR1 (wo/ hall) */
     //CTRL.motor->R = 1.6;
     CTRL.motor->KE = 0.095;
@@ -48,18 +68,28 @@ void init_experiment_overwrite(int Seletc_exp_operation){
 
     pid1_spd.OutLimit = G.OverwriteSpeedOutLimit;
 
-    if(Seletc_exp_operation == AS_LOAD_MOTOR_CONST){
+
+    #ifdef _XCUBE1
+        CTRL.g->Seletc_exp_operation = 1; //AS_LOAD_MOTOR_CONST;
+        G.dac_watch_stator_resistance = 1.703;
+    #else
+        // CTRL.g->Seletc_exp_operation = 3; //NSOAF_LOW_SPEED_OPERATION;
+        // CTRL.g->Seletc_exp_operation = 4; //NSOAF_HIGH_SPEED_OPERATION
+        G.dac_watch_stator_resistance = 1.69;
+    #endif
+
+    if(G.Seletc_exp_operation == AS_LOAD_MOTOR_CONST){
         pid1_spd.OutLimit = 2.1; //2.0;
         G.Set_manual_rpm = 300;
     }
-    if(Seletc_exp_operation == AS_LOAD_MOTOR_RAMP){
+    if(G.Seletc_exp_operation == AS_LOAD_MOTOR_RAMP){
         pid1_spd.OutLimit = 0.01;
         G.Set_manual_rpm = -1200;
     }
-    if(Seletc_exp_operation == NSOAF_LOW_SPEED_OPERATION){
+    if(G.Seletc_exp_operation == NSOAF_LOW_SPEED_OPERATION){
         low_speed_operation_init();
     }
-    if(Seletc_exp_operation == NSOAF_HIGH_SPEED_OPERATION){
+    if(G.Seletc_exp_operation == NSOAF_HIGH_SPEED_OPERATION){
         high_speed_operation_init();
     }
 
