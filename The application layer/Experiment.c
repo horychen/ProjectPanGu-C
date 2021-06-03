@@ -364,11 +364,11 @@ void high_speed_operation_tuning(){
     #if SELECT_ALGORITHM == ALG_Chi_Xu
     #elif SELECT_ALGORITHM == ALG_NSOAF
         // Original Submission
-        //        /* 动态性能和两个KP的值密切相关 */
-        //            //    nsoaf.KP = fabs(G.Set_manual_rpm) / 1500.0 * 4;
-        //            //    if(nsoaf.KP<1){
-        //            //        nsoaf.KP = 1;
-        //            //    }
+        /* 动态性能和两个KP的值密切相关 */
+            //    nsoaf.KP = fabs(G.Set_manual_rpm) / 1500.0 * 4;
+            //    if(nsoaf.KP<1){
+            //        nsoaf.KP = 1;
+            //    }
         //        if(fabs(G.Set_manual_rpm) > 1000){
         //            nsoaf.KP = 4; //2;
         //            AFEOE.ActiveFlux_KP = 1;
@@ -381,20 +381,20 @@ void high_speed_operation_tuning(){
         //        }else{
         //            AFEOE.ActiveFlux_KP = 0.1;
         //        }
-        //
-        //        /* Steady state rpm error when ZFY speed command is at 0 rpm (load sudden change when speed command sign changes) */
-        //        //    if(G.Set_manual_rpm > 0){
-        //        //        CTRL.motor->KE=0.097;
-        //        //    }else{
-        //        //        CTRL.motor->KE=0.099;
-        //        //    }
-        //
-        //        /* Steady state rpm error when ZFY speed command is at 2000 rpm. */
-        //        if(G.Set_manual_rpm > 0){
-        //            CTRL.motor->KE = 0.103; // positive spinning with load motor@2000 rpm 2.1A
-        //        }else{
-        //            CTRL.motor->KE=0.087;  // negative positive spinning with load motor@2000 rpm 2.1A
-        //        }
+
+        /* Steady state rpm error when ZFY speed command is at 0 rpm (load sudden change when speed command sign changes) */
+        //    if(G.Set_manual_rpm > 0){
+        //        CTRL.motor->KE=0.097;
+        //    }else{
+        //        CTRL.motor->KE=0.099;
+        //    }
+
+        /* Steady state rpm error when ZFY speed command is at 2000 rpm. */
+        if(G.Set_manual_rpm > 0){
+            CTRL.motor->KE = 0.0895; // positive spinning with load motor@2000 rpm 2.1A
+        }else{
+            CTRL.motor->KE=0.089;  // negative positive spinning with load motor@2000 rpm 2.1A
+        }
     #endif
 
     /* 防止手贱输错了值 */
