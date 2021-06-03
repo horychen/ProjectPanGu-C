@@ -885,6 +885,11 @@ void Main_ChiXu2009_emfSMO(){
     chixu.xZeq[0]  = chixu.x[2];
     chixu.xZeq[1]  = chixu.x[3];
     chixu.xOmg     = chixu.x[4];
+    if(chixu.x[5]>M_PI){
+        chixu.x[5] -= 2*M_PI;
+    }else if(chixu.x[5]<-M_PI){
+        chixu.x[5] += 2*M_PI;
+    }
     chixu.xTheta_d = chixu.x[5];
     if(TRUE){
         // use xZeq
