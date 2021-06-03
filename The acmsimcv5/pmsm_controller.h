@@ -270,7 +270,6 @@ extern struct ControllerForExperiment CTRL;
 
 
 void init_experiment();
-void init_experiment_offset();
 void init_CTRL();
 void commissioning();
 void controller(REAL rpm_speed_command, REAL set_iq_cmd, REAL set_id_cmd);

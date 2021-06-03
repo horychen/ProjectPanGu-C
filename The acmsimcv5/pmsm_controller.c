@@ -12,18 +12,6 @@ void init_experiment(){
 }
 
 // 初始化函数
-#if PC_SIMULATION
-    // this is defined in main.c for experiment
-void init_experiment_offset(){
-    /* Peripheral configurations */
-    CTRL.enc->OffsetCountBetweenIndexAndUPhaseAxis = 0;
-    CTRL.enc->theta_d_offset = CTRL.enc->OffsetCountBetweenIndexAndUPhaseAxis * CNT_2_ELEC_RAD;
-
-    // 这个在仿真中是要一直运行的，不要清零！
-    // ENC.sum_qepPosCnt = 0.0;
-    // ENC.cursor = 0;
-};
-#endif
 void init_CTRL(){
 
     allocate_CTRL(&CTRL);
@@ -76,33 +64,12 @@ void init_CTRL(){
     CTRL.cap->ECapPassCount[1]= 0;
     CTRL.cap->ECapPassCount[2]= 0;
 
+/* Peripheral configurations */
+    CTRL.enc->OffsetCountBetweenIndexAndUPhaseAxis = 0;
+    CTRL.enc->theta_d_offset = CTRL.enc->OffsetCountBetweenIndexAndUPhaseAxis * CNT_2_ELEC_RAD;
+
 /* Console */
-    // Mode Changing During Experiment
-    CTRL.g->OverwriteSpeedOutLimit = 2;
-    CTRL.g->Overwrite_Voltage_DC_BUS = 180;
-    CTRL.g->flag_overwite_voltage_dc_bus = FALSE;
-    CTRL.g->flag_use_ecap_voltage = 0;
-
-    // CTRL.g->Select_algorithm = SELECT_ALGORITHM;
-
-    // G.Rotor_angle_selection=SYSTEM_QEP_ROTOR_ANGLE; // delete?
-
-    CTRL.g->Set_manual_rpm = 300;
-    CTRL.g->DAC_MAX5307_FLAG = FALSE;
-    CTRL.g->AD_offset_flag2 = FALSE;
-
-    init_experiment_offset();
-
-    CTRL.g->FLAG_INVERTER_NONLINEARITY_COMPENSATION = INVERTER_NONLINEARITY_COMPENSATION_INIT;
-
-    #ifdef _XCUBE1
-        CTRL.g->Seletc_exp_operation = 1; //AS_LOAD_MOTOR_CONST;
-        G.dac_watch_stator_resistance = 1.703;
-    #else
-        CTRL.g->Seletc_exp_operation = 3; //NSOAF_LOW_SPEED_OPERATION;
-        // CTRL.g->Seletc_exp_operation = 4; //NSOAF_HIGH_SPEED_OPERATION
-        G.dac_watch_stator_resistance = 1.69;
-    #endif
+    // See init_experiment_overwrite() in CJHMainISR.c
 
 /* Black Box Model | Controller quantities */
 
