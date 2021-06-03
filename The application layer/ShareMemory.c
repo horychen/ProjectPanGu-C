@@ -57,7 +57,7 @@ struct IPC_MEMORY_READ Read;
 //int channels[NO_OF_CHANNELS]={10,11,20,21,6,7,55,59}; // Compare to CM-VM fusion with only KP
 
 //int channels[NO_OF_CHANNELS]={50,9,20,21,6,7,52,59}; // Chi.Xu 2009 SSR
-int channels[NO_OF_CHANNELS]={50,9,20,21,26,27,49,59}; // Chi.Xu 2009 High speed
+int channels[NO_OF_CHANNELS]={50,9,52,53,26,27,49,59}; // Chi.Xu 2009 High speed
 
 int channels_preset = 0;
 
@@ -159,7 +159,8 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
     G.dac_watch[51] = chixu.output_error[0]*0.2;
     G.dac_watch[52] = chixu.xZeq[0]*0.1;
     G.dac_watch[53] = chixu.xZeq[1]*0.1;
-
+    G.dac_watch[54] = chixu.xEmf_raw[0]*0.01;
+    G.dac_watch[55] = chixu.xEmf_raw[1]*0.01;
 
     // HU WU 1998
     //    G.dac_watch[50] = sin(CTRL.I->theta_d_elec-huwu.theta_d);
@@ -224,7 +225,7 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
         G.dac_offset[0] = 0.0045;
         G.dac_offset[1] = 0.004;
         G.dac_offset[2] = 0.0055;
-        G.dac_offset[3] = 0.0087;
+        G.dac_offset[3] = 0.0035;
         G.dac_offset[4] = 0.006;
         G.dac_offset[5] = 0.002;
         G.dac_offset[6] = 0.002;

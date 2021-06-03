@@ -14,7 +14,7 @@ void init_experiment_AD_gain_and_offset(){
         G.offsetU=2075;
         G.offsetV=2062;
         G.offsetW=2047; // ADC offset. U, V, W corresponds to ADCRESULT2, ADCRESULT3, ADCRESULT1.
-        G.offsetUDC=1; // 5.18
+        G.offsetUDC=0; // 6.03
     #endif
 
     /* ADC SCALE */
@@ -30,7 +30,7 @@ void init_experiment_AD_gain_and_offset(){
         G.AD_scale_W   = 0.0049418264616;
         G.AD_scale_V   = 0.0064003544;
         G.AD_scale_U   = 0.005325766233109334;
-        G.AD_scale_VDC = 0.1265022138; // =0.5*0.1897533207 / 60 * 80, 袁鑫6月2日改的硬件 //  (0.5*0.1897533207); // 短上一个470R再补上一个470R，所以乘0.5。
+        G.AD_scale_VDC = 0.09375740207975308; //=180.1 / (182.25 / (0.5*0.1897533207)) // 连ecap系数变！ // =0.5*0.1897533207 / 60 * 80, 袁鑫6月2日改的硬件？ //  (0.5*0.1897533207); // 短上一个470R再补上一个470R，所以乘0.5。
     #endif
 
     /* eQEP OFFSET */

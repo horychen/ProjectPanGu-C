@@ -25,7 +25,7 @@ void voltage_commands_to_pwm(){
 void measurement(){
 
     // 母线电压测量
-    G.Voltage_DC_BUS=((AdcaResultRegs.ADCRESULT0)-G.offsetUDC)*G.AD_scale_VDC + G.Offset_Udc;//
+    G.Voltage_DC_BUS=((REAL)(AdcaResultRegs.ADCRESULT0)-G.offsetUDC)*G.AD_scale_VDC + G.Offset_Udc;//
 
     // 相电压测量（基于占空比和母线电压）
     CAP.terminal_voltage[0] = (CAP.terminal_DutyOnRatio[0]) * G.Voltage_DC_BUS - G.Voltage_DC_BUS * 0.5; // -0.5 is due to duty ratio calculation; - Voltage_DC_BUS * 0.5 is referring to the center of dc bus capacitor.
@@ -112,9 +112,9 @@ void measurement(){
         G.Current_U=-(G.Current_W+G.Current_V);
 
     #else
-        G.Current_W       =((AdcaResultRegs.ADCRESULT1)-G.offsetW)*G.AD_scale_W;// ADC A1-> Phase W Current  //-11.8-11.8A
-        G.Current_Not_Used=((AdcaResultRegs.ADCRESULT3)-G.offsetV)*G.AD_scale_V;// ADC A1-> Phase V Current  //-11.8-11.8A
-        G.Current_U       =((AdcaResultRegs.ADCRESULT2)-G.offsetU)*G.AD_scale_U;// ADC A1-> Phase U Current  //-11.8-11.8A
+        G.Current_W       =((REAL)(AdcaResultRegs.ADCRESULT1)-G.offsetW)*G.AD_scale_W;// ADC A1-> Phase W Current  //-11.8-11.8A
+        G.Current_Not_Used=((REAL)(AdcaResultRegs.ADCRESULT3)-G.offsetV)*G.AD_scale_V;// ADC A1-> Phase V Current  //-11.8-11.8A
+        G.Current_U       =((REAL)(AdcaResultRegs.ADCRESULT2)-G.offsetU)*G.AD_scale_U;// ADC A1-> Phase U Current  //-11.8-11.8A
         if(G.AD_offset_flag2==TRUE){
             G.Current_W = G.Current_W - G.Offset_W;
             G.Current_Not_Used = G.Current_Not_Used - G.Offset_V;

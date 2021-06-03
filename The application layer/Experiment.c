@@ -1,23 +1,25 @@
 #include <All_Definition.h>
 
 void init_experiment_overwrite(){
+
     init_experiment_AD_gain_and_offset();
 
-    // Mode Changing During Experiment
-    CTRL.g->OverwriteSpeedOutLimit = 2;
+    /* Mode Changing During Experiment */
+    #ifdef _XCUBE1
+        CTRL.g->OverwriteSpeedOutLimit = 2;
+    #else
+        CTRL.g->OverwriteSpeedOutLimit = 10;
+    #endif
     CTRL.g->Overwrite_Voltage_DC_BUS = 180;
     CTRL.g->flag_overwite_voltage_dc_bus = FALSE;
     CTRL.g->flag_use_ecap_voltage = 0;
-
-    // CTRL.g->Select_algorithm = SELECT_ALGORITHM;
-
-    // G.Rotor_angle_selection=SYSTEM_QEP_ROTOR_ANGLE; // delete?
 
     CTRL.g->Set_manual_rpm = 300;
     CTRL.g->DAC_MAX5307_FLAG = FALSE;
     CTRL.g->AD_offset_flag2 = FALSE;
 
     CTRL.g->FLAG_INVERTER_NONLINEARITY_COMPENSATION = INVERTER_NONLINEARITY_COMPENSATION_INIT;
+
 
 
     /* 750W MOTOR1 (wo/ hall) */
@@ -62,6 +64,10 @@ void init_experiment_overwrite(){
          * */
         AFEOE.ActiveFlux_KP = 50; // for R=1.7, larger KP causes larger pos error (KP=30 went unstable), but with correct R, large KP can be used.
         AFEOE.ActiveFlux_KI = 25;
+
+        /* ONLy Kp */
+        AFEOE.ActiveFlux_KP = 200;
+        AFEOE.ActiveFlux_KI = 0.0;
 
     #endif
 
