@@ -1,6 +1,7 @@
 #include <All_Definition.h>
 
 void init_experiment_overwrite(){
+    init_experiment_AD_gain_and_offset();
 
     // Mode Changing During Experiment
     CTRL.g->OverwriteSpeedOutLimit = 2;
@@ -15,8 +16,6 @@ void init_experiment_overwrite(){
     CTRL.g->Set_manual_rpm = 300;
     CTRL.g->DAC_MAX5307_FLAG = FALSE;
     CTRL.g->AD_offset_flag2 = FALSE;
-
-    init_experiment_offset();
 
     CTRL.g->FLAG_INVERTER_NONLINEARITY_COMPENSATION = INVERTER_NONLINEARITY_COMPENSATION_INIT;
 

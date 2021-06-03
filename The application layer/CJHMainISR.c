@@ -210,7 +210,7 @@ void CJHMainISR(void){
 
             init_experiment();
             //G.Seletc_exp_operation = 3; // fixed
-            init_experiment_overwrite(G.Seletc_exp_operation);
+            init_experiment_overwrite();
         }
 
         DELAY_US(11);

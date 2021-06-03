@@ -14,7 +14,7 @@
 #define NSOAF_HIGH_SPEED_OPERATION 4
 #define XCUBE_TaTbTc_DEBUG_MODE    5
 
-
+void init_experiment_AD_gain_and_offset();
 void init_experiment_overwrite();
 void runtime_command_and_tuning();
 
