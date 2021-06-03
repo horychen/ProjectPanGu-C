@@ -108,6 +108,7 @@
         #define CHI_XU_SIGMOID_COEFF  500 /*比200大以后，在实验中无感速度稳态误差不会再减小了，但是会影响慢反转*/
     #if OPERATION_MODE == LOW_SPEED_OPERATION
         /* note ell4Zeq is -0.5 */
+        #define CHI_XU_USE_CONSTANT_LPF_POLE TRUE
         #if PC_SIMULATION
             #define CHI_XU_SMO_GAIN_SCALE 10.0  //2
             #define CHI_XU_LPF_4_ZEQ    5.0   //10.0
@@ -122,8 +123,9 @@
         /* note ell4Zeq will become 1 */
         #define CHI_XU_SMO_GAIN_SCALE  1.5
         #define CHI_XU_LPF_4_ZEQ       10.0
-        #define CHI_XU_SPEED_PLL_KP (3000) // [rad/s] 3000 = 阶跃转速不震荡，8000=阶跃转速很震荡
-        #define CHI_XU_SPEED_PLL_KI (350000)
+        #define CHI_XU_USE_CONSTANT_LPF_POLE FALSE
+        #define CHI_XU_SPEED_PLL_KP (2*500) // [rad/s] 3000 = 阶跃转速不震荡，8000=阶跃转速很震荡
+        #define CHI_XU_SPEED_PLL_KI (10e4) // 从350000减少为150000，可以减少稳态估计转速的波动
     #endif
 
     /* Qiao.Xia 2013 SMO for EMF of SPMSM */

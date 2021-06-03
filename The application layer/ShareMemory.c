@@ -57,7 +57,8 @@ struct IPC_MEMORY_READ Read;
 //int channels[NO_OF_CHANNELS]={10,11,20,21,6,7,55,59}; // Compare to CM-VM fusion with only KP
 
 //int channels[NO_OF_CHANNELS]={50,9,20,21,6,7,52,59}; // Chi.Xu 2009 SSR
-int channels[NO_OF_CHANNELS]={50,9,52,53,26,27,49,59}; // Chi.Xu 2009 High speed
+//int channels[NO_OF_CHANNELS]={50,9,52,53,26,27,49,59}; // Chi.Xu 2009 High speed
+int channels[NO_OF_CHANNELS]={56,57,3,5,26,27,49,59}; // Chi.Xu 2009 High speed
 
 int channels_preset = 0;
 
@@ -70,13 +71,14 @@ void write_DAC_buffer(){
 if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
 
     // 所有曾经看过的变量都在列在这里，记得有效范围是 [-1, 1]。
-    G.dac_watch[0] = G.Current_U*0.2;
+    G.dac_watch[0] = G.Current_W*0.2;
     G.dac_watch[1] = G.Current_V*0.2;
-    G.dac_watch[2] = G.Current_W*0.2;
-    G.dac_watch[3] = G.Current_Not_Used*0.2;
-
-    G.dac_watch[4] = CTRL.I->idq[0]*0.2;
-    G.dac_watch[5] = CTRL.I->idq[1]*0.2; // 5 A for low speed
+    //G.dac_watch[2] = G.Current_U*0.2;
+    //G.dac_watch[3] = G.Current_Not_Used*0.2;
+    G.dac_watch[2] = CTRL.I->idq_cmd[0]*0.1;
+    G.dac_watch[3] = CTRL.I->idq_cmd[1]*0.1; // 5 A for low speed
+    G.dac_watch[4] = CTRL.I->idq[0]*0.1;
+    G.dac_watch[5] = CTRL.I->idq[1]*0.1; // 5 A for low speed
     //G.dac_watch[5] = CTRL.I->idq[1]*0.05; // 20 A for high speed reversal
     G.dac_watch[6] = CTRL.I->rpm*0.002;
     G.dac_watch[7] = ELECTRICAL_SPEED_FEEDBACK*ELEC_RAD_PER_SEC_2_RPM*0.002;

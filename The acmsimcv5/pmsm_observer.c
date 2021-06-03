@@ -870,10 +870,14 @@ void rhf_ChiXu2009_Dynamics(REAL t, REAL *x, REAL *fx){
 }
 void Main_ChiXu2009_emfSMO(){
 
+    // #define OMEGA_SYNC_USED CTRL.I->cmd_omg_elec
+    // #define OMEGA_SYNC_USED CTRL.I->omg_elec
+    #define OMEGA_SYNC_USED chixu.xOmg
+
     #if CHI_XU_USE_CONSTANT_SMO_GAIN == FALSE
         /* Time-varying gains */
-        chixu.smo_gain = chixu.smo_gain_scale * fabs(CTRL.I->cmd_omg_elec) * MOTOR.KE; // 根据Qiao.Xia 2013的稳定性证明增益要比反电势大。
-        if(fabs(CTRL.I->cmd_omg_elec)<5){
+        chixu.smo_gain = chixu.smo_gain_scale * fabs(OMEGA_SYNC_USED) * MOTOR.KE; // 根据Qiao.Xia 2013的稳定性证明增益要比反电势大。
+        if(fabs(OMEGA_SYNC_USED)<5){ // [rad/s]
             // 转速太低以后，就不要再减小滑模增益了
             chixu.smo_gain = chixu.smo_gain_scale * 5 * MOTOR.KE;
         }
@@ -890,7 +894,9 @@ void Main_ChiXu2009_emfSMO(){
         It is noticed that the time constant τc of LPF should be designed
         properly according to the fundamental frequency of phase
         currents of PMSM */
-    chixu.omega_lpf_4_xZeq = 0.1*fabs(CTRL.I->cmd_omg_elec) + chixu.omega_lpf_4_xZeq_const_part;
+    #if CHI_XU_USE_CONSTANT_LPF_POLE == FALSE
+        chixu.omega_lpf_4_xZeq = 0.05*fabs(OMEGA_SYNC_USED) + chixu.omega_lpf_4_xZeq_const_part;
+    #endif
 
     general_6states_rk4_solver(&rhf_ChiXu2009_Dynamics, CTRL.timebase, chixu.x, CL_TS);
 
