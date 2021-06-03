@@ -792,12 +792,19 @@ void Main_QiaoXia2013_emfSMO(){
  */
 #if PC_SIMULATION || SELECT_ALGORITHM == ALG_Chi_Xu
 void init_ChiXu2009(){
-    chixu.smo_gain      = 0.0; // time varying gain
+    /*实验中Chi.Xu的状态x在调参过程中经常变成+inf，所以这里初始化一下。*/
+    chixu.x[0] = 0.0;
+    chixu.x[1] = 0.0;
+    chixu.x[2] = 0.0;
+    chixu.x[3] = 0.0;
+
+    chixu.smo_gain      = 400.0; // CHI_XU_USE_CONSTANT_SMO_GAIN
     chixu.sigmoid_coeff = CHI_XU_SIGMOID_COEFF;   // 17
     chixu.PLL_KP        = CHI_XU_SPEED_PLL_KP;
     chixu.PLL_KI        = CHI_XU_SPEED_PLL_KI;
     chixu.ell4xZeq      = -0.5; // -0.5 for low speed and 1.0 for high speed
-    chixu.omega_lpf_4_xZeq = CHI_XU_LPF_4_ZEQ;
+    chixu.omega_lpf_4_xZeq_const_part = CHI_XU_LPF_4_ZEQ;
+    chixu.omega_lpf_4_xZeq = chixu.omega_lpf_4_xZeq_const_part;
 
     chixu.smo_gain_scale = CHI_XU_SMO_GAIN_SCALE;
 }
@@ -863,19 +870,27 @@ void rhf_ChiXu2009_Dynamics(REAL t, REAL *x, REAL *fx){
 }
 void Main_ChiXu2009_emfSMO(){
 
-    /* Time-varying gains */
-    chixu.smo_gain = chixu.smo_gain_scale * fabs(CTRL.I->cmd_omg_elec) * MOTOR.KE; // 根据Qiao.Xia 2013的稳定性证明增益要比反电势大。
-    if(fabs(CTRL.I->cmd_omg_elec)<5){
-        // 转速太低以后，就不要再减小滑模增益了
-        chixu.smo_gain = chixu.smo_gain_scale * 5 * MOTOR.KE;
-    }
-    // chixu.smo_gain = chixu.smo_gain_scale * 10;  // constant gain
+    #if CHI_XU_USE_CONSTANT_SMO_GAIN == FALSE
+        /* Time-varying gains */
+        chixu.smo_gain = chixu.smo_gain_scale * fabs(CTRL.I->cmd_omg_elec) * MOTOR.KE; // 根据Qiao.Xia 2013的稳定性证明增益要比反电势大。
+        if(fabs(CTRL.I->cmd_omg_elec)<5){
+            // 转速太低以后，就不要再减小滑模增益了
+            chixu.smo_gain = chixu.smo_gain_scale * 5 * MOTOR.KE;
+        }
+    #endif
 
+    /* ell for xZeq */
     if(fabs(CTRL.I->cmd_speed_rpm)>180){
         chixu.ell4xZeq = 1.0;
     }else{
         chixu.ell4xZeq = -0.5;
     }
+
+    /* For the sake of simplicity, a first-order LPF is used in (3).
+        It is noticed that the time constant τc of LPF should be designed
+        properly according to the fundamental frequency of phase
+        currents of PMSM */
+    chixu.omega_lpf_4_xZeq = 0.1*fabs(CTRL.I->cmd_omg_elec) + chixu.omega_lpf_4_xZeq_const_part;
 
     general_6states_rk4_solver(&rhf_ChiXu2009_Dynamics, CTRL.timebase, chixu.x, CL_TS);
 
@@ -891,7 +906,7 @@ void Main_ChiXu2009_emfSMO(){
         chixu.x[5] += 2*M_PI;
     }
     chixu.xTheta_d = chixu.x[5];
-    if(TRUE){
+    if(FALSE){
         // use xZeq
         chixu.theta_d = get_theta_d_from_xZeq(chixu.xZeq[0], chixu.xZeq[1]);
     }else{

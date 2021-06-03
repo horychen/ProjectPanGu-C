@@ -64,6 +64,7 @@ struct ObserverForExperiment{
         REAL smo_gain;
         REAL ell4xZeq; // VSS
         REAL omega_lpf_4_xZeq;
+        REAL omega_lpf_4_xZeq_const_part;
         REAL PLL_KP;
         REAL PLL_KI;
         REAL smo_gain_scale; // 几倍反电势
