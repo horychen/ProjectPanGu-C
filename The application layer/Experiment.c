@@ -359,6 +359,7 @@ void high_speed_operation_init(){
     //    AFEOE.ActiveFlux_KP = 0.2; // nsoaf.ActiveFlux_KP取0.5及以上的时候，300rpm会出现active flux马鞍波的现象
     //    AFEOE.ActiveFlux_KI = 2.0;
 }
+int manual_adjust_KE=FALSE;
 void high_speed_operation_tuning(){
 
     #if SELECT_ALGORITHM == ALG_Chi_Xu
@@ -390,11 +391,15 @@ void high_speed_operation_tuning(){
         //    }
 
         /* Steady state rpm error when ZFY speed command is at 2000 rpm. */
+    if(manual_adjust_KE==FALSE){
         if(G.Set_manual_rpm > 0){
-            CTRL.motor->KE = 0.0895; // positive spinning with load motor@2000 rpm 2.1A
+            //CTRL.motor->KE = 0.0895; // positive spinning with load motor@2000 rpm 2.1A
+            CTRL.motor->KE = 0.0895;
         }else{
-            CTRL.motor->KE=0.089;  // negative positive spinning with load motor@2000 rpm 2.1A
+            //CTRL.motor->KE=0.089;  // negative positive spinning with load motor@2000 rpm 2.1A
+            CTRL.motor->KE=  0.0890500024;
         }
+    }
     #endif
 
     /* 防止手贱输错了值 */
