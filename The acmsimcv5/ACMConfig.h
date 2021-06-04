@@ -138,7 +138,7 @@
         // #define NSOAF_SPMSM // use AP Error
         #define NSOAF_IPMSM // use only OE
         #define TUNING_IGNORE_UQ TRUE
-        #define NSOAF_OMEGA_OBSERVER 25 // >12 [rad/s] // cannot be too small (e.g., 10, KP will be negative), 
+        #define NSOAF_OMEGA_OBSERVER 300 // >150 [rad/s] // cannot be too small (e.g., 145, KP will be negative), 
             #define NSOAF_TL_P (1) // 1 for experimental starting // 4 for 1500 rpm // 2 for 800 rpm
             #define NSOAF_TL_I (20)
             #define NSOAF_TL_D (0)

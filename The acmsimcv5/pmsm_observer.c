@@ -53,10 +53,15 @@ void rhf_NSOAF_Dynamics(REAL t, REAL *x, REAL *fx){
     fx[2] = nsoaf.KI * nsoaf.active_power_error;
 }
 void nso_one_parameter_tuning(REAL omega_ob){
+    if(omega_ob<170){
+        nsoaf.set_omega_ob = 170;
+        return;
+    }
 
+    #define LQ_INV MOTOR.Lq_inv
     REAL one_over__npp_divided_by_Js__times__Lq_id_plus_KActive = 1.0 \
         / ( MOTOR.npp 
-            * MOTOR.Js_inv 
+            * MOTOR.Js_inv * LQ_INV
             * (MOTOR.Lq*CTRL.I->idq_cmd[0] + MOTOR.KActive)
           );
     REAL uq_inv = 1.0 / CTRL.O->udq_cmd[1];
@@ -64,9 +69,13 @@ void nso_one_parameter_tuning(REAL omega_ob){
         uq_inv = 1.0; // this is 1.#INF when init
     #endif
 
-    nsoaf.KD = 3*omega_ob                        * one_over__npp_divided_by_Js__times__Lq_id_plus_KActive                                 * uq_inv;
-    nsoaf.KP = ( (3*omega_ob*omega_ob - MOTOR.R) * one_over__npp_divided_by_Js__times__Lq_id_plus_KActive - 1.5*MOTOR.npp*MOTOR.KActive ) * uq_inv;
-    nsoaf.KI = omega_ob*omega_ob*omega_ob        * one_over__npp_divided_by_Js__times__Lq_id_plus_KActive                                 * uq_inv;
+    // nsoaf.KD = 3*omega_ob                                     * one_over__npp_divided_by_Js__times__Lq_id_plus_KActive                                 * uq_inv;
+    // nsoaf.KP = ( (3*omega_ob*omega_ob - MOTOR.R*LQ_INV) * one_over__npp_divided_by_Js__times__Lq_id_plus_KActive - 1.5*MOTOR.npp*MOTOR.KActive ) * uq_inv;
+    // nsoaf.KI = omega_ob*omega_ob*omega_ob                     * one_over__npp_divided_by_Js__times__Lq_id_plus_KActive                                 * uq_inv;
+
+    nsoaf.KD = (  3*omega_ob - MOTOR.R*LQ_INV) * one_over__npp_divided_by_Js__times__Lq_id_plus_KActive                                 * uq_inv;
+    nsoaf.KP = ( (3*omega_ob*omega_ob)         * one_over__npp_divided_by_Js__times__Lq_id_plus_KActive - 1.5*MOTOR.npp*MOTOR.KActive ) * uq_inv;
+    nsoaf.KI = omega_ob*omega_ob*omega_ob      * one_over__npp_divided_by_Js__times__Lq_id_plus_KActive                                 * uq_inv;
 
     #if PC_SIMULATION
     #if TUNING_IGNORE_UQ
