@@ -52,14 +52,18 @@ extern void InitPeripheralClocks(void);
 extern void DisablePeripheralClocks(void);
 extern void InitPieCtrl(void);
 extern void InitPieVectTable(void);
-extern void InitSpi(void);
-extern void InitSpiGpio(void);
-extern void InitSpiaGpio(void);
 extern void InitSysCtrl(void);
 extern void InitSysPll(Uint16 clock_source, Uint16 imult, Uint16 fmult,
                        Uint16 divsel);
 extern void InitAuxPll(Uint16 clock_source, Uint16 imult, Uint16 fmult,
                        Uint16 divsel);
+// serial communication (SCI and SPI)
+extern void InitSpi(void);
+extern void InitSpiGpio(void);
+extern void InitSpiaGpio(void);
+extern void InitSci(void);
+extern void InitSciGpio(void);
+extern void InitScicGpio(void);
 
 #define KickDog ServiceDog     // For compatibility with previous versions
 extern void ServiceDog(void);

@@ -491,15 +491,18 @@ void Gpio_initialize(void)
     // DI-1 (Digital Input)
 	GPIO_SetupPinOptions(26, GPIO_INPUT, GPIO_SYNC);//
 	GPIO_SetupPinMux(26,0,0);//
-    // DSP_ENPWM
+
+	// DSP_ENPWM
 	GPIO_SetupPinOptions(105, GPIO_OUTPUT, GPIO_SYNC);//
 	GPIO_SetupPinMux(105,0,0);//
     GPIO_SetupPinOptions(27, GPIO_OUTPUT, GPIO_SYNC);//
     GPIO_SetupPinMux(27,0,0);//
+
     // Inverter_error signal
 	GPIO_SetupPinOptions(104, GPIO_INPUT, GPIO_SYNC);//
 	GPIO_SetupPinMux(104,0,0);//
-    // QEP_IO
+
+	// QEP_IO
 	GPIO_SetupPinOptions(106, GPIO_OUTPUT, GPIO_SYNC);//
 	GPIO_SetupPinMux(106,0,0);//
 
@@ -508,14 +511,16 @@ void Gpio_initialize(void)
     InitECap2Gpio(70);
     InitECap3Gpio(71);
 
-    // Ë«ºËÅäÖÃÀý×Ó£º
+    // SCI is init'd in CPU02 (see F2837xD_Spi.c)
+
+    // SPI is init'd in CPU02 (see F2837xD_Sci.c)
+
+    /* Ë«ºËÅäÖÃÀý×Ó£º
     // Give GPIO31 Control to CPU02
-    //    GPIO_SetupPinMux(31,GPIO_MUX_CPU2,0);
-    //    GPIO_SetupPinOptions(31, GPIO_OUTPUT,0);
+        GPIO_SetupPinMux(31,GPIO_MUX_CPU2,0);
+        GPIO_SetupPinOptions(31, GPIO_OUTPUT,0);
     // Give GPIO34 Control to CPU01
-    //    GPIO_SetupPinMux(34,GPIO_MUX_CPU1,0);
-    //    GPIO_SetupPinOptions(34, GPIO_OUTPUT,0);
+        GPIO_SetupPinMux(34,GPIO_MUX_CPU1,0);
+        GPIO_SetupPinOptions(34, GPIO_OUTPUT,0);
+     */
 }
-//
-// End of file
-//

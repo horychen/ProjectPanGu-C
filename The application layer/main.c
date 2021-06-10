@@ -1,4 +1,10 @@
 #include <All_Definition.h>
+
+extern int nnn;
+extern Uint16 sciRX_dataA[8];
+extern Uint16 sciTX_dataA[8];
+extern int SCI_number;
+
 void init_experiment_AD_gain_and_offset(){
     /* ADC OFFSET */
     #ifdef _XCUBE1
@@ -66,10 +72,13 @@ void main(void){
     eQEP_initialize(0);
     InitECaptureContinuousMode();
     init_experiment();
+
+    /* SPI and SCI */
     #if NUMBER_OF_DSP_CORES == 1
-        // GPIO配置
         InitSpiaGpio();
         InitSpi();
+        InitSciGpio();
+        InitSci();
     #elif NUMBER_OF_DSP_CORES == 2
         /* 双核配置*/
         // 初始化SPI，用于与DAC芯片MAX5307通讯。
@@ -88,6 +97,20 @@ void main(void){
             EDIS;
         }
     #endif
+
+    SCI_number++;
+    if (SCI_number==200)
+    {
+        nnn=nnn+1;
+        if (nnn>=4)
+        {nnn=0;}
+        sciTxFifoIsr();
+        SCI_number=0;
+    }
+    else if(SCI_number==100)
+    {
+        sciRxFifoIsr();
+    }
 
     /* PIE Vector Table */
     EALLOW; // This is needed to write to EALLOW protected registers
