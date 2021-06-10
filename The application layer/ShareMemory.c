@@ -256,44 +256,44 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
 }
 }
 
+#elif NUMBER_OF_DSP_CORES == 1
 
-void single_core_dac(){
-    G.DAC_MAX5307_FLAG++;
-    if (G.DAC_MAX5307_FLAG==1)
-    {
-        DAC_MAX5307(1, G.Current_V*0.1 );//71us 10khz
+    void single_core_dac(){
+        G.DAC_MAX5307_FLAG++;
+        if (G.DAC_MAX5307_FLAG==1)
+        {
+            DAC_MAX5307(1, G.Current_V*0.1 );//71us 10khz
+        }
+        if (G.DAC_MAX5307_FLAG==2)
+        {
+            DAC_MAX5307(2, G.Current_W*0.1 );
+        }
+        if (G.DAC_MAX5307_FLAG==3)
+        {
+            DAC_MAX5307(3, G.Current_W*0.1 );//phase w
+        }
+        if (G.DAC_MAX5307_FLAG==4)
+        {
+            DAC_MAX5307(4, 0.1 );//Id
+        }
+        if (G.DAC_MAX5307_FLAG==5)
+        {
+            DAC_MAX5307(5, 0.1 );
+        }
+        if (G.DAC_MAX5307_FLAG==6)
+        {
+            DAC_MAX5307(6, 0.1 );//iq
+            G.DAC_MAX5307_FLAG=2;//4 means from 3 to 6;
+        }
+        if (G.DAC_MAX5307_FLAG==7)
+        {
+            DAC_MAX5307(7, 0.1 );
+        }
+        if (G.DAC_MAX5307_FLAG==8)
+        {
+            DAC_MAX5307(8, 0.1 );
+        }
     }
-    if (G.DAC_MAX5307_FLAG==2)
-    {
-        DAC_MAX5307(2, G.Current_W*0.1 );
-    }
-    if (G.DAC_MAX5307_FLAG==3)
-    {
-        DAC_MAX5307(3, G.Current_W*0.1 );//phase w
-    }
-    if (G.DAC_MAX5307_FLAG==4)
-    {
-        DAC_MAX5307(4, 0.1 );//Id
-    }
-    if (G.DAC_MAX5307_FLAG==5)
-    {
-        DAC_MAX5307(5, 0.1 );
-    }
-    if (G.DAC_MAX5307_FLAG==6)
-    {
-        DAC_MAX5307(6, 0.1 );//iq
-        G.DAC_MAX5307_FLAG=2;//4 means from 3 to 6;
-    }
-    if (G.DAC_MAX5307_FLAG==7)
-    {
-        DAC_MAX5307(7, 0.1 );
-    }
-    if (G.DAC_MAX5307_FLAG==8)
-    {
-        DAC_MAX5307(8, 0.1 );
-    }    
-}
-
 #endif
 
 

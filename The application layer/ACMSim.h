@@ -8,7 +8,7 @@
 
 #if PC_SIMULATION == FALSE
 /*  SYSTEM Configuration -----------------------------------------------------------------------------------*/
-    #define NUMBER_OF_DSP_CORES 2  // 1 or 2
+    #define NUMBER_OF_DSP_CORES 1  // 1 or 2
     #define SYSTEM_PROGRAM_MODE 223  //223 for CJHMainISR //0 stands for MainISR ,1 stands for Motor_Parameter_Compute_ISR
     #if SYSTEM_PROGRAM_MODE==223
         #define SYSTEM_PROGRAM                     EPWM1ISR
