@@ -21,6 +21,8 @@
     __interrupt void ecap2_isr(void);
     __interrupt void ecap3_isr(void);
     __interrupt void EQEP_UTO_INT(void);
+    __interrupt void scicRxFifoIsr(void);
+    __interrupt void scicTxFifoIsr(void);
     void SVGEN_Drive(SVGENDQ* ptrV);
 /* Driver -----------------------------------------------------------------------------------*/
     #include "DAC_MAX5307.h"
@@ -36,11 +38,6 @@
     void eQEP_initialize(int m);
     void Gpio_initialize(void);
     void ADC_initialize(void);
-    #define DSP_ENPWM  GpioDataRegs.GPDSET.bit.GPIO105=1;     //SD置高，封波
-    #define STOP_LED1  GpioDataRegs.GPDCLEAR.bit.GPIO124=1;
-    #define STOP_LED2  GpioDataRegs.GPBCLEAR.bit.GPIO33=1;
-    #define START_LED1 GpioDataRegs.GPDSET.bit.GPIO124=1;
-    #define START_LED2 GpioDataRegs.GPBSET.bit.GPIO33=1;
     //PWM CONFIGURATION
     #define SYSTEM_PWM_DEADTIME               5     // us   PWM deadtime
     #define SYSTEM_PWM_DB_ACTV                0x1     //DB_ACTV_LOC  0x1   DB_ACTV_HIC  0x2 // LOW EFFECT /HIGH EFFECT
@@ -103,15 +100,21 @@
     #define MAX_PWM_LIMATATION                    0.96
     #define MIN_PWM_LIMATATION                    0.04
     //GPIO
-    #define DSP_ENPWM               GpioDataRegs.GPDSET.bit.GPIO105=1;    //SD置高，封波
-    #define DSP_ENPWM_LOW           GpioDataRegs.GPDCLEAR.bit.GPIO105=1;
-    #define DSP_2ENPWM              GpioDataRegs.GPASET.bit.GPIO27=1;     //SD置高，封波
-    #define DSP_2ENPWM_LOW          GpioDataRegs.GPACLEAR.bit.GPIO27=1;
-    #define DSP_EPWM_DISABLE        GpioDataRegs.GPDSET.bit.GPIO105=1;    // 低有效，置位封波
-    #define DSP_EPWM_ENABLE         GpioDataRegs.GPDCLEAR.bit.GPIO105=1;  // 低有效，清零有效
-    #define DSP_2EPWM_DISABLE       GpioDataRegs.GPASET.bit.GPIO27=1;
-    #define DSP_2EPWM_ENABLE        GpioDataRegs.GPACLEAR.bit.GPIO27=1;
-    #define INVERTER_FLT_FAULT      GpioDataRegs.GPDDAT.bit.GPIO104  //Inverter_error signal
+        //    #define DSP_ENPWM               GpioDataRegs.GPDSET.bit.GPIO105=1;    //SD置高，封波
+        //    #define DSP_ENPWM_LOW           GpioDataRegs.GPDCLEAR.bit.GPIO105=1;
+        //    #define DSP_2ENPWM              GpioDataRegs.GPASET.bit.GPIO27=1;     //SD置高，封波
+        //    #define DSP_2ENPWM_LOW          GpioDataRegs.GPACLEAR.bit.GPIO27=1;
+    #define DSP_PWM_DISABLE        GpioDataRegs.GPDSET.bit.GPIO105=1;    // 低有效，置位封波
+    #define DSP_PWM_ENABLE         GpioDataRegs.GPDCLEAR.bit.GPIO105=1;  // 低有效，清零有效
+    #define DSP_2PWM_DISABLE       GpioDataRegs.GPASET.bit.GPIO27=1;
+    #define DSP_2PWM_ENABLE        GpioDataRegs.GPACLEAR.bit.GPIO27=1;
+
+    #define INVERTER_FLT_FAULT     GpioDataRegs.GPDDAT.bit.GPIO104  //Inverter_error signal
+
+    #define DSP_STOP_LED1  GpioDataRegs.GPDCLEAR.bit.GPIO124=1;
+    #define DSP_STOP_LED2  GpioDataRegs.GPBCLEAR.bit.GPIO33=1;
+    #define DSP_START_LED1 GpioDataRegs.GPDSET.bit.GPIO124=1;
+    #define DSP_START_LED2 GpioDataRegs.GPBSET.bit.GPIO33=1;
 
 /* Logic  -----------------------------------------------------------------------------------*/
     //#include "Logic.h"                //逻辑库 包括故障代码，DI,状态机
