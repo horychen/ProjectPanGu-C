@@ -159,7 +159,7 @@ void InitSpiaGpio()
     GpioCtrlRegs.GPBQSEL2.bit.GPIO56 = 3; // Asynch input GPIO55 (SPICLKA)
     GpioCtrlRegs.GPBMUX2.bit.GPIO56 = 1; // Configure GPIO56 as SPICLKA
 
-    // SPI ADC MAX5307
+    // SPISTEA for SPI with D/A chip MAX5307
     GPIO_SetupPinOptions(57, GPIO_OUTPUT, GPIO_SYNC);
     #if NUMBER_OF_DSP_CORES == 1
         GPIO_SetupPinMux(57,GPIO_MUX_CPU1,0);

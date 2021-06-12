@@ -1,9 +1,11 @@
 #include <All_Definition.h>
-
-extern int nnn;
-extern Uint16 sciRX_dataA[8];
-extern Uint16 sciTX_dataA[8];
-extern int SCI_number;
+//
+// Globals
+//
+Uint16 LoopCount;
+Uint16 ErrorCount;
+Uint16 SendChar;
+Uint16 ReceivedChar;
 
 void init_experiment_AD_gain_and_offset(){
     /* ADC OFFSET */
@@ -45,12 +47,15 @@ void init_experiment_AD_gain_and_offset(){
 }
 void main(void){
 
-    InitSysCtrl();
-    DINT;                 // Disable CPU interrupts
-    InitPieCtrl();        // Initialize the PIE control registers to their default state. The default state is all PIE interrupts disabled and flags are cleared.
-    IER = 0x0000;         // Disable CPU __interrupts and clear all CPU __interrupt flags
-    IFR = 0x0000;         // Disable CPU __interrupts and clear all CPU __interrupt flags
-    InitPieVectTable();   // Initialize the PIE vector table with pointers to the shell Interrupt Service Routines (ISR).
+    InitSysCtrl();        // 1. Initialize System Control: PLL, WatchDog, enable Peripheral Clocks.
+    Gpio_initialize();    // 2. Initialize GPIO and assign GPIO to peripherals.
+    DINT;                 // 3.1 Clear all interrupts and initialize PIE vector table.
+    InitPieCtrl();        // 3.2 Initialize the PIE control registers to their default state. The default state is all PIE interrupts disabled and flags are cleared.
+    IER = 0x0000;         // 3.3 Disable CPU __interrupts,
+    IFR = 0x0000;         // 3.4 and clear all CPU __interrupt flags.
+    InitPieVectTable();   // 3.5 Initialize the PIE vector table with pointers to the shell Interrupt Service Routines (ISR). At end, ENPIE = 1.
+
+    // 4.1 IPC
     #if NUMBER_OF_DSP_CORES == 2
         IPCBootCPU2(C1C2_BROM_BOOTMODE_BOOT_FROM_FLASH);
     #endif
@@ -66,13 +71,13 @@ void main(void){
     #endif
     #endif
 
-    Gpio_initialize();
+    // 4.2 Initialize peripherals
     ePWM_initialize();
     ADC_initialize();
     eQEP_initialize(0);
     InitECaptureContinuousMode();
-    init_experiment();
 
+    // 4.3 Assign peripherals to CPU02
     /* SPI and SCI */
     #if NUMBER_OF_DSP_CORES == 1
         InitSpiaGpio();
@@ -84,9 +89,14 @@ void main(void){
         // 初始化SPI，用于与DAC芯片MAX5307通讯。
         EALLOW;
         DevCfgRegs.CPUSEL6.bit.SPI_A = 1; // assign spi-a to cpu2
+        DevCfgRegs.CPUSEL5.bit.SCI_C = 1; // assign sci-ca to cpu2
         EDIS;
+
         InitSpiaGpio();
         //InitSpi(); // this is moved to CPU02
+        InitSciGpio();
+        //InitSci(); // this is moved to CPU02
+
         // 在此之前，已经把GPIO和外设的权限转给CPU2了。
         // 这里再把部分贡献内存权限给CPU2，同时告诉CPU2，你可以继续运行代码了。
         while( !(MemCfgRegs.GSxMSEL.bit.MSEL_GS0))
@@ -98,55 +108,51 @@ void main(void){
         }
     #endif
 
-    SCI_number++;
-    if (SCI_number==200)
-    {
-        nnn=nnn+1;
-        if (nnn>=4)
-        {nnn=0;}
-        sciTxFifoIsr();
-        SCI_number=0;
-    }
-    else if(SCI_number==100)
-    {
-        sciRxFifoIsr();
-    }
+    // 4.4 Initialize algorithms
+    init_experiment();
 
-    /* PIE Vector Table */
-    EALLOW; // This is needed to write to EALLOW protected registers
-    PieVectTable.EPWM1_INT = &SYSTEM_PROGRAM;     //&MainISR;      // PWM主中断 10kKHz
-    PieVectTable.ECAP1_INT = &ecap1_isr;
-    PieVectTable.ECAP2_INT = &ecap2_isr;
-    PieVectTable.ECAP3_INT = &ecap3_isr;
-    PieVectTable.EQEP1_INT = &EQEP_UTO_INT;      // eqep
-    EDIS; // This is needed to disable write to EALLOW protected registers
-
+    // 5. Handle Interrupts
+    /* Re-map PIE Vector Table to user defined ISR functions. */
+        EALLOW; // This is needed to write to EALLOW protected registers
+        PieVectTable.EPWM1_INT = &SYSTEM_PROGRAM;     //&MainISR;      // PWM主中断 10kKHz
+        PieVectTable.ECAP1_INT = &ecap1_isr;
+        PieVectTable.ECAP2_INT = &ecap2_isr;
+        PieVectTable.ECAP3_INT = &ecap3_isr;
+        PieVectTable.EQEP1_INT = &EQEP_UTO_INT;      // eQEP
+        PieVectTable.SCIC_RX_INT = &scicRxFifoIsr;   // SCI Receive
+        PieVectTable.SCIC_TX_INT = &scicTxFifoIsr;   // SCI Transmit
+        EDIS; // This is needed to disable write to EALLOW protected registers
     /* PIE Control */
-    PieCtrlRegs.PIEIER3.bit.INTx1 = 1;      // PWM1 interrupt (Interrupt 3.1)
-#if USE_ECAP_CEVT2_INTERRUPT == 1
-    PieCtrlRegs.PIEIER4.bit.INTx1 = 1;      // Enable eCAP INTn in the PIE: Group 3 __interrupt 1--6 (Interrupt 4.1)
-    PieCtrlRegs.PIEIER4.bit.INTx2 = 1;      // 1 Enable for Interrupt 4.2
-    PieCtrlRegs.PIEIER4.bit.INTx3 = 1;      // 2 Enable for Interrupt 4.3
-#endif
-#if SYSTEM_PROGRAM_MODE != 223
-    PieCtrlRegs.PIEIER5.bit.INTx1 = 1;      // QEP interrupt
-#endif
-
+        PieCtrlRegs.PIEIER3.bit.INTx1 = 1;      // PWM1 interrupt (Interrupt 3.1)
+        #if NUMBER_OF_DSP_CORES == 1
+            PieCtrlRegs.PIEIER8.bit.INTx5 = 1;   // PIE Group 8, INT5, SCI-C Rx
+            PieCtrlRegs.PIEIER8.bit.INTx6 = 1;   // PIE Group 8, INT6, SCI-C Tx
+        #endif
+        #if USE_ECAP_CEVT2_INTERRUPT == 1
+            PieCtrlRegs.PIEIER4.bit.INTx1 = 1;      // Enable eCAP INTn in the PIE: Group 3 __interrupt 1--6 (Interrupt 4.1)
+            PieCtrlRegs.PIEIER4.bit.INTx2 = 1;      // 1 Enable for Interrupt 4.2
+            PieCtrlRegs.PIEIER4.bit.INTx3 = 1;      // 2 Enable for Interrupt 4.3
+        #endif
+        #if SYSTEM_PROGRAM_MODE != 223
+            PieCtrlRegs.PIEIER5.bit.INTx1 = 1;      // QEP interrupt
+        #endif
     /* CPU Interrupt Enable Register (IER) */
-    IER |= M_INT3;  // EPWM1_INT
-#if USE_ECAP_CEVT2_INTERRUPT == 1
-    IER |= M_INT4;  // ECAP1_INT // CPU INT4 which is connected to ECAP1-4 INT
-#endif
-    IER |= M_INT5;  // EQEP1_INT???
-
+        IER |= M_INT3;  // EPWM1_INT
+        #if NUMBER_OF_DSP_CORES == 1
+            IER |= M_INT8; // SCI-C
+        #endif
+        #if USE_ECAP_CEVT2_INTERRUPT == 1
+            IER |= M_INT4;  // ECAP1_INT // CPU INT4 which is connected to ECAP1-4 INT
+        #endif
+        IER |= M_INT5;  // EQEP1_INT???
     EINT;   // Enable Global __interrupt INTM
     ERTM;   // Enable Global realtime __interrupt DBGM
 
-    STOP_LED1;
-    STOP_LED2;
-    DSP_ENPWM;
-    DSP_2ENPWM;
-
+    // 6. Pre main loop
+    DSP_STOP_LED1
+    DSP_STOP_LED2
+    DSP_PWM_DISABLE
+    DSP_2PWM_DISABLE
     /* Test IPC to CPU02 */
     #if NUMBER_OF_DSP_CORES == 2
         Write.dac_buffer[0] = 0.5;
@@ -161,27 +167,55 @@ void main(void){
         IPCLtoRFlagSet(IPC_FLAG7);
     #endif
 
+    SendChar = 24;
+    for(;;)
+    {
+        ScicRegs.SCITXBUF.all = (SendChar);
+
+       //
+       // wait for RRDY/RXFFST =1 for 1 data available in FIFO
+       //
+       while(ScicRegs.SCIFFRX.bit.RXFFST == 0) {
+       }
+       CTRL.S->go_sensorless = 100;
+
+       //
+       // Check received character
+       //
+       ReceivedChar = ScicRegs.SCIRXBUF.all;
+       if(ReceivedChar != SendChar)
+       {
+           //error();
+       }
+
+       //
+       // Move to the next character and repeat the test
+       //
+       SendChar++;
+
+       //
+       // Limit the character to 8-bits
+       //
+       SendChar &= 0x00F;
+       LoopCount++;
+    }
+
+    // 7. Main loop
     while(1){
         //STATE_APP_MachineState();
         //System_Checking();  //状态机第一个状态 ：系统自检
         //System_Protection();//IU/IV/VOLTAGE保护
 
         //#define Motor_mode_START    GpioDataRegs.GPADAT.bit.GPIO26          //DI Start Button
-        if (Motor_mode_START==1)
-        {
+        if (Motor_mode_START==1){
             G.FLAG_ENABLE_PWM_OUTPUT = 1;
-            //Enable_START_FLAG=1;
-            //Enable_STOP_FLAG=0;
-            START_LED1
-            START_LED2
+            DSP_START_LED1
+            DSP_START_LED2
         }else if (Motor_mode_START==0){
             G.FLAG_ENABLE_PWM_OUTPUT = 0;
-            //Enable_START_FLAG=0;
-            //Enable_STOP_FLAG=1;
-            STOP_LED1
-            STOP_LED2
+            DSP_STOP_LED1
+            DSP_STOP_LED2
         }
-
 
         #if NUMBER_OF_DSP_CORES == 2
             if(IPCLtoRFlagBusy(IPC_FLAG10) == 1) // if flag
@@ -197,10 +231,7 @@ void main(void){
 
 
 /* Below is moved from CJHMainISR.c */
-
 #if SYSTEM_PROGRAM_MODE==223
-
-
 void voltage_commands_to_pwm(){
     // ----------------------------SVGEN生成-------------------------------------------------
     CTRL.svgen1.Ualpha= CTRL.O->uab_cmd_to_inverter[0];
@@ -214,12 +245,6 @@ void voltage_commands_to_pwm(){
     EPwm2Regs.CMPA.bit.CMPA = CTRL.svgen1.Tb*50000000*CL_TS;
     EPwm3Regs.CMPA.bit.CMPA = CTRL.svgen1.Tc*50000000*CL_TS;
 }
-
-
-
-//extern int CAP.flag_bad_U_capture;
-//extern int CAP.flag_bad_V_capture;
-//extern int CAP.flag_bad_W_capture;
 void measurement(){
 
     // 母线电压测量
@@ -342,8 +367,8 @@ void measurement(){
 
     //    这样不能形成保护，必须设置故障状态才行。
     //    if(fabs(G.Current_W)>8 || fabs(G.Current_V)>8){
-    //        DSP_EPWM_DISABLE
-    //        DSP_2EPWM_DISABLE
+    //        DSP_PWM_DISABLE
+    //        DSP_2PWM_DISABLE
     //    }
 
 
@@ -379,9 +404,6 @@ void measurement(){
         }
     }
 }
-
-
-
 // int down_freq_ecap_counter = 1;
 void CJHMainISR(void){
     #if NUMBER_OF_DSP_CORES == 2
@@ -399,8 +421,8 @@ void CJHMainISR(void){
 
     if(!G.FLAG_ENABLE_PWM_OUTPUT){
 
-        DSP_EPWM_DISABLE
-        DSP_2EPWM_DISABLE
+        DSP_PWM_DISABLE
+        DSP_2PWM_DISABLE
 
         /* Only init once for easy debug */
         if(!G.flag_experimental_initialized){
@@ -412,12 +434,12 @@ void CJHMainISR(void){
         }
 
         DELAY_US(11);
-        GpioDataRegs.GPDCLEAR.bit.GPIO106=1;
+        GpioDataRegs.GPDCLEAR.bit.GPIO106=1; // TODO: What is this doing?
 
     }else{
         G.flag_experimental_initialized = FALSE;
-        DSP_EPWM_ENABLE
-        DSP_2EPWM_ENABLE
+        DSP_PWM_ENABLE
+        DSP_2PWM_ENABLE
 
         // DSP中控制器的时间
         CTRL.timebase += CL_TS;
@@ -451,7 +473,6 @@ void CJHMainISR(void){
         #endif
     }
 }
-
 Uint64 EPWM1IntCount=0;
 __interrupt void EPWM1ISR(void){
     EPWM1IntCount += 1;
