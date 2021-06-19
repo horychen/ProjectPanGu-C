@@ -109,7 +109,7 @@ void init_experiment_overwrite(){
 
     // for debug
     CTRL.S->PSD_Done = FALSE;
-    G.bool_comm_status = 0;
+    COMM.bool_comm_status = 0;
 }
 
 void runtime_command_and_tuning(){

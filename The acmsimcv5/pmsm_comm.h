@@ -7,6 +7,8 @@
 #define COMM_IV_SIZE_L1 30
 struct CommissioningDataStruct{
 
+    int bool_comm_status;
+
     REAL timebase;
     int32 counterEntered;
     int16 i;
@@ -40,7 +42,6 @@ struct CommissioningDataStruct{
 };
 extern struct CommissioningDataStruct COMM;
 extern int16 bool_single_phase_excitation;
-extern int16 bool_comm_status;
 
 void COMM_PI_tuning(REAL LL, REAL RR, REAL BW_current, REAL delta, REAL JJ, REAL KE, REAL npp);
 

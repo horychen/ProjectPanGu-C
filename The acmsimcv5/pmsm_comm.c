@@ -164,7 +164,7 @@ void commissioning(){
 // 声明参数自整定结构体变量
 struct CommissioningDataStruct COMM;
 int16 bool_single_phase_excitation = FALSE;
-// int16 G.bool_comm_status = FALSE;
+// int16 COMM.bool_comm_status = FALSE;
 int16 bool_tuning = TRUE;
 int16 bool_CL_tuned = FALSE;
 int16 bool_VL_tuned = FALSE;
@@ -211,7 +211,7 @@ void init_COMM(){
     COMM.number_of_repeats_Js = 0.0;
 
     // global status vairbale
-    G.bool_comm_status = 1;
+    COMM.bool_comm_status = 1;
 
     COMM.counterEntered = 0;
     COMM.i = 0;
@@ -428,7 +428,7 @@ void COMM_resistanceId(REAL id_fb, REAL iq_fb){
                 #else
                     COMM.last_voltage_command = UD_OUTPUT;
                 #endif
-                G.bool_comm_status = 2;
+                COMM.bool_comm_status = 2;
                 COMM.counterEntered = 0;
 
                 // UD_OUTPUT = 0.0;
@@ -560,7 +560,7 @@ void COMM_resistanceId_v2(REAL id_fb, REAL iq_fb){
                 #else
                     COMM.last_voltage_command = UD_OUTPUT;
                 #endif
-                G.bool_comm_status = -1; // 由于此时电流是零，last_voltage_command也是零，就不能做电感辨识的开环激励辨识了，直接结束吧。
+                COMM.bool_comm_status = -1; // 由于此时电流是零，last_voltage_command也是零，就不能做电感辨识的开环激励辨识了，直接结束吧。
                 COMM.counterEntered = 0;
 
                 // UD_OUTPUT = 0.0;
@@ -643,7 +643,7 @@ void COMM_inductanceId(REAL id_fb, REAL iq_fb){
             printf("[Actual]  m=%g, b=%g, r=%g\n", m,b,r);
             printf("COMM.L = %g\n", COMM.L);
         #endif
-        G.bool_comm_status = 3;
+        COMM.bool_comm_status = 3;
         COMM.counterEntered = 0;
     }
 
@@ -714,7 +714,7 @@ void COMM_inductanceId_ver2(REAL id_fb, REAL iq_fb){
             #endif
             number_of_repeats_L2 += 1;
             if(number_of_repeats_L2 > 500){
-                G.bool_comm_status = 3;
+                COMM.bool_comm_status = 3;
                 number_of_repeats_L2 = 0;
             }
         }
@@ -807,8 +807,8 @@ void COMM_inductanceId_ver3(REAL id_fb, REAL iq_fb){
             printf("R3=%g, L3=%g, mztime=%g, triggertime=%g\n", COMM.R3, COMM.L3, mz_timebase, (1.0-HORY_MZ2014_SAMPLE_DUTY)*N_SAMPLE*CL_TS);
         #endif
 
-        G.bool_comm_status = 4; // PM flux id
-        G.bool_comm_status = 5; // inertia id
+        COMM.bool_comm_status = 4; // PM flux id
+        COMM.bool_comm_status = 5; // inertia id
         COMM.counterEntered = 0;
 
 
@@ -1014,7 +1014,7 @@ void COMM_PMFluxId(REAL id_fb, REAL iq_fb, REAL omg_elec_fb){
                 #endif
                 // getch();
 
-                G.bool_comm_status = 6; // end
+                COMM.bool_comm_status = 6; // end
                 COMM.counterEntered = 0;
 
                 accumKE = 0;
@@ -1145,8 +1145,8 @@ void COMM_inertiaId(REAL id_fb, REAL iq_fb, REAL cosPark, REAL sinPark, REAL omg
         sum_B = 0.0;
         COMM.number_of_repeats_Js += 1;
         if(COMM.number_of_repeats_Js>10){
-            G.bool_comm_status = 6;
-            G.bool_comm_status = 4; // PM flux id
+            COMM.bool_comm_status = 6;
+            COMM.bool_comm_status = 4; // PM flux id
 
             UD_OUTPUT = 0.0;
             UQ_OUTPUT = 0.0;
@@ -1185,17 +1185,17 @@ void COMM_end(REAL id_fb, REAL iq_fb){
 
 
 void StepByStepCommissioning(){
-    // G.bool_comm_status = 4;
+    // COMM.bool_comm_status = 4;
 
     /* Start *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 
     // 使用测量得到的电流、转速、位置等信息，生成电压指令CTRL.ual，CTRL.ube
     // commissioning();
-    if(G.bool_comm_status == 0){
+    if(COMM.bool_comm_status == 0){
         // 初始化
         init_COMM();
 
-    }else if(G.bool_comm_status == 1){
+    }else if(COMM.bool_comm_status == 1){
         // 电阻辨识
         if(G.flag_do_inverter_characteristics){
             COMM_resistanceId_v2(IS_C(0), IS_C(1)); // v2 is intended only for better inverter nonlinearity identification considering the rotor movement issue (starting from negative maximal current value to force align)
@@ -1203,20 +1203,20 @@ void StepByStepCommissioning(){
             COMM_resistanceId(IS_C(0), IS_C(1));
         }
 
-    }else if(G.bool_comm_status == 2){
+    }else if(COMM.bool_comm_status == 2){
         // 电感辨识（阶跃）
         COMM_inductanceId(IS_C(0), IS_C(1));
 
         // 电感辨识（方波）
         // COMM_inductanceId_ver2(IS_C(0), IS_C(1));
 
-    }else if(G.bool_comm_status == 3){
+    }else if(COMM.bool_comm_status == 3){
         // 电感辨识（正弦）
         COMM_inductanceId_ver3(IS_C(0), IS_C(1));
 
         // 更新电流PI
 
-    }else if(G.bool_comm_status == 4){
+    }else if(COMM.bool_comm_status == 4){
 
         // 永磁体磁链辨识
         CTRL.S->cosT = cos(CTRL.I->theta_d_elec);
@@ -1227,7 +1227,7 @@ void StepByStepCommissioning(){
 
         // 更新转速PI
 
-    }else if(G.bool_comm_status == 5){
+    }else if(COMM.bool_comm_status == 5){
 
         // 惯量辨识
         // CTRL.I->omg_elec     = EXP.omg_elec;
@@ -1246,7 +1246,7 @@ void StepByStepCommissioning(){
 
     }else{
         COMM_end(IS_C(0), IS_C(1));
-        G.bool_comm_status = -1;
+        COMM.bool_comm_status = -1;
     }
 
     /* End *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/      
