@@ -209,7 +209,6 @@ typedef struct {
         REAL Set_manual_current_iq,Set_manual_current_id,Set_manual_rpm;
         int DAC_MAX5307_FLAG; // for single core case
         int AD_offset_flag2;
-        int bool_comm_status;
     // Mode Changing During Experiment Debug
         REAL OverwriteSpeedOutLimit; // = 2;
         REAL Overwrite_Voltage_DC_BUS; // = 180;
