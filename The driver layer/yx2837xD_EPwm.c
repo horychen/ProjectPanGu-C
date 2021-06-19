@@ -49,7 +49,7 @@ void PWM_1ch_UpDwnCnt_CNF(int16 n, Uint16 period, int16 db) {
     // Active high complementary PWMs - Set up the deadband
     (*ePWM[n]).DBCTL.bit.IN_MODE  = DBA_ALL;
     (*ePWM[n]).DBCTL.bit.OUT_MODE = DB_FULL_ENABLE;
-    (*ePWM[n]).DBCTL.bit.POLSEL   = DB_ACTV_HIC ;
+    (*ePWM[n]).DBCTL.bit.POLSEL   = DB_ACTV_HIC;
     (*ePWM[n]).DBRED.all = db;
     (*ePWM[n]).DBFED.all = db;
     EDIS;

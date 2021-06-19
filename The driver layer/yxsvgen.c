@@ -8,17 +8,21 @@
 
 void SVGEN_Drive(SVGENDQ* ptrV){
 
-    float Va,Vb,Vc,t1,t2,temp_sv1,temp_sv2,t_voltage;
+    float Va,Vb,Vc,t1,t2,temp_sv1,temp_sv2;
     int Sector = 0;  // Sector is treated as Q0 - independently with global Q
     SVGENDQ  v;
     v=(*ptrV);
     Sector = 0;
-    t_voltage=G.Voltage_DC_BUS*0.577367;
-    temp_sv1=(v.Ubeta*0.8660254)/G.Voltage_DC_BUS; 					/*divide by 2*/
-    temp_sv2=(1.5*v.Ualpha)/G.Voltage_DC_BUS;	/* 0.8660254 = sqrt(3)/2*/
+    REAL Inverse_Voltage_DC_BUS = 1.0 / G.Voltage_DC_BUS;
+    temp_sv1=(v.Ubeta*0.8660254)*Inverse_Voltage_DC_BUS;
+    temp_sv2=(1.5*v.Ualpha)     *Inverse_Voltage_DC_BUS;
+
+    //t_voltage=G.Voltage_DC_BUS*0.577367;
+
+    REAL sqrt3_Inverse_Voltage_DC_BUS = 1.7320508 * Inverse_Voltage_DC_BUS;
 
     /* Inverse clarke transformation */
-        Va = v.Ubeta/t_voltage;
+        Va = v.Ubeta * sqrt3_Inverse_Voltage_DC_BUS;
         Vb = -temp_sv1 + temp_sv2;
         Vc = -temp_sv1 - temp_sv2;
     /* 60 degree Sector determination */
@@ -26,7 +30,7 @@ void SVGEN_Drive(SVGENDQ* ptrV){
         if (Vb>0) Sector = Sector+2;
         if (Vc>0) Sector = Sector+4;
     /* X,Y,Z (Va,Vb,Vc) calculations X = Va, Y = Vb, Z = Vc */
-        Va = v.Ubeta/t_voltage;
+        Va = v.Ubeta * sqrt3_Inverse_Voltage_DC_BUS;
         Vb = temp_sv1 + temp_sv2;
         Vc = temp_sv1 - temp_sv2;
     /* Sector 0: this is special case for (Ualpha,Ubeta) = (0,0)*/
