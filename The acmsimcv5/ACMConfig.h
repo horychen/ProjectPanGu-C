@@ -43,13 +43,14 @@
     #define AFE_USED AFEOE
     // #define AFE_USED huwu
 
+    /* Tuning Algorithm 1 */
         /* AFEOE or CM-VM Fusion */
         #define AFEOE_OMEGA_ESTIMATOR 5 // [rad/s] //0.5 // 5 for slow reversal
             #define AFEOE_KP (200) // ONLY KP
             #define AFEOE_KI (0.0) // ONLY KP
         #define AFE_25_FISION__FLUX_LIMITER_AT_LOW_SPEED FALSE // no need
 
-        /* Hu Wu 1998 recomends tau_1_inv=20 rad/s */
+        /* Hu Wu 1998 recommend tau_1_inv=20 rad/s */
         // #define AFE_21_HUWU_TAU_1_INVERSE (20)
         #define AFE_21_HUWU_TAU_1_INVERSE (200.0) // [rad/s] Alg 2: 0.1 rad/s gives better performance near zero speed, but the converging rate is slower comapred to 0.9 rad/s.
         // #define AFE_21_HUWU_TAU_1_INVERSE (7.5) // [rad/s] Alg 3: increase this will reduce the transient converging time
@@ -66,28 +67,28 @@
         #define ALG_Harnefors_2006 7
     #define SELECT_ALGORITHM ALG_NSOAF
     // #define SELECT_ALGORITHM ALG_Chi_Xu
+        #if SELECT_ALGORITHM == ALG_Chi_Xu
+            #define ELECTRICAL_SPEED_FEEDBACK    chixu.xOmg
+            #define ELECTRICAL_POSITION_FEEDBACK chixu.theta_d
+        #elif SELECT_ALGORITHM == ALG_NSOAF
+            #define ELECTRICAL_SPEED_FEEDBACK    nsoaf.xOmg // harnefors.omg_elec
+            #define ELECTRICAL_POSITION_FEEDBACK AFE_USED.theta_d // harnefors.theta_d
+        #else
+            // #define ELECTRICAL_SPEED_FEEDBACK    G.omg_elec
+            // #define ELECTRICAL_POSITION_FEEDBACK G.theta_d
 
-    // #define ELECTRICAL_SPEED_FEEDBACK    G.omg_elec
-    // #define ELECTRICAL_POSITION_FEEDBACK G.theta_d
+            // #define ELECTRICAL_SPEED_FEEDBACK    parksul.xOmg
+            // #define ELECTRICAL_POSITION_FEEDBACK parksul.theta_d
 
-    // #define ELECTRICAL_SPEED_FEEDBACK    parksul.xOmg
-    // #define ELECTRICAL_POSITION_FEEDBACK parksul.theta_d
+            // #define ELECTRICAL_SPEED_FEEDBACK    qiaoxia.xOmg
+            // #define ELECTRICAL_POSITION_FEEDBACK qiaoxia.theta_d
 
-    // #define ELECTRICAL_SPEED_FEEDBACK    qiaoxia.xOmg
-    // #define ELECTRICAL_POSITION_FEEDBACK qiaoxia.theta_d
+            #define ELECTRICAL_SPEED_FEEDBACK    CTRL.I->omg_elec
+            #define ELECTRICAL_POSITION_FEEDBACK CTRL.I->theta_d_elec
+        #endif
 
-    #if SELECT_ALGORITHM == ALG_Chi_Xu
-        #define ELECTRICAL_SPEED_FEEDBACK    chixu.xOmg
-        #define ELECTRICAL_POSITION_FEEDBACK chixu.theta_d
-    #elif SELECT_ALGORITHM == ALG_NSOAF
-        #define ELECTRICAL_SPEED_FEEDBACK    nsoaf.xOmg // harnefors.omg_elec
-        #define ELECTRICAL_POSITION_FEEDBACK AFE_USED.theta_d // harnefors.theta_d
-    #endif
 
-    // #define ELECTRICAL_SPEED_FEEDBACK    CTRL.I->omg_elec
-    // #define ELECTRICAL_POSITION_FEEDBACK CTRL.I->theta_d_elec
-
-    /* Tuning Algorithm */
+    /* Tuning Algorithm 2 */
     #define LOW_SPEED_OPERATION  1
     #define HIGH_SPEED_OPERATION 2
     #define OPERATION_MODE HIGH_SPEED_OPERATION
@@ -188,7 +189,7 @@
 	#define NULL_D_AXIS_CURRENT_CONTROL -1
 	#define MTPA -2 // not supported
 #define CONTROL_STRATEGY NULL_D_AXIS_CURRENT_CONTROL
-#define NUMBER_OF_STEPS 250000
+#define NUMBER_OF_STEPS 150000
     #define DOWN_SAMPLE 1
     #define USE_QEP_RAW TRUE
     #define VOLTAGE_CURRENT_DECOUPLING_CIRCUIT FALSE

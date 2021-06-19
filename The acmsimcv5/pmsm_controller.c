@@ -39,6 +39,8 @@ void init_CTRL(){
 /* Inverter */
     CTRL.inv->filter_pole = 3000*2*M_PI;
     inverterNonlinearity_Initialization();
+    G.FLAG_INVERTER_NONLINEARITY_COMPENSATION = INVERTER_NONLINEARITY_COMPENSATION_INIT;
+
 
 /* Capture */
     CTRL.cap->flag_nonlinear_filtering = FALSE;
