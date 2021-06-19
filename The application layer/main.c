@@ -94,11 +94,11 @@ void main(void){
 
         InitSpiaGpio();
         //InitSpi(); // this is moved to CPU02
-        InitSciGpio();
+        InitScicGpio();
         //InitSci(); // this is moved to CPU02
 
         // 在此之前，已经把GPIO和外设的权限转给CPU2了。
-        // 这里再把部分贡献内存权限给CPU2，同时告诉CPU2，你可以继续运行代码了。
+        // 这里再把部分共享内存权限给CPU2，同时告诉CPU2，你可以继续运行代码了。
         while( !(MemCfgRegs.GSxMSEL.bit.MSEL_GS0))
         {
             EALLOW;
@@ -115,24 +115,34 @@ void main(void){
     /* Re-map PIE Vector Table to user defined ISR functions. */
         EALLOW; // This is needed to write to EALLOW protected registers
         PieVectTable.EPWM1_INT = &SYSTEM_PROGRAM;     //&MainISR;      // PWM主中断 10kKHz
+        #if USE_ECAP_CEVT2_INTERRUPT == 1 && ENABLE_ECAP
         PieVectTable.ECAP1_INT = &ecap1_isr;
         PieVectTable.ECAP2_INT = &ecap2_isr;
         PieVectTable.ECAP3_INT = &ecap3_isr;
+        #endif
+        #if SYSTEM_PROGRAM_MODE != 223
         PieVectTable.EQEP1_INT = &EQEP_UTO_INT;      // eQEP
+        #endif
+        #if NUMBER_OF_DSP_CORES == 1
         PieVectTable.SCIC_RX_INT = &scicRxFifoIsr;   // SCI Receive
         PieVectTable.SCIC_TX_INT = &scicTxFifoIsr;   // SCI Transmit
+        #endif
         EDIS; // This is needed to disable write to EALLOW protected registers
     /* PIE Control */
+        /* ePWM */
         PieCtrlRegs.PIEIER3.bit.INTx1 = 1;      // PWM1 interrupt (Interrupt 3.1)
+        /* SCI */
         #if NUMBER_OF_DSP_CORES == 1
             PieCtrlRegs.PIEIER8.bit.INTx5 = 1;   // PIE Group 8, INT5, SCI-C Rx
             PieCtrlRegs.PIEIER8.bit.INTx6 = 1;   // PIE Group 8, INT6, SCI-C Tx
         #endif
-        #if USE_ECAP_CEVT2_INTERRUPT == 1
+        /* eCAP */
+        #if USE_ECAP_CEVT2_INTERRUPT == 1 && ENABLE_ECAP
             PieCtrlRegs.PIEIER4.bit.INTx1 = 1;      // Enable eCAP INTn in the PIE: Group 3 __interrupt 1--6 (Interrupt 4.1)
             PieCtrlRegs.PIEIER4.bit.INTx2 = 1;      // 1 Enable for Interrupt 4.2
             PieCtrlRegs.PIEIER4.bit.INTx3 = 1;      // 2 Enable for Interrupt 4.3
         #endif
+        /* eQEP */
         #if SYSTEM_PROGRAM_MODE != 223
             PieCtrlRegs.PIEIER5.bit.INTx1 = 1;      // QEP interrupt
         #endif
@@ -141,10 +151,12 @@ void main(void){
         #if NUMBER_OF_DSP_CORES == 1
             IER |= M_INT8; // SCI-C
         #endif
-        #if USE_ECAP_CEVT2_INTERRUPT == 1
+        #if USE_ECAP_CEVT2_INTERRUPT == 1 && ENABLE_ECAP
             IER |= M_INT4;  // ECAP1_INT // CPU INT4 which is connected to ECAP1-4 INT
         #endif
+        #if SYSTEM_PROGRAM_MODE != 223 // used by yuanxin
         IER |= M_INT5;  // EQEP1_INT???
+        #endif
     EINT;   // Enable Global __interrupt INTM
     ERTM;   // Enable Global realtime __interrupt DBGM
 
@@ -167,37 +179,39 @@ void main(void){
         IPCLtoRFlagSet(IPC_FLAG7);
     #endif
 
-    SendChar = 24;
-    for(;;)
-    {
-        ScicRegs.SCITXBUF.all = (SendChar);
+    if(FALSE){
+        SendChar = 24;
+        for(;;)
+        {
+            ScicRegs.SCITXBUF.all = (SendChar);
 
-       //
-       // wait for RRDY/RXFFST =1 for 1 data available in FIFO
-       //
-       while(ScicRegs.SCIFFRX.bit.RXFFST == 0) {
-       }
-       CTRL.S->go_sensorless = 100;
+           //
+           // wait for RRDY/RXFFST =1 for 1 data available in FIFO
+           //
+           while(ScicRegs.SCIFFRX.bit.RXFFST == 0) {
+           }
+           CTRL.S->go_sensorless = 100;
 
-       //
-       // Check received character
-       //
-       ReceivedChar = ScicRegs.SCIRXBUF.all;
-       if(ReceivedChar != SendChar)
-       {
-           //error();
-       }
+           //
+           // Check received character
+           //
+           ReceivedChar = ScicRegs.SCIRXBUF.all;
+           if(ReceivedChar != SendChar)
+           {
+               //error();
+           }
 
-       //
-       // Move to the next character and repeat the test
-       //
-       SendChar++;
+           //
+           // Move to the next character and repeat the test
+           //
+           SendChar++;
 
-       //
-       // Limit the character to 8-bits
-       //
-       SendChar &= 0x00F;
-       LoopCount++;
+           //
+           // Limit the character to 8-bits
+           //
+           SendChar &= 0x00F;
+           LoopCount++;
+        }
     }
 
     // 7. Main loop
@@ -410,10 +424,9 @@ void CJHMainISR(void){
         write_DAC_buffer();
     #endif
 
-    //if(down_freq_ecap_counter++==2){
-    do_enhanced_capture();
-    //    down_freq_ecap_counter = 1;
-    //}
+    #if ENABLE_ECAP
+        do_enhanced_capture();
+    #endif
 
     // 采样，包括DSP中的ADC采样等
     DELAY_US(2); // wait for adc conversion TODO: check adc eoc flag?

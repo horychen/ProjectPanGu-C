@@ -5,7 +5,7 @@
 #ifndef ALL_DEFINITATION_H
 #define ALL_DEFINITATION_H
 #include "math.h"
-//#include "IQmathLib.h"            //硬件库 StepAngle
+//#include "IQmathLib.h"
 /* DSP system Configuration------------------------------------------------------------------*/
     #include "F2837xD_Cla_typedefs.h"  // F2837xD CLA Type definitions
     #include "F2837xD_device.h"        // F2837xD Headerfile Include File
@@ -16,6 +16,7 @@
     #include "Experiment.h"
 /* Motor Library file------------------------------------------------------------------------*/
     __interrupt void EPWM1ISR(void);
+    #define ENABLE_ECAP 0
     #define USE_ECAP_CEVT2_INTERRUPT 1
     __interrupt void ecap1_isr(void);
     __interrupt void ecap2_isr(void);
@@ -65,33 +66,7 @@
     #define SYSTEM_QEP_CUTOFF_FILTER           5      // CUTOFF FREQUENCY 10HZ
     #define SYSTEM_QEP_SWAP_ENABLE              1     //正方向计数
     #define SYSTEM_QEP_SWAP_DISABLE             0     //反方向计数
-    //ADC CONFIGURATION
-    //    #define AD_scale_W                       0.005491759 //0.00558484     //0.0057316444 // -11.8—11.8 A // 0.0062421972 //-12-12A
-    //    #define AD_scale_V                       0.005491759 //0.00558484     //0.0056072670 // -11.8—11.8 A // 0.0061728395 //-12-12A
-    //    #define AD_scale_U                       0.005491759
-    #ifdef _XCUBE1
-        //        #define AD_scale_U                       0.0109649
-        //        #define AD_scale_V                       0.009809628544893137 // (degaussed CP030A) // 0.01125872551 (YX)
-        //        #define AD_scale_W                       0.009592536539804648 // (degaussed CP030A) // 0.01134558656 (YX)
-        //        #define AD_scale_VDC                     0.3546099
-
-        /* 借用Sensor Board的电流传感器 */
-        //#define AD_scale_W                       0.0057316444
-        //#define AD_scale_V                       0.0056072670
-
-            #else
-                // test condition, Ta=0.5, Tb=0.4, Tc=0.6, W=1.708, V=-1.693.
-                //        #define AD_scale_W                       0.001002814052101 // 0.001050801473 / (1.708/1.63)   // 120 Ohm: 0.0057316444 / (120/22)
-                //        #define AD_scale_V                       0.000989745002067 // 0.001027998950 / (1.693 / 1.63) //  120 Ohm: 0.0056072670 / (120/22)
-                //        #define AD_scale_U                       0.0057316444
-                //        #define AD_scale_VDC                     0.3546099
-
-        //        #define AD_scale_W                       0.0058002658 // 0.00867354 // 0.0096392 // 0.0057316444
-        //        #define AD_scale_V                       0.0064003544 // 0.01027935 //0.0094433 // 0.0056072670
-        //        #define AD_scale_U                       0.006300196648
-        //        #define AD_scale_VDC                     (0.5*0.1897533207) // 短上一个470R再补上一个470R
-    #endif
-
+    //ADC CONFIGURATION is moved to main.c
     //TRIP CONFIGURATION
     #define MAX_CURRENT_N                      -11.8      //-12A  // Set your negative current trip threshold here in [0, 4095]
     #define MAX_CURRENT_P                       11.8       //12A   // Set your positive current trip threshold here in [0, 4095]
@@ -100,10 +75,6 @@
     #define MAX_PWM_LIMATATION                    0.96
     #define MIN_PWM_LIMATATION                    0.04
     //GPIO
-        //    #define DSP_ENPWM               GpioDataRegs.GPDSET.bit.GPIO105=1;    //SD置高，封波
-        //    #define DSP_ENPWM_LOW           GpioDataRegs.GPDCLEAR.bit.GPIO105=1;
-        //    #define DSP_2ENPWM              GpioDataRegs.GPASET.bit.GPIO27=1;     //SD置高，封波
-        //    #define DSP_2ENPWM_LOW          GpioDataRegs.GPACLEAR.bit.GPIO27=1;
     #define DSP_PWM_DISABLE        GpioDataRegs.GPDSET.bit.GPIO105=1;    // 低有效，置位封波
     #define DSP_PWM_ENABLE         GpioDataRegs.GPDCLEAR.bit.GPIO105=1;  // 低有效，清零有效
     #define DSP_2PWM_DISABLE       GpioDataRegs.GPASET.bit.GPIO27=1;
