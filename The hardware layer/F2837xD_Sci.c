@@ -35,26 +35,26 @@ void InitSciGpio(){
 }
 
 void InitScicGpio(void){
-    GPIO_SetupPinOptions(38, GPIO_OUTPUT, GPIO_ASYNC);//SCI_TX
-    GPIO_SetupPinMux(38,1,5);//
-    GPIO_SetupPinOptions(39, GPIO_INPUT, GPIO_ASYNC);//SCI_RX
-    GPIO_SetupPinMux(39,1,5);//
+//    GPIO_SetupPinOptions(38, GPIO_OUTPUT, GPIO_ASYNC);//SCI_TX
+//    GPIO_SetupPinMux(38,1,5);//
+//    GPIO_SetupPinOptions(39, GPIO_INPUT, GPIO_ASYNC);//SCI_RX
+//    GPIO_SetupPinMux(39,1,5);//
 
-//    GPIO_SetupPinOptions(38, GPIO_OUTPUT, GPIO_ASYNC);
-//    #if NUMBER_OF_DSP_CORES == 1
-//        GPIO_SetupPinMux(38,GPIO_MUX_CPU1,5);
-//    #else
-//        GPIO_SetupPinMux(38,GPIO_MUX_CPU2,5);
-//    #endif
+    //SCI_TX
+    GPIO_SetupPinOptions(38, GPIO_OUTPUT, GPIO_ASYNC);
+    #if NUMBER_OF_DSP_CORES == 1
+        GPIO_SetupPinMux(38,GPIO_MUX_CPU1,5);
+    #else
+        GPIO_SetupPinMux(38,GPIO_MUX_CPU2,5);
+    #endif
 
-//    GPIO_SetupPinOptions(39, GPIO_INPUT, GPIO_ASYNC);
-//    #if NUMBER_OF_DSP_CORES == 1
-//        GPIO_SetupPinMux(39,GPIO_MUX_CPU1,5);
-//    #else
-//        GPIO_SetupPinMux(39,GPIO_MUX_CPU2,5);
-//    #endif
-
-
+    //SCI_RX
+    GPIO_SetupPinOptions(39, GPIO_INPUT, GPIO_ASYNC);
+    #if NUMBER_OF_DSP_CORES == 1
+        GPIO_SetupPinMux(39,GPIO_MUX_CPU1,5);
+    #else
+        GPIO_SetupPinMux(39,GPIO_MUX_CPU2,5);
+    #endif
 }
 void InitSci(void){
     CpuSysRegs.PCLKCR7.bit.SCI_C = 1; // SCI_C Clock Enable bit (Table 2-179) Peripheral Clock Gating Registers
