@@ -18,6 +18,8 @@
 #define AFE_35_SATURATION_TIME_DIFFERENCE 0
 #define AFE_36_TOP_BUTT_EXACT_COMPENSATION 0
 
+#define AFE_40_JO_CHOI_METHOD 0
+
 typedef void (*pointer_flux_estimator_dynamics)(REAL t, REAL *x, REAL *fx);
 void general_2states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REAL *x, REAL hs);
 void general_3states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REAL *x, REAL hs);

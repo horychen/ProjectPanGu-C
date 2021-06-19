@@ -257,7 +257,7 @@ void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REA
         AFEOE.set_omega_est = AFEOE_OMEGA_ESTIMATOR;
         AFEOE.omega_est = AFEOE.set_omega_est;
         #if AFE_25_VM_CM_FUSION
-            afe_one_parameter_tuning(AFEOE.omega_est);
+            // afe_one_parameter_tuning(AFEOE.omega_est);
         #endif
 
         AFEOE.limiter_KE = 1.15 * MOTOR.KE;
@@ -303,8 +303,7 @@ void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REA
             AFEOE.output_error[1] = KActive*sinT - AFEOE.psi_2[1];
         #endif
 
-        #define AFE_25_FLUX_LIMITER
-        #ifdef AFE_25_FLUX_LIMITER
+        #if AFE_25_FISION__FLUX_LIMITER_AT_LOW_SPEED
             /* The amplitude limiter */
             if(AFEOE.active_flux_ampl > AFEOE.limiter_KE){
                 AFEOE.psi_2_limited[0] = AFEOE.limiter_KE * AFEOE.psi_2[0]*active_flux_ampl_inv;
@@ -353,7 +352,7 @@ void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REA
             AFEOE.limiter_Flag = FALSE;
         }
 
-        #if AFE_25_FISION__FLUX_LIMITER_AT_LOW_SPEED == TRUE
+        #if AFE_25_FISION__FLUX_LIMITER_AT_LOW_SPEED == FALSE
             /* NO Need */
             /* NO Need */
             /* NO Need */
@@ -398,6 +397,120 @@ void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REA
 #endif
 #if AFE_36_TOP_BUTT_EXACT_COMPENSATION 
 #endif
+
+#if AFE_40_JO_CHOI_METHOD
+    void init_joChoi(){
+        AFEOE.active_flux_ampl = MOTOR.KE;
+        AFEOE.cosT = 1.0;
+        AFEOE.sinT = 0.0;
+
+        AFEOE.x[0] = PMSM_PERMANENT_MAGNET_FLUX_LINKAGE; // TODO：这里假设了初始位置是alpha轴对着d轴的
+        AFEOE.x[1] = 0.0;
+        AFEOE.ActiveFlux_KP = AFEOE_KP;
+        AFEOE.ActiveFlux_KI = AFEOE_KI;
+        AFEOE.set_omega_est = AFEOE_OMEGA_ESTIMATOR;
+        AFEOE.omega_est = AFEOE.set_omega_est;
+        #if AFE_25_VM_CM_FUSION
+            // afe_one_parameter_tuning(AFEOE.omega_est);
+        #endif
+
+        AFEOE.limiter_KE = 1.15 * MOTOR.KE;
+        AFEOE.k_af = 0.0 * 100 * 2 * M_PI;
+    }
+    void rhf_ActiveFluxEstimator_Dynamics(REAL t, REAL *x, REAL *fx){
+        // x[0], x[1]: stator flux in ab frame
+        // x[2], x[3]: integral action compensating offset voltage
+
+        /* Calculate psi_2 from psi_1, Lq and i_ab */
+        AFEOE.psi_2[0] = x[0] - MOTOR.Lq * IS(0);
+        AFEOE.psi_2[1] = x[1] - MOTOR.Lq * IS(1);
+
+        /* Output: Flux amplitude */
+        AFEOE.active_flux_ampl = sqrt(AFEOE.psi_2[0]*AFEOE.psi_2[0] + AFEOE.psi_2[1]*AFEOE.psi_2[1]);
+
+        /* State: Cosine and Sine of the flux angle */
+        REAL active_flux_ampl_inv=0.0;
+        if(AFEOE.active_flux_ampl!=0){
+            active_flux_ampl_inv = 1.0/AFEOE.active_flux_ampl;
+        } 
+        REAL cosT = AFEOE.psi_2[0] * active_flux_ampl_inv;
+        REAL sinT = AFEOE.psi_2[1] * active_flux_ampl_inv;
+
+        /* Input: Current at dq frame and KActive */
+        REAL iDQ_at_current_step[2];
+        iDQ_at_current_step[0] = AB2M(IS(0), IS(1), cosT, sinT);
+        iDQ_at_current_step[1] = AB2T(IS(0), IS(1), cosT, sinT);
+        REAL KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * iDQ_at_current_step[0];
+
+        /* State: stator emf as the derivative of staotr flux, psi_1 */
+        REAL emf[2];
+        emf[0] = US(0) - MOTOR.R*IS(0) + 1*OFFSET_VOLTAGE_ALPHA;
+        emf[1] = US(1) - MOTOR.R*IS(1) + 1*OFFSET_VOLTAGE_BETA ;
+        fx[0] = emf[0] \
+            /*k_af*/- AFEOE.k_af*(AFEOE.psi_2[0] - AFEOE.psi_2_limited[0]) \
+            /*P*/+ AFEOE.ActiveFlux_KP * AFEOE.output_error[0] \
+            /*I*/+ x[2];
+        fx[1] = emf[1] \
+            /*k_af*/- AFEOE.k_af*(AFEOE.psi_2[1] - AFEOE.psi_2_limited[1]) \
+            /*P*/+ AFEOE.ActiveFlux_KP * AFEOE.output_error[1] \
+            /*I*/+ x[3];
+
+        /* State: disturbance/offset estimated by an integrator */
+        fx[2] = AFEOE.ActiveFlux_KI * AFEOE.output_error[0];
+        fx[3] = AFEOE.ActiveFlux_KI * AFEOE.output_error[1];
+    }
+    REAL k_af_speed_Hz = 1.5;
+    void Main_the_active_flux_estimator(){
+
+        /* OPT for AFE */
+        if(AFEOE.omega_est != AFEOE.set_omega_est){
+            AFEOE.omega_est = AFEOE.set_omega_est;
+            afe_one_parameter_tuning(AFEOE.omega_est);
+        }
+
+        /* Time-varying gains */
+        if(fabs(CTRL.I->cmd_omg_elec)*MOTOR.npp_inv*ONE_OVER_2PI<k_af_speed_Hz){ // [Hz]
+            AFEOE.k_af = 2*M_PI*100;
+            AFEOE.limiter_Flag = TRUE;
+        }else{
+            AFEOE.k_af = 0.0;
+            AFEOE.limiter_Flag = FALSE;
+        }
+
+        #if AFE_25_FISION__FLUX_LIMITER_AT_LOW_SPEED == FALSE
+            /* NO Need */
+            /* NO Need */
+            /* NO Need */
+            AFEOE.k_af = 0.0;
+        #endif
+
+        /* Proposed closed loop estimator AB frame + ODE4 */
+        // stator flux and integral states update
+        general_4states_rk4_solver(&rhf_ActiveFluxEstimator_Dynamics, CTRL.timebase, AFEOE.x, CL_TS);
+        // Unpack x
+        AFEOE.psi_1[0]    = AFEOE.x[0];
+        AFEOE.psi_1[1]    = AFEOE.x[1];
+        AFEOE.u_offset[0] = AFEOE.x[2];
+        AFEOE.u_offset[1] = AFEOE.x[3];
+
+        // active flux
+        AFEOE.psi_2[0] = AFEOE.x[0] - CTRL.motor->Lq * IS(0);
+        AFEOE.psi_2[1] = AFEOE.x[1] - CTRL.motor->Lq * IS(1);
+        AFEOE.active_flux_ampl = sqrt(AFEOE.psi_2[0]*AFEOE.psi_2[0] + AFEOE.psi_2[1]*AFEOE.psi_2[1]);
+        REAL active_flux_ampl_inv=0.0;
+        if(AFEOE.active_flux_ampl!=0){
+            active_flux_ampl_inv = 1.0/AFEOE.active_flux_ampl;
+            AFEOE.cosT = AFEOE.psi_2[0] * active_flux_ampl_inv;
+            AFEOE.sinT = AFEOE.psi_2[1] * active_flux_ampl_inv;
+        }else{
+            AFEOE.cosT = 1.0;
+            AFEOE.sinT = 0.0;
+        }
+
+        AFEOE.theta_d = atan2(AFEOE.psi_2[1], AFEOE.psi_2[0]);
+    }
+#endif
+
 
 void test_flux_estimators(){
     Main_the_active_flux_estimator();
