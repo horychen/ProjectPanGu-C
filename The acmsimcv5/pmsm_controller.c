@@ -41,7 +41,6 @@ void init_CTRL(){
     inverterNonlinearity_Initialization();
     G.FLAG_INVERTER_NONLINEARITY_COMPENSATION = INVERTER_NONLINEARITY_COMPENSATION_INIT;
 
-
 /* Capture */
     CTRL.cap->flag_nonlinear_filtering = FALSE;
     CTRL.cap->flag_bad_U_capture = FALSE;
@@ -72,6 +71,7 @@ void init_CTRL(){
 
 /* Console */
     // See init_experiment_overwrite() in CJHMainISR.c
+    G.flag_do_inverter_characteristics = SELF_COMM_INVERTER;
 
 /* Black Box Model | Controller quantities */
 
@@ -615,6 +615,135 @@ REAL shift2pi(REAL thetaA){
 }
 // REAL watch_theta_trapezoidal = 0.0;
 void Modified_ParkSul_Compensation(void){
+
+    /* Park12/14
+     * */
+    // Phase A current's fundamental component transformation    
+    INV.thetaA = -M_PI*1.5 + CTRL.I->theta_d_elec + atan2(CTRL.I->idq_cmd[1], CTRL.I->idq_cmd[0]); /* Q: why -pi*(1.5)? */ /* ParkSul2014 suggests to use PLL to extract thetaA from current command */
+    INV.thetaA = shift2pi(INV.thetaA); /* Q: how to handle it when INV.thetaA jumps between pi and -pi? */ // 这句话绝对不能省去，否则C相的梯形波会出错。
+
+    INV.cos_thetaA = cos(INV.thetaA);
+    INV.sin_thetaA = sin(INV.thetaA);
+    INV.iD_atA = AB2M(IS_C(0),IS_C(1), INV.cos_thetaA, INV.sin_thetaA);
+    INV.iQ_atA = AB2T(IS_C(0),IS_C(1), INV.cos_thetaA, INV.sin_thetaA);
+
+    INV.I5_plus_I7 = INV.iD_atA * sin(6*INV.thetaA); /* Q: Why sin? Why not cos? 和上面的-1.5*pi有关系吗？ */
+    INV.I5_plus_I7_LPF = lpf1_inverter(INV.I5_plus_I7, INV.I5_plus_I7_LPF); /* lpf1 for inverter */
+
+    INV.I11_plus_I13 = INV.iD_atA * sin(12*INV.thetaA);
+    INV.I11_plus_I13_LPF = lpf1_inverter(INV.I11_plus_I13, INV.I11_plus_I13_LPF);
+
+    INV.I17_plus_I19 = INV.iD_atA * sin(18*INV.thetaA);
+    INV.I17_plus_I19_LPF = lpf1_inverter(INV.I17_plus_I19, INV.I17_plus_I19_LPF);
+
+    // The adjusting of theta_t via 6th harmonic magnitude
+    INV.theta_trapezoidal += CL_TS * INV.gamma_theta_trapezoidal \
+                            // *fabs(CTRL.I->cmd_speed_rpm)
+                            *(      INV.I5_plus_I7_LPF 
+                                + 0*INV.I11_plus_I13_LPF
+                                + 0*INV.I17_plus_I19_LPF
+                             );
+
+    // 两种方法选其一：第一种可用于sensorless系统。
+    if(FALSE){
+        /* 利用theta_t的饱和特性辨识Vsat（次优解） */
+    }else{
+        // 由于实际逆变器有一个调制比低引入5、7次谐波的问题，所以最佳theta_t不在11度附近了。
+        if(INV.theta_trapezoidal >= 25*M_PI_OVER_180){ // 17
+            INV.theta_trapezoidal = 25*M_PI_OVER_180; // 17
+        }
+        if(INV.theta_trapezoidal <= 0.223*M_PI_OVER_180){
+            INV.theta_trapezoidal = 0.223*M_PI_OVER_180;
+        }
+    }
+
+
+    #if PC_SIMULATION == TRUE
+        // 用偏小的Vsat，观察theta_t的收敛是否直达下界？
+        // if(CTRL.timebase>23){
+        //     INV.Vsat = 9.0/6.0 * 16.0575341/2;
+        // }else if(CTRL.timebase>20){
+        //     INV.Vsat = 7.0/6.0 * 16.0575341/2;
+        // }else if(CTRL.timebase>15){
+        //     INV.Vsat = 6.0/6.0 * 16.0575341/2;
+        // }else if(CTRL.timebase>10){
+        //     INV.Vsat = 5.0/6.0 * 16.0575341/2;
+        // }else if(CTRL.timebase>5){
+        //     INV.Vsat = 4.0/6.0 * 16.0575341/2;
+        // }
+
+        // /* Adaptive Vsat based on position error */
+        // INV.Vsat += CL_TS * INV.gain_Vsat * sin(ENC.theta_d_elec - ELECTRICAL_POSITION_FEEDBACK) * sign(ENC.omg_elec);
+        // if (INV.Vsat>15){
+        //     INV.Vsat = 15;
+        // }else if(INV.Vsat<0){
+        //     INV.Vsat = 0;
+        // }
+    #else
+        /* Adaptive Vsat based on position error */
+        /* TO use this, you muast have a large enough stator current */
+        /* TO use this, you muast have a large enough stator current */
+        /* TO use this, you muast have a large enough stator current */
+        INV.Vsat += CL_TS * INV.gain_Vsat * sin(ENC.theta_d_elec - ELECTRICAL_POSITION_FEEDBACK) * sign(ENC.omg_elec);
+        if (INV.Vsat>15){
+            INV.Vsat = 15;
+        }else if(INV.Vsat<0){
+            INV.Vsat = 0;
+        }
+    #endif
+
+
+    #if INVERTER_NONLINEARITY == 3 // [ModelLUT]
+        // INV.Vsat = 6.67054;
+    #elif INVERTER_NONLINEARITY == 2 // [ModelSigmoid]
+        // INV.Vsat = sigmoid(100)*1.0;
+            // INV.Vsat = sigmoid(100)*0.95;
+            // INV.Vsat = sigmoid(100)*1.05;
+    #elif INVERTER_NONLINEARITY == 1 // [ModelSul96]
+        REAL TM    = _Toff - _Ton - _Tdead + _Tcomp; // Sul1996
+        REAL Udist = (_Udc*TM*CL_TS_INVERSE - _Vce0 - _Vd0) / 6.0;
+        INV.Vsat = 3*fabs( Udist ); // 4 = 2*sign(ia) - sign(ib) - sign(ic) when ia is positive and ib/ic is negative
+                                    // but Vsat is phase voltage distortion maximum, so we need to add a zero sequence voltage of Udist*(sign(ia) + sign(ib) + sign(ic)),
+                                    // so, it is 3 * |Udist| as Vsat.
+        static int bool_printed = FALSE;
+        if(bool_printed==FALSE){
+            printf("\tVsat = %g V; Udist = %g.\n", INV.Vsat, Udist);
+            bool_printed=TRUE;
+        }
+    #endif
+
+    REAL oneOver_theta_trapezoidal = 1.0/INV.theta_trapezoidal;
+    // watch_theta_trapezoidal = INV.theta_trapezoidal / M_PI_OVER_180;
+    INV.u_comp[0] = u_comp_per_phase(INV.Vsat,          INV.thetaA                 , INV.theta_trapezoidal, oneOver_theta_trapezoidal);
+    INV.u_comp[1] = u_comp_per_phase(INV.Vsat, shift2pi(INV.thetaA-  TWO_PI_OVER_3), INV.theta_trapezoidal, oneOver_theta_trapezoidal);
+    INV.u_comp[2] = u_comp_per_phase(INV.Vsat, shift2pi(INV.thetaA-2*TWO_PI_OVER_3), INV.theta_trapezoidal, oneOver_theta_trapezoidal);
+
+    // #define MISMATCH_A3 1.1
+    // REAL ia,ib,ic;
+    // ia = 1 * (       IS_C(0)                                  );
+    // ib = 1 * (-0.5 * IS_C(0) - SIN_DASH_2PI_SLASH_3 * IS_C(1) );
+    // ic = 1 * (-0.5 * IS_C(0) - SIN_2PI_SLASH_3      * IS_C(1) );
+    // INV.u_comp[0] = sigmoid_online(ia, INV.Vsat, 5.22150403 * MISMATCH_A3); //INV.theta_trapezoidal);
+    // INV.u_comp[1] = sigmoid_online(ib, INV.Vsat, 5.22150403 * MISMATCH_A3); //INV.theta_trapezoidal);
+    // INV.u_comp[2] = sigmoid_online(ic, INV.Vsat, 5.22150403 * MISMATCH_A3); //INV.theta_trapezoidal);
+
+    // 改成恒幅值变换
+    INV.ual_comp = 0.66666666667 * (INV.u_comp[0] - 0.5*INV.u_comp[1] - 0.5*INV.u_comp[2]);
+    INV.ube_comp = 0.66666666667 * 0.86602540378 * (    INV.u_comp[1] -     INV.u_comp[2]);
+        // INV.ual_comp = SQRT_2_SLASH_3      * (INV.u_comp[0] - 0.5*INV.u_comp[1] - 0.5*INV.u_comp[2]); // sqrt(2/3.)
+        // INV.ube_comp = 0.70710678118654746 * (                    INV.u_comp[1] -     INV.u_comp[2]); // sqrt(2/3.)*sin(2*pi/3) = sqrt(2/3.)*(sqrt(3)/2)
+
+    // 区分补偿前的电压和补偿后的电压：
+    // CTRL.ual, CTRL.ube 是补偿前的电压！
+    // CTRL.ual + INV.ual_comp, CTRL.ube + INV.ube_comp 是补偿后的电压！
+
+    // for plotting
+    INV.uDcomp_atA = AB2M(INV.ual_comp, INV.ube_comp, INV.cos_thetaA, INV.sin_thetaA);
+    INV.uQcomp_atA = AB2T(INV.ual_comp, INV.ube_comp, INV.cos_thetaA, INV.sin_thetaA);
+}
+
+/* My Online Inverter Compensation 梯形波 */
+void Chen2021_Trapezoidal_Voltage_Compensation(void){
 
     /* Park12/14
      * */

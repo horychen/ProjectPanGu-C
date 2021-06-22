@@ -2,11 +2,13 @@
 #define PMSM_CONTROLLER_H
 #if MACHINE_TYPE == 2
 typedef struct { 
-    float  Ualpha; // Input: reference alpha-axis phase voltage
-    float  Ubeta;  // Input: reference beta-axis phase voltage
-    float  Ta;     // Output: reference phase-a switching function
-    float  Tb;     // Output: reference phase-b switching function
-    float  Tc;     // Output: reference phase-c switching function
+    REAL  Ualpha; // Input: reference alpha-axis phase voltage
+    REAL  Ubeta;  // Input: reference beta-axis phase voltage
+    REAL  Ta;     // Output: reference phase-a switching function
+    REAL  Tb;     // Output: reference phase-b switching function
+    REAL  Tc;     // Output: reference phase-c switching function
+    REAL CMPA[3]; // PWM compare register value original
+    REAL CMPA_DBC[3]; // PWM compare register value dead-band compensated
 } SVGENDQ;
 
 typedef struct {

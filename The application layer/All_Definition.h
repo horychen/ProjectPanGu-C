@@ -39,11 +39,7 @@
     void eQEP_initialize(int m);
     void Gpio_initialize(void);
     void ADC_initialize(void);
-    //PWM CONFIGURATION
-    #define SYSTEM_PWM_DEADTIME               5     // us   PWM deadtime
-    #define SYSTEM_PWM_DB_ACTV                0x1     //DB_ACTV_LOC  0x1   DB_ACTV_HIC  0x2 // LOW EFFECT /HIGH EFFECT
-    #define SYSTEM_PWM_AQ_SET                 0x2     //AQ_SET;    OTHERWISE, REVERSE!
-    #define SYSTEM_PWM_AQ_CLEAR               0x1     //AQ_CLEAR;
+    //PWM CONFIGURATION // see ACMSim.h
     //QEP CONFIGURATION
     #define USE_ORIGINAL_INVERTER_MOTOR_PAIR
     #ifdef USE_ORIGINAL_INVERTER_MOTOR_PAIR
@@ -71,9 +67,6 @@
     #define MAX_CURRENT_N                      -11.8      //-12A  // Set your negative current trip threshold here in [0, 4095]
     #define MAX_CURRENT_P                       11.8       //12A   // Set your positive current trip threshold here in [0, 4095]
     #define MAX_OVERVOLTAGE                    400      //400V  // Set your unipolar trip Over-voltage threshold in [0, 4095]
-    //SVPWM CONFIGURATION
-    #define MAX_PWM_LIMATATION                    0.96
-    #define MIN_PWM_LIMATATION                    0.04
     //GPIO
     #define DSP_PWM_DISABLE        GpioDataRegs.GPDSET.bit.GPIO105=1;    // 低有效，置位封波
     #define DSP_PWM_ENABLE         GpioDataRegs.GPDCLEAR.bit.GPIO105=1;  // 低有效，清零有效

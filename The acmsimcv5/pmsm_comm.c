@@ -193,8 +193,8 @@ void init_COMM(){
     COMM.bool_collecting = FALSE;
     int i;
     for(i=0;i<COMM_IV_SIZE_R1;++i){
-        COMM.i_data_R1[i] = 0.0;
-        COMM.v_data_R1[i] = 0.0;
+        COMM.i_phase_data_R1[i] = 0.0;
+        COMM.v_phase_data_R1[i] = 0.0;
     }
     for(i=0;i<COMM_IV_SIZE_L1;++i){
         COMM.i_data_L1[i] = 0.0;
@@ -361,10 +361,6 @@ void COMM_resistanceId(REAL id_fb, REAL iq_fb){
         UQ_OUTPUT = 0.0;
     #endif
 
-    // for ParkSul2012
-    CTRL.I->idq_cmd[0] = REGULATOR.Ref;
-    CTRL.I->idq_cmd[1] = 0.0;
-
     // collect steady state data
     if(COMM.bool_collecting){
         #if EXCITE_BETA_AXIS_AND_MEASURE_PHASE_B
@@ -377,10 +373,10 @@ void COMM_resistanceId(REAL id_fb, REAL iq_fb){
         COMM.counterSS += 1;
 
         if(COMM.counterSS>800){
-            COMM.i_data_R1[COMM.i] = COMM.current_sum/(REAL)COMM.counterSS * -SIN_DASH_2PI_SLASH_3; // beta -> phase b
-            COMM.v_data_R1[COMM.i] = COMM.voltage_sum/(REAL)COMM.counterSS * -SIN_DASH_2PI_SLASH_3; // beta -> phase b
+            COMM.i_phase_data_R1[COMM.i] = COMM.current_sum/(REAL)COMM.counterSS * -SIN_DASH_2PI_SLASH_3; // beta -> phase b
+            COMM.v_phase_data_R1[COMM.i] = COMM.voltage_sum/(REAL)COMM.counterSS * -SIN_DASH_2PI_SLASH_3; // beta -> phase b
             #if PC_SIMULATION
-                printf("%f, %f\n", COMM.i_data_R1[COMM.i], COMM.v_data_R1[COMM.i]);
+                printf("%f, %f\n", COMM.i_phase_data_R1[COMM.i], COMM.v_phase_data_R1[COMM.i]);
             #endif
             COMM.bool_collecting = FALSE;
             ++COMM.i;
@@ -392,7 +388,7 @@ void COMM_resistanceId(REAL id_fb, REAL iq_fb){
         COMM.counterSS = 0;
 
         // check steady state and assign boolean variable
-        if(reachSteadyStateCurrent(pid1_id.Ref-pid1_id.Fbk, MOTOR_RATED_CURRENT_RMS)){
+        if(reachSteadyStateCurrent(REGULATOR.Ref-REGULATOR.Fbk, MOTOR_RATED_CURRENT_RMS)){
 
             COMM.bool_collecting = TRUE;
 
@@ -400,10 +396,10 @@ void COMM_resistanceId(REAL id_fb, REAL iq_fb){
 
                 // Get resistance value
                 if(FALSE){
-                    COMM.R = (COMM.v_data_R1[1] - COMM.v_data_R1[0]) / (COMM.i_data_R1[1] - COMM.i_data_R1[0]);
+                    COMM.R = (COMM.v_phase_data_R1[1] - COMM.v_phase_data_R1[0]) / (COMM.i_phase_data_R1[1] - COMM.i_phase_data_R1[0]);
                 }else{
                     REAL m,b,r;
-                    if(linreg(( int)(0.3*RS_ID_NUMBER_OF_STAIRS), COMM.i_data_R1, COMM.v_data_R1, &m, &b, &r)){
+                    if(linreg(( int)(0.3*RS_ID_NUMBER_OF_STAIRS), COMM.i_phase_data_R1, COMM.v_phase_data_R1, &m, &b, &r)){
                         #if PC_SIMULATION
                             printf("FAILURE\n");
                         #endif
@@ -416,11 +412,11 @@ void COMM_resistanceId(REAL id_fb, REAL iq_fb){
                     int j;
                     printf("---CURRENT LIST:\n");
                     for(j=0;j<COMM_IV_SIZE_R1;++j){
-                        printf("\t%g,\n", COMM.i_data_R1[j]);
+                        printf("\t%g,\n", COMM.i_phase_data_R1[j]);
                     }
                     printf("---VOLTAGE LIST:\n");
                     for(j=0;j<COMM_IV_SIZE_R1;++j){
-                        printf("\t%g,\n", COMM.v_data_R1[j]);
+                        printf("\t%g,\n", COMM.v_phase_data_R1[j]);
                     }
                 #endif
                 #if EXCITE_BETA_AXIS_AND_MEASURE_PHASE_B
@@ -448,38 +444,53 @@ void COMM_resistanceId_v2(REAL id_fb, REAL iq_fb){
     if(COMM.counterEntered<=1){
         // Current loop tuning (LL, RR, BW_c, delta, JJ, KE, npp)
         COMM_PI_tuning(PMSM_D_AXIS_INDUCTANCE, PMSM_RESISTANCE, 2*3.1415926*CL_TS_INVERSE * 0.025, 20, MOTOR_SHAFT_INERTIA, MOTOR_BACK_EMF_CONSTANT, MOTOR_NUMBER_OF_POLE_PAIRS);
-            // COMM_PI_tuning(7e-3, 0.8, 2*3.1415926*CL_TS_INVERSE * 0.025, 20, MOTOR_SHAFT_INERTIA, MOTOR_BACK_EMF_CONSTANT, MOTOR_NUMBER_OF_POLE_PAIRS);
+     // COMM_PI_tuning(7e-3, 0.8, 2*3.1415926*CL_TS_INVERSE * 0.025, 20, MOTOR_SHAFT_INERTIA, MOTOR_BACK_EMF_CONSTANT, MOTOR_NUMBER_OF_POLE_PAIRS);
     }
 
-    #define RS_ID_NUMBER_OF_STAIRS (COMM_IV_SIZE_R1*0.5-3)
-    // #define RS_ID_NUMBER_OF_STAIRS 40
+    // number of stairs (positive or negative current)
+    #define NOS_II (9)
+    #define NOS    (COMM_IV_SIZE_R1*0.5-1-NOS_II) // 40
     #ifdef _XCUBE1
-        #define RS_ID_MAXIMUM_CURRENT (1.0) /* [A] This is inverter related */ // *(REAL)MOTOR_RATED_CURRENT_RMS
+        #define RS_ID_MAXIMUM_CURRENT (1.0) /* [A] This is inverter related */
+        #define RS_ID_LOW_CURRENT (RS_ID_MAXIMUM_CURRENT*0.3)
     #else
         #define RS_ID_MAXIMUM_CURRENT (3.0) /* [A] This is inverter related */ 
+        #define RS_ID_LOW_CURRENT (RS_ID_MAXIMUM_CURRENT*0.3)
     #endif
-    REAL current_increase_per_step = RS_ID_MAXIMUM_CURRENT / (REAL)RS_ID_NUMBER_OF_STAIRS;
+    // REAL current_increase_per_step_equalStepSize = RS_ID_MAXIMUM_CURRENT / (REAL)NOS;
+    REAL Delta_I_Low  = RS_ID_LOW_CURRENT / (REAL)NOS;
+    REAL Delta_I_High = (RS_ID_MAXIMUM_CURRENT-RS_ID_LOW_CURRENT) / (REAL)NOS_II;
 
-    if(COMM.i>=RS_ID_NUMBER_OF_STAIRS){
-        COMM.current_command = -RS_ID_MAXIMUM_CURRENT;
-        COMM.current_command += current_increase_per_step*(COMM.i-RS_ID_NUMBER_OF_STAIRS);
-    }else{
+    if(COMM.i < NOS_II){
+        /* 正电流-高电流段 */
         COMM.current_command = RS_ID_MAXIMUM_CURRENT;
-        COMM.current_command -= current_increase_per_step*COMM.i;        
+        COMM.current_command -= Delta_I_High*COMM.i;
+    }else if(COMM.i < NOS+NOS_II){
+        /* 正电流-低电流段 */
+        COMM.current_command = RS_ID_MAXIMUM_CURRENT;
+        COMM.current_command -= Delta_I_High* NOS_II \
+                              + Delta_I_Low * (COMM.i-NOS_II);
+    }else if(COMM.i < NOS+2*NOS_II){
+        /* 负电流-高电流段 */
+        COMM.current_command = -RS_ID_MAXIMUM_CURRENT;
+        COMM.current_command += Delta_I_High*(COMM.i-NOS-NOS_II);
+    }else{
+        /* 负电流-低电流段 */
+        COMM.current_command = -RS_ID_MAXIMUM_CURRENT;
+        COMM.current_command += Delta_I_High* NOS_II \
+                              + Delta_I_Low * (COMM.i-NOS-2*NOS_II);
     }
 
     #if EXCITE_BETA_AXIS_AND_MEASURE_PHASE_B
         #define REGULATOR pid1_iq
         #define FEEDBACK  iq_fb
-        // pid1_id.Ref = 0.0;
     #else
         #define REGULATOR pid1_id
         #define FEEDBACK  id_fb
-        // pid1_iq.Ref = 0.0;
     #endif
 
     REGULATOR.Fbk = FEEDBACK;
-    REGULATOR.Ref = COMM.current_command; /* 改为从正到负 */
+    REGULATOR.Ref = COMM.current_command;
     if(G.FLAG_TUNING_CURRENT_SCALE_FACTOR)
         REGULATOR.Ref = 3;
     REGULATOR.calc(&REGULATOR);
@@ -487,14 +498,18 @@ void COMM_resistanceId_v2(REAL id_fb, REAL iq_fb){
     #if EXCITE_BETA_AXIS_AND_MEASURE_PHASE_B
         UD_OUTPUT = 0.0;
         UQ_OUTPUT = REGULATOR.Out;
+
+        // for ParkSul2012
+        CTRL.I->idq_cmd[0] = 0.0;
+        CTRL.I->idq_cmd[1] = REGULATOR.Ref;
     #else
         UD_OUTPUT = REGULATOR.Out;
         UQ_OUTPUT = 0.0;
-    #endif
 
-    // for ParkSul2012
-    CTRL.I->idq_cmd[0] = REGULATOR.Ref;
-    CTRL.I->idq_cmd[1] = 0.0;
+        // for ParkSul2012
+        CTRL.I->idq_cmd[0] = REGULATOR.Ref;
+        CTRL.I->idq_cmd[1] = 0.0;
+    #endif
 
     // collect steady state data
     if(COMM.bool_collecting){
@@ -508,10 +523,10 @@ void COMM_resistanceId_v2(REAL id_fb, REAL iq_fb){
         COMM.counterSS += 1;
 
         if(COMM.counterSS>800){
-            COMM.i_data_R1[COMM.i] = COMM.current_sum/(REAL)COMM.counterSS * -SIN_DASH_2PI_SLASH_3;
-            COMM.v_data_R1[COMM.i] = COMM.voltage_sum/(REAL)COMM.counterSS * -SIN_DASH_2PI_SLASH_3;
+            COMM.i_phase_data_R1[COMM.i] = COMM.current_sum/(REAL)COMM.counterSS * -SIN_DASH_2PI_SLASH_3;
+            COMM.v_phase_data_R1[COMM.i] = COMM.voltage_sum/(REAL)COMM.counterSS * -SIN_DASH_2PI_SLASH_3;
             #if PC_SIMULATION
-                printf("%f, %f\n", COMM.i_data_R1[COMM.i], COMM.v_data_R1[COMM.i]);
+                printf("I=%f, U=%f\n", COMM.i_phase_data_R1[COMM.i], COMM.v_phase_data_R1[COMM.i]);
             #endif
             COMM.bool_collecting = FALSE;
             ++COMM.i;
@@ -523,19 +538,22 @@ void COMM_resistanceId_v2(REAL id_fb, REAL iq_fb){
         COMM.counterSS = 0;
 
         // check steady state and assign boolean variable
-        if(reachSteadyStateCurrent(pid1_id.Ref-pid1_id.Fbk, MOTOR_RATED_CURRENT_RMS)){
+        if(reachSteadyStateCurrent(REGULATOR.Ref-REGULATOR.Fbk, RS_ID_MAXIMUM_CURRENT)){
 
             COMM.bool_collecting = TRUE;
 
+            /* 判断是否结束 */
             // if(fabs(COMM.current_command) > RS_ID_MAXIMUM_CURRENT){
-            if(COMM.i>=RS_ID_NUMBER_OF_STAIRS*2){
+            if(COMM.i>=NOS*2+NOS_II*2){
 
                 // Get resistance value
                 if(FALSE){
-                    COMM.R = (COMM.v_data_R1[1] - COMM.v_data_R1[0]) / (COMM.i_data_R1[1] - COMM.i_data_R1[0]);
+                    /* use two points */
+                    COMM.R = (COMM.v_phase_data_R1[1] - COMM.v_phase_data_R1[0]) / (COMM.i_phase_data_R1[1] - COMM.i_phase_data_R1[0]);
                 }else{
+                    /* least square fitting */
                     REAL m,b,r;
-                    if(linreg(( int)(0.3*RS_ID_NUMBER_OF_STAIRS), COMM.i_data_R1, COMM.v_data_R1, &m, &b, &r)){
+                    if(linreg(( int)(1.0*NOS_II), COMM.i_phase_data_R1, COMM.v_phase_data_R1, &m, &b, &r)){
                         #if PC_SIMULATION
                             printf("FAILURE\n");
                         #endif
@@ -548,19 +566,21 @@ void COMM_resistanceId_v2(REAL id_fb, REAL iq_fb){
                     int j;
                     printf("---PHASE B CURRENT LIST:\n");
                     for(j=0;j<COMM_IV_SIZE_R1;++j){
-                        printf("\t%g,\n", COMM.i_data_R1[j] );
+                        printf("\t%g,\n", COMM.i_phase_data_R1[j] );
                     }
                     printf("---PHASE B VOLTAGE LIST:\n");
                     for(j=0;j<COMM_IV_SIZE_R1;++j){
-                        printf("\t%g,\n", COMM.v_data_R1[j] );
+                        printf("\t%g,\n", COMM.v_phase_data_R1[j] );
                     }
                 #endif
+                /* 无意义 */
                 #if EXCITE_BETA_AXIS_AND_MEASURE_PHASE_B
-                    COMM.last_voltage_command = UQ_OUTPUT;    
+                    COMM.last_voltage_command = UQ_OUTPUT;
                 #else
                     COMM.last_voltage_command = UD_OUTPUT;
                 #endif
-                COMM.bool_comm_status = -1; // 由于此时电流是零，last_voltage_command也是零，就不能做电感辨识的开环激励辨识了，直接结束吧。
+                // 由于此时电流是零，last_voltage_command也是零，就不能做电感辨识的开环激励辨识了，直接结束吧。
+                COMM.bool_comm_status = -1; 
                 COMM.counterEntered = 0;
 
                 // UD_OUTPUT = 0.0;
@@ -569,8 +589,10 @@ void COMM_resistanceId_v2(REAL id_fb, REAL iq_fb){
         }
     }
 
-    #undef RS_ID_NUMBER_OF_STAIRS
-    #undef RS_ID_MAXIMUM_CURRENT 
+    #undef NOS
+    #undef NOS_II
+    #undef RS_ID_MAXIMUM_CURRENT
+    #undef RS_ID_LOW_CURRENT
     #undef REGULATOR
     #undef FEEDBACK
 }

@@ -11,13 +11,29 @@
     #define NUMBER_OF_DSP_CORES 2  // 1 or 2
     #define SYSTEM_PROGRAM_MODE 223  //223 for CJHMainISR //0 stands for MainISR ,1 stands for Motor_Parameter_Compute_ISR
     #if SYSTEM_PROGRAM_MODE==223
+        /* ePWM CONFIGURATION */
         #define SYSTEM_PROGRAM                     EPWM1ISR
-        #define SYSTEM_PWM_FREQUENCY               10
-        #define SYSTEM_PWM_MAX_COUNT_INVERSE       5e-5 // = 1 / 20000
-        #define SYSTEM_PWM_MAX_COUNT               20000
+        #define SYSTEM_PWM_FREQUENCY               10 // 10kHz
+        //        #define SYSTEM_CARRIER_PERIOD              (100000/SYSTEM_PWM_FREQUENCY) // = TBCLK (100 MHz) / 10 (kHz) = 100e6/1e4 = 100e2 = 1e4 cnt 对应一个载波周期
+        //        #define SYSTEM_TBPRD                       (SYSTEM_CARRIER_PERIOD/2)
+        #define SYSTEM_CARRIER_PERIOD              10000 // =100000/10
+        #define SYSTEM_TBPRD                       5000 // =10000/2
+        #define SYSTEM_PWM_DEADTIME_CNT            500 // 500 个 TBCLK = EPWMCLK/1 = 100 MHz
+        #define SYSTEM_PWM_DEADTIME_COMPENSATION   483
+            // Td = 5.0us; Ton = 0.15us; Toff = 0.32us;
+            // TM = Td + Ton -Toff;
+            // CJH: (5.0 + 0.15 - 0.32 )*1e-6 * TBCLK (100 MHz) = 483
+        #define SYSTEM_MAX_PWM_DUTY_LIMATATION     0.96
+        #define SYSTEM_MIN_PWM_DUTY_LIMATATION     0.04
+        #define SYSTEM_PWM_UDC_UTILIZATION         SYSTEM_MAX_PWM_DUTY_LIMATATION
+
+        /* eCAP CONFIGURATION */ /* eCAP最大的波谷？或波峰？中断周期计数值是20000，这进一步验证了TBCLK被降频了，不是200MHz，而是100MHz。 */
+        #define SYSTEM_PWM_INT_MAX_COUNT               20000
+        #define SYSTEM_PWM_INT_MAX_COUNT_INVERSE       5e-5 // = 1 / 20000
         #define SYSTEM_HALF_PWM_MAX_COUNT          10000
     #endif
 #endif
+
 
 // 重定义变量类型
 #ifndef DSP28_DATA_TYPES
