@@ -48,45 +48,45 @@ void do_enhanced_capture(){    // Section 16.6.4 // The 32 bit counter is stored
     CAP.flag_bad_V_capture = FALSE;
     CAP.flag_bad_W_capture = FALSE;
     if(CAP.flag_nonlinear_filtering){
-        /*U 注意Uiint32不能做减法（非常容易出错）！*/
-        if( fabs((double)SYSTEM_PWM_MAX_COUNT - (double)CAP.ecapU.DutyOnTime1 - (double)CAP.ecapU.DutyOffTime1) > 4444.0 ||
-            fabs((double)SYSTEM_PWM_MAX_COUNT - (double)CAP.ecapU.DutyOnTime2 - (double)CAP.ecapU.DutyOffTime2) > 4444.0
+        /*U 注意Uint32不能做减法（非常容易出错）！*/
+        if( fabs((double)SYSTEM_PWM_INT_MAX_COUNT - (double)CAP.ecapU.DutyOnTime1 - (double)CAP.ecapU.DutyOffTime1) > 4444.0 ||
+            fabs((double)SYSTEM_PWM_INT_MAX_COUNT - (double)CAP.ecapU.DutyOnTime2 - (double)CAP.ecapU.DutyOffTime2) > 4444.0
           ){
             CAP.flag_bad_U_capture = TRUE;
         }
 
         /*V*/
-        if( fabs((double)SYSTEM_PWM_MAX_COUNT - (double)CAP.ecapV.DutyOnTime1 - (double)CAP.ecapV.DutyOffTime1) > 4444.0 ||
-            fabs((double)SYSTEM_PWM_MAX_COUNT - (double)CAP.ecapV.DutyOnTime2 - (double)CAP.ecapV.DutyOffTime2) > 4444.0
+        if( fabs((double)SYSTEM_PWM_INT_MAX_COUNT - (double)CAP.ecapV.DutyOnTime1 - (double)CAP.ecapV.DutyOffTime1) > 4444.0 ||
+            fabs((double)SYSTEM_PWM_INT_MAX_COUNT - (double)CAP.ecapV.DutyOnTime2 - (double)CAP.ecapV.DutyOffTime2) > 4444.0
           ){
             CAP.flag_bad_V_capture = TRUE;
         }
 
         /*W*/
-        if( fabs((double)SYSTEM_PWM_MAX_COUNT - (double)CAP.ecapW.DutyOnTime1 - (double)CAP.ecapW.DutyOffTime1) > 4444.0 ||
-            fabs((double)SYSTEM_PWM_MAX_COUNT - (double)CAP.ecapW.DutyOnTime2 - (double)CAP.ecapW.DutyOffTime2) > 4444.0
+        if( fabs((double)SYSTEM_PWM_INT_MAX_COUNT - (double)CAP.ecapW.DutyOnTime1 - (double)CAP.ecapW.DutyOffTime1) > 4444.0 ||
+            fabs((double)SYSTEM_PWM_INT_MAX_COUNT - (double)CAP.ecapW.DutyOnTime2 - (double)CAP.ecapW.DutyOffTime2) > 4444.0
           ){
             CAP.flag_bad_W_capture = TRUE;
         }
 
         if(!CAP.flag_bad_U_capture){
-            CAP.terminal_DutyOnRatio[0] = 0.5*(CAP.ecapU.DutyOnTime1 + CAP.ecapU.DutyOnTime2) * SYSTEM_PWM_MAX_COUNT_INVERSE;
+            CAP.terminal_DutyOnRatio[0] = 0.5*(CAP.ecapU.DutyOnTime1 + CAP.ecapU.DutyOnTime2) * SYSTEM_PWM_INT_MAX_COUNT_INVERSE;
             CAP.pwm_time = 0.5*(CAP.ecapU.Period1 + CAP.ecapU.Period2);
         }
         if(!CAP.flag_bad_V_capture){
-            CAP.terminal_DutyOnRatio[1] = 0.5*(CAP.ecapV.DutyOnTime1 + CAP.ecapV.DutyOnTime2) * SYSTEM_PWM_MAX_COUNT_INVERSE;
+            CAP.terminal_DutyOnRatio[1] = 0.5*(CAP.ecapV.DutyOnTime1 + CAP.ecapV.DutyOnTime2) * SYSTEM_PWM_INT_MAX_COUNT_INVERSE;
         }
         if(!CAP.flag_bad_W_capture){
-            CAP.terminal_DutyOnRatio[2] = 0.5*(CAP.ecapW.DutyOnTime1 + CAP.ecapW.DutyOnTime2) * SYSTEM_PWM_MAX_COUNT_INVERSE;
+            CAP.terminal_DutyOnRatio[2] = 0.5*(CAP.ecapW.DutyOnTime1 + CAP.ecapW.DutyOnTime2) * SYSTEM_PWM_INT_MAX_COUNT_INVERSE;
         }
 
     }else{
 
-        //    TODO: accuracy can be further improve by replacing SYSTEM_PWM_MAX_COUNT_INVERSE with actual period measured? No, the period is not accurate as the duty ratio is chaning.
+        //    TODO: accuracy can be further improve by replacing SYSTEM_PWM_INT_MAX_COUNT_INVERSE with actual period measured? No, the period is not accurate as the duty ratio is chaning.
         /*API to global variable CTRL with two point moving average*/
-        CAP.terminal_DutyOnRatio[0] = 0.5*(CAP.ecapU.DutyOnTime1 + CAP.ecapU.DutyOnTime2) * SYSTEM_PWM_MAX_COUNT_INVERSE;
-        CAP.terminal_DutyOnRatio[1] = 0.5*(CAP.ecapV.DutyOnTime1 + CAP.ecapV.DutyOnTime2) * SYSTEM_PWM_MAX_COUNT_INVERSE;
-        CAP.terminal_DutyOnRatio[2] = 0.5*(CAP.ecapW.DutyOnTime1 + CAP.ecapW.DutyOnTime2) * SYSTEM_PWM_MAX_COUNT_INVERSE; // / (0.5*(CAP.ecapW.Period1+CAP.ecapW.Period2))
+        CAP.terminal_DutyOnRatio[0] = 0.5*(CAP.ecapU.DutyOnTime1 + CAP.ecapU.DutyOnTime2) * SYSTEM_PWM_INT_MAX_COUNT_INVERSE;
+        CAP.terminal_DutyOnRatio[1] = 0.5*(CAP.ecapV.DutyOnTime1 + CAP.ecapV.DutyOnTime2) * SYSTEM_PWM_INT_MAX_COUNT_INVERSE;
+        CAP.terminal_DutyOnRatio[2] = 0.5*(CAP.ecapW.DutyOnTime1 + CAP.ecapW.DutyOnTime2) * SYSTEM_PWM_INT_MAX_COUNT_INVERSE; // / (0.5*(CAP.ecapW.Period1+CAP.ecapW.Period2))
         CAP.pwm_time = 0.5*(CAP.ecapU.Period1 + CAP.ecapU.Period2);
     }
 }
@@ -399,7 +399,7 @@ __interrupt void ecap1_isr(void){
     // On1 Off1 一起跌落(CAP2 and CAP3) 
     // 用4444这么大的数字，而不是444，是因为我发现有时候V相测量得到的ON1和OFF1分别为9000+和9000+，加起来小于19000，判断为bad，但是这应该是属于正常的捕获。
     // 棘手的是，V相的CAP1有时候会读为20000+，这尼玛是为什么？
-    if( ( (DutyOnTime1+DutyOffTime1<SYSTEM_PWM_MAX_COUNT-4444) || (DutyOnTime1+DutyOffTime1>SYSTEM_PWM_MAX_COUNT+4444) ) ){
+    if( ( (DutyOnTime1+DutyOffTime1<SYSTEM_PWM_INT_MAX_COUNT-4444) || (DutyOnTime1+DutyOffTime1>SYSTEM_PWM_INT_MAX_COUNT+4444) ) ){
         // || // and or or? 
         // ( DutyOnTime1<50 || DutyOffTime1<50 ) ){
         // This clause should never be entered when ECap1Regs.ECEINT.bit.CEVT2 = 1;
@@ -409,7 +409,7 @@ __interrupt void ecap1_isr(void){
         CAP.u_ecap_bad1.off2 = DutyOffTime2;
     }
     // On2 Off2 一起跌落(CAP4 and CAP1)
-    else if( ( (DutyOnTime2+DutyOffTime2<SYSTEM_PWM_MAX_COUNT-4444) || (DutyOnTime2+DutyOffTime2>SYSTEM_PWM_MAX_COUNT+4444) ) ){
+    else if( ( (DutyOnTime2+DutyOffTime2<SYSTEM_PWM_INT_MAX_COUNT-4444) || (DutyOnTime2+DutyOffTime2>SYSTEM_PWM_INT_MAX_COUNT+4444) ) ){
         // || // and or or? 
         // ( DutyOnTime2<50 || DutyOffTime2<50 ) ){
         CAP.u_ecap_bad2.on1  = DutyOnTime1;
@@ -484,7 +484,7 @@ __interrupt void ecap2_isr(void){
     Uint32 DutyOffTime2 = CAP1;
 
     // On1 Off1 一起跌落(CAP2 and CAP3)
-    if( ( (DutyOnTime1+DutyOffTime1<SYSTEM_PWM_MAX_COUNT-4444) || (DutyOnTime1+DutyOffTime1>SYSTEM_PWM_MAX_COUNT+4444) ) ){
+    if( ( (DutyOnTime1+DutyOffTime1<SYSTEM_PWM_INT_MAX_COUNT-4444) || (DutyOnTime1+DutyOffTime1>SYSTEM_PWM_INT_MAX_COUNT+4444) ) ){
         // || // and or or? 
         // ( DutyOnTime1<50 || DutyOffTime1<50 ) ){
         // This clause should never be entered when ECap1Regs.ECEINT.bit.CEVT2 = 1;
@@ -494,7 +494,7 @@ __interrupt void ecap2_isr(void){
         CAP.v_ecap_bad1.off2 = DutyOffTime2;
     }
     // On2 Off2 一起跌落(CAP4 and CAP1)
-    else if( ( (DutyOnTime2+DutyOffTime2<SYSTEM_PWM_MAX_COUNT-4444) || (DutyOnTime2+DutyOffTime2>SYSTEM_PWM_MAX_COUNT+4444) ) ){
+    else if( ( (DutyOnTime2+DutyOffTime2<SYSTEM_PWM_INT_MAX_COUNT-4444) || (DutyOnTime2+DutyOffTime2>SYSTEM_PWM_INT_MAX_COUNT+4444) ) ){
         // || // and or or? 
         // ( DutyOnTime2<50 || DutyOffTime2<50 ) ){
         CAP.v_ecap_bad2.on1  = DutyOnTime1;
@@ -540,7 +540,7 @@ __interrupt void ecap3_isr(void){
     Uint32 DutyOffTime2 = CAP1;
 
     // On1 Off1 一起跌落(CAP2 and CAP3)
-    if( ( (DutyOnTime1+DutyOffTime1<SYSTEM_PWM_MAX_COUNT-4444) || (DutyOnTime1+DutyOffTime1>SYSTEM_PWM_MAX_COUNT+4444) ) ){
+    if( ( (DutyOnTime1+DutyOffTime1<SYSTEM_PWM_INT_MAX_COUNT-4444) || (DutyOnTime1+DutyOffTime1>SYSTEM_PWM_INT_MAX_COUNT+4444) ) ){
         // || // and or or? 
         // ( DutyOnTime1<50 || DutyOffTime1<50 ) ){
         // This clause should never be entered when ECap1Regs.ECEINT.bit.CEVT2 = 1;
@@ -550,7 +550,7 @@ __interrupt void ecap3_isr(void){
         CAP.w_ecap_bad1.off2 = DutyOffTime2;
     }
     // On2 Off2 一起跌落(CAP4 and CAP1)
-    else if( ( (DutyOnTime2+DutyOffTime2<SYSTEM_PWM_MAX_COUNT-4444) || (DutyOnTime2+DutyOffTime2>SYSTEM_PWM_MAX_COUNT+4444) ) ){
+    else if( ( (DutyOnTime2+DutyOffTime2<SYSTEM_PWM_INT_MAX_COUNT-4444) || (DutyOnTime2+DutyOffTime2>SYSTEM_PWM_INT_MAX_COUNT+4444) ) ){
         // || // and or or? 
         // ( DutyOnTime2<50 || DutyOffTime2<50 ) ){
         CAP.w_ecap_bad2.on1  = DutyOnTime1;

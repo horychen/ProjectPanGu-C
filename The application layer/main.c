@@ -246,6 +246,52 @@ void main(void){
 
 /* Below is moved from CJHMainISR.c */
 #if SYSTEM_PROGRAM_MODE==223
+void DeadtimeCompensation(REAL CMPA[], REAL CMPA_DBC[]){
+    int temp = 0;
+    // ------------U--------------
+    if (G.Current_U>=0){
+        temp = (int)(CMPA[0] + SYSTEM_PWM_DEADTIME_COMPENSATION);
+        if(temp>=SYSTEM_TBPRD)
+            temp =  (int)((SYSTEM_PWM_UDC_UTILIZATION * 0.5 + 0.5) * SYSTEM_TBPRD);
+    }else{
+        temp = (int)(CMPA[0] - SYSTEM_PWM_DEADTIME_COMPENSATION);
+        if (temp<=0)
+            temp = (int)((-SYSTEM_PWM_UDC_UTILIZATION * 0.5 + 0.5) * SYSTEM_TBPRD);
+    }
+    CMPA_DBC[0] = (Uint16)temp;
+    temp = 0;
+
+    // --------------V--------------
+    if (G.Current_V>=0)
+    {
+        temp = (int)(CMPA[1] + SYSTEM_PWM_DEADTIME_COMPENSATION);
+        if(temp>=SYSTEM_TBPRD)
+            temp =  (int)((SYSTEM_PWM_UDC_UTILIZATION * 0.5 + 0.5) * SYSTEM_TBPRD);
+    }
+    else
+    {
+        temp = (int)(CMPA[1] - SYSTEM_PWM_DEADTIME_COMPENSATION);
+        if (temp<=0)
+            temp = (int)((-SYSTEM_PWM_UDC_UTILIZATION * 0.5 + 0.5) * SYSTEM_TBPRD);
+    }
+    CMPA_DBC[1] = (Uint16)temp;
+    temp = 0;
+
+    // --------------W--------------
+    if (G.Current_W>=0)
+    {
+        temp = (int)(CMPA[2] + SYSTEM_PWM_DEADTIME_COMPENSATION);
+        if(temp>=SYSTEM_TBPRD)
+            temp =  (int)((SYSTEM_PWM_UDC_UTILIZATION * 0.5 + 0.5) * SYSTEM_TBPRD);
+    }
+    else
+    {
+        temp = (int)(CMPA[2] - SYSTEM_PWM_DEADTIME_COMPENSATION);
+        if (temp<=0)
+            temp = (int)((-SYSTEM_PWM_UDC_UTILIZATION * 0.5 + 0.5) * SYSTEM_TBPRD);
+    }
+    CMPA_DBC[2] = (Uint16)temp;
+}
 void voltage_commands_to_pwm(){
     // ----------------------------SVGENÉú³É-------------------------------------------------
     CTRL.svgen1.Ualpha= CTRL.O->uab_cmd_to_inverter[0];
@@ -254,10 +300,19 @@ void voltage_commands_to_pwm(){
     SVGEN_Drive(&CTRL.svgen1);
     //SPWM_Drive(&CTRL.svgen1);
 
-    // ------------------------------------------------------------------------------
-    EPwm1Regs.CMPA.bit.CMPA = CTRL.svgen1.Ta*50000000*CL_TS;
-    EPwm2Regs.CMPA.bit.CMPA = CTRL.svgen1.Tb*50000000*CL_TS;
-    EPwm3Regs.CMPA.bit.CMPA = CTRL.svgen1.Tc*50000000*CL_TS;
+    CTRL.svgen1.CMPA[0] = CTRL.svgen1.Ta*SYSTEM_TBPRD;
+    CTRL.svgen1.CMPA[1] = CTRL.svgen1.Tb*SYSTEM_TBPRD;
+    CTRL.svgen1.CMPA[2] = CTRL.svgen1.Tc*SYSTEM_TBPRD;
+    #if USE_DEATIME_PRECOMP
+        DeadtimeCompensation(CTRL.svgen1.CMPA, CTRL.svgen1.CMPA_DBC);
+        EPwm1Regs.CMPA.bit.CMPA = CTRL.svgen1.CMPA_DBC[0];
+        EPwm2Regs.CMPA.bit.CMPA = CTRL.svgen1.CMPA_DBC[1];
+        EPwm3Regs.CMPA.bit.CMPA = CTRL.svgen1.CMPA_DBC[2];
+    #else
+        EPwm1Regs.CMPA.bit.CMPA = CTRL.svgen1.CMPA[0];
+        EPwm2Regs.CMPA.bit.CMPA = CTRL.svgen1.CMPA[1];
+        EPwm3Regs.CMPA.bit.CMPA = CTRL.svgen1.CMPA[2];
+    #endif
 }
 void measurement(){
 

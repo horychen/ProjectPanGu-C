@@ -23,16 +23,21 @@ volatile struct EPWM_REGS *ePWM[] = {
         &EPwm1Regs, &EPwm2Regs, &EPwm3Regs, &EPwm4Regs, &EPwm5Regs, &EPwm6Regs,
         &EPwm7Regs, &EPwm8Regs, &EPwm9Regs, &EPwm10Regs, &EPwm11Regs, &EPwm12Regs};
 
-void PWM_1ch_UpDwnCnt_CNF(int16 n, Uint16 period, int16 db) {
+void PWM_1ch_UpDwnCnt_CNF(int16 n, Uint16 carrier_period, int16 db_cnt) {
     EALLOW;
     // Time Base SubModule Registers
     (*ePWM[n]).TBCTL.bit.PRDLD = TB_SHADOW ; // set Immediate load
-    (*ePWM[n]).TBPRD = period / 2; // PWM frequency = 1 / period
+    (*ePWM[n]).TBPRD = carrier_period / 2; // divide by 2 because of TB_COUNT_UPDOWN.
     (*ePWM[n]).TBPHS.bit.TBPHS = 0;
     (*ePWM[n]).TBCTR = 0;
     (*ePWM[n]).TBCTL.bit.CTRMODE   = TB_COUNT_UPDOWN;
     (*ePWM[n]).TBCTL.bit.HSPCLKDIV = TB_DIV1;
     (*ePWM[n]).TBCTL.bit.CLKDIV    = TB_DIV1;
+
+    // TBCLK = EPWMCLK / (HSPCLKDIV * CLKDIV) = 100 MHz / (1*1)
+    //    TBCLK Time-base clock.
+    //    This is a prescaled version of the EPWM clock (EPWMCLK) and is used by all submodules within the ePWM.
+    //    This clock determines the rate at which time-base counter increments or decrements.
 
     (*ePWM[n]).TBCTL.bit.PHSEN    = TB_DISABLE;
     (*ePWM[n]).TBCTL.bit.SYNCOSEL = TB_CTR_CMPB; // sync "down-stream"
@@ -43,15 +48,18 @@ void PWM_1ch_UpDwnCnt_CNF(int16 n, Uint16 period, int16 db) {
     (*ePWM[n]).CMPCTL.bit.LOADAMODE = CC_CTR_ZERO;
 
     // Action Qualifier SubModule Registers
-    (*ePWM[n]).AQCTLA.bit.CAU =SYSTEM_PWM_AQ_CLEAR;// ;
-    (*ePWM[n]).AQCTLA.bit.CAD =SYSTEM_PWM_AQ_SET;// ;
+    (*ePWM[n]).AQCTLA.bit.CAU =AQ_CLEAR; //SYSTEM_PWM_AQ_CLEAR;// ;
+    (*ePWM[n]).AQCTLA.bit.CAD =AQ_SET; //SYSTEM_PWM_AQ_SET;// ;
+        //    #define SYSTEM_PWM_AQ_SET                 0x2     //AQ_SET;    OTHERWISE, REVERSE!
+        //    #define SYSTEM_PWM_AQ_CLEAR               0x1     //AQ_CLEAR;
 
     // Active high complementary PWMs - Set up the deadband
     (*ePWM[n]).DBCTL.bit.IN_MODE  = DBA_ALL;
     (*ePWM[n]).DBCTL.bit.OUT_MODE = DB_FULL_ENABLE;
     (*ePWM[n]).DBCTL.bit.POLSEL   = DB_ACTV_HIC;
-    (*ePWM[n]).DBRED.all = db;
-    (*ePWM[n]).DBFED.all = db;
+        //    #define SYSTEM_PWM_DB_ACTV                0x2     //DB_ACTV_LOC  0x1   DB_ACTV_HIC  0x2 // LOW EFFECT /HIGH EFFECT
+    (*ePWM[n]).DBRED.all = db_cnt;
+    (*ePWM[n]).DBFED.all = db_cnt; // 这么多个TBCLK的时间，作为死区时间
     EDIS;
 }
 
@@ -445,44 +453,39 @@ void InitEPwm12Gpio(void)
 }
 void ePWM_initialize(void)
 {
-
     InitEPwm1Gpio();
     InitEPwm2Gpio();
     InitEPwm3Gpio();
     InitEPwm4Gpio();
     InitEPwm5Gpio();
     InitEPwm6Gpio();
+
     EALLOW;
-    // *****************************************
-   // Inverter PWM configuration
-   // ****************************************
-   /* By default on soprano the PWM clock is divided by 2
-     ClkCfgRegs.PERCLKDIVSEL.bit.EPWMCLKDIV=1
-    * Deadband needs to be 2.0us => 10ns*500=5us
-    */
-    ClkCfgRegs.PERCLKDIVSEL.bit.EPWMCLKDIV=1;
-    PWM_1ch_UpDwnCnt_CNF(1,100000/SYSTEM_PWM_FREQUENCY,SYSTEM_PWM_DEADTIME*100);   //10k    2.5us   10000,500
-    PWM_1ch_UpDwnCnt_CNF(2,100000/SYSTEM_PWM_FREQUENCY,SYSTEM_PWM_DEADTIME*100);
-    PWM_1ch_UpDwnCnt_CNF(3,100000/SYSTEM_PWM_FREQUENCY,SYSTEM_PWM_DEADTIME*100);
-    PWM_1ch_UpDwnCnt_CNF(4,100000/SYSTEM_PWM_FREQUENCY,SYSTEM_PWM_DEADTIME*100);
-    PWM_1ch_UpDwnCnt_CNF(5,100000/SYSTEM_PWM_FREQUENCY,SYSTEM_PWM_DEADTIME*100);
-    PWM_1ch_UpDwnCnt_CNF(6,100000/SYSTEM_PWM_FREQUENCY,SYSTEM_PWM_DEADTIME*100);
-   // ***********************************
-   // Set up GPIOs for PWM functions
-   // **************************************
-   /*-- Setup Event-Trigger (ET) Submodule --*/
-     // Event-Trigger Selection and Event-Trigger Pre-Scale Register
-      EPwm1Regs.ETSEL.all = (EPwm1Regs.ETSEL.all & ~0xFF0F) | 0x9909;
-      EPwm1Regs.ETPS.all = (EPwm1Regs.ETPS.all & ~0x3303) | 0x1101;
-      EPwm2Regs.ETSEL.all = (EPwm2Regs.ETSEL.all & ~0xFF0F) | 0x9901;
-      EPwm2Regs.ETPS.all = (EPwm2Regs.ETPS.all & ~0x3303) | 0x1101;
-      EPwm3Regs.ETSEL.all = (EPwm3Regs.ETSEL.all & ~0xFF0F) | 0x9901;
-      EPwm3Regs.ETPS.all = (EPwm3Regs.ETPS.all & ~0x3303) | 0x1101;
-      EPwm4Regs.ETSEL.all = (EPwm4Regs.ETSEL.all & ~0xFF0F) | 0x9909;
-      EPwm4Regs.ETPS.all = (EPwm4Regs.ETPS.all & ~0x3303) | 0x1101;
-      EPwm5Regs.ETSEL.all = (EPwm5Regs.ETSEL.all & ~0xFF0F) | 0x9901;
-      EPwm5Regs.ETPS.all = (EPwm5Regs.ETPS.all & ~0x3303) | 0x1101;
-      EPwm6Regs.ETSEL.all = (EPwm6Regs.ETSEL.all & ~0xFF0F) | 0x9901;
-      EPwm6Regs.ETPS.all = (EPwm6Regs.ETPS.all & ~0x3303) | 0x1101;
-      EDIS;
+    /* PLLSYSCLK / EPWMCLKDIV = EPWMCLK
+        * 200 MHz / 2 = 100 MHz
+        * Default: EPWMCLK = SYSCLKOUT / 2.
+        */
+        ClkCfgRegs.PERCLKDIVSEL.bit.EPWMCLKDIV=1;
+        PWM_1ch_UpDwnCnt_CNF(1,SYSTEM_CARRIER_PERIOD,SYSTEM_PWM_DEADTIME_CNT);   //10k, 5us   10000,500
+        PWM_1ch_UpDwnCnt_CNF(2,SYSTEM_CARRIER_PERIOD,SYSTEM_PWM_DEADTIME_CNT);
+        PWM_1ch_UpDwnCnt_CNF(3,SYSTEM_CARRIER_PERIOD,SYSTEM_PWM_DEADTIME_CNT);
+        PWM_1ch_UpDwnCnt_CNF(4,SYSTEM_CARRIER_PERIOD,SYSTEM_PWM_DEADTIME_CNT);
+        PWM_1ch_UpDwnCnt_CNF(5,SYSTEM_CARRIER_PERIOD,SYSTEM_PWM_DEADTIME_CNT);
+        PWM_1ch_UpDwnCnt_CNF(6,SYSTEM_CARRIER_PERIOD,SYSTEM_PWM_DEADTIME_CNT);
+
+    /*-- Setup Event-Trigger (ET) Submodule --*/
+        // Event-Trigger Selection and Event-Trigger Pre-Scale Register
+        EPwm1Regs.ETSEL.all = (EPwm1Regs.ETSEL.all & ~0xFF0F) | 0x9909;
+        EPwm1Regs.ETPS.all = (EPwm1Regs.ETPS.all & ~0x3303) | 0x1101;
+        EPwm2Regs.ETSEL.all = (EPwm2Regs.ETSEL.all & ~0xFF0F) | 0x9901;
+        EPwm2Regs.ETPS.all = (EPwm2Regs.ETPS.all & ~0x3303) | 0x1101;
+        EPwm3Regs.ETSEL.all = (EPwm3Regs.ETSEL.all & ~0xFF0F) | 0x9901;
+        EPwm3Regs.ETPS.all = (EPwm3Regs.ETPS.all & ~0x3303) | 0x1101;
+        EPwm4Regs.ETSEL.all = (EPwm4Regs.ETSEL.all & ~0xFF0F) | 0x9909;
+        EPwm4Regs.ETPS.all = (EPwm4Regs.ETPS.all & ~0x3303) | 0x1101;
+        EPwm5Regs.ETSEL.all = (EPwm5Regs.ETSEL.all & ~0xFF0F) | 0x9901;
+        EPwm5Regs.ETPS.all = (EPwm5Regs.ETPS.all & ~0x3303) | 0x1101;
+        EPwm6Regs.ETSEL.all = (EPwm6Regs.ETSEL.all & ~0xFF0F) | 0x9901;
+        EPwm6Regs.ETPS.all = (EPwm6Regs.ETPS.all & ~0x3303) | 0x1101;
+    EDIS;
 }

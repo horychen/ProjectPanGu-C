@@ -89,18 +89,18 @@ void SVGEN_Drive(SVGENDQ* ptrV){
     v.Tb=1-v.Tb;
     v.Tc=1-v.Tc;
     // ----------------------------SVGEN·ÀÖ¹±¥ºÍ--- Convert the unsigned GLOBAL_Q format (ranged (0,1))
-    if (v.Ta>MAX_PWM_LIMATATION )
-        v.Ta=MAX_PWM_LIMATATION ;
-    if (v.Tb>MAX_PWM_LIMATATION )
-        v.Tb=MAX_PWM_LIMATATION ;
-    if (v.Tc>MAX_PWM_LIMATATION )
-        v.Tc=MAX_PWM_LIMATATION ;
-    if (v.Ta<MIN_PWM_LIMATATION)
-        v.Ta=MIN_PWM_LIMATATION;
-    if (v.Tb<MIN_PWM_LIMATATION)
-        v.Tb=MIN_PWM_LIMATATION;
-    if (v.Tc<MIN_PWM_LIMATATION)
-        v.Tc=MIN_PWM_LIMATATION;
+    if (v.Ta>SYSTEM_MAX_PWM_DUTY_LIMATATION )
+        v.Ta=SYSTEM_MAX_PWM_DUTY_LIMATATION ;
+    if (v.Tb>SYSTEM_MAX_PWM_DUTY_LIMATATION )
+        v.Tb=SYSTEM_MAX_PWM_DUTY_LIMATATION ;
+    if (v.Tc>SYSTEM_MAX_PWM_DUTY_LIMATATION )
+        v.Tc=SYSTEM_MAX_PWM_DUTY_LIMATATION ;
+    if (v.Ta<SYSTEM_MIN_PWM_DUTY_LIMATATION)
+        v.Ta=SYSTEM_MIN_PWM_DUTY_LIMATATION;
+    if (v.Tb<SYSTEM_MIN_PWM_DUTY_LIMATATION)
+        v.Tb=SYSTEM_MIN_PWM_DUTY_LIMATATION;
+    if (v.Tc<SYSTEM_MIN_PWM_DUTY_LIMATATION)
+        v.Tc=SYSTEM_MIN_PWM_DUTY_LIMATATION;
 (*ptrV)=v;
 }
 

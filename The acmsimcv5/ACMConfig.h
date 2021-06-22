@@ -33,9 +33,11 @@
 /* Algorithms */
 #if /* PM Motor */ MACHINE_TYPE % 10 == 2
     #if PC_SIMULATION
-        #define ENABLE_COMMISSIONING FALSE /*Simulation*/
+        #define ENABLE_COMMISSIONING TRUE /*Simulation*/
+        #define SELF_COMM_INVERTER TRUE
     #else
         #define ENABLE_COMMISSIONING TRUE /*Experiment*/
+        #define SELF_COMM_INVERTER TRUE
         /*As we use CTRL.O->iab_cmd for look up, now dead-time compensation during ENABLE_COMMISSIONING is not active*/
     #endif
 
@@ -189,7 +191,7 @@
 	#define NULL_D_AXIS_CURRENT_CONTROL -1
 	#define MTPA -2 // not supported
 #define CONTROL_STRATEGY NULL_D_AXIS_CURRENT_CONTROL
-#define NUMBER_OF_STEPS 150000
+#define NUMBER_OF_STEPS 500000
     #define DOWN_SAMPLE 1
     #define USE_QEP_RAW TRUE
     #define VOLTAGE_CURRENT_DECOUPLING_CIRCUIT FALSE
