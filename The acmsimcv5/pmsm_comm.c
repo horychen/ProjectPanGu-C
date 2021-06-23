@@ -448,14 +448,13 @@ void COMM_resistanceId_v2(REAL id_fb, REAL iq_fb){
     }
 
     // number of stairs (positive or negative current)
-    #define NOS_II (9)
-    #define NOS    (COMM_IV_SIZE_R1*0.5-1-NOS_II) // 40
+    #define NOS_II (29)
+    #define NOS    (COMM_IV_SIZE_R1/2-1-NOS_II) // 200/2-30 = 70
+    #define RS_ID_MAXIMUM_CURRENT (1.414/0.8660254*MOTOR_RATED_CURRENT_RMS) /* [A] This specifies beta-axis current, so we need to make it larger so that the phase current is large enough This is motor related (to identify accurate resistance) */
     #ifdef _XCUBE1
-        #define RS_ID_MAXIMUM_CURRENT (1.0) /* [A] This is inverter related */
-        #define RS_ID_LOW_CURRENT (RS_ID_MAXIMUM_CURRENT*0.3)
+        #define RS_ID_LOW_CURRENT (0.3)
     #else
-        #define RS_ID_MAXIMUM_CURRENT (3.0) /* [A] This is inverter related */ 
-        #define RS_ID_LOW_CURRENT (RS_ID_MAXIMUM_CURRENT*0.3)
+        #define RS_ID_LOW_CURRENT (1.0) /* [A] This is inverter related */ 
     #endif
     // REAL current_increase_per_step_equalStepSize = RS_ID_MAXIMUM_CURRENT / (REAL)NOS;
     REAL Delta_I_Low  = RS_ID_LOW_CURRENT / (REAL)NOS;

@@ -296,8 +296,8 @@ void controller(REAL set_rpm_speed_command, REAL set_iq_cmd, REAL set_id_cmd){
     // REAL sig_a3 = 8.42010418;
 
     // 180 V
-    REAL sig_a2 = 13.36317172;
-    REAL sig_a3 = 5.81981571;
+    REAL sig_a2 = 15.43046115;
+    REAL sig_a3 = 5.04010863;
 #endif
 REAL sigmoid(REAL x){
     // beta
@@ -308,6 +308,8 @@ REAL sigmoid(REAL x){
     // -------------------------------
 
     #ifdef _XCUBE1
+        /* Si Mini OW IPM Inverter*/
+
         // b-phase @180 V Mini6PhaseIPMInverter
         // REAL a1 = 0.0; //1.34971502
         // REAL a2 = 16.0575341;  // yuefei tuning gives a2' = 9.2*2
@@ -322,6 +324,8 @@ REAL sigmoid(REAL x){
         REAL a3 = 67.0107635483658; //1.2*55.84230295697151; 
 
     #else
+        /* SiC Cree 3 Phase Inverter*/
+
         // b-phase @20 V
         // REAL a1 = 0.0; //1.25991178;
         // REAL a2 = 2.30505904;
@@ -336,12 +340,19 @@ REAL sigmoid(REAL x){
         // REAL a3 = sig_a3; 8.42010418;
 
         // b-phase @180 V
-            // REAL a1 = 0.0; //1.50469916;
-            // REAL a2 = 13.48467604;
-            // REAL a3 = 5.22150403;
-        REAL a1 = 0.0; //1.83573529
-        REAL a2 = sig_a2; 13.36317172;
-        REAL a3 = sig_a3; 5.81981571;
+                /*最早的拟合结果*/
+                // REAL a1 = 0.0; //1.50469916;
+                // REAL a2 = 13.48467604;
+                // REAL a3 = 5.22150403;
+            /*错误！多乘了一次beta-axis转phase系数！*/
+            // REAL a1 = 0.0; //1.83573529
+            // REAL a2 = sig_a2; 13.36317172;
+            // REAL a3 = sig_a3; 5.81981571;
+        /*纠正！100个点，平均分配*/
+        REAL a1 = 0.0; //1.8357354;
+        REAL a2 = sig_a2; 15.43046115;
+        REAL a3 = sig_a3; 5.04010863;
+
     #endif
        
     return a1 * x + a2 / (1.0 + exp(-a3 * x)) - a2*0.5;
@@ -444,6 +455,8 @@ void inverter_voltage_command(int bool_use_iab_cmd){
 }
 
 /* 查表法 */
+REAL look_up_phase_current_by_index(REAL current, REAL *lut_voltage, REAL *lut_current, int length_of_lut){
+}
 REAL look_up_phase_current(REAL current, REAL *lut_voltage, REAL *lut_current, int length_of_lut){
     /* assume lut_voltage[0] is negative and lut_voltage[-1] is positive */
     int j;
