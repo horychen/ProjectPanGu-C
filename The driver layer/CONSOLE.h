@@ -10,6 +10,6 @@
 
 
 
-
+void sci_poll(int16 ch);
 
 #endif /* THE_DRIVER_LAYER_CONSOLE_H_ */

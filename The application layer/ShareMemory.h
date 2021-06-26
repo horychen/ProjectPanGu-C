@@ -14,6 +14,8 @@ struct IPC_MEMORY_READ{
     /* read only (RO) shared memory @ GS0 */
     REAL position_cmd_elec;
     REAL speed_cmd_elec;
+
+    int16 SCI_char;
 };// Ë«Ïò±äÁ¿
 extern struct IPC_MEMORY_READ Read;
 

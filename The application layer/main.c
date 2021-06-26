@@ -183,6 +183,7 @@ void main(void){
         SendChar = 24;
         for(;;)
         {
+            //SendChar = 0;
             ScicRegs.SCITXBUF.all = (SendChar);
 
            //
@@ -232,9 +233,12 @@ void main(void){
         }
 
         #if NUMBER_OF_DSP_CORES == 2
-            if(IPCLtoRFlagBusy(IPC_FLAG10) == 1) // if flag
+        /* CPU02 (Remote) to CPU01 (Local)
+         * The register to check is IPCSTS.
+         * */
+            if(IPCRtoLFlagBusy(IPC_FLAG10) == 1) // if flag
             {
-                Write.test += 0.001;
+                sci_poll(Read.SCI_char);
                 IPCRtoLFlagAcknowledge (IPC_FLAG10);
             }
         #endif
