@@ -226,6 +226,9 @@ typedef struct {
         // int Select_algorithm;
         REAL omg_elec;
         REAL theta_d;
+    //
+    int16 sendCurrentCommandFlag;
+    int16 sendSpeedCommandFlag;
 } st_global_variables; // globals
 
 struct ControllerForExperiment{

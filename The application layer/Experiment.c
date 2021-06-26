@@ -109,7 +109,9 @@ void init_experiment_overwrite(){
 
     // for debug
     CTRL.S->PSD_Done = FALSE;
-    COMM.bool_comm_status = 0;
+    #if ENABLE_COMMISSIONING
+        COMM.bool_comm_status = 0;
+    #endif
 }
 
 void runtime_command_and_tuning(){

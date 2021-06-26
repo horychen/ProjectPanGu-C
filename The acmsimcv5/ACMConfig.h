@@ -36,8 +36,8 @@
         #define ENABLE_COMMISSIONING TRUE /*Simulation*/
         #define SELF_COMM_INVERTER TRUE
     #else
-        #define ENABLE_COMMISSIONING TRUE /*Experiment*/
-        #define SELF_COMM_INVERTER TRUE
+        #define ENABLE_COMMISSIONING FALSE /*Experiment*/
+        #define SELF_COMM_INVERTER FALSE
         /*As we use CTRL.O->iab_cmd for look up, now dead-time compensation during ENABLE_COMMISSIONING is not active*/
     #endif
 
