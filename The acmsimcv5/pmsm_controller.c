@@ -9,6 +9,7 @@ void init_experiment(){
 
     init_CTRL(); // 控制器结构体初始化
     init_pmsm_observers(); // 永磁电机观测器初始化
+    init_FE();
 }
 
 // 初始化函数
@@ -28,6 +29,7 @@ void init_CTRL(){
     CTRL.motor->Lq_inv = 1.0/CTRL.motor->Lq;
     CTRL.motor->DeltaL = CTRL.motor->Ld - CTRL.motor->Lq; // for IPMSM
     CTRL.motor->KActive = CTRL.motor->KE; // TODO
+    CTRL.motor->Rreq = U_MOTOR_RREQ;
     // mech
     CTRL.motor->npp     = MOTOR_NUMBER_OF_POLE_PAIRS;
     CTRL.motor->npp_inv = 1.0 / CTRL.motor->npp;
@@ -85,6 +87,7 @@ void init_CTRL(){
     CTRL.S->spd = &pid1_spd;
 
     // commands
+    CTRL.I->cmd_psi = U_MOTOR_KE;
     // CTRL.I->idq_cmd[0] = 0.0;
     // CTRL.I->idq_cmd[1] = 0.0;
     // // error
@@ -335,9 +338,9 @@ REAL sigmoid(REAL x){
             // REAL a1 = 0.0; //1.28430164;
             // REAL a2 = 7.78857441;
             // REAL a3 = 6.20979077;
-        // REAL a1 = 0.0; //1.6997103;
-        // REAL a2 = sig_a2; 6.67159129;
-        // REAL a3 = sig_a3; 8.42010418;
+        REAL a1 = 0.0; //1.6997103;
+        REAL a2 = sig_a2; 6.67159129;
+        REAL a3 = sig_a3; 8.42010418;
 
         // b-phase @180 V
                 /*最早的拟合结果*/
@@ -349,13 +352,16 @@ REAL sigmoid(REAL x){
             // REAL a2 = sig_a2; 13.36317172;
             // REAL a3 = sig_a3; 5.81981571;
         /*纠正！100个点，平均分配*/
-        REAL a1 = 0.0; //1.8357354;
-        REAL a2 = sig_a2; 15.43046115;
-        REAL a3 = sig_a3; 5.04010863;
+        // REAL a1 = 0.0; //1.8357354;
+        // REAL a2 = sig_a2; 15.43046115;
+        // REAL a3 = sig_a3; 5.04010863;
 
     #endif
        
     return a1 * x + a2 / (1.0 + exp(-a3 * x)) - a2*0.5;
+}
+REAL sigmoid_online_v2(REAL x, REAL a2, REAL a3){
+    return a2 / (1.0 + exp(-a3 * x)) - a2*0.5;
 }
 REAL sigmoid_online(REAL x, REAL Vsat, REAL a3){
 
@@ -454,9 +460,11 @@ void inverter_voltage_command(int bool_use_iab_cmd){
     }
 }
 
-/* 查表法 */
+/* 真查表法 */
 REAL look_up_phase_current_by_index(REAL current, REAL *lut_voltage, REAL *lut_current, int length_of_lut){
+        // TODO: python脚本已经验证查表法，实际的C代码还没写。
 }
+/* 伪查表法（需要循环比大小，运算量不固定） */
 REAL look_up_phase_current(REAL current, REAL *lut_voltage, REAL *lut_current, int length_of_lut){
     /* assume lut_voltage[0] is negative and lut_voltage[-1] is positive */
     int j;
@@ -476,10 +484,6 @@ REAL look_up_phase_current(REAL current, REAL *lut_voltage, REAL *lut_current, i
     #if PC_SIMULATION
         printf("DEBUG inverter.c. %g, %d, %d\n", current, j, length_of_lut);
     #endif
-    return 0.0;
-}
-REAL trapezoidal_voltage_by_phase_current(REAL current, REAL Vsat, REAL theta_trapezoidal){
-    // theta_trapezoidal;
     return 0.0;
 }
 REAL sigmoid_a3_tune = 1.0;
@@ -552,13 +556,24 @@ void get_distorted_voltage_via_LUT(REAL ual, REAL ube, REAL ial, REAL ibe, REAL 
     }
 }
 
+/* Chen 2021 Linear Approximation of U-I Curve */
+REAL trapezoidal_voltage_by_phase_current(REAL current, REAL V_plateau, REAL I_plateau, REAL oneOnver_I_plateau){
+    REAL abs_current = fabs(current);
+    if(abs_current < I_plateau){
+        return current * V_plateau * oneOnver_I_plateau;
+    }
+    else{
+        return sign(current) * V_plateau;
+    }
+}
+
 /* ParkSul2012 梯形波 */
 void inverterNonlinearity_Initialization(){
     INV.gamma_theta_trapezoidal = GAIN_THETA_TRAPEZOIDAL;
     #ifdef _XCUBE1
     INV.Vsat = 16.0575341/2; //6.67054; // 180 V SiC
     #else
-    INV.Vsat = 6.74233802;
+    INV.Vsat = sig_a2*0.5; //6.74233802;
     #endif
 
     INV.gain_Vsat = 10;
@@ -581,7 +596,23 @@ void inverterNonlinearity_Initialization(){
     INV.I5_plus_I7=0;
     INV.I5_plus_I7_LPF=0.0;
     INV.theta_trapezoidal=11.0 * M_PI_OVER_180; // in rad
+
+    #ifdef _XCUBE1
+        INV.I_plateau_Max = 2.0;
+        INV.I_plateau_Min = 0.2;
+    #else
+        INV.I_plateau_Max = 1.0;
+        INV.I_plateau_Min = 0.1;
+    #endif
+    INV.I_plateau = 0.7;
+    INV.V_plateau = 1.5 * sig_a2*0.5;
+    INV.gamma_I_plateau = 10.0;
+    INV.gamma_V_plateau = 0.0; // this is updated by the estimated disturbance to the sinusoidal flux model.
+
+    INV.sig_a2 = 1.0*sig_a2; // = Plateau * 2
+    INV.sig_a3 = 1.0*sig_a3; // = shape parameter
 }
+#define trapezoidal_voltage_by_current_vector_angle u_comp_per_phase
 REAL u_comp_per_phase(REAL Vsat, REAL thetaA, REAL theta_trapezoidal, REAL oneOver_theta_trapezoidal){
     REAL compensation;
 
@@ -656,7 +687,6 @@ void Modified_ParkSul_Compensation(void){
                                 + 0*INV.I11_plus_I13_LPF
                                 + 0*INV.I17_plus_I19_LPF
                              );
-
     // 两种方法选其一：第一种可用于sensorless系统。
     if(FALSE){
         /* 利用theta_t的饱和特性辨识Vsat（次优解） */
@@ -671,133 +701,46 @@ void Modified_ParkSul_Compensation(void){
     }
 
 
-    #if PC_SIMULATION == TRUE
-        // 用偏小的Vsat，观察theta_t的收敛是否直达下界？
-        // if(CTRL.timebase>23){
-        //     INV.Vsat = 9.0/6.0 * 16.0575341/2;
-        // }else if(CTRL.timebase>20){
-        //     INV.Vsat = 7.0/6.0 * 16.0575341/2;
-        // }else if(CTRL.timebase>15){
-        //     INV.Vsat = 6.0/6.0 * 16.0575341/2;
-        // }else if(CTRL.timebase>10){
-        //     INV.Vsat = 5.0/6.0 * 16.0575341/2;
-        // }else if(CTRL.timebase>5){
-        //     INV.Vsat = 4.0/6.0 * 16.0575341/2;
-        // }
-
-        // /* Adaptive Vsat based on position error */
-        // INV.Vsat += CL_TS * INV.gain_Vsat * sin(ENC.theta_d_elec - ELECTRICAL_POSITION_FEEDBACK) * sign(ENC.omg_elec);
-        // if (INV.Vsat>15){
-        //     INV.Vsat = 15;
-        // }else if(INV.Vsat<0){
-        //     INV.Vsat = 0;
-        // }
-    #else
-        /* Adaptive Vsat based on position error */
-        /* TO use this, you muast have a large enough stator current */
-        /* TO use this, you muast have a large enough stator current */
-        /* TO use this, you muast have a large enough stator current */
-        INV.Vsat += CL_TS * INV.gain_Vsat * sin(ENC.theta_d_elec - ELECTRICAL_POSITION_FEEDBACK) * sign(ENC.omg_elec);
-        if (INV.Vsat>15){
-            INV.Vsat = 15;
-        }else if(INV.Vsat<0){
-            INV.Vsat = 0;
-        }
-    #endif
-
-
-    #if INVERTER_NONLINEARITY == 3 // [ModelLUT]
-        // INV.Vsat = 6.67054;
-    #elif INVERTER_NONLINEARITY == 2 // [ModelSigmoid]
-        // INV.Vsat = sigmoid(100)*1.0;
-            // INV.Vsat = sigmoid(100)*0.95;
-            // INV.Vsat = sigmoid(100)*1.05;
-    #elif INVERTER_NONLINEARITY == 1 // [ModelSul96]
-        REAL TM    = _Toff - _Ton - _Tdead + _Tcomp; // Sul1996
-        REAL Udist = (_Udc*TM*CL_TS_INVERSE - _Vce0 - _Vd0) / 6.0;
-        INV.Vsat = 3*fabs( Udist ); // 4 = 2*sign(ia) - sign(ib) - sign(ic) when ia is positive and ib/ic is negative
-                                    // but Vsat is phase voltage distortion maximum, so we need to add a zero sequence voltage of Udist*(sign(ia) + sign(ib) + sign(ic)),
-                                    // so, it is 3 * |Udist| as Vsat.
-        static int bool_printed = FALSE;
-        if(bool_printed==FALSE){
-            printf("\tVsat = %g V; Udist = %g.\n", INV.Vsat, Udist);
-            bool_printed=TRUE;
-        }
-    #endif
-
-    REAL oneOver_theta_trapezoidal = 1.0/INV.theta_trapezoidal;
-    // watch_theta_trapezoidal = INV.theta_trapezoidal / M_PI_OVER_180;
-    INV.u_comp[0] = u_comp_per_phase(INV.Vsat,          INV.thetaA                 , INV.theta_trapezoidal, oneOver_theta_trapezoidal);
-    INV.u_comp[1] = u_comp_per_phase(INV.Vsat, shift2pi(INV.thetaA-  TWO_PI_OVER_3), INV.theta_trapezoidal, oneOver_theta_trapezoidal);
-    INV.u_comp[2] = u_comp_per_phase(INV.Vsat, shift2pi(INV.thetaA-2*TWO_PI_OVER_3), INV.theta_trapezoidal, oneOver_theta_trapezoidal);
-
-    // #define MISMATCH_A3 1.1
-    // REAL ia,ib,ic;
-    // ia = 1 * (       IS_C(0)                                  );
-    // ib = 1 * (-0.5 * IS_C(0) - SIN_DASH_2PI_SLASH_3 * IS_C(1) );
-    // ic = 1 * (-0.5 * IS_C(0) - SIN_2PI_SLASH_3      * IS_C(1) );
-    // INV.u_comp[0] = sigmoid_online(ia, INV.Vsat, 5.22150403 * MISMATCH_A3); //INV.theta_trapezoidal);
-    // INV.u_comp[1] = sigmoid_online(ib, INV.Vsat, 5.22150403 * MISMATCH_A3); //INV.theta_trapezoidal);
-    // INV.u_comp[2] = sigmoid_online(ic, INV.Vsat, 5.22150403 * MISMATCH_A3); //INV.theta_trapezoidal);
-
-    // 改成恒幅值变换
-    INV.ual_comp = 0.66666666667 * (INV.u_comp[0] - 0.5*INV.u_comp[1] - 0.5*INV.u_comp[2]);
-    INV.ube_comp = 0.66666666667 * 0.86602540378 * (    INV.u_comp[1] -     INV.u_comp[2]);
-        // INV.ual_comp = SQRT_2_SLASH_3      * (INV.u_comp[0] - 0.5*INV.u_comp[1] - 0.5*INV.u_comp[2]); // sqrt(2/3.)
-        // INV.ube_comp = 0.70710678118654746 * (                    INV.u_comp[1] -     INV.u_comp[2]); // sqrt(2/3.)*sin(2*pi/3) = sqrt(2/3.)*(sqrt(3)/2)
-
-    // 区分补偿前的电压和补偿后的电压：
-    // CTRL.ual, CTRL.ube 是补偿前的电压！
-    // CTRL.ual + INV.ual_comp, CTRL.ube + INV.ube_comp 是补偿后的电压！
-
-    // for plotting
-    INV.uDcomp_atA = AB2M(INV.ual_comp, INV.ube_comp, INV.cos_thetaA, INV.sin_thetaA);
-    INV.uQcomp_atA = AB2T(INV.ual_comp, INV.ube_comp, INV.cos_thetaA, INV.sin_thetaA);
-}
-
-/* My Online Inverter Compensation 梯形波 */
-void Chen2021_Trapezoidal_Voltage_Compensation(void){
-
-    /* Park12/14
-     * */
-    // Phase A current's fundamental component transformation    
-    INV.thetaA = -M_PI*1.5 + CTRL.I->theta_d_elec + atan2(CTRL.I->idq_cmd[1], CTRL.I->idq_cmd[0]); /* Q: why -pi*(1.5)? */ /* ParkSul2014 suggests to use PLL to extract thetaA from current command */
-    INV.thetaA = shift2pi(INV.thetaA); /* Q: how to handle it when INV.thetaA jumps between pi and -pi? */ // 这句话绝对不能省去，否则C相的梯形波会出错。
-
-    INV.cos_thetaA = cos(INV.thetaA);
-    INV.sin_thetaA = sin(INV.thetaA);
-    INV.iD_atA = AB2M(IS_C(0),IS_C(1), INV.cos_thetaA, INV.sin_thetaA);
-    INV.iQ_atA = AB2T(IS_C(0),IS_C(1), INV.cos_thetaA, INV.sin_thetaA);
-
-    INV.I5_plus_I7 = INV.iD_atA * sin(6*INV.thetaA); /* Q: Why sin? Why not cos? 和上面的-1.5*pi有关系吗？ */
-    INV.I5_plus_I7_LPF = lpf1_inverter(INV.I5_plus_I7, INV.I5_plus_I7_LPF); /* lpf1 for inverter */
-
-    INV.I11_plus_I13 = INV.iD_atA * sin(12*INV.thetaA);
-    INV.I11_plus_I13_LPF = lpf1_inverter(INV.I11_plus_I13, INV.I11_plus_I13_LPF);
-
-    INV.I17_plus_I19 = INV.iD_atA * sin(18*INV.thetaA);
-    INV.I17_plus_I19_LPF = lpf1_inverter(INV.I17_plus_I19, INV.I17_plus_I19_LPF);
-
-    // The adjusting of theta_t via 6th harmonic magnitude
-    INV.theta_trapezoidal += CL_TS * INV.gamma_theta_trapezoidal \
+    /* Online Update Sigmoid a3? */
+    // if(CTRL.timebase>35){
+    //     INV.gamma_I_plateau = 0.0;
+    // }
+    INV.sig_a3 -= CL_TS * 250 * 0 \
                             // *fabs(CTRL.I->cmd_speed_rpm)
-                            *(      INV.I5_plus_I7_LPF 
+                            *(    0*INV.I5_plus_I7_LPF 
                                 + 0*INV.I11_plus_I13_LPF
-                                + 0*INV.I17_plus_I19_LPF
+                                + 1*INV.I17_plus_I19_LPF
                              );
+    if(INV.sig_a3 > 20){ INV.sig_a3 = 20; }else if(INV.sig_a3 < 0.5){ INV.sig_a3 = 0.5; }
 
-    // 两种方法选其一：第一种可用于sensorless系统。
-    if(FALSE){
-        /* 利用theta_t的饱和特性辨识Vsat（次优解） */
-    }else{
-        // 由于实际逆变器有一个调制比低引入5、7次谐波的问题，所以最佳theta_t不在11度附近了。
-        if(INV.theta_trapezoidal >= 25*M_PI_OVER_180){ // 17
-            INV.theta_trapezoidal = 25*M_PI_OVER_180; // 17
-        }
-        if(INV.theta_trapezoidal <= 0.223*M_PI_OVER_180){
-            INV.theta_trapezoidal = 0.223*M_PI_OVER_180;
-        }
+    if(CTRL.timebase>2)
+    {
+        // use linear FE
+        // INV.sig_a2 += CL_TS * -100 * 0 * AFEOE.output_error_dq[0];
+
+        // use nonlinear (saturation) FE
+        INV.sig_a2 += CL_TS * -500 * 0 * sign(CTRL.I->cmd_omg_elec) * (MOTOR.KE - htz.psi_2_ampl_lpf);
     }
+    if(INV.sig_a2 > 30){ INV.sig_a2 = 30; }else if(INV.sig_a2 < 2){ INV.sig_a2 = 2; }
+
+    /* Chen2021: linear approximation of u-i curve */
+    // if(CTRL.timebase>35){
+    //     INV.gamma_I_plateau = 0.0;
+    // }
+    // INV.I_plateau += CL_TS * 0 * INV.gamma_I_plateau \
+    //                         // *fabs(CTRL.I->cmd_speed_rpm)
+    //                         *(    1*INV.I5_plus_I7_LPF 
+    //                             + 0*INV.I11_plus_I13_LPF
+    //                             + 0*INV.I17_plus_I19_LPF
+    //                          );
+    // if(INV.I_plateau > INV.I_plateau_Max){
+    //     INV.I_plateau = INV.I_plateau_Max;
+    // }else if(INV.I_plateau < INV.I_plateau_Min){
+    //     INV.I_plateau = INV.I_plateau_Min;
+    // }
+
+
+
 
 
     #if PC_SIMULATION == TRUE
@@ -860,15 +803,35 @@ void Chen2021_Trapezoidal_Voltage_Compensation(void){
     INV.u_comp[1] = u_comp_per_phase(INV.Vsat, shift2pi(INV.thetaA-  TWO_PI_OVER_3), INV.theta_trapezoidal, oneOver_theta_trapezoidal);
     INV.u_comp[2] = u_comp_per_phase(INV.Vsat, shift2pi(INV.thetaA-2*TWO_PI_OVER_3), INV.theta_trapezoidal, oneOver_theta_trapezoidal);
 
-    // #define MISMATCH_A3 1.1
     // REAL ia,ib,ic;
     // ia = 1 * (       IS_C(0)                                  );
     // ib = 1 * (-0.5 * IS_C(0) - SIN_DASH_2PI_SLASH_3 * IS_C(1) );
     // ic = 1 * (-0.5 * IS_C(0) - SIN_2PI_SLASH_3      * IS_C(1) );
+    // #define MISMATCH_A3 1.1
     // INV.u_comp[0] = sigmoid_online(ia, INV.Vsat, 5.22150403 * MISMATCH_A3); //INV.theta_trapezoidal);
     // INV.u_comp[1] = sigmoid_online(ib, INV.Vsat, 5.22150403 * MISMATCH_A3); //INV.theta_trapezoidal);
     // INV.u_comp[2] = sigmoid_online(ic, INV.Vsat, 5.22150403 * MISMATCH_A3); //INV.theta_trapezoidal);
 
+
+    /* Chen2021 覆盖 */
+    if(INV.gamma_I_plateau!=0){
+        REAL ia_cmd = (       CTRL.O->iab_cmd[0]                                             );
+        REAL ib_cmd = (-0.5 * CTRL.O->iab_cmd[0] - SIN_DASH_2PI_SLASH_3 * CTRL.O->iab_cmd[1] );
+        REAL ic_cmd = (-0.5 * CTRL.O->iab_cmd[0] - SIN_2PI_SLASH_3      * CTRL.O->iab_cmd[1] );
+        REAL oneOver_I_plateau = 1.0 / INV.I_plateau;
+        INV.u_comp[0] = trapezoidal_voltage_by_phase_current(ia_cmd, INV.V_plateau, INV.I_plateau, oneOver_I_plateau);
+        INV.u_comp[1] = trapezoidal_voltage_by_phase_current(ib_cmd, INV.V_plateau, INV.I_plateau, oneOver_I_plateau);
+        INV.u_comp[2] = trapezoidal_voltage_by_phase_current(ic_cmd, INV.V_plateau, INV.I_plateau, oneOver_I_plateau);
+
+        /* Online Sigmoid a3 覆盖 覆盖 */
+        INV.u_comp[0] = sigmoid_online_v2(ia_cmd, INV.sig_a2, INV.sig_a3);
+        INV.u_comp[1] = sigmoid_online_v2(ib_cmd, INV.sig_a2, INV.sig_a3);
+        INV.u_comp[2] = sigmoid_online_v2(ic_cmd, INV.sig_a2, INV.sig_a3);
+    }
+
+
+
+    /* 相补偿电压Clarke为静止正交坐标系电压。 */
     // 改成恒幅值变换
     INV.ual_comp = 0.66666666667 * (INV.u_comp[0] - 0.5*INV.u_comp[1] - 0.5*INV.u_comp[2]);
     INV.ube_comp = 0.66666666667 * 0.86602540378 * (    INV.u_comp[1] -     INV.u_comp[2]);
@@ -883,5 +846,6 @@ void Chen2021_Trapezoidal_Voltage_Compensation(void){
     INV.uDcomp_atA = AB2M(INV.ual_comp, INV.ube_comp, INV.cos_thetaA, INV.sin_thetaA);
     INV.uQcomp_atA = AB2T(INV.ual_comp, INV.ube_comp, INV.cos_thetaA, INV.sin_thetaA);
 }
+
 
 #endif

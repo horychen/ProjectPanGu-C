@@ -61,7 +61,7 @@ struct IPC_MEMORY_READ Read;
 int channels[NO_OF_CHANNELS]={56,57,3,5,26,27,49,59}; // Chi.Xu 2009 High speed
 //int channels[NO_OF_CHANNELS]={56,57,3,5,26,27,23,59}; // NSOAF High Speed
 
-int channels_preset = 0;
+int channels_preset = 4;
 
 REAL dac_time_that_cannot_be_modified = 0;
 //REAL if_you_define_an_extra_global_variable_here_you_cannot_modify_dac_time_anymore = 0;
@@ -118,7 +118,14 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
     G.dac_watch[26] = CTRL.I->rpm*0.0005;
     G.dac_watch[27] = ELECTRICAL_SPEED_FEEDBACK*ELEC_RAD_PER_SEC_2_RPM*0.0005;
 
-    #if FALSAE
+    G.dac_watch[30] = htz.psi_2_ampl;
+    G.dac_watch[31] = htz.psi_2_ampl_lpf;
+    G.dac_watch[32] = MOTOR.KE - htz.psi_2_ampl_lpf;
+    G.dac_watch[33] = htz.psi_2[0];
+    G.dac_watch[34] = htz.psi_2[1];
+    G.dac_watch[35] = htz.theta_d*0.1;
+
+    #if FALSE
         REAL ual_dist = MT2A(pid1_iM.Out, pid1_iT.Out, CTRL.S->cosT, CTRL.S->sinT);
         REAL ube_dist = MT2B(pid1_iM.Out, pid1_iT.Out, CTRL.S->cosT, CTRL.S->sinT);
         G.dac_watch[28] = pid1_iM.Out*0.02;
@@ -215,6 +222,14 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
         channels[3] = 51;
         channels[4] = 46;
         channels[5] = 47;
+    }else if(channels_preset==4){channels_preset=0;
+        /* Test Holtz03 for online invnonl id. */
+        channels[0] = 30;
+        channels[1] = 31;
+        channels[2] = 32;
+        channels[3] = 33;
+        channels[4] = 34;
+        channels[5] = 35;
     }
 
     // 八通道DAC输出，请修改channels数组来确定具体输出哪些G.dac_watch数组中的变量。

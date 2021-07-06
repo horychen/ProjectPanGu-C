@@ -9,8 +9,8 @@ void init_experiment_overwrite(){
         CTRL.g->Seletc_exp_operation = 1; //AS_LOAD_MOTOR_CONST;
         G.dac_watch_stator_resistance = 1.703;
     #else
-        // CTRL.g->Seletc_exp_operation = NSOAF_LOW_SPEED_OPERATION;
-         CTRL.g->Seletc_exp_operation = NSOAF_HIGH_SPEED_OPERATION;
+         CTRL.g->Seletc_exp_operation = NSOAF_LOW_SPEED_OPERATION;
+        // CTRL.g->Seletc_exp_operation = NSOAF_HIGH_SPEED_OPERATION;
         // CTRL.g->Seletc_exp_operation = NSOAF_RAMP_SPEED_OPERATION;
         G.dac_watch_stator_resistance = 1.69;
     #endif
@@ -106,6 +106,8 @@ void init_experiment_overwrite(){
         huwu.limiter_KE = 1.0 * MOTOR.KE; // this depends on KE value
     #endif
     AFEOE.limiter_KE = 1.15 * MOTOR.KE; // this depends on KE value
+
+    htz.psi_aster_max = CTRL.motor->KE;
 
     // for debug
     CTRL.S->PSD_Done = FALSE;

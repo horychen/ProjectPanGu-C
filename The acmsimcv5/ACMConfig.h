@@ -1,8 +1,8 @@
 #ifndef ACMCONFIG_H
 #define ACMCONFIG_H
 /* 经常要修改的 */
-#define INVERTER_NONLINEARITY_COMPENSATION_INIT 0 //2 // 1:ParkSul12, 2:Sigmoid, 3:LUT
-#define INVERTER_NONLINEARITY                   0 //2 // 1:ModelSul96, 2:ModelExpSigmoid, 3: ModelExpLUT
+#define INVERTER_NONLINEARITY_COMPENSATION_INIT 1 // 1:ParkSul12, 2:Sigmoid, 3:LUT
+#define INVERTER_NONLINEARITY                   2 // 1:ModelSul96, 2:ModelExpSigmoid, 3: ModelExpLUT
 #define SENSORLESS_CONTROL FALSE
 #define SENSORLESS_CONTROL_HFSI FALSE
 /* ParkSul2012 梯形波 */
@@ -33,8 +33,8 @@
 /* Algorithms */
 #if /* PM Motor */ MACHINE_TYPE % 10 == 2
     #if PC_SIMULATION
-        #define ENABLE_COMMISSIONING TRUE /*Simulation*/
-        #define SELF_COMM_INVERTER TRUE
+        #define ENABLE_COMMISSIONING FALSE /*Simulation*/
+        #define SELF_COMM_INVERTER FALSE
     #else
         #define ENABLE_COMMISSIONING FALSE /*Experiment*/
         #define SELF_COMM_INVERTER FALSE
@@ -42,14 +42,15 @@
     #endif
 
     /* Select Algorithm 1 */
-    #define AFE_USED AFEOE
+    // #define AFE_USED AFEOE
     // #define AFE_USED huwu
+    #define AFE_USED htz
 
     /* Tuning Algorithm 1 */
         /* AFEOE or CM-VM Fusion */
         #define AFEOE_OMEGA_ESTIMATOR 5 // [rad/s] //0.5 // 5 for slow reversal
-            #define AFEOE_KP (200) // ONLY KP
-            #define AFEOE_KI (0.0) // ONLY KP
+            #define AFEOE_KP (200) // (200) // ONLY KP
+            #define AFEOE_KI (0) // ONLY KP
         #define AFE_25_FISION__FLUX_LIMITER_AT_LOW_SPEED FALSE // no need
 
         /* Hu Wu 1998 recommend tau_1_inv=20 rad/s */
@@ -191,7 +192,7 @@
 	#define NULL_D_AXIS_CURRENT_CONTROL -1
 	#define MTPA -2 // not supported
 #define CONTROL_STRATEGY NULL_D_AXIS_CURRENT_CONTROL
-#define NUMBER_OF_STEPS 500000
+#define NUMBER_OF_STEPS 400000
     #define DOWN_SAMPLE 1
     #define USE_QEP_RAW TRUE
     #define VOLTAGE_CURRENT_DECOUPLING_CIRCUIT FALSE
