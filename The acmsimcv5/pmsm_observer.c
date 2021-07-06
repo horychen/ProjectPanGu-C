@@ -967,13 +967,14 @@ void rhf_parksul2014_Dynamics(REAL t, REAL *x, REAL *fx){
 
     /* Know Signals */
     parksul.omega_f = x[8]; // In addition, it is evident in Fig. 3 that all the integrations in the proposed observer are stopped when ω f is zero, which coincides with the natural property of stator flux at standstill.
+    // parksul.omega_f = CTRL.I->omg_elec;
 
     /* Pre-calculation */
     parksul.internal_error[0] = xPsi1(0) - xHatPsi1(0);
     parksul.internal_error[1] = xPsi1(1) - xHatPsi1(1);
 
-    parksul.xPsi2[0] = xPsi1(0) - MOTOR.Lq*IS(0);
-    parksul.xPsi2[1] = xPsi1(1) - MOTOR.Lq*IS(1);
+    parksul.xPsi2[0] = xPsi1(0) - xD(0) - MOTOR.Lq*IS(0);
+    parksul.xPsi2[1] = xPsi1(1) - xD(1) - MOTOR.Lq*IS(1);
     parksul.theta_d = atan2(parksul.xPsi2[1], parksul.xPsi2[0]);
 
     /* The amplitude limiter */
@@ -1074,10 +1075,10 @@ void Main_parksul2014_FADO(){
     }
 
     // debug: turn off k_df/k_af
-    parksul.k_df = 0.0;
+    // parksul.k_df = 0.0; // overwrite k_df as zero
     // parksul.k_af = 0.0;
-    // parksul.CM_KP = 0.0;
-    // parksul.CM_KI = 0.0;
+    parksul.CM_KP = 0.0; //200.0;  // overwrite KP as zero
+    parksul.CM_KI = 0.0; //0.0;  // overwrite KI as zero
 
     general_10states_rk4_solver(&rhf_parksul2014_Dynamics, CTRL.timebase, parksul.x, CL_TS);
 
@@ -1108,9 +1109,10 @@ void Main_parksul2014_FADO(){
     parksul.xTheta_d     = parksul.x[7]; // parksul2014 uses this instead of atan2(parksul.xPsi2[1], parksul.xPsi2[0]);
     parksul.xOmg         = parksul.x[8];
 
-    /* Post-observer calculations */
-    parksul.xPsi2[0] = parksul.xPsi1[0] - MOTOR.Lq*IS_C(0);
-    parksul.xPsi2[1] = parksul.xPsi1[1] - MOTOR.Lq*IS_C(1);
+    /* Post-observer calculations @(20) */
+    parksul.xPsi2[0] = parksul.xPsi1[0] - parksul.xD[0] - MOTOR.Lq*IS_C(0);
+    parksul.xPsi2[1] = parksul.xPsi1[1] - parksul.xD[1] - MOTOR.Lq*IS_C(1);
+    parksul.xPsi2_Amplitude = sqrt(parksul.xPsi2[0]*parksul.xPsi2[0] + parksul.xPsi2[1]*parksul.xPsi2[1]);
     if(TRUE){
         parksul.theta_d = atan2(parksul.xPsi2[1], parksul.xPsi2[0]);
     }else{
@@ -1177,18 +1179,20 @@ void pmsm_observers(){
         // nsoaf.theta_d = AFE_USED.theta_d;
 
         /* Speed and Position Estimator */
-        // harnefors_scvm();
+        Main_harnefors_scvm();
         // cjh_eemfao();
         // cjh_eemfhgo_farza09();
         Main_nsoaf_chen2020();
         // Main_QiaoXia2013_emfSMO();
         Main_ChiXu2009_emfSMO();
         Main_parksul2014_FADO();
+
     #else
         /* 资源有限 */
         #if SELECT_ALGORITHM == ALG_NSOAF
-            Main_the_active_flux_estimator();
-            MainFE_HuWu_1998();
+            // Main_the_active_flux_estimator();
+            // MainFE_HuWu_1998(); // use algorithm 2
+            Main_VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
             Main_nsoaf_chen2020();
         #elif SELECT_ALGORITHM == ALG_Farza_2009
             Main_cjh_eemfhgo_farza09();

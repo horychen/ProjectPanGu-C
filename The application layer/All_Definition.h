@@ -15,6 +15,7 @@
     #include "ACMSim.h"
     #include "Experiment.h"
 /* Motor Library file------------------------------------------------------------------------*/
+    #define USE_DEATIME_PRECOMP FALSE
     __interrupt void EPWM1ISR(void);
     #define ENABLE_ECAP 0
     #define USE_ECAP_CEVT2_INTERRUPT 1

@@ -1,6 +1,16 @@
 #ifndef ACMSIM_H
 #define ACMSIM_H
 
+/* Try to use Holtz03 developed for IM for PMSM */
+#define U_MOTOR_R       PMSM_RESISTANCE
+#define U_MOTOR_LD      PMSM_D_AXIS_INDUCTANCE
+#define U_MOTOR_LQ      PMSM_Q_AXIS_INDUCTANCE
+#define U_MOTOR_KE      PMSM_PERMANENT_MAGNET_FLUX_LINKAGE
+#define U_MOTOR_RREQ    0
+#define IM_FLUX_COMMAND_SINE_PART 0
+#define HOLTZ_2002_GAIN_OFFSET 20
+
+
 #define PC_SIMULATION FALSE
 #include "math.h"
 #include "stdlib.h"

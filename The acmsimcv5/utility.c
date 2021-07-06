@@ -1,7 +1,9 @@
 #include "ACMSim.h"
-// 功能函数
+extern REAL sig_a2;
+extern REAL sig_a3;
 
 
+/* 功能函数 */
 // 符号函数
 double sign(double x){
     return (x > 0) - (x < 0);    

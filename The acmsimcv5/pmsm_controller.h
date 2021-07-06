@@ -17,6 +17,7 @@ typedef struct {
     REAL cmd_speed_rpm;     // mechanical
     REAL cmd_omg_elec;      // electrical
     REAL cmd_rotor_flux_Wb;
+    REAL cmd_psi; // this is not used for PMSM
     REAL idq_cmd[2];
     REAL Tem_cmd;
     // feedback
@@ -67,6 +68,7 @@ typedef struct {
     REAL Lq_inv;
     REAL DeltaL; // Ld - Lq for IPMSM
     REAL KActive;
+    REAL Rreq;
     // mechanical
     REAL npp;
     REAL npp_inv;
@@ -144,6 +146,17 @@ typedef struct {
     REAL I17_plus_I19;
     REAL I17_plus_I19_LPF;
     REAL theta_trapezoidal; // theta_t defined by Park.Sul-2012
+
+    /* Chen 2021 */
+    REAL I_plateau_Max;
+    REAL I_plateau_Min;
+    REAL I_plateau;
+    REAL gamma_I_plateau;
+    REAL V_plateau;
+    REAL gamma_V_plateau;
+    /**/
+    REAL sig_a2;
+    REAL sig_a3;
 } st_InverterNonlinearity; // inverter
 typedef struct {
     // ECAP support (i.e., the API)
