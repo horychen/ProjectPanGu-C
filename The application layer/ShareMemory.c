@@ -230,6 +230,7 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
         channels[3] = 33;
         channels[4] = 34;
         channels[5] = 35;
+        channels[7] = 55;
     }
 
     // 八通道DAC输出，请修改channels数组来确定具体输出哪些G.dac_watch数组中的变量。

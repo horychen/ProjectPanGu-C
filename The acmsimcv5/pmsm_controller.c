@@ -357,7 +357,7 @@ REAL sigmoid(REAL x){
         // REAL a3 = sig_a3; 5.04010863;
 
     #endif
-       
+
     return a1 * x + a2 / (1.0 + exp(-a3 * x)) - a2*0.5;
 }
 REAL sigmoid_online_v2(REAL x, REAL a2, REAL a3){
@@ -705,7 +705,7 @@ void Modified_ParkSul_Compensation(void){
     // if(CTRL.timebase>35){
     //     INV.gamma_I_plateau = 0.0;
     // }
-    INV.sig_a3 -= CL_TS * 250 * 0 \
+    INV.sig_a3 -= CL_TS * 250 * 0.05 \
                             // *fabs(CTRL.I->cmd_speed_rpm)
                             *(    0*INV.I5_plus_I7_LPF 
                                 + 0*INV.I11_plus_I13_LPF
@@ -719,7 +719,7 @@ void Modified_ParkSul_Compensation(void){
         // INV.sig_a2 += CL_TS * -100 * 0 * AFEOE.output_error_dq[0];
 
         // use nonlinear (saturation) FE
-        INV.sig_a2 += CL_TS * -500 * 0 * sign(CTRL.I->cmd_omg_elec) * (MOTOR.KE - htz.psi_2_ampl_lpf);
+        INV.sig_a2 += CL_TS * -500 * 0.1 * sign(CTRL.I->cmd_omg_elec) * (MOTOR.KE - htz.psi_2_ampl_lpf);
     }
     if(INV.sig_a2 > 30){ INV.sig_a2 = 30; }else if(INV.sig_a2 < 2){ INV.sig_a2 = 2; }
 
