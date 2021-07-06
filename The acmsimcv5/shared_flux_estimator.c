@@ -513,9 +513,11 @@ void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REA
         htz.psi_2_nonSat[0] = htz.psi_1_nonSat[0] - CTRL.motor->Lq*IS_C(0);
         htz.psi_2_nonSat[1] = htz.psi_1_nonSat[1] - CTRL.motor->Lq*IS_C(1);
 
-        // htz.psi_aster_max = CTRL.taao_flux_cmd + 0.05;
-        htz.psi_aster_max = CTRL.I->cmd_psi + htz.extra_limit;
-        // htz.psi_aster_max = CTRL.taao_flux_cmd;
+        if(BOOL_TURN_ON_ADAPTIVE_EXTRA_LIMIT){
+            // htz.psi_aster_max = CTRL.taao_flux_cmd + 0.05;
+            htz.psi_aster_max = CTRL.I->cmd_psi + htz.extra_limit;
+            // htz.psi_aster_max = CTRL.taao_flux_cmd;            
+        }
 
         // 限幅是针对转子磁链限幅的
         if(htz.psi_2[0]    > PSI_MU_ASTER_MAX){
