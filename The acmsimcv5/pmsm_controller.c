@@ -293,6 +293,9 @@ void controller(REAL set_rpm_speed_command, REAL set_iq_cmd, REAL set_id_cmd){
 
 /* 拟合法 */
 #ifdef _XCUBE1
+    // b-phase @80 V Mini6PhaseIPMInverter
+    REAL sig_a2 = 7.705938744542915;
+    REAL sig_a3 = 67.0107635483658;
 #else
     // 80 V
     // REAL sig_a2 = 6.67159129;
@@ -323,8 +326,8 @@ REAL sigmoid(REAL x){
         // REAL a2 = 7.36725304;
         // REAL a3 = 62.98712805;
         REAL a1 = 0.0; //(1.705, 
-        REAL a2 = 7.705938744542915;
-        REAL a3 = 67.0107635483658; //1.2*55.84230295697151; 
+        REAL a2 = sig_a2;
+        REAL a3 = sig_a3;
 
     #else
         /* SiC Cree 3 Phase Inverter*/
@@ -705,13 +708,18 @@ void Modified_ParkSul_Compensation(void){
     // if(CTRL.timebase>35){
     //     INV.gamma_I_plateau = 0.0;
     // }
-    INV.sig_a3 -= CL_TS * 250 * 0.05 \
+    INV.sig_a3 -= CL_TS * 250 * 0.5 \
                             // *fabs(CTRL.I->cmd_speed_rpm)
                             *(    0*INV.I5_plus_I7_LPF 
-                                + 0*INV.I11_plus_I13_LPF
+                                + 1*INV.I11_plus_I13_LPF
                                 + 1*INV.I17_plus_I19_LPF
                              );
-    if(INV.sig_a3 > 20){ INV.sig_a3 = 20; }else if(INV.sig_a3 < 0.5){ INV.sig_a3 = 0.5; }
+    #ifdef _XCUBE2
+        if(INV.sig_a3 > 20){ INV.sig_a3 = 20; }else if(INV.sig_a3 < 0.5){ INV.sig_a3 = 0.5; }
+    #endif
+    #ifdef _XCUBE1
+        if(INV.sig_a3 > 100){ INV.sig_a3 = 100; }else if(INV.sig_a3 < 5){ INV.sig_a3 = 5; }
+    #endif
 
     if(CTRL.timebase>2)
     {
@@ -719,7 +727,7 @@ void Modified_ParkSul_Compensation(void){
         // INV.sig_a2 += CL_TS * -100 * 0 * AFEOE.output_error_dq[0];
 
         // use nonlinear (saturation) FE
-        INV.sig_a2 += CL_TS * -500 * 0.1 * sign(CTRL.I->cmd_omg_elec) * (MOTOR.KE - htz.psi_2_ampl_lpf);
+        INV.sig_a2 += CL_TS * -500 * 0.75 * sign(CTRL.I->cmd_omg_elec) * (MOTOR.KE - htz.psi_2_ampl_lpf);
     }
     if(INV.sig_a2 > 30){ INV.sig_a2 = 30; }else if(INV.sig_a2 < 2){ INV.sig_a2 = 2; }
 

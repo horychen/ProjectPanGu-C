@@ -8,6 +8,10 @@ void init_experiment_overwrite(){
     #ifdef _XCUBE1
         CTRL.g->Seletc_exp_operation = 1; //AS_LOAD_MOTOR_CONST;
         G.dac_watch_stator_resistance = 1.703;
+
+        // 2021-07-17
+        CTRL.g->Seletc_exp_operation = NSOAF_LOW_SPEED_OPERATION;
+
     #else
          CTRL.g->Seletc_exp_operation = NSOAF_LOW_SPEED_OPERATION;
         // CTRL.g->Seletc_exp_operation = NSOAF_HIGH_SPEED_OPERATION;
