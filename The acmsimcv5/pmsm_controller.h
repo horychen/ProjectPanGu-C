@@ -48,7 +48,7 @@ typedef struct {
     int PSD_Done;
     int IPD_Done;
     // State of Operation
-    int Motor_or_Gnerator;
+    REAL Motor_or_Generator; // 1 for motoring, -1 for regenerating
 } st_controller_states;
 typedef struct {
     // voltage commands
@@ -230,7 +230,7 @@ typedef struct {
         int flag_overwite_voltage_dc_bus; // = FALSE;
         int flag_use_ecap_voltage; // = 0;
         int flag_experimental_initialized; 
-        int FLAG_TUNING_CURRENT_SCALE_FACTOR; // for comm
+        int FLAG_TUNING_CURRENT_SCALE_FACTOR; // for comm (special mode for calibrate current sensor channel gain)
         int flag_do_inverter_characteristics; // for comm
         int Seletc_exp_operation; // for exp
         int flag_auto_id_cmd; // for slow reversal
