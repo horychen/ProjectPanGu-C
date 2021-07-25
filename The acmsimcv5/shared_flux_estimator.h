@@ -77,6 +77,7 @@ struct SharedFluxEstimatorForExperiment{
             REAL set_omega_est;
             /* Output */
             REAL active_flux_ampl;
+            REAL active_flux_ampl_lpf;
             REAL theta_d;
             REAL output_error[2];    // CM mismatch 
             REAL output_error_dq[2]; // CM mismatch to dq frame

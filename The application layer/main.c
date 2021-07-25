@@ -19,8 +19,8 @@ void init_experiment_AD_gain_and_offset(){
         // G.offsetV=2047;
         // G.offsetW=2030;
     #else
-        G.offsetU=2062;
-        G.offsetV=2063;
+        G.offsetU=2054;
+        G.offsetV=2064;
         G.offsetW=2048; // ADC offset. U, V, W corresponds to ADCRESULT2, ADCRESULT3, ADCRESULT1.
         G.offsetUDC=0; // 6.03
     #endif
@@ -35,10 +35,10 @@ void init_experiment_AD_gain_and_offset(){
             //#define AD_scale_W                       0.0057316444
             //#define AD_scale_V                       0.0056072670
     #else
-        G.AD_scale_W   = 0.0049418264616;
+        G.AD_scale_W   = 0.0048; //0.0049418264616;
         G.AD_scale_V   = 0.0064003544;
-        G.AD_scale_U   = 0.005325766233109334;
-        G.AD_scale_VDC = 0.09375740207975308; //=180.1 / (182.25 / (0.5*0.1897533207)) // 连ecap系数变！ // =0.5*0.1897533207 / 60 * 80, 袁鑫6月2日改的硬件？ //  (0.5*0.1897533207); // 短上一个470R再补上一个470R，所以乘0.5。
+        G.AD_scale_U   = 0.0048; //0.005325766233109334;  // (R121, 120 Ohm) is changed to (R220, 22 Ohm)
+        G.AD_scale_VDC = 0.09375740207975308; //=180.1 / (182.25 / (0.5*0.1897533207)) // 连ecap系数变！（原因已知，是因为母线电压测量的端子插了两根线松了！包括ecap测量和Udc测量都受到影响） // =0.5*0.1897533207 / 60 * 80, 袁鑫6月2日改的硬件？ //  (0.5*0.1897533207); // 短上一个470R再补上一个470R，所以乘0.5。
     #endif
 
     /* eQEP OFFSET */
@@ -518,7 +518,7 @@ void CJHMainISR(void){
 
         // 根据指令，产生控制输出（电压）
         #if ENABLE_COMMISSIONING == FALSE
-            CTRL.S->Motor_or_Gnerator = sign(CTRL.I->idq_cmd[1]) == sign(ENC.rpm); // sign(CTRL.I->idq_cmd[1]) != sign(CTRL.I->cmd_speed_rpm))
+            //CTRL.S->Motor_or_Gnerator = sign(CTRL.I->idq_cmd[1]) == sign(ENC.rpm); // sign(CTRL.I->idq_cmd[1]) != sign(CTRL.I->cmd_speed_rpm))
             runtime_command_and_tuning(G.Seletc_exp_operation);
             controller(G.Set_manual_rpm, G.Set_manual_current_iq, G.Set_manual_current_id);
         #else

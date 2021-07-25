@@ -264,7 +264,9 @@ void controller(REAL set_rpm_speed_command, REAL set_iq_cmd, REAL set_id_cmd){
     /// 调用具体的控制器
     #if CONTROL_STRATEGY == NULL_D_AXIS_CURRENT_CONTROL
         null_d_control(set_iq_cmd, set_id_cmd);
+        CTRL.S->Motor_or_Generator = sign(CTRL.I->idq_cmd[1]) == sign(ENC.rpm); // sign(CTRL.I->idq_cmd[1]) != sign(CTRL.I->cmd_speed_rpm))
     #endif
+
 
     /// 7. 反帕克变换
     CTRL.O->uab_cmd[0] = MT2A(CTRL.O->udq_cmd[0], CTRL.O->udq_cmd[1], CTRL.S->cosT, CTRL.S->sinT);
@@ -612,7 +614,7 @@ void inverterNonlinearity_Initialization(){
     INV.gamma_I_plateau = 10.0;
     INV.gamma_V_plateau = 0.0; // this is updated by the estimated disturbance to the sinusoidal flux model.
 
-    INV.sig_a2 = 1.0*sig_a2; // = Plateau * 2
+    INV.sig_a2 = 1.2*sig_a2; // = Plateau * 2
     INV.sig_a3 = 1.0*sig_a3; // = shape parameter
 }
 #define trapezoidal_voltage_by_current_vector_angle u_comp_per_phase
@@ -708,7 +710,7 @@ void Modified_ParkSul_Compensation(void){
     // if(CTRL.timebase>35){
     //     INV.gamma_I_plateau = 0.0;
     // }
-    INV.sig_a3 -= CL_TS * 250 * 0.5 \
+    INV.sig_a3 -= CL_TS * 125 * 0 \
                             // *fabs(CTRL.I->cmd_speed_rpm)
                             *(    0*INV.I5_plus_I7_LPF 
                                 + 1*INV.I11_plus_I13_LPF
@@ -721,13 +723,16 @@ void Modified_ParkSul_Compensation(void){
         if(INV.sig_a3 > 100){ INV.sig_a3 = 100; }else if(INV.sig_a3 < 5){ INV.sig_a3 = 5; }
     #endif
 
+    // CTRL.S->Motor_or_Generator = sign(CTRL.I->omg_elec * CTRL.I->idq_cmd[1]);
+    // CTRL.S->Motor_or_Generator = sign(CTRL.I->cmd_omg_elec);
+
     if(CTRL.timebase>2)
     {
         // use linear FE
-        // INV.sig_a2 += CL_TS * -100 * 0 * AFEOE.output_error_dq[0];
+        // INV.sig_a2 += CL_TS * -100 * AFEOE.output_error_dq[0];
 
         // use nonlinear (saturation) FE
-        INV.sig_a2 += CL_TS * -500 * 0.75 * sign(CTRL.I->cmd_omg_elec) * (MOTOR.KE - htz.psi_2_ampl_lpf);
+        INV.sig_a2 += CL_TS * -500 * 0.75 * CTRL.S->Motor_or_Generator  * (MOTOR.KE - htz.psi_2_ampl_lpf);
     }
     if(INV.sig_a2 > 30){ INV.sig_a2 = 30; }else if(INV.sig_a2 < 2){ INV.sig_a2 = 2; }
 
@@ -821,7 +826,7 @@ void Modified_ParkSul_Compensation(void){
     // INV.u_comp[2] = sigmoid_online(ic, INV.Vsat, 5.22150403 * MISMATCH_A3); //INV.theta_trapezoidal);
 
 
-    /* Chen2021 覆盖 */
+    /* Chen2021SlessInv 覆盖 */
     if(INV.gamma_I_plateau!=0){
         REAL ia_cmd = (       CTRL.O->iab_cmd[0]                                             );
         REAL ib_cmd = (-0.5 * CTRL.O->iab_cmd[0] - SIN_DASH_2PI_SLASH_3 * CTRL.O->iab_cmd[1] );

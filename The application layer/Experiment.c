@@ -298,7 +298,7 @@ void slow_speed_reversal_tuning(){
         //            }
         //        }
 
-        if(CTRL.S->Motor_or_Gnerator){
+        if(CTRL.S->Motor_or_Generator){
             CTRL.motor->R = RSmall; //for positive speed
         }else{
             CTRL.motor->R = RLarge; //for negative speed

@@ -1,8 +1,8 @@
 #ifndef ACMCONFIG_H
 #define ACMCONFIG_H
 /* 经常要修改的 */
-#define INVERTER_NONLINEARITY_COMPENSATION_INIT 1 // 1:ParkSul12, 2:Sigmoid, 3:LUT
-#define INVERTER_NONLINEARITY                   2 // 1:ModelSul96, 2:ModelExpSigmoid, 3: ModelExpLUT
+#define INVERTER_NONLINEARITY_COMPENSATION_INIT 0 //1 // 1:ParkSul12, 2:Sigmoid, 3:LUT
+#define INVERTER_NONLINEARITY                   0 //2 // 1:ModelSul96, 2:ModelExpSigmoid, 3: ModelExpLUT
 #define SENSORLESS_CONTROL FALSE
 #define SENSORLESS_CONTROL_HFSI FALSE
 /* ParkSul2012 梯形波 */
@@ -36,8 +36,8 @@
         #define ENABLE_COMMISSIONING FALSE /*Simulation*/
         #define SELF_COMM_INVERTER FALSE
     #else
-        #define ENABLE_COMMISSIONING FALSE /*Experiment*/
-        #define SELF_COMM_INVERTER FALSE
+        #define ENABLE_COMMISSIONING TRUE /*Experiment*/
+        #define SELF_COMM_INVERTER TRUE
         /*As we use CTRL.O->iab_cmd for look up, now dead-time compensation during ENABLE_COMMISSIONING is not active*/
     #endif
 
@@ -192,7 +192,7 @@
 	#define NULL_D_AXIS_CURRENT_CONTROL -1
 	#define MTPA -2 // not supported
 #define CONTROL_STRATEGY NULL_D_AXIS_CURRENT_CONTROL
-#define NUMBER_OF_STEPS 400000
+#define NUMBER_OF_STEPS 250000
     #define DOWN_SAMPLE 1
     #define USE_QEP_RAW TRUE
     #define VOLTAGE_CURRENT_DECOUPLING_CIRCUIT FALSE
@@ -248,5 +248,5 @@
 #define SWEEP_FREQ_C2V FALSE
 #define SWEEP_FREQ_C2C FALSE
 
-#define DATA_FILE_NAME "../dat/PMSM_NTUMotor-205-1000-10-1982.dat"
+#define DATA_FILE_NAME "../dat/SlessInv-OverEstimated-a2-NL-205-1000-10-1982.dat"
 #endif
