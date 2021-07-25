@@ -10,7 +10,7 @@ Uint16 ReceivedChar;
 void init_experiment_AD_gain_and_offset(){
     /* ADC OFFSET */
     #ifdef _XCUBE1
-        G.offsetU=2044;
+        G.offsetU=2047;
         G.offsetV=2052;
         G.offsetW=2032; // ADC offset. U, V, W corresponds to ADCRESULT2, ADCRESULT3, ADCRESULT1.
         G.offsetUDC=1430;
@@ -28,8 +28,8 @@ void init_experiment_AD_gain_and_offset(){
     /* ADC SCALE */
     #ifdef _XCUBE1
         G.AD_scale_U   = 0.0109649;
-        G.AD_scale_V   = 0.00988908653610677; // (degaussed CP030A and offset ADC) // 0.01125872551 (YX)
-        G.AD_scale_W   = 0.00972075677822004; // (degaussed CP030A and offset ADC) // 0.01134558656 (YX)
+        G.AD_scale_V   = 0.00995; //0.009889086536107; // (degaussed CP030A and offset ADC) // 0.01125872551 (YX)
+        G.AD_scale_W   = 0.00970; //0.009075677822004; // (degaussed CP030A and offset ADC) // 0.01134558656 (YX)
         G.AD_scale_VDC = 0.3546099;
             /* 借用Sensor Board的电流传感器 */
             //#define AD_scale_W                       0.0057316444
