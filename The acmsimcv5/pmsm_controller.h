@@ -157,6 +157,8 @@ typedef struct {
     /**/
     REAL sig_a2;
     REAL sig_a3;
+    REAL gamma_a2;
+    REAL gamma_a3;
 } st_InverterNonlinearity; // inverter
 typedef struct {
     // ECAP support (i.e., the API)

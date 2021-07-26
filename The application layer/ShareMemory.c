@@ -229,7 +229,7 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
         channels[2] = 32;
         channels[3] = 33;
         channels[4] = 34;
-        channels[5] = 35;
+        channels[5] = 59; //35;
         channels[7] = 55;
     }
 
