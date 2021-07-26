@@ -616,6 +616,9 @@ void inverterNonlinearity_Initialization(){
 
     INV.sig_a2 = 1.2*sig_a2; // = Plateau * 2
     INV.sig_a3 = 1.0*sig_a3; // = shape parameter
+
+    INV.gamma_a2 = 400;
+    INV.gamma_a3 = 125;
 }
 #define trapezoidal_voltage_by_current_vector_angle u_comp_per_phase
 REAL u_comp_per_phase(REAL Vsat, REAL thetaA, REAL theta_trapezoidal, REAL oneOver_theta_trapezoidal){
@@ -710,9 +713,9 @@ void Modified_ParkSul_Compensation(void){
     // if(CTRL.timebase>35){
     //     INV.gamma_I_plateau = 0.0;
     // }
-    INV.sig_a3 -= CL_TS * 125 * 0 \
+    INV.sig_a3 -= CL_TS * INV.gamma_a3 \
                             // *fabs(CTRL.I->cmd_speed_rpm)
-                            *(    0*INV.I5_plus_I7_LPF 
+                            *(    1*INV.I5_plus_I7_LPF 
                                 + 1*INV.I11_plus_I13_LPF
                                 + 1*INV.I17_plus_I19_LPF
                              );
@@ -732,7 +735,7 @@ void Modified_ParkSul_Compensation(void){
         // INV.sig_a2 += CL_TS * -100 * AFEOE.output_error_dq[0];
 
         // use nonlinear (saturation) FE
-        INV.sig_a2 += CL_TS * -500 * 0.75 * CTRL.S->Motor_or_Generator  * (MOTOR.KE - htz.psi_2_ampl_lpf);
+        INV.sig_a2 += CL_TS * -INV.gamma_a2 * CTRL.S->Motor_or_Generator  * (MOTOR.KE - htz.psi_2_ampl_lpf);
     }
     if(INV.sig_a2 > 30){ INV.sig_a2 = 30; }else if(INV.sig_a2 < 2){ INV.sig_a2 = 2; }
 
