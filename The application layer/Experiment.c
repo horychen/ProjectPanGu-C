@@ -10,13 +10,15 @@ void init_experiment_overwrite(){
         G.dac_watch_stator_resistance = 1.703;
 
         // 2021-07-17
-        CTRL.g->Seletc_exp_operation = NSOAF_LOW_SPEED_OPERATION;
+        //CTRL.g->Seletc_exp_operation = NSOAF_LOW_SPEED_OPERATION;
 
     #else
-         CTRL.g->Seletc_exp_operation = NSOAF_LOW_SPEED_OPERATION;
+        CTRL.g->Seletc_exp_operation = NSOAF_LOW_SPEED_OPERATION;
         // CTRL.g->Seletc_exp_operation = NSOAF_HIGH_SPEED_OPERATION;
         // CTRL.g->Seletc_exp_operation = NSOAF_RAMP_SPEED_OPERATION;
         G.dac_watch_stator_resistance = 1.69;
+
+        // CTRL.g->Seletc_exp_operation = AS_LOAD_MOTOR_CONST;
     #endif
 
     if(G.Seletc_exp_operation == AS_LOAD_MOTOR_CONST){
@@ -39,15 +41,16 @@ void init_experiment_overwrite(){
     }
 
     #ifdef _XCUBE1
-        CTRL.g->OverwriteSpeedOutLimit = 2;
-
         CTRL.g->Overwrite_Voltage_DC_BUS = 180;
         CTRL.g->flag_overwite_voltage_dc_bus = FALSE;
         CTRL.g->flag_use_ecap_voltage = 0;
+
+        CTRL.g->OverwriteSpeedOutLimit = 6.3;
+        pid1_spd.OutLimit = G.OverwriteSpeedOutLimit;
     #else
         CTRL.g->OverwriteSpeedOutLimit = 6.3; // 150% rated
+        pid1_spd.OutLimit = G.OverwriteSpeedOutLimit;
     #endif
-    pid1_spd.OutLimit = G.OverwriteSpeedOutLimit;
 
     CTRL.g->DAC_MAX5307_FLAG = FALSE;
     CTRL.g->AD_offset_flag2 = FALSE;
@@ -123,10 +126,15 @@ void init_experiment_overwrite(){
 void runtime_command_and_tuning(){
     if(G.Seletc_exp_operation == AS_LOAD_MOTOR_CONST){
         CTRL.S->go_sensorless = 0;
+        G.FLAG_INVERTER_NONLINEARITY_COMPENSATION = 0;
         if(CTRL.timebase < 2){
             pid1_spd.OutLimit = 0.1;
         }else{
-            pid1_spd.OutLimit = 2.0;
+            if((long int)CTRL.timebase % 2 == 0){
+                pid1_spd.OutLimit = 1.5;
+            }else{
+                pid1_spd.OutLimit = 3.0;
+            }
         }
     }
     if(G.Seletc_exp_operation == AS_LOAD_MOTOR_RAMP){
