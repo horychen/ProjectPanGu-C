@@ -302,7 +302,7 @@ void controller(REAL set_rpm_speed_command, REAL set_iq_cmd, REAL set_id_cmd){
 
     // 180V (old)
     // REAL sig_a2 = 16.0575341;  // yuefei tuning gives a2' = 9.2*2
-    REAL sig_a3 = 17.59278688; // yuefei tuning gives a3' = a3*5
+    // REAL sig_a3 = 17.59278688; // yuefei tuning gives a3' = a3*5
 #else
     // 80 V
     REAL sig_a2 = 6.67159129;
@@ -619,11 +619,18 @@ void inverterNonlinearity_Initialization(){
     INV.gamma_I_plateau = 10.0;
     INV.gamma_V_plateau = 0.0; // this is updated by the estimated disturbance to the sinusoidal flux model.
 
-    INV.sig_a2 = 1.0*sig_a2; // = Plateau * 2
+    #if PC_SIMULATION
+        INV.sig_a2 = 1.2*sig_a2;
+    #else
+        INV.sig_a2 = sig_a2; // = Plateau * 2
+    #endif
     INV.sig_a3 = 1.0*sig_a3; // = shape parameter
 
-    INV.gamma_a2 = 400;
-    INV.gamma_a3 = 125;
+    INV.w6  = 1;
+    INV.w12 = 1;
+    INV.w18 = 1;
+    INV.gamma_a2 = 2000; //400;
+    INV.gamma_a3 = 500; //125;
 }
 #define trapezoidal_voltage_by_current_vector_angle u_comp_per_phase
 REAL u_comp_per_phase(REAL Vsat, REAL thetaA, REAL theta_trapezoidal, REAL oneOver_theta_trapezoidal){
@@ -714,15 +721,20 @@ void Modified_ParkSul_Compensation(void){
     }
 
 
-    /* Online Update Sigmoid a3? */
+    #if PC_SIMULATION
+        INV.gamma_a2 = 0.0;
+        INV.gamma_a3 = 0.0;
+    #endif
+
+    /* Online Update Sigmoid a3 */
     // if(CTRL.timebase>35){
     //     INV.gamma_I_plateau = 0.0;
     // }
     INV.sig_a3 -= CL_TS * INV.gamma_a3 \
                             // *fabs(CTRL.I->cmd_speed_rpm)
-                            *(    1*INV.I5_plus_I7_LPF 
-                                + 1*INV.I11_plus_I13_LPF
-                                + 1*INV.I17_plus_I19_LPF
+                            *(    INV.w6 *INV.I5_plus_I7_LPF 
+                                + INV.w12*INV.I11_plus_I13_LPF
+                                + INV.w18*INV.I17_plus_I19_LPF
                              );
     #ifdef _XCUBE2
         if(INV.sig_a3 > 20){ INV.sig_a3 = 20; }else if(INV.sig_a3 < 0.5){ INV.sig_a3 = 0.5; }
@@ -734,6 +746,7 @@ void Modified_ParkSul_Compensation(void){
     // CTRL.S->Motor_or_Generator = sign(CTRL.I->omg_elec * CTRL.I->idq_cmd[1]);
     // CTRL.S->Motor_or_Generator = sign(CTRL.I->cmd_omg_elec);
 
+    /* Online Update Sigmoid a2 */
     if(CTRL.timebase>2)
     {
         // use linear FE

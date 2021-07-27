@@ -155,6 +155,9 @@ typedef struct {
     REAL V_plateau;
     REAL gamma_V_plateau;
     /**/
+    REAL w6;
+    REAL w12;
+    REAL w18;
     REAL sig_a2;
     REAL sig_a3;
     REAL gamma_a2;

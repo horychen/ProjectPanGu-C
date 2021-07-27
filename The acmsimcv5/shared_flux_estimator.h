@@ -180,7 +180,7 @@ extern struct SharedFluxEstimatorForExperiment FE;
 
 #define htz (FE.htz)
 
-void test_flux_estimators();
+void simulation_test_flux_estimators();
     void Main_the_active_flux_estimator();
     void MainFE_HuWu_1998();
 
