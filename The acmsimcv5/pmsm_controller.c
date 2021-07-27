@@ -298,14 +298,18 @@ void controller(REAL set_rpm_speed_command, REAL set_iq_cmd, REAL set_id_cmd){
     // b-phase @80 V Mini6PhaseIPMInverter
     REAL sig_a2 = 7.705938744542915;
     REAL sig_a3 = 67.0107635483658;
+
+    // 180V (old)
+    // REAL sig_a2 = 16.0575341;  // yuefei tuning gives a2' = 9.2*2
+    REAL sig_a3 = 17.59278688; // yuefei tuning gives a3' = a3*5
 #else
     // 80 V
-    // REAL sig_a2 = 6.67159129;
-    // REAL sig_a3 = 8.42010418;
+    REAL sig_a2 = 6.67159129;
+    REAL sig_a3 = 8.42010418;
 
     // 180 V
-    REAL sig_a2 = 15.43046115;
-    REAL sig_a3 = 5.04010863;
+    // REAL sig_a2 = 15.43046115;
+    // REAL sig_a3 = 5.04010863;
 #endif
 REAL sigmoid(REAL x){
     // beta
@@ -614,7 +618,7 @@ void inverterNonlinearity_Initialization(){
     INV.gamma_I_plateau = 10.0;
     INV.gamma_V_plateau = 0.0; // this is updated by the estimated disturbance to the sinusoidal flux model.
 
-    INV.sig_a2 = 1.2*sig_a2; // = Plateau * 2
+    INV.sig_a2 = 1.0*sig_a2; // = Plateau * 2
     INV.sig_a3 = 1.0*sig_a3; // = shape parameter
 
     INV.gamma_a2 = 400;
