@@ -1,8 +1,8 @@
 #ifndef ACMCONFIG_H
 #define ACMCONFIG_H
 /* 经常要修改的 */
-#define INVERTER_NONLINEARITY_COMPENSATION_INIT 2 // 1:ParkSul12, 2:Sigmoid, 3:LUT
-#define INVERTER_NONLINEARITY                   2 // 1:ModelSul96, 2:ModelExpSigmoid, 3: ModelExpLUT
+#define INVERTER_NONLINEARITY_COMPENSATION_INIT 0 //2 // 1:ParkSul12, 2:Sigmoid, 3:LUT
+#define INVERTER_NONLINEARITY                   0 //2 // 1:ModelSul96, 2:ModelExpSigmoid, 3: ModelExpLUT
 #define SENSORLESS_CONTROL FALSE
 #define SENSORLESS_CONTROL_HFSI FALSE
 /* ParkSul2012 梯形波 */
@@ -32,19 +32,22 @@
 
 /* Algorithms */
 #if /* PM Motor */ MACHINE_TYPE % 10 == 2
+    /* Commissioning */
+    #define EXCITE_BETA_AXIS_AND_MEASURE_PHASE_B TRUE
     #if PC_SIMULATION
         #define ENABLE_COMMISSIONING FALSE /*Simulation*/
         #define SELF_COMM_INVERTER FALSE
     #else
-        #define ENABLE_COMMISSIONING FALSE /*Experiment*/
-        #define SELF_COMM_INVERTER FALSE
+        #define ENABLE_COMMISSIONING TRUE /*Experiment*/
+        #define SELF_COMM_INVERTER TRUE
+        #define TUNING_CURRENT_SCALE_FACTOR_INIT TRUE
         /*As we use CTRL.O->iab_cmd for look up, now dead-time compensation during ENABLE_COMMISSIONING is not active*/
     #endif
 
     /* Select Algorithm 1 */
-    #define AFE_USED AFEOE
+    // #define AFE_USED AFEOE
     // #define AFE_USED huwu
-    // #define AFE_USED htz
+    #define AFE_USED htz
 
     /* Tuning Algorithm 1 */
         /* AFEOE or CM-VM Fusion */
