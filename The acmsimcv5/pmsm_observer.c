@@ -1175,7 +1175,7 @@ void pmsm_observers(){
 
     #if PC_SIMULATION
         /* Cascaded Flux Estimator */
-        test_flux_estimators();
+        simulation_test_flux_estimators();
         // nsoaf.theta_d = AFE_USED.theta_d;
 
         /* Speed and Position Estimator */
@@ -1190,7 +1190,7 @@ void pmsm_observers(){
     #else
         /* 资源有限 */
         #if SELECT_ALGORITHM == ALG_NSOAF
-            // Main_the_active_flux_estimator();
+            Main_the_active_flux_estimator();
             // MainFE_HuWu_1998(); // use algorithm 2
             Main_VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
             Main_nsoaf_chen2020();

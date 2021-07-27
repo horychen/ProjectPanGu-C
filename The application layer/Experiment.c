@@ -6,7 +6,7 @@ void init_experiment_overwrite(){
 
     /* Mode Changing During Experiment */
     #ifdef _XCUBE1
-        CTRL.g->Seletc_exp_operation = 1; //AS_LOAD_MOTOR_CONST;
+        CTRL.g->Seletc_exp_operation = AS_LOAD_MOTOR_CONST;
         G.dac_watch_stator_resistance = 1.703;
 
         // 2021-07-17
@@ -24,7 +24,7 @@ void init_experiment_overwrite(){
     if(G.Seletc_exp_operation == AS_LOAD_MOTOR_CONST){
         pid1_spd.OutLimit = 2.1; //2.0;
         G.Set_manual_rpm = 300;  // motoring + regeneration for low speed test
-        G.Set_manual_rpm = 0;    // motoring for high speed test
+        //G.Set_manual_rpm = 0;    // motoring for high speed test
     }
     else if(G.Seletc_exp_operation == AS_LOAD_MOTOR_RAMP){
         pid1_spd.OutLimit = 0.01;
@@ -130,7 +130,7 @@ void runtime_command_and_tuning(){
         if(CTRL.timebase < 2){
             pid1_spd.OutLimit = 0.1;
         }else{
-            if((long int)CTRL.timebase % 2 == 0){
+            if( ((long int)(CTRL.timebase*0.25)) % 2 == 0){
                 pid1_spd.OutLimit = 1.5;
             }else{
                 pid1_spd.OutLimit = 3.0;
