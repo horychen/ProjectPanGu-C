@@ -171,7 +171,6 @@ int16 bool_VL_tuned = FALSE;
 int16 bool_PL_tuned = FALSE;
 
 
-#define EXCITE_BETA_AXIS_AND_MEASURE_PHASE_B TRUE
 #define UD_OUTPUT CTRL.O->uab_cmd[0]
 #define UQ_OUTPUT CTRL.O->uab_cmd[1]
 
