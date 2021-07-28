@@ -262,10 +262,14 @@ void controller(REAL set_rpm_speed_command, REAL set_iq_cmd, REAL set_id_cmd){
     CTRL.I->idq[0] = AB2M(CTRL.I->iab[0], CTRL.I->iab[1], CTRL.S->cosT, CTRL.S->sinT);
     CTRL.I->idq[1] = AB2T(CTRL.I->iab[0], CTRL.I->iab[1], CTRL.S->cosT, CTRL.S->sinT);
 
+    /* 更新依赖于dq轴电流的物理量 */
+    // MOTOR.KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * CTRL.I->idq_cmd[0];
+    MOTOR.KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * CTRL.I->idq[0];
+
     /// 调用具体的控制器
     #if CONTROL_STRATEGY == NULL_D_AXIS_CURRENT_CONTROL
         null_d_control(set_iq_cmd, set_id_cmd);
-        CTRL.S->Motor_or_Generator = sign(CTRL.I->idq_cmd[1]) == sign(ENC.rpm); // sign(CTRL.I->idq_cmd[1]) != sign(CTRL.I->cmd_speed_rpm))
+        CTRL.S->Motor_or_Generator = sign(CTRL.I->omg_elec * CTRL.I->idq_cmd[1]); // sign(CTRL.I->cmd_omg_elec);
     #endif
 
 
@@ -464,7 +468,9 @@ void inverter_voltage_command(int bool_use_iab_cmd){
 
     }if(G.FLAG_INVERTER_NONLINEARITY_COMPENSATION == 1){
         /* 梯形波自适应 */
-        Modified_ParkSul_Compensation();
+        // Modified_ParkSul_Compensation();
+        /* Sigmoid自适应 */
+        Online_PAA_Based_Compensation();
         CTRL.O->uab_cmd_to_inverter[0] = CTRL.O->uab_cmd[0] + INV.ual_comp;
         CTRL.O->uab_cmd_to_inverter[1] = CTRL.O->uab_cmd[1] + INV.ube_comp;
     }
@@ -620,17 +626,18 @@ void inverterNonlinearity_Initialization(){
     INV.gamma_V_plateau = 0.0; // this is updated by the estimated disturbance to the sinusoidal flux model.
 
     #if PC_SIMULATION
-        INV.sig_a2 = 1.2*sig_a2;
+        INV.sig_a2 = 1.0*sig_a2;
+        INV.sig_a3 = 1.5*sig_a3; // = shape parameter
     #else
         INV.sig_a2 = sig_a2; // = Plateau * 2
+        INV.sig_a3 = sig_a3; // = shape parameter
     #endif
-    INV.sig_a3 = 1.0*sig_a3; // = shape parameter
 
     INV.w6  = 1;
     INV.w12 = 1;
     INV.w18 = 1;
-    INV.gamma_a2 = 2000; //400;
-    INV.gamma_a3 = 500; //125;
+    INV.gamma_a2 = 400;
+    INV.gamma_a3 = 125;
 }
 #define trapezoidal_voltage_by_current_vector_angle u_comp_per_phase
 REAL u_comp_per_phase(REAL Vsat, REAL thetaA, REAL theta_trapezoidal, REAL oneOver_theta_trapezoidal){
@@ -720,63 +727,6 @@ void Modified_ParkSul_Compensation(void){
         }
     }
 
-
-    #if PC_SIMULATION
-        INV.gamma_a2 = 0.0;
-        INV.gamma_a3 = 0.0;
-    #endif
-
-    /* Online Update Sigmoid a3 */
-    // if(CTRL.timebase>35){
-    //     INV.gamma_I_plateau = 0.0;
-    // }
-    INV.sig_a3 -= CL_TS * INV.gamma_a3 \
-                            // *fabs(CTRL.I->cmd_speed_rpm)
-                            *(    INV.w6 *INV.I5_plus_I7_LPF 
-                                + INV.w12*INV.I11_plus_I13_LPF
-                                + INV.w18*INV.I17_plus_I19_LPF
-                             );
-    #ifdef _XCUBE2
-        if(INV.sig_a3 > 20){ INV.sig_a3 = 20; }else if(INV.sig_a3 < 0.5){ INV.sig_a3 = 0.5; }
-    #endif
-    #ifdef _XCUBE1
-        if(INV.sig_a3 > 100){ INV.sig_a3 = 100; }else if(INV.sig_a3 < 5){ INV.sig_a3 = 5; }
-    #endif
-
-    // CTRL.S->Motor_or_Generator = sign(CTRL.I->omg_elec * CTRL.I->idq_cmd[1]);
-    // CTRL.S->Motor_or_Generator = sign(CTRL.I->cmd_omg_elec);
-
-    /* Online Update Sigmoid a2 */
-    if(CTRL.timebase>2)
-    {
-        // use linear FE
-        // INV.sig_a2 += CL_TS * -100 * AFEOE.output_error_dq[0];
-
-        // use nonlinear (saturation) FE
-        INV.sig_a2 += CL_TS * -INV.gamma_a2 * CTRL.S->Motor_or_Generator  * (MOTOR.KE - htz.psi_2_ampl_lpf);
-    }
-    if(INV.sig_a2 > 30){ INV.sig_a2 = 30; }else if(INV.sig_a2 < 2){ INV.sig_a2 = 2; }
-
-    /* Chen2021: linear approximation of u-i curve */
-    // if(CTRL.timebase>35){
-    //     INV.gamma_I_plateau = 0.0;
-    // }
-    // INV.I_plateau += CL_TS * 0 * INV.gamma_I_plateau \
-    //                         // *fabs(CTRL.I->cmd_speed_rpm)
-    //                         *(    1*INV.I5_plus_I7_LPF 
-    //                             + 0*INV.I11_plus_I13_LPF
-    //                             + 0*INV.I17_plus_I19_LPF
-    //                          );
-    // if(INV.I_plateau > INV.I_plateau_Max){
-    //     INV.I_plateau = INV.I_plateau_Max;
-    // }else if(INV.I_plateau < INV.I_plateau_Min){
-    //     INV.I_plateau = INV.I_plateau_Min;
-    // }
-
-
-
-
-
     #if PC_SIMULATION == TRUE
         // 用偏小的Vsat，观察theta_t的收敛是否直达下界？
         // if(CTRL.timebase>23){
@@ -846,6 +796,124 @@ void Modified_ParkSul_Compensation(void){
     // INV.u_comp[1] = sigmoid_online(ib, INV.Vsat, 5.22150403 * MISMATCH_A3); //INV.theta_trapezoidal);
     // INV.u_comp[2] = sigmoid_online(ic, INV.Vsat, 5.22150403 * MISMATCH_A3); //INV.theta_trapezoidal);
 
+    /* 相补偿电压Clarke为静止正交坐标系电压。 */
+    // 改成恒幅值变换
+    INV.ual_comp = 0.66666666667 * (INV.u_comp[0] - 0.5*INV.u_comp[1] - 0.5*INV.u_comp[2]);
+    INV.ube_comp = 0.66666666667 * 0.86602540378 * (    INV.u_comp[1] -     INV.u_comp[2]);
+        // INV.ual_comp = SQRT_2_SLASH_3      * (INV.u_comp[0] - 0.5*INV.u_comp[1] - 0.5*INV.u_comp[2]); // sqrt(2/3.)
+        // INV.ube_comp = 0.70710678118654746 * (                    INV.u_comp[1] -     INV.u_comp[2]); // sqrt(2/3.)*sin(2*pi/3) = sqrt(2/3.)*(sqrt(3)/2)
+
+    // 区分补偿前的电压和补偿后的电压：
+    // CTRL.ual, CTRL.ube 是补偿前的电压！
+    // CTRL.ual + INV.ual_comp, CTRL.ube + INV.ube_comp 是补偿后的电压！
+
+    // for plotting
+    INV.uDcomp_atA = AB2M(INV.ual_comp, INV.ube_comp, INV.cos_thetaA, INV.sin_thetaA);
+    INV.uQcomp_atA = AB2T(INV.ual_comp, INV.ube_comp, INV.cos_thetaA, INV.sin_thetaA);
+}
+
+void Online_PAA_Based_Compensation(void){
+
+    // /* 角度反馈: CTRL.I->theta_d_elec or ELECTRICAL_POSITION_FEEDBACK? */
+    // INV.thetaA = ELECTRICAL_POSITION_FEEDBACK;
+    // // I (current vector amplitude)
+    // INV.iD_atA = sqrt(IS_C(0)*IS_C(0) + IS_C(1)*IS_C(1));
+
+    /* 在Park2012中，a相电流被建模成了sin函数，一个sin函数的自变量角度放在正交坐标系下看就是在交轴上的，所以要-1.5*pi */
+
+    // Phase A current's fundamental component transformation
+    /* 这里使用哪个角度的关键不在于是有感的角度还是无感的角度，而是你FOC电流控制器（Park变换）用的角度是哪个？ */
+    if(CTRL.S->go_sensorless){
+        INV.thetaA = -M_PI*1.5 + ELECTRICAL_POSITION_FEEDBACK + atan2(CTRL.I->idq_cmd[1], CTRL.I->idq_cmd[0]); /* Q: why -pi*(1.5)? */ /* ParkSul2014 suggests to use PLL to extract thetaA from current command */
+    }else{
+        INV.thetaA = -M_PI*1.5 +         CTRL.I->theta_d_elec + atan2(CTRL.I->idq_cmd[1], CTRL.I->idq_cmd[0]); /* Q: why -pi*(1.5)? */ /* ParkSul2014 suggests to use PLL to extract thetaA from current command */
+    }
+    INV.thetaA = shift2pi(INV.thetaA); /* Q: how to handle it when INV.thetaA jumps between pi and -pi? */ // 这句话绝对不能省去，否则C相的梯形波会出错。
+
+    INV.cos_thetaA = cos(INV.thetaA);
+    INV.sin_thetaA = sin(INV.thetaA);
+    INV.iD_atA = AB2M(IS_C(0),IS_C(1), INV.cos_thetaA, INV.sin_thetaA);
+    INV.iQ_atA = AB2T(IS_C(0),IS_C(1), INV.cos_thetaA, INV.sin_thetaA);
+
+    if(FALSE){
+        /* Use q-axis current in phase A angle (Tentative and Failed) */
+        INV.I5_plus_I7     = INV.iQ_atA * cos(6*INV.thetaA);
+        INV.I5_plus_I7_LPF = lpf1_inverter(INV.I5_plus_I7, INV.I5_plus_I7_LPF);
+
+        INV.I11_plus_I13     = INV.iQ_atA * cos(12*INV.thetaA);
+        INV.I11_plus_I13_LPF = lpf1_inverter(INV.I11_plus_I13, INV.I11_plus_I13_LPF);
+
+        INV.I17_plus_I19     = INV.iQ_atA * cos(18*INV.thetaA);
+        INV.I17_plus_I19_LPF = lpf1_inverter(INV.I17_plus_I19, INV.I17_plus_I19_LPF);        
+    }else{
+        /* Use d-axis current in phase A angle */
+        INV.I5_plus_I7     = INV.iD_atA * sin(6*INV.thetaA); /* Q: Why sin? Why not cos? 和上面的-1.5*pi有关系吗？ */
+        INV.I5_plus_I7_LPF = lpf1_inverter(INV.I5_plus_I7, INV.I5_plus_I7_LPF); /* lpf1 for inverter */
+
+        INV.I11_plus_I13     = INV.iD_atA * sin(12*INV.thetaA);
+        INV.I11_plus_I13_LPF = lpf1_inverter(INV.I11_plus_I13, INV.I11_plus_I13_LPF);
+
+        INV.I17_plus_I19     = INV.iD_atA * sin(18*INV.thetaA);
+        INV.I17_plus_I19_LPF = lpf1_inverter(INV.I17_plus_I19, INV.I17_plus_I19_LPF);        
+    }
+
+    #if PC_SIMULATION
+        // INV.gamma_a2 = 0.0;
+        // INV.gamma_a3 = 0.0;
+    #endif
+
+    /* Online Update Sigmoid a3 */
+    // if(CTRL.timebase>35){
+    //     INV.gamma_I_plateau = 0.0;
+    // }
+    INV.sig_a3 -= CL_TS * INV.gamma_a3 \
+                            // *fabs(CTRL.I->cmd_speed_rpm)
+                            *(    INV.w6 *INV.I5_plus_I7_LPF 
+                                + INV.w12*INV.I11_plus_I13_LPF
+                                + INV.w18*INV.I17_plus_I19_LPF
+                             );
+    #ifdef _XCUBE2
+        if(INV.sig_a3 > 20){ INV.sig_a3 = 20; }else if(INV.sig_a3 < 0.5){ INV.sig_a3 = 0.5; }
+    #endif
+    #ifdef _XCUBE1
+        if(INV.sig_a3 > 100){ INV.sig_a3 = 100; }else if(INV.sig_a3 < 5){ INV.sig_a3 = 5; }
+    #endif
+
+    // CTRL.S->Motor_or_Generator = sign(CTRL.I->omg_elec * CTRL.I->idq_cmd[1]);
+    // CTRL.S->Motor_or_Generator = sign(CTRL.I->cmd_omg_elec);
+
+    /* Online Update Sigmoid a2 */
+    if(CTRL.timebase>2){
+        /* Sensorless: Adaptive a2 based on flux amplitude error */
+        // use linear FE
+        // INV.sig_a2 += CL_TS * -100 * AFEOE.output_error_dq[0];
+
+        // use nonlinear (saturation) FE
+        INV.sig_a2 += CL_TS * -INV.gamma_a2 * CTRL.S->Motor_or_Generator  * (MOTOR.KActive - htz.psi_2_ampl_lpf);
+
+        /* Sensored: Adaptive a2 based on position error */
+        /* To use this, you muast have a large enough stator current */
+        /* To use this, you muast have a large enough stator current */
+        /* To use this, you muast have a large enough stator current */
+        // INV.sig_a2 += CL_TS * INV.gain_Vsat * sin(ENC.theta_d_elec - ELECTRICAL_POSITION_FEEDBACK) * sign(ENC.omg_elec);
+    }
+    if(INV.sig_a2 > 30){ INV.sig_a2 = 30; }else if(INV.sig_a2 < 2){ INV.sig_a2 = 2; }
+
+    /* Chen2021: linear approximation of u-i curve */
+    // if(CTRL.timebase>35){
+    //     INV.gamma_I_plateau = 0.0;
+    // }
+    // INV.I_plateau += CL_TS * 0 * INV.gamma_I_plateau \
+    //                         // *fabs(CTRL.I->cmd_speed_rpm)
+    //                         *(    1*INV.I5_plus_I7_LPF 
+    //                             + 0*INV.I11_plus_I13_LPF
+    //                             + 0*INV.I17_plus_I19_LPF
+    //                          );
+    // if(INV.I_plateau > INV.I_plateau_Max){
+    //     INV.I_plateau = INV.I_plateau_Max;
+    // }else if(INV.I_plateau < INV.I_plateau_Min){
+    //     INV.I_plateau = INV.I_plateau_Min;
+    // }
 
     /* Chen2021SlessInv 覆盖 */
     if(INV.gamma_I_plateau!=0){
@@ -875,11 +943,6 @@ void Modified_ParkSul_Compensation(void){
     // 区分补偿前的电压和补偿后的电压：
     // CTRL.ual, CTRL.ube 是补偿前的电压！
     // CTRL.ual + INV.ual_comp, CTRL.ube + INV.ube_comp 是补偿后的电压！
-
-    // for plotting
-    INV.uDcomp_atA = AB2M(INV.ual_comp, INV.ube_comp, INV.cos_thetaA, INV.sin_thetaA);
-    INV.uQcomp_atA = AB2T(INV.ual_comp, INV.ube_comp, INV.cos_thetaA, INV.sin_thetaA);
 }
-
 
 #endif

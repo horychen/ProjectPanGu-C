@@ -317,6 +317,7 @@ REAL lpf1(REAL x, REAL y_tminus1);
 REAL shift2pi(REAL thetaA);
 
 void Modified_ParkSul_Compensation(void);
+void Online_PAA_Based_Compensation(void);
 
 #endif
 #endif
