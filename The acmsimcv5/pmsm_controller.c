@@ -889,13 +889,12 @@ void Online_PAA_Based_Compensation(void){
         // INV.sig_a2 += CL_TS * -100 * AFEOE.output_error_dq[0];
 
         // use nonlinear (saturation) FE
-        INV.sig_a2 += CL_TS * -INV.gamma_a2 * CTRL.S->Motor_or_Generator  * (MOTOR.KActive - htz.psi_2_ampl_lpf);
+        INV.sig_a2 += CL_TS * -INV.gamma_a2 * CTRL.S->Motor_or_Generator * (MOTOR.KActive - htz.psi_2_ampl_lpf);
 
         /* Sensored: Adaptive a2 based on position error */
-        /* To use this, you muast have a large enough stator current */
-        /* To use this, you muast have a large enough stator current */
-        /* To use this, you muast have a large enough stator current */
-        // INV.sig_a2 += CL_TS * INV.gain_Vsat * sin(ENC.theta_d_elec - ELECTRICAL_POSITION_FEEDBACK) * sign(ENC.omg_elec);
+        /* To use this, you must have a large enough stator current */
+        /* 这个好像只对梯形波（电流值的函数）有效 ……*/
+        // INV.sig_a2 += CL_TS * INV.gain_Vsat * sin(ENC.theta_d_elec - ELECTRICAL_POSITION_FEEDBACK) * CTRL.S->Motor_or_Generator;
     }
     if(INV.sig_a2 > 30){ INV.sig_a2 = 30; }else if(INV.sig_a2 < 2){ INV.sig_a2 = 2; }
 

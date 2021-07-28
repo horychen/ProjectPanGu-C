@@ -120,13 +120,16 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
 
     G.dac_watch[30] = htz.psi_2_ampl;
     G.dac_watch[31] = htz.psi_2_ampl_lpf;
-    G.dac_watch[32] = MOTOR.KE - htz.psi_2_ampl_lpf;
+    G.dac_watch[32] = MOTOR.KActive - htz.psi_2_ampl_lpf;
     G.dac_watch[33] = htz.psi_2[0];
     G.dac_watch[34] = htz.psi_2[1];
     G.dac_watch[35] = htz.theta_d*0.1;
 
     G.dac_watch[36] = INV.sig_a2*0.02;
     G.dac_watch[37] = INV.sig_a3*0.02;
+
+    G.dac_watch[38] = htz.u_offset[0]*1;
+    G.dac_watch[39] = htz.u_offset[1]*1;
 
 
     #if FALSE
@@ -243,8 +246,8 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
         channels[3] = 33;
         channels[4] = 10;
         channels[5] = 59; //35;
-        channels[6] = 55;
-        channels[7] = 55;
+        channels[6] = 38;
+        channels[7] = 39;
     }
 
     // 八通道DAC输出，请修改channels数组来确定具体输出哪些G.dac_watch数组中的变量。
