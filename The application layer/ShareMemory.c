@@ -95,8 +95,8 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
 
     G.dac_watch[10] = AFE_USED.psi_2[0];
     G.dac_watch[11] = AFE_USED.psi_2[1]; // MOTOR.KActive; //AFEOE.psi_2[1];
-    G.dac_watch[12] = AFE_USED.psi_1[0];
-    G.dac_watch[13] = AFE_USED.psi_1[1];
+    G.dac_watch[12] = AFEOE.psi_2[0];
+    G.dac_watch[13] = AFEOE.psi_2[1];
 
     G.dac_watch[14] = CTRL.O->uab_cmd_to_inverter[0]*0.01;
     G.dac_watch[15] = CTRL.O->uab_cmd_to_inverter[1]*0.01;
@@ -244,7 +244,7 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
         channels[1] = 37;
         channels[2] = 32;
         channels[3] = 33;
-        channels[4] = 10;
+        channels[4] = 12;
         channels[5] = 59; //35;
         channels[6] = 38;
         channels[7] = 39;
