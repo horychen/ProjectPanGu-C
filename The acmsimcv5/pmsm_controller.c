@@ -276,8 +276,11 @@ void controller(REAL set_rpm_speed_command, REAL set_iq_cmd, REAL set_id_cmd){
 
 
     /// 7. 反帕克变换
-    CTRL.S->cosT_compensated_1p5omegaTs = cos(used_theta_d_elec + 1.5*CTRL.I->omg_elec*CL_TS);
-    CTRL.S->sinT_compensated_1p5omegaTs = sin(used_theta_d_elec + 1.5*CTRL.I->omg_elec*CL_TS);
+    // See D:\Users\horyc\Downloads\Documents\2003 TIA Bae SK Sul A compensation method for time delay of.pdf
+    // CTRL.S->cosT_compensated_1p5omegaTs = cos(used_theta_d_elec + 1.5*CTRL.I->omg_elec*CL_TS);
+    // CTRL.S->sinT_compensated_1p5omegaTs = sin(used_theta_d_elec + 1.5*CTRL.I->omg_elec*CL_TS);
+    CTRL.S->cosT_compensated_1p5omegaTs = CTRL.S->cosT;
+    CTRL.S->sinT_compensated_1p5omegaTs = CTRL.S->sinT;
     CTRL.O->uab_cmd[0] = MT2A(CTRL.O->udq_cmd[0], CTRL.O->udq_cmd[1], CTRL.S->cosT_compensated_1p5omegaTs, CTRL.S->sinT_compensated_1p5omegaTs);
     CTRL.O->uab_cmd[1] = MT2B(CTRL.O->udq_cmd[0], CTRL.O->udq_cmd[1], CTRL.S->cosT_compensated_1p5omegaTs, CTRL.S->sinT_compensated_1p5omegaTs);
     CTRL.O->iab_cmd[0] = MT2A(CTRL.I->idq_cmd[0], CTRL.I->idq_cmd[1], CTRL.S->cosT_compensated_1p5omegaTs, CTRL.S->sinT_compensated_1p5omegaTs);
