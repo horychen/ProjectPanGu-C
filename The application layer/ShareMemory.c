@@ -61,7 +61,7 @@ struct IPC_MEMORY_READ Read;
 int channels[NO_OF_CHANNELS]={56,57,3,5,26,27,49,59}; // Chi.Xu 2009 High speed
 //int channels[NO_OF_CHANNELS]={56,57,3,5,26,27,23,59}; // NSOAF High Speed
 
-int channels_preset = 5;
+int channels_preset = 6;
 
 REAL dac_time_that_cannot_be_modified = 0;
 //REAL if_you_define_an_extra_global_variable_here_you_cannot_modify_dac_time_anymore = 0;
@@ -247,6 +247,16 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
         channels[3] = 33;
         channels[4] = 12;
         channels[5] = 59; //35;
+        channels[6] = 38;
+        channels[7] = 39;
+    }else if(channels_preset==6){channels_preset=0;
+        /* Test Holtz03 for online invnonl id. */
+        channels[0] = 36;
+        channels[1] = 37;
+        channels[2] = 6;
+        channels[3] = 58;
+        channels[4] = 59;
+        channels[5] = 12;
         channels[6] = 38;
         channels[7] = 39;
     }
