@@ -44,8 +44,8 @@ void rhf_NSOAF_Dynamics(REAL t, REAL *x, REAL *fx){
     // xIq
     fx[0] = MOTOR.Lq_inv * (uQ_now - MOTOR.R * xIq - xOmg*(MOTOR.KE + MOTOR.Ld*iDQ_now[0])) - nsoaf.KD*nsoaf.active_power_error;
     // xOmg
-    REAL KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * iDQ_now[0];
-    nsoaf.xTem = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * KActive * xIq;
+    // REAL KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * iDQ_now[0];
+    nsoaf.xTem = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * MOTOR.KActive * xIq;
     // xTL = ACM.TLoad; // DEBUG
     fx[1] = MOTOR.Js_inv * MOTOR.npp * (nsoaf.xTem - xTL - nsoaf.KP*nsoaf.active_power_error);
     /* Parameter Adaptation */
@@ -91,8 +91,6 @@ void nso_one_parameter_tuning(REAL omega_ob){
 void Main_nsoaf_chen2020(){
 
     /* OBSERVATION */
-
-    MOTOR.KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * MOTOR.Lq*CTRL.I->idq_cmd[0];
 
     // TODO: when id changes, the gain should also change.
     if(nsoaf.set_omega_ob != nsoaf.omega_ob){
@@ -179,7 +177,7 @@ void init_nsoaf(){
     nsoaf.KD = NSOAF_TL_D;
     nsoaf.set_omega_ob = NSOAF_OMEGA_OBSERVER;
 
-    MOTOR.KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * MOTOR.Lq*CTRL.I->idq[0];
+    MOTOR.KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * CTRL.I->idq[0];
     nsoaf.omega_ob = nsoaf.set_omega_ob;
     nso_one_parameter_tuning(nsoaf.omega_ob);
 }

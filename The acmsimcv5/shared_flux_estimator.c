@@ -392,12 +392,12 @@ void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REA
         AFEOE.theta_d = atan2(AFEOE.psi_2[1], AFEOE.psi_2[0]);
 
         // Convert output error to dq frame
-        REAL KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * CTRL.I->idq[0];
+        // REAL KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * CTRL.I->idq[0];
         /* TODO: 思考这个dq角度怎么选最好，要不要换成电压向量的角度而不是转子角度？ */
         AFEOE.active_flux_ampl_lpf = _lpf(AFEOE.active_flux_ampl, AFEOE.active_flux_ampl_lpf, 5);
-        AFEOE.output_error_dq[0] = KActive - AFEOE.active_flux_ampl_lpf;
-        AFEOE.output_error[0] = KActive*AFEOE.cosT - AFEOE.psi_2[0];
-        AFEOE.output_error[1] = KActive*AFEOE.sinT - AFEOE.psi_2[1];
+        AFEOE.output_error_dq[0] = MOTOR.KActive - AFEOE.active_flux_ampl_lpf;
+        AFEOE.output_error[0] = MOTOR.KActive*AFEOE.cosT - AFEOE.psi_2[0];
+        AFEOE.output_error[1] = MOTOR.KActive*AFEOE.sinT - AFEOE.psi_2[1];
         AFEOE.output_error_dq[1] = sqrt(AFEOE.output_error[0]*AFEOE.output_error[0] + AFEOE.output_error[1]*AFEOE.output_error[1]);
         // if(CTRL.I->cmd_speed_rpm>0){
         //     AFEOE.output_error_dq[0] = AB2M(AFEOE.output_error[0], AFEOE.output_error[1], AFEOE.cosT, AFEOE.sinT);
