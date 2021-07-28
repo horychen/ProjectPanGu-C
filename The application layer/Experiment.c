@@ -61,7 +61,7 @@ void init_experiment_overwrite(){
 
     /* 750W MOTOR1 (wo/ hall) */
     //CTRL.motor->R = 1.6;
-    CTRL.motor->KE = 0.095;
+    //CTRL.motor->KE = 0.095;
     //pid1_spd.OutLimit = 10;
 
     #ifdef _XCUBE1
@@ -110,6 +110,7 @@ void init_experiment_overwrite(){
 
     #if TRUE
         MOTOR.KE = 0.095;
+        MOTOR.KE = 0.098; // 2021-07-28 电动模式，a2/a3辨识时，轻载（1.5A）时htz观测磁链幅值波形的包络线不会波动，需要将KE从0.095 Wb增加到0.098 Wb 或0.099 Wb（肉眼难以区分，可以试试FFT看哪个值可以抑制幅值波动到最小）。
         huwu.limiter_KE = 1.0 * MOTOR.KE; // this depends on KE value
     #endif
     AFEOE.limiter_KE = 1.15 * MOTOR.KE; // this depends on KE value
