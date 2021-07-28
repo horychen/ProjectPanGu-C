@@ -37,6 +37,8 @@ typedef struct {
     // field oriented control
     REAL cosT;
     REAL sinT;
+    REAL cosT_compensated_1p5omegaTs;
+    REAL sinT_compensated_1p5omegaTs;
     REAL omega_syn;
     // states
     st_pid_regulator *iM;

@@ -107,6 +107,8 @@ void init_CTRL(){
     // // indirect field oriented control
     CTRL.S->cosT = 1.0;
     CTRL.S->sinT = 0.0;
+    CTRL.S->cosT_compensated_1p5omegaTs = 1.0;
+    CTRL.S->sinT_compensated_1p5omegaTs = 0.0;
     // CTRL.S->omega_syn = 0.0;
     CTRL.S->the_vc_count = 1; // starts from 1
 
@@ -274,10 +276,12 @@ void controller(REAL set_rpm_speed_command, REAL set_iq_cmd, REAL set_id_cmd){
 
 
     /// 7. 反帕克变换
-    CTRL.O->uab_cmd[0] = MT2A(CTRL.O->udq_cmd[0], CTRL.O->udq_cmd[1], CTRL.S->cosT, CTRL.S->sinT);
-    CTRL.O->uab_cmd[1] = MT2B(CTRL.O->udq_cmd[0], CTRL.O->udq_cmd[1], CTRL.S->cosT, CTRL.S->sinT);
-    CTRL.O->iab_cmd[0] = MT2A(CTRL.I->idq_cmd[0], CTRL.I->idq_cmd[1], CTRL.S->cosT, CTRL.S->sinT);
-    CTRL.O->iab_cmd[1] = MT2B(CTRL.I->idq_cmd[0], CTRL.I->idq_cmd[1], CTRL.S->cosT, CTRL.S->sinT);
+    CTRL.S->cosT_compensated_1p5omegaTs = cos(used_theta_d_elec + 1.5*CTRL.I->omg_elec*CL_TS);
+    CTRL.S->sinT_compensated_1p5omegaTs = sin(used_theta_d_elec + 1.5*CTRL.I->omg_elec*CL_TS);
+    CTRL.O->uab_cmd[0] = MT2A(CTRL.O->udq_cmd[0], CTRL.O->udq_cmd[1], CTRL.S->cosT_compensated_1p5omegaTs, CTRL.S->sinT_compensated_1p5omegaTs);
+    CTRL.O->uab_cmd[1] = MT2B(CTRL.O->udq_cmd[0], CTRL.O->udq_cmd[1], CTRL.S->cosT_compensated_1p5omegaTs, CTRL.S->sinT_compensated_1p5omegaTs);
+    CTRL.O->iab_cmd[0] = MT2A(CTRL.I->idq_cmd[0], CTRL.I->idq_cmd[1], CTRL.S->cosT_compensated_1p5omegaTs, CTRL.S->sinT_compensated_1p5omegaTs);
+    CTRL.O->iab_cmd[1] = MT2B(CTRL.I->idq_cmd[0], CTRL.I->idq_cmd[1], CTRL.S->cosT_compensated_1p5omegaTs, CTRL.S->sinT_compensated_1p5omegaTs);
 
 
     /// 8. 补偿逆变器非线性
@@ -454,7 +458,7 @@ void inverter_voltage_command(int bool_use_iab_cmd){
         get_distorted_voltage_via_LUT( CTRL.O->uab_cmd[0], CTRL.O->uab_cmd[1], Ia, Ib, ualbe_dist, lut_voltage_ctrl, lut_current_ctrl, LENGTH_OF_LUT);
         CTRL.O->uab_cmd_to_inverter[0] = CTRL.O->uab_cmd[0] + ualbe_dist[0];
         CTRL.O->uab_cmd_to_inverter[1] = CTRL.O->uab_cmd[1] + ualbe_dist[1];
-    
+
     }if(G.FLAG_INVERTER_NONLINEARITY_COMPENSATION == 2){
         /* 拟合法-补偿 */
         REAL ualbe_dist[2] = {0.0, 0.0};
@@ -464,7 +468,7 @@ void inverter_voltage_command(int bool_use_iab_cmd){
 
         /* For scope only */
         INV.ual_comp = ualbe_dist[0];
-        INV.ube_comp = ualbe_dist[1];        
+        INV.ube_comp = ualbe_dist[1];
 
     }if(G.FLAG_INVERTER_NONLINEARITY_COMPENSATION == 1){
         /* 梯形波自适应 */
