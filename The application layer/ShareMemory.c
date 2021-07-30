@@ -120,7 +120,7 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
 
     G.dac_watch[30] = htz.psi_2_ampl;
     G.dac_watch[31] = htz.psi_2_ampl_lpf;
-    G.dac_watch[32] = MOTOR.KActive - htz.psi_2_ampl_lpf;
+    G.dac_watch[32] = (MOTOR.KActive - htz.psi_2_ampl_lpf)*10;
     G.dac_watch[33] = htz.psi_2[0];
     G.dac_watch[34] = htz.psi_2[1];
     G.dac_watch[35] = htz.theta_d*0.1;
@@ -168,6 +168,10 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
         G.dac_watch[45] = (CTRL.O->udq_cmd_to_inverter[1])*0.02;
         G.dac_watch[46] = (CAP.dq[0]            )*0.02;
         G.dac_watch[47] = (CAP.dq[1]            )*0.02;
+    #else
+
+        G.dac_watch[40] = G.Voltage_DC_BUS*0.0025;
+
     #endif
 
     #if SELECT_ALGORITHM == ALG_Chi_Xu
@@ -187,6 +191,7 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
     //    G.dac_watch[52] = huwu.x[1];
     //    G.dac_watch[53] = huwu.x[2];
     //    G.dac_watch[54] = huwu.limiter_KE;
+
     G.dac_watch[55] = MOTOR.KE;
 
     //        G.dac_watch[48] = (CAP.ecapU.DutyOnTime1)  * 0.25e-4;
@@ -241,24 +246,26 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
         channels[7] = 55;
     }else if(channels_preset==5){channels_preset=0;
         /* Test Holtz03 for online invnonl id. */
-        channels[0] = 36;
-        channels[1] = 37;
-        channels[2] = 32;
-        channels[3] = 33;
-        channels[4] = 12;
-        channels[5] = 59; //35;
-        channels[6] = 38;
-        channels[7] = 39;
+        channels[0] = 36; // sig_a2
+        channels[1] = 37; // sig_a3
+        channels[2] = 32; // ampl error
+        channels[3] = 59; // angle error
+        channels[4] = 33; // htz.psi_2[0]
+        channels[5] = 12; // AFEOE.psi_2[0]
+        channels[6] = 38; // htz.u_offset[0]
+        channels[7] = 39; // htz.u_offset[1]
     }else if(channels_preset==6){channels_preset=0;
         /* Test Holtz03 for online invnonl id. */
-        channels[0] = 36;
-        channels[1] = 37;
-        channels[2] = 6;
-        channels[3] = 58;
-        channels[4] = 59;
-        channels[5] = 12;
-        channels[6] = 38;
-        channels[7] = 39;
+        channels[0] = 36; // sig_a2
+        channels[1] = 37; // sig_a3
+        channels[2] = 59; // angle error
+        channels[3] = 40; // Vdc
+        channels[4] = 33; // htz.psi_2[0]
+        channels[5] = 12; // AFEOE.psi_2[0]
+        //channels[6] = 6; // Speed
+        //channels[7] = 5; // iq
+        channels[6] = 38; // htz.u_offset[0]
+        channels[7] = 39; // htz.u_offset[1]
     }
 
     // 八通道DAC输出，请修改channels数组来确定具体输出哪些G.dac_watch数组中的变量。
