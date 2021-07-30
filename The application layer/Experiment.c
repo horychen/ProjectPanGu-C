@@ -40,6 +40,15 @@ void init_experiment_overwrite(){
         CTRL.g->Set_manual_rpm = 300;
     }
 
+    CTRL.g->DAC_MAX5307_FLAG = FALSE;
+    CTRL.g->AD_offset_flag2 = FALSE;
+    if(CTRL.g->Seletc_exp_operation == AS_LOAD_MOTOR_CONST){
+        CTRL.g->FLAG_INVERTER_NONLINEARITY_COMPENSATION = 2; // use sigmoid as compensation
+    }else{
+        CTRL.g->FLAG_INVERTER_NONLINEARITY_COMPENSATION = INVERTER_NONLINEARITY_COMPENSATION_INIT;
+    }
+
+    /* Overwrite */
     #ifdef _XCUBE1
         CTRL.g->Overwrite_Voltage_DC_BUS = 180;
         CTRL.g->flag_overwite_voltage_dc_bus = FALSE;
@@ -51,10 +60,6 @@ void init_experiment_overwrite(){
         CTRL.g->OverwriteSpeedOutLimit = 6.3; // 150% rated
         pid1_spd.OutLimit = G.OverwriteSpeedOutLimit;
     #endif
-
-    CTRL.g->DAC_MAX5307_FLAG = FALSE;
-    CTRL.g->AD_offset_flag2 = FALSE;
-    CTRL.g->FLAG_INVERTER_NONLINEARITY_COMPENSATION = INVERTER_NONLINEARITY_COMPENSATION_INIT;
 
 
 
@@ -114,6 +119,7 @@ void init_experiment_overwrite(){
         MOTOR.KE = 0.101; // 2021-07-28 电动模式，继续增加KE到0.101的时候，htz.u_offset[0]不再波动，甚至在不同的负载（1.5A和3A）下，仍然保持一条水平线！
         MOTOR.KE = 0.103; // 2021-07-28 电动模式，空载，500rpm，htz.u_offset[0]alpha分量在KE=0.101的情况下仍有波动，增加到0.102波动减小，增加到0.103变成水平线。【注意此时有1.5Ts延时校正！】
         MOTOR.KE = 0.105; // 2021-07-28 电动模式，空载，500rpm，htz.u_offset[0]alpha分量在KE=0.103的情况下仍有波动，增加到0.104波动减小，增加到0.105变成水平线。【注意此时没有1.5Ts延时校正！】
+        MOTOR.KE = 0.108; // 2021-07-29 利用磁链幅值误差去确定不会导致htz.u_offset[0]波动的KE的上限值为0.108
         huwu.limiter_KE = 1.0 * MOTOR.KE; // this depends on KE value
     #endif
     AFEOE.limiter_KE = 1.15 * MOTOR.KE; // this depends on KE value
@@ -134,11 +140,12 @@ void runtime_command_and_tuning(){
         if(CTRL.timebase < 2){
             pid1_spd.OutLimit = 0.1;
         }else{
-            if( ((long int)(CTRL.timebase*0.25)) % 2 == 0){
-                pid1_spd.OutLimit = 1.5;
-            }else{
-                pid1_spd.OutLimit = 3.0;
-            }
+//            if( ((long int)(CTRL.timebase*0.25)) % 2 == 0){
+//                pid1_spd.OutLimit = 1.5;
+//            }else{
+//                pid1_spd.OutLimit = 3.0;
+//            }
+            pid1_spd.OutLimit = 3.0;
         }
     }
     if(G.Seletc_exp_operation == AS_LOAD_MOTOR_RAMP){

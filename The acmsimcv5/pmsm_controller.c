@@ -880,7 +880,7 @@ void Online_PAA_Based_Compensation(void){
                                 + INV.w18*INV.I17_plus_I19_LPF
                              );
     #ifdef _XCUBE2
-        if(INV.sig_a3 > 20){ INV.sig_a3 = 20; }else if(INV.sig_a3 < 0.5){ INV.sig_a3 = 0.5; }
+        if(INV.sig_a3 > 50){ INV.sig_a3 = 50; }else if(INV.sig_a3 < 0.5){ INV.sig_a3 = 0.5; }
     #endif
     #ifdef _XCUBE1
         if(INV.sig_a3 > 100){ INV.sig_a3 = 100; }else if(INV.sig_a3 < 5){ INV.sig_a3 = 5; }
