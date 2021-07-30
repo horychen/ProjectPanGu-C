@@ -128,8 +128,8 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
     G.dac_watch[36] = INV.sig_a2*0.02;
     G.dac_watch[37] = INV.sig_a3*0.02;
 
-    G.dac_watch[38] = htz.u_offset[0]*1;
-    G.dac_watch[39] = htz.u_offset[1]*1;
+    G.dac_watch[38] = htz.u_offset[0]*0.2;
+    G.dac_watch[39] = htz.u_offset[1]*0.2;
 
 
     #if FALSE

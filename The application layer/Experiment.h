@@ -14,6 +14,7 @@
 #define NSOAF_HIGH_SPEED_OPERATION 4
 #define NSOAF_RAMP_SPEED_OPERATION 41
 #define XCUBE_TaTbTc_DEBUG_MODE    5
+#define SLESSINV_CONST_LOAD_PAA  10
 
 void init_experiment_AD_gain_and_offset();
 void init_experiment_overwrite();
