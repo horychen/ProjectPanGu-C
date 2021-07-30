@@ -19,6 +19,7 @@ void init_experiment_overwrite(){
         G.dac_watch_stator_resistance = 1.69;
 
         // CTRL.g->Seletc_exp_operation = AS_LOAD_MOTOR_CONST;
+        CTRL.g->Seletc_exp_operation = SLESSINV_CONST_LOAD_PAA;
     #endif
 
     if(G.Seletc_exp_operation == AS_LOAD_MOTOR_CONST){
@@ -115,16 +116,17 @@ void init_experiment_overwrite(){
 
     #if TRUE
         MOTOR.KE = 0.095;
-        MOTOR.KE = 0.098; // 2021-07-28 电动模式，a2/a3辨识时，轻载（1.5A）时htz观测磁链幅值波形的包络线不会波动，需要将KE从0.095 Wb增加到0.098 Wb 或0.099 Wb（肉眼难以区分，可以试试FFT看哪个值可以抑制幅值波动到最小）。
-        MOTOR.KE = 0.101; // 2021-07-28 电动模式，继续增加KE到0.101的时候，htz.u_offset[0]不再波动，甚至在不同的负载（1.5A和3A）下，仍然保持一条水平线！
-        MOTOR.KE = 0.103; // 2021-07-28 电动模式，空载，500rpm，htz.u_offset[0]alpha分量在KE=0.101的情况下仍有波动，增加到0.102波动减小，增加到0.103变成水平线。【注意此时有1.5Ts延时校正！】
-        MOTOR.KE = 0.105; // 2021-07-28 电动模式，空载，500rpm，htz.u_offset[0]alpha分量在KE=0.103的情况下仍有波动，增加到0.104波动减小，增加到0.105变成水平线。【注意此时没有1.5Ts延时校正！】
-        MOTOR.KE = 0.108; // 2021-07-29 利用磁链幅值误差去确定不会导致htz.u_offset[0]波动的KE的上限值为0.108
+//        MOTOR.KE = 0.098; // 2021-07-28 电动模式，a2/a3辨识时，轻载（1.5A）时htz观测磁链幅值波形的包络线不会波动，需要将KE从0.095 Wb增加到0.098 Wb 或0.099 Wb（肉眼难以区分，可以试试FFT看哪个值可以抑制幅值波动到最小）。
+//        MOTOR.KE = 0.101; // 2021-07-28 电动模式，继续增加KE到0.101的时候，htz.u_offset[0]不再波动，甚至在不同的负载（1.5A和3A）下，仍然保持一条水平线！
+//        MOTOR.KE = 0.103; // 2021-07-28 电动模式，空载，500rpm，htz.u_offset[0]alpha分量在KE=0.101的情况下仍有波动，增加到0.102波动减小，增加到0.103变成水平线。【注意此时有1.5Ts延时校正！】
+//        MOTOR.KE = 0.105; // 2021-07-28 电动模式，空载，500rpm，htz.u_offset[0]alpha分量在KE=0.103的情况下仍有波动，增加到0.104波动减小，增加到0.105变成水平线。【注意此时没有1.5Ts延时校正！】
+//        MOTOR.KE = 0.108; // 2021-07-29 利用磁链幅值误差去确定不会导致htz.u_offset[0]波动的KE的上限值为0.108
         huwu.limiter_KE = 1.0 * MOTOR.KE; // this depends on KE value
     #endif
     AFEOE.limiter_KE = 1.15 * MOTOR.KE; // this depends on KE value
 
-    htz.psi_aster_max = CTRL.motor->KE;
+    /* SlessInv */
+    htz.psi_aster_max = CTRL.motor->KE - 0.003;
 
     // for debug
     CTRL.S->PSD_Done = FALSE;
@@ -164,6 +166,18 @@ void runtime_command_and_tuning(){
         //        }else{
         //            pid1_spd.OutLimit = 0.01;
         //        }
+    }
+
+
+    /* Inverter Model Parameter Adaptation */
+    if(G.Seletc_exp_operation == SLESSINV_CONST_LOAD_PAA){
+        if(CTRL.timebase>10){
+            INV.gamma_a2 = 800;
+            INV.gamma_a3 = 200;
+        }else{
+            INV.gamma_a2 = 0;
+            INV.gamma_a3 = 0;
+        }
     }
 
     /* Low Speed Operation*/

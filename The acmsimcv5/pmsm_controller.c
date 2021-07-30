@@ -316,8 +316,12 @@ void controller(REAL set_rpm_speed_command, REAL set_iq_cmd, REAL set_id_cmd){
     // REAL sig_a3 = 17.59278688; // yuefei tuning gives a3' = a3*5
 #else
     // 80 V
-    REAL sig_a2 = 6.67159129;
-    REAL sig_a3 = 8.42010418;
+    // REAL sig_a2 = 6.67159129;
+    // REAL sig_a3 = 8.42010418;
+
+    // 100 V from SlessInv paper
+    REAL sig_a2 = 6.7;
+    REAL sig_a3 = 5.6;
 
     // 180 V
     // REAL sig_a2 = 15.43046115;
