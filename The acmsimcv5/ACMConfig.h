@@ -14,10 +14,10 @@
     #define PM_SYNCHRONOUS_MACHINE 2
 #define MACHINE_TYPE 2
 	// 电机参数
-	#define PMSM_RESISTANCE                    1.179
+	#define PMSM_RESISTANCE                    1.1
 	#define PMSM_D_AXIS_INDUCTANCE             0.004957
 	#define PMSM_Q_AXIS_INDUCTANCE             0.004957
-	#define PMSM_PERMANENT_MAGNET_FLUX_LINKAGE 0.1342
+	#define PMSM_PERMANENT_MAGNET_FLUX_LINKAGE 0.1
 	// 铭牌值
 	#define MOTOR_NUMBER_OF_POLE_PAIRS         4
 	#define MOTOR_RATED_CURRENT_RMS            3
@@ -216,11 +216,11 @@
 #define VISCOUS_COEFF   0.0007
 
 #define CURRENT_KP (6.39955)
-#define CURRENT_KI (237.845)
+#define CURRENT_KI (221.908)
     #define CURRENT_KI_CODE (CURRENT_KI*CURRENT_KP*CL_TS)
 #define CURRENT_LOOP_LIMIT_VOLTS (110)
 
-#define SPEED_KP (0.0380362)
+#define SPEED_KP (0.0510446)
 #define SPEED_KI (30.5565)
     #define MOTOR_RATED_TORQUE ( MOTOR_RATED_POWER_WATT / (MOTOR_RATED_SPEED_RPM/60.0*2*3.1415926) )
     #define MOTOR_TORQUE_CONSTANT ( MOTOR_RATED_TORQUE / (MOTOR_RATED_CURRENT_RMS*1.414) )
@@ -252,5 +252,5 @@
 #define SWEEP_FREQ_C2V FALSE
 #define SWEEP_FREQ_C2C FALSE
 
-#define DATA_FILE_NAME "../dat/SlessInv-OverEstimated-a2-NL-205-1000-10-1982.dat"
+#define DATA_FILE_NAME "../dat/SlessInv-OverEstimated-a2-NL-205-1000-13-1477.dat"
 #endif
