@@ -38,7 +38,7 @@ void init_experiment_overwrite(){
         high_speed_operation_init();
     }
     else{
-        CTRL.g->Set_manual_rpm = 300;
+        CTRL.g->Set_manual_rpm = 200;
     }
 
     CTRL.g->DAC_MAX5307_FLAG = FALSE;
