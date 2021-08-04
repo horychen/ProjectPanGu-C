@@ -1294,11 +1294,12 @@ void pmsm_observers(){
     #else
         /* 资源有限 */
         #if SELECT_ALGORITHM == ALG_NSOAF
-            Main_the_active_flux_estimator();
             // MainFE_HuWu_1998(); // use algorithm 2
+            Main_the_active_flux_estimator();
             Main_VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
             Main_nsoaf_chen2020();
         #elif SELECT_ALGORITHM == ALG_ESOAF
+            Main_the_active_flux_estimator();
             Main_VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
             Main_esoaf_chen2021();
         #elif SELECT_ALGORITHM == ALG_Farza_2009
