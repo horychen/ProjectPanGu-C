@@ -14,8 +14,8 @@ struct IPC_MEMORY_READ Read;
 #pragma DATA_SECTION(Write, "SHARERAMGS1"); // GS1 is write
 #pragma DATA_SECTION( Read, "SHARERAMGS0");
 
-//REAL G.dac_watch[50];
 #define NO_OF_CHANNELS 8
+
 //int channels[4]={2,3,14,15}; // 自整定
 //int channels[4]={2,3,14,16}; // 自整定
 //int channels[4]={4,5,6,7};
@@ -58,13 +58,23 @@ struct IPC_MEMORY_READ Read;
 
 //int channels[NO_OF_CHANNELS]={50,9,20,21,6,7,52,59}; // Chi.Xu 2009 SSR
 //int channels[NO_OF_CHANNELS]={50,9,52,53,26,27,49,59}; // Chi.Xu 2009 High speed
-int channels[NO_OF_CHANNELS]={56,57,3,5,26,27,49,59}; // Chi.Xu 2009 High speed
+//int channels[NO_OF_CHANNELS]={56,57,3,5,26,27,49,59}; // Chi.Xu 2009 High speed
 //int channels[NO_OF_CHANNELS]={56,57,3,5,26,27,23,59}; // NSOAF High Speed
 
-int channels_preset = 6;
+int channels[NO_OF_CHANNELS]={6,7,49,59,20,21,47,48}; // ESOAF
+
+int channels_preset = 0; //6
 
 REAL dac_time_that_cannot_be_modified = 0;
 //REAL if_you_define_an_extra_global_variable_here_you_cannot_modify_dac_time_anymore = 0;
+
+
+REAL angle_error_limiter(REAL angle_error){
+    if(fabs(angle_error)>M_PI){
+        angle_error -= sign(angle_error) * 2*M_PI;
+    }
+    return angle_error;
+}
 
 
 
@@ -172,6 +182,10 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
 
         G.dac_watch[40] = G.Voltage_DC_BUS*0.0025;
 
+        G.dac_watch[47] = esoaf.xPos*0.1;
+        G.dac_watch[48] = angle_error_limiter(ELECTRICAL_POSITION_FEEDBACK - esoaf.xPos);
+        G.dac_watch[49] = angle_error_limiter(ENC.theta_d_elec - esoaf.xPos);
+
     #endif
 
     #if SELECT_ALGORITHM == ALG_Chi_Xu
@@ -202,8 +216,10 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
     G.dac_watch[56] = (CTRL.I->rpm - CTRL.I->cmd_speed_rpm)*0.01;
     G.dac_watch[57] = (ELECTRICAL_SPEED_FEEDBACK*ELEC_RAD_PER_SEC_2_RPM - CTRL.I->cmd_speed_rpm)*0.01;
 
-    G.dac_watch[58] = sin(ENC.theta_d_elec - AFEOE.theta_d);
-    G.dac_watch[59] = sin(ENC.theta_d_elec - ELECTRICAL_POSITION_FEEDBACK);
+    G.dac_watch[58] = angle_error_limiter(ENC.theta_d_elec - AFEOE.theta_d); // VM CM Fusion
+    G.dac_watch[59] = angle_error_limiter(ENC.theta_d_elec - ELECTRICAL_POSITION_FEEDBACK);
+    //    G.dac_watch[58] = sin(ENC.theta_d_elec - AFEOE.theta_d);
+    //    G.dac_watch[59] = sin(ENC.theta_d_elec - ELECTRICAL_POSITION_FEEDBACK);
 
 
     // information from d-axis voltage equation

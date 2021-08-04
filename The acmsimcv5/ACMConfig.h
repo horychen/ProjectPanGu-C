@@ -1,7 +1,7 @@
 #ifndef ACMCONFIG_H
 #define ACMCONFIG_H
 /* 经常要修改的 */
-#define INVERTER_NONLINEARITY_COMPENSATION_INIT 1 // 1:ParkSul12, 2:Sigmoid, 3:LUT
+#define INVERTER_NONLINEARITY_COMPENSATION_INIT 2 // 1:ParkSul12, 2:Sigmoid, 3:LUT
 #define INVERTER_NONLINEARITY                   2 // 1:ModelSul96, 2:ModelExpSigmoid, 3: ModelExpLUT
 #define SENSORLESS_CONTROL FALSE
 #define SENSORLESS_CONTROL_HFSI FALSE
@@ -72,14 +72,21 @@
         #define ALG_CJH_EEMF 5
         #define ALG_Farza_2009 6
         #define ALG_Harnefors_2006 7
-    #define SELECT_ALGORITHM ALG_NSOAF
+        #define ALG_ESOAF 10
+
+    #define SELECT_ALGORITHM ALG_ESOAF
+    // #define SELECT_ALGORITHM ALG_NSOAF
     // #define SELECT_ALGORITHM ALG_Chi_Xu
+
         #if SELECT_ALGORITHM == ALG_Chi_Xu
             #define ELECTRICAL_SPEED_FEEDBACK    chixu.xOmg
             #define ELECTRICAL_POSITION_FEEDBACK chixu.theta_d
         #elif SELECT_ALGORITHM == ALG_NSOAF
             #define ELECTRICAL_SPEED_FEEDBACK    nsoaf.xOmg // harnefors.omg_elec
             #define ELECTRICAL_POSITION_FEEDBACK AFE_USED.theta_d // harnefors.theta_d
+        #elif SELECT_ALGORITHM == ALG_ESOAF
+            #define ELECTRICAL_SPEED_FEEDBACK    esoaf.xOmg
+            #define ELECTRICAL_POSITION_FEEDBACK AFE_USED.theta_d
         #else
             // #define ELECTRICAL_SPEED_FEEDBACK    G.omg_elec
             // #define ELECTRICAL_POSITION_FEEDBACK G.theta_d
@@ -150,6 +157,9 @@
             #define NSOAF_TL_P (1) // 1 for experimental starting // 4 for 1500 rpm // 2 for 800 rpm
             #define NSOAF_TL_I (20)
             #define NSOAF_TL_D (0)
+
+    /* CHEN 2021 ESO with Active Flux Concept */
+        #define ESOAF_OMEGA_OBSERVER 30 // 30 gives acceptable steady state speed ripple, 200
 
     /* Farza 2009 for EMMF */
         #define FARZA09_HGO_EEMF_VARTHETA 10

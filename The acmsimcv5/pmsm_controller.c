@@ -316,12 +316,12 @@ void controller(REAL set_rpm_speed_command, REAL set_iq_cmd, REAL set_id_cmd){
     // REAL sig_a3 = 17.59278688; // yuefei tuning gives a3' = a3*5
 #else
     // 80 V
-    // REAL sig_a2 = 6.67159129;
-    // REAL sig_a3 = 8.42010418;
+    REAL sig_a2 = 6.67159129;
+    REAL sig_a3 = 8.42010418;
 
     // 100 V from SlessInv paper
-    REAL sig_a2 = 6.7;
-    REAL sig_a3 = 5.6;
+    // REAL sig_a2 = 6.7;
+    // REAL sig_a3 = 5.6;
 
     // 180 V
     // REAL sig_a2 = 15.43046115;
@@ -489,7 +489,8 @@ void inverter_voltage_command(int bool_use_iab_cmd){
 
 /* 真查表法 */
 REAL look_up_phase_current_by_index(REAL current, REAL *lut_voltage, REAL *lut_current, int length_of_lut){
-        // TODO: python脚本已经验证查表法，实际的C代码还没写。
+    // TODO: python脚本已经验证查表法，实际的C代码参考ui_curve_v4.py
+    return 0.0;
 }
 /* 伪查表法（需要循环比大小，运算量不固定） */
 REAL look_up_phase_current(REAL current, REAL *lut_voltage, REAL *lut_current, int length_of_lut){

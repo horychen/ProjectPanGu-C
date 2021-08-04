@@ -183,6 +183,7 @@ extern struct SharedFluxEstimatorForExperiment FE;
 void simulation_test_flux_estimators();
     void Main_the_active_flux_estimator();
     void MainFE_HuWu_1998();
+    void Main_VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
 
 void init_afe();
 void init_FE();

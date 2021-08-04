@@ -147,6 +147,30 @@ struct ObserverForExperiment{
 #define nsoaf OBSV.nsoaf
 #endif
 
+/* Extended State Observer with active flux concept Chen2021 */
+#if PC_SIMULATION || SELECT_ALGORITHM == ALG_ESOAF
+
+    struct Chen21_ESO_AF{
+        #define NS_CHEN_2021 4
+        REAL xPos;
+        REAL xOmg;
+        REAL xTL;
+        REAL xPL; // rotatum
+        REAL x[NS_CHEN_2021];
+        REAL ell[NS_CHEN_2021];
+
+        REAL bool_ramp_load_torque; // TRUE for 4th order ESO
+        REAL omega_ob; // one parameter tuning
+        REAL set_omega_ob;
+
+        REAL output_error_sine; // sin(\tilde\vartheta_d)
+        REAL output_error; // \tilde\vartheta_d, need to detect bound jumping 
+
+        REAL xTem;
+    } esoaf;
+#define esoaf OBSV.esoaf
+#endif
+
 /* Farza 2009 HGO */
 #if PC_SIMULATION || SELECT_ALGORITHM == ALG_Farza_2009
 
