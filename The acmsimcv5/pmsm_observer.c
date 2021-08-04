@@ -2,12 +2,118 @@
 
 #if MACHINE_TYPE == PM_SYNCHRONOUS_MACHINE
 
+
+/********************************************/
+/* 4rd-order ESO 
+ ********************************************/
+/* The 4rd-order dynamic system */
+#if PC_SIMULATION || SELECT_ALGORITHM == ALG_ESOAF
+void rhf_dynamics_ESO(REAL t, REAL *x, REAL *fx){
+
+    /* Unpack States */
+    REAL xPos = x[0];
+    REAL xOmg = x[1];
+    REAL xTL  = x[2];
+    REAL xPL  = x[3];
+
+    /* Know Signals */
+    REAL iq = AB2T(IS(0), IS(1), AFE_USED.cosT, AFE_USED.sinT); // Option 1
+    // REAL iq = AB2T(IS(0), IS(1), cos(xPos), sin(xPos)); // Option 2
+    esoaf.xTem = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * MOTOR.KActive * iq;
+
+    /* Output Error = sine of angle error */
+    esoaf.output_error_sine = sin(AFE_USED.theta_d - xPos);
+    esoaf.output_error = AFE_USED.theta_d - xPos;
+    // yuefei said you should check for sudden change in angle error.
+    if(fabs(esoaf.output_error)>M_PI){
+        esoaf.output_error -= sign(esoaf.output_error) * 2*M_PI;
+    }
+
+    /* Extended State Observer */
+    // xPos
+    fx[0] = + esoaf.ell[0]*esoaf.output_error + xOmg;
+    // xOmg
+    fx[1] = + esoaf.ell[1]*esoaf.output_error + (esoaf.xTem - xTL) * (MOTOR.Js_inv*MOTOR.npp);
+    // xTL
+    fx[2] = - esoaf.ell[2]*esoaf.output_error + xPL;
+    // xPL
+    fx[3] = - esoaf.ell[3]*esoaf.output_error;
+}
+void eso_one_parameter_tuning(REAL omega_ob){
+    // Luenberger Observer Framework
+    if(esoaf.bool_ramp_load_torque == FALSE){
+        esoaf.ell[0] =                            3*omega_ob;
+        esoaf.ell[1] =                            3*omega_ob*omega_ob;
+        esoaf.ell[2] = (MOTOR.Js*MOTOR.npp_inv) * 1*omega_ob*omega_ob*omega_ob;
+        esoaf.ell[3] = 0.0;
+    }else{
+        // TODO: double check?
+        esoaf.ell[0] =                            4*omega_ob;
+        esoaf.ell[1] =                            6*omega_ob*omega_ob;
+        esoaf.ell[2] = (MOTOR.Js*MOTOR.npp_inv) * 4*omega_ob*omega_ob*omega_ob;
+        esoaf.ell[3] = (MOTOR.Js*MOTOR.npp_inv) * 1*omega_ob*omega_ob*omega_ob*omega_ob;
+    }
+
+    // Natural Observer Framework
+    // if(esoaf.bool_ramp_load_torque == FALSE){
+    //     // D, P, I, II?
+    //     esoaf.ell[0] = (MOTOR.Js*MOTOR.npp_inv) * 3*omega_ob;
+    //     esoaf.ell[1] = (MOTOR.Js*MOTOR.npp_inv) * 3*omega_ob*omega_ob;
+    //     esoaf.ell[2] = (MOTOR.Js*MOTOR.npp_inv) * 1*omega_ob*omega_ob*omega_ob;
+    //     esoaf.ell[3] = 0.0;
+    // }else{
+    //     esoaf.ell[0] = (MOTOR.Js*MOTOR.npp_inv) * 4*omega_ob;
+    //     esoaf.ell[1] = (MOTOR.Js*MOTOR.npp_inv) * 6*omega_ob*omega_ob;
+    //     esoaf.ell[2] = (MOTOR.Js*MOTOR.npp_inv) * 4*omega_ob*omega_ob*omega_ob;
+    //     esoaf.ell[3] = (MOTOR.Js*MOTOR.npp_inv) * 1*omega_ob*omega_ob*omega_ob*omega_ob;
+    // }
+
+    #if PC_SIMULATION
+    printf("ESO OPT: %g, %g, %g, %g", esoaf.ell[0], esoaf.ell[1], esoaf.ell[2], esoaf.ell[3]);
+    #endif
+}
+void Main_esoaf_chen2021(){
+
+    /* OBSERVATION */
+
+    if(esoaf.set_omega_ob != esoaf.omega_ob){
+        esoaf.omega_ob = esoaf.set_omega_ob;
+        eso_one_parameter_tuning(esoaf.omega_ob);
+    }
+
+    general_4states_rk4_solver(&rhf_dynamics_ESO, CTRL.timebase, esoaf.x, CL_TS);
+    while(esoaf.x[0]>M_PI){
+        esoaf.x[0] -= 2*M_PI;
+    }
+    while(esoaf.x[0]<-M_PI){
+        esoaf.x[0] += 2*M_PI;
+    }
+    esoaf.xPos = esoaf.x[0];
+    esoaf.xOmg = esoaf.x[1];
+    esoaf.xTL  = esoaf.x[2];
+    esoaf.xPL  = esoaf.x[3]; // rotatum
+
+    /* Post-observer calculations */
+}
+void init_esoaf(){
+
+    esoaf.ell[0] = 0.0;
+    esoaf.ell[1] = 0.0;
+    esoaf.ell[2] = 0.0;
+    esoaf.ell[3] = 0.0;
+    esoaf.set_omega_ob = ESOAF_OMEGA_OBSERVER;
+
+    esoaf.omega_ob = esoaf.set_omega_ob;
+    eso_one_parameter_tuning(esoaf.omega_ob);
+}
+#endif
+
 /********************************************/
 /* Natural Speed Observer for IPMSM with Active Flux Concept (Chen 2020)
  ********************************************/
 /* The 3rd-order dynamic system */
 #if PC_SIMULATION || SELECT_ALGORITHM == ALG_NSOAF
-void rhf_NSOAF_Dynamics(REAL t, REAL *x, REAL *fx){
+void rhf_NSO_Dynamics(REAL t, REAL *x, REAL *fx){
 
     /* Unpack States */
     REAL xIq  = x[0];
@@ -145,7 +251,7 @@ void Main_nsoaf_chen2020(){
         //     nsoaf.KP = (j+1) * 0.2 * NSOAF_TL_P*0;
         //     nsoaf.KI = (j+1) * 0.2 * NSOAF_TL_I;
         //     nsoaf.KD = (j+1) * 0.2 * NSOAF_TL_D;
-        //     general_3_states_rk4_solver(&rhf_NSOAF_Dynamics, CTRL.timebase, (nsoaf.x+j*NS), CL_TS);
+        //     general_3_states_rk4_solver(&rhf_NSO_Dynamics, CTRL.timebase, (nsoaf.x+j*NS), CL_TS);
         //     nsoaf.output_error = iQ_C - *(nsoaf.x+j*NS);
         //     if(fabs(nsoaf.output_error) < fabs(best_output_error)){
         //         best_output_error = nsoaf.output_error;
@@ -159,7 +265,7 @@ void Main_nsoaf_chen2020(){
         // DEBUG
         // nsoaf.xBest[1] = ACM.omg_elec;
 
-    general_3states_rk4_solver(&rhf_NSOAF_Dynamics, CTRL.timebase, nsoaf.xBest, CL_TS);
+    general_3states_rk4_solver(&rhf_NSO_Dynamics, CTRL.timebase, nsoaf.xBest, CL_TS);
 
 
     /* Unpack x (for the best) */
@@ -1181,10 +1287,10 @@ void pmsm_observers(){
         // cjh_eemfao();
         // cjh_eemfhgo_farza09();
         Main_nsoaf_chen2020();
+        Main_esoaf_chen2021();
         // Main_QiaoXia2013_emfSMO();
         Main_ChiXu2009_emfSMO();
         Main_parksul2014_FADO();
-
     #else
         /* 资源有限 */
         #if SELECT_ALGORITHM == ALG_NSOAF
@@ -1192,6 +1298,9 @@ void pmsm_observers(){
             // MainFE_HuWu_1998(); // use algorithm 2
             Main_VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
             Main_nsoaf_chen2020();
+        #elif SELECT_ALGORITHM == ALG_ESOAF
+            Main_VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
+            Main_esoaf_chen2021();
         #elif SELECT_ALGORITHM == ALG_Farza_2009
             Main_cjh_eemfhgo_farza09();
         #elif SELECT_ALGORITHM == ALG_CJH_EEMF
@@ -1242,6 +1351,7 @@ void init_pmsm_observers(){
     #if PC_SIMULATION
         // OBSV
         init_nsoaf();
+        init_esoaf();
         init_hgo4eemf();
         init_cjheemf(); // cjheemf 结构体初始化
         init_harnefors(); // harnefors结构体初始化
@@ -1252,6 +1362,8 @@ void init_pmsm_observers(){
         /* 资源有限 */
         #if SELECT_ALGORITHM == ALG_NSOAF
             init_nsoaf();
+        #elif SELECT_ALGORITHM == ALG_ESOAF
+            init_esoaf();
         #elif SELECT_ALGORITHM == ALG_Farza_2009
             init_hgo4eemf();
         #elif SELECT_ALGORITHM == ALG_CJH_EEMF
