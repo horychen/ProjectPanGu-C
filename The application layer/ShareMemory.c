@@ -63,7 +63,7 @@ struct IPC_MEMORY_READ Read;
 
 int channels[NO_OF_CHANNELS]={6,7,49,59,20,21,47,48}; // ESOAF
 
-int channels_preset = 0; //6
+int channels_preset = 6; //6
 
 REAL dac_time_that_cannot_be_modified = 0;
 //REAL if_you_define_an_extra_global_variable_here_you_cannot_modify_dac_time_anymore = 0;
@@ -125,8 +125,10 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
         //G.dac_watch[23] = nsoaf.xIq*0.05; // 20 A for high speed reversal
     #endif
 
-    G.dac_watch[26] = CTRL.I->rpm*0.0005;
-    G.dac_watch[27] = ELECTRICAL_SPEED_FEEDBACK*ELEC_RAD_PER_SEC_2_RPM*0.0005;
+    //G.dac_watch[26] = CTRL.I->rpm*0.0005;
+    //G.dac_watch[27] = ELECTRICAL_SPEED_FEEDBACK*ELEC_RAD_PER_SEC_2_RPM*0.0005;
+    G.dac_watch[26] = CTRL.I->rpm*0.001;
+    G.dac_watch[27] = ELECTRICAL_SPEED_FEEDBACK*ELEC_RAD_PER_SEC_2_RPM*0.001;
 
     G.dac_watch[30] = htz.psi_2_ampl;
     G.dac_watch[31] = htz.psi_2_ampl_lpf;
@@ -181,6 +183,9 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
     #else
 
         G.dac_watch[40] = G.Voltage_DC_BUS*0.0025;
+
+        G.dac_watch[41] = INV.ual_comp*0.05;
+        G.dac_watch[42] = INV.ube_comp*0.05;
 
         G.dac_watch[47] = esoaf.xPos*0.1;
         G.dac_watch[48] = angle_error_limiter(ELECTRICAL_POSITION_FEEDBACK - esoaf.xPos);
@@ -276,14 +281,17 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
         channels[1] = 37; // sig_a3
         channels[2] = 59; // angle error
         channels[3] = 40; // Vdc
-        channels[4] = 30; // htz.psi_2_ampl
-        channels[5] = 31; // htz.psi_2_ampl_lpf
+        //channels[4] = 30; // htz.psi_2_ampl
+        //channels[5] = 31; // htz.psi_2_ampl_lpf
         //channels[4] = 33; // htz.psi_2[0]
         //channels[5] = 12; // AFEOE.psi_2[0]
-        //channels[6] = 6; // Speed
+        channels[4] = 41; // Compensation Voltage alpha
+        channels[5] = 42; // Compensation Voltage beta
+        channels[6] = 26; // Speed
+        channels[7] = 27; // Speed Esitmate
+        //channels[6] = 38; // htz.u_offset[0]
+        //channels[7] = 39; // htz.u_offset[1]
         //channels[7] = 5; // iq
-        channels[6] = 38; // htz.u_offset[0]
-        channels[7] = 39; // htz.u_offset[1]
     }
 
     // 八通道DAC输出，请修改channels数组来确定具体输出哪些G.dac_watch数组中的变量。
