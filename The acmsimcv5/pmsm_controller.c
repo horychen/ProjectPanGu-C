@@ -288,7 +288,7 @@ void controller(REAL set_rpm_speed_command, REAL set_iq_cmd, REAL set_id_cmd){
 
 
     /// 8. 补偿逆变器非线性
-    inverter_voltage_command(1);
+    main_inverter_voltage_command(1);
 
     /// 9. 结束
     #if PC_SIMULATION
@@ -316,12 +316,16 @@ void controller(REAL set_rpm_speed_command, REAL set_iq_cmd, REAL set_id_cmd){
     // REAL sig_a3 = 17.59278688; // yuefei tuning gives a3' = a3*5
 #else
     // 80 V
-    REAL sig_a2 = 6.67159129;
-    REAL sig_a3 = 8.42010418;
+    // REAL sig_a2 = 6.67159129;
+    // REAL sig_a3 = 8.42010418;
 
     // 100 V from SlessInv paper
     // REAL sig_a2 = 6.7;
     // REAL sig_a3 = 5.6;
+
+    // 150 V
+    REAL sig_a2 = 13.25723639;
+    REAL sig_a3 = 5.6420585;
 
     // 180 V
     // REAL sig_a2 = 15.43046115;
@@ -395,105 +399,76 @@ REAL sigmoid_online(REAL x, REAL Vsat, REAL a3){
     return a2 / (1.0 + exp(-a3 * x)) - a2*0.5;
 }
 
-void inverter_voltage_command(int bool_use_iab_cmd){
-    REAL Ia, Ib;
+/* 真查表法 // C代码参考ui_curve_v4.py */
+    #define LUT_N_LC  70
+    #define LUT_N_HC  29
+    REAL lut_lc_voltage[70] = {0, -0.0105529, 0.31933, 0.364001, 0.415814, 0.489953, 0.602715, 0.769718, 0.971424, 1.21079, 1.50055, 1.83306, 2.16318, 2.54303, 2.92186, 3.24129, 3.51575, 3.75058, 3.97849, 4.16454, 4.33493, 4.49719, 4.64278, 4.76509, 4.88146, 4.99055, 5.06347, 5.16252, 5.24808, 5.30369, 5.36092, 5.44246, 5.50212, 5.5786, 5.63384, 5.69022, 5.74442, 5.79613, 5.8491, 5.89762, 5.93325, 5.98141, 6.01726, 6.06201, 6.09346, 6.13419, 6.16634, 6.19528, 6.2233, 6.25819, 6.29004, 6.31378, 6.34112, 6.3669, 6.38991, 6.4147, 6.4381, 6.46156, 6.48171, 6.49962, 6.51565, 6.53689, 6.5566, 6.57761, 6.59515, 6.60624, 6.62549, 6.64589, 6.65606, 6.67132};
+    REAL lut_hc_voltage[29] = {6.69023, 6.80461, 6.89879, 6.96976, 7.02613, 7.08644, 7.12535, 7.17312, 7.20858, 7.2444, 7.27558, 7.30321, 7.32961, 7.35726, 7.38272, 7.39944, 7.42055, 7.43142, 7.4416, 7.43598, 7.44959, 7.45352, 7.45434, 7.45356, 7.45172, 7.45522, 7.45602, 7.44348, 7.43926};
+    #define LUT_STEPSIZE_BIG 0.11641244037931034
+    #define LUT_STEPSIZE_SMALL 0.01237159786376811
+    #define LUT_STEPSIZE_BIG_INVERSE 8.59014721057018
+    #define LUT_STEPSIZE_SMALL_INVERSE 80.83030268294078
+    #define LUT_I_TURNING_LC 0.8660118504637677
+    #define LUT_I_TURNING_HC 4.241972621463768
+    #define V_PLATEAU 7.43925517763064
+REAL lookup_compensation_voltage_indexed(REAL current_value){
+    REAL abs_current_value = fabs(current_value);
 
-    if(bool_use_iab_cmd){
-        Ia = CTRL.O->iab_cmd[0];
-        Ib = CTRL.O->iab_cmd[1];
+    if(abs_current_value < LUT_I_TURNING_LC){
+        REAL float_index = abs_current_value * LUT_STEPSIZE_SMALL_INVERSE;
+        int index = (int)float_index;
+        REAL slope;
+        if(index+1 >= LUT_N_LC)
+            slope = (lut_hc_voltage[0] - lut_lc_voltage[index]) * LUT_STEPSIZE_SMALL_INVERSE;
+        else
+            slope = (lut_lc_voltage[index+1] - lut_lc_voltage[index]) * LUT_STEPSIZE_SMALL_INVERSE;
+        return sign(current_value) * (lut_lc_voltage[index] + slope * (abs_current_value - index*LUT_STEPSIZE_SMALL));
     }else{
-        Ia = CTRL.I->iab[0];
-        Ib = CTRL.I->iab[1];        
+        REAL float_index = (abs_current_value - LUT_I_TURNING_LC) * LUT_STEPSIZE_BIG_INVERSE;
+        int index = (int)float_index; // THIS IS A RELATIVE INDEX!
+        REAL slope;
+        if(index+1 >= LUT_N_HC)
+            return sign(current_value) * V_PLATEAU;
+        else
+            slope = (lut_hc_voltage[index+1] - lut_hc_voltage[index]) * LUT_STEPSIZE_BIG_INVERSE;
+        return sign(current_value) * (lut_hc_voltage[index] + slope * (abs_current_value - LUT_I_TURNING_LC - index*LUT_STEPSIZE_BIG));
     }
+}
+void get_distorted_voltage_via_LUT_indexed(REAL ial, REAL ibe, REAL *ualbe_dist){
 
-    /* We use iab_cmd instead of iab to look-up */
+    /* 查表法 */
+    if(TRUE){
+        REAL ia,ib,ic;
+        ia = 1 * (       ial                              );
+        ib = 1 * (-0.5 * ial - SIN_DASH_2PI_SLASH_3 * ibe );
+        ic = 1 * (-0.5 * ial - SIN_2PI_SLASH_3      * ibe );
 
-    if(G.FLAG_INVERTER_NONLINEARITY_COMPENSATION == 0){
+        REAL dist_ua = lookup_compensation_voltage_indexed(ia);
+        REAL dist_ub = lookup_compensation_voltage_indexed(ib);
+        REAL dist_uc = lookup_compensation_voltage_indexed(ic);
 
-        CTRL.O->uab_cmd_to_inverter[0] = CTRL.O->uab_cmd[0];
-        CTRL.O->uab_cmd_to_inverter[1] = CTRL.O->uab_cmd[1];
+        G.ia = ia;
+        G.dist_ua = dist_ua;
 
-        /* For scope only */
-        #if PC_SIMULATION
-            REAL ualbe_dist[2];
-            get_distorted_voltage_via_CurveFitting( CTRL.O->uab_cmd[0], CTRL.O->uab_cmd[1], Ia, Ib, ualbe_dist);
-            INV.ual_comp = ualbe_dist[0];
-            INV.ube_comp = ualbe_dist[1];
-        #endif
+        // Clarke transformation（三分之二，0.5倍根号三）
+        ualbe_dist[0] = 0.66666667 * (dist_ua - 0.5*dist_ub - 0.5*dist_uc);
+        ualbe_dist[1] = 0.66666667 * 0.8660254 * ( dist_ub -     dist_uc); // 0.5773502695534
+    }else{
+        /* AB2U_AI 这宏假设了零序分量为零，即ia+ib+ic=0，但是电压并不一定满足吧，所以还是得用上面的？ */
+        REAL ia,ib;//,ic;
+        ia = AB2U_AI(ial, ibe); // ia = 1 * (       ial                              );
+        ib = AB2V_AI(ial, ibe); // ib = 1 * (-0.5 * ial - SIN_DASH_2PI_SLASH_3 * ibe );
 
-    }else if(G.FLAG_INVERTER_NONLINEARITY_COMPENSATION == 3){
-        /* 查表法-补偿 */
-        // // Measured in Simulation when the inverter is modelled according to the experimental measurements
-        // #define LENGTH_OF_LUT  19
-        // REAL lut_current_ctrl[LENGTH_OF_LUT] = {-3.78, -3.36, -2.94, -2.52, -2.1, -1.68, -1.26, -0.839998, -0.419998, -0, 0.420002, 0.840002, 1.26, 1.68, 2.1, 2.52, 2.94, 3.36, 3.78};
-        // // REAL lut_voltage_ctrl[LENGTH_OF_LUT] = {-6.41808, -6.41942, -6.39433, -6.36032, -6.25784, -6.12639, -5.79563, -5.35301, -3.61951, 0, 3.5038, 5.24969, 5.73176, 6.11153, 6.24738, 6.35941, 6.43225, 6.39274, 6.39482};
-        // #define MANUAL_CORRECTION 1.1 // [V]
-        // REAL lut_voltage_ctrl[LENGTH_OF_LUT] = {
-        //     -6.41808+MANUAL_CORRECTION, 
-        //     -6.41942+MANUAL_CORRECTION, 
-        //     -6.39433+MANUAL_CORRECTION, 
-        //     -6.36032+MANUAL_CORRECTION, 
-        //     -6.25784+MANUAL_CORRECTION, 
-        //     -6.12639+MANUAL_CORRECTION, 
-        //     -5.79563+MANUAL_CORRECTION, 
-        //     -5.35301+MANUAL_CORRECTION, 
-        //     -3.61951, 0, 3.5038,
-        //      5.24969-MANUAL_CORRECTION,
-        //      5.73176-MANUAL_CORRECTION,
-        //      6.11153-MANUAL_CORRECTION,
-        //      6.24738-MANUAL_CORRECTION,
-        //      6.35941-MANUAL_CORRECTION,
-        //      6.43225-MANUAL_CORRECTION,
-        //      6.39274-MANUAL_CORRECTION,
-        //      6.39482-MANUAL_CORRECTION};
+        REAL dist_ua = lookup_compensation_voltage_indexed(ia);
+        REAL dist_ub = lookup_compensation_voltage_indexed(ib);
 
-        // #define LENGTH_OF_LUT  100
-        // REAL lut_current_ctrl[LENGTH_OF_LUT] = {-4.116, -4.032, -3.948, -3.864, -3.78, -3.696, -3.612, -3.528, -3.444, -3.36, -3.276, -3.192, -3.108, -3.024, -2.94, -2.856, -2.772, -2.688, -2.604, -2.52, -2.436, -2.352, -2.268, -2.184, -2.1, -2.016, -1.932, -1.848, -1.764, -1.68, -1.596, -1.512, -1.428, -1.344, -1.26, -1.176, -1.092, -1.008, -0.923998, -0.839998, -0.755998, -0.671998, -0.587998, -0.503998, -0.419998, -0.335999, -0.251999, -0.168, -0.084, -0, 0.084, 0.168, 0.252001, 0.336001, 0.420002, 0.504002, 0.588002, 0.672002, 0.756002, 0.840002, 0.924002, 1.008, 1.092, 1.176, 1.26, 1.344, 1.428, 1.512, 1.596, 1.68, 1.764, 1.848, 1.932, 2.016, 2.1, 2.184, 2.268, 2.352, 2.436, 2.52, 2.604, 2.688, 2.772, 2.856, 2.94, 3.024, 3.108, 3.192, 3.276, 3.36, 3.444, 3.528, 3.612, 3.696, 3.78, 3.864, 3.948, 4.032, 4.116, 4.2};
-        // REAL lut_voltage_ctrl[LENGTH_OF_LUT] = {-6.48905, -6.49021, -6.49137, -6.49253, -6.49368, -6.49227, -6.49086, -6.48945, -6.48803, -6.48662, -6.47993, -6.47323, -6.46653, -6.45983, -6.45313, -6.44465, -6.43617, -6.42769, -6.41921, -6.41072, -6.38854, -6.36637, -6.34419, -6.32202, -6.29984, -6.27187, -6.2439, -6.21593, -6.18796, -6.15999, -6.09216, -6.02433, -5.9565, -5.88867, -5.82083, -5.73067, -5.6405, -5.55033, -5.46016, -5.36981, -5.02143, -4.67305, -4.32467, -3.97629, -3.62791, -2.90251, -2.17689, -1.45126, -0.725632, -1e-06, 0.702441, 1.40488, 2.10732, 2.80976, 3.5122, 3.86321, 4.21409, 4.56497, 4.91585, 5.26649, 5.36459, 5.46268, 5.56078, 5.65887, 5.75696, 5.8346, 5.91224, 5.98987, 6.0675, 6.14513, 6.17402, 6.20286, 6.2317, 6.26054, 6.28938, 6.31347, 6.33755, 6.36164, 6.38572, 6.40981, 6.4303, 6.4508, 6.47129, 6.49178, 6.49105, 6.48483, 6.4786, 6.47238, 6.46616, 6.45994, 6.46204, 6.46413, 6.46623, 6.46832, 6.47042, 6.47202, 6.47363, 6.47524, 6.47684, 6.47843};
-
-        // Experimental measurements
-        // #define LENGTH_OF_LUT 21
-        // REAL lut_current_ctrl[LENGTH_OF_LUT] = {-4.19999, -3.77999, -3.36001, -2.94002, -2.51999, -2.10004, -1.68004, -1.26002, -0.840052, -0.419948, 5.88754e-06, 0.420032, 0.839998, 1.26003, 1.67998, 2.10009, 2.51996, 2.87326, 3.36001, 3.78002, 4.2};
-        // REAL lut_voltage_ctrl[LENGTH_OF_LUT] = {-5.20719, -5.2079, -5.18934, -5.15954, -5.11637, -5.04723, -4.93463, -4.76367, -4.42522, -3.46825, 0.317444, 3.75588, 4.55737, 4.87773, 5.04459, 5.15468, 5.22904, 5.33942, 5.25929, 5.28171, 5.30045};
-
-        // Experimental measurements 03-18-2021
-        #define LENGTH_OF_LUT  41
-        REAL lut_current_ctrl[LENGTH_OF_LUT] = {-4.20001, -3.98998, -3.78002, -3.57, -3.36002, -3.14999, -2.93996, -2.72993, -2.51998, -2.31003, -2.1, -1.88996, -1.67999, -1.46998, -1.25999, -1.05001, -0.839962, -0.62995, -0.420046, -0.210048, 1.39409e-05, 0.209888, 0.420001, 0.629998, 0.840008, 1.05002, 1.25999, 1.47002, 1.68001, 1.89001, 2.10002, 2.31, 2.51999, 2.73004, 2.94, 3.14996, 3.35995, 3.57001, 3.77999, 3.98998, 4.2};
-        REAL lut_voltage_ctrl[LENGTH_OF_LUT] = {-5.75434, -5.74721, -5.72803, -5.70736, -5.68605, -5.66224, -5.63274, -5.59982, -5.56391, -5.52287, -5.47247, -5.40911, -5.33464, -5.25019, -5.14551, -5.00196, -4.80021, -4.48369, -3.90965, -2.47845, -0.382101, 2.02274, 3.7011, 4.35633, 4.71427, 4.94376, 5.10356, 5.22256, 5.31722, 5.39868, 5.46753, 5.5286, 5.57507, 5.62385, 5.66235, 5.70198, 5.73617, 5.76636, 5.79075, 5.81737, 5.83632};
-
-        REAL ualbe_dist[2];
-        get_distorted_voltage_via_LUT( CTRL.O->uab_cmd[0], CTRL.O->uab_cmd[1], Ia, Ib, ualbe_dist, lut_voltage_ctrl, lut_current_ctrl, LENGTH_OF_LUT);
-        CTRL.O->uab_cmd_to_inverter[0] = CTRL.O->uab_cmd[0] + ualbe_dist[0];
-        CTRL.O->uab_cmd_to_inverter[1] = CTRL.O->uab_cmd[1] + ualbe_dist[1];
-
-    }if(G.FLAG_INVERTER_NONLINEARITY_COMPENSATION == 2){
-        /* 拟合法-补偿 */
-        REAL ualbe_dist[2] = {0.0, 0.0};
-        get_distorted_voltage_via_CurveFitting( CTRL.O->uab_cmd[0], CTRL.O->uab_cmd[1], Ia, Ib, ualbe_dist);
-        CTRL.O->uab_cmd_to_inverter[0] = CTRL.O->uab_cmd[0] + ualbe_dist[0];
-        CTRL.O->uab_cmd_to_inverter[1] = CTRL.O->uab_cmd[1] + ualbe_dist[1];
-
-        /* For scope only */
-        INV.ual_comp = ualbe_dist[0];
-        INV.ube_comp = ualbe_dist[1];
-
-    }if(G.FLAG_INVERTER_NONLINEARITY_COMPENSATION == 1){
-        /* 梯形波自适应 */
-        // Modified_ParkSul_Compensation();
-        /* Sigmoid自适应 */
-        Online_PAA_Based_Compensation();
-        CTRL.O->uab_cmd_to_inverter[0] = CTRL.O->uab_cmd[0] + INV.ual_comp;
-        CTRL.O->uab_cmd_to_inverter[1] = CTRL.O->uab_cmd[1] + INV.ube_comp;
+        ualbe_dist[0] = UV2A_AI(dist_ua, dist_ub); // 0.66666667 * (dist_ua - 0.5*dist_ub - 0.5*dist_uc);
+        ualbe_dist[1] = UV2B_AI(dist_ua, dist_ub); // 0.66666667 * 0.8660254 * ( dist_ub -     dist_uc);        
     }
 }
 
-/* 真查表法 */
-REAL look_up_phase_current_by_index(REAL current, REAL *lut_voltage, REAL *lut_current, int length_of_lut){
-    // TODO: python脚本已经验证查表法，实际的C代码参考ui_curve_v4.py
-    return 0.0;
-}
 /* 伪查表法（需要循环比大小，运算量不固定） */
-REAL look_up_phase_current(REAL current, REAL *lut_voltage, REAL *lut_current, int length_of_lut){
+REAL lookup_phase_current(REAL current, REAL *lut_voltage, REAL *lut_current, int length_of_lut){
     /* assume lut_voltage[0] is negative and lut_voltage[-1] is positive */
     int j;
     if( current<lut_current[0] ){
@@ -557,9 +532,9 @@ void get_distorted_voltage_via_LUT(REAL ual, REAL ube, REAL ial, REAL ibe, REAL 
         ib = 1 * (-0.5 * ial - SIN_DASH_2PI_SLASH_3 * ibe );
         ic = 1 * (-0.5 * ial - SIN_2PI_SLASH_3      * ibe );
 
-        REAL dist_ua = look_up_phase_current(ia, lut_voltage, lut_current, length_of_lut);
-        REAL dist_ub = look_up_phase_current(ib, lut_voltage, lut_current, length_of_lut);
-        REAL dist_uc = look_up_phase_current(ic, lut_voltage, lut_current, length_of_lut);
+        REAL dist_ua = lookup_phase_current(ia, lut_voltage, lut_current, length_of_lut);
+        REAL dist_ub = lookup_phase_current(ib, lut_voltage, lut_current, length_of_lut);
+        REAL dist_uc = lookup_phase_current(ic, lut_voltage, lut_current, length_of_lut);
 
         // Clarke transformation（三分之二，0.5倍根号三）
         ualbe_dist[0] = 0.66666667 * (dist_ua - 0.5*dist_ub - 0.5*dist_uc);
@@ -571,9 +546,9 @@ void get_distorted_voltage_via_LUT(REAL ual, REAL ube, REAL ial, REAL ibe, REAL 
         ib = AB2V_AI(ial, ibe); // ib = 1 * (-0.5 * ial - SIN_DASH_2PI_SLASH_3 * ibe );
         // ic = AB2W_AI(ial, ibe); // ic = 1 * (-0.5 * ial - SIN_2PI_SLASH_3      * ibe );
 
-        REAL dist_ua = look_up_phase_current(ia, lut_voltage, lut_current, length_of_lut);
-        REAL dist_ub = look_up_phase_current(ib, lut_voltage, lut_current, length_of_lut);
-        // REAL dist_uc = look_up_phase_current(ic, lut_voltage, lut_current, length_of_lut);
+        REAL dist_ua = lookup_phase_current(ia, lut_voltage, lut_current, length_of_lut);
+        REAL dist_ub = lookup_phase_current(ib, lut_voltage, lut_current, length_of_lut);
+        // REAL dist_uc = lookup_phase_current(ic, lut_voltage, lut_current, length_of_lut);
 
         // Clarke transformation（三分之二，0.5倍根号三）
         // ualbe_dist[0] = 0.66666667 * (dist_ua - 0.5*dist_ub - 0.5*dist_uc);
@@ -955,5 +930,115 @@ void Online_PAA_Based_Compensation(void){
     // CTRL.ual, CTRL.ube 是补偿前的电压！
     // CTRL.ual + INV.ual_comp, CTRL.ube + INV.ube_comp 是补偿后的电压！
 }
+
+
+/* MAIN */
+void main_inverter_voltage_command(int bool_use_iab_cmd){
+    REAL Ia, Ib;
+
+    if(bool_use_iab_cmd){
+        Ia = CTRL.O->iab_cmd[0];
+        Ib = CTRL.O->iab_cmd[1];
+    }else{
+        Ia = CTRL.I->iab[0];
+        Ib = CTRL.I->iab[1];        
+    }
+
+    /* We use iab_cmd instead of iab to look-up */
+
+    if(G.FLAG_INVERTER_NONLINEARITY_COMPENSATION == 0){
+
+        CTRL.O->uab_cmd_to_inverter[0] = CTRL.O->uab_cmd[0];
+        CTRL.O->uab_cmd_to_inverter[1] = CTRL.O->uab_cmd[1];
+
+        /* For scope only */
+        #if PC_SIMULATION
+            REAL ualbe_dist[2];
+            get_distorted_voltage_via_CurveFitting( CTRL.O->uab_cmd[0], CTRL.O->uab_cmd[1], Ia, Ib, ualbe_dist);
+            INV.ual_comp = ualbe_dist[0];
+            INV.ube_comp = ualbe_dist[1];
+        #endif
+
+    }else if(G.FLAG_INVERTER_NONLINEARITY_COMPENSATION == 4){
+
+        REAL ualbe_dist[2];
+        get_distorted_voltage_via_LUT_indexed( Ia, Ib, ualbe_dist);
+        CTRL.O->uab_cmd_to_inverter[0] = CTRL.O->uab_cmd[0] + ualbe_dist[0];
+        CTRL.O->uab_cmd_to_inverter[1] = CTRL.O->uab_cmd[1] + ualbe_dist[1];
+
+        /* For scope only */
+        INV.ual_comp = ualbe_dist[0];
+        INV.ube_comp = ualbe_dist[1];
+
+    }else if(G.FLAG_INVERTER_NONLINEARITY_COMPENSATION == 3){
+        /* 查表法-补偿 */
+        // // Measured in Simulation when the inverter is modelled according to the experimental measurements
+        // #define LENGTH_OF_LUT  19
+        // REAL lut_current_ctrl[LENGTH_OF_LUT] = {-3.78, -3.36, -2.94, -2.52, -2.1, -1.68, -1.26, -0.839998, -0.419998, -0, 0.420002, 0.840002, 1.26, 1.68, 2.1, 2.52, 2.94, 3.36, 3.78};
+        // // REAL lut_voltage_ctrl[LENGTH_OF_LUT] = {-6.41808, -6.41942, -6.39433, -6.36032, -6.25784, -6.12639, -5.79563, -5.35301, -3.61951, 0, 3.5038, 5.24969, 5.73176, 6.11153, 6.24738, 6.35941, 6.43225, 6.39274, 6.39482};
+        // #define MANUAL_CORRECTION 1.1 // [V]
+        // REAL lut_voltage_ctrl[LENGTH_OF_LUT] = {
+        //     -6.41808+MANUAL_CORRECTION, 
+        //     -6.41942+MANUAL_CORRECTION, 
+        //     -6.39433+MANUAL_CORRECTION, 
+        //     -6.36032+MANUAL_CORRECTION, 
+        //     -6.25784+MANUAL_CORRECTION, 
+        //     -6.12639+MANUAL_CORRECTION, 
+        //     -5.79563+MANUAL_CORRECTION, 
+        //     -5.35301+MANUAL_CORRECTION, 
+        //     -3.61951, 0, 3.5038,
+        //      5.24969-MANUAL_CORRECTION,
+        //      5.73176-MANUAL_CORRECTION,
+        //      6.11153-MANUAL_CORRECTION,
+        //      6.24738-MANUAL_CORRECTION,
+        //      6.35941-MANUAL_CORRECTION,
+        //      6.43225-MANUAL_CORRECTION,
+        //      6.39274-MANUAL_CORRECTION,
+        //      6.39482-MANUAL_CORRECTION};
+
+        // #define LENGTH_OF_LUT  100
+        // REAL lut_current_ctrl[LENGTH_OF_LUT] = {-4.116, -4.032, -3.948, -3.864, -3.78, -3.696, -3.612, -3.528, -3.444, -3.36, -3.276, -3.192, -3.108, -3.024, -2.94, -2.856, -2.772, -2.688, -2.604, -2.52, -2.436, -2.352, -2.268, -2.184, -2.1, -2.016, -1.932, -1.848, -1.764, -1.68, -1.596, -1.512, -1.428, -1.344, -1.26, -1.176, -1.092, -1.008, -0.923998, -0.839998, -0.755998, -0.671998, -0.587998, -0.503998, -0.419998, -0.335999, -0.251999, -0.168, -0.084, -0, 0.084, 0.168, 0.252001, 0.336001, 0.420002, 0.504002, 0.588002, 0.672002, 0.756002, 0.840002, 0.924002, 1.008, 1.092, 1.176, 1.26, 1.344, 1.428, 1.512, 1.596, 1.68, 1.764, 1.848, 1.932, 2.016, 2.1, 2.184, 2.268, 2.352, 2.436, 2.52, 2.604, 2.688, 2.772, 2.856, 2.94, 3.024, 3.108, 3.192, 3.276, 3.36, 3.444, 3.528, 3.612, 3.696, 3.78, 3.864, 3.948, 4.032, 4.116, 4.2};
+        // REAL lut_voltage_ctrl[LENGTH_OF_LUT] = {-6.48905, -6.49021, -6.49137, -6.49253, -6.49368, -6.49227, -6.49086, -6.48945, -6.48803, -6.48662, -6.47993, -6.47323, -6.46653, -6.45983, -6.45313, -6.44465, -6.43617, -6.42769, -6.41921, -6.41072, -6.38854, -6.36637, -6.34419, -6.32202, -6.29984, -6.27187, -6.2439, -6.21593, -6.18796, -6.15999, -6.09216, -6.02433, -5.9565, -5.88867, -5.82083, -5.73067, -5.6405, -5.55033, -5.46016, -5.36981, -5.02143, -4.67305, -4.32467, -3.97629, -3.62791, -2.90251, -2.17689, -1.45126, -0.725632, -1e-06, 0.702441, 1.40488, 2.10732, 2.80976, 3.5122, 3.86321, 4.21409, 4.56497, 4.91585, 5.26649, 5.36459, 5.46268, 5.56078, 5.65887, 5.75696, 5.8346, 5.91224, 5.98987, 6.0675, 6.14513, 6.17402, 6.20286, 6.2317, 6.26054, 6.28938, 6.31347, 6.33755, 6.36164, 6.38572, 6.40981, 6.4303, 6.4508, 6.47129, 6.49178, 6.49105, 6.48483, 6.4786, 6.47238, 6.46616, 6.45994, 6.46204, 6.46413, 6.46623, 6.46832, 6.47042, 6.47202, 6.47363, 6.47524, 6.47684, 6.47843};
+
+        // Experimental measurements
+        // #define LENGTH_OF_LUT 21
+        // REAL lut_current_ctrl[LENGTH_OF_LUT] = {-4.19999, -3.77999, -3.36001, -2.94002, -2.51999, -2.10004, -1.68004, -1.26002, -0.840052, -0.419948, 5.88754e-06, 0.420032, 0.839998, 1.26003, 1.67998, 2.10009, 2.51996, 2.87326, 3.36001, 3.78002, 4.2};
+        // REAL lut_voltage_ctrl[LENGTH_OF_LUT] = {-5.20719, -5.2079, -5.18934, -5.15954, -5.11637, -5.04723, -4.93463, -4.76367, -4.42522, -3.46825, 0.317444, 3.75588, 4.55737, 4.87773, 5.04459, 5.15468, 5.22904, 5.33942, 5.25929, 5.28171, 5.30045};
+
+        // Experimental measurements 03-18-2021
+        #define LENGTH_OF_LUT  41
+        REAL lut_current_ctrl[LENGTH_OF_LUT] = {-4.20001, -3.98998, -3.78002, -3.57, -3.36002, -3.14999, -2.93996, -2.72993, -2.51998, -2.31003, -2.1, -1.88996, -1.67999, -1.46998, -1.25999, -1.05001, -0.839962, -0.62995, -0.420046, -0.210048, 1.39409e-05, 0.209888, 0.420001, 0.629998, 0.840008, 1.05002, 1.25999, 1.47002, 1.68001, 1.89001, 2.10002, 2.31, 2.51999, 2.73004, 2.94, 3.14996, 3.35995, 3.57001, 3.77999, 3.98998, 4.2};
+        REAL lut_voltage_ctrl[LENGTH_OF_LUT] = {-5.75434, -5.74721, -5.72803, -5.70736, -5.68605, -5.66224, -5.63274, -5.59982, -5.56391, -5.52287, -5.47247, -5.40911, -5.33464, -5.25019, -5.14551, -5.00196, -4.80021, -4.48369, -3.90965, -2.47845, -0.382101, 2.02274, 3.7011, 4.35633, 4.71427, 4.94376, 5.10356, 5.22256, 5.31722, 5.39868, 5.46753, 5.5286, 5.57507, 5.62385, 5.66235, 5.70198, 5.73617, 5.76636, 5.79075, 5.81737, 5.83632};
+
+        REAL ualbe_dist[2];
+        get_distorted_voltage_via_LUT( CTRL.O->uab_cmd[0], CTRL.O->uab_cmd[1], Ia, Ib, ualbe_dist, lut_voltage_ctrl, lut_current_ctrl, LENGTH_OF_LUT);
+        CTRL.O->uab_cmd_to_inverter[0] = CTRL.O->uab_cmd[0] + ualbe_dist[0];
+        CTRL.O->uab_cmd_to_inverter[1] = CTRL.O->uab_cmd[1] + ualbe_dist[1];
+
+        /* For scope only */
+        INV.ual_comp = ualbe_dist[0];
+        INV.ube_comp = ualbe_dist[1];
+
+    }else if(G.FLAG_INVERTER_NONLINEARITY_COMPENSATION == 2){
+        /* 拟合法-补偿 */
+        REAL ualbe_dist[2] = {0.0, 0.0};
+        get_distorted_voltage_via_CurveFitting( CTRL.O->uab_cmd[0], CTRL.O->uab_cmd[1], Ia, Ib, ualbe_dist);
+        CTRL.O->uab_cmd_to_inverter[0] = CTRL.O->uab_cmd[0] + ualbe_dist[0];
+        CTRL.O->uab_cmd_to_inverter[1] = CTRL.O->uab_cmd[1] + ualbe_dist[1];
+
+        /* For scope only */
+        INV.ual_comp = ualbe_dist[0];
+        INV.ube_comp = ualbe_dist[1];
+
+    }else if(G.FLAG_INVERTER_NONLINEARITY_COMPENSATION == 1){
+        /* 梯形波自适应 */
+        // Modified_ParkSul_Compensation();
+        /* Sigmoid自适应 */
+        Online_PAA_Based_Compensation();
+        CTRL.O->uab_cmd_to_inverter[0] = CTRL.O->uab_cmd[0] + INV.ual_comp;
+        CTRL.O->uab_cmd_to_inverter[1] = CTRL.O->uab_cmd[1] + INV.ube_comp;
+    }
+}
+
 
 #endif

@@ -251,6 +251,9 @@ typedef struct {
     //
     int16 sendCurrentCommandFlag;
     int16 sendSpeedCommandFlag;
+    // 
+    REAL ia;
+    REAL dist_ua;
 } st_global_variables; // globals
 
 struct ControllerForExperiment{
@@ -309,7 +312,7 @@ void cmd_slow_speed_reversal(REAL timebase, REAL instant, REAL interval, REAL rp
 
 /* 逆变器非线性 */
 /* 查表法 */
-void inverter_voltage_command(int bool_use_iab_cmd);
+void get_distorted_voltage_via_LUT_indexed(REAL ial, REAL ibe, REAL *ualbe_dist);
 void get_distorted_voltage_via_LUT(REAL ual, REAL ube, REAL ial, REAL ibe, REAL *ualbe_dist, REAL *lut_voltage, REAL *lut_current, int length_of_lut);
 void get_distorted_voltage_via_CurveFitting(REAL ual, REAL ube, REAL ial, REAL ibe, REAL *ualbe_dist);
 
@@ -322,6 +325,9 @@ REAL shift2pi(REAL thetaA);
 
 void Modified_ParkSul_Compensation(void);
 void Online_PAA_Based_Compensation(void);
+
+/* Main */
+void main_inverter_voltage_command(int bool_use_iab_cmd);
 
 #endif
 #endif
