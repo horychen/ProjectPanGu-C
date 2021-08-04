@@ -38,7 +38,7 @@ void init_experiment_overwrite(){
         high_speed_operation_init();
     }
     else{
-        CTRL.g->Set_manual_rpm = 200;
+        CTRL.g->Set_manual_rpm = -200;
     }
 
     CTRL.g->DAC_MAX5307_FLAG = FALSE;
@@ -176,6 +176,8 @@ void runtime_command_and_tuning(){
         }else if(CTRL.timebase>10){
             INV.gamma_a2 = 800;
             INV.gamma_a3 = 200;
+            //INV.gamma_a2 = 400;
+            //INV.gamma_a3 = 150;
         }else{
             INV.gamma_a2 = 0;
             INV.gamma_a3 = 0;

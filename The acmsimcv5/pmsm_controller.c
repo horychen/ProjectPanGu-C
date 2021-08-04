@@ -320,12 +320,12 @@ void controller(REAL set_rpm_speed_command, REAL set_iq_cmd, REAL set_id_cmd){
     // REAL sig_a3 = 8.42010418;
 
     // 100 V from SlessInv paper
-    // REAL sig_a2 = 6.7;
-    // REAL sig_a3 = 5.6;
+    REAL sig_a2 = 6.7;
+    REAL sig_a3 = 5.6;
 
     // 150 V
-    REAL sig_a2 = 13.25723639;
-    REAL sig_a3 = 5.6420585;
+    // REAL sig_a2 = 13.25723639;
+    // REAL sig_a3 = 5.6420585;
 
     // 180 V
     // REAL sig_a2 = 15.43046115;

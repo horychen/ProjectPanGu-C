@@ -1,8 +1,8 @@
 #ifndef ACMCONFIG_H
 #define ACMCONFIG_H
 /* 经常要修改的 */
-#define INVERTER_NONLINEARITY_COMPENSATION_INIT 4 // 1, 4 // 1:ParkSul12, 2:Sigmoid, 3:LUT(Obsolete), 4:LUT(by index)
-#define INVERTER_NONLINEARITY                   4 // 2, 2 // 1:ModelSul96, 2:ModelExpSigmoid, 3: ModelExpLUT, 4:LUT(by index)
+#define INVERTER_NONLINEARITY_COMPENSATION_INIT 1 // 4 // 1:ParkSul12, 2:Sigmoid, 3:LUT(Obsolete), 4:LUT(by index)
+#define INVERTER_NONLINEARITY                   2 // 4 // 1:ModelSul96, 2:ModelExpSigmoid, 3: ModelExpLUT, 4:LUT(by index)
 #define SENSORLESS_CONTROL FALSE
 #define SENSORLESS_CONTROL_HFSI FALSE
 /* ParkSul2012 梯形波 */
@@ -100,7 +100,6 @@
             #define ELECTRICAL_SPEED_FEEDBACK    CTRL.I->omg_elec
             #define ELECTRICAL_POSITION_FEEDBACK CTRL.I->theta_d_elec
         #endif
-
 
     /* Tuning Algorithm 2 */
     #define LOW_SPEED_OPERATION  1
