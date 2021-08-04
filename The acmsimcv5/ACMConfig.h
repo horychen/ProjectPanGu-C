@@ -46,9 +46,9 @@
     #endif
 
     /* Select Algorithm 1 */
-    #define AFE_USED AFEOE
+    // #define AFE_USED AFEOE
     // #define AFE_USED huwu
-    // #define AFE_USED htz
+    #define AFE_USED htz
 
     /* Tuning Algorithm 1 */
         /* AFEOE or CM-VM Fusion */
