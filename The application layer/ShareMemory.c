@@ -280,8 +280,8 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
         channels[0] = 36; // sig_a2
         channels[1] = 37; // sig_a3
         channels[2] = 59; // angle error
-        //channels[3] = 40; // Vdc
-        channels[3] = 5; // iq
+        channels[3] = 40; // Vdc
+        //channels[3] = 5; // iq
         //channels[4] = 30; // htz.psi_2_ampl
         //channels[5] = 31; // htz.psi_2_ampl_lpf
         //channels[4] = 33; // htz.psi_2[0]
