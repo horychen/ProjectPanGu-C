@@ -883,7 +883,7 @@ void Online_PAA_Based_Compensation(void){
         /* 这个好像只对梯形波（电流值的函数）有效 ……*/
         // INV.sig_a2 += CL_TS * INV.gain_Vsat * sin(ENC.theta_d_elec - ELECTRICAL_POSITION_FEEDBACK) * CTRL.S->Motor_or_Generator;
     }
-    if(INV.sig_a2 > 30){ INV.sig_a2 = 30; }else if(INV.sig_a2 < 2){ INV.sig_a2 = 2; }
+    if(INV.sig_a2 > 40){ INV.sig_a2 = 40; }else if(INV.sig_a2 < 2){ INV.sig_a2 = 2; }
 
     /* Chen2021: linear approximation of u-i curve */
     // if(CTRL.timebase>35){
