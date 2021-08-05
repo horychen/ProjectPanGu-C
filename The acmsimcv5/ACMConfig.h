@@ -158,7 +158,8 @@
             #define NSOAF_TL_D (0)
 
     /* CHEN 2021 ESO with Active Flux Concept */
-        #define ESOAF_OMEGA_OBSERVER 30 // 30 gives acceptable steady state speed ripple, 200
+        // #define ESOAF_OMEGA_OBSERVER 30 // 30 gives acceptable steady state speed ripple, 200
+        #define ESOAF_OMEGA_OBSERVER 200 // 200 gives acceptable disturbance rejection when load changes between 1.5 A and 3 A.
 
     /* Farza 2009 for EMMF */
         #define FARZA09_HGO_EEMF_VARTHETA 10

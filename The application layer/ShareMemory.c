@@ -280,7 +280,8 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
         channels[0] = 36; // sig_a2
         channels[1] = 37; // sig_a3
         channels[2] = 59; // angle error
-        channels[3] = 40; // Vdc
+        //channels[3] = 40; // Vdc
+        channels[3] = 5; // iq
         //channels[4] = 30; // htz.psi_2_ampl
         //channels[5] = 31; // htz.psi_2_ampl_lpf
         //channels[4] = 33; // htz.psi_2[0]
@@ -288,10 +289,9 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
         channels[4] = 41; // Compensation Voltage alpha
         channels[5] = 42; // Compensation Voltage beta
         channels[6] = 26; // Speed
-        channels[7] = 27; // Speed Esitmate
+        channels[7] = 27; // Speed Estimate
         //channels[6] = 38; // htz.u_offset[0]
         //channels[7] = 39; // htz.u_offset[1]
-        //channels[7] = 5; // iq
     }
 
     // 八通道DAC输出，请修改channels数组来确定具体输出哪些G.dac_watch数组中的变量。

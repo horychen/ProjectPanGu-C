@@ -142,12 +142,12 @@ void runtime_command_and_tuning(){
         if(CTRL.timebase < 2){
             pid1_spd.OutLimit = 0.1;
         }else{
-//            if( ((long int)(CTRL.timebase*0.25)) % 2 == 0){
-//                pid1_spd.OutLimit = 1.5;
-//            }else{
-//                pid1_spd.OutLimit = 3.0;
-//            }
-            pid1_spd.OutLimit = 3.0;
+            //pid1_spd.OutLimit = 3.0;
+            if( ((long int)(CTRL.timebase*0.125)) % 2 == 0){ // 0.125 means 8 sec period
+                pid1_spd.OutLimit = 1.5;
+            }else{
+                pid1_spd.OutLimit = 3.0;
+            }
         }
     }
     if(G.Seletc_exp_operation == AS_LOAD_MOTOR_RAMP){
@@ -176,11 +176,11 @@ void runtime_command_and_tuning(){
         }else if(CTRL.timebase>10){
             INV.gamma_a2 = 800;
             INV.gamma_a3 = 200;
-            //INV.gamma_a2 = 400;
-            //INV.gamma_a3 = 150;
         }else{
-            INV.gamma_a2 = 0;
-            INV.gamma_a3 = 0;
+            //INV.gamma_a2 = 0; // exp 1: vary Vdc
+            //INV.gamma_a3 = 0;
+            INV.gamma_a2 = 800; // exp 2: vary load
+            INV.gamma_a3 = 200;
         }
     }
 
