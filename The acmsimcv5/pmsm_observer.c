@@ -21,6 +21,11 @@ void rhf_dynamics_ESO(REAL t, REAL *x, REAL *fx){
     // REAL iq = AB2T(IS(0), IS(1), cos(xPos), sin(xPos)); // Option 2
     esoaf.xTem = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * MOTOR.KActive * iq;
 
+    /* 未测试，如果用iq给定会不会好一点？？ 计算量还少*/
+    /* 未测试，如果用iq给定会不会好一点？？ 计算量还少*/
+    /* 未测试，如果用iq给定会不会好一点？？ 计算量还少*/
+    // esoaf.xTem = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * MOTOR.KActive * CTRL->I.idq_cmd[1];
+
     /* Output Error = sine of angle error */
     esoaf.output_error_sine = sin(AFE_USED.theta_d - xPos);
     esoaf.output_error = AFE_USED.theta_d - xPos;

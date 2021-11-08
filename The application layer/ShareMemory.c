@@ -61,9 +61,11 @@ struct IPC_MEMORY_READ Read;
 //int channels[NO_OF_CHANNELS]={56,57,3,5,26,27,49,59}; // Chi.Xu 2009 High speed
 //int channels[NO_OF_CHANNELS]={56,57,3,5,26,27,23,59}; // NSOAF High Speed
 
-int channels[NO_OF_CHANNELS]={6,7,49,59,20,21,47,48}; // ESOAF
+//int channels[NO_OF_CHANNELS]={6,7,49,59,20,21,47,48}; // ESOAF
 
-int channels_preset = 6; //6
+int channels[NO_OF_CHANNELS]={3,5,49,59,20,21,47,48}; // ESOAF
+
+int channels_preset = 8; //6
 
 REAL dac_time_that_cannot_be_modified = 0;
 //REAL if_you_define_an_extra_global_variable_here_you_cannot_modify_dac_time_anymore = 0;
@@ -187,6 +189,8 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
         G.dac_watch[41] = INV.ual_comp*0.05;
         G.dac_watch[42] = INV.ube_comp*0.05;
 
+        G.dac_watch[43] = CTRL.inv->theta_trapezoidal / M_PI_OVER_180 * 0.025;
+
         G.dac_watch[47] = esoaf.xPos*0.1;
         G.dac_watch[48] = angle_error_limiter(ELECTRICAL_POSITION_FEEDBACK - esoaf.xPos);
         G.dac_watch[49] = angle_error_limiter(ENC.theta_d_elec - esoaf.xPos);
@@ -292,6 +296,26 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
         channels[7] = 27; // Speed Estimate
         //channels[6] = 38; // htz.u_offset[0]
         //channels[7] = 39; // htz.u_offset[1]
+    }else if(channels_preset==7){channels_preset=0;
+        /* TIE.R1 Slessinv SS */
+        channels[0] = 3; // iq cmd
+        channels[1] = 5; // iq
+        channels[2] = 59; // angle error
+        channels[3] = 39; // u offset beta
+        channels[4] = 38; // psi_2 alpha
+        channels[5] = 1; // dc bus
+        channels[6] = 26; // Speed
+        channels[7] = 27; // Speed Estimate
+    }else if(channels_preset==8){channels_preset=0;
+        /* TIE.R1 Slessinv SS */
+        channels[0] = 59; // angle error
+        channels[1] = 5;  // iq
+        channels[2] = 20; // theta_d
+        channels[3] = 21; // hat theta_d
+        channels[4] = 41; // ual_comp
+        channels[5] = 42; // ube_comp
+        channels[6] = 26; // Speed
+        channels[7] = 27; // Speed Estimate
     }
 
     // 八通道DAC输出，请修改channels数组来确定具体输出哪些G.dac_watch数组中的变量。
@@ -311,8 +335,8 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
         G.dac_offset[1] = 0.004;
         G.dac_offset[2] = 0.0055;
         G.dac_offset[3] = 0.0035;
-        G.dac_offset[4] = 0.006;
-        G.dac_offset[5] = 0.002;
+        G.dac_offset[4] = 0.003;
+        G.dac_offset[5] =-0.0045;
         G.dac_offset[6] = 0.002;
         G.dac_offset[7] =-0.001;
 

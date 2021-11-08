@@ -143,11 +143,15 @@ void runtime_command_and_tuning(){
             pid1_spd.OutLimit = 0.1;
         }else{
             pid1_spd.OutLimit = 3.0;
-            //            if( ((long int)(CTRL.timebase*0.125)) % 2 == 0){ // 0.125 means 8 sec period
-            //                pid1_spd.OutLimit = 1.5;
-            //            }else{
-            //                pid1_spd.OutLimit = 3.0;
-            //            }
+            //pid1_spd.OutLimit = 1.5;
+
+            // Slessinv: Variable Load Experiment
+            if( ((long int)(CTRL.timebase*0.125)) % 2 == 0){ // 0.125 means 8 sec period
+                //pid1_spd.OutLimit = 1.5; // original
+                pid1_spd.OutLimit = 4.2; // compare with Park & Sul
+            }else{
+                pid1_spd.OutLimit = 3.0;
+            }
         }
     }
     if(G.Seletc_exp_operation == AS_LOAD_MOTOR_RAMP){
