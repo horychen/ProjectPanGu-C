@@ -19,9 +19,9 @@ void init_experiment_AD_gain_and_offset(){
         // G.offsetV=2047;
         // G.offsetW=2030;
     #else
-        G.offsetU=2054;
-        G.offsetV=2064;
-        G.offsetW=2048; // ADC offset. U, V, W corresponds to ADCRESULT2, ADCRESULT3, ADCRESULT1.
+        G.offsetU=2057;
+        G.offsetV=2067;
+        G.offsetW=2056; //2047; // ADC offset. U, V, W corresponds to ADCRESULT2, ADCRESULT3, ADCRESULT1.
         G.offsetUDC=0; // 6.03
     #endif
 

@@ -621,8 +621,8 @@ void inverterNonlinearity_Initialization(){
     #endif
 
     INV.w6  = 1;
-    INV.w12 = 1;
-    INV.w18 = 1;
+    INV.w12 = 0;
+    INV.w18 = 0;
     INV.gamma_a2 = 400;
     INV.gamma_a3 = 125;
 }
@@ -1032,7 +1032,11 @@ void main_inverter_voltage_command(int bool_use_iab_cmd){
 
     }else if(G.FLAG_INVERTER_NONLINEARITY_COMPENSATION == 1){
         /* 梯形波自适应 */
-        // Modified_ParkSul_Compensation();
+        Modified_ParkSul_Compensation();
+        CTRL.O->uab_cmd_to_inverter[0] = CTRL.O->uab_cmd[0] + INV.ual_comp;
+        CTRL.O->uab_cmd_to_inverter[1] = CTRL.O->uab_cmd[1] + INV.ube_comp;
+
+    }else if(G.FLAG_INVERTER_NONLINEARITY_COMPENSATION == 5){
         /* Sigmoid自适应 */
         Online_PAA_Based_Compensation();
         CTRL.O->uab_cmd_to_inverter[0] = CTRL.O->uab_cmd[0] + INV.ual_comp;
