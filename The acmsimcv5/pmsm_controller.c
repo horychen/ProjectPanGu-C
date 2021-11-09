@@ -576,10 +576,11 @@ void inverterNonlinearity_Initialization(){
     #ifdef _XCUBE1
     INV.Vsat = 16.0575341/2; //6.67054; // 180 V SiC
     #else
-    INV.Vsat = sig_a2*0.5; //6.74233802;
+    // INV.Vsat = sig_a2*0.5; //6.74233802;
+    INV.Vsat = 7.84; // 150 V
     #endif
 
-    INV.gain_Vsat = 10;
+    INV.gain_Vsat = 0 * 10;
 
     INV.thetaA=0;
     INV.cos_thetaA=1;
