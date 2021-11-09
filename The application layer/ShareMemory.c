@@ -312,10 +312,11 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
         channels[1] = 5;  // iq
         channels[2] = 20; // theta_d
         channels[3] = 21; // hat theta_d
-        channels[4] = 41; // ual_comp
-        channels[5] = 42; // ube_comp
+        channels[4] = 36; //a2 //41; // ual_comp
+        channels[5] = 37; //a3 //42; // ube_comp
         channels[6] = 26; // Speed
-        channels[7] = 27; // Speed Estimate
+        //channels[7] = 27; // Speed Estimate
+        channels[7] = 43; // theta_trapezoidal
     }
 
     // 八通道DAC输出，请修改channels数组来确定具体输出哪些G.dac_watch数组中的变量。
