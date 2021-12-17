@@ -55,6 +55,10 @@ void main(void){
     IFR = 0x0000;         // 3.4 and clear all CPU __interrupt flags.
     InitPieVectTable();   // 3.5 Initialize the PIE vector table with pointers to the shell Interrupt Service Routines (ISR). At end, ENPIE = 1.
 
+    // for Slessinv TIE.R1 for measuring the execution time
+    InitCpuTimers();
+    ConfigCpuTimer(&CpuTimer1, 200, 1000000); // 200MHz, period = 1e6 us
+
     // 4.1 IPC
     #if NUMBER_OF_DSP_CORES == 2
         IPCBootCPU2(C1C2_BROM_BOOTMODE_BOOT_FROM_FLASH);
