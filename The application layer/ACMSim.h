@@ -28,7 +28,8 @@
         //        #define SYSTEM_TBPRD                       (SYSTEM_CARRIER_PERIOD/2)
         #define SYSTEM_CARRIER_PERIOD              10000 // =100000/10
         #define SYSTEM_TBPRD                       5000 // =10000/2
-        #define SYSTEM_PWM_DEADTIME_CNT            500 // 500 ¸ö TBCLK = EPWMCLK/1 = 100 MHz
+        //#define SYSTEM_PWM_DEADTIME_CNT            500 // 500 ¸ö TBCLK = EPWMCLK/1 = 100 MHz
+        #define SYSTEM_PWM_DEADTIME_CNT            200
         #define SYSTEM_PWM_DEADTIME_COMPENSATION   483
             // Td = 5.0us; Ton = 0.15us; Toff = 0.32us;
             // TM = Td + Ton -Toff;
