@@ -20,6 +20,7 @@ void init_experiment_overwrite(){
 
         // CTRL.g->Seletc_exp_operation = AS_LOAD_MOTOR_CONST;
         CTRL.g->Seletc_exp_operation = SLESSINV_CONST_LOAD_PAA;
+        CTRL.g->Seletc_exp_operation = 0;
     #endif
 
     if(G.Seletc_exp_operation == AS_LOAD_MOTOR_CONST){

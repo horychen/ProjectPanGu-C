@@ -96,8 +96,8 @@ void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REA
     #undef NS
 }
 #if PC_SIMULATION == TRUE
-    #define OFFSET_VOLTAGE_ALPHA (0*0.05*-0.1 *(CTRL.timebase>3)) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
-    #define OFFSET_VOLTAGE_BETA  (0*0.05*+0.1 *(CTRL.timebase>3)) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
+    #define OFFSET_VOLTAGE_ALPHA (0.5*-0.1 *(CTRL.timebase>3)) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
+    #define OFFSET_VOLTAGE_BETA  (0.5*+0.1 *(CTRL.timebase>3)) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
 #else
     #define OFFSET_VOLTAGE_ALPHA 0
     #define OFFSET_VOLTAGE_BETA  0
@@ -474,8 +474,8 @@ void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REA
         }
     }
     void rhf_Holtz2003_Dynamics(REAL t, REAL *x, REAL *fx){
-        htz.emf_stator[0] = US(0) - htz.rs_est*IS(0) - htz.u_offset[0]; // + OFFSET_VOLTAGE_ALPHA;
-        htz.emf_stator[1] = US(1) - htz.rs_est*IS(1) - htz.u_offset[1]; // + OFFSET_VOLTAGE_BETA ;
+        htz.emf_stator[0] = US(0) - htz.rs_est*IS(0) - htz.u_offset[0] + OFFSET_VOLTAGE_ALPHA;
+        htz.emf_stator[1] = US(1) - htz.rs_est*IS(1) - htz.u_offset[1] + OFFSET_VOLTAGE_BETA ;
         fx[0] = (htz.emf_stator[0]);
         fx[1] = (htz.emf_stator[1]);
     }

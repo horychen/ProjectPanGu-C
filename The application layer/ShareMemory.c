@@ -1,7 +1,7 @@
 /*
  * ShareMemory.c
  *
- *  Created on: 2021Äê1ÔÂ15ÈÕ
+ *  Created on: 2021å¹´1æœˆ15æ—¥
  *      Author: JIAHAO
  *///cpu2 CONNECTION
 
@@ -16,20 +16,20 @@ struct IPC_MEMORY_READ Read;
 
 #define NO_OF_CHANNELS 8
 
-//int channels[4]={2,3,14,15}; // ×ÔÕû¶¨
-//int channels[4]={2,3,14,16}; // ×ÔÕû¶¨
+//int channels[4]={2,3,14,15}; // è‡ªæ•´å®š
+//int channels[4]={2,3,14,16}; // è‡ªæ•´å®š
 //int channels[4]={4,5,6,7};
 //int channels[4]={10,12,6,7};
-//int channels[4]={10,11,20,21}; // ´ÅÁ´ºÍÎ»ÖÃ¹Û²âÊµÑé
-//int channels[4]={6,7,20,21}; // µÍËÙÔËĞĞÊµÑé
+//int channels[4]={10,11,20,21}; // ç£é“¾å’Œä½ç½®è§‚æµ‹å®éªŒ
+//int channels[4]={6,7,20,21}; // ä½é€Ÿè¿è¡Œå®éªŒ
 
-//int channels[NO_OF_CHANNELS]={5,23,4,21,6,7}; // µÍËÙÔËĞĞÊµÑé
-//int channels[NO_OF_CHANNELS]={5,23,20,21,6,7}; // µÍËÙÔËĞĞÊµÑé
+//int channels[NO_OF_CHANNELS]={5,23,4,21,6,7}; // ä½é€Ÿè¿è¡Œå®éªŒ
+//int channels[NO_OF_CHANNELS]={5,23,20,21,6,7}; // ä½é€Ÿè¿è¡Œå®éªŒ
 
 
-//int channels[4]={26,27,5,22}; // ¸ßËÙÔËĞĞÊµÑé
-//int channels[NO_OF_CHANNELS]={5,23,26,27,22,19}; // ¸ßËÙÔËĞĞÊµÑé
-//int channels[NO_OF_CHANNELS]={5,23,26,27,12,22}; // ¸ßËÙÔËĞĞÊµÑé
+//int channels[4]={26,27,5,22}; // é«˜é€Ÿè¿è¡Œå®éªŒ
+//int channels[NO_OF_CHANNELS]={5,23,26,27,22,19}; // é«˜é€Ÿè¿è¡Œå®éªŒ
+//int channels[NO_OF_CHANNELS]={5,23,26,27,12,22}; // é«˜é€Ÿè¿è¡Œå®éªŒ
 
 
 // ECAP
@@ -65,7 +65,7 @@ struct IPC_MEMORY_READ Read;
 
 int channels[NO_OF_CHANNELS]={3,5,49,59,20,21,47,48}; // ESOAF
 
-int channels_preset = 8; //6
+int channels_preset = 9; //6
 
 REAL dac_time_that_cannot_be_modified = 0;
 //REAL if_you_define_an_extra_global_variable_here_you_cannot_modify_dac_time_anymore = 0;
@@ -80,12 +80,18 @@ REAL angle_error_limiter(REAL angle_error){
 
 
 
+extern REAL hall_sensor_read[3];
+extern int current_pole[3];
+extern REAL hall_qep_count;
+extern int count_magnet[3];
+extern REAL hall_theta_r_mech_incremental[3];
+
 void write_DAC_buffer(){
 if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
 
-    // ËùÓĞÔø¾­¿´¹ıµÄ±äÁ¿¶¼ÔÚÁĞÔÚÕâÀï£¬¼ÇµÃÓĞĞ§·¶Î§ÊÇ [-1, 1]¡£
-    G.dac_watch[0] = G.Current_W*0.2;
-    G.dac_watch[1] = G.Current_V*0.2;
+    // æ‰€æœ‰æ›¾ç»çœ‹è¿‡çš„å˜é‡éƒ½åœ¨åˆ—åœ¨è¿™é‡Œï¼Œè®°å¾—æœ‰æ•ˆèŒƒå›´æ˜¯ [-1, 1]ã€‚
+    G.dac_watch[0] = G.iuvw[2]*0.2;
+    G.dac_watch[1] = G.iuvw[1]*0.2;
     //G.dac_watch[2] = G.Current_U*0.2;
     //G.dac_watch[3] = G.Current_Not_Used*0.2;
     G.dac_watch[2] = CTRL.I->idq_cmd[0]*0.1;
@@ -184,7 +190,7 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
         G.dac_watch[47] = (CAP.dq[1]            )*0.02;
     #else
 
-        G.dac_watch[40] = G.Voltage_DC_BUS*0.0025;
+        G.dac_watch[40] = G.vdc*0.0025;
 
         G.dac_watch[41] = INV.ual_comp*0.05;
         G.dac_watch[42] = INV.ube_comp*0.05;
@@ -234,6 +240,18 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
     // information from d-axis voltage equation
     //temp_xOmg = (CTRL.O->udq_cmd[0] - CTRL.motor->R * CTRL.I->idq[0] ) / -CTRL.motor->Lq*CTRL.I->idq[1];
     //temp_xOmg_filtered = _lpf(temp_xOmg, temp_xOmg_filtered, 20.0);
+
+
+    G.dac_watch[50] = hall_sensor_read[0] * 0.0005;
+    G.dac_watch[51] = hall_sensor_read[1] * 0.0005;
+    G.dac_watch[52] = current_pole[0]*0.5;
+    G.dac_watch[53] = current_pole[1]*0.5;
+    G.dac_watch[54] = count_magnet[0] * 0.02;
+    G.dac_watch[55] = count_magnet[1] * 0.02;
+    G.dac_watch[56] = hall_theta_r_mech_incremental[0]*0.01;
+    G.dac_watch[57] = hall_theta_r_mech_incremental[1]*0.01;
+    G.dac_watch[58] = hall_qep_count * 0.003;
+
 
     if(channels_preset==1){channels_preset=0;
         /*Sensorless using ECAP*/
@@ -317,9 +335,16 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
         channels[6] = 26; // Speed
         //channels[7] = 27; // Speed Estimate
         channels[7] = 43; // theta_trapezoidal
+    }else if(channels_preset==9){channels_preset=0;
+        /* Slice motor */
+        channels[0] = 50;
+        channels[1] = 51;
+        channels[2] = 52;
+        channels[3] = 53;
+        channels[4] = 54;
     }
 
-    // °ËÍ¨µÀDACÊä³ö£¬ÇëĞŞ¸ÄchannelsÊı×éÀ´È·¶¨¾ßÌåÊä³öÄÄĞ©G.dac_watchÊı×éÖĞµÄ±äÁ¿¡£
+    // å…«é€šé“DACè¾“å‡ºï¼Œè¯·ä¿®æ”¹channelsæ•°ç»„æ¥ç¡®å®šå…·ä½“è¾“å‡ºå“ªäº›G.dac_watchæ•°ç»„ä¸­çš„å˜é‡ã€‚
     Write.dac_buffer[0] = G.dac_watch[channels[0]] + G.dac_offset[0];
     Write.dac_buffer[1] = G.dac_watch[channels[1]] + G.dac_offset[1];
     Write.dac_buffer[2] = G.dac_watch[channels[2]] + G.dac_offset[2];

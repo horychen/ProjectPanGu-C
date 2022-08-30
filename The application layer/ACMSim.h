@@ -24,11 +24,11 @@
         /* ePWM CONFIGURATION */
         #define SYSTEM_PROGRAM                     EPWM1ISR
         #define SYSTEM_PWM_FREQUENCY               10 // 10kHz
-        //        #define SYSTEM_CARRIER_PERIOD              (100000/SYSTEM_PWM_FREQUENCY) // = TBCLK (100 MHz) / 10 (kHz) = 100e6/1e4 = 100e2 = 1e4 cnt ∂‘”¶“ª∏ˆ‘ÿ≤®÷‹∆⁄
+        //        #define SYSTEM_CARRIER_PERIOD              (100000/SYSTEM_PWM_FREQUENCY) // = TBCLK (100 MHz) / 10 (kHz) = 100e6/1e4 = 100e2 = 1e4 cnt ÂØπÂ∫î‰∏Ä‰∏™ËΩΩÊ≥¢Âë®Êúü
         //        #define SYSTEM_TBPRD                       (SYSTEM_CARRIER_PERIOD/2)
         #define SYSTEM_CARRIER_PERIOD              10000 // =100000/10
         #define SYSTEM_TBPRD                       5000 // =10000/2
-        //#define SYSTEM_PWM_DEADTIME_CNT            500 // 500 ∏ˆ TBCLK = EPWMCLK/1 = 100 MHz
+        //#define SYSTEM_PWM_DEADTIME_CNT            500 // 500 ‰∏™ TBCLK = EPWMCLK/1 = 100 MHz
         #define SYSTEM_PWM_DEADTIME_CNT            200
         #define SYSTEM_PWM_DEADTIME_COMPENSATION   483
             // Td = 5.0us; Ton = 0.15us; Toff = 0.32us;
@@ -38,7 +38,7 @@
         #define SYSTEM_MIN_PWM_DUTY_LIMATATION     0.04
         #define SYSTEM_PWM_UDC_UTILIZATION         SYSTEM_MAX_PWM_DUTY_LIMATATION
 
-        /* eCAP CONFIGURATION */ /* eCAP◊Ó¥Ûµƒ≤®π»£øªÚ≤®∑Â£ø÷–∂œ÷‹∆⁄º∆ ˝÷µ «20000£¨’‚Ω¯“ª≤Ω—È÷§¡ÀTBCLK±ªΩµ∆µ¡À£¨≤ª «200MHz£¨∂¯ «100MHz°£ */
+        /* eCAP CONFIGURATION */ /* eCAPÊúÄÂ§ßÁöÑÊ≥¢Ë∞∑ÔºüÊàñÊ≥¢Â≥∞Ôºü‰∏≠Êñ≠Âë®ÊúüËÆ°Êï∞ÂÄºÊòØ20000ÔºåËøôËøõ‰∏ÄÊ≠•È™åËØÅ‰∫ÜTBCLKË¢´ÈôçÈ¢ë‰∫ÜÔºå‰∏çÊòØ200MHzÔºåËÄåÊòØ100MHz„ÄÇ */
         #define SYSTEM_PWM_INT_MAX_COUNT               20000
         #define SYSTEM_PWM_INT_MAX_COUNT_INVERSE       5e-5 // = 1 / 20000
         #define SYSTEM_HALF_PWM_MAX_COUNT          10000
@@ -46,7 +46,7 @@
 #endif
 
 
-// ÷ÿ∂®“Â±‰¡ø¿‡–Õ
+// ÈáçÂÆö‰πâÂèòÈáèÁ±ªÂûã
 #ifndef DSP28_DATA_TYPES
 #define DSP28_DATA_TYPES
 typedef          int int16;
@@ -75,6 +75,11 @@ typedef float32 REAL;
 /* Macro for two-phase Amplitude-invariant Clarke transformation*/
 #define UV2A_AI(U, V) ( U )
 #define UV2B_AI(U, V) ( (U + 2*(V)) * CONST_1_OVER_SQRT3 )
+
+#define UVW2A_AI(U, V, W) ( 0.666667 * U - 0.333333 * V - 0.333333 * W )
+#define UVW2B_AI(U, V, W) ( (V - W) * CONST_1_OVER_SQRT3 )
+#define UVW2G_AI(U, V, W) ( 0.333333 * (U + V + W))
+
 #define AB2U_AI(A, B) ( ( A ) )
 #define AB2V_AI(A, B) ( ( (A)*-0.5 + (B)*0.866 ) )
 #define AB2W_AI(A, B) ( ( (A)*-0.5 + (B)*-0.866 ) )

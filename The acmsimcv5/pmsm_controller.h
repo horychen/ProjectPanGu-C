@@ -206,17 +206,16 @@ typedef struct {
 typedef struct {
     // ADC Offset
         // Automatic Offset Removing
-        REAL Offset_Counter;
-        REAL Offset_W;
-        REAL Offset_V;
-        REAL Offset_U;
-        REAL Offset_Udc;
-        REAL AD_scale_W;
-        REAL AD_scale_V;
-        REAL AD_scale_U;
-        REAL AD_scale_VDC;
+        REAL offset_counter;
+        REAL offset_online[6];
         // Raw
-        REAL offsetU,offsetV,offsetW,offsetUDC; // ADC offset. U, V, W corresponds to ADCRESULT2, ADCRESULT3, ADCRESULT1.
+        REAL adc_offset[12]; // ADC offset. U, V, W corresponds to ADCRESULT2, ADCRESULT3, ADCRESULT1.
+        REAL adc_scale[12];
+    // Raw measurment for easy access
+        REAL vdc;
+        REAL iabg[6];
+        REAL iuvw[6];
+        REAL iuvw_offset_online[6];
     // DAC
         REAL dac_offset[8];
         REAL dac_time;
@@ -225,8 +224,6 @@ typedef struct {
     // To show that REAL type is not very accurate 64 missing by counting 1e-4 sec to 10 sec.
         Uint32  test_integer;
         REAL    test_float;
-    // Raw measurment for easy access
-        REAL Current_U, Current_V, Current_W, Current_Not_Used, Voltage_DC_BUS;
     // Mode Changing During Experiment
         int FLAG_ENABLE_PWM_OUTPUT; // 电机模式标志位
         Uint16 Rotor_angle_selection; // delete?
@@ -235,8 +232,8 @@ typedef struct {
         int AD_offset_flag2;
     // Mode Changing During Experiment Debug
         REAL OverwriteSpeedOutLimit; // = 2;
-        REAL Overwrite_Voltage_DC_BUS; // = 180;
-        int flag_overwite_voltage_dc_bus; // = FALSE;
+        REAL overwrite_vdc; // = 180;
+        int flag_overwite_vdc; // = FALSE;
         int flag_use_ecap_voltage; // = 0;
         int flag_experimental_initialized; 
         int FLAG_TUNING_CURRENT_SCALE_FACTOR; // for comm (special mode for calibrate current sensor channel gain)
