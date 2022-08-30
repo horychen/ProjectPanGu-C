@@ -13,7 +13,7 @@ void SVGEN_Drive(SVGENDQ* ptrV){
     SVGENDQ  v;
     v=(*ptrV);
     Sector = 0;
-    REAL Inverse_Voltage_DC_BUS = 1.0 / G.Voltage_DC_BUS;
+    REAL Inverse_Voltage_DC_BUS = 1.0 / G.vdc;
     temp_sv1=(v.Ubeta*0.8660254)*Inverse_Voltage_DC_BUS;
     temp_sv2=(1.5*v.Ualpha)     *Inverse_Voltage_DC_BUS;
 

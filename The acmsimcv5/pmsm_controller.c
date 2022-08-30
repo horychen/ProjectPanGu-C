@@ -1,12 +1,5 @@
 #include "ACMSim.h"
 
-#if PC_SIMULATION==FALSE
-#include <All_Definition.h> // for accessing CpuTimer1
-double CpuTimer_Delta = 0;
-Uint32 CpuTimer_Before = 0;
-Uint32 CpuTimer_After = 0;
-#endif
-
 #if MACHINE_TYPE == 2
 void init_experiment(){
 
@@ -295,23 +288,7 @@ void controller(REAL set_rpm_speed_command, REAL set_iq_cmd, REAL set_id_cmd){
 
 
     /// 8. 补偿逆变器非线性
-    // #if PC_SIMULATION==FALSE
-    // EALLOW;
-    // CpuTimer1.RegsAddr->TCR.bit.TRB = 1; // reset cpu timer to period value
-    // CpuTimer1.RegsAddr->TCR.bit.TSS = 0; // start/restart
-    // CpuTimer_Before = CpuTimer1.RegsAddr->TIM.all; // get count
-    // EDIS;
-    // #endif
-
     main_inverter_voltage_command(1);
-
-    // #if PC_SIMULATION==FALSE
-    // CpuTimer_After = CpuTimer1.RegsAddr->TIM.all; // get count
-    // CpuTimer_Delta = (double)CpuTimer_Before - (double)CpuTimer_After;
-    // // EALLOW;
-    // // CpuTimer1.RegsAddr->TCR.bit.TSS = 1; // stop (not needed because of the line TRB=1)
-    // // EDIS;
-    // #endif
 
     /// 9. 结束
     #if PC_SIMULATION
@@ -846,15 +823,6 @@ void Online_PAA_Based_Compensation(void){
     INV.iD_atA = AB2M(IS_C(0),IS_C(1), INV.cos_thetaA, INV.sin_thetaA);
     INV.iQ_atA = AB2T(IS_C(0),IS_C(1), INV.cos_thetaA, INV.sin_thetaA);
 
-
-    #if PC_SIMULATION==FALSE
-    EALLOW;
-    CpuTimer1.RegsAddr->TCR.bit.TRB = 1; // reset cpu timer to period value
-    CpuTimer1.RegsAddr->TCR.bit.TSS = 0; // start/restart
-    CpuTimer_Before = CpuTimer1.RegsAddr->TIM.all; // get count
-    EDIS;
-    #endif
-
     if(FALSE){
         /* Use q-axis current in phase A angle (Tentative and Failed) */
         INV.I5_plus_I7     = INV.iQ_atA * cos(6*INV.thetaA);
@@ -876,14 +844,6 @@ void Online_PAA_Based_Compensation(void){
         INV.I17_plus_I19     = INV.iD_atA * sin(18*INV.thetaA);
         INV.I17_plus_I19_LPF = lpf1_inverter(INV.I17_plus_I19, INV.I17_plus_I19_LPF);        
     }
-
-    #if PC_SIMULATION==FALSE
-    CpuTimer_After = CpuTimer1.RegsAddr->TIM.all; // get count
-    CpuTimer_Delta = (double)CpuTimer_Before - (double)CpuTimer_After;
-    // EALLOW;
-    // CpuTimer1.RegsAddr->TCR.bit.TSS = 1; // stop (not needed because of the line TRB=1)
-    // EDIS;
-    #endif
 
     #if PC_SIMULATION
         // INV.gamma_a2 = 0.0;
