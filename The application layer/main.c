@@ -2,6 +2,8 @@
 
 struct st_axis{
     struct ControllerForExperiment *CTRL;
+    struct ADC_RESULT_REGS *AdcaResultRegs;
+    struct ADC_RESULT_REGS *AdcbResultRegs;
 } Axis;
 
 Uint16 LoopCount;
@@ -34,7 +36,7 @@ void start_hall_conversion(REAL hall_sensor_read[]);
 #endif
 
 #ifdef _XCUBE2 // At Process Instrumentation Lab
-    #define OFFSET_VDC 15
+    #define OFFSET_VDC 11
     #define OFFSET_U   2057
     #define OFFSET_V   2065
     #define OFFSET_W   2047
@@ -54,7 +56,7 @@ void start_hall_conversion(REAL hall_sensor_read[]);
 
 // #define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS -976 // for MOTOR1 (w/ hall sensor) // -968 for MOTOR1
 // #define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS -2668 // for MOTOR2
-#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS 0 // for Slice FSPM
+#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS -847 // for Slice FSPM
 
 void init_experiment_AD_gain_and_offset(){
     /* ADC OFFSET */
@@ -86,6 +88,8 @@ void init_experiment_AD_gain_and_offset(){
 void main(void){
 
     Axis.CTRL = &CTRL;
+    Axis.AdcaResultRegs = &AdcaResultRegs;
+    Axis.AdcbResultRegs = &AdcbResultRegs;
 
     InitSysCtrl();        // 1. Initialize System Control: PLL, WatchDog, enable Peripheral Clocks.
     Gpio_initialize();    // 2. Initialize GPIO and assign GPIO to peripherals.
@@ -341,16 +345,25 @@ void DeadtimeCompensation(REAL Current_U, REAL Current_V, REAL Current_W, REAL C
     CMPA_DBC[2] = (Uint16)temp;
 }
 void voltage_commands_to_pwm(){
-    // ----------------------------SVGEN生成-------------------------------------------------
+    // SVPWM of the motor 3-phase
     CTRL.svgen1.Ualpha= CTRL.O->uab_cmd_to_inverter[0];
     CTRL.svgen1.Ubeta = CTRL.O->uab_cmd_to_inverter[1];
-    //    Deadtime_compensation_selection();
     SVGEN_Drive(&CTRL.svgen1);
-    //SPWM_Drive(&CTRL.svgen1);
+
+    // SVPWM of the suspension 3-phase
+    //    svgen2.Ualpha = svgen1.Ualpha*0.5        + svgen1.Ubeta*0.8660254; // rotate 60 deg
+    //    svgen2.Ubeta  = svgen1.Ualpha*-0.8660254 + svgen1.Ubeta*0.5;
+    CTRL.svgen2.Ualpha = 0.0;
+    CTRL.svgen2.Ubeta  = 0.0;
+    SVGEN_Drive(&CTRL.svgen2); //, -ctrl.UNot);
 
     CTRL.svgen1.CMPA[0] = CTRL.svgen1.Ta*SYSTEM_TBPRD;
     CTRL.svgen1.CMPA[1] = CTRL.svgen1.Tb*SYSTEM_TBPRD;
     CTRL.svgen1.CMPA[2] = CTRL.svgen1.Tc*SYSTEM_TBPRD;
+    CTRL.svgen2.CMPA[0] = CTRL.svgen2.Ta*SYSTEM_TBPRD;
+    CTRL.svgen2.CMPA[1] = CTRL.svgen2.Tb*SYSTEM_TBPRD;
+    CTRL.svgen2.CMPA[2] = CTRL.svgen2.Tc*SYSTEM_TBPRD;
+
     #if USE_DEATIME_PRECOMP
         DeadtimeCompensation(G.iuvw[0], G.iuvw[1], G.iuvw[2],
                             CTRL.svgen1.CMPA, CTRL.svgen1.CMPA_DBC);
@@ -358,9 +371,12 @@ void voltage_commands_to_pwm(){
         EPwm2Regs.CMPA.bit.CMPA = CTRL.svgen1.CMPA_DBC[1];
         EPwm3Regs.CMPA.bit.CMPA = CTRL.svgen1.CMPA_DBC[2];
     #else
-        EPwm1Regs.CMPA.bit.CMPA = CTRL.svgen1.CMPA[0];
-        EPwm2Regs.CMPA.bit.CMPA = CTRL.svgen1.CMPA[1];
-        EPwm3Regs.CMPA.bit.CMPA = CTRL.svgen1.CMPA[2];
+        EPwm1Regs.CMPA.bit.CMPA = (Uint16)CTRL.svgen1.CMPA[0];
+        EPwm2Regs.CMPA.bit.CMPA = (Uint16)CTRL.svgen1.CMPA[1];
+        EPwm3Regs.CMPA.bit.CMPA = (Uint16)CTRL.svgen1.CMPA[2];
+        EPwm4Regs.CMPA.bit.CMPA = (Uint16)CTRL.svgen2.CMPA[0];
+        EPwm5Regs.CMPA.bit.CMPA = (Uint16)CTRL.svgen2.CMPA[1];
+        EPwm6Regs.CMPA.bit.CMPA = (Uint16)CTRL.svgen2.CMPA[2];
     #endif
 }
 void voltage_measurement_based_on_eCAP(){
@@ -444,6 +460,10 @@ void measurement(){
     // 线电压测量（基于占空比和母线电压）
     voltage_measurement_based_on_eCAP();
 
+    // 电流环限幅
+    pid1_iM.OutLimit = G.vdc * 0.5773672;
+    pid1_iT.OutLimit = G.vdc * 0.5773672;
+
     // 电流接口
     G.iabg[0] = UVW2A_AI(G.iuvw[0], G.iuvw[1], G.iuvw[2]);
     G.iabg[1] = UVW2B_AI(G.iuvw[0], G.iuvw[1], G.iuvw[2]);
@@ -451,10 +471,14 @@ void measurement(){
     G.iabg[3] = UVW2A_AI(G.iuvw[3], G.iuvw[4], G.iuvw[5]);
     G.iabg[4] = UVW2B_AI(G.iuvw[3], G.iuvw[4], G.iuvw[5]);
     G.iabg[5] = UVW2G_AI(G.iuvw[3], G.iuvw[4], G.iuvw[5]);
-    IS_C(0)        = G.iabg[3];
-    IS_C(1)        = G.iabg[4];
-    CTRL.I->iab[0] = G.iabg[3];
-    CTRL.I->iab[1] = G.iabg[4];
+    IS_C(0)        = G.iabg[0];
+    IS_C(1)        = G.iabg[1];
+    CTRL.I->iab[0] = G.iabg[0];
+    CTRL.I->iab[1] = G.iabg[1];
+    //    IS_C(0)        = G.iabg[3];
+    //    IS_C(1)        = G.iabg[4];
+    //    CTRL.I->iab[0] = G.iabg[3];
+    //    CTRL.I->iab[1] = G.iabg[4];
 
     // 转子位置和转速接口 以及 转子位置和转速测量
     {

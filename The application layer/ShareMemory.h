@@ -2,12 +2,12 @@
 #define SHARE_MOMORY_H
 
 //Share Memory Configuration
-// ¹²ÏíÄÚ´æ½á¹¹ÌåÉùÃ÷
+// å…±äº«å†…å­˜ç»“æ„ä½“å£°æ˜
 struct IPC_MEMORY_WRITE{
     /* read/write (RW) shared memory @ GS1 owned by CPU1 */
     REAL dac_buffer[8];
     REAL test;
-};// Ë«Ïò±äÁ¿
+};// åŒå‘å˜é‡
 extern struct IPC_MEMORY_WRITE Write;
 
 struct IPC_MEMORY_READ{
@@ -16,7 +16,7 @@ struct IPC_MEMORY_READ{
     REAL speed_cmd_elec;
 
     int16 SCI_char;
-};// Ë«Ïò±äÁ¿
+};// åŒå‘å˜é‡
 extern struct IPC_MEMORY_READ Read;
 
 void write_DAC_buffer();

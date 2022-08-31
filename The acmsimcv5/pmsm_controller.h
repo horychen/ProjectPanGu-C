@@ -219,7 +219,7 @@ typedef struct {
     // DAC
         REAL dac_offset[8];
         REAL dac_time;
-        REAL dac_watch[60];
+        REAL dac_watch[80];
         REAL dac_watch_stator_resistance;
     // To show that REAL type is not very accurate 64 missing by counting 1e-4 sec to 10 sec.
         Uint32  test_integer;
@@ -268,8 +268,9 @@ struct ControllerForExperiment{
     /* Inverter */
     st_InverterNonlinearity *inv;
     SVGENDQ svgen1;
+    SVGENDQ svgen2;
 
-    /* Capture */
+    /* Capture (line-to-line voltage) */
     st_capture *cap;
 
     /* Console */
