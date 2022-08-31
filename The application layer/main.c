@@ -54,13 +54,17 @@ void start_hall_conversion(REAL hall_sensor_read[]);
     #define SCALE_T -0.034
 #endif
 
-// #define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS -976 // for MOTOR1 (w/ hall sensor) // -968 for MOTOR1
-// #define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS -2668 // for MOTOR2
-#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS -847 // for Slice FSPM
+// #define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS -976 // for 750W MOTOR1 (w/ hall sensor)
+// #define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS -2668 // for 750W MOTOR2
+//#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS 0 // for Slice FSPM
+//#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS 55 // for 400W reducer sdcq motor, 3 A, 2445, 7433, 2442, 9943
+#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS -100 // for 400W reducer sdcq motor, 3 A, 2445, 7433, 2442, 9943
 
 void init_experiment_AD_gain_and_offset(){
     /* ADC OFFSET */
+    // dc bus sensor
     G.adc_offset[0] = OFFSET_VDC;
+    // phase current sensor
     G.adc_offset[1] = OFFSET_U;
     G.adc_offset[2] = OFFSET_V;
     G.adc_offset[3] = OFFSET_W;
@@ -68,6 +72,7 @@ void init_experiment_AD_gain_and_offset(){
     G.adc_offset[5] = OFFSET_S;
     G.adc_offset[6] = OFFSET_T;
 
+    // hall sensor
     G.adc_offset[7] = 1659.5;// (1350 - -732) / 2
     G.adc_offset[8] = 1671.0;// (1355 - -847) / 2
     G.adc_offset[9] = 1850; // (700+3000)/2

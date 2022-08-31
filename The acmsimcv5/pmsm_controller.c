@@ -219,7 +219,7 @@ void null_d_control(REAL set_iq_cmd, REAL set_id_cmd){
     extern float Set_maunal_current_id;
 #endif
 int flag_overwrite_theta_d=FALSE;
-int Overwrite_Current_Frequency = 2;
+REAL Overwrite_Current_Frequency = 0.5;
 void controller(REAL set_rpm_speed_command, REAL set_iq_cmd, REAL set_id_cmd){
 
     /// 0. 参数时变

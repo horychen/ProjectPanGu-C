@@ -373,7 +373,7 @@ void eQEP_initialize(int m)
     (*eQEP[m]).QPOSCTL.all = QPOSCTL_INIT_STATE;
     (*eQEP[m]).QUPRD = SYSTEM_QEP_UNITTIME_ISR *200000000;		        	// Unit Timer for 1K
     (*eQEP[m]).QCAPCTL.all = QCAPCTL_INIT_STATE;
-    (*eQEP[m]).QPOSMAX = (4*SYSTEM_QEP_LINE);//(4*v.LineEncoder);
+    (*eQEP[m]).QPOSMAX = SYSTEM_QEP_QPOSMAX; // (4*SYSTEM_QEP_LINE);//(4*v.LineEncoder);
 
     EQep1Regs.QEPCTL.bit.IEI = 0;        // disable POSCNT=POSINIT @ Index
     EQep1Regs.QCLR.bit.UTO=1; //清除定时中断标志位

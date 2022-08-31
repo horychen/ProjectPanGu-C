@@ -244,8 +244,9 @@
     // increase to 3 times because of the bug in dynamics clamping
 
 /* Encoder QEP TODO: should read from excel */
-#define SYSTEM_QEP_PULSES_PER_REV  (10000)
-#define SYSTEM_QEP_REV_PER_PULSE  (1e-4)
+#define SYSTEM_QEP_QPOSMAX 65535 // (9999)
+#define SYSTEM_QEP_PULSES_PER_REV 65536 // (10000)
+#define SYSTEM_QEP_REV_PER_PULSE  1.52587890625e-05 // (1e-4)
 #define CNT_2_ELEC_RAD (SYSTEM_QEP_REV_PER_PULSE * 2*M_PI * MOTOR_NUMBER_OF_POLE_PAIRS)
 
 

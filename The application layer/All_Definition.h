@@ -39,8 +39,8 @@
     void ADC_initialize(void);
     //PWM CONFIGURATION // see ACMSim.h
     //QEP CONFIGURATION
-    #define SYSTEM_QEP_LINE                  2500     //encoder line
-    #define SYSTEM_QEP_POLE_PAIRS               4     //pairs
+    // #define SYSTEM_QEP_LINE                  2500     //encoder line
+    // #define SYSTEM_QEP_POLE_PAIRS               4     //pairs
     #define SYSTEM_QEP_UNITTIME_ISR          0.001    //1K ,1ms     time_out timer   isr_time
     #define SYSTEM_QEP_CAP_X128           0.00000064  //cap timer
     #define SYSTEM_QEP_CUTOFF_FILTER           5      // CUTOFF FREQUENCY 10HZ
