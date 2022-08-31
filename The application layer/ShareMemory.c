@@ -251,6 +251,7 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
     G.dac_watch[56] = hall_theta_r_mech_incremental[0]*0.01;
     G.dac_watch[57] = hall_theta_r_mech_incremental[1]*0.01;
     G.dac_watch[58] = hall_qep_count * 0.003;
+    G.dac_watch[59] = hall_qep_count * 0.003;
 
 
     if(channels_preset==1){channels_preset=0;
@@ -342,6 +343,7 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
         channels[2] = 52;
         channels[3] = 53;
         channels[4] = 54;
+        channels[5] = 55;
     }
 
     // 八通道DAC输出，请修改channels数组来确定具体输出哪些G.dac_watch数组中的变量。
