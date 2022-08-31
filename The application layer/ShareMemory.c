@@ -221,20 +221,20 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
     //    G.dac_watch[53] = huwu.x[2];
     //    G.dac_watch[54] = huwu.limiter_KE;
 
-    G.dac_watch[55] = MOTOR.KE;
-
-    //        G.dac_watch[48] = (CAP.ecapU.DutyOnTime1)  * 0.25e-4;
-    //        G.dac_watch[49] = (CAP.ecapU.DutyOffTime1) * 0.25e-4;
-    //        G.dac_watch[50] = (CAP.ecapU.DutyOnTime2)  * 0.25e-4;
-    //        G.dac_watch[51] = (CAP.ecapU.DutyOffTime2) * 0.25e-4;
-
-    G.dac_watch[56] = (CTRL.I->rpm - CTRL.I->cmd_speed_rpm)*0.01;
-    G.dac_watch[57] = (ELECTRICAL_SPEED_FEEDBACK*ELEC_RAD_PER_SEC_2_RPM - CTRL.I->cmd_speed_rpm)*0.01;
-
-    G.dac_watch[58] = angle_error_limiter(ENC.theta_d_elec - AFEOE.theta_d); // VM CM Fusion
-    G.dac_watch[59] = angle_error_limiter(ENC.theta_d_elec - ELECTRICAL_POSITION_FEEDBACK);
-    //    G.dac_watch[58] = sin(ENC.theta_d_elec - AFEOE.theta_d);
-    //    G.dac_watch[59] = sin(ENC.theta_d_elec - ELECTRICAL_POSITION_FEEDBACK);
+//    G.dac_watch[55] = MOTOR.KE;
+//
+//    //        G.dac_watch[48] = (CAP.ecapU.DutyOnTime1)  * 0.25e-4;
+//    //        G.dac_watch[49] = (CAP.ecapU.DutyOffTime1) * 0.25e-4;
+//    //        G.dac_watch[50] = (CAP.ecapU.DutyOnTime2)  * 0.25e-4;
+//    //        G.dac_watch[51] = (CAP.ecapU.DutyOffTime2) * 0.25e-4;
+//
+//    G.dac_watch[56] = (CTRL.I->rpm - CTRL.I->cmd_speed_rpm)*0.01;
+//    G.dac_watch[57] = (ELECTRICAL_SPEED_FEEDBACK*ELEC_RAD_PER_SEC_2_RPM - CTRL.I->cmd_speed_rpm)*0.01;
+//
+//    G.dac_watch[58] = angle_error_limiter(ENC.theta_d_elec - AFEOE.theta_d); // VM CM Fusion
+//    G.dac_watch[59] = angle_error_limiter(ENC.theta_d_elec - ELECTRICAL_POSITION_FEEDBACK);
+//    //    G.dac_watch[58] = sin(ENC.theta_d_elec - AFEOE.theta_d);
+//    //    G.dac_watch[59] = sin(ENC.theta_d_elec - ELECTRICAL_POSITION_FEEDBACK);
 
 
     // information from d-axis voltage equation
@@ -248,8 +248,10 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
     G.dac_watch[53] = current_pole[1]*0.5;
     G.dac_watch[54] = count_magnet[0] * 0.02;
     G.dac_watch[55] = count_magnet[1] * 0.02;
-    G.dac_watch[56] = hall_theta_r_mech_incremental[0]*0.01;
-    G.dac_watch[57] = hall_theta_r_mech_incremental[1]*0.01;
+
+    G.dac_watch[56] = CTRL.I->theta_d_elec*0.1;
+    G.dac_watch[57] = CTRL.I->rpm*0.01;
+
     G.dac_watch[58] = hall_qep_count * 0.003;
     G.dac_watch[59] = hall_qep_count * 0.003;
 
@@ -340,10 +342,10 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
         /* Slice motor */
         channels[0] = 50;
         channels[1] = 51;
-        channels[2] = 52;
-        channels[3] = 53;
-        channels[4] = 54;
-        channels[5] = 55;
+        channels[2] = 56;
+        channels[3] = 57;
+        channels[4] = 52;
+        channels[5] = 53;
     }
 
     // 八通道DAC输出，请修改channels数组来确定具体输出哪些G.dac_watch数组中的变量。
