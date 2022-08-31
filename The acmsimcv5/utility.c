@@ -46,7 +46,7 @@ REAL PostionSpeedMeasurement_MovingAvergage(Uint32 QPOSCNT){
 
         /* 获取绝对位置 [cnt] 用于转子位置解算 */
         ENC.encoder_abs_cnt_previous = ENC.encoder_abs_cnt;
-        ENC.encoder_abs_cnt = QPOSCNT + ENC.OffsetCountBetweenIndexAndUPhaseAxis;
+        ENC.encoder_abs_cnt = (int32)QPOSCNT + ENC.OffsetCountBetweenIndexAndUPhaseAxis;
         if(ENC.encoder_abs_cnt > SYSTEM_QEP_PULSES_PER_REV) {ENC.encoder_abs_cnt -= SYSTEM_QEP_PULSES_PER_REV;}
         if(ENC.encoder_abs_cnt < 0)                         {ENC.encoder_abs_cnt += SYSTEM_QEP_PULSES_PER_REV;}
         ENC.theta_d__state = ENC.encoder_abs_cnt * CNT_2_ELEC_RAD;
@@ -57,7 +57,7 @@ REAL PostionSpeedMeasurement_MovingAvergage(Uint32 QPOSCNT){
 
         /* 获取位置增量 [cnt] 用于滑动平均转速解算 */
         ENC.encoder_incremental_cnt = ENC.encoder_abs_cnt - ENC.encoder_abs_cnt_previous;
-        // 增量超过ppr的一半则认为是发生了Cnt被Z信号清零事件
+        // 增量超过ppr*4(=2500*4)的一半则认为是发生了Cnt被Z信号清零事件
         if(        ENC.encoder_incremental_cnt < -0.5*    SYSTEM_QEP_PULSES_PER_REV)
                    ENC.encoder_incremental_cnt += (int32) SYSTEM_QEP_PULSES_PER_REV;
         else if (  ENC.encoder_incremental_cnt >  0.5*    SYSTEM_QEP_PULSES_PER_REV)
