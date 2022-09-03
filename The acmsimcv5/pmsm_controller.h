@@ -18,15 +18,15 @@ typedef struct {
     REAL cmd_omg_elec;      // electrical
     REAL cmd_rotor_flux_Wb;
     REAL cmd_psi; // this is not used for PMSM
-    REAL idq_cmd[2];
+    REAL idq_cmd[4];
     REAL Tem_cmd;
     // feedback
     REAL rpm;
     REAL omg_elec;
     REAL theta_d_elec;
     REAL theta_d_elec_previous;
-    REAL iab[2];
-    REAL idq[2];
+    REAL iab[4];
+    REAL idq[4];
     REAL psi_mu[2];
     REAL Tem;
 } st_controller_inputs;
@@ -39,12 +39,16 @@ typedef struct {
     REAL sinT;
     REAL cosT_compensated_1p5omegaTs;
     REAL sinT_compensated_1p5omegaTs;
+    REAL cosT2;
+    REAL sinT2;
     REAL omega_syn;
     // states
     st_pid_regulator *iM;
     st_pid_regulator *iT;
-    st_pid_regulator *pos;
     st_pid_regulator *spd;
+    st_pid_regulator *pos;
+    st_pid_regulator *iM2;
+    st_pid_regulator *iT2;
     int the_vc_count;
     // Status of Detection
     int PSD_Done;
@@ -54,12 +58,12 @@ typedef struct {
 } st_controller_states;
 typedef struct {
     // voltage commands
-    REAL uab_cmd[2];
-    REAL uab_cmd_to_inverter[2]; // foc control output + inverter nonlinearity compensation
-    REAL udq_cmd[2];
-    REAL udq_cmd_to_inverter[2];
+    REAL uab_cmd[4];
+    REAL uab_cmd_to_inverter[4]; // foc control output + inverter nonlinearity compensation
+    REAL udq_cmd[4];
+    REAL udq_cmd_to_inverter[4];
     // current commands
-    REAL iab_cmd[2];
+    REAL iab_cmd[4];
 } st_controller_outputs;
 typedef struct {
     // electrical 
@@ -300,7 +304,7 @@ void init_experiment();
 void init_CTRL();
 void commissioning();
 void controller(REAL rpm_speed_command, REAL set_iq_cmd, REAL set_id_cmd);
-void allocate_CTRL(struct ControllerForExperiment *CTRL);
+void allocate_CTRL(struct ControllerForExperiment *p);
 
 // void control(REAL speed_cmd, REAL speed_cmd_dot);
 

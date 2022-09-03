@@ -2,8 +2,9 @@
 
 struct st_axis{
     struct ControllerForExperiment *CTRL;
-    struct ADC_RESULT_REGS *AdcaResultRegs;
-    struct ADC_RESULT_REGS *AdcbResultRegs;
+    volatile struct ADC_RESULT_REGS *AdcaResultRegs;
+    volatile struct ADC_RESULT_REGS *AdcbResultRegs;
+    int use_fisrt_set_three_phase;
 } Axis;
 
 Uint16 LoopCount;
@@ -37,12 +38,12 @@ void start_hall_conversion(REAL hall_sensor_read[]);
 
 #ifdef _XCUBE2 // At Process Instrumentation Lab
     #define OFFSET_VDC 11
-    #define OFFSET_U   2057
-    #define OFFSET_V   2065
-    #define OFFSET_W   2047
-    #define OFFSET_R   2060
-    #define OFFSET_S   2062
-    #define OFFSET_T   2060
+    #define OFFSET_U   2053
+    #define OFFSET_V   2062
+    #define OFFSET_W   2046
+    #define OFFSET_R   2056
+    #define OFFSET_S   2061
+    #define OFFSET_T   2057
 
     // Sensor Board 6 Phase SiC MOSFET Inverter
     #define SCALE_VDC 0.0949
@@ -58,7 +59,22 @@ void start_hall_conversion(REAL hall_sensor_read[]);
 // #define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS -2668 // for 750W MOTOR2
 //#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS 0 // for Slice FSPM
 //#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS 55 // for 400W reducer sdcq motor, 3 A, 2445, 7433, 2442, 9943
-#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS -100 // for 400W reducer sdcq motor, 3 A, 2445, 7433, 2442, 9943
+//#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS -100 // for 400W reducer sdcq motor, 3 A, 2445, 7433, 2442, 9943
+
+//#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS -27807 // for yaojie linear-rotary motor
+//#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS -51107 // for yaojie linear-rotary motor
+//#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS -27900 // 堵转给id转矩测量为0Nm
+//#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS -49800 // 堵转给id转矩测量为0Nm
+//#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS 14429
+
+//#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS 236 // 第一套
+//#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS 203 // 第二套
+
+//#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS 205 // 相序反接后，第一套
+//#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS 182 // 相序反接后，第二套
+
+#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS 330 // 相序接回去后，第一套
+//#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS 0 // 相序接回去后，第二套
 
 void init_experiment_AD_gain_and_offset(){
     /* ADC OFFSET */
@@ -95,6 +111,7 @@ void main(void){
     Axis.CTRL = &CTRL;
     Axis.AdcaResultRegs = &AdcaResultRegs;
     Axis.AdcbResultRegs = &AdcbResultRegs;
+    Axis.use_fisrt_set_three_phase = 1;
 
     InitSysCtrl();        // 1. Initialize System Control: PLL, WatchDog, enable Peripheral Clocks.
     Gpio_initialize();    // 2. Initialize GPIO and assign GPIO to peripherals.
@@ -350,16 +367,35 @@ void DeadtimeCompensation(REAL Current_U, REAL Current_V, REAL Current_W, REAL C
     CMPA_DBC[2] = (Uint16)temp;
 }
 void voltage_commands_to_pwm(){
-    // SVPWM of the motor 3-phase
-    CTRL.svgen1.Ualpha= CTRL.O->uab_cmd_to_inverter[0];
-    CTRL.svgen1.Ubeta = CTRL.O->uab_cmd_to_inverter[1];
-    SVGEN_Drive(&CTRL.svgen1);
+    if(Axis.use_fisrt_set_three_phase==1){
+        // SVPWM of the motor 3-phase
+        CTRL.svgen1.Ualpha= CTRL.O->uab_cmd_to_inverter[0];
+        CTRL.svgen1.Ubeta = CTRL.O->uab_cmd_to_inverter[1];
 
-    // SVPWM of the suspension 3-phase
-    //    svgen2.Ualpha = svgen1.Ualpha*0.5        + svgen1.Ubeta*0.8660254; // rotate 60 deg
-    //    svgen2.Ubeta  = svgen1.Ualpha*-0.8660254 + svgen1.Ubeta*0.5;
-    CTRL.svgen2.Ualpha = 0.0;
-    CTRL.svgen2.Ubeta  = 0.0;
+        // SVPWM of the suspension 3-phase
+        //    svgen2.Ualpha = svgen1.Ualpha*0.5        + svgen1.Ubeta*0.8660254; // rotate 60 deg
+        //    svgen2.Ubeta  = svgen1.Ualpha*-0.8660254 + svgen1.Ubeta*0.5;
+        CTRL.svgen2.Ualpha = 0;
+        CTRL.svgen2.Ubeta  = 0;
+    }else if(Axis.use_fisrt_set_three_phase==2){
+        // SVPWM of the motor 3-phase
+        CTRL.svgen1.Ualpha= 0;
+        CTRL.svgen1.Ubeta = 0;
+
+        // SVPWM of the suspension 3-phase
+        CTRL.svgen2.Ualpha = CTRL.O->uab_cmd_to_inverter[0+2];
+        CTRL.svgen2.Ubeta  = CTRL.O->uab_cmd_to_inverter[1+2];
+    }else if(Axis.use_fisrt_set_three_phase==-1){
+
+        // SVPWM of the motor 3-phase
+        CTRL.svgen1.Ualpha= CTRL.O->uab_cmd_to_inverter[0];
+        CTRL.svgen1.Ubeta = CTRL.O->uab_cmd_to_inverter[1];
+
+        // SVPWM of the suspension 3-phase
+        CTRL.svgen2.Ualpha = CTRL.O->uab_cmd_to_inverter[0+2];
+        CTRL.svgen2.Ubeta  = CTRL.O->uab_cmd_to_inverter[1+2];
+    }
+    SVGEN_Drive(&CTRL.svgen1);
     SVGEN_Drive(&CTRL.svgen2); //, -ctrl.UNot);
 
     CTRL.svgen1.CMPA[0] = CTRL.svgen1.Ta*SYSTEM_TBPRD;
@@ -468,22 +504,47 @@ void measurement(){
     // 电流环限幅
     pid1_iM.OutLimit = G.vdc * 0.5773672;
     pid1_iT.OutLimit = G.vdc * 0.5773672;
+    pid2_iM.OutLimit = G.vdc * 0.5773672;
+    pid2_iT.OutLimit = G.vdc * 0.5773672;
 
     // 电流接口
-    G.iabg[0] = UVW2A_AI(G.iuvw[0], G.iuvw[1], G.iuvw[2]);
-    G.iabg[1] = UVW2B_AI(G.iuvw[0], G.iuvw[1], G.iuvw[2]);
-    G.iabg[2] = UVW2G_AI(G.iuvw[0], G.iuvw[1], G.iuvw[2]);
-    G.iabg[3] = UVW2A_AI(G.iuvw[3], G.iuvw[4], G.iuvw[5]);
-    G.iabg[4] = UVW2B_AI(G.iuvw[3], G.iuvw[4], G.iuvw[5]);
-    G.iabg[5] = UVW2G_AI(G.iuvw[3], G.iuvw[4], G.iuvw[5]);
-    IS_C(0)        = G.iabg[0];
-    IS_C(1)        = G.iabg[1];
-    CTRL.I->iab[0] = G.iabg[0];
-    CTRL.I->iab[1] = G.iabg[1];
-    //    IS_C(0)        = G.iabg[3];
-    //    IS_C(1)        = G.iabg[4];
-    //    CTRL.I->iab[0] = G.iabg[3];
-    //    CTRL.I->iab[1] = G.iabg[4];
+//    G.iabg[0] = UVW2A_AI(G.iuvw[0], G.iuvw[1], G.iuvw[2]);
+//    G.iabg[1] = UVW2B_AI(G.iuvw[0], G.iuvw[1], G.iuvw[2]);
+//    G.iabg[2] = UVW2G_AI(G.iuvw[0], G.iuvw[1], G.iuvw[2]);
+    // TODO: 电流传感器V相没接线，接的是IDC_BUS
+    REAL phase_V_current = -G.iuvw[0] - G.iuvw[2];
+    G.iabg[0] = UV2A_AI(G.iuvw[0], phase_V_current);
+    G.iabg[1] = UV2B_AI(G.iuvw[0], phase_V_current);
+
+//    G.iabg[3] = UVW2A_AI(G.iuvw[3], G.iuvw[4], G.iuvw[5]);
+//    G.iabg[4] = UVW2B_AI(G.iuvw[3], G.iuvw[4], G.iuvw[5]);
+//    G.iabg[5] = UVW2G_AI(G.iuvw[3], G.iuvw[4], G.iuvw[5]);
+
+    phase_V_current = -G.iuvw[3] - G.iuvw[5];
+    G.iabg[3] = UV2A_AI(G.iuvw[3], phase_V_current);
+    G.iabg[4] = UV2B_AI(G.iuvw[3], phase_V_current);
+
+    // 第一套三相
+    if(Axis.use_fisrt_set_three_phase==1){
+        IS_C(0)        = G.iabg[0];
+        IS_C(1)        = G.iabg[1];
+        CTRL.I->iab[0] = G.iabg[0];
+        CTRL.I->iab[1] = G.iabg[1];
+    }else if(Axis.use_fisrt_set_three_phase==2){
+        // 第二套三相
+        IS_C(0)        = G.iabg[3];
+        IS_C(1)        = G.iabg[4];
+        CTRL.I->iab[0+2] = G.iabg[3];
+        CTRL.I->iab[1+2] = G.iabg[4];
+    }else if(Axis.use_fisrt_set_three_phase==-1){
+        IS_C(0)        = G.iabg[0];
+        IS_C(1)        = G.iabg[1];
+        CTRL.I->iab[0] = G.iabg[0];
+        CTRL.I->iab[1] = G.iabg[1];
+        CTRL.I->iab[0+2] = G.iabg[3];
+        CTRL.I->iab[1+2] = G.iabg[4];
+    }
+
 
     // 转子位置和转速接口 以及 转子位置和转速测量
     {
@@ -492,6 +553,7 @@ void measurement(){
         ENC.omg_elec     = ENC.rpm * RPM_2_ELEC_RAD_PER_SEC; // 机械转速（单位：RPM）-> 电气角速度（单位：elec.rad/s)
         ENC.theta_d_elec = ENC.theta_d__state;
     }
+    //CTRL.I->omg_elec = SPEED_DIRECTION * ENC.omg_elec;
     CTRL.I->omg_elec = ENC.omg_elec;
     CTRL.I->rpm = CTRL.I->omg_elec * ELEC_RAD_PER_SEC_2_RPM;
     CTRL.I->theta_d_elec = ENC.theta_d_elec;
@@ -573,6 +635,7 @@ void PanGuMainISR(void){
 
             init_experiment();
             //G.Seletc_exp_operation = 3; // fixed
+            init_experiment_AD_gain_and_offset();
             init_experiment_overwrite();
         }
 

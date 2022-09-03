@@ -57,7 +57,7 @@ REAL PostionSpeedMeasurement_MovingAvergage(Uint32 QPOSCNT){
 
         /* 获取位置增量 [cnt] 用于滑动平均转速解算 */
         ENC.encoder_incremental_cnt = ENC.encoder_abs_cnt - ENC.encoder_abs_cnt_previous;
-        // 增量超过ppr*4(=2500*4)的一半则认为是发生了Cnt被Z信号清零事件
+        // 增量超过ppr的一半则认为是发生了Cnt被Z信号清零事件
         if(        ENC.encoder_incremental_cnt < -0.5*    SYSTEM_QEP_PULSES_PER_REV)
                    ENC.encoder_incremental_cnt += (int32) SYSTEM_QEP_PULSES_PER_REV;
         else if (  ENC.encoder_incremental_cnt >  0.5*    SYSTEM_QEP_PULSES_PER_REV)
@@ -72,7 +72,7 @@ REAL PostionSpeedMeasurement_MovingAvergage(Uint32 QPOSCNT){
         }
 
     // Output of the moving average is speed. CTRL.I->rpm = how many counts / time elapsed
-    return ENC.sum_qepPosCnt*SYSTEM_QEP_REV_PER_PULSE * 60 * MA_SEQUENCE_LENGTH_INVERSE * CL_TS_INVERSE;
+    return ENC.sum_qepPosCnt*SYSTEM_QEP_REV_PER_PULSE * ONE_OVER_RESOLVER_NUMBER_OF_POLE_PAIRS * 60 * MA_SEQUENCE_LENGTH_INVERSE * CL_TS_INVERSE;
     // return ENC.sum_qepPosCnt*SYSTEM_QEP_REV_PER_PULSE * 60 / (MA_SEQUENCE_LENGTH*CL_TS);
     // return ENC.sum_qepPosCnt*SYSTEM_QEP_REV_PER_PULSE * 6e4; // 6e4 = 60 / (MA_SEQUENCE_LENGTH*CL_TS) 
 }
