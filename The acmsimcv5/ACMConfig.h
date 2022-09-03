@@ -1,7 +1,7 @@
 #ifndef ACMCONFIG_H
 #define ACMCONFIG_H
 /* 经常要修改的 */
-#define INVERTER_NONLINEARITY_COMPENSATION_INIT 5 // 4 // 1:ParkSul12, 2:Sigmoid, 3:LUT(Obsolete), 4:LUT(by index), 5 Slessinv-a2a3Model
+#define INVERTER_NONLINEARITY_COMPENSATION_INIT 0 // 5（9月1日及以前峣杰实验一直用的5） // 4 // 1:ParkSul12, 2:Sigmoid, 3:LUT(Obsolete), 4:LUT(by index), 5 Slessinv-a2a3Model
 #define INVERTER_NONLINEARITY                   2 // 4 // 1:ModelSul96, 2:ModelExpSigmoid, 3: ModelExpLUT, 4:LUT(by index)
 #define SENSORLESS_CONTROL FALSE
 #define SENSORLESS_CONTROL_HFSI FALSE
@@ -14,16 +14,16 @@
     #define PM_SYNCHRONOUS_MACHINE 2
 #define MACHINE_TYPE 2
 	// 电机参数
-	#define PMSM_RESISTANCE                    1.1
-	#define PMSM_D_AXIS_INDUCTANCE             0.004957
-	#define PMSM_Q_AXIS_INDUCTANCE             0.004957
-	#define PMSM_PERMANENT_MAGNET_FLUX_LINKAGE 0.1
+	#define PMSM_RESISTANCE                    1.97 //1.1
+	#define PMSM_D_AXIS_INDUCTANCE             0.1035 //0.004957
+	#define PMSM_Q_AXIS_INDUCTANCE             0.1063 //0.004957
+	#define PMSM_PERMANENT_MAGNET_FLUX_LINKAGE 0.0745 //0.1
 	// 铭牌值
-	#define MOTOR_NUMBER_OF_POLE_PAIRS         4
+	#define MOTOR_NUMBER_OF_POLE_PAIRS         24 //4
 	#define MOTOR_RATED_CURRENT_RMS            3
 	#define MOTOR_RATED_POWER_WATT             750
-	#define MOTOR_RATED_SPEED_RPM              1500
-	#define MOTOR_SHAFT_INERTIA                0.0006168
+	#define MOTOR_RATED_SPEED_RPM              250 //1500
+	#define MOTOR_SHAFT_INERTIA                0.051 //0.0006168
 	// 参数误差
 		#define MISMATCH_R   100
 		#define MISMATCH_LD  100
@@ -226,13 +226,23 @@
 #define LOAD_TORQUE     3
 #define VISCOUS_COEFF   0.0007
 
-#define CURRENT_KP (6.39955)
-#define CURRENT_KI (221.908)
+// #define CURRENT_KP (202.3158472591765)
+// #define CURRENT_KI (18.532455315145814)
+// #define SPEED_KP (0.23199757309020605)
+// #define SPEED_KI (45.0474201649182)
+
+#define CURRENT_KP (71.67677731308854)
+#define CURRENT_KI (18.532455315145814)
+#define SPEED_KP (0.1232886988995577)
+#define SPEED_KI (15.959471032210619)
+
+// #define CURRENT_KP (6.39955)
+// #define CURRENT_KI (221.908)
     #define CURRENT_KI_CODE (CURRENT_KI*CURRENT_KP*CL_TS)
 #define CURRENT_LOOP_LIMIT_VOLTS (110)
 
-#define SPEED_KP (0.0510446)
-#define SPEED_KI (30.5565)
+// #define SPEED_KP (0.0510446)
+// #define SPEED_KI (30.5565)
     #define MOTOR_RATED_TORQUE ( MOTOR_RATED_POWER_WATT / (MOTOR_RATED_SPEED_RPM/60.0*2*3.1415926) )
     #define MOTOR_TORQUE_CONSTANT ( MOTOR_RATED_TORQUE / (MOTOR_RATED_CURRENT_RMS*1.414) )
     #define MOTOR_BACK_EMF_CONSTANT ( MOTOR_TORQUE_CONSTANT / 1.5 / MOTOR_NUMBER_OF_POLE_PAIRS )
@@ -244,10 +254,12 @@
     // increase to 3 times because of the bug in dynamics clamping
 
 /* Encoder QEP TODO: should read from excel */
-#define SYSTEM_QEP_QPOSMAX 65535 // (9999)
-#define SYSTEM_QEP_PULSES_PER_REV 65536 // (10000)
-#define SYSTEM_QEP_REV_PER_PULSE  1.52587890625e-05 // (1e-4)
-#define CNT_2_ELEC_RAD (SYSTEM_QEP_REV_PER_PULSE * 2*M_PI * MOTOR_NUMBER_OF_POLE_PAIRS)
+#define SYSTEM_QEP_QPOSMAX (65535)
+#define SYSTEM_QEP_PULSES_PER_REV  (65536) // (10000)
+#define SYSTEM_QEP_REV_PER_PULSE   (1.52587890625e-05) // (1e-4)
+#define ONE_OVER_RESOLVER_NUMBER_OF_POLE_PAIRS 0.25 // Receive 4 Z-pulses per mechnical revolution from the resolver 
+#define CNT_2_ELEC_RAD (SYSTEM_QEP_REV_PER_PULSE * 2*M_PI * ONE_OVER_RESOLVER_NUMBER_OF_POLE_PAIRS * MOTOR_NUMBER_OF_POLE_PAIRS)
+// #define CNT_2_ELEC_RAD (SYSTEM_QEP_REV_PER_PULSE * 2*M_PI * MOTOR_NUMBER_OF_POLE_PAIRS)
 
 
 /* 指令类型 */
