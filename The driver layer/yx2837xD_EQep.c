@@ -361,10 +361,10 @@ void eQEP_initialize(int m)
 {
     InitEQep1Gpio();
 
-    //  //Ðý±ä³õÊ¼Î»ÖÃ²É¼¯
-    // DELAY_US(11);         //RESET µÍµçÆ½ÖÁÉÙ10US
+    //  //ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼Î»ï¿½Ã²É¼ï¿½
+    // DELAY_US(11);         //RESET ï¿½Íµï¿½Æ½ï¿½ï¿½ï¿½ï¿½10US
     // GpioDataRegs.GPDSET.bit.GPIO106=1;
-    // DELAY_US(30001);      //RESET ¸ßµçÆ½ÖÁÉÙ30MS
+    // DELAY_US(30001);      //RESET ï¿½ßµï¿½Æ½ï¿½ï¿½ï¿½ï¿½30MS
     // GpioDataRegs.GPDCLEAR.bit.GPIO106=1;
 
     (*eQEP[m]).QDECCTL.all = QDECCTL_INIT_STATE;
@@ -376,9 +376,9 @@ void eQEP_initialize(int m)
     (*eQEP[m]).QPOSMAX = SYSTEM_QEP_QPOSMAX; // (4*SYSTEM_QEP_LINE);//(4*v.LineEncoder);
 
     EQep1Regs.QEPCTL.bit.IEI = 0;        // disable POSCNT=POSINIT @ Index
-    EQep1Regs.QCLR.bit.UTO=1; //Çå³ý¶¨Ê±ÖÐ¶Ï±êÖ¾Î»
+    EQep1Regs.QCLR.bit.UTO=1; //ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½Ð¶Ï±ï¿½Ö¾Î»
     EQep1Regs.QFRC.bit.UTO=1;
-    EQep1Regs.QEINT.bit.UTO=1; //Ê¹ÄÜ¶¨Ê±Æ÷µÄÖÐ¶Ï
+    EQep1Regs.QEINT.bit.UTO=1; //Ê¹ï¿½Ü¶ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½Ð¶ï¿½
 
     // from EE124
     //    #if SYSTEM_PROGRAM_MODE == 223

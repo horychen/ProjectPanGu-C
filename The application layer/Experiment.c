@@ -2,8 +2,6 @@
 
 void init_experiment_overwrite(){
 
-    init_experiment_AD_gain_and_offset();
-
     /* Mode Changing During Experiment */
     #ifdef _XCUBE1
         CTRL.g->Seletc_exp_operation = AS_LOAD_MOTOR_CONST;
