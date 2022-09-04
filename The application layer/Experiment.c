@@ -4,45 +4,45 @@ void init_experiment_overwrite(){
 
     /* Mode Changing During Experiment */
     #ifdef _XCUBE1
-        CTRL.g->Seletc_exp_operation = AS_LOAD_MOTOR_CONST;
+        Axis.Seletc_exp_operation = AS_LOAD_MOTOR_CONST;
         G.dac_watch_stator_resistance = 1.703;
 
         // 2021-07-17
-        //CTRL.g->Seletc_exp_operation = NSOAF_LOW_SPEED_OPERATION;
+        //Axis.Seletc_exp_operation = NSOAF_LOW_SPEED_OPERATION;
 
     #else
-        // CTRL.g->Seletc_exp_operation = NSOAF_LOW_SPEED_OPERATION;
-        // CTRL.g->Seletc_exp_operation = NSOAF_HIGH_SPEED_OPERATION;
-        // CTRL.g->Seletc_exp_operation = NSOAF_RAMP_SPEED_OPERATION;
-        G.dac_watch_stator_resistance = 1.69;
+        // Axis.Seletc_exp_operation = NSOAF_LOW_SPEED_OPERATION;
+        // Axis.Seletc_exp_operation = NSOAF_HIGH_SPEED_OPERATION;
+        // Axis.Seletc_exp_operation = NSOAF_RAMP_SPEED_OPERATION;
+        Axis.dac_watch_stator_resistance = 1.69;
 
-        // CTRL.g->Seletc_exp_operation = AS_LOAD_MOTOR_CONST;
-        CTRL.g->Seletc_exp_operation = SLESSINV_CONST_LOAD_PAA;
-        CTRL.g->Seletc_exp_operation = 0;
+        // Axis.Seletc_exp_operation = AS_LOAD_MOTOR_CONST;
+        Axis.Seletc_exp_operation = SLESSINV_CONST_LOAD_PAA;
+        Axis.Seletc_exp_operation = 0;
     #endif
 
-    if(G.Seletc_exp_operation == AS_LOAD_MOTOR_CONST){
+    if(Axis.Seletc_exp_operation == AS_LOAD_MOTOR_CONST){
         pid1_spd.OutLimit = 2.1; //2.0;
-        G.Set_manual_rpm = -600;  // motoring + regeneration for low speed test
-        //G.Set_manual_rpm = 0;    // motoring for high speed test
+        Axis.Set_manual_rpm = -600;  // motoring + regeneration for low speed test
+        //Axis.Set_manual_rpm = 0;    // motoring for high speed test
     }
-    else if(G.Seletc_exp_operation == AS_LOAD_MOTOR_RAMP){
+    else if(Axis.Seletc_exp_operation == AS_LOAD_MOTOR_RAMP){
         pid1_spd.OutLimit = 0.01;
-        G.Set_manual_rpm = -1200;
+        Axis.Set_manual_rpm = -1200;
     }
-    else if(G.Seletc_exp_operation == NSOAF_LOW_SPEED_OPERATION){
+    else if(Axis.Seletc_exp_operation == NSOAF_LOW_SPEED_OPERATION){
         low_speed_operation_init();
     }
-    else if(G.Seletc_exp_operation == NSOAF_HIGH_SPEED_OPERATION){
+    else if(Axis.Seletc_exp_operation == NSOAF_HIGH_SPEED_OPERATION){
         high_speed_operation_init();
     }
     else{
-        CTRL.g->Set_manual_rpm = 0.0; //-200;
+        Axis.Set_manual_rpm = 0.0; //-200;
     }
 
-    CTRL.g->DAC_MAX5307_FLAG = FALSE;
-    CTRL.g->AD_offset_flag2 = FALSE;
-    if(CTRL.g->Seletc_exp_operation == AS_LOAD_MOTOR_CONST){
+    Axis.DAC_MAX5307_FLAG = FALSE;
+    Axis.AD_offset_flag2 = FALSE;
+    if(Axis.Seletc_exp_operation == AS_LOAD_MOTOR_CONST){
         CTRL.g->FLAG_INVERTER_NONLINEARITY_COMPENSATION = 2; // use sigmoid as compensation
     }else{
         CTRL.g->FLAG_INVERTER_NONLINEARITY_COMPENSATION = INVERTER_NONLINEARITY_COMPENSATION_INIT;
@@ -54,11 +54,11 @@ void init_experiment_overwrite(){
         CTRL.g->flag_overwite_voltage_dc_bus = FALSE;
         CTRL.g->flag_use_ecap_voltage = 0;
 
-        CTRL.g->OverwriteSpeedOutLimit = 6.3;
-        pid1_spd.OutLimit = G.OverwriteSpeedOutLimit;
+        //CTRL.g->OverwriteSpeedOutLimitDuringInit = 6.3;
+        pid1_spd.OutLimit = Axis.OverwriteSpeedOutLimitDuringInit;
     #else
-        CTRL.g->OverwriteSpeedOutLimit = 2; // 6.3; // 150% rated
-        pid1_spd.OutLimit = G.OverwriteSpeedOutLimit;
+        //CTRL.g->OverwriteSpeedOutLimitDuringInit = 2; // 6.3; // 150% rated
+        pid1_spd.OutLimit = Axis.OverwriteSpeedOutLimitDuringInit;
     #endif
 
 
@@ -115,11 +115,11 @@ void init_experiment_overwrite(){
 
     #if TRUE
         MOTOR.KE = 0.095;
-        MOTOR.KE = 0.098; // 2021-07-28 ç”µåŠ¨æ¨¡å¼ï¼Œa2/a3è¾¨è¯†æ—¶ï¼Œè½»è½½ï¼ˆ1.5Aï¼‰æ—¶htzè§‚æµ‹ç£é“¾å¹…å€¼æ³¢å½¢çš„åŒ…ç»œçº¿ä¸ä¼šæ³¢åŠ¨ï¼Œéœ€è¦å°†KEä»0.095 Wbå¢åŠ åˆ°0.098 Wb æˆ–0.099 Wbï¼ˆè‚‰çœ¼éš¾ä»¥åŒºåˆ†ï¼Œå¯ä»¥è¯•è¯•FFTçœ‹å“ªä¸ªå€¼å¯ä»¥æŠ‘åˆ¶å¹…å€¼æ³¢åŠ¨åˆ°æœ€å°ï¼‰ã€‚
-//        MOTOR.KE = 0.101; // 2021-07-28 ç”µåŠ¨æ¨¡å¼ï¼Œç»§ç»­å¢åŠ KEåˆ°0.101çš„æ—¶å€™ï¼Œhtz.u_offset[0]ä¸å†æ³¢åŠ¨ï¼Œç”šè‡³åœ¨ä¸åŒçš„è´Ÿè½½ï¼ˆ1.5Aå’Œ3Aï¼‰ä¸‹ï¼Œä»ç„¶ä¿æŒä¸€æ¡æ°´å¹³çº¿ï¼
-//        MOTOR.KE = 0.103; // 2021-07-28 ç”µåŠ¨æ¨¡å¼ï¼Œç©ºè½½ï¼Œ500rpmï¼Œhtz.u_offset[0]alphaåˆ†é‡åœ¨KE=0.101çš„æƒ…å†µä¸‹ä»æœ‰æ³¢åŠ¨ï¼Œå¢åŠ åˆ°0.102æ³¢åŠ¨å‡å°ï¼Œå¢åŠ åˆ°0.103å˜æˆæ°´å¹³çº¿ã€‚ã€æ³¨æ„æ­¤æ—¶æœ‰1.5Tså»¶æ—¶æ ¡æ­£ï¼ã€‘
-//        MOTOR.KE = 0.105; // 2021-07-28 ç”µåŠ¨æ¨¡å¼ï¼Œç©ºè½½ï¼Œ500rpmï¼Œhtz.u_offset[0]alphaåˆ†é‡åœ¨KE=0.103çš„æƒ…å†µä¸‹ä»æœ‰æ³¢åŠ¨ï¼Œå¢åŠ åˆ°0.104æ³¢åŠ¨å‡å°ï¼Œå¢åŠ åˆ°0.105å˜æˆæ°´å¹³çº¿ã€‚ã€æ³¨æ„æ­¤æ—¶æ²¡æœ‰1.5Tså»¶æ—¶æ ¡æ­£ï¼ã€‘
-//        MOTOR.KE = 0.108; // 2021-07-29 åˆ©ç”¨ç£é“¾å¹…å€¼è¯¯å·®å»ç¡®å®šä¸ä¼šå¯¼è‡´htz.u_offset[0]æ³¢åŠ¨çš„KEçš„ä¸Šé™å€¼ä¸º0.108
+        MOTOR.KE = 0.098; // 2021-07-28 µç¶¯Ä£Ê½£¬a2/a3±æÊ¶Ê±£¬ÇáÔØ£¨1.5A£©Ê±htz¹Û²â´ÅÁ´·ùÖµ²¨ĞÎµÄ°üÂçÏß²»»á²¨¶¯£¬ĞèÒª½«KE´Ó0.095 WbÔö¼Óµ½0.098 Wb »ò0.099 Wb£¨ÈâÑÛÄÑÒÔÇø·Ö£¬¿ÉÒÔÊÔÊÔFFT¿´ÄÄ¸öÖµ¿ÉÒÔÒÖÖÆ·ùÖµ²¨¶¯µ½×îĞ¡£©¡£
+//        MOTOR.KE = 0.101; // 2021-07-28 µç¶¯Ä£Ê½£¬¼ÌĞøÔö¼ÓKEµ½0.101µÄÊ±ºò£¬htz.u_offset[0]²»ÔÙ²¨¶¯£¬ÉõÖÁÔÚ²»Í¬µÄ¸ºÔØ£¨1.5AºÍ3A£©ÏÂ£¬ÈÔÈ»±£³ÖÒ»ÌõË®Æ½Ïß£¡
+//        MOTOR.KE = 0.103; // 2021-07-28 µç¶¯Ä£Ê½£¬¿ÕÔØ£¬500rpm£¬htz.u_offset[0]alpha·ÖÁ¿ÔÚKE=0.101µÄÇé¿öÏÂÈÔÓĞ²¨¶¯£¬Ôö¼Óµ½0.102²¨¶¯¼õĞ¡£¬Ôö¼Óµ½0.103±ä³ÉË®Æ½Ïß¡£¡¾×¢Òâ´ËÊ±ÓĞ1.5TsÑÓÊ±Ğ£Õı£¡¡¿
+//        MOTOR.KE = 0.105; // 2021-07-28 µç¶¯Ä£Ê½£¬¿ÕÔØ£¬500rpm£¬htz.u_offset[0]alpha·ÖÁ¿ÔÚKE=0.103µÄÇé¿öÏÂÈÔÓĞ²¨¶¯£¬Ôö¼Óµ½0.104²¨¶¯¼õĞ¡£¬Ôö¼Óµ½0.105±ä³ÉË®Æ½Ïß¡£¡¾×¢Òâ´ËÊ±Ã»ÓĞ1.5TsÑÓÊ±Ğ£Õı£¡¡¿
+//        MOTOR.KE = 0.108; // 2021-07-29 ÀûÓÃ´ÅÁ´·ùÖµÎó²îÈ¥È·¶¨²»»áµ¼ÖÂhtz.u_offset[0]²¨¶¯µÄKEµÄÉÏÏŞÖµÎª0.108
         huwu.limiter_KE = 1.0 * MOTOR.KE; // this depends on KE value
     #endif
     AFEOE.limiter_KE = 1.15 * MOTOR.KE; // this depends on KE value
@@ -135,7 +135,7 @@ void init_experiment_overwrite(){
 }
 
 void runtime_command_and_tuning(){
-    if(G.Seletc_exp_operation == AS_LOAD_MOTOR_CONST){
+    if(Axis.Seletc_exp_operation == AS_LOAD_MOTOR_CONST){
         CTRL.S->go_sensorless = 0;
         G.FLAG_INVERTER_NONLINEARITY_COMPENSATION = 0;
         if(CTRL.timebase < 2){
@@ -156,7 +156,7 @@ void runtime_command_and_tuning(){
             }
         }
     }
-    if(G.Seletc_exp_operation == AS_LOAD_MOTOR_RAMP){
+    if(Axis.Seletc_exp_operation == AS_LOAD_MOTOR_RAMP){
         CTRL.S->go_sensorless = 0;
         if(CTRL.timebase < 0.4){
             pid1_spd.OutLimit = 4.2;
@@ -176,7 +176,7 @@ void runtime_command_and_tuning(){
 
 
     /* Inverter Model Parameter Adaptation */
-    if(G.Seletc_exp_operation == SLESSINV_CONST_LOAD_PAA){
+    if(Axis.Seletc_exp_operation == SLESSINV_CONST_LOAD_PAA){
         if(CTRL.timebase>11){
             ;
         }else if(CTRL.timebase>10){
@@ -191,7 +191,7 @@ void runtime_command_and_tuning(){
     }
 
     /* Low Speed Operation*/
-    if(G.Seletc_exp_operation == NSOAF_LOW_SPEED_OPERATION){
+    if(Axis.Seletc_exp_operation == NSOAF_LOW_SPEED_OPERATION){
         if(FALSE){
             zero_speed_stopping();
             zero_speed_stopping_tuning();
@@ -203,26 +203,26 @@ void runtime_command_and_tuning(){
     }
 
     /* High Speed Reversal Operation */
-    if(G.Seletc_exp_operation == NSOAF_HIGH_SPEED_OPERATION){
+    if(Axis.Seletc_exp_operation == NSOAF_HIGH_SPEED_OPERATION){
         high_speed_operation();
         high_speed_operation_tuning();
     }
 
     /* Ramp High Speed Operation */
-    if(G.Seletc_exp_operation == NSOAF_RAMP_SPEED_OPERATION){
+    if(Axis.Seletc_exp_operation == NSOAF_RAMP_SPEED_OPERATION){
         ramp_speed_operation();
         //ramp_speed_operation_tuning();
     }
 
-    /* é˜²æ‰‹è´± */
+    /* ·ÀÊÖ¼ú */
     if(CTRL.motor->KE > 0.2){
         CTRL.motor->KE=0.1;
     }
-    if(CTRL.g->Set_manual_rpm>3000){
-        CTRL.g->Set_manual_rpm=3000;
+    if(Axis.Set_manual_rpm>3000){
+        Axis.Set_manual_rpm=3000;
     }
-    if(CTRL.g->Set_manual_rpm<-3000){
-        CTRL.g->Set_manual_rpm=3000;
+    if(Axis.Set_manual_rpm<-3000){
+        Axis.Set_manual_rpm=3000;
     }
 }
 
@@ -236,28 +236,28 @@ void short_stopping_at_zero_speed(){
     #define RPM1 100
     #define BIAS 0
     if(CTRL.timebase<1){ // note 1 sec is not enough for stator flux to reach steady state.
-        G.Set_manual_rpm = 0;
+        Axis.Set_manual_rpm = 0;
     }else if(CTRL.timebase<5){
-        G.Set_manual_rpm = RPM1;
+        Axis.Set_manual_rpm = RPM1;
     }else if(CTRL.timebase<10){
-        G.Set_manual_rpm += CL_TS * -SLOW_REVERSAL_RATE;
-        if(G.Set_manual_rpm < 0){
-            G.Set_manual_rpm = 0.0;
+        Axis.Set_manual_rpm += CL_TS * -SLOW_REVERSAL_RATE;
+        if(Axis.Set_manual_rpm < 0){
+            Axis.Set_manual_rpm = 0.0;
         }
     }else if(CTRL.timebase<15){
-        G.Set_manual_rpm += CL_TS * -SLOW_REVERSAL_RATE;
-        if(G.Set_manual_rpm<-RPM1){
-            G.Set_manual_rpm = -RPM1;
+        Axis.Set_manual_rpm += CL_TS * -SLOW_REVERSAL_RATE;
+        if(Axis.Set_manual_rpm<-RPM1){
+            Axis.Set_manual_rpm = -RPM1;
         }
     }else if(CTRL.timebase<20){
-        G.Set_manual_rpm += CL_TS * +SLOW_REVERSAL_RATE;
-        if(G.Set_manual_rpm > 0){
-            G.Set_manual_rpm = 0.0;
+        Axis.Set_manual_rpm += CL_TS * +SLOW_REVERSAL_RATE;
+        if(Axis.Set_manual_rpm > 0){
+            Axis.Set_manual_rpm = 0.0;
         }
     }else if(CTRL.timebase<25){
-        G.Set_manual_rpm += CL_TS * +SLOW_REVERSAL_RATE;
-        if(G.Set_manual_rpm>RPM1){
-            G.Set_manual_rpm = RPM1;
+        Axis.Set_manual_rpm += CL_TS * +SLOW_REVERSAL_RATE;
+        if(Axis.Set_manual_rpm>RPM1){
+            Axis.Set_manual_rpm = RPM1;
         }
     }
 
@@ -270,18 +270,18 @@ void slow_speed_reversal(){
     #define RPM1 100
     #define BIAS 0
     if(CTRL.timebase<1){ // note 1 sec is not enough for stator flux to reach steady state.
-        G.Set_manual_rpm = RPM1; // 0;
+        Axis.Set_manual_rpm = RPM1; // 0;
     }else if(CTRL.timebase<4-2){
-        G.Set_manual_rpm = RPM1;
+        Axis.Set_manual_rpm = RPM1;
     }else if(CTRL.timebase<10-2){
-        G.Set_manual_rpm += CL_TS * -SLOW_REVERSAL_RATE;
-        if(G.Set_manual_rpm<-RPM1){
-            G.Set_manual_rpm = -RPM1;
+        Axis.Set_manual_rpm += CL_TS * -SLOW_REVERSAL_RATE;
+        if(Axis.Set_manual_rpm<-RPM1){
+            Axis.Set_manual_rpm = -RPM1;
         }
     }else if(CTRL.timebase<16-2){
-        G.Set_manual_rpm += CL_TS * +SLOW_REVERSAL_RATE;
-        if(G.Set_manual_rpm>RPM1){
-            G.Set_manual_rpm = RPM1;
+        Axis.Set_manual_rpm += CL_TS * +SLOW_REVERSAL_RATE;
+        if(Axis.Set_manual_rpm>RPM1){
+            Axis.Set_manual_rpm = RPM1;
         }
     }
 
@@ -298,10 +298,10 @@ void low_speed_operation_init(){
     //    CTRL.motor->KE = 0.10;  // ZFY: 2.0A Slow speed reversal at 100 rpm @ Udc=80V (offset_Udc 12V)
 }
 
-/*when AS_LOAD_MOTOR_CONST use G.Set_manual_rpm =-300; [rpm], iq is negative*/
+/*when AS_LOAD_MOTOR_CONST use Axis.Set_manual_rpm =-300; [rpm], iq is negative*/
 //REAL RP =2.15; // 2.15 for cold motor, 2.20 for hot motor
 //REAL RN =1.95; // 1.95 for cold motor, 2.00 for hot motor
-/*when AS_LOAD_MOTOR_CONST use G.Set_manual_rpm = 300; [rpm], iq is positive*/
+/*when AS_LOAD_MOTOR_CONST use Axis.Set_manual_rpm = 300; [rpm], iq is positive*/
 
 /* HUWU--SSR */
 REAL RSmall =1.95; // motoring is smaller
@@ -314,19 +314,19 @@ REAL RLarge =2.15; // regenerating
 void slow_speed_reversal_tuning(){
 
     if(CTRL.timebase<30){
-        /* å¤±å»ç£åœºå®šå‘åèµ·åˆ°é”å®šè½¬å­çš„ä½œç”¨ */
+        /* Ê§È¥´Å³¡¶¨ÏòºóÆğµ½Ëø¶¨×ª×ÓµÄ×÷ÓÃ */
         if(G.flag_auto_id_cmd == TRUE){
             // need to also set id cmd according to speed cmd
-            if(fabs(G.Set_manual_rpm) < 50){ // 5 or 50?
-                G.Set_manual_current_id = 2;
+            if(fabs(Axis.Set_manual_rpm) < 50){ // 5 or 50?
+                Axis.Set_manual_current_id = 2;
             }else{
-                G.Set_manual_current_id = 0;
+                Axis.Set_manual_current_id = 0;
             }
         }
 
         /* Steady state error */
         //        if(CTRL.g->flag_use_ecap_voltage==0){
-        //            if(G.Set_manual_rpm>0){
+        //            if(Axis.Set_manual_rpm>0){
         //                CTRL.motor->R = RP; //for positive speed
         //            }else{
         //                CTRL.motor->R = RN; //for negative speed
@@ -334,7 +334,7 @@ void slow_speed_reversal_tuning(){
         //        }else{
         //            RP = 2.20;
         //            RN = 1.80;
-        //            if(G.Set_manual_rpm>0){
+        //            if(Axis.Set_manual_rpm>0){
         //                CTRL.motor->R = RP; //for positive speed
         //            }else{
         //                CTRL.motor->R = RN; //for negative speed
@@ -347,12 +347,12 @@ void slow_speed_reversal_tuning(){
             CTRL.motor->R = RLarge; //for negative speed
         }
 
-        //    if(G.Set_manual_rpm<-10){
+        //    if(Axis.Set_manual_rpm<-10){
         //
         //        CTRL.motor->KE = 0.14; // for negative speed
         //        //CTRL.motor->KE = 0.085; //2.1A
         //
-        //    }else if (G.Set_manual_rpm>10){
+        //    }else if (Axis.Set_manual_rpm>10){
         //
         //        CTRL.motor->KE = 0.103; // this is effective to tune steady state position error but position speed and negative speed have two different optimal values.
         //        //CTRL.motor->KE = 0.11; // 2.1A
@@ -365,18 +365,18 @@ void slow_speed_reversal_tuning(){
 }
 void zero_speed_stopping_tuning(){
 
-    /* å¤±å»ç£åœºå®šå‘åèµ·åˆ°é”å®šè½¬å­çš„ä½œç”¨ */
+    /* Ê§È¥´Å³¡¶¨ÏòºóÆğµ½Ëø¶¨×ª×ÓµÄ×÷ÓÃ */
     // need to also set id cmd according to speed cmd
-    if(fabs(G.Set_manual_rpm) < 50){ // 5 or 50?
-        G.Set_manual_current_id = 2;
+    if(fabs(Axis.Set_manual_rpm) < 50){ // 5 or 50?
+        Axis.Set_manual_current_id = 2;
     }else{
-        //G.Set_manual_current_id = 0;
+        //Axis.Set_manual_current_id = 0;
     }
 
     /* Steady state error */
-    if(G.Set_manual_rpm<-5){
+    if(Axis.Set_manual_rpm<-5){
         CTRL.motor->KE = 0.082; //2.1A
-    }else if (G.Set_manual_rpm>5){
+    }else if (Axis.Set_manual_rpm>5){
         CTRL.motor->KE = 0.118; // 2.1A
     }else{
         CTRL.motor->KE = 0.10;
@@ -387,17 +387,17 @@ void zero_speed_stopping(){
     #define RPM1 100
     #define BIAS 0
     if(CTRL.timebase<1){ // note 1 sec is not enough for stator flux to reach steady state.
-        G.Set_manual_rpm = 0;
+        Axis.Set_manual_rpm = 0;
     }else if(CTRL.timebase<4){
-        G.Set_manual_rpm = RPM1;
+        Axis.Set_manual_rpm = RPM1;
     }else if(CTRL.timebase<6+BIAS){
-        G.Set_manual_rpm = -RPM1;
+        Axis.Set_manual_rpm = -RPM1;
     }else if(CTRL.timebase<9+BIAS){
-        G.Set_manual_rpm = 0;
+        Axis.Set_manual_rpm = 0;
     }else if(CTRL.timebase<18+BIAS){
-        G.Set_manual_rpm = RPM1;
+        Axis.Set_manual_rpm = RPM1;
     }else if(CTRL.timebase<25+BIAS){
-        G.Set_manual_rpm = RPM1*sin(2*2*M_PI*CTRL.timebase);
+        Axis.Set_manual_rpm = RPM1*sin(2*2*M_PI*CTRL.timebase);
     }
 
     #undef RPM1
@@ -407,7 +407,7 @@ void zero_speed_stopping(){
 void high_speed_operation_init(){
     //    pid1_spd.OutLimit = 10; // sensorless needs higher bounds (does not work well with nonlinear controller gain)
     //    CTRL.motor->KE = 0.095;
-    //    AFEOE.ActiveFlux_KP = 0.2; // nsoaf.ActiveFlux_KPå–0.5åŠä»¥ä¸Šçš„æ—¶å€™ï¼Œ300rpmä¼šå‡ºç°active fluxé©¬éæ³¢çš„ç°è±¡
+    //    AFEOE.ActiveFlux_KP = 0.2; // nsoaf.ActiveFlux_KPÈ¡0.5¼°ÒÔÉÏµÄÊ±ºò£¬300rpm»á³öÏÖactive fluxÂí°°²¨µÄÏÖÏó
     //    AFEOE.ActiveFlux_KI = 2.0;
 }
 int manual_adjust_KE=FALSE;
@@ -416,18 +416,18 @@ void high_speed_operation_tuning(){
     #if SELECT_ALGORITHM == ALG_Chi_Xu
     #elif SELECT_ALGORITHM == ALG_NSOAF
         // Original Submission
-        /* åŠ¨æ€æ€§èƒ½å’Œä¸¤ä¸ªKPçš„å€¼å¯†åˆ‡ç›¸å…³ */
-            //    nsoaf.KP = fabs(G.Set_manual_rpm) / 1500.0 * 4;
+        /* ¶¯Ì¬ĞÔÄÜºÍÁ½¸öKPµÄÖµÃÜÇĞÏà¹Ø */
+            //    nsoaf.KP = fabs(Axis.Set_manual_rpm) / 1500.0 * 4;
             //    if(nsoaf.KP<1){
             //        nsoaf.KP = 1;
             //    }
-        //        if(fabs(G.Set_manual_rpm) > 1000){
+        //        if(fabs(Axis.Set_manual_rpm) > 1000){
         //            nsoaf.KP = 4; //2;
         //            AFEOE.ActiveFlux_KP = 1;
-        //        }else if(fabs(G.Set_manual_rpm) > 500){
+        //        }else if(fabs(Axis.Set_manual_rpm) > 500){
         //            nsoaf.KP = 2; //1.5;
         //            AFEOE.ActiveFlux_KP = 0.5;
-        //        }else if(fabs(G.Set_manual_rpm) > 300){
+        //        }else if(fabs(Axis.Set_manual_rpm) > 300){
         //            nsoaf.KP = 1;
         //            AFEOE.ActiveFlux_KP = 0.2;
         //        }else{
@@ -435,7 +435,7 @@ void high_speed_operation_tuning(){
         //        }
 
         /* Steady state rpm error when ZFY speed command is at 0 rpm (load sudden change when speed command sign changes) */
-        //    if(G.Set_manual_rpm > 0){
+        //    if(Axis.Set_manual_rpm > 0){
         //        CTRL.motor->KE=0.097;
         //    }else{
         //        CTRL.motor->KE=0.099;
@@ -443,7 +443,7 @@ void high_speed_operation_tuning(){
 
         /* Steady state rpm error when ZFY speed command is at 2000 rpm. */
     if(manual_adjust_KE==FALSE){
-        if(G.Set_manual_rpm > 0){
+        if(Axis.Set_manual_rpm > 0){
             //CTRL.motor->KE = 0.0895; // positive spinning with load motor@2000 rpm 2.1A
             CTRL.motor->KE = 0.0895;
         }else{
@@ -453,7 +453,7 @@ void high_speed_operation_tuning(){
     }
     #endif
 
-    /* é˜²æ­¢æ‰‹è´±è¾“é”™äº†å€¼ */
+    /* ·ÀÖ¹ÊÖ¼úÊä´íÁËÖµ */
     if(CTRL.motor->KE > 0.2){
         CTRL.motor->KE = 0.1;
     }
@@ -464,38 +464,38 @@ void high_speed_operation(){
     #define RPM1 1500
     #define BIAS 0
     //    if(CTRL.timebase<1){ // note 1 sec is not enough for stator flux to reach steady state.
-    //        G.Set_manual_rpm = 100;
+    //        Axis.Set_manual_rpm = 100;
     //    }else if(CTRL.timebase<1.5){
-    //        G.Set_manual_rpm = RPM1;
+    //        Axis.Set_manual_rpm = RPM1;
     //    }else if(CTRL.timebase<2.0+BIAS){
-    //        G.Set_manual_rpm = -RPM1;
+    //        Axis.Set_manual_rpm = -RPM1;
     //    }else if(CTRL.timebase<2.5+BIAS){
-    //        G.Set_manual_rpm = RPM1;
+    //        Axis.Set_manual_rpm = RPM1;
     //    }else if(CTRL.timebase<3.0+BIAS){
-    //        G.Set_manual_rpm = -100;
+    //        Axis.Set_manual_rpm = -100;
     //    }
 
     if(CTRL.timebase<2){ // note 1 sec is not enough for stator flux to reach steady state.
-        G.Set_manual_rpm = 500; // give human more time to setup iq limit and load motor speed
+        Axis.Set_manual_rpm = 500; // give human more time to setup iq limit and load motor speed
     }else if(CTRL.timebase<4.5){
-        G.Set_manual_rpm = RPM1;
+        Axis.Set_manual_rpm = RPM1;
     }else if(CTRL.timebase<5.0+BIAS){
-        G.Set_manual_rpm = -RPM1;
+        Axis.Set_manual_rpm = -RPM1;
     }else if(CTRL.timebase<5.5+BIAS){
-        G.Set_manual_rpm = RPM1;
+        Axis.Set_manual_rpm = RPM1;
     }
 
     // Orignal Submission
     //    if(CTRL.timebase<10){ // note 1 sec is not enough for stator flux to reach steady state.
-    //        G.Set_manual_rpm = 300; // give human more time to setup iq limit and load motor speed
+    //        Axis.Set_manual_rpm = 300; // give human more time to setup iq limit and load motor speed
     //    }else if(CTRL.timebase<10.5){
-    //        G.Set_manual_rpm = RPM1;
+    //        Axis.Set_manual_rpm = RPM1;
     //    }else if(CTRL.timebase<11.0+BIAS){
-    //        G.Set_manual_rpm = -RPM1;
+    //        Axis.Set_manual_rpm = -RPM1;
     //    }else if(CTRL.timebase<11.5+BIAS){
-    //        G.Set_manual_rpm = RPM1;
+    //        Axis.Set_manual_rpm = RPM1;
     //    }
-    some_speed_variable = G.Set_manual_rpm;
+    some_speed_variable = Axis.Set_manual_rpm;
     #undef RPM1
     #undef BIAS
 }
@@ -506,18 +506,18 @@ void ramp_speed_operation(){
         #define FAST_REVERSAL_RATE 500
         #define RPM1 1500
         if(CTRL.timebase<1){
-            G.Set_manual_rpm = 500;
+            Axis.Set_manual_rpm = 500;
         }else if(CTRL.timebase<2){
-            G.Set_manual_rpm = RPM1;
+            Axis.Set_manual_rpm = RPM1;
         }else if(CTRL.timebase<10){
-            G.Set_manual_rpm += CL_TS * -FAST_REVERSAL_RATE;
-            if(G.Set_manual_rpm<-RPM1){
-                G.Set_manual_rpm = -RPM1;
+            Axis.Set_manual_rpm += CL_TS * -FAST_REVERSAL_RATE;
+            if(Axis.Set_manual_rpm<-RPM1){
+                Axis.Set_manual_rpm = -RPM1;
             }
         }else if(CTRL.timebase<18){
-            G.Set_manual_rpm += CL_TS * +FAST_REVERSAL_RATE;
-            if(G.Set_manual_rpm>RPM1){
-                G.Set_manual_rpm = RPM1;
+            Axis.Set_manual_rpm += CL_TS * +FAST_REVERSAL_RATE;
+            if(Axis.Set_manual_rpm>RPM1){
+                Axis.Set_manual_rpm = RPM1;
             }
         }
         #undef RPM1
@@ -526,18 +526,18 @@ void ramp_speed_operation(){
         #define FAST_REVERSAL_RATE 1500
         #define RPM1 1500
         if(CTRL.timebase<1){
-            G.Set_manual_rpm = 500;
+            Axis.Set_manual_rpm = 500;
         }else if(CTRL.timebase<2){
-            G.Set_manual_rpm = RPM1;
+            Axis.Set_manual_rpm = RPM1;
         }else if(CTRL.timebase<6){
-            G.Set_manual_rpm += CL_TS * -FAST_REVERSAL_RATE;
-            if(G.Set_manual_rpm<-RPM1){
-                G.Set_manual_rpm = -RPM1;
+            Axis.Set_manual_rpm += CL_TS * -FAST_REVERSAL_RATE;
+            if(Axis.Set_manual_rpm<-RPM1){
+                Axis.Set_manual_rpm = -RPM1;
             }
         }else if(CTRL.timebase<10){
-            G.Set_manual_rpm += CL_TS * +FAST_REVERSAL_RATE;
-            if(G.Set_manual_rpm>RPM1){
-                G.Set_manual_rpm = RPM1;
+            Axis.Set_manual_rpm += CL_TS * +FAST_REVERSAL_RATE;
+            if(Axis.Set_manual_rpm>RPM1){
+                Axis.Set_manual_rpm = RPM1;
             }
         }
         #undef RPM1

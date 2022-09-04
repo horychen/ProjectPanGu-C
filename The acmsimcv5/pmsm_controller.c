@@ -109,6 +109,8 @@ void init_CTRL(){
     CTRL.S->sinT = 0.0;
     CTRL.S->cosT_compensated_1p5omegaTs = 1.0;
     CTRL.S->sinT_compensated_1p5omegaTs = 0.0;
+    CTRL.S->cosT2 = 1.0;
+    CTRL.S->sinT2 = 0.0;
     // CTRL.S->omega_syn = 0.0;
     CTRL.S->the_vc_count = 1; // starts from 1
 
@@ -118,8 +120,7 @@ void init_CTRL(){
 }
 
 /* id=0控制 */
-extern int Set_current_loop;
-void null_d_control(REAL set_iq_cmd, REAL set_id_cmd){
+void null_d_control(int set_current_loop, REAL set_iq_cmd, REAL set_id_cmd){
     // 定义局部变量，减少对CTRL的直接调用
     #define MOTOR  (*CTRL.motor)
 
@@ -189,7 +190,7 @@ void null_d_control(REAL set_iq_cmd, REAL set_id_cmd){
     #endif
 
     // debug
-    // Set_current_loop = 1;
+    // set_current_loop = 1;
     // set_iq_cmd = 1;
 
     /// 6. 电流环
@@ -202,10 +203,10 @@ void null_d_control(REAL set_iq_cmd, REAL set_id_cmd){
     pid2_id.calc(&pid2_id);
     // q-axis
     pid1_iq.Fbk = CTRL.I->idq[1];
-    pid1_iq.Ref = CTRL.I->idq_cmd[1]; if(Set_current_loop==1){pid1_iq.Ref = set_iq_cmd;}
+    pid1_iq.Ref = CTRL.I->idq_cmd[1]; if(set_current_loop==1){pid1_iq.Ref = set_iq_cmd;}
     pid1_iq.calc(&pid1_iq);
     pid2_iq.Fbk = CTRL.I->idq[1+2];
-    pid2_iq.Ref = CTRL.I->idq_cmd[1+2]; if(Set_current_loop==1){pid2_iq.Ref = set_iq_cmd;}
+    pid2_iq.Ref = CTRL.I->idq_cmd[1+2]; if(set_current_loop==1){pid2_iq.Ref = set_iq_cmd;}
     pid2_iq.calc(&pid2_iq);
     // 电压电流解耦
     #if VOLTAGE_CURRENT_DECOUPLING_CIRCUIT == TRUE
@@ -222,22 +223,27 @@ void null_d_control(REAL set_iq_cmd, REAL set_id_cmd){
 }
 
 
-#if PC_SIMULATION
-    REAL Set_maunal_current_id=0.0;
-#else
-    extern float Set_maunal_current_id;
-#endif
-int flag_overwrite_theta_d=FALSE;
-REAL Overwrite_Current_Frequency = 0.0;
-REAL used_theta_d_elec = 0.0;
+// #if PC_SIMULATION
+//     REAL Set_maunal_current_id=0.0;
+// #else
+//     extern float Set_maunal_current_id;
+// #endif
+
+// int flag_overwrite_theta_d=FALSE;
+// REAL Overwrite_Current_Frequency = 0.0;
+// REAL used_theta_d_elec = 0.0;
 // REAL angle_shift_for_first_inverter  =  0.435288906 - 0.5*M_PI;
 // REAL angle_shift_for_second_inverter = -1.57021952  - 0.5*M_PI;
 // REAL angle_shift_for_first_inverter  = -0.445220411 - 0.5*M_PI;
 // REAL angle_shift_for_second_inverter =  2.62570524  - 0.5*M_PI;
-
-REAL angle_shift_for_first_inverter  = -2.82372499 - 0.5*M_PI;
-REAL angle_shift_for_second_inverter = 2.17232847 - 0.5*M_PI;
-void controller(REAL set_rpm_speed_command, REAL set_iq_cmd, REAL set_id_cmd){
+// REAL angle_shift_for_first_inverter  = -2.82372499 - 0.5*M_PI;
+// REAL angle_shift_for_second_inverter = 2.17232847 - 0.5*M_PI;
+void controller(REAL set_rpm_speed_command, 
+    int set_current_loop, REAL set_iq_cmd, REAL set_id_cmd,
+    int flag_overwrite_theta_d, REAL Overwrite_Current_Frequency,
+    REAL used_theta_d_elec,
+    REAL angle_shift_for_first_inverter,
+    REAL angle_shift_for_second_inverter){
 
     /// 0. 参数时变
     // if (fabs(CTRL.timebase-2.0)<CL_TS){
@@ -253,7 +259,7 @@ void controller(REAL set_rpm_speed_command, REAL set_iq_cmd, REAL set_id_cmd){
     CTRL.I->cmd_omg_elec        = CTRL.I->cmd_speed_rpm * RPM_2_ELEC_RAD_PER_SEC; // electrical
 
     /// 2. 生成磁链指令
-    if(Set_maunal_current_id==0.0){
+    if(set_id_cmd==0.0){
         // if(set_iq_cmd<1){
         //     set_id_cmd = 1; // 2;
         // }
@@ -295,7 +301,7 @@ void controller(REAL set_rpm_speed_command, REAL set_iq_cmd, REAL set_id_cmd){
 
     /// 调用具体的控制器
     #if CONTROL_STRATEGY == NULL_D_AXIS_CURRENT_CONTROL
-        null_d_control(set_iq_cmd, set_id_cmd);
+        null_d_control(set_current_loop, set_iq_cmd, set_id_cmd);
         CTRL.S->Motor_or_Generator = sign(CTRL.I->omg_elec * CTRL.I->idq_cmd[1]); // sign(CTRL.I->cmd_omg_elec);
     #endif
 

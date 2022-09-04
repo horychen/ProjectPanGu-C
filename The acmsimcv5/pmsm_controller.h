@@ -208,47 +208,30 @@ typedef struct {
         int decipher_password[3];
 } st_capture; // eCapture
 typedef struct {
-    // ADC Offset
-        // Automatic Offset Removing
-        REAL offset_counter;
-        REAL offset_online[6];
-        // Raw
-        REAL adc_offset[12]; // ADC offset. U, V, W corresponds to ADCRESULT2, ADCRESULT3, ADCRESULT1.
-        REAL adc_scale[12];
-    // Raw measurment for easy access
-        REAL vdc;
-        REAL iabg[6];
-        REAL iuvw[6];
-        REAL iuvw_offset_online[6];
-    // DAC
-        REAL dac_offset[8];
-        REAL dac_time;
-        REAL dac_watch[80];
-        REAL dac_watch_stator_resistance;
     // To show that REAL type is not very accurate 64 missing by counting 1e-4 sec to 10 sec.
         Uint32  test_integer;
         REAL    test_float;
     // Mode Changing During Experiment
-        int FLAG_ENABLE_PWM_OUTPUT; // 电机模式标志位
-        Uint16 Rotor_angle_selection; // delete?
-        REAL Set_manual_current_iq,Set_manual_current_id,Set_manual_rpm;
-        int DAC_MAX5307_FLAG; // for single core case
-        int AD_offset_flag2;
+        // int FLAG_ENABLE_PWM_OUTPUT; // 电机模式标志位
+        // int DAC_MAX5307_FLAG; // for single core case
+        // int AD_offset_flag2;
+        // Uint16 Rotor_angle_selection; // delete?
+        // REAL Set_manual_current_iq,Set_manual_current_id,Set_manual_rpm;
     // Mode Changing During Experiment Debug
-        REAL OverwriteSpeedOutLimit; // = 2;
+        // REAL OverwriteSpeedOutLimitDuringInit; // = 2;
         REAL overwrite_vdc; // = 180;
         int flag_overwite_vdc; // = FALSE;
         int flag_use_ecap_voltage; // = 0;
         int flag_experimental_initialized; 
         int FLAG_TUNING_CURRENT_SCALE_FACTOR; // for comm (special mode for calibrate current sensor channel gain)
         int flag_do_inverter_characteristics; // for comm
-        int Seletc_exp_operation; // for exp
+        // int Seletc_exp_operation; // for exp
         int flag_auto_id_cmd; // for slow reversal
         int FLAG_INVERTER_NONLINEARITY_COMPENSATION;
     // Select Algorithm
         // int Select_algorithm;
-        REAL omg_elec;
-        REAL theta_d;
+        REAL omg_elec; // updated in observers
+        REAL theta_d; // updated in observers
     //
     int16 sendCurrentCommandFlag;
     int16 sendSpeedCommandFlag;
@@ -303,7 +286,12 @@ extern struct ControllerForExperiment CTRL;
 void init_experiment();
 void init_CTRL();
 void commissioning();
-void controller(REAL rpm_speed_command, REAL set_iq_cmd, REAL set_id_cmd);
+void controller(REAL set_rpm_speed_command, 
+    int set_current_loop, REAL set_iq_cmd, REAL set_id_cmd,
+    int flag_overwrite_theta_d, REAL Overwrite_Current_Frequency,
+    REAL used_theta_d_elec,
+    REAL angle_shift_for_first_inverter,
+    REAL angle_shift_for_second_inverter);
 void allocate_CTRL(struct ControllerForExperiment *p);
 
 // void control(REAL speed_cmd, REAL speed_cmd_dot);

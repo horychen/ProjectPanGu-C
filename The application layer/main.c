@@ -1,19 +1,7 @@
 #include <All_Definition.h>
-
-struct st_axis{
-    struct ControllerForExperiment *CTRL;
-    volatile struct ADC_RESULT_REGS *AdcaResultRegs;
-    volatile struct ADC_RESULT_REGS *AdcbResultRegs;
-    int use_fisrt_set_three_phase;
-} Axis;
-
-Uint16 LoopCount;
-Uint16 ErrorCount;
-Uint16 SendChar;
-Uint16 ReceivedChar;
+struct st_axis Axis;
 
 REAL hall_sensor_read[3] = {0, 0, 0};
-// void start_hall_conversion(REAL hall_sensor_read[]);
 extern REAL hall_qep_angle;
 void start_hall_conversion(REAL hall_sensor_read[]);
 
@@ -63,44 +51,44 @@ void start_hall_conversion(REAL hall_sensor_read[]);
 
 //#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS -27807 // for yaojie linear-rotary motor
 //#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS -51107 // for yaojie linear-rotary motor
-//#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS -27900 // å µè½¬ç»™idè½¬çŸ©æµ‹é‡ä¸º0Nm
-//#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS -49800 // å µè½¬ç»™idè½¬çŸ©æµ‹é‡ä¸º0Nm
+//#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS -27900 // ¶Â×ª¸øid×ª¾Ø²âÁ¿Îª0Nm
+//#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS -49800 // ¶Â×ª¸øid×ª¾Ø²âÁ¿Îª0Nm
 //#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS 14429
 
-//#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS 236 // ç¬¬ä¸€å¥—
-//#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS 203 // ç¬¬äºŒå¥—
+//#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS 236 // µÚÒ»Ì×
+//#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS 203 // µÚ¶þÌ×
 
-//#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS 205 // ç›¸åºåæŽ¥åŽï¼Œç¬¬ä¸€å¥—
-//#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS 182 // ç›¸åºåæŽ¥åŽï¼Œç¬¬äºŒå¥—
+//#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS 205 // ÏàÐò·´½Óºó£¬µÚÒ»Ì×
+//#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS 182 // ÏàÐò·´½Óºó£¬µÚ¶þÌ×
 
-#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS 330 // ç›¸åºæŽ¥å›žåŽ»åŽï¼Œç¬¬ä¸€å¥—
-//#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS 0 // ç›¸åºæŽ¥å›žåŽ»åŽï¼Œç¬¬äºŒå¥—
+#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS 330 // ÏàÐò½Ó»ØÈ¥ºó£¬µÚÒ»Ì×
+//#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS 0 // ÏàÐò½Ó»ØÈ¥ºó£¬µÚ¶þÌ×
 
 void init_experiment_AD_gain_and_offset(){
     /* ADC OFFSET */
     // dc bus sensor
-    G.adc_offset[0] = OFFSET_VDC;
+    Axis.adc_offset[0] = OFFSET_VDC;
     // phase current sensor
-    G.adc_offset[1] = OFFSET_U;
-    G.adc_offset[2] = OFFSET_V;
-    G.adc_offset[3] = OFFSET_W;
-    G.adc_offset[4] = OFFSET_R;
-    G.adc_offset[5] = OFFSET_S;
-    G.adc_offset[6] = OFFSET_T;
+    Axis.adc_offset[1] = OFFSET_U;
+    Axis.adc_offset[2] = OFFSET_V;
+    Axis.adc_offset[3] = OFFSET_W;
+    Axis.adc_offset[4] = OFFSET_R;
+    Axis.adc_offset[5] = OFFSET_S;
+    Axis.adc_offset[6] = OFFSET_T;
 
     // hall sensor
-    G.adc_offset[7] = 1659.5;// (1350 - -732) / 2
-    G.adc_offset[8] = 1671.0;// (1355 - -847) / 2
-    G.adc_offset[9] = 1850; // (700+3000)/2
+    Axis.adc_offset[7] = 1659.5;// (1350 - -732) / 2
+    Axis.adc_offset[8] = 1671.0;// (1355 - -847) / 2
+    Axis.adc_offset[9] = 1850; // (700+3000)/2
 
     /* ADC SCALE */
-    G.adc_scale[0]  = SCALE_VDC;
-    G.adc_scale[1]  = SCALE_U;
-    G.adc_scale[2]  = SCALE_V;
-    G.adc_scale[3]  = SCALE_W;
-    G.adc_scale[4]  = SCALE_R;
-    G.adc_scale[5]  = SCALE_S;
-    G.adc_scale[6]  = SCALE_T;
+    Axis.adc_scale[0]  = SCALE_VDC;
+    Axis.adc_scale[1]  = SCALE_U;
+    Axis.adc_scale[2]  = SCALE_V;
+    Axis.adc_scale[3]  = SCALE_W;
+    Axis.adc_scale[4]  = SCALE_R;
+    Axis.adc_scale[5]  = SCALE_S;
+    Axis.adc_scale[6]  = SCALE_T;
 
     /* eQEP OFFSET */
     CTRL.enc->OffsetCountBetweenIndexAndUPhaseAxis = OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS;
@@ -108,10 +96,23 @@ void init_experiment_AD_gain_and_offset(){
 }
 void main(void){
 
-    Axis.CTRL = &CTRL;
-    Axis.AdcaResultRegs = &AdcaResultRegs;
-    Axis.AdcbResultRegs = &AdcbResultRegs;
+    Axis.pCTRL = &CTRL;
+    Axis.pAdcaResultRegs = &AdcaResultRegs;
+    Axis.pAdcbResultRegs = &AdcbResultRegs;
     Axis.use_fisrt_set_three_phase = 1;
+    Axis.Set_current_loop = 0;
+    Axis.Set_manual_rpm = 0;
+    Axis.Set_manual_current_iq = 0;
+    Axis.Set_manual_current_id = 0;
+    Axis.Seletc_exp_operation = 0;
+    Axis.pFLAG_INVERTER_NONLINEARITY_COMPENSATION = &G.FLAG_INVERTER_NONLINEARITY_COMPENSATION;
+    Axis.flag_overwrite_theta_d = 0;
+    Axis.Overwrite_Current_Frequency = 0;
+    Axis.used_theta_d_elec = 0.0;
+    Axis.angle_shift_for_first_inverter  = -2.82372499 - 0.5*M_PI;
+    Axis.angle_shift_for_second_inverter =  2.17232847 - 0.5*M_PI;
+    Axis.OverwriteSpeedOutLimitDuringInit = 3; // A
+    Axis.FLAG_ENABLE_PWM_OUTPUT = FALSE;
 
     InitSysCtrl();        // 1. Initialize System Control: PLL, WatchDog, enable Peripheral Clocks.
     Gpio_initialize();    // 2. Initialize GPIO and assign GPIO to peripherals.
@@ -131,12 +132,12 @@ void main(void){
     #endif
     #ifdef _STANDALONE
     #ifdef _FLASH
-        // å½“ä½ éœ€è¦ç¦»çº¿æ–­ç”µå†ä¸Šç”µè¿è¡Œæ—¶ç”¨è¿™ä¸ªï¼š
+        // µ±ÄãÐèÒªÀëÏß¶ÏµçÔÙÉÏµçÔËÐÐÊ±ÓÃÕâ¸ö£º
         //  Send boot command to allow the CPU02 application to begin execution
         IPCBootCPU2(C1C2_BROM_BOOTMODE_BOOT_FROM_FLASH);
     #else
         //  Send boot command to allow the CPU02 application to begin execution
-        // è¿™å¥è¯æˆ‘ä¸çŸ¥é“ä»€ä¹ˆæ„ä¹‰ï¼Œå¯èƒ½è¿˜æ˜¯ä¸è¦æ¯”è¾ƒå¥½ã€‚
+        // Õâ¾ä»°ÎÒ²»ÖªµÀÊ²Ã´ÒâÒå£¬¿ÉÄÜ»¹ÊÇ²»Òª±È½ÏºÃ¡£
         //IPCBootCPU2(C1C2_BROM_BOOTMODE_BOOT_FROM_RAM);
     #endif
     #endif
@@ -155,8 +156,8 @@ void main(void){
         InitSciGpio();
         InitSci();
     #elif NUMBER_OF_DSP_CORES == 2
-        /* åŒæ ¸é…ç½®*/
-        // åˆå§‹åŒ–SPIï¼Œç”¨äºŽä¸ŽDACèŠ¯ç‰‡MAX5307é€šè®¯ã€‚
+        /* Ë«ºËÅäÖÃ*/
+        // ³õÊ¼»¯SPI£¬ÓÃÓÚÓëDACÐ¾Æ¬MAX5307Í¨Ñ¶¡£
         EALLOW;
         DevCfgRegs.CPUSEL6.bit.SPI_A = 1; // assign spi-a to cpu2
         DevCfgRegs.CPUSEL5.bit.SCI_C = 1; // assign sci-ca to cpu2
@@ -167,8 +168,8 @@ void main(void){
         InitScicGpio();
         //InitSci(); // this is moved to CPU02
 
-        // åœ¨æ­¤ä¹‹å‰ï¼Œå·²ç»æŠŠGPIOå’Œå¤–è®¾çš„æƒé™è½¬ç»™CPU2äº†ã€‚
-        // è¿™é‡Œå†æŠŠéƒ¨åˆ†å…±äº«å†…å­˜æƒé™ç»™CPU2ï¼ŒåŒæ—¶å‘Šè¯‰CPU2ï¼Œä½ å¯ä»¥ç»§ç»­è¿è¡Œä»£ç äº†ã€‚
+        // ÔÚ´ËÖ®Ç°£¬ÒÑ¾­°ÑGPIOºÍÍâÉèµÄÈ¨ÏÞ×ª¸øCPU2ÁË¡£
+        // ÕâÀïÔÙ°Ñ²¿·Ö¹²ÏíÄÚ´æÈ¨ÏÞ¸øCPU2£¬Í¬Ê±¸æËßCPU2£¬Äã¿ÉÒÔ¼ÌÐøÔËÐÐ´úÂëÁË¡£
         while( !(MemCfgRegs.GSxMSEL.bit.MSEL_GS0))
         {
             EALLOW;
@@ -184,7 +185,7 @@ void main(void){
     // 5. Handle Interrupts
     /* Re-map PIE Vector Table to user defined ISR functions. */
         EALLOW; // This is needed to write to EALLOW protected registers
-        PieVectTable.EPWM1_INT = &SYSTEM_PROGRAM;     //&MainISR;      // PWMä¸»ä¸­æ–­ 10kKHz
+        PieVectTable.EPWM1_INT = &SYSTEM_PROGRAM;     //&MainISR;      // PWMÖ÷ÖÐ¶Ï 10kKHz
         #if USE_ECAP_CEVT2_INTERRUPT == 1 && ENABLE_ECAP
         PieVectTable.ECAP1_INT = &ecap1_isr;
         PieVectTable.ECAP2_INT = &ecap2_isr;
@@ -288,16 +289,16 @@ void main(void){
     // 7. Main loop
     while(1){
         //STATE_APP_MachineState();
-        //System_Checking();  //çŠ¶æ€æœºç¬¬ä¸€ä¸ªçŠ¶æ€ ï¼šç³»ç»Ÿè‡ªæ£€
-        //System_Protection();//IU/IV/VOLTAGEä¿æŠ¤
+        //System_Checking();  //×´Ì¬»úµÚÒ»¸ö×´Ì¬ £ºÏµÍ³×Ô¼ì
+        //System_Protection();//IU/IV/VOLTAGE±£»¤
 
         //#define Motor_mode_START    GpioDataRegs.GPADAT.bit.GPIO26          //DI Start Button
         if (Motor_mode_START==1){
-            G.FLAG_ENABLE_PWM_OUTPUT = 1;
+            Axis.FLAG_ENABLE_PWM_OUTPUT = 1;
             DSP_START_LED1
             DSP_START_LED2
         }else if (Motor_mode_START==0){
-            G.FLAG_ENABLE_PWM_OUTPUT = 0;
+            Axis.FLAG_ENABLE_PWM_OUTPUT = 0;
             DSP_STOP_LED1
             DSP_STOP_LED2
         }
@@ -406,7 +407,7 @@ void voltage_commands_to_pwm(){
     CTRL.svgen2.CMPA[2] = CTRL.svgen2.Tc*SYSTEM_TBPRD;
 
     #if USE_DEATIME_PRECOMP
-        DeadtimeCompensation(G.iuvw[0], G.iuvw[1], G.iuvw[2],
+        DeadtimeCompensation(Axis.iuvw[0], Axis.iuvw[1], Axis.iuvw[2],
                             CTRL.svgen1.CMPA, CTRL.svgen1.CMPA_DBC);
         EPwm1Regs.CMPA.bit.CMPA = CTRL.svgen1.CMPA_DBC[0];
         EPwm2Regs.CMPA.bit.CMPA = CTRL.svgen1.CMPA_DBC[1];
@@ -421,9 +422,9 @@ void voltage_commands_to_pwm(){
     #endif
 }
 void voltage_measurement_based_on_eCAP(){
-    CAP.terminal_voltage[0] = (CAP.terminal_DutyOnRatio[0]) * G.vdc - G.vdc * 0.5; // -0.5 is due to duty ratio calculation; - vdc * 0.5 is referring to the center of dc bus capacitor.
-    CAP.terminal_voltage[1] = (CAP.terminal_DutyOnRatio[1]) * G.vdc - G.vdc * 0.5;
-    CAP.terminal_voltage[2] = (CAP.terminal_DutyOnRatio[2]) * G.vdc - G.vdc * 0.5;
+    CAP.terminal_voltage[0] = (CAP.terminal_DutyOnRatio[0]) * Axis.vdc - Axis.vdc * 0.5; // -0.5 is due to duty ratio calculation; - vdc * 0.5 is referring to the center of dc bus capacitor.
+    CAP.terminal_voltage[1] = (CAP.terminal_DutyOnRatio[1]) * Axis.vdc - Axis.vdc * 0.5;
+    CAP.terminal_voltage[2] = (CAP.terminal_DutyOnRatio[2]) * Axis.vdc - Axis.vdc * 0.5;
 
     CAP.line_to_line_voltage[0] = CAP.terminal_voltage[0] - CAP.terminal_voltage[1];
     CAP.line_to_line_voltage[1] = CAP.terminal_voltage[1] - CAP.terminal_voltage[2];
@@ -443,7 +444,7 @@ void voltage_measurement_based_on_eCAP(){
         CAP.uab0[1] = CTRL.S->sinT*CAP.dq[0] + CTRL.S->cosT*CAP.dq[1];
     }
 
-    // ç”µåŽ‹æµ‹é‡
+    // µçÑ¹²âÁ¿
     if(G.flag_use_ecap_voltage==2 || G.flag_use_ecap_voltage==1){
         /*Use original ecap measured voltage*/
         US_P(0) = US_C(0);
@@ -467,10 +468,10 @@ void voltage_measurement_based_on_eCAP(){
 
     }else if(G.flag_use_ecap_voltage==0){
         /*Use command voltage for feedback*/
-        US_P(0) = CTRL.O->uab_cmd[0]; // åŽç¼€_Pè¡¨ç¤ºä¸Šä¸€æ­¥çš„ç”µåŽ‹ï¼ŒP = Previous
-        US_P(1) = CTRL.O->uab_cmd[1]; // åŽç¼€_Cè¡¨ç¤ºå½“å‰æ­¥çš„ç”µåŽ‹ï¼ŒC = Current
-        US_C(0) = CTRL.O->uab_cmd[0]; // åŽç¼€_Pè¡¨ç¤ºä¸Šä¸€æ­¥çš„ç”µåŽ‹ï¼ŒP = Previous
-        US_C(1) = CTRL.O->uab_cmd[1]; // åŽç¼€_Cè¡¨ç¤ºå½“å‰æ­¥çš„ç”µåŽ‹ï¼ŒC = Current
+        US_P(0) = CTRL.O->uab_cmd[0]; // ºó×º_P±íÊ¾ÉÏÒ»²½µÄµçÑ¹£¬P = Previous
+        US_P(1) = CTRL.O->uab_cmd[1]; // ºó×º_C±íÊ¾µ±Ç°²½µÄµçÑ¹£¬C = Current
+        US_C(0) = CTRL.O->uab_cmd[0]; // ºó×º_P±íÊ¾ÉÏÒ»²½µÄµçÑ¹£¬P = Previous
+        US_C(1) = CTRL.O->uab_cmd[1]; // ºó×º_C±íÊ¾µ±Ç°²½µÄµçÑ¹£¬C = Current
     }
 
     // (for watch only) Mismatch between ecap measurement and command to inverter
@@ -483,74 +484,74 @@ void voltage_measurement_based_on_eCAP(){
 void measurement(){
 
     // Convert adc results
-    G.vdc    =((REAL)(AdcaResultRegs.ADCRESULT0 ) - G.adc_offset[0]) * G.adc_scale[0];
-    if(G.flag_overwite_vdc) G.vdc = G.overwrite_vdc;
-    G.iuvw[0]=((REAL)(AdcaResultRegs.ADCRESULT2 ) - G.adc_offset[1]) * G.adc_scale[1];
-    G.iuvw[1]=((REAL)(AdcaResultRegs.ADCRESULT3 ) - G.adc_offset[2]) * G.adc_scale[2];
-    G.iuvw[2]=((REAL)(AdcaResultRegs.ADCRESULT1 ) - G.adc_offset[3]) * G.adc_scale[3];
-    G.iuvw[3]=((REAL)(AdcbResultRegs.ADCRESULT11) - G.adc_offset[4]) * G.adc_scale[4]; // AD_scale_U2; offsetD2
-    G.iuvw[4]=((REAL)(AdcbResultRegs.ADCRESULT9 ) - G.adc_offset[5]) * G.adc_scale[5]; // AD_scale_V2; offsetB2
-    G.iuvw[5]=((REAL)(AdcbResultRegs.ADCRESULT8 ) - G.adc_offset[6]) * G.adc_scale[6]; // AD_scale_W2; offsetA2
-    // å°†ADCè½¬æ¢å¾—åˆ°çš„æ¨¡æ‹Ÿç”µåŽ‹é‡æ¢ç®—æœ‰æžæ€§çš„éœå°”ä¼ æ„Ÿå™¨è¯»æ•°
-    hall_sensor_read[0] = (REAL)AdcaResultRegs.ADCRESULT5  - G.adc_offset[7]; // ADC_HALL_OFFSET_ADC5; // 32 poles on Aluminum target
-    hall_sensor_read[1] = (REAL)AdcaResultRegs.ADCRESULT4  - G.adc_offset[8]; // ADC_HALL_OFFSET_ADC4; // 32 poles on Aluminum target
-    hall_sensor_read[2] = (REAL)AdcbResultRegs.ADCRESULT10 - G.adc_offset[9]; // ADC_HALL_OFFSET_ADC10; // Bogen 40 poles on the top
+    Axis.vdc    =((REAL)(AdcaResultRegs.ADCRESULT0 ) - Axis.adc_offset[0]) * Axis.adc_scale[0];
+    if(G.flag_overwite_vdc) Axis.vdc = G.overwrite_vdc;
+    Axis.iuvw[0]=((REAL)(AdcaResultRegs.ADCRESULT2 ) - Axis.adc_offset[1]) * Axis.adc_scale[1];
+    Axis.iuvw[1]=((REAL)(AdcaResultRegs.ADCRESULT3 ) - Axis.adc_offset[2]) * Axis.adc_scale[2];
+    Axis.iuvw[2]=((REAL)(AdcaResultRegs.ADCRESULT1 ) - Axis.adc_offset[3]) * Axis.adc_scale[3];
+    Axis.iuvw[3]=((REAL)(AdcbResultRegs.ADCRESULT11) - Axis.adc_offset[4]) * Axis.adc_scale[4]; // AD_scale_U2; offsetD2
+    Axis.iuvw[4]=((REAL)(AdcbResultRegs.ADCRESULT9 ) - Axis.adc_offset[5]) * Axis.adc_scale[5]; // AD_scale_V2; offsetB2
+    Axis.iuvw[5]=((REAL)(AdcbResultRegs.ADCRESULT8 ) - Axis.adc_offset[6]) * Axis.adc_scale[6]; // AD_scale_W2; offsetA2
+    // ½«ADC×ª»»µÃµ½µÄÄ£ÄâµçÑ¹Á¿»»ËãÓÐ¼«ÐÔµÄ»ô¶û´«¸ÐÆ÷¶ÁÊý
+    hall_sensor_read[0] = (REAL)AdcaResultRegs.ADCRESULT5  - Axis.adc_offset[7]; // ADC_HALL_OFFSET_ADC5; // 32 poles on Aluminum target
+    hall_sensor_read[1] = (REAL)AdcaResultRegs.ADCRESULT4  - Axis.adc_offset[8]; // ADC_HALL_OFFSET_ADC4; // 32 poles on Aluminum target
+    hall_sensor_read[2] = (REAL)AdcbResultRegs.ADCRESULT10 - Axis.adc_offset[9]; // ADC_HALL_OFFSET_ADC10; // Bogen 40 poles on the top
 
     start_hall_conversion(hall_sensor_read);
 
-    // çº¿ç”µåŽ‹æµ‹é‡ï¼ˆåŸºäºŽå ç©ºæ¯”å’Œæ¯çº¿ç”µåŽ‹ï¼‰
+    // ÏßµçÑ¹²âÁ¿£¨»ùÓÚÕ¼¿Õ±ÈºÍÄ¸ÏßµçÑ¹£©
     voltage_measurement_based_on_eCAP();
 
-    // ç”µæµçŽ¯é™å¹…
-    pid1_iM.OutLimit = G.vdc * 0.5773672;
-    pid1_iT.OutLimit = G.vdc * 0.5773672;
-    pid2_iM.OutLimit = G.vdc * 0.5773672;
-    pid2_iT.OutLimit = G.vdc * 0.5773672;
+    // µçÁ÷»·ÏÞ·ù
+    pid1_iM.OutLimit = Axis.vdc * 0.5773672;
+    pid1_iT.OutLimit = Axis.vdc * 0.5773672;
+    pid2_iM.OutLimit = Axis.vdc * 0.5773672;
+    pid2_iT.OutLimit = Axis.vdc * 0.5773672;
 
-    // ç”µæµæŽ¥å£
-//    G.iabg[0] = UVW2A_AI(G.iuvw[0], G.iuvw[1], G.iuvw[2]);
-//    G.iabg[1] = UVW2B_AI(G.iuvw[0], G.iuvw[1], G.iuvw[2]);
-//    G.iabg[2] = UVW2G_AI(G.iuvw[0], G.iuvw[1], G.iuvw[2]);
-    // TODO: ç”µæµä¼ æ„Ÿå™¨Vç›¸æ²¡æŽ¥çº¿ï¼ŒæŽ¥çš„æ˜¯IDC_BUS
-    REAL phase_V_current = -G.iuvw[0] - G.iuvw[2];
-    G.iabg[0] = UV2A_AI(G.iuvw[0], phase_V_current);
-    G.iabg[1] = UV2B_AI(G.iuvw[0], phase_V_current);
+    // µçÁ÷½Ó¿Ú
+//    Axis.iabg[0] = UVW2A_AI(Axis.iuvw[0], Axis.iuvw[1], Axis.iuvw[2]);
+//    Axis.iabg[1] = UVW2B_AI(Axis.iuvw[0], Axis.iuvw[1], Axis.iuvw[2]);
+//    Axis.iabg[2] = UVW2G_AI(Axis.iuvw[0], Axis.iuvw[1], Axis.iuvw[2]);
+    // TODO: µçÁ÷´«¸ÐÆ÷VÏàÃ»½ÓÏß£¬½ÓµÄÊÇIDC_BUS
+    REAL phase_V_current = -Axis.iuvw[0] - Axis.iuvw[2];
+    Axis.iabg[0] = UV2A_AI(Axis.iuvw[0], phase_V_current);
+    Axis.iabg[1] = UV2B_AI(Axis.iuvw[0], phase_V_current);
 
-//    G.iabg[3] = UVW2A_AI(G.iuvw[3], G.iuvw[4], G.iuvw[5]);
-//    G.iabg[4] = UVW2B_AI(G.iuvw[3], G.iuvw[4], G.iuvw[5]);
-//    G.iabg[5] = UVW2G_AI(G.iuvw[3], G.iuvw[4], G.iuvw[5]);
+//    Axis.iabg[3] = UVW2A_AI(Axis.iuvw[3], Axis.iuvw[4], Axis.iuvw[5]);
+//    Axis.iabg[4] = UVW2B_AI(Axis.iuvw[3], Axis.iuvw[4], Axis.iuvw[5]);
+//    Axis.iabg[5] = UVW2G_AI(Axis.iuvw[3], Axis.iuvw[4], Axis.iuvw[5]);
 
-    phase_V_current = -G.iuvw[3] - G.iuvw[5];
-    G.iabg[3] = UV2A_AI(G.iuvw[3], phase_V_current);
-    G.iabg[4] = UV2B_AI(G.iuvw[3], phase_V_current);
+    phase_V_current = -Axis.iuvw[3] - Axis.iuvw[5];
+    Axis.iabg[3] = UV2A_AI(Axis.iuvw[3], phase_V_current);
+    Axis.iabg[4] = UV2B_AI(Axis.iuvw[3], phase_V_current);
 
-    // ç¬¬ä¸€å¥—ä¸‰ç›¸
+    // µÚÒ»Ì×ÈýÏà
     if(Axis.use_fisrt_set_three_phase==1){
-        IS_C(0)        = G.iabg[0];
-        IS_C(1)        = G.iabg[1];
-        CTRL.I->iab[0] = G.iabg[0];
-        CTRL.I->iab[1] = G.iabg[1];
+        IS_C(0)        = Axis.iabg[0];
+        IS_C(1)        = Axis.iabg[1];
+        CTRL.I->iab[0] = Axis.iabg[0];
+        CTRL.I->iab[1] = Axis.iabg[1];
     }else if(Axis.use_fisrt_set_three_phase==2){
-        // ç¬¬äºŒå¥—ä¸‰ç›¸
-        IS_C(0)        = G.iabg[3];
-        IS_C(1)        = G.iabg[4];
-        CTRL.I->iab[0+2] = G.iabg[3];
-        CTRL.I->iab[1+2] = G.iabg[4];
+        // µÚ¶þÌ×ÈýÏà
+        IS_C(0)        = Axis.iabg[3];
+        IS_C(1)        = Axis.iabg[4];
+        CTRL.I->iab[0+2] = Axis.iabg[3];
+        CTRL.I->iab[1+2] = Axis.iabg[4];
     }else if(Axis.use_fisrt_set_three_phase==-1){
-        IS_C(0)        = G.iabg[0];
-        IS_C(1)        = G.iabg[1];
-        CTRL.I->iab[0] = G.iabg[0];
-        CTRL.I->iab[1] = G.iabg[1];
-        CTRL.I->iab[0+2] = G.iabg[3];
-        CTRL.I->iab[1+2] = G.iabg[4];
+        IS_C(0)        = Axis.iabg[0];
+        IS_C(1)        = Axis.iabg[1];
+        CTRL.I->iab[0] = Axis.iabg[0];
+        CTRL.I->iab[1] = Axis.iabg[1];
+        CTRL.I->iab[0+2] = Axis.iabg[3];
+        CTRL.I->iab[1+2] = Axis.iabg[4];
     }
 
 
-    // è½¬å­ä½ç½®å’Œè½¬é€ŸæŽ¥å£ ä»¥åŠ è½¬å­ä½ç½®å’Œè½¬é€Ÿæµ‹é‡
+    // ×ª×ÓÎ»ÖÃºÍ×ªËÙ½Ó¿Ú ÒÔ¼° ×ª×ÓÎ»ÖÃºÍ×ªËÙ²âÁ¿
     {
         Uint32 QPOSCNT   = EQep1Regs.QPOSCNT;
         ENC.rpm          = PostionSpeedMeasurement_MovingAvergage(QPOSCNT);
-        ENC.omg_elec     = ENC.rpm * RPM_2_ELEC_RAD_PER_SEC; // æœºæ¢°è½¬é€Ÿï¼ˆå•ä½ï¼šRPMï¼‰-> ç”µæ°”è§’é€Ÿåº¦ï¼ˆå•ä½ï¼šelec.rad/s)
+        ENC.omg_elec     = ENC.rpm * RPM_2_ELEC_RAD_PER_SEC; // »úÐµ×ªËÙ£¨µ¥Î»£ºRPM£©-> µçÆø½ÇËÙ¶È£¨µ¥Î»£ºelec.rad/s)
         ENC.theta_d_elec = ENC.theta_d__state;
     }
     //CTRL.I->omg_elec = SPEED_DIRECTION * ENC.omg_elec;
@@ -558,55 +559,55 @@ void measurement(){
     CTRL.I->rpm = CTRL.I->omg_elec * ELEC_RAD_PER_SEC_2_RPM;
     CTRL.I->theta_d_elec = ENC.theta_d_elec;
 
-    //    è¿™æ ·ä¸èƒ½å½¢æˆä¿æŠ¤ï¼Œå¿…é¡»è®¾ç½®æ•…éšœçŠ¶æ€æ‰è¡Œã€‚
+    //    ÕâÑù²»ÄÜÐÎ³É±£»¤£¬±ØÐëÉèÖÃ¹ÊÕÏ×´Ì¬²ÅÐÐ¡£
     //    if(fabs(G.Current_W)>8 || fabs(G.Current_V)>8){
     //        DSP_PWM_DISABLE
     //        DSP_2PWM_DISABLE
     //    }
 
-    // ç”µæµé‡‡æ ·ADCæ¸©é£˜æ ¡å‡† // TODO æ”¹æˆç”¨ADC Raw Resultsæ ¡å‡†ã€‚
-    if(G.AD_offset_flag2==FALSE)
+    // µçÁ÷²ÉÑùADCÎÂÆ®Ð£×¼ // TODO ¸Ä³ÉÓÃADC Raw ResultsÐ£×¼¡£
+    if(Axis.AD_offset_flag2==FALSE)
     {
-        G.offset_counter += 1;
-        G.iuvw_offset_online[0] += G.iuvw[0];
-        G.iuvw_offset_online[1] += G.iuvw[1];
-        G.iuvw_offset_online[2] += G.iuvw[2];
-        G.iuvw_offset_online[3] += G.iuvw[0];
-        G.iuvw_offset_online[4] += G.iuvw[1];
-        G.iuvw_offset_online[5] += G.iuvw[2];
-        if(G.offset_counter>=5000){
-            G.iuvw_offset_online[0] = G.iuvw_offset_online[0] / 5000;
-            G.iuvw_offset_online[1] = G.iuvw_offset_online[1] / 5000;
-            G.iuvw_offset_online[2] = G.iuvw_offset_online[2] / 5000;
-            G.iuvw_offset_online[3] = G.iuvw_offset_online[3] / 5000;
-            G.iuvw_offset_online[4] = G.iuvw_offset_online[4] / 5000;
-            G.iuvw_offset_online[5] = G.iuvw_offset_online[5] / 5000;
-            G.AD_offset_flag2 = TRUE;
-            G.offset_counter = 0;
+        Axis.offset_counter += 1;
+        Axis.iuvw_offset_online[0] += Axis.iuvw[0];
+        Axis.iuvw_offset_online[1] += Axis.iuvw[1];
+        Axis.iuvw_offset_online[2] += Axis.iuvw[2];
+        Axis.iuvw_offset_online[3] += Axis.iuvw[0];
+        Axis.iuvw_offset_online[4] += Axis.iuvw[1];
+        Axis.iuvw_offset_online[5] += Axis.iuvw[2];
+        if(Axis.offset_counter>=5000){
+            Axis.iuvw_offset_online[0] = Axis.iuvw_offset_online[0] / 5000;
+            Axis.iuvw_offset_online[1] = Axis.iuvw_offset_online[1] / 5000;
+            Axis.iuvw_offset_online[2] = Axis.iuvw_offset_online[2] / 5000;
+            Axis.iuvw_offset_online[3] = Axis.iuvw_offset_online[3] / 5000;
+            Axis.iuvw_offset_online[4] = Axis.iuvw_offset_online[4] / 5000;
+            Axis.iuvw_offset_online[5] = Axis.iuvw_offset_online[5] / 5000;
+            Axis.AD_offset_flag2 = TRUE;
+            Axis.offset_counter = 0;
         }
 
-        // æ¥ä¸åŠå®Œæˆåç½®æ£€æµ‹ï¼ˆæ¯”å¦‚åˆšä¸Šç”µæ•°å­—å¼€å…³å°±æ˜¯å¼€çš„ï¼‰ï¼Œé‡‡ç”¨é»˜è®¤å€¼
-        /* 427-1401ï¼šæ·»åŠ å¼€å…³ä¿¡å·æ»¤æ³¢ã€‚ä»Šå¤©å‘çŽ°åœ¨åˆšä¸Šç”µçš„æ—¶å€™ï¼ŒXCUBE-IIçš„å‰ä¸¤ä¸ªä¸­æ–­é‡Œï¼Œæ•°å­—å¼€å…³æ˜¯æ‰“å¼€çš„ï¼Œç„¶åŽæ‰å˜æˆå…³é—­ã€‚*/
-        if(G.FLAG_ENABLE_PWM_OUTPUT && G.offset_counter>100){
-            G.iuvw_offset_online[0] = 0.0;
-            G.iuvw_offset_online[1] = 0.0;
-            G.iuvw_offset_online[2] = 0.0;
-            G.iuvw_offset_online[3] = 0.0;
-            G.iuvw_offset_online[4] = 0.0;
-            G.iuvw_offset_online[5] = 0.0;
-            G.AD_offset_flag2 = TRUE;
+        // À´²»¼°Íê³ÉÆ«ÖÃ¼ì²â£¨±ÈÈç¸ÕÉÏµçÊý×Ö¿ª¹Ø¾ÍÊÇ¿ªµÄ£©£¬²ÉÓÃÄ¬ÈÏÖµ
+        /* 427-1401£ºÌí¼Ó¿ª¹ØÐÅºÅÂË²¨¡£½ñÌì·¢ÏÖÔÚ¸ÕÉÏµçµÄÊ±ºò£¬XCUBE-IIµÄÇ°Á½¸öÖÐ¶ÏÀï£¬Êý×Ö¿ª¹ØÊÇ´ò¿ªµÄ£¬È»ºó²Å±ä³É¹Ø±Õ¡£*/
+        if(Axis.FLAG_ENABLE_PWM_OUTPUT && Axis.offset_counter>100){
+            Axis.iuvw_offset_online[0] = 0.0;
+            Axis.iuvw_offset_online[1] = 0.0;
+            Axis.iuvw_offset_online[2] = 0.0;
+            Axis.iuvw_offset_online[3] = 0.0;
+            Axis.iuvw_offset_online[4] = 0.0;
+            Axis.iuvw_offset_online[5] = 0.0;
+            Axis.AD_offset_flag2 = TRUE;
         }
 
-        // ä¸Šç”µçš„æ—¶å€™ï¼Œç”µæœºå¯èƒ½åœ¨è½¬ï¼Œæ­¤æ—¶æ ¹æ®ç”µæµåˆ¤æ–­æ˜¯å¦è¿˜è¦é¢å¤–è¿›è¡Œåç½®è¡¥å¿ã€‚
-        if( fabs(G.iuvw[0])>0.05 || fabs(G.iuvw[1])>0.05 || fabs(G.iuvw[2])>0.05 || \
-            fabs(G.iuvw[3])>0.05 || fabs(G.iuvw[4])>0.05 || fabs(G.iuvw[5])>0.05){
-            G.iuvw_offset_online[0] = 0.0;
-            G.iuvw_offset_online[1] = 0.0;
-            G.iuvw_offset_online[2] = 0.0;
-            G.iuvw_offset_online[3] = 0.0;
-            G.iuvw_offset_online[4] = 0.0;
-            G.iuvw_offset_online[5] = 0.0;
-            G.AD_offset_flag2 = TRUE;
+        // ÉÏµçµÄÊ±ºò£¬µç»ú¿ÉÄÜÔÚ×ª£¬´ËÊ±¸ù¾ÝµçÁ÷ÅÐ¶ÏÊÇ·ñ»¹Òª¶îÍâ½øÐÐÆ«ÖÃ²¹³¥¡£
+        if( fabs(Axis.iuvw[0])>0.05 || fabs(Axis.iuvw[1])>0.05 || fabs(Axis.iuvw[2])>0.05 || \
+            fabs(Axis.iuvw[3])>0.05 || fabs(Axis.iuvw[4])>0.05 || fabs(Axis.iuvw[5])>0.05){
+            Axis.iuvw_offset_online[0] = 0.0;
+            Axis.iuvw_offset_online[1] = 0.0;
+            Axis.iuvw_offset_online[2] = 0.0;
+            Axis.iuvw_offset_online[3] = 0.0;
+            Axis.iuvw_offset_online[4] = 0.0;
+            Axis.iuvw_offset_online[5] = 0.0;
+            Axis.AD_offset_flag2 = TRUE;
         }
     }
 }
@@ -620,11 +621,11 @@ void PanGuMainISR(void){
         do_enhanced_capture();
     #endif
 
-    // é‡‡æ ·ï¼ŒåŒ…æ‹¬DSPä¸­çš„ADCé‡‡æ ·ç­‰
+    // ²ÉÑù£¬°üÀ¨DSPÖÐµÄADC²ÉÑùµÈ
     DELAY_US(2); // wait for adc conversion TODO: check adc eoc flag?
     measurement();
 
-    if(!G.FLAG_ENABLE_PWM_OUTPUT){
+    if(!Axis.FLAG_ENABLE_PWM_OUTPUT){
 
         DSP_PWM_DISABLE
         DSP_2PWM_DISABLE
@@ -647,19 +648,23 @@ void PanGuMainISR(void){
         DSP_PWM_ENABLE
         DSP_2PWM_ENABLE
 
-        // DSPä¸­æŽ§åˆ¶å™¨çš„æ—¶é—´
+        // DSPÖÐ¿ØÖÆÆ÷µÄÊ±¼ä
         CTRL.timebase += CL_TS;
 
-        // æ ¹æ®æŒ‡ä»¤ï¼Œäº§ç”ŸæŽ§åˆ¶è¾“å‡ºï¼ˆç”µåŽ‹ï¼‰
+        // ¸ù¾ÝÖ¸Áî£¬²úÉú¿ØÖÆÊä³ö£¨µçÑ¹£©
         #if ENABLE_COMMISSIONING == FALSE
             //CTRL.S->Motor_or_Gnerator = sign(CTRL.I->idq_cmd[1]) == sign(ENC.rpm); // sign(CTRL.I->idq_cmd[1]) != sign(CTRL.I->cmd_speed_rpm))
-            runtime_command_and_tuning(G.Seletc_exp_operation);
-            controller(G.Set_manual_rpm, G.Set_manual_current_iq, G.Set_manual_current_id);
+            runtime_command_and_tuning(Axis.Seletc_exp_operation);
+            controller(Axis.Set_manual_rpm, Axis.Set_current_loop, Axis.Set_manual_current_iq, Axis.Set_manual_current_id,
+                Axis.flag_overwrite_theta_d, Axis.Overwrite_Current_Frequency,
+                Axis.used_theta_d_elec,
+                Axis.angle_shift_for_first_inverter,
+                Axis.angle_shift_for_second_inverter);
         #else
             commissioning();
         #endif
 
-        if(G.Seletc_exp_operation == XCUBE_TaTbTc_DEBUG_MODE){
+        if(Axis.Seletc_exp_operation == XCUBE_TaTbTc_DEBUG_MODE){
             //   CTRL.svgen1.Ta = 0.6; CTRL.svgen1.Tb = 0.4; CTRL.svgen1.Tc = 0.5;
             if(CTRL.svgen1.Ta>0.7) CTRL.svgen1.Ta=0.7;
             if(CTRL.svgen1.Ta<0.3) CTRL.svgen1.Ta=0.3;
@@ -696,7 +701,7 @@ __interrupt void EPWM1ISR(void){
     PieCtrlRegs.PIEIER4.all &= 0x7;        // Set group priority by adjusting PIEIER4 to allow INT4.1, 4.2, 4.3 to interrupt current ISR
 
     /* Step 3. [eCAP] Enable interrupts */
-    PieCtrlRegs.PIEACK.all = 0xFFFF;      // Enable PIE interrupts by writing all 1â€™s to the PIEACK register
+    PieCtrlRegs.PIEACK.all = 0xFFFF;      // Enable PIE interrupts by writing all 1¡¯s to the PIEACK register
     asm("       NOP");                    // Wait at least one cycle
     EINT;                                 // Enable global interrupts by clearing INTM
 #endif
