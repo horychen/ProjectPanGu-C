@@ -22,47 +22,47 @@ struct IPC_MEMORY_READ Read;
 //int channels[4]={10,11,20,21}; // 磁链和位置观测实验
 //int channels[4]={6,7,20,21}; // 低速运行实验
 
-//int channels[NO_OF_CHANNELS]={5,23,4,21,6,7}; // 低速运行实验
-//int channels[NO_OF_CHANNELS]={5,23,20,21,6,7}; // 低速运行实验
+//int channels[NO_OF_DAC_CHANNELS]={5,23,4,21,6,7}; // 低速运行实验
+//int channels[NO_OF_DAC_CHANNELS]={5,23,20,21,6,7}; // 低速运行实验
 
 
 //int channels[4]={26,27,5,22}; // 高速运行实验
-//int channels[NO_OF_CHANNELS]={5,23,26,27,22,19}; // 高速运行实验
-//int channels[NO_OF_CHANNELS]={5,23,26,27,12,22}; // 高速运行实验
+//int channels[NO_OF_DAC_CHANNELS]={5,23,26,27,22,19}; // 高速运行实验
+//int channels[NO_OF_DAC_CHANNELS]={5,23,26,27,12,22}; // 高速运行实验
 
 
 // ECAP
-//int channels[NO_OF_CHANNELS]={0,1,4,5,6,7};
-//int channels[NO_OF_CHANNELS]={0,1,32,34,33,35};
-//int channels[NO_OF_CHANNELS]={0,1,4,38,32,33};
+//int channels[NO_OF_DAC_CHANNELS]={0,1,4,5,6,7};
+//int channels[NO_OF_DAC_CHANNELS]={0,1,32,34,33,35};
+//int channels[NO_OF_DAC_CHANNELS]={0,1,4,38,32,33};
 
 // NSOAF-Rev1
-//int channels[NO_OF_CHANNELS]={6,7,20,21,5,23};
-//int channels[NO_OF_CHANNELS]={6,7,30,32,31,33};
-//int channels[NO_OF_CHANNELS]={6,7,20,21,32,33};
+//int channels[NO_OF_DAC_CHANNELS]={6,7,20,21,5,23};
+//int channels[NO_OF_DAC_CHANNELS]={6,7,30,32,31,33};
+//int channels[NO_OF_DAC_CHANNELS]={6,7,20,21,32,33};
 
 // ECAP
-//int channels[NO_OF_CHANNELS]={6,7,40,42,41,43};
-//int channels[NO_OF_CHANNELS]={6,7,44,45,46,47};
-//int channels[NO_OF_CHANNELS]={46,47,20,21,6,7};
+//int channels[NO_OF_DAC_CHANNELS]={6,7,40,42,41,43};
+//int channels[NO_OF_DAC_CHANNELS]={6,7,44,45,46,47};
+//int channels[NO_OF_DAC_CHANNELS]={46,47,20,21,6,7};
 
-//int channels[NO_OF_CHANNELS]={46,47,20,21,6,7,59,59}; // ecap dq
-//int channels[NO_OF_CHANNELS]={10,11,20,21,6,7,59,59}; // psi_2
-//int channels[NO_OF_CHANNELS]={10,11,20,21,6,39,39,59}; // park trapezoidal
-//int channels[NO_OF_CHANNELS]={10,11,20,21,6,7,39,59}; // park trapezoidal
-//int channels[NO_OF_CHANNELS]={10,11,20,21,6,7,5,23}; // rev1 sensorless slow reversal
+//int channels[NO_OF_DAC_CHANNELS]={46,47,20,21,6,7,59,59}; // ecap dq
+//int channels[NO_OF_DAC_CHANNELS]={10,11,20,21,6,7,59,59}; // psi_2
+//int channels[NO_OF_DAC_CHANNELS]={10,11,20,21,6,39,39,59}; // park trapezoidal
+//int channels[NO_OF_DAC_CHANNELS]={10,11,20,21,6,7,39,59}; // park trapezoidal
+//int channels[NO_OF_DAC_CHANNELS]={10,11,20,21,6,7,5,23}; // rev1 sensorless slow reversal
 
-//int channels[NO_OF_CHANNELS]={51,52,20,21,6,7,54,59}; // test huwu 1998
-//int channels[NO_OF_CHANNELS]={10,11,20,21,6,7,55,59}; // Compare to CM-VM fusion with only KP
+//int channels[NO_OF_DAC_CHANNELS]={51,52,20,21,6,7,54,59}; // test huwu 1998
+//int channels[NO_OF_DAC_CHANNELS]={10,11,20,21,6,7,55,59}; // Compare to CM-VM fusion with only KP
 
-//int channels[NO_OF_CHANNELS]={50,9,20,21,6,7,52,59}; // Chi.Xu 2009 SSR
-//int channels[NO_OF_CHANNELS]={50,9,52,53,26,27,49,59}; // Chi.Xu 2009 High speed
-//int channels[NO_OF_CHANNELS]={56,57,3,5,26,27,49,59}; // Chi.Xu 2009 High speed
-//int channels[NO_OF_CHANNELS]={56,57,3,5,26,27,23,59}; // NSOAF High Speed
+//int channels[NO_OF_DAC_CHANNELS]={50,9,20,21,6,7,52,59}; // Chi.Xu 2009 SSR
+//int channels[NO_OF_DAC_CHANNELS]={50,9,52,53,26,27,49,59}; // Chi.Xu 2009 High speed
+//int channels[NO_OF_DAC_CHANNELS]={56,57,3,5,26,27,49,59}; // Chi.Xu 2009 High speed
+//int channels[NO_OF_DAC_CHANNELS]={56,57,3,5,26,27,23,59}; // NSOAF High Speed
 
-//int channels[NO_OF_CHANNELS]={6,7,49,59,20,21,47,48}; // ESOAF
+//int channels[NO_OF_DAC_CHANNELS]={6,7,49,59,20,21,47,48}; // ESOAF
 
-int channels[NO_OF_CHANNELS]={3,5,49,59,20,21,47,48}; // ESOAF
+int channels[NO_OF_DAC_CHANNELS]={3,5,49,59,20,21,47,48}; // ESOAF
 
 int channels_preset = 9; //6
 

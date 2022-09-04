@@ -11,48 +11,6 @@
     #include "ACMConfig.h"
     #include "ACMSim.h"
     #include "Experiment.h"
-
-struct st_axis{
-    struct ControllerForExperiment *pCTRL;
-    // Commonly used for prototype motor testing
-        int use_fisrt_set_three_phase;
-        int Set_current_loop;
-        REAL Set_manual_rpm;
-        REAL Set_manual_current_iq;
-        REAL Set_manual_current_id;
-        int Seletc_exp_operation;
-        int *pFLAG_INVERTER_NONLINEARITY_COMPENSATION;
-        int flag_overwrite_theta_d;
-        REAL Overwrite_Current_Frequency;
-        REAL used_theta_d_elec;
-        REAL angle_shift_for_first_inverter;
-        REAL angle_shift_for_second_inverter;
-        REAL OverwriteSpeedOutLimitDuringInit;
-        int FLAG_ENABLE_PWM_OUTPUT; // 电机模式标志位
-    // ADC Offset
-        // Automatic Offset Removing
-        int AD_offset_flag2;
-        REAL offset_counter;
-        REAL offset_online[6];
-        // Raw
-        REAL adc_offset[12]; // ADC offset. U, V, W corresponds to ADCRESULT2, ADCRESULT3, ADCRESULT1.
-        REAL adc_scale[12];
-        volatile struct ADC_RESULT_REGS *pAdcaResultRegs;
-        volatile struct ADC_RESULT_REGS *pAdcbResultRegs;
-    // Sensor - Raw measurement
-        REAL vdc;
-        REAL iabg[6];
-        REAL iuvw[6];
-        REAL iuvw_offset_online[6];
-    // DAC
-        int DAC_MAX5307_FLAG; // for single core case
-        REAL dac_offset[8];
-        REAL dac_time;
-        REAL dac_watch[80];
-        REAL dac_watch_stator_resistance;
-};
-extern struct st_axis Axis;
-
 /* Motor Library file------------------------------------------------------------------------*/
     #define USE_DEATIME_PRECOMP FALSE
     __interrupt void EPWM1ISR(void);
@@ -91,7 +49,7 @@ extern struct st_axis Axis;
     #define SYSTEM_QEP_SWAP_DISABLE             0     //反方向计数
     //ADC CONFIGURATION is moved to main.c
     //DAC Configuration
-    #define NO_OF_CHANNELS 8
+    #define NO_OF_DAC_CHANNELS 8
     //TRIP CONFIGURATION
     //#define MAX_CURRENT_N                      -11.8      //-12A  // Set your negative current trip threshold here in [0, 4095]
     //#define MAX_CURRENT_P                       11.8       //12A   // Set your positive current trip threshold here in [0, 4095]
@@ -123,4 +81,48 @@ extern struct st_axis Axis;
     int Motor_MODE_STOP(void);
     int Motor_MODE_REVERSE(void);
     void System_Checking(void);
+/* Global Variable */
+struct st_axis{
+    struct ControllerForExperiment *pCTRL;
+    // Commonly used for prototype motor testing
+        int use_fisrt_set_three_phase;
+        int Set_current_loop;
+        REAL Set_manual_rpm;
+        REAL Set_manual_current_iq;
+        REAL Set_manual_current_id;
+        int Seletc_exp_operation;
+        int *pFLAG_INVERTER_NONLINEARITY_COMPENSATION;
+        int flag_overwrite_theta_d;
+        REAL Overwrite_Current_Frequency;
+        REAL used_theta_d_elec;
+        REAL angle_shift_for_first_inverter;
+        REAL angle_shift_for_second_inverter;
+        REAL OverwriteSpeedOutLimitDuringInit;
+        int FLAG_ENABLE_PWM_OUTPUT; // 电机模式标志位
+    // ADC Offset
+        // Automatic Offset Removing
+        int AD_offset_flag2;
+        REAL offset_counter;
+        REAL offset_online[6];
+        // Raw
+        REAL adc_offset[12]; // ADC offset. U, V, W corresponds to ADCRESULT2, ADCRESULT3, ADCRESULT1.
+        REAL adc_scale[12];
+        volatile struct ADC_RESULT_REGS *pAdcaResultRegs;
+        volatile struct ADC_RESULT_REGS *pAdcbResultRegs;
+    // Sensor - Raw measurement
+        REAL vdc;
+        REAL iabg[6];
+        REAL iuvw[6];
+        REAL iuvw_offset_online[6];
+    // DAC
+        int DAC_MAX5307_FLAG; // for single core case
+        REAL dac_offset[NO_OF_DAC_CHANNELS];
+        REAL dac_time;
+        REAL dac_watch[80];
+        REAL dac_watch_stator_resistance;
+};
+extern struct st_axis Axis;
+
+
+
 #endif
