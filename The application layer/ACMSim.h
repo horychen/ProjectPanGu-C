@@ -19,16 +19,16 @@
 #if PC_SIMULATION == FALSE
 /*  SYSTEM Configuration -----------------------------------------------------------------------------------*/
     #define NUMBER_OF_DSP_CORES 2  // 1 or 2
-    #define SYSTEM_PROGRAM_MODE 223  //223 for CJHMainISR //0 stands for MainISR ,1 stands for Motor_Parameter_Compute_ISR
+    #define SYSTEM_PROGRAM_MODE 223  //223 for CJHMainISR
     #if SYSTEM_PROGRAM_MODE==223
         /* ePWM CONFIGURATION */
         #define SYSTEM_PROGRAM                     EPWM1ISR
-        #define SYSTEM_PWM_FREQUENCY               10 // 10kHz
-        //        #define SYSTEM_CARRIER_PERIOD              (100000/SYSTEM_PWM_FREQUENCY) // = TBCLK (100 MHz) / 10 (kHz) = 100e6/1e4 = 100e2 = 1e4 cnt ÂØπÂ∫î‰∏Ä‰∏™ËΩΩÊ≥¢Âë®Êúü
+        //        #define SYSTEM_PWM_KILO_FREQUENCY               10 // 10kHz
+        //        #define SYSTEM_CARRIER_PERIOD              (100000/SYSTEM_PWM_KILO_FREQUENCY) // = TBCLK (100 MHz) / 10 (kHz) = 100e6/1e4 = 100e2 = 1e4 cnt ∂‘”¶“ª∏ˆ‘ÿ≤®÷‹∆⁄
         //        #define SYSTEM_TBPRD                       (SYSTEM_CARRIER_PERIOD/2)
-        #define SYSTEM_CARRIER_PERIOD              10000 // =100000/10
-        #define SYSTEM_TBPRD                       5000 // =10000/2
-        //#define SYSTEM_PWM_DEADTIME_CNT            500 // 500 ‰∏™ TBCLK = EPWMCLK/1 = 100 MHz
+        #define SYSTEM_CARRIER_PERIOD              10000 // =100000/10, max is 100kHz
+        #define SYSTEM_TBPRD                       5000  // =SYSTEM_CARRIER_PERIOD/2
+        //#define SYSTEM_PWM_DEADTIME_CNT            500 // 500 ∏ˆ TBCLK = EPWMCLK/1 = 100 MHz
         #define SYSTEM_PWM_DEADTIME_CNT            200
         #define SYSTEM_PWM_DEADTIME_COMPENSATION   483
             // Td = 5.0us; Ton = 0.15us; Toff = 0.32us;
@@ -38,7 +38,7 @@
         #define SYSTEM_MIN_PWM_DUTY_LIMATATION     0.04
         #define SYSTEM_PWM_UDC_UTILIZATION         SYSTEM_MAX_PWM_DUTY_LIMATATION
 
-        /* eCAP CONFIGURATION */ /* eCAPÊúÄÂ§ßÁöÑÊ≥¢Ë∞∑ÔºüÊàñÊ≥¢Â≥∞Ôºü‰∏≠Êñ≠Âë®ÊúüËÆ°Êï∞ÂÄºÊòØ20000ÔºåËøôËøõ‰∏ÄÊ≠•È™åËØÅ‰∫ÜTBCLKË¢´ÈôçÈ¢ë‰∫ÜÔºå‰∏çÊòØ200MHzÔºåËÄåÊòØ100MHz„ÄÇ */
+        /* eCAP CONFIGURATION */ /* eCAP◊Ó¥Ûµƒ≤®π»£øªÚ≤®∑Â£ø÷–∂œ÷‹∆⁄º∆ ˝÷µ «20000£¨’‚Ω¯“ª≤Ω—È÷§¡ÀTBCLK±ªΩµ∆µ¡À£¨≤ª «200MHz£¨∂¯ «100MHz°£ */
         #define SYSTEM_PWM_INT_MAX_COUNT               20000
         #define SYSTEM_PWM_INT_MAX_COUNT_INVERSE       5e-5 // = 1 / 20000
         #define SYSTEM_HALF_PWM_MAX_COUNT          10000
@@ -46,7 +46,7 @@
 #endif
 
 
-// ÈáçÂÆö‰πâÂèòÈáèÁ±ªÂûã
+// ÷ÿ∂®“Â±‰¡ø¿‡–Õ
 #ifndef DSP28_DATA_TYPES
 #define DSP28_DATA_TYPES
 typedef          int int16;
@@ -56,10 +56,10 @@ typedef unsigned long Uint32;
 typedef          long long int64;
 typedef unsigned long long Uint64;
 typedef float float32;
-typedef long double float64;
+typedef double float64;
+typedef long double float128;
 #endif
 typedef float32 REAL;
-// typedef float64 REAL;
 
 /* Constants */
 #define CONST_PI_OVER_180 (0.0174533)
@@ -129,18 +129,18 @@ typedef float32 REAL;
 #include "sweep_frequency.h"
 
 
-struct GlobalWatch
-{
-    #if MACHINE_TYPE % 10 == 1
-        // induction motor
-        double offset[2];
-        double offset_compensation[2];
-        double psi_2[2];
-    #elif MACHINE_TYPE % 10 == 2
-        // PM motor
-    #endif
-};
-extern struct GlobalWatch watch;
+//struct GlobalWatch
+//{
+//    #if MACHINE_TYPE % 10 == 1
+//        // induction motor
+//        double offset[2];
+//        double offset_compensation[2];
+//        double psi_2[2];
+//    #elif MACHINE_TYPE % 10 == 2
+//        // PM motor
+//    #endif
+//};
+//extern struct GlobalWatch watch;
 
 
 

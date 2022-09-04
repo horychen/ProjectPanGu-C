@@ -1,7 +1,7 @@
 /*
  * ShareMemory.c
  *
- *  Created on: 2021å¹´1æœˆ15æ—¥
+ *  Created on: 2021Äê1ÔÂ15ÈÕ
  *      Author: JIAHAO
  *///cpu2 CONNECTION
 
@@ -14,22 +14,21 @@ struct IPC_MEMORY_READ Read;
 #pragma DATA_SECTION(Write, "SHARERAMGS1"); // GS1 is write
 #pragma DATA_SECTION( Read, "SHARERAMGS0");
 
-#define NO_OF_CHANNELS 8
 
-//int channels[4]={2,3,14,15}; // è‡ªæ•´å®š
-//int channels[4]={2,3,14,16}; // è‡ªæ•´å®š
+//int channels[4]={2,3,14,15}; // ×ÔÕû¶¨
+//int channels[4]={2,3,14,16}; // ×ÔÕû¶¨
 //int channels[4]={4,5,6,7};
 //int channels[4]={10,12,6,7};
-//int channels[4]={10,11,20,21}; // ç£é“¾å’Œä½ç½®è§‚æµ‹å®éªŒ
-//int channels[4]={6,7,20,21}; // ä½é€Ÿè¿è¡Œå®éªŒ
+//int channels[4]={10,11,20,21}; // ´ÅÁ´ºÍÎ»ÖÃ¹Û²âÊµÑé
+//int channels[4]={6,7,20,21}; // µÍËÙÔËĞĞÊµÑé
 
-//int channels[NO_OF_CHANNELS]={5,23,4,21,6,7}; // ä½é€Ÿè¿è¡Œå®éªŒ
-//int channels[NO_OF_CHANNELS]={5,23,20,21,6,7}; // ä½é€Ÿè¿è¡Œå®éªŒ
+//int channels[NO_OF_CHANNELS]={5,23,4,21,6,7}; // µÍËÙÔËĞĞÊµÑé
+//int channels[NO_OF_CHANNELS]={5,23,20,21,6,7}; // µÍËÙÔËĞĞÊµÑé
 
 
-//int channels[4]={26,27,5,22}; // é«˜é€Ÿè¿è¡Œå®éªŒ
-//int channels[NO_OF_CHANNELS]={5,23,26,27,22,19}; // é«˜é€Ÿè¿è¡Œå®éªŒ
-//int channels[NO_OF_CHANNELS]={5,23,26,27,12,22}; // é«˜é€Ÿè¿è¡Œå®éªŒ
+//int channels[4]={26,27,5,22}; // ¸ßËÙÔËĞĞÊµÑé
+//int channels[NO_OF_CHANNELS]={5,23,26,27,22,19}; // ¸ßËÙÔËĞĞÊµÑé
+//int channels[NO_OF_CHANNELS]={5,23,26,27,12,22}; // ¸ßËÙÔËĞĞÊµÑé
 
 
 // ECAP
@@ -89,152 +88,152 @@ extern REAL hall_theta_r_mech_incremental[3];
 void write_DAC_buffer(){
 if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
 
-    // æ‰€æœ‰æ›¾ç»çœ‹è¿‡çš„å˜é‡éƒ½åœ¨åˆ—åœ¨è¿™é‡Œï¼Œè®°å¾—æœ‰æ•ˆèŒƒå›´æ˜¯ [-1, 1]ã€‚
-    G.dac_watch[0] = G.iuvw[2]*0.2;
-    G.dac_watch[1] = G.iuvw[1]*0.2;
-    //G.dac_watch[2] = G.Current_U*0.2;
-    //G.dac_watch[3] = G.Current_Not_Used*0.2;
-    G.dac_watch[2] = CTRL.I->idq_cmd[0]*0.1;
-    G.dac_watch[3] = CTRL.I->idq_cmd[1]*0.1; // 5 A for low speed
-    G.dac_watch[4] = CTRL.I->idq[0]*0.1;
-    G.dac_watch[5] = CTRL.I->idq[1]*0.1; // 5 A for low speed
-    //G.dac_watch[5] = CTRL.I->idq[1]*0.05; // 20 A for high speed reversal
-    G.dac_watch[6] = CTRL.I->rpm*0.002;
-    G.dac_watch[7] = ELECTRICAL_SPEED_FEEDBACK*ELEC_RAD_PER_SEC_2_RPM*0.002;
+    // ËùÓĞÔø¾­¿´¹ıµÄ±äÁ¿¶¼ÔÚÁĞÔÚÕâÀï£¬¼ÇµÃÓĞĞ§·¶Î§ÊÇ [-1, 1]¡£
+    Axis.dac_watch[0] = Axis.iuvw[2]*0.2;
+    Axis.dac_watch[1] = Axis.iuvw[1]*0.2;
+    //Axis.dac_watch[2] = G.Current_U*0.2;
+    //Axis.dac_watch[3] = G.Current_Not_Used*0.2;
+    Axis.dac_watch[2] = CTRL.I->idq_cmd[0]*0.1;
+    Axis.dac_watch[3] = CTRL.I->idq_cmd[1]*0.1; // 5 A for low speed
+    Axis.dac_watch[4] = CTRL.I->idq[0]*0.1;
+    Axis.dac_watch[5] = CTRL.I->idq[1]*0.1; // 5 A for low speed
+    //Axis.dac_watch[5] = CTRL.I->idq[1]*0.05; // 20 A for high speed reversal
+    Axis.dac_watch[6] = CTRL.I->rpm*0.002;
+    Axis.dac_watch[7] = ELECTRICAL_SPEED_FEEDBACK*ELEC_RAD_PER_SEC_2_RPM*0.002;
 
-    G.dac_watch[8] = EQep1Regs.QPOSCNT*0.0001; // [0, 10000]
+    Axis.dac_watch[8] = EQep1Regs.QPOSCNT*0.0001; // [0, 10000]
 
-    //G.dac_watch[2] = CTRL.I->iab[1]*0.2;
-    G.dac_watch[9] = CTRL.I->iab[0]*0.2;
+    //Axis.dac_watch[2] = CTRL.I->iab[1]*0.2;
+    Axis.dac_watch[9] = CTRL.I->iab[0]*0.2;
 
-    //G.dac_watch[11] = COMM.current_sum*0.05/(float32)COMM.counterSS;
-    //G.dac_watch[12] = COMM.voltage_sum*0.05/(float32)COMM.counterSS;
-    //G.dac_watch[13] = COMM.counterSS*0.001;
+    //Axis.dac_watch[11] = COMM.current_sum*0.05/(float32)COMM.counterSS;
+    //Axis.dac_watch[12] = COMM.voltage_sum*0.05/(float32)COMM.counterSS;
+    //Axis.dac_watch[13] = COMM.counterSS*0.001;
 
-    G.dac_watch[10] = AFE_USED.psi_2[0];
-    G.dac_watch[11] = AFE_USED.psi_2[1]; // MOTOR.KActive; //AFEOE.psi_2[1];
-    G.dac_watch[12] = AFEOE.psi_2[0];
-    G.dac_watch[13] = AFEOE.psi_2[1];
+    Axis.dac_watch[10] = AFE_USED.psi_2[0];
+    Axis.dac_watch[11] = AFE_USED.psi_2[1]; // MOTOR.KActive; //AFEOE.psi_2[1];
+    Axis.dac_watch[12] = AFEOE.psi_2[0];
+    Axis.dac_watch[13] = AFEOE.psi_2[1];
 
-    G.dac_watch[14] = CTRL.O->uab_cmd_to_inverter[0]*0.01;
-    G.dac_watch[15] = CTRL.O->uab_cmd_to_inverter[1]*0.01;
-    G.dac_watch[16] = CTRL.O->uab_cmd[0]*0.01;
-    G.dac_watch[17] = CTRL.O->uab_cmd[1]*0.01;
+    Axis.dac_watch[14] = CTRL.O->uab_cmd_to_inverter[0]*0.01;
+    Axis.dac_watch[15] = CTRL.O->uab_cmd_to_inverter[1]*0.01;
+    Axis.dac_watch[16] = CTRL.O->uab_cmd[0]*0.01;
+    Axis.dac_watch[17] = CTRL.O->uab_cmd[1]*0.01;
 
-    G.dac_watch[18] = CTRL.O->udq_cmd[0]*0.01;
-    G.dac_watch[19] = CTRL.O->udq_cmd[1]*0.01;
+    Axis.dac_watch[18] = CTRL.O->udq_cmd[0]*0.01;
+    Axis.dac_watch[19] = CTRL.O->udq_cmd[1]*0.01;
 
-    G.dac_watch[20] = ENC.theta_d_elec*0.1;
-    G.dac_watch[21] = ELECTRICAL_POSITION_FEEDBACK*0.1;
+    Axis.dac_watch[20] = ENC.theta_d_elec*0.1;
+    Axis.dac_watch[21] = ELECTRICAL_POSITION_FEEDBACK*0.1;
 
     #if SELECT_ALGORITHM == ALG_NSOAF
-        G.dac_watch[22] = nsoaf.LoadTorquePI*0.25;
-        G.dac_watch[23] = nsoaf.xIq*0.2; // 5 A for low speed
-        //G.dac_watch[23] = nsoaf.xIq*0.05; // 20 A for high speed reversal
+        Axis.dac_watch[22] = nsoaf.LoadTorquePI*0.25;
+        Axis.dac_watch[23] = nsoaf.xIq*0.2; // 5 A for low speed
+        //Axis.dac_watch[23] = nsoaf.xIq*0.05; // 20 A for high speed reversal
     #endif
 
-    //G.dac_watch[26] = CTRL.I->rpm*0.0005;
-    //G.dac_watch[27] = ELECTRICAL_SPEED_FEEDBACK*ELEC_RAD_PER_SEC_2_RPM*0.0005;
-    G.dac_watch[26] = CTRL.I->rpm*0.001;
-    G.dac_watch[27] = ELECTRICAL_SPEED_FEEDBACK*ELEC_RAD_PER_SEC_2_RPM*0.001;
+    //Axis.dac_watch[26] = CTRL.I->rpm*0.0005;
+    //Axis.dac_watch[27] = ELECTRICAL_SPEED_FEEDBACK*ELEC_RAD_PER_SEC_2_RPM*0.0005;
+    Axis.dac_watch[26] = CTRL.I->rpm*0.001;
+    Axis.dac_watch[27] = ELECTRICAL_SPEED_FEEDBACK*ELEC_RAD_PER_SEC_2_RPM*0.001;
 
-    G.dac_watch[30] = htz.psi_2_ampl;
-    G.dac_watch[31] = htz.psi_2_ampl_lpf;
-    G.dac_watch[32] = (MOTOR.KActive - htz.psi_2_ampl_lpf)*10;
-    G.dac_watch[33] = htz.psi_2[0];
-    G.dac_watch[34] = htz.psi_2[1];
-    G.dac_watch[35] = htz.theta_d*0.1;
+    Axis.dac_watch[30] = htz.psi_2_ampl;
+    Axis.dac_watch[31] = htz.psi_2_ampl_lpf;
+    Axis.dac_watch[32] = (MOTOR.KActive - htz.psi_2_ampl_lpf)*10;
+    Axis.dac_watch[33] = htz.psi_2[0];
+    Axis.dac_watch[34] = htz.psi_2[1];
+    Axis.dac_watch[35] = htz.theta_d*0.1;
 
-    G.dac_watch[36] = INV.sig_a2*0.02;
-    G.dac_watch[37] = INV.sig_a3*0.02;
+    Axis.dac_watch[36] = INV.sig_a2*0.02;
+    Axis.dac_watch[37] = INV.sig_a3*0.02;
 
-    G.dac_watch[38] = htz.u_offset[0]*0.2;
-    G.dac_watch[39] = htz.u_offset[1]*0.2;
+    Axis.dac_watch[38] = htz.u_offset[0]*0.2;
+    Axis.dac_watch[39] = htz.u_offset[1]*0.2;
 
 
     #if FALSE
         REAL ual_dist = MT2A(pid1_iM.Out, pid1_iT.Out, CTRL.S->cosT, CTRL.S->sinT);
         REAL ube_dist = MT2B(pid1_iM.Out, pid1_iT.Out, CTRL.S->cosT, CTRL.S->sinT);
-        G.dac_watch[28] = pid1_iM.Out*0.02;
-        G.dac_watch[29] = pid1_iT.Out*0.02;
+        Axis.dac_watch[28] = pid1_iM.Out*0.02;
+        Axis.dac_watch[29] = pid1_iT.Out*0.02;
 
-        G.dac_watch[30] = ual_dist*0.02;
-        G.dac_watch[31] = ube_dist*0.02;
+        Axis.dac_watch[30] = ual_dist*0.02;
+        Axis.dac_watch[31] = ube_dist*0.02;
 
-        G.dac_watch[32] = INV.ual_comp*0.02;
-        G.dac_watch[33] = INV.ube_comp*0.02;
+        Axis.dac_watch[32] = INV.ual_comp*0.02;
+        Axis.dac_watch[33] = INV.ube_comp*0.02;
 
-        G.dac_watch[34] = (CTRL.O->uab_cmd_to_inverter[0] - G.dac_watch_stator_resistance * CTRL.I->iab[0])*0.02;
-        G.dac_watch[35] = (CTRL.O->uab_cmd_to_inverter[1] - G.dac_watch_stator_resistance * CTRL.I->iab[1])*0.02;
+        Axis.dac_watch[34] = (CTRL.O->uab_cmd_to_inverter[0] - Axis.dac_watch_stator_resistance * CTRL.I->iab[0])*0.02;
+        Axis.dac_watch[35] = (CTRL.O->uab_cmd_to_inverter[1] - Axis.dac_watch_stator_resistance * CTRL.I->iab[1])*0.02;
 
-        G.dac_watch[36] = G.dac_watch[34] - G.dac_watch[32];
-        G.dac_watch[37] = G.dac_watch[35] - G.dac_watch[33];
+        Axis.dac_watch[36] = Axis.dac_watch[34] - Axis.dac_watch[32];
+        Axis.dac_watch[37] = Axis.dac_watch[35] - Axis.dac_watch[33];
 
-        G.dac_watch[38] = CTRL.inv->theta_trapezoidal / M_PI_OVER_180 * 0.025;
-        G.dac_watch[39] = CTRL.inv->Vsat* 0.05;
-        //G.dac_watch[39] = INV.I5_plus_I7_LPF * 0.2;
-        G.dac_watch[40] = (CTRL.O->udq_cmd_to_inverter[0] - CTRL.O->udq_cmd[0])*0.02;
-        G.dac_watch[41] = (CTRL.O->udq_cmd_to_inverter[1] - CTRL.O->udq_cmd[1])*0.02;
-        G.dac_watch[42] = (CAP.dq[0]             - CTRL.O->udq_cmd[0])*0.02;
-        G.dac_watch[43] = (CAP.dq[1]             - CTRL.O->udq_cmd[1])*0.02;
-        //        G.dac_watch[38] = (CAP.ecapU.Period1) * 0.25e-4;
-        //        G.dac_watch[39] = (CAP.ecapV.Period1) * 0.25e-4;
-        //        G.dac_watch[40] = (CAP.ecapW.Period1) * 0.25e-4;
-        //        G.dac_watch[41] = (CAP.ecapU.Period2) * 0.25e-4;
-        //        G.dac_watch[42] = (CAP.ecapV.Period2) * 0.25e-4;
-        //        G.dac_watch[43] = (CAP.ecapW.Period2) * 0.25e-4;
+        Axis.dac_watch[38] = CTRL.inv->theta_trapezoidal / M_PI_OVER_180 * 0.025;
+        Axis.dac_watch[39] = CTRL.inv->Vsat* 0.05;
+        //Axis.dac_watch[39] = INV.I5_plus_I7_LPF * 0.2;
+        Axis.dac_watch[40] = (CTRL.O->udq_cmd_to_inverter[0] - CTRL.O->udq_cmd[0])*0.02;
+        Axis.dac_watch[41] = (CTRL.O->udq_cmd_to_inverter[1] - CTRL.O->udq_cmd[1])*0.02;
+        Axis.dac_watch[42] = (CAP.dq[0]             - CTRL.O->udq_cmd[0])*0.02;
+        Axis.dac_watch[43] = (CAP.dq[1]             - CTRL.O->udq_cmd[1])*0.02;
+        //        Axis.dac_watch[38] = (CAP.ecapU.Period1) * 0.25e-4;
+        //        Axis.dac_watch[39] = (CAP.ecapV.Period1) * 0.25e-4;
+        //        Axis.dac_watch[40] = (CAP.ecapW.Period1) * 0.25e-4;
+        //        Axis.dac_watch[41] = (CAP.ecapU.Period2) * 0.25e-4;
+        //        Axis.dac_watch[42] = (CAP.ecapV.Period2) * 0.25e-4;
+        //        Axis.dac_watch[43] = (CAP.ecapW.Period2) * 0.25e-4;
 
-        G.dac_watch[44] = (CTRL.O->udq_cmd_to_inverter[0])*0.02;
-        G.dac_watch[45] = (CTRL.O->udq_cmd_to_inverter[1])*0.02;
-        G.dac_watch[46] = (CAP.dq[0]            )*0.02;
-        G.dac_watch[47] = (CAP.dq[1]            )*0.02;
+        Axis.dac_watch[44] = (CTRL.O->udq_cmd_to_inverter[0])*0.02;
+        Axis.dac_watch[45] = (CTRL.O->udq_cmd_to_inverter[1])*0.02;
+        Axis.dac_watch[46] = (CAP.dq[0]            )*0.02;
+        Axis.dac_watch[47] = (CAP.dq[1]            )*0.02;
     #else
 
-        G.dac_watch[40] = G.vdc*0.0025;
+        Axis.dac_watch[40] = Axis.vdc*0.0025;
 
-        G.dac_watch[41] = INV.ual_comp*0.05;
-        G.dac_watch[42] = INV.ube_comp*0.05;
+        Axis.dac_watch[41] = INV.ual_comp*0.05;
+        Axis.dac_watch[42] = INV.ube_comp*0.05;
 
-        G.dac_watch[43] = CTRL.inv->theta_trapezoidal / M_PI_OVER_180 * 0.025;
+        Axis.dac_watch[43] = CTRL.inv->theta_trapezoidal / M_PI_OVER_180 * 0.025;
 
-        G.dac_watch[47] = esoaf.xPos*0.1;
-        G.dac_watch[48] = angle_error_limiter(ELECTRICAL_POSITION_FEEDBACK - esoaf.xPos);
-        G.dac_watch[49] = angle_error_limiter(ENC.theta_d_elec - esoaf.xPos);
+        Axis.dac_watch[47] = esoaf.xPos*0.1;
+        Axis.dac_watch[48] = angle_error_limiter(ELECTRICAL_POSITION_FEEDBACK - esoaf.xPos);
+        Axis.dac_watch[49] = angle_error_limiter(ENC.theta_d_elec - esoaf.xPos);
 
     #endif
 
     #if SELECT_ALGORITHM == ALG_Chi_Xu
     // Chi Xu 2009
-    G.dac_watch[49] = sin(ENC.theta_d_elec - chixu.xTheta_d);
-    G.dac_watch[50] = chixu.xIab[0]*0.2;
-    G.dac_watch[51] = chixu.output_error[0]*0.2;
-    G.dac_watch[52] = chixu.xZeq[0]*0.1;
-    G.dac_watch[53] = chixu.xZeq[1]*0.1;
-    G.dac_watch[54] = chixu.xEmf_raw[0]*0.01;
-    G.dac_watch[55] = chixu.xEmf_raw[1]*0.01;
+    Axis.dac_watch[49] = sin(ENC.theta_d_elec - chixu.xTheta_d);
+    Axis.dac_watch[50] = chixu.xIab[0]*0.2;
+    Axis.dac_watch[51] = chixu.output_error[0]*0.2;
+    Axis.dac_watch[52] = chixu.xZeq[0]*0.1;
+    Axis.dac_watch[53] = chixu.xZeq[1]*0.1;
+    Axis.dac_watch[54] = chixu.xEmf_raw[0]*0.01;
+    Axis.dac_watch[55] = chixu.xEmf_raw[1]*0.01;
     #endif
 
     // HU WU 1998
-    //    G.dac_watch[50] = sin(CTRL.I->theta_d_elec-huwu.theta_d);
-    //    G.dac_watch[51] = huwu.x[0];
-    //    G.dac_watch[52] = huwu.x[1];
-    //    G.dac_watch[53] = huwu.x[2];
-    //    G.dac_watch[54] = huwu.limiter_KE;
+    //    Axis.dac_watch[50] = sin(CTRL.I->theta_d_elec-huwu.theta_d);
+    //    Axis.dac_watch[51] = huwu.x[0];
+    //    Axis.dac_watch[52] = huwu.x[1];
+    //    Axis.dac_watch[53] = huwu.x[2];
+    //    Axis.dac_watch[54] = huwu.limiter_KE;
 
-//    G.dac_watch[55] = MOTOR.KE;
+//    Axis.dac_watch[55] = MOTOR.KE;
 //
-//    //        G.dac_watch[48] = (CAP.ecapU.DutyOnTime1)  * 0.25e-4;
-//    //        G.dac_watch[49] = (CAP.ecapU.DutyOffTime1) * 0.25e-4;
-//    //        G.dac_watch[50] = (CAP.ecapU.DutyOnTime2)  * 0.25e-4;
-//    //        G.dac_watch[51] = (CAP.ecapU.DutyOffTime2) * 0.25e-4;
+//    //        Axis.dac_watch[48] = (CAP.ecapU.DutyOnTime1)  * 0.25e-4;
+//    //        Axis.dac_watch[49] = (CAP.ecapU.DutyOffTime1) * 0.25e-4;
+//    //        Axis.dac_watch[50] = (CAP.ecapU.DutyOnTime2)  * 0.25e-4;
+//    //        Axis.dac_watch[51] = (CAP.ecapU.DutyOffTime2) * 0.25e-4;
 //
-//    G.dac_watch[56] = (CTRL.I->rpm - CTRL.I->cmd_speed_rpm)*0.01;
-//    G.dac_watch[57] = (ELECTRICAL_SPEED_FEEDBACK*ELEC_RAD_PER_SEC_2_RPM - CTRL.I->cmd_speed_rpm)*0.01;
+//    Axis.dac_watch[56] = (CTRL.I->rpm - CTRL.I->cmd_speed_rpm)*0.01;
+//    Axis.dac_watch[57] = (ELECTRICAL_SPEED_FEEDBACK*ELEC_RAD_PER_SEC_2_RPM - CTRL.I->cmd_speed_rpm)*0.01;
 //
-//    G.dac_watch[58] = angle_error_limiter(ENC.theta_d_elec - AFEOE.theta_d); // VM CM Fusion
-//    G.dac_watch[59] = angle_error_limiter(ENC.theta_d_elec - ELECTRICAL_POSITION_FEEDBACK);
-//    //    G.dac_watch[58] = sin(ENC.theta_d_elec - AFEOE.theta_d);
-//    //    G.dac_watch[59] = sin(ENC.theta_d_elec - ELECTRICAL_POSITION_FEEDBACK);
+//    Axis.dac_watch[58] = angle_error_limiter(ENC.theta_d_elec - AFEOE.theta_d); // VM CM Fusion
+//    Axis.dac_watch[59] = angle_error_limiter(ENC.theta_d_elec - ELECTRICAL_POSITION_FEEDBACK);
+//    //    Axis.dac_watch[58] = sin(ENC.theta_d_elec - AFEOE.theta_d);
+//    //    Axis.dac_watch[59] = sin(ENC.theta_d_elec - ELECTRICAL_POSITION_FEEDBACK);
 
 
     // information from d-axis voltage equation
@@ -242,18 +241,18 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
     //temp_xOmg_filtered = _lpf(temp_xOmg, temp_xOmg_filtered, 20.0);
 
 
-    G.dac_watch[50] = hall_sensor_read[0] * 0.0005;
-    G.dac_watch[51] = hall_sensor_read[1] * 0.0005;
-    G.dac_watch[52] = current_pole[0]*0.5;
-    G.dac_watch[53] = current_pole[1]*0.5;
-    G.dac_watch[54] = count_magnet[0] * 0.02;
-    G.dac_watch[55] = count_magnet[1] * 0.02;
+    Axis.dac_watch[50] = hall_sensor_read[0] * 0.0005;
+    Axis.dac_watch[51] = hall_sensor_read[1] * 0.0005;
+    Axis.dac_watch[52] = current_pole[0]*0.5;
+    Axis.dac_watch[53] = current_pole[1]*0.5;
+    Axis.dac_watch[54] = count_magnet[0] * 0.02;
+    Axis.dac_watch[55] = count_magnet[1] * 0.02;
 
-    G.dac_watch[56] = CTRL.I->theta_d_elec*0.1;
-    G.dac_watch[57] = CTRL.I->rpm*0.01;
+    Axis.dac_watch[56] = CTRL.I->theta_d_elec*0.1;
+    Axis.dac_watch[57] = CTRL.I->rpm*0.01;
 
-    G.dac_watch[58] = hall_qep_count * 0.003;
-    G.dac_watch[59] = hall_qep_count * 0.003;
+    Axis.dac_watch[58] = hall_qep_count * 0.003;
+    Axis.dac_watch[59] = hall_qep_count * 0.003;
 
 
     if(channels_preset==1){channels_preset=0;
@@ -348,36 +347,36 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
         channels[5] = 53;
     }
 
-    // å…«é€šé“DACè¾“å‡ºï¼Œè¯·ä¿®æ”¹channelsæ•°ç»„æ¥ç¡®å®šå…·ä½“è¾“å‡ºå“ªäº›G.dac_watchæ•°ç»„ä¸­çš„å˜é‡ã€‚
-    Write.dac_buffer[0] = G.dac_watch[channels[0]] + G.dac_offset[0];
-    Write.dac_buffer[1] = G.dac_watch[channels[1]] + G.dac_offset[1];
-    Write.dac_buffer[2] = G.dac_watch[channels[2]] + G.dac_offset[2];
-    Write.dac_buffer[3] = G.dac_watch[channels[3]] + G.dac_offset[3];
-    Write.dac_buffer[4] = G.dac_watch[channels[4]] + G.dac_offset[4];
-    Write.dac_buffer[5] = G.dac_watch[channels[5]] + G.dac_offset[5];
-    Write.dac_buffer[6] = G.dac_watch[channels[6]] + G.dac_offset[6];
-    Write.dac_buffer[7] = G.dac_watch[channels[7]] + G.dac_offset[7];
+    // °ËÍ¨µÀDACÊä³ö£¬ÇëĞŞ¸ÄchannelsÊı×éÀ´È·¶¨¾ßÌåÊä³öÄÄĞ©Axis.dac_watchÊı×éÖĞµÄ±äÁ¿¡£
+    Write.dac_buffer[0] = Axis.dac_watch[channels[0]] + Axis.dac_offset[0];
+    Write.dac_buffer[1] = Axis.dac_watch[channels[1]] + Axis.dac_offset[1];
+    Write.dac_buffer[2] = Axis.dac_watch[channels[2]] + Axis.dac_offset[2];
+    Write.dac_buffer[3] = Axis.dac_watch[channels[3]] + Axis.dac_offset[3];
+    Write.dac_buffer[4] = Axis.dac_watch[channels[4]] + Axis.dac_offset[4];
+    Write.dac_buffer[5] = Axis.dac_watch[channels[5]] + Axis.dac_offset[5];
+    Write.dac_buffer[6] = Axis.dac_watch[channels[6]] + Axis.dac_offset[6];
+    Write.dac_buffer[7] = Axis.dac_watch[channels[7]] + Axis.dac_offset[7];
 
     dac_time_that_cannot_be_modified += CL_TS;
-    G.dac_time += CL_TS;
-    if((G.dac_time)<3){
-        G.dac_offset[0] = 0.0045;
-        G.dac_offset[1] = 0.004;
-        G.dac_offset[2] = 0.0055;
-        G.dac_offset[3] = 0.0035;
-        G.dac_offset[4] = 0.003;
-        G.dac_offset[5] =-0.0045;
-        G.dac_offset[6] = 0.002;
-        G.dac_offset[7] =-0.001;
+    Axis.dac_time += CL_TS;
+    if((Axis.dac_time)<3){
+        Axis.dac_offset[0] = 0.0045;
+        Axis.dac_offset[1] = 0.004;
+        Axis.dac_offset[2] = 0.0055;
+        Axis.dac_offset[3] = 0.0035;
+        Axis.dac_offset[4] = 0.003;
+        Axis.dac_offset[5] =-0.0045;
+        Axis.dac_offset[6] = 0.002;
+        Axis.dac_offset[7] =-0.001;
 
-        Write.dac_buffer[0] = G.dac_offset[0];
-        Write.dac_buffer[1] = G.dac_offset[1];
-        Write.dac_buffer[2] = G.dac_offset[2];
-        Write.dac_buffer[3] = G.dac_offset[3];
-        Write.dac_buffer[4] = G.dac_offset[4];
-        Write.dac_buffer[5] = G.dac_offset[5];
-        Write.dac_buffer[6] = G.dac_offset[6];
-        Write.dac_buffer[7] = G.dac_offset[7];
+        Write.dac_buffer[0] = Axis.dac_offset[0];
+        Write.dac_buffer[1] = Axis.dac_offset[1];
+        Write.dac_buffer[2] = Axis.dac_offset[2];
+        Write.dac_buffer[3] = Axis.dac_offset[3];
+        Write.dac_buffer[4] = Axis.dac_offset[4];
+        Write.dac_buffer[5] = Axis.dac_offset[5];
+        Write.dac_buffer[6] = Axis.dac_offset[6];
+        Write.dac_buffer[7] = Axis.dac_offset[7];
 
         G.test_integer += 1;
         G.test_float   +=CL_TS;

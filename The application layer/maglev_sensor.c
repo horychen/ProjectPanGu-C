@@ -3,7 +3,7 @@
 // typedef struct {
 // } st_hall; // hall sensor as quadrature encoder
 
-// å‡è®¾åŒ€é€Ÿæœ‰ä¸€ä¸ªå¾ˆä¸¥é‡çš„é—®é¢˜ï¼Œé‚£å°±æ˜¯é™æ­¢çš„æ—¶å€™ä¼šå¤±å»åŸºå‡†ã€‚
+// ¼ÙÉèÔÈËÙÓĞÒ»¸öºÜÑÏÖØµÄÎÊÌâ£¬ÄÇ¾ÍÊÇ¾²Ö¹µÄÊ±ºò»áÊ§È¥»ù×¼¡£
 #define UPWARD_TREND 1
 #define DOWNWARD_TREND -1
 #define PEAKING 1
@@ -55,7 +55,7 @@ int count_extreme[3] = {0, 0, 0};
 REAL delta_time[3] = {0,0,0};
 REAL delta_voltage[3] = {0,0,0};
 
-REAL hall_timing[3][8]; // åˆå§‹åŒ–ï¼Ÿ
+REAL hall_timing[3][8]; // ³õÊ¼»¯£¿
 REAL hall_readin[3][8];
 
 REAL hall_timing_eventpoint_most_recent[3];
@@ -74,7 +74,7 @@ long int trend_change_count = 0;
 int event_lock[3] = {FALSE,FALSE,FALSE};
 REAL normalizer[3] = {1e-3, 1e-3, 1e-3};
 
-// åœ¨äº‹ä»¶å‘ç”Ÿç‚¹æ›´æ–°é€Ÿåº¦å³å¯ï¼Œå› ä¸ºäº‹ä»¶å‘ç”Ÿç‚¹çš„è§’åº¦æ˜¯å‡†ç¡®çš„ã€‚å…¶ä»–ç‚¹ç”¨åŒ€é€Ÿå‡è®¾å»æ›´æ–°è§’åº¦å³å¯ã€‚
+// ÔÚÊÂ¼ş·¢Éúµã¸üĞÂËÙ¶È¼´¿É£¬ÒòÎªÊÂ¼ş·¢ÉúµãµÄ½Ç¶ÈÊÇ×¼È·µÄ¡£ÆäËûµãÓÃÔÈËÙ¼ÙÉèÈ¥¸üĞÂ½Ç¶È¼´¿É¡£
 
 #define CODE_CALCULATE_SPEED(X) hall_omega_r_mech[0] = 2*M_PI*ONE_OVER_ST_MAGNETS / (CTRL.timebase - hall_timing_eventpoint_most_recent[X])
 
@@ -101,63 +101,63 @@ int recent_zero_crossing_hall_is=HALL_X;
 
 void start_hall_conversion(REAL hall_sensor_read[]){
 
-    // // å°†ADCè½¬æ¢å¾—åˆ°çš„æ¨¡æ‹Ÿç”µå‹é‡æ¢ç®—æœ‰ææ€§çš„éœå°”ä¼ æ„Ÿå™¨è¯»æ•°
+    // // ½«ADC×ª»»µÃµ½µÄÄ£ÄâµçÑ¹Á¿»»ËãÓĞ¼«ĞÔµÄ»ô¶û´«¸ĞÆ÷¶ÁÊı
     // hall_sensor_read[0] = (REAL)AdcaResultRegs.ADCRESULT5 - ADC_HALL_OFFSET_ADC5; // 32 poles on Aluminum target
     // hall_sensor_read[1] = (REAL)AdcaResultRegs.ADCRESULT4 - ADC_HALL_OFFSET_ADC4; // 32 poles on Aluminum target
     // hall_sensor_read[2] = (REAL)AdcbResultRegs.ADCRESULT10 - ADC_HALL_OFFSET_ADC10; // Bogen 40 poles on the top
 
-    // å±€éƒ¨ï¼ˆä¸¤ä¸ªè¿‡é›¶ç‚¹ä¹‹é—´çš„ï¼‰æå€¼
+    // ¾Ö²¿£¨Á½¸ö¹ıÁãµãÖ®¼äµÄ£©¼«Öµ
     if(hall_sensor_read[0] > hall_sensor_read_max_NORTH[0]) hall_sensor_read_max_NORTH[0] = hall_sensor_read[0];
     if(hall_sensor_read[0] < hall_sensor_read_min_SOUTH[0]) hall_sensor_read_min_SOUTH[0] = hall_sensor_read[0];
     if(hall_sensor_read[1] > hall_sensor_read_max_NORTH[1]) hall_sensor_read_max_NORTH[1] = hall_sensor_read[1];
     if(hall_sensor_read[1] < hall_sensor_read_min_SOUTH[1]) hall_sensor_read_min_SOUTH[1] = hall_sensor_read[1];
 
-    // é˜²æŠ–çš„æœ¬è´¨æ˜¯é¿å…è¯¯åˆ¤çš„å‘ç”Ÿ
+    // ·À¶¶µÄ±¾ÖÊÊÇ±ÜÃâÎóÅĞµÄ·¢Éú
     // lock_zero_crossing[0]
     // lock_threshold[0]
 
-    // æ„å¤–ï¼šåè½¬ï¼Œä¸€åˆ‡åˆ¤æ–­é‡ç½®
+    // ÒâÍâ£º·´×ª£¬Ò»ÇĞÅĞ¶ÏÖØÖÃ
 
-    // åˆ¤æ–­æå€¼é€»è¾‘ï¼šä»é˜ˆå€¼å‡ºå‘å›è½åˆ°é˜ˆå€¼ï¼Œè¿™å…¶ä¸­çš„æœ€å¤§å€¼å°±æ˜¯æå€¼ï¼ŸNoï¼Œæ— æ³•é˜²æŠ–ï¼
+    // ÅĞ¶Ï¼«ÖµÂß¼­£º´ÓãĞÖµ³ö·¢»ØÂäµ½ãĞÖµ£¬ÕâÆäÖĞµÄ×î´óÖµ¾ÍÊÇ¼«Öµ£¿No£¬ÎŞ·¨·À¶¶£¡
     // if(hall_sensor_read[0]>=THRESHOLD_RATIO*hall_sensor_read_max_NORTH_last[0]){
     //     lock_zero_crossing[0]
     // }
 
-    // åˆ¤æ–­éœå°”è¿‡é›¶ç‚¹
+    // ÅĞ¶Ï»ô¶û¹ıÁãµã
     #define THRESHOLD_RATIO 0.2
     /* HALL X */
-    if(hall_sensor_read[0]>0 && hall_sensor_read_last[0]>0){ // æœ¬æ¬¡å’Œä¸Šæ¬¡å‡å¤§äºé›¶
+    if(hall_sensor_read[0]>0 && hall_sensor_read_last[0]>0){ // ±¾´ÎºÍÉÏ´Î¾ù´óÓÚÁã
         pole_change_count += 1;
         current_pole[0] = NORTH_POLE;
-    }else if(hall_sensor_read[0]<0 && hall_sensor_read_last[0]<0){ // æœ¬æ¬¡å’Œä¸Šæ¬¡å‡å°äºé›¶
+    }else if(hall_sensor_read[0]<0 && hall_sensor_read_last[0]<0){ // ±¾´ÎºÍÉÏ´Î¾ùĞ¡ÓÚÁã
         pole_change_count -= 1;
         current_pole[0] = SOUTH_POLE;
     }else{
         pole_change_count = 0;
     }
-    // åˆ¤æ–­éœå°”è¿‡é˜ˆå€¼ç‚¹
+    // ÅĞ¶Ï»ô¶û¹ıãĞÖµµã
     if(hall_sensor_read[0]>=THRESHOLD_RATIO*hall_sensor_read_max_NORTH_last[0]){
         if(event_zero_crossing[0]==RISING_CROSSING){
-            // è¿‡é›¶äº‹ä»¶å‘ç”Ÿåç¬¬ä¸€æ¬¡è¶Šè¿‡é˜ˆå€¼ç‚¹ï¼Œæˆ‘ä»¬è®¤ä¸ºä¸Šæ¬¡è¿‡é›¶å°±æ˜¯çœŸçš„è¿‡é›¶äº†ï¼Œåšä¸€ä¸ªæ ‡è®°ï¼Œç°åœ¨å¼€å§‹ï¼Œè®°å½•åŒºé—´æå€¼ã€‚
+            // ¹ıÁãÊÂ¼ş·¢ÉúºóµÚÒ»´ÎÔ½¹ıãĞÖµµã£¬ÎÒÃÇÈÏÎªÉÏ´Î¹ıÁã¾ÍÊÇÕæµÄ¹ıÁãÁË£¬×öÒ»¸ö±ê¼Ç£¬ÏÖÔÚ¿ªÊ¼£¬¼ÇÂ¼Çø¼ä¼«Öµ¡£
             event_rising_threhold[0] = TRUE;
         }else{
-            // å¯èƒ½æ˜¯åœ¨é˜ˆå€¼çº¿é™„è¿‘æŠ–åŠ¨ï¼Œä¹Ÿå¯èƒ½æ˜¯ä»æå€¼ç‚¹å›è½åˆ°é˜ˆå€¼
+            // ¿ÉÄÜÊÇÔÚãĞÖµÏß¸½½ü¶¶¶¯£¬Ò²¿ÉÄÜÊÇ´Ó¼«Öµµã»ØÂäµ½ãĞÖµ
         }
         event_zero_crossing[0] = FALSE;
     }else if(hall_sensor_read[0]<=THRESHOLD_RATIO*hall_sensor_read_min_SOUTH_last[0]){
         if(event_zero_crossing[0]==FALLING_CROSSING){
-            // è¿‡é›¶äº‹ä»¶å‘ç”Ÿåç¬¬ä¸€æ¬¡è¶Šè¿‡é˜ˆå€¼ç‚¹ï¼Œæˆ‘ä»¬è®¤ä¸ºä¸Šæ¬¡è¿‡é›¶å°±æ˜¯çœŸçš„è¿‡é›¶äº†ï¼Œåšä¸€ä¸ªæ ‡è®°ï¼Œç°åœ¨å¼€å§‹ï¼Œè®°å½•åŒºé—´æå€¼ã€‚
+            // ¹ıÁãÊÂ¼ş·¢ÉúºóµÚÒ»´ÎÔ½¹ıãĞÖµµã£¬ÎÒÃÇÈÏÎªÉÏ´Î¹ıÁã¾ÍÊÇÕæµÄ¹ıÁãÁË£¬×öÒ»¸ö±ê¼Ç£¬ÏÖÔÚ¿ªÊ¼£¬¼ÇÂ¼Çø¼ä¼«Öµ¡£
             event_falling_threhold[0] = TRUE;
         }else{
-            // å¯èƒ½æ˜¯åœ¨é˜ˆå€¼çº¿é™„è¿‘æŠ–åŠ¨ï¼Œä¹Ÿå¯èƒ½æ˜¯ä»æå€¼ç‚¹å›è½åˆ°é˜ˆå€¼
+            // ¿ÉÄÜÊÇÔÚãĞÖµÏß¸½½ü¶¶¶¯£¬Ò²¿ÉÄÜÊÇ´Ó¼«Öµµã»ØÂäµ½ãĞÖµ
         }
         event_zero_crossing[0] = FALSE;
     }
 
-    // ææ€§æ”¹å˜äº†ï¼Ÿ
+    // ¼«ĞÔ¸Ä±äÁË£¿
     if(current_pole[0]*last_pole[0]==-1){
-        // ææ€§æ”¹å˜ä¸”ä¸ä¸ºé›¶
-        // last_pole[0] = current_pole[0]; // last_poleçš„æ›´æ–°æ„å‘³ç€æ­£å¼è¿›å…¥æ–°çš„å˜åŒ–è¶‹åŠ¿äº†ã€‚
+        // ¼«ĞÔ¸Ä±äÇÒ²»ÎªÁã
+        // last_pole[0] = current_pole[0]; // last_poleµÄ¸üĞÂÒâÎ¶×ÅÕıÊ½½øÈëĞÂµÄ±ä»¯Ç÷ÊÆÁË¡£
 
         // lock_zero_crossing[0] = TRUE;
 
@@ -165,16 +165,16 @@ void start_hall_conversion(REAL hall_sensor_read[]){
 
             if(event_zero_crossing[0]!=RISING_CROSSING){
 
-                // ç²—ç•¥è®¡ç®—è½¬é€Ÿ
+                // ´ÖÂÔ¼ÆËã×ªËÙ
                 // CODE_CALCULATE_SPEED(0);
 
-                // å®Œæ•´èµ°è¿‡çš„æ°¸ç£ä½“ä¸ªæ•°
+                // ÍêÕû×ß¹ıµÄÓÀ´ÅÌå¸öÊı
                 count_magnet[0] += 1;
                 hall_theta_r_mech_incremental[0] = count_magnet[0] * M_PI*ONE_OVER_ST_MAGNETS;
                 if(count_magnet[0]>=ST_MAGNETS){
                     count_magnet[0] = 0;
 
-                    // æ›´æ–°éœå°”è¯»æ•°å¯¹åº”ç”µå‹æ­£è´Ÿåˆ‡æ¢çš„åç½®å€¼
+                    // ¸üĞÂ»ô¶û¶ÁÊı¶ÔÓ¦µçÑ¹Õı¸ºÇĞ»»µÄÆ«ÖÃÖµ
                     //            ADC_HALL_OFFSET_ADC5 = 0.5 * (hall_sensor_read_max_global[0] - hall_sensor_read_min_global[0]);
                     //            ADC_HALL_OFFSET_ADC4 = 0.5 * (hall_sensor_read_max_global[1] - hall_sensor_read_min_global[1]);
                     //            ADC_HALL_OFFSET_ADC10 = 0.5 * (hall_sensor_read_max_global[2] - hall_sensor_read_min_global[2]);
@@ -186,15 +186,15 @@ void start_hall_conversion(REAL hall_sensor_read[]){
                     //            hall_sensor_read_min_global[2] = -100; // reset max and min
                 }
 
-                // è®°å½•æœ€è¿‘ä¸€æ¬¡é›¶ç‚¹é—´çš„æœ€å¤§å€¼ï¼Œæ‹¿æ¥ç®—normalizer
+                // ¼ÇÂ¼×î½üÒ»´ÎÁãµã¼äµÄ×î´óÖµ£¬ÄÃÀ´Ëãnormalizer
                 hall_sensor_read_max_NORTH_last[0] = hall_sensor_read_max_NORTH[0];
                 normalizer[0] = 1.0 / hall_sensor_read_max_NORTH_last[0];
 
-                // è®°å½•ä¸€äº›ä¿¡æ¯ï¼ˆä¸ä¸€å®šç”¨èµ·æ¥çš„ï¼‰
+                // ¼ÇÂ¼Ò»Ğ©ĞÅÏ¢£¨²»Ò»¶¨ÓÃÆğÀ´µÄ£©
                 hall_timing[0][_T0] = CTRL.timebase;       hall_timing_eventpoint_most_recent[0] = CTRL.timebase;
                 hall_readin[0][_T0] = hall_sensor_read[0]; // hall_readin_eventpoint_most_recent[0] = hall_sensor_read[0];
 
-                // ä¸Šå‡è¿‡é›¶äº‹ä»¶
+                // ÉÏÉı¹ıÁãÊÂ¼ş
                 event_zero_crossing[0] = RISING_CROSSING;
             }
 
@@ -202,7 +202,7 @@ void start_hall_conversion(REAL hall_sensor_read[]){
 
             if(event_zero_crossing[0]!=FALLING_CROSSING){
 
-                // å®Œæ•´èµ°è¿‡çš„æ°¸ç£ä½“ä¸ªæ•°
+                // ÍêÕû×ß¹ıµÄÓÀ´ÅÌå¸öÊı
                 count_magnet[0] += 1;
                 if(count_magnet[0]>=ST_MAGNETS){
                     count_magnet[0] = 0;
@@ -210,7 +210,7 @@ void start_hall_conversion(REAL hall_sensor_read[]){
             }
 
             // if(event_rising_threhold[0]==TRUE){
-            //     // è‡³æ­¤å¯ä»¥ç¡®å®šåŒ—æçš„æå€¼å·²ç»è¾¾åˆ°ï¼ˆrising crossing threshold -> falling crossing zeroï¼‰
+            //     // ÖÁ´Ë¿ÉÒÔÈ·¶¨±±¼«µÄ¼«ÖµÒÑ¾­´ïµ½£¨rising crossing threshold -> falling crossing zero£©
             //     event_rising_threhold[0] = FALSE;
             //     hall_sensor_read_max_NORTH_last[0] = hall_sensor_read_max_NORTH[0];
             //     hall_sensor_read_max_NORTH[0] = 100;
@@ -231,40 +231,40 @@ void start_hall_conversion(REAL hall_sensor_read[]){
 
 
 
-    // åˆ¤æ–­éœå°”è¿‡é›¶ç‚¹
+    // ÅĞ¶Ï»ô¶û¹ıÁãµã
     /* HALL Y */
-    if(hall_sensor_read[1]>0 && hall_sensor_read_last[1]>0){ // æœ¬æ¬¡å’Œä¸Šæ¬¡å‡å¤§äºé›¶
+    if(hall_sensor_read[1]>0 && hall_sensor_read_last[1]>0){ // ±¾´ÎºÍÉÏ´Î¾ù´óÓÚÁã
         pole_change_count += 1;
         current_pole[1] = NORTH_POLE;
-    }else if(hall_sensor_read[1]<0 && hall_sensor_read_last[1]<0){ // æœ¬æ¬¡å’Œä¸Šæ¬¡å‡å°äºé›¶
+    }else if(hall_sensor_read[1]<0 && hall_sensor_read_last[1]<0){ // ±¾´ÎºÍÉÏ´Î¾ùĞ¡ÓÚÁã
         pole_change_count -= 1;
         current_pole[1] = SOUTH_POLE;
     }else{
         pole_change_count = 0;
     }
-    // åˆ¤æ–­éœå°”è¿‡é˜ˆå€¼ç‚¹
+    // ÅĞ¶Ï»ô¶û¹ıãĞÖµµã
     if(hall_sensor_read[1]>=THRESHOLD_RATIO*hall_sensor_read_max_NORTH_last[1]){
         if(event_zero_crossing[1]==RISING_CROSSING){
-            // è¿‡é›¶äº‹ä»¶å‘ç”Ÿåç¬¬ä¸€æ¬¡è¶Šè¿‡é˜ˆå€¼ç‚¹ï¼Œæˆ‘ä»¬è®¤ä¸ºä¸Šæ¬¡è¿‡é›¶å°±æ˜¯çœŸçš„è¿‡é›¶äº†ï¼Œåšä¸€ä¸ªæ ‡è®°ï¼Œç°åœ¨å¼€å§‹ï¼Œè®°å½•åŒºé—´æå€¼ã€‚
+            // ¹ıÁãÊÂ¼ş·¢ÉúºóµÚÒ»´ÎÔ½¹ıãĞÖµµã£¬ÎÒÃÇÈÏÎªÉÏ´Î¹ıÁã¾ÍÊÇÕæµÄ¹ıÁãÁË£¬×öÒ»¸ö±ê¼Ç£¬ÏÖÔÚ¿ªÊ¼£¬¼ÇÂ¼Çø¼ä¼«Öµ¡£
             event_rising_threhold[1] = TRUE;
         }else{
-            // å¯èƒ½æ˜¯åœ¨é˜ˆå€¼çº¿é™„è¿‘æŠ–åŠ¨ï¼Œä¹Ÿå¯èƒ½æ˜¯ä»æå€¼ç‚¹å›è½åˆ°é˜ˆå€¼
+            // ¿ÉÄÜÊÇÔÚãĞÖµÏß¸½½ü¶¶¶¯£¬Ò²¿ÉÄÜÊÇ´Ó¼«Öµµã»ØÂäµ½ãĞÖµ
         }
         event_zero_crossing[1] = FALSE;
     }else if(hall_sensor_read[1]<=THRESHOLD_RATIO*hall_sensor_read_min_SOUTH_last[1]){
         if(event_zero_crossing[1]==FALLING_CROSSING){
-            // è¿‡é›¶äº‹ä»¶å‘ç”Ÿåç¬¬ä¸€æ¬¡è¶Šè¿‡é˜ˆå€¼ç‚¹ï¼Œæˆ‘ä»¬è®¤ä¸ºä¸Šæ¬¡è¿‡é›¶å°±æ˜¯çœŸçš„è¿‡é›¶äº†ï¼Œåšä¸€ä¸ªæ ‡è®°ï¼Œç°åœ¨å¼€å§‹ï¼Œè®°å½•åŒºé—´æå€¼ã€‚
+            // ¹ıÁãÊÂ¼ş·¢ÉúºóµÚÒ»´ÎÔ½¹ıãĞÖµµã£¬ÎÒÃÇÈÏÎªÉÏ´Î¹ıÁã¾ÍÊÇÕæµÄ¹ıÁãÁË£¬×öÒ»¸ö±ê¼Ç£¬ÏÖÔÚ¿ªÊ¼£¬¼ÇÂ¼Çø¼ä¼«Öµ¡£
             event_falling_threhold[1] = TRUE;
         }else{
-            // å¯èƒ½æ˜¯åœ¨é˜ˆå€¼çº¿é™„è¿‘æŠ–åŠ¨ï¼Œä¹Ÿå¯èƒ½æ˜¯ä»æå€¼ç‚¹å›è½åˆ°é˜ˆå€¼
+            // ¿ÉÄÜÊÇÔÚãĞÖµÏß¸½½ü¶¶¶¯£¬Ò²¿ÉÄÜÊÇ´Ó¼«Öµµã»ØÂäµ½ãĞÖµ
         }
         event_zero_crossing[1] = FALSE;
     }
 
-    // ææ€§æ”¹å˜äº†ï¼Ÿ
+    // ¼«ĞÔ¸Ä±äÁË£¿
     if(current_pole[1]*last_pole[1]==-1){
-        // ææ€§æ”¹å˜ä¸”ä¸ä¸ºé›¶
-        // last_pole[1] = current_pole[1]; // last_poleçš„æ›´æ–°æ„å‘³ç€æ­£å¼è¿›å…¥æ–°çš„å˜åŒ–è¶‹åŠ¿äº†ã€‚
+        // ¼«ĞÔ¸Ä±äÇÒ²»ÎªÁã
+        // last_pole[1] = current_pole[1]; // last_poleµÄ¸üĞÂÒâÎ¶×ÅÕıÊ½½øÈëĞÂµÄ±ä»¯Ç÷ÊÆÁË¡£
 
         // lock_zero_crossing[1] = TRUE;
 
@@ -272,15 +272,15 @@ void start_hall_conversion(REAL hall_sensor_read[]){
 
             if(event_zero_crossing[1]!=RISING_CROSSING){
 
-                // ç²—ç•¥è®¡ç®—è½¬é€Ÿ
+                // ´ÖÂÔ¼ÆËã×ªËÙ
                 // CODE_CALCULATE_SPEED(1);
 
-                // å®Œæ•´èµ°è¿‡çš„æ°¸ç£ä½“ä¸ªæ•°
+                // ÍêÕû×ß¹ıµÄÓÀ´ÅÌå¸öÊı
                 count_magnet[1] += 1;
                 if(count_magnet[1]>=ST_MAGNETS){
                     count_magnet[1] = 0;
 
-                    // æ›´æ–°éœå°”è¯»æ•°å¯¹åº”ç”µå‹æ­£è´Ÿåˆ‡æ¢çš„åç½®å€¼
+                    // ¸üĞÂ»ô¶û¶ÁÊı¶ÔÓ¦µçÑ¹Õı¸ºÇĞ»»µÄÆ«ÖÃÖµ
                     //            ADC_HALL_OFFSET_ADC5 = 0.5 * (hall_sensor_read_max_global[1] - hall_sensor_read_min_global[1]);
                     //            ADC_HALL_OFFSET_ADC4 = 0.5 * (hall_sensor_read_max_global[1] - hall_sensor_read_min_global[1]);
                     //            ADC_HALL_OFFSET_ADC10 = 0.5 * (hall_sensor_read_max_global[2] - hall_sensor_read_min_global[2]);
@@ -303,15 +303,15 @@ void start_hall_conversion(REAL hall_sensor_read[]){
                 //     hall_qep_count -= 1;
                 // }
 
-                // è®°å½•æœ€è¿‘ä¸€æ¬¡é›¶ç‚¹é—´çš„æœ€å¤§å€¼ï¼Œæ‹¿æ¥ç®—normalizer
+                // ¼ÇÂ¼×î½üÒ»´ÎÁãµã¼äµÄ×î´óÖµ£¬ÄÃÀ´Ëãnormalizer
                 hall_sensor_read_max_NORTH_last[1] = hall_sensor_read_max_NORTH[1];
                 normalizer[1] = 1.0 / hall_sensor_read_max_NORTH_last[1];
 
-                // è®°å½•ä¸€äº›ä¿¡æ¯ï¼ˆä¸ä¸€å®šç”¨èµ·æ¥çš„ï¼‰
+                // ¼ÇÂ¼Ò»Ğ©ĞÅÏ¢£¨²»Ò»¶¨ÓÃÆğÀ´µÄ£©
                 hall_timing[1][_T0] = CTRL.timebase;       hall_timing_eventpoint_most_recent[1] = CTRL.timebase;
                 hall_readin[1][_T0] = hall_sensor_read[1]; // hall_readin_eventpoint_most_recent[1] = hall_sensor_read[1];
 
-                // ä¸Šå‡è¿‡é›¶äº‹ä»¶
+                // ÉÏÉı¹ıÁãÊÂ¼ş
                 event_zero_crossing[1] = RISING_CROSSING;
             }
 
@@ -319,7 +319,7 @@ void start_hall_conversion(REAL hall_sensor_read[]){
 
             if(event_zero_crossing[1]!=FALLING_CROSSING){
 
-                // å®Œæ•´èµ°è¿‡çš„æ°¸ç£ä½“ä¸ªæ•°
+                // ÍêÕû×ß¹ıµÄÓÀ´ÅÌå¸öÊı
                 count_magnet[1] += 1;
                 if(count_magnet[1]>=ST_MAGNETS){
                     count_magnet[1] = 0;
@@ -336,7 +336,7 @@ void start_hall_conversion(REAL hall_sensor_read[]){
             }
 
             // if(event_rising_threhold[1]==TRUE){
-            //     // è‡³æ­¤å¯ä»¥ç¡®å®šåŒ—æçš„æå€¼å·²ç»è¾¾åˆ°ï¼ˆrising crossing threshold -> falling crossing zeroï¼‰
+            //     // ÖÁ´Ë¿ÉÒÔÈ·¶¨±±¼«µÄ¼«ÖµÒÑ¾­´ïµ½£¨rising crossing threshold -> falling crossing zero£©
             //     event_rising_threhold[1] = FALSE;
             //     hall_sensor_read_max_NORTH_last[1] = hall_sensor_read_max_NORTH[1];
             //     hall_sensor_read_max_NORTH[1] = 100;
@@ -356,101 +356,101 @@ void start_hall_conversion(REAL hall_sensor_read[]){
 
 
 
-    // æ­£äº¤è§£ç ï¼ˆæŒ‡ä»¤ç”¨éœå°”ç”µå‹è¿‡é›¶ç‚¹çš„ä¿¡æ¯ï¼Œä½ç²¾åº¦ï¼‰
-    /* HALL Xï¼ˆç¤ºæ³¢å™¨å›¾é‡Œçš„é»„è‰²é€šé“ï¼Œä¹Ÿå°±æ˜¯æ³¢å½¢è¶…å‰ä¹ååº¦çš„é‚£ä¸ªéœå°”ï¼‰ */
+    // Õı½»½âÂë£¨Ö¸ÁîÓÃ»ô¶ûµçÑ¹¹ıÁãµãµÄĞÅÏ¢£¬µÍ¾«¶È£©
+    /* HALL X£¨Ê¾²¨Æ÷Í¼ÀïµÄ»ÆÉ«Í¨µÀ£¬Ò²¾ÍÊÇ²¨ĞÎ³¬Ç°¾ÅÊ®¶ÈµÄÄÇ¸ö»ô¶û£© */
     if(current_pole[0]*last_pole[0]==-1){
         if(current_pole[0]==NORTH_POLE){
 
             if(recent_zero_crossing_hall_is==HALL_X){
-                // æŠ–åŠ¨æˆ–è€…åè½¬äº†ï¼
+                // ¶¶¶¯»òÕß·´×ªÁË£¡
                 // Do nothing
             }else if(recent_zero_crossing_hall_is==HALL_Y){
                 if(event_rising_crossing[1]==TRUE){
-                    event_rising_crossing[1] = FALSE; // é‡ç½®äº‹ä»¶æ ‡å¿—ä½
-                    hall_qep_count -= 1; // å®šä¹‰ä¸ºæ­£äº¤ç¼–ç å™¨åè½¬
+                    event_rising_crossing[1] = FALSE; // ÖØÖÃÊÂ¼ş±êÖ¾Î»
+                    hall_qep_count -= 1; // ¶¨ÒåÎªÕı½»±àÂëÆ÷·´×ª
                 }
                 if(event_falling_crossing[1]==TRUE){
                     event_falling_crossing[1]==FALSE;
-                    hall_qep_count += 1; // å®šä¹‰ä¸ºæ­£äº¤ç¼–ç å™¨æ­£è½¬ï¼ˆä»éœå°”è¾“å‡ºç”µå‹æ³¢å½¢ä¸Šçœ‹å°±æ˜¯å‘å³ä¼ æ’­ï¼‰
+                    hall_qep_count += 1; // ¶¨ÒåÎªÕı½»±àÂëÆ÷Õı×ª£¨´Ó»ô¶ûÊä³öµçÑ¹²¨ĞÎÉÏ¿´¾ÍÊÇÏòÓÒ´«²¥£©
                 }
             }
-            // å¯¹æœ¬æ¬¡ä¸Šå‡è¿‡é›¶äº‹ä»¶è¿›è¡Œè®°å½•
+            // ¶Ô±¾´ÎÉÏÉı¹ıÁãÊÂ¼ş½øĞĞ¼ÇÂ¼
             event_rising_crossing[0] = TRUE;
             recent_zero_crossing_hall_is = HALL_X;
 
         }else if(current_pole[0]==SOUTH_POLE){
 
             if(recent_zero_crossing_hall_is==HALL_X){
-                // æŠ–åŠ¨æˆ–è€…åè½¬äº†ï¼
+                // ¶¶¶¯»òÕß·´×ªÁË£¡
                 // Do nothing
             }else if(recent_zero_crossing_hall_is==HALL_Y){
                 if(event_rising_crossing[1]==TRUE){
-                    event_rising_crossing[1] = FALSE; // é‡ç½®äº‹ä»¶æ ‡å¿—ä½
-                    hall_qep_count += 1; // å®šä¹‰ä¸ºæ­£äº¤ç¼–ç å™¨æ­£è½¬ï¼ˆä»éœå°”è¾“å‡ºç”µå‹æ³¢å½¢ä¸Šçœ‹å°±æ˜¯å‘å³ä¼ æ’­ï¼‰
+                    event_rising_crossing[1] = FALSE; // ÖØÖÃÊÂ¼ş±êÖ¾Î»
+                    hall_qep_count += 1; // ¶¨ÒåÎªÕı½»±àÂëÆ÷Õı×ª£¨´Ó»ô¶ûÊä³öµçÑ¹²¨ĞÎÉÏ¿´¾ÍÊÇÏòÓÒ´«²¥£©
                 }
                 if(event_falling_crossing[1]==TRUE){
-                    event_falling_crossing[1]==FALSE; // é‡ç½®äº‹ä»¶æ ‡å¿—ä½
-                    hall_qep_count -= 1; // å®šä¹‰ä¸ºæ­£äº¤ç¼–ç å™¨åè½¬
+                    event_falling_crossing[1]==FALSE; // ÖØÖÃÊÂ¼ş±êÖ¾Î»
+                    hall_qep_count -= 1; // ¶¨ÒåÎªÕı½»±àÂëÆ÷·´×ª
                 }
             }
-            // å¯¹æœ¬æ¬¡ä¸‹é™è¿‡é›¶äº‹ä»¶è¿›è¡Œè®°å½•
+            // ¶Ô±¾´ÎÏÂ½µ¹ıÁãÊÂ¼ş½øĞĞ¼ÇÂ¼
             event_falling_crossing[0] = TRUE;
             recent_zero_crossing_hall_is = HALL_X;
         }
-        last_pole[0] = current_pole[0]; // é‡ç½®äº‹ä»¶æ ‡å¿—ä½
+        last_pole[0] = current_pole[0]; // ÖØÖÃÊÂ¼ş±êÖ¾Î»
     }
     /* HALL Y */
     if(current_pole[1]*last_pole[1]==-1){
         if(current_pole[1]==NORTH_POLE){
 
             if(recent_zero_crossing_hall_is==HALL_Y){
-                // æŠ–åŠ¨æˆ–è€…åè½¬äº†ï¼
+                // ¶¶¶¯»òÕß·´×ªÁË£¡
                 // Do nothing
             }else if(recent_zero_crossing_hall_is==HALL_X){
                 if(event_rising_crossing[0]==TRUE){
-                    event_rising_crossing[0] = FALSE; // é‡ç½®äº‹ä»¶æ ‡å¿—ä½
-                    hall_qep_count += 1; // å’Œ HALL X åä¸€å
+                    event_rising_crossing[0] = FALSE; // ÖØÖÃÊÂ¼ş±êÖ¾Î»
+                    hall_qep_count += 1; // ºÍ HALL X ·´Ò»·´
                 }
                 if(event_falling_crossing[0]==TRUE){
                     event_falling_crossing[0]==FALSE;
-                    hall_qep_count -= 1; // å’Œ HALL X åä¸€å
+                    hall_qep_count -= 1; // ºÍ HALL X ·´Ò»·´
                 }
             }
-            // å¯¹æœ¬æ¬¡ä¸Šå‡è¿‡é›¶äº‹ä»¶è¿›è¡Œè®°å½•
+            // ¶Ô±¾´ÎÉÏÉı¹ıÁãÊÂ¼ş½øĞĞ¼ÇÂ¼
             event_rising_crossing[1] = TRUE;
             recent_zero_crossing_hall_is = HALL_Y;
 
         }else if(current_pole[1]==SOUTH_POLE){
 
             if(recent_zero_crossing_hall_is==HALL_Y){
-                // æŠ–åŠ¨æˆ–è€…åè½¬äº†ï¼
+                // ¶¶¶¯»òÕß·´×ªÁË£¡
                 // Do nothing
             }else if(recent_zero_crossing_hall_is==HALL_X){
                 if(event_rising_crossing[0]==TRUE){
-                    event_rising_crossing[0] = FALSE; // é‡ç½®äº‹ä»¶æ ‡å¿—ä½
-                    hall_qep_count -= 1; // å’Œ HALL X åä¸€å
+                    event_rising_crossing[0] = FALSE; // ÖØÖÃÊÂ¼ş±êÖ¾Î»
+                    hall_qep_count -= 1; // ºÍ HALL X ·´Ò»·´
                 }
                 if(event_falling_crossing[0]==TRUE){
-                    event_falling_crossing[0]==FALSE; // é‡ç½®äº‹ä»¶æ ‡å¿—ä½
-                    hall_qep_count += 1; // å’Œ HALL X åä¸€å
+                    event_falling_crossing[0]==FALSE; // ÖØÖÃÊÂ¼ş±êÖ¾Î»
+                    hall_qep_count += 1; // ºÍ HALL X ·´Ò»·´
                 }
             }
-            // å¯¹æœ¬æ¬¡ä¸‹é™è¿‡é›¶äº‹ä»¶è¿›è¡Œè®°å½•
+            // ¶Ô±¾´ÎÏÂ½µ¹ıÁãÊÂ¼ş½øĞĞ¼ÇÂ¼
             event_falling_crossing[1] = TRUE;
             recent_zero_crossing_hall_is = HALL_Y;
         }
-        last_pole[1] = current_pole[1]; // é‡ç½®äº‹ä»¶æ ‡å¿—ä½
+        last_pole[1] = current_pole[1]; // ÖØÖÃÊÂ¼ş±êÖ¾Î»
     }
 
 
     // /* HALL Y */
-    // if(hall_sensor_read[1]>0 && hall_sensor_read_last[1]>0){ // æœ¬æ¬¡å’Œä¸Šæ¬¡å‡å¤§äºé›¶
+    // if(hall_sensor_read[1]>0 && hall_sensor_read_last[1]>0){ // ±¾´ÎºÍÉÏ´Î¾ù´óÓÚÁã
     //     pole_change_count += 1;
     //     current_pole[1] = 0;
     //     // if(pole_change_count>=???){
     //     //     current_pole[1] = NORTH_POLE;
     //     // }
-    // }else if(hall_sensor_read[1]<0 && hall_sensor_read_last[1]<0){ // æœ¬æ¬¡å’Œä¸Šæ¬¡å‡å°äºé›¶
+    // }else if(hall_sensor_read[1]<0 && hall_sensor_read_last[1]<0){ // ±¾´ÎºÍÉÏ´Î¾ùĞ¡ÓÚÁã
     //     pole_change_count -= 1;
     //     current_pole[1] = 0;
     //     if(hall_sensor_read[0]<=THRESHOLD_RATIO*hall_sensor_read_min_SOUTH_last[0]){
@@ -460,11 +460,11 @@ void start_hall_conversion(REAL hall_sensor_read[]){
     //     pole_change_count = 0;
     //     current_pole[1] = 0;
     // }
-    // // ææ€§æ”¹å˜äº†ï¼Ÿ
+    // // ¼«ĞÔ¸Ä±äÁË£¿
     // if(current_pole[1]*last_pole[1]==-1){
-    //     // ææ€§æ”¹å˜ä¸”ä¸ä¸ºé›¶
+    //     // ¼«ĞÔ¸Ä±äÇÒ²»ÎªÁã
 
-    //     // åˆ¤æ–­æ—‹è½¬æ–¹å‘ one hall sensor cannot decide the rotating direction
+    //     // ÅĞ¶ÏĞı×ª·½Ïò one hall sensor cannot decide the rotating direction
     //     if (current_pole[0]==NORTH_POLE && current_pole[1]-last_pole[1]>0 ) rotating_direction = CW_DIRECTION;
     //     if (current_pole[0]==NORTH_POLE && current_pole[1]-last_pole[1]<0 ) rotating_direction = COUNTER_CW_DIRECTION;
     //     if (current_pole[0]==SOUTH_POLE && current_pole[1]-last_pole[1]<0 ) rotating_direction = CW_DIRECTION;
@@ -476,7 +476,7 @@ void start_hall_conversion(REAL hall_sensor_read[]){
     //         count_magnet[1] = 0;
     //     }
 
-    //     last_pole[1] = current_pole[1]; // last_poleçš„æ›´æ–°æ„å‘³ç€æ­£å¼è¿›å…¥æ–°çš„å˜åŒ–è¶‹åŠ¿äº†ã€‚
+    //     last_pole[1] = current_pole[1]; // last_poleµÄ¸üĞÂÒâÎ¶×ÅÕıÊ½½øÈëĞÂµÄ±ä»¯Ç÷ÊÆÁË¡£
     //     CODE_CALCULATE_SPEED(1);
     //     if(current_pole[1] == NORTH_POLE){
     //         hall_timing[1][_T0] = CTRL.timebase;       hall_timing_eventpoint_most_recent[1] = CTRL.timebase;
@@ -509,13 +509,13 @@ void start_hall_conversion(REAL hall_sensor_read[]){
 
 
 
-    // äº‹ä»¶å‘ç”Ÿï¼Œæ›´æ–°éœå°”Tæ³•æµ‹é‡åˆ°çš„è½¬é€Ÿ
+    // ÊÂ¼ş·¢Éú£¬¸üĞÂ»ô¶ûT·¨²âÁ¿µ½µÄ×ªËÙ
     // /* HALL X */
     // if(event_extreme[0]==PEAKING){event_extreme[0]=0;
     // }else if(event_extreme[0]==VALLEY){event_extreme[0]=0;
     // }else if(event_zero_crossing[0]==RISING_CROSSING){event_zero_crossing[0]=0;
     // }else if(event_zero_crossing[0]==FALLING_CROSSING){event_zero_crossing[0]=0;
-    // }else{ // æ— äº‹å‘ç”Ÿï¼Œä¹–ä¹–è®°å½•ä¸­é—´ç‚¹ï¼Œä»¥ä¸€ä¸ªå…­ååº¦ç‚¹ä¸ºä¾‹
+    // }else{ // ÎŞÊÂ·¢Éú£¬¹Ô¹Ô¼ÇÂ¼ÖĞ¼äµã£¬ÒÔÒ»¸öÁùÊ®¶ÈµãÎªÀı
     // //        if(current_pole[0]==NORTH_POLE && current_trend[0]==UPWARD_TREND   && hall_sensor_read[0]> 0.866*hall_readin[0][_T2]) {hall_timing[0][_T1]=CTRL.timebase; delta_time[0]=CTRL.timebase-hall_timing_eventpoint_most_recent[0]; delta_voltage[0]=hall_sensor_read[0]-hall_readin_eventpoint_most_recent[0];}
     // //        if(current_pole[0]==NORTH_POLE && current_trend[0]==DOWNWARD_TREND && hall_sensor_read[0]< 0.866*hall_readin[0][_T2]) {hall_timing[0][_T3]=CTRL.timebase; delta_time[0]=CTRL.timebase-hall_timing_eventpoint_most_recent[0]; delta_voltage[0]=hall_sensor_read[0]-hall_readin_eventpoint_most_recent[0];}
     // //        if(current_pole[0]==SOUTH_POLE && current_trend[0]==UPWARD_TREND   && hall_sensor_read[0]>-0.866*hall_readin[0][_T6]) {hall_timing[0][_T7]=CTRL.timebase; delta_time[0]=CTRL.timebase-hall_timing_eventpoint_most_recent[0]; delta_voltage[0]=hall_sensor_read[0]-hall_readin_eventpoint_most_recent[0];}
@@ -526,14 +526,14 @@ void start_hall_conversion(REAL hall_sensor_read[]){
     // }else if(event_extreme[1]==VALLEY){event_extreme[1]=0;
     // }else if(event_zero_crossing[1]==RISING_CROSSING){event_zero_crossing[1]=0;
     // }else if(event_zero_crossing[1]==FALLING_CROSSING){event_zero_crossing[1]=0;
-    // }else{ // æ— äº‹å‘ç”Ÿï¼Œä¹–ä¹–è®°å½•ä¸­é—´ç‚¹ï¼Œä»¥ä¸€ä¸ªå…­ååº¦ç‚¹ä¸ºä¾‹
+    // }else{ // ÎŞÊÂ·¢Éú£¬¹Ô¹Ô¼ÇÂ¼ÖĞ¼äµã£¬ÒÔÒ»¸öÁùÊ®¶ÈµãÎªÀı
     // //        if(current_pole[1]==NORTH_POLE && current_trend[1]==UPWARD_TREND   && hall_sensor_read[1]> 0.866*hall_readin[1][_T2]) {hall_timing[1][_T1]=CTRL.timebase; delta_time[1]=CTRL.timebase-hall_timing_eventpoint_most_recent[1]; delta_voltage[1]=hall_sensor_read[1]-hall_readin_eventpoint_most_recent[1];}
     // //        if(current_pole[1]==NORTH_POLE && current_trend[1]==DOWNWARD_TREND && hall_sensor_read[1]< 0.866*hall_readin[1][_T2]) {hall_timing[1][_T3]=CTRL.timebase; delta_time[1]=CTRL.timebase-hall_timing_eventpoint_most_recent[1]; delta_voltage[1]=hall_sensor_read[1]-hall_readin_eventpoint_most_recent[1];}
     // //        if(current_pole[1]==SOUTH_POLE && current_trend[1]==UPWARD_TREND   && hall_sensor_read[1]>-0.866*hall_readin[1][_T6]) {hall_timing[1][_T7]=CTRL.timebase; delta_time[1]=CTRL.timebase-hall_timing_eventpoint_most_recent[1]; delta_voltage[1]=hall_sensor_read[1]-hall_readin_eventpoint_most_recent[1];}
     // //        if(current_pole[1]==SOUTH_POLE && current_trend[1]==DOWNWARD_TREND && hall_sensor_read[1]<-0.866*hall_readin[1][_T6]) {hall_timing[1][_T5]=CTRL.timebase; delta_time[1]=CTRL.timebase-hall_timing_eventpoint_most_recent[1]; delta_voltage[1]=hall_sensor_read[1]-hall_readin_eventpoint_most_recent[1];}
     // }
 
-    // è®°å½•æœ€å¤§ã€æœ€å°éœå°”è¯»æ•°
+    // ¼ÇÂ¼×î´ó¡¢×îĞ¡»ô¶û¶ÁÊı
     if(hall_sensor_read[0] > hall_sensor_read_max_global[0]) hall_sensor_read_max_global[0] = hall_sensor_read[0];
     if(hall_sensor_read[0] < hall_sensor_read_min_global[0]) hall_sensor_read_min_global[0] = hall_sensor_read[0];
     if(hall_sensor_read[1] > hall_sensor_read_max_global[1]) hall_sensor_read_max_global[1] = hall_sensor_read[1];
@@ -549,11 +549,11 @@ void start_hall_conversion(REAL hall_sensor_read[]){
     hall_sensor_read_delta_last[1] = hall_sensor_read_delta[1];
     hall_sensor_read_delta_last[2] = hall_sensor_read_delta[2];
 
-    // è§£ç®—éœå°”æµ‹é‡ç”µå‹ä¸ºè½¬å­è§’åº¦
-    // é€Ÿåº¦ç§¯åˆ†æ–¹æ¡ˆ
+    // ½âËã»ô¶û²âÁ¿µçÑ¹Îª×ª×Ó½Ç¶È
+    // ËÙ¶È»ı·Ö·½°¸
     // hall_theta_r_mech_incremental[0] += CL_TS*hall_omega_r_mech[0] * rotating_direction;
     // hall_theta_r_mech_incremental[1] += CL_TS*hall_omega_r_mech[1] * rotating_direction;
-    // å±€éƒ¨ä¸€å¯¹ææ˜ å°„æ–¹æ¡ˆ
+    // ¾Ö²¿Ò»¶Ô¼«Ó³Éä·½°¸
     // hall_theta_r_mech_local_absolute[0] = hall_sensor_read[0] * normalizer[0] * 0.5*M_PI;
     // hall_theta_r_mech_local_absolute[1] = hall_sensor_read[1] * normalizer[1] * 0.5*M_PI;
     // hall_theta_r_mech[0] = hall_theta_r_mech_incremental[0] + hall_theta_r_mech_local_absolute[0];

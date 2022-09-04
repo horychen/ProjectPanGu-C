@@ -65,11 +65,8 @@ void allocate_CTRL(struct ControllerForExperiment *p){
     p->S->iT2  = &pid2_iT;
 }
 
-// CCS Debug Window
-int Set_current_loop=0;
-
 // Global watch variables
-struct GlobalWatch watch;
+// struct GlobalWatch watch;
 
 /* Structs for Algorithm */
 #if MACHINE_TYPE == PM_SYNCHRONOUS_MACHINE

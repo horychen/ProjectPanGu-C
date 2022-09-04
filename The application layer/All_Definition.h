@@ -1,15 +1,58 @@
 #ifndef ALL_DEFINITATION_H
 #define ALL_DEFINITATION_H
+
 #include "math.h"
 //#include "IQmathLib.h"
 /* DSP system Configuration------------------------------------------------------------------*/
     #include "F2837xD_Cla_typedefs.h"  // F2837xD CLA Type definitions
     #include "F2837xD_device.h"        // F2837xD Headerfile Include File
     #include "F2837xD_Examples.h"      // F2837xD Examples Include File
-/* ç»å¸¸éœ€è¦ä¿®æ”¹çš„å®å®šä¹‰å£°æ˜æ–‡ä»¶ */
+/* ¾­³£ĞèÒªĞŞ¸ÄµÄºê¶¨ÒåÉùÃ÷ÎÄ¼ş */
     #include "ACMConfig.h"
     #include "ACMSim.h"
     #include "Experiment.h"
+
+struct st_axis{
+    struct ControllerForExperiment *pCTRL;
+    // Commonly used for prototype motor testing
+        int use_fisrt_set_three_phase;
+        int Set_current_loop;
+        REAL Set_manual_rpm;
+        REAL Set_manual_current_iq;
+        REAL Set_manual_current_id;
+        int Seletc_exp_operation;
+        int *pFLAG_INVERTER_NONLINEARITY_COMPENSATION;
+        int flag_overwrite_theta_d;
+        REAL Overwrite_Current_Frequency;
+        REAL used_theta_d_elec;
+        REAL angle_shift_for_first_inverter;
+        REAL angle_shift_for_second_inverter;
+        REAL OverwriteSpeedOutLimitDuringInit;
+        int FLAG_ENABLE_PWM_OUTPUT; // µç»úÄ£Ê½±êÖ¾Î»
+    // ADC Offset
+        // Automatic Offset Removing
+        int AD_offset_flag2;
+        REAL offset_counter;
+        REAL offset_online[6];
+        // Raw
+        REAL adc_offset[12]; // ADC offset. U, V, W corresponds to ADCRESULT2, ADCRESULT3, ADCRESULT1.
+        REAL adc_scale[12];
+        volatile struct ADC_RESULT_REGS *pAdcaResultRegs;
+        volatile struct ADC_RESULT_REGS *pAdcbResultRegs;
+    // Sensor - Raw measurement
+        REAL vdc;
+        REAL iabg[6];
+        REAL iuvw[6];
+        REAL iuvw_offset_online[6];
+    // DAC
+        int DAC_MAX5307_FLAG; // for single core case
+        REAL dac_offset[8];
+        REAL dac_time;
+        REAL dac_watch[80];
+        REAL dac_watch_stator_resistance;
+};
+extern struct st_axis Axis;
+
 /* Motor Library file------------------------------------------------------------------------*/
     #define USE_DEATIME_PRECOMP FALSE
     __interrupt void EPWM1ISR(void);
@@ -26,7 +69,7 @@
     #include "CONSOLE.h"
     #include "DAC_MAX5307.h"
     #include "ECaptureVoltage.h"
-    #include "F2837xD_Ipc_drivers.h" // åŒæ ¸é€šè®¯
+    #include "F2837xD_Ipc_drivers.h" // Ë«ºËÍ¨Ñ¶
     #include "F2837xD_struct.h"
     #include "F2837xD_sdfm_drivers.h"
     #include "ShareMemory.h"
@@ -44,16 +87,18 @@
     #define SYSTEM_QEP_UNITTIME_ISR          0.001    //1K ,1ms     time_out timer   isr_time
     #define SYSTEM_QEP_CAP_X128           0.00000064  //cap timer
     #define SYSTEM_QEP_CUTOFF_FILTER           5      // CUTOFF FREQUENCY 10HZ
-    #define SYSTEM_QEP_SWAP_ENABLE              1     //æ­£æ–¹å‘è®¡æ•°
-    #define SYSTEM_QEP_SWAP_DISABLE             0     //åæ–¹å‘è®¡æ•°
+    #define SYSTEM_QEP_SWAP_ENABLE              1     //Õı·½Ïò¼ÆÊı
+    #define SYSTEM_QEP_SWAP_DISABLE             0     //·´·½Ïò¼ÆÊı
     //ADC CONFIGURATION is moved to main.c
+    //DAC Configuration
+    #define NO_OF_CHANNELS 8
     //TRIP CONFIGURATION
-    #define MAX_CURRENT_N                      -11.8      //-12A  // Set your negative current trip threshold here in [0, 4095]
-    #define MAX_CURRENT_P                       11.8       //12A   // Set your positive current trip threshold here in [0, 4095]
-    #define MAX_OVERVOLTAGE                    400      //400V  // Set your unipolar trip Over-voltage threshold in [0, 4095]
+    //#define MAX_CURRENT_N                      -11.8      //-12A  // Set your negative current trip threshold here in [0, 4095]
+    //#define MAX_CURRENT_P                       11.8       //12A   // Set your positive current trip threshold here in [0, 4095]
+    //#define MAX_OVERVOLTAGE                    400      //400V  // Set your unipolar trip Over-voltage threshold in [0, 4095]
     //GPIO
-    #define DSP_PWM_DISABLE        GpioDataRegs.GPDSET.bit.GPIO105=1;    // ä½æœ‰æ•ˆï¼Œç½®ä½å°æ³¢
-    #define DSP_PWM_ENABLE         GpioDataRegs.GPDCLEAR.bit.GPIO105=1;  // ä½æœ‰æ•ˆï¼Œæ¸…é›¶æœ‰æ•ˆ
+    #define DSP_PWM_DISABLE        GpioDataRegs.GPDSET.bit.GPIO105=1;    // µÍÓĞĞ§£¬ÖÃÎ»·â²¨
+    #define DSP_PWM_ENABLE         GpioDataRegs.GPDCLEAR.bit.GPIO105=1;  // µÍÓĞĞ§£¬ÇåÁãÓĞĞ§
     #define DSP_2PWM_DISABLE       GpioDataRegs.GPASET.bit.GPIO27=1;
     #define DSP_2PWM_ENABLE        GpioDataRegs.GPACLEAR.bit.GPIO27=1;
 
@@ -65,7 +110,7 @@
     #define DSP_START_LED2 GpioDataRegs.GPBSET.bit.GPIO33=1;
 
 /* Logic  -----------------------------------------------------------------------------------*/
-    //#include "Logic.h"                //é€»è¾‘åº“ åŒ…æ‹¬æ•…éšœä»£ç ï¼ŒDI,çŠ¶æ€æœº
+    //#include "Logic.h"                //Âß¼­¿â °üÀ¨¹ÊÕÏ´úÂë£¬DI,×´Ì¬»ú
     extern int VoltageOVER_FLAG;
     struct Trip_Variables
     {
