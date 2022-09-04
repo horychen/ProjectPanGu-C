@@ -72,7 +72,7 @@ REAL PostionSpeedMeasurement_MovingAvergage(Uint32 QPOSCNT){
         }
 
     // Output of the moving average is speed. CTRL.I->rpm = how many counts / time elapsed
-    return ENC.sum_qepPosCnt*SYSTEM_QEP_REV_PER_PULSE * ONE_OVER_RESOLVER_NUMBER_OF_POLE_PAIRS * 60 * MA_SEQUENCE_LENGTH_INVERSE * CL_TS_INVERSE;
+    return ENC.sum_qepPosCnt*SYSTEM_QEP_REV_PER_PULSE * 60 * MA_SEQUENCE_LENGTH_INVERSE * CL_TS_INVERSE;
     // return ENC.sum_qepPosCnt*SYSTEM_QEP_REV_PER_PULSE * 60 / (MA_SEQUENCE_LENGTH*CL_TS);
     // return ENC.sum_qepPosCnt*SYSTEM_QEP_REV_PER_PULSE * 6e4; // 6e4 = 60 / (MA_SEQUENCE_LENGTH*CL_TS) 
 }
