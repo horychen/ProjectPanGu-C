@@ -36,7 +36,7 @@ void start_hall_conversion(REAL hall_sensor_read[]);
     // Sensor Board 6 Phase SiC MOSFET Inverter
     #define SCALE_VDC 0.0949
     #define SCALE_U  0.03367
-    #define SCALE_V  0.005607267
+    #define SCALE_V  0.03388
     #define SCALE_W  0.0340136
     #define SCALE_R -0.032
     #define SCALE_S -0.032
@@ -61,8 +61,13 @@ void start_hall_conversion(REAL hall_sensor_read[]);
 //#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS 205 // 相序反接后，第一套
 //#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS 182 // 相序反接后，第二套
 
-#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS 330 // 相序接回去后，第一套
+//#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS 330 // 相序接回去后，第一套
 //#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS 0 // 相序接回去后，第二套
+
+#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS -149 // 400W sdcq 减速比电机
+#define ANGLE_SHIFT_FOR_FIRST_INVERTER 0 // -2.82372499 - 0.5*M_PI; // (for Yaojie Motor)
+#define ANGLE_SHIFT_FOR_SECOND_INVERTER 0 // 2.17232847 - 0.5*M_PI; // (for Yaojie Motor)
+
 
 void init_experiment_AD_gain_and_offset(){
     /* ADC OFFSET */
@@ -109,8 +114,10 @@ void main(void){
     Axis.flag_overwrite_theta_d = 0;
     Axis.Overwrite_Current_Frequency = 0;
     Axis.used_theta_d_elec = 0.0;
-    Axis.angle_shift_for_first_inverter  = -2.82372499 - 0.5*M_PI;
-    Axis.angle_shift_for_second_inverter =  2.17232847 - 0.5*M_PI;
+//    Axis.angle_shift_for_first_inverter  = -2.82372499 - 0.5*M_PI;
+//    Axis.angle_shift_for_second_inverter =  2.17232847 - 0.5*M_PI;
+    Axis.angle_shift_for_first_inverter  = ANGLE_SHIFT_FOR_FIRST_INVERTER;
+    Axis.angle_shift_for_second_inverter = ANGLE_SHIFT_FOR_SECOND_INVERTER;
     Axis.OverwriteSpeedOutLimitDuringInit = 3; // A
     Axis.FLAG_ENABLE_PWM_OUTPUT = FALSE;
 
