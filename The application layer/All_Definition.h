@@ -82,7 +82,7 @@
     int Motor_MODE_REVERSE(void);
     void System_Checking(void);
 /* Global Variable */
-struct st_axis{
+typedef struct{
     struct ControllerForExperiment *pCTRL;
     // Commonly used for prototype motor testing
         int use_fisrt_set_three_phase;
@@ -120,8 +120,8 @@ struct st_axis{
         REAL dac_time;
         REAL dac_watch[80];
         REAL dac_watch_stator_resistance;
-};
-extern struct st_axis Axis;
+} st_axis;
+extern st_axis Axis;
 
 
 

@@ -39,40 +39,44 @@ REAL _hpf(REAL x, REAL *lpf_y, REAL tau_inv){
 // REAL ENC.MA_qepPosCnt[MA_SEQUENCE_LENGTH];
 // REAL sum_qepPosCnt = 0.0;
 // unsigned int ENC.cursor=0; // ENC.cursor is between 0~79, and it decides which element in MA queue should be kicked out.
-REAL PostionSpeedMeasurement_MovingAvergage(Uint32 QPOSCNT){
+REAL PostionSpeedMeasurement_MovingAvergage(Uint32 QPOSCNT, st_enc *p_enc){
     // EQep1Regs
+    #define enc (*p_enc)
 
     /* Part One: Read QEP Registers to get Position */
 
         /* 获取绝对位置 [cnt] 用于转子位置解算 */
-        ENC.encoder_abs_cnt_previous = ENC.encoder_abs_cnt;
-        ENC.encoder_abs_cnt = (int32)QPOSCNT + ENC.OffsetCountBetweenIndexAndUPhaseAxis;
-        if(ENC.encoder_abs_cnt > SYSTEM_QEP_PULSES_PER_REV) {ENC.encoder_abs_cnt -= SYSTEM_QEP_PULSES_PER_REV;}
-        if(ENC.encoder_abs_cnt < 0)                         {ENC.encoder_abs_cnt += SYSTEM_QEP_PULSES_PER_REV;}
-        ENC.theta_d__state = ENC.encoder_abs_cnt * CNT_2_ELEC_RAD;
-        while(ENC.theta_d__state> M_PI) ENC.theta_d__state -= 2*M_PI;
-        while(ENC.theta_d__state<-M_PI) ENC.theta_d__state += 2*M_PI;
+        enc.encoder_abs_cnt_previous = enc.encoder_abs_cnt;
+        enc.encoder_abs_cnt = (int32)QPOSCNT + enc.OffsetCountBetweenIndexAndUPhaseAxis;
+        if(enc.encoder_abs_cnt > SYSTEM_QEP_PULSES_PER_REV) {enc.encoder_abs_cnt -= SYSTEM_QEP_PULSES_PER_REV;}
+        if(enc.encoder_abs_cnt < 0)                         {enc.encoder_abs_cnt += SYSTEM_QEP_PULSES_PER_REV;}
+        enc.theta_d__state = enc.encoder_abs_cnt * CNT_2_ELEC_RAD;
+        while(enc.theta_d__state> M_PI) enc.theta_d__state -= 2*M_PI;
+        while(enc.theta_d__state<-M_PI) enc.theta_d__state += 2*M_PI;
 
     /* Part Two: Moving Average with a update period of CL_TS */
 
         /* 获取位置增量 [cnt] 用于滑动平均转速解算 */
-        ENC.encoder_incremental_cnt = ENC.encoder_abs_cnt - ENC.encoder_abs_cnt_previous;
+        enc.encoder_incremental_cnt = enc.encoder_abs_cnt - enc.encoder_abs_cnt_previous;
         // 增量超过ppr的一半则认为是发生了Cnt被Z信号清零事件
-        if(        ENC.encoder_incremental_cnt < -0.5*    SYSTEM_QEP_PULSES_PER_REV)
-                   ENC.encoder_incremental_cnt += (int32) SYSTEM_QEP_PULSES_PER_REV;
-        else if (  ENC.encoder_incremental_cnt >  0.5*    SYSTEM_QEP_PULSES_PER_REV)
-                   ENC.encoder_incremental_cnt -= (int32) SYSTEM_QEP_PULSES_PER_REV;
+        if(        enc.encoder_incremental_cnt < -0.5*    SYSTEM_QEP_PULSES_PER_REV)
+                   enc.encoder_incremental_cnt += (int32) SYSTEM_QEP_PULSES_PER_REV;
+        else if (  enc.encoder_incremental_cnt >  0.5*    SYSTEM_QEP_PULSES_PER_REV)
+                   enc.encoder_incremental_cnt -= (int32) SYSTEM_QEP_PULSES_PER_REV;
 
-        ENC.sum_qepPosCnt       -= ENC.MA_qepPosCnt[ENC.cursor];
-        ENC.sum_qepPosCnt       += ENC.encoder_incremental_cnt;
-        ENC.MA_qepPosCnt[ENC.cursor] = ENC.encoder_incremental_cnt;
-        ENC.cursor+=1; // 完事以后再加一
-        if(ENC.cursor>=MA_SEQUENCE_LENGTH){
-            ENC.cursor=0; // Reset ENC.cursor
+        enc.sum_qepPosCnt       -= enc.MA_qepPosCnt[enc.cursor];
+        enc.sum_qepPosCnt       += enc.encoder_incremental_cnt;
+        enc.MA_qepPosCnt[enc.cursor] = enc.encoder_incremental_cnt;
+        enc.cursor+=1; // 完事以后再加一
+        if(enc.cursor>=MA_SEQUENCE_LENGTH){
+            enc.cursor=0; // Reset enc.cursor
         }
+    enc.rpm = enc.sum_qepPosCnt*SYSTEM_QEP_REV_PER_PULSE * 60 * MA_SEQUENCE_LENGTH_INVERSE * CL_TS_INVERSE;
+    enc.omg_elec     = enc.rpm * RPM_2_ELEC_RAD_PER_SEC; // 机械转速（单位：RPM）-> 电气角速度（单位：elec.rad/s)
+    enc.theta_d_elec = enc.theta_d__state;
 
     // Output of the moving average is speed. CTRL.I->rpm = how many counts / time elapsed
-    return ENC.sum_qepPosCnt*SYSTEM_QEP_REV_PER_PULSE * 60 * MA_SEQUENCE_LENGTH_INVERSE * CL_TS_INVERSE;
+    return enc.rpm
     // return ENC.sum_qepPosCnt*SYSTEM_QEP_REV_PER_PULSE * 60 / (MA_SEQUENCE_LENGTH*CL_TS);
     // return ENC.sum_qepPosCnt*SYSTEM_QEP_REV_PER_PULSE * 6e4; // 6e4 = 60 / (MA_SEQUENCE_LENGTH*CL_TS) 
 }

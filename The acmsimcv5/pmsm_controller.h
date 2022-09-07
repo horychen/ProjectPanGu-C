@@ -250,6 +250,7 @@ struct ControllerForExperiment{
 
     /* Peripheral configurations */
     st_enc *enc;
+    st_enc *enc_hall;
     st_psd *psd; // phase sequence detection
 
     /* Inverter */
@@ -289,7 +290,6 @@ void commissioning();
 void controller(REAL set_rpm_speed_command, 
     int set_current_loop, REAL set_iq_cmd, REAL set_id_cmd,
     int flag_overwrite_theta_d, REAL Overwrite_Current_Frequency,
-    REAL used_theta_d_elec,
     REAL angle_shift_for_first_inverter,
     REAL angle_shift_for_second_inverter);
 void allocate_CTRL(struct ControllerForExperiment *p);
