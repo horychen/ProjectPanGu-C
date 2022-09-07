@@ -85,44 +85,44 @@ void init_experiment_overwrite(){
         //CTRL.motor->KE = 0.14; // for negative speed
     #else
 
-        CTRL.motor->R = 1.69;      // from fitting
-        CTRL.motor->KE = 0.0968527496;
-        CTRL.motor->Js = 0.000767020276;
-
-        //CTRL.motor->R = 2.0;      // from low speed position error correction at 20 rpm for slow reversal. id=2
-        //CTRL.motor->R = 2.4;      // from low speed position error correction at 20 rpm for slow reversal. iq=2
-
-        CTRL.motor->R = 1.85; //for negative speed [id?, iq=2 A]
-        CTRL.motor->R = 2.20; //for positive speed [id?, iq=2 A]
-
-        CTRL.motor->R = 1.95; //for negative speed [no id, iq=2 A]
-        CTRL.motor->R = 2.30; //for positive speed [no id, iq=2 A]
-
-        /* Tuning tips:
-         * 1. KP cannot be smaller than 50, for example, KP=40 will make sensorless system unstable at 400 rpm with load.
-         * 2. KP can be as large as 150 without any issue at 400 rpm wiht load.
-         * 3. KI can be changed in a wide range without any impact on sensorless performance.
-         * 4. KP has Speed dependency: lower than 100 rpm, KP can be as low as 20, and the sensorless system is stable with slow reversal.
-         * */
-        AFEOE.ActiveFlux_KP = 50; // for R=1.7, larger KP causes larger pos error (KP=30 went unstable), but with correct R, large KP can be used.
-        AFEOE.ActiveFlux_KI = 25;
-
-        /* ONLy Kp */
-        AFEOE.ActiveFlux_KP = 200;
-        AFEOE.ActiveFlux_KI = 0.0;
+    //        CTRL.motor->R = 1.69;      // from fitting
+    //        CTRL.motor->KE = 0.0968527496;
+    //        CTRL.motor->Js = 0.000767020276;
+    //
+    //        //CTRL.motor->R = 2.0;      // from low speed position error correction at 20 rpm for slow reversal. id=2
+    //        //CTRL.motor->R = 2.4;      // from low speed position error correction at 20 rpm for slow reversal. iq=2
+    //
+    //        CTRL.motor->R = 1.85; //for negative speed [id?, iq=2 A]
+    //        CTRL.motor->R = 2.20; //for positive speed [id?, iq=2 A]
+    //
+    //        CTRL.motor->R = 1.95; //for negative speed [no id, iq=2 A]
+    //        CTRL.motor->R = 2.30; //for positive speed [no id, iq=2 A]
+    //
+    //        /* Tuning tips:
+    //         * 1. KP cannot be smaller than 50, for example, KP=40 will make sensorless system unstable at 400 rpm with load.
+    //         * 2. KP can be as large as 150 without any issue at 400 rpm wiht load.
+    //         * 3. KI can be changed in a wide range without any impact on sensorless performance.
+    //         * 4. KP has Speed dependency: lower than 100 rpm, KP can be as low as 20, and the sensorless system is stable with slow reversal.
+    //         * */
+    //        AFEOE.ActiveFlux_KP = 50; // for R=1.7, larger KP causes larger pos error (KP=30 went unstable), but with correct R, large KP can be used.
+    //        AFEOE.ActiveFlux_KI = 25;
+    //
+    //        /* ONLy Kp */
+    //        AFEOE.ActiveFlux_KP = 200;
+    //        AFEOE.ActiveFlux_KI = 0.0;
 
     #endif
 
-    #if TRUE
-        MOTOR.KE = 0.095;
-        MOTOR.KE = 0.098; // 2021-07-28 电动模式，a2/a3辨识时，轻载（1.5A）时htz观测磁链幅值波形的包络线不会波动，需要将KE从0.095 Wb增加到0.098 Wb 或0.099 Wb（肉眼难以区分，可以试试FFT看哪个值可以抑制幅值波动到最小）。
-//        MOTOR.KE = 0.101; // 2021-07-28 电动模式，继续增加KE到0.101的时候，htz.u_offset[0]不再波动，甚至在不同的负载（1.5A和3A）下，仍然保持一条水平线！
-//        MOTOR.KE = 0.103; // 2021-07-28 电动模式，空载，500rpm，htz.u_offset[0]alpha分量在KE=0.101的情况下仍有波动，增加到0.102波动减小，增加到0.103变成水平线。【注意此时有1.5Ts延时校正！】
-//        MOTOR.KE = 0.105; // 2021-07-28 电动模式，空载，500rpm，htz.u_offset[0]alpha分量在KE=0.103的情况下仍有波动，增加到0.104波动减小，增加到0.105变成水平线。【注意此时没有1.5Ts延时校正！】
-//        MOTOR.KE = 0.108; // 2021-07-29 利用磁链幅值误差去确定不会导致htz.u_offset[0]波动的KE的上限值为0.108
-        huwu.limiter_KE = 1.0 * MOTOR.KE; // this depends on KE value
-    #endif
-    AFEOE.limiter_KE = 1.15 * MOTOR.KE; // this depends on KE value
+    //    #if TRUE
+    //        MOTOR.KE = 0.095;
+    //        MOTOR.KE = 0.098; // 2021-07-28 电动模式，a2/a3辨识时，轻载（1.5A）时htz观测磁链幅值波形的包络线不会波动，需要将KE从0.095 Wb增加到0.098 Wb 或0.099 Wb（肉眼难以区分，可以试试FFT看哪个值可以抑制幅值波动到最小）。
+    ////        MOTOR.KE = 0.101; // 2021-07-28 电动模式，继续增加KE到0.101的时候，htz.u_offset[0]不再波动，甚至在不同的负载（1.5A和3A）下，仍然保持一条水平线！
+    ////        MOTOR.KE = 0.103; // 2021-07-28 电动模式，空载，500rpm，htz.u_offset[0]alpha分量在KE=0.101的情况下仍有波动，增加到0.102波动减小，增加到0.103变成水平线。【注意此时有1.5Ts延时校正！】
+    ////        MOTOR.KE = 0.105; // 2021-07-28 电动模式，空载，500rpm，htz.u_offset[0]alpha分量在KE=0.103的情况下仍有波动，增加到0.104波动减小，增加到0.105变成水平线。【注意此时没有1.5Ts延时校正！】
+    ////        MOTOR.KE = 0.108; // 2021-07-29 利用磁链幅值误差去确定不会导致htz.u_offset[0]波动的KE的上限值为0.108
+    //        huwu.limiter_KE = 1.0 * MOTOR.KE; // this depends on KE value
+    //    #endif
+    //    AFEOE.limiter_KE = 1.15 * MOTOR.KE; // this depends on KE value
 
     /* SlessInv */
     htz.psi_aster_max = CTRL.motor->KE - 0.003;

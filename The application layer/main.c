@@ -4,6 +4,7 @@ st_axis Axis;
 REAL hall_sensor_read[3] = {0, 0, 0};
 extern REAL hall_qep_angle;
 extern REAL hall_qep_count;
+REAL last_hall_qep_count;
 void start_hall_conversion(REAL hall_sensor_read[]);
 
 #ifdef _XCUBE1 // At Water Energy Lab
@@ -70,6 +71,7 @@ void start_hall_conversion(REAL hall_sensor_read[]);
 #define ANGLE_SHIFT_FOR_SECOND_INVERTER 0 // 2.17232847 - 0.5*M_PI; // (for Yaojie Motor)
 
 #define USE_3_CURRENT_SENSORS 1
+#define USE_HALL_SENSOR_FOR_QEP 1
 
 void init_experiment_AD_gain_and_offset(){
     /* ADC OFFSET */
@@ -106,11 +108,11 @@ void main(void){
     Axis.pCTRL = &CTRL;
     Axis.pAdcaResultRegs = &AdcaResultRegs;
     Axis.pAdcbResultRegs = &AdcbResultRegs;
-    Axis.use_fisrt_set_three_phase = 1;
-    Axis.Set_current_loop = 0;
+    Axis.use_fisrt_set_three_phase = 2;
+    Axis.Set_current_loop = TRUE;
     Axis.Set_manual_rpm = 0;
     Axis.Set_manual_current_iq = 0;
-    Axis.Set_manual_current_id = 0;
+    Axis.Set_manual_current_id = 2;
     Axis.Seletc_exp_operation = 0;
     Axis.pFLAG_INVERTER_NONLINEARITY_COMPENSATION = &G.FLAG_INVERTER_NONLINEARITY_COMPENSATION;
     Axis.flag_overwrite_theta_d = 0;
@@ -495,9 +497,6 @@ void measurement(){
     // 转子位置和转速接口 以及 转子位置和转速测量
     Uint32 QPOSCNT   = EQep1Regs.QPOSCNT;
     ENC.rpm          = PostionSpeedMeasurement_MovingAvergage(QPOSCNT, CTRL.enc);
-    CTRL.I->theta_d_elec = ENC.theta_d_elec;
-    CTRL.I->omg_elec     = ENC.omg_elec;
-    CTRL.I->rpm = CTRL.I->omg_elec * ELEC_RAD_PER_SEC_2_RPM;
 
     // Convert adc results
     Axis.vdc    =((REAL)(AdcaResultRegs.ADCRESULT0 ) - Axis.adc_offset[0]) * Axis.adc_scale[0];
@@ -514,10 +513,31 @@ void measurement(){
     hall_sensor_read[2] = (REAL)AdcbResultRegs.ADCRESULT10 - Axis.adc_offset[9]; // ADC_HALL_OFFSET_ADC10; // Bogen 40 poles on the top
 
     // Use two hall sensors for QEP
+    last_hall_qep_count = hall_qep_count;
     start_hall_conversion(hall_sensor_read);
-    CTRL.enc_hall->rpm = PostionSpeedMeasurement_MovingAvergage(hall_qep_count, CTRL.enc_hall);
-    CTRL.I->theta_d_elec = CTRL.enc_hall->theta_d_elec;
-    CTRL.I->omg_elec     = CTRL.enc_hall->omg_elec;
+    if(USE_HALL_SENSOR_FOR_QEP){
+        CTRL.enc_hall->theta_d__state = hall_qep_count * (0.015625 * 2*M_PI * MOTOR_NUMBER_OF_POLE_PAIRS);
+
+        /* 获取位置增量 [cnt] 用于滑动平均转速解算 */
+        CTRL.enc_hall->encoder_incremental_cnt = hall_qep_count - last_hall_qep_count;
+        CTRL.enc_hall->sum_qepPosCnt       -= CTRL.enc_hall->MA_qepPosCnt[CTRL.enc_hall->cursor];
+        CTRL.enc_hall->sum_qepPosCnt       += CTRL.enc_hall->encoder_incremental_cnt;
+        CTRL.enc_hall->MA_qepPosCnt[CTRL.enc_hall->cursor] = CTRL.enc_hall->encoder_incremental_cnt;
+        CTRL.enc_hall->cursor+=1; // 完事以后再加一
+        if(CTRL.enc_hall->cursor>=MA_SEQUENCE_LENGTH){
+            CTRL.enc_hall->cursor=0; // Reset CTRL.enc_hall->cursor
+        }
+
+        CTRL.enc_hall->rpm = CTRL.enc_hall->sum_qepPosCnt*SYSTEM_QEP_REV_PER_PULSE * 60 * MA_SEQUENCE_LENGTH_INVERSE * CL_TS_INVERSE;
+        CTRL.enc_hall->omg_elec     = CTRL.enc_hall->rpm * RPM_2_ELEC_RAD_PER_SEC; // 机械转速（单位：RPM）-> 电气角速度（单位：elec.rad/s)
+        CTRL.enc_hall->theta_d_elec = CTRL.enc_hall->theta_d__state;
+
+        CTRL.I->theta_d_elec = CTRL.enc_hall->theta_d_elec;
+        CTRL.I->omg_elec     = CTRL.enc_hall->omg_elec;
+    }else{
+        CTRL.I->theta_d_elec = ENC.theta_d_elec;
+        CTRL.I->omg_elec     = ENC.omg_elec;
+    }
     CTRL.I->rpm = CTRL.I->omg_elec * ELEC_RAD_PER_SEC_2_RPM;
 
     // 线电压测量（基于占空比和母线电压）
@@ -620,6 +640,7 @@ void measurement(){
     }
 }
 // int down_freq_ecap_counter = 1;
+Uint64 timebase_counter = 0;
 void PanGuMainISR(void){
     #if NUMBER_OF_DSP_CORES == 2
         write_DAC_buffer();
@@ -657,7 +678,8 @@ void PanGuMainISR(void){
         DSP_2PWM_ENABLE
 
         // DSP中控制器的时间
-        CTRL.timebase += CL_TS;
+        timebase_counter += 1;
+        CTRL.timebase = CL_TS * timebase_counter; //CTRL.timebase += CL_TS; // 2048 = float/double max
 
         // 根据指令，产生控制输出（电压）
         #if ENABLE_COMMISSIONING == FALSE

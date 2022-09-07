@@ -66,7 +66,7 @@ int channels[NO_OF_DAC_CHANNELS]={3,5,49,59,20,21,47,48}; // ESOAF
 
 int channels_preset = 9; //6
 
-REAL dac_time_that_cannot_be_modified = 0;
+//REAL dac_time_that_cannot_be_modified = 0;
 //REAL if_you_define_an_extra_global_variable_here_you_cannot_modify_dac_time_anymore = 0;
 
 
@@ -357,7 +357,6 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
     Write.dac_buffer[6] = Axis.dac_watch[channels[6]] + Axis.dac_offset[6];
     Write.dac_buffer[7] = Axis.dac_watch[channels[7]] + Axis.dac_offset[7];
 
-    dac_time_that_cannot_be_modified += CL_TS;
     Axis.dac_time += CL_TS;
     if((Axis.dac_time)<3){
         Axis.dac_offset[0] = 0.0045;
