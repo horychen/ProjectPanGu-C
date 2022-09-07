@@ -341,8 +341,8 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
         /* Slice motor */
         channels[0] = 50;
         channels[1] = 51;
-        channels[2] = 56;
-        channels[3] = 57;
+        channels[2] = 58;
+        channels[3] = 59;
         channels[4] = 52;
         channels[5] = 53;
     }

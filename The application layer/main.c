@@ -1,8 +1,9 @@
 #include <All_Definition.h>
-struct st_axis Axis;
+st_axis Axis;
 
 REAL hall_sensor_read[3] = {0, 0, 0};
 extern REAL hall_qep_angle;
+extern REAL hall_qep_count;
 void start_hall_conversion(REAL hall_sensor_read[]);
 
 #ifdef _XCUBE1 // At Water Energy Lab
@@ -68,6 +69,7 @@ void start_hall_conversion(REAL hall_sensor_read[]);
 #define ANGLE_SHIFT_FOR_FIRST_INVERTER 0 // -2.82372499 - 0.5*M_PI; // (for Yaojie Motor)
 #define ANGLE_SHIFT_FOR_SECOND_INVERTER 0 // 2.17232847 - 0.5*M_PI; // (for Yaojie Motor)
 
+#define USE_3_CURRENT_SENSORS 1
 
 void init_experiment_AD_gain_and_offset(){
     /* ADC OFFSET */
@@ -490,6 +492,13 @@ void voltage_measurement_based_on_eCAP(){
 
 void measurement(){
 
+    // 转子位置和转速接口 以及 转子位置和转速测量
+    Uint32 QPOSCNT   = EQep1Regs.QPOSCNT;
+    ENC.rpm          = PostionSpeedMeasurement_MovingAvergage(QPOSCNT, CTRL.enc);
+    CTRL.I->theta_d_elec = ENC.theta_d_elec;
+    CTRL.I->omg_elec     = ENC.omg_elec;
+    CTRL.I->rpm = CTRL.I->omg_elec * ELEC_RAD_PER_SEC_2_RPM;
+
     // Convert adc results
     Axis.vdc    =((REAL)(AdcaResultRegs.ADCRESULT0 ) - Axis.adc_offset[0]) * Axis.adc_scale[0];
     if(G.flag_overwite_vdc) Axis.vdc = G.overwrite_vdc;
@@ -504,42 +513,46 @@ void measurement(){
     hall_sensor_read[1] = (REAL)AdcaResultRegs.ADCRESULT4  - Axis.adc_offset[8]; // ADC_HALL_OFFSET_ADC4; // 32 poles on Aluminum target
     hall_sensor_read[2] = (REAL)AdcbResultRegs.ADCRESULT10 - Axis.adc_offset[9]; // ADC_HALL_OFFSET_ADC10; // Bogen 40 poles on the top
 
+    // Use two hall sensors for QEP
     start_hall_conversion(hall_sensor_read);
+    CTRL.enc_hall->rpm = PostionSpeedMeasurement_MovingAvergage(hall_qep_count, CTRL.enc_hall);
+    CTRL.I->theta_d_elec = CTRL.enc_hall->theta_d_elec;
+    CTRL.I->omg_elec     = CTRL.enc_hall->omg_elec;
+    CTRL.I->rpm = CTRL.I->omg_elec * ELEC_RAD_PER_SEC_2_RPM;
 
     // 线电压测量（基于占空比和母线电压）
     voltage_measurement_based_on_eCAP();
-
-    // 电流环限幅
+    // Vdc用于实时更新电流环限幅
     pid1_iM.OutLimit = Axis.vdc * 0.5773672;
     pid1_iT.OutLimit = Axis.vdc * 0.5773672;
     pid2_iM.OutLimit = Axis.vdc * 0.5773672;
     pid2_iT.OutLimit = Axis.vdc * 0.5773672;
 
     // 电流接口
-//    Axis.iabg[0] = UVW2A_AI(Axis.iuvw[0], Axis.iuvw[1], Axis.iuvw[2]);
-//    Axis.iabg[1] = UVW2B_AI(Axis.iuvw[0], Axis.iuvw[1], Axis.iuvw[2]);
-//    Axis.iabg[2] = UVW2G_AI(Axis.iuvw[0], Axis.iuvw[1], Axis.iuvw[2]);
-    // TODO: 电流传感器V相没接线，接的是IDC_BUS
-    REAL phase_V_current = -Axis.iuvw[0] - Axis.iuvw[2];
-    Axis.iabg[0] = UV2A_AI(Axis.iuvw[0], phase_V_current);
-    Axis.iabg[1] = UV2B_AI(Axis.iuvw[0], phase_V_current);
+    #if USE_3_CURRENT_SENSORS
+        Axis.iabg[0] = UVW2A_AI(Axis.iuvw[0], Axis.iuvw[1], Axis.iuvw[2]);
+        Axis.iabg[1] = UVW2B_AI(Axis.iuvw[0], Axis.iuvw[1], Axis.iuvw[2]);
+        Axis.iabg[2] = UVW2G_AI(Axis.iuvw[0], Axis.iuvw[1], Axis.iuvw[2]);
+        Axis.iabg[3] = UVW2A_AI(Axis.iuvw[3], Axis.iuvw[4], Axis.iuvw[5]);
+        Axis.iabg[4] = UVW2B_AI(Axis.iuvw[3], Axis.iuvw[4], Axis.iuvw[5]);
+        Axis.iabg[5] = UVW2G_AI(Axis.iuvw[3], Axis.iuvw[4], Axis.iuvw[5]);
+    #else
+        REAL phase_V_current = -Axis.iuvw[0] - Axis.iuvw[2];
+        Axis.iabg[0] = UV2A_AI(Axis.iuvw[0], phase_V_current);
+        Axis.iabg[1] = UV2B_AI(Axis.iuvw[0], phase_V_current);
+        phase_V_current = -Axis.iuvw[3] - Axis.iuvw[5];
+        Axis.iabg[3] = UV2A_AI(Axis.iuvw[3], phase_V_current);
+        Axis.iabg[4] = UV2B_AI(Axis.iuvw[3], phase_V_current);
+    #endif
 
-//    Axis.iabg[3] = UVW2A_AI(Axis.iuvw[3], Axis.iuvw[4], Axis.iuvw[5]);
-//    Axis.iabg[4] = UVW2B_AI(Axis.iuvw[3], Axis.iuvw[4], Axis.iuvw[5]);
-//    Axis.iabg[5] = UVW2G_AI(Axis.iuvw[3], Axis.iuvw[4], Axis.iuvw[5]);
-
-    phase_V_current = -Axis.iuvw[3] - Axis.iuvw[5];
-    Axis.iabg[3] = UV2A_AI(Axis.iuvw[3], phase_V_current);
-    Axis.iabg[4] = UV2B_AI(Axis.iuvw[3], phase_V_current);
-
-    // 第一套三相
     if(Axis.use_fisrt_set_three_phase==1){
+        // 只用第一套三相
         IS_C(0)        = Axis.iabg[0];
         IS_C(1)        = Axis.iabg[1];
         CTRL.I->iab[0] = Axis.iabg[0];
         CTRL.I->iab[1] = Axis.iabg[1];
     }else if(Axis.use_fisrt_set_three_phase==2){
-        // 第二套三相
+        // 只用第二套三相
         IS_C(0)        = Axis.iabg[3];
         IS_C(1)        = Axis.iabg[4];
         CTRL.I->iab[0+2] = Axis.iabg[3];
@@ -553,18 +566,6 @@ void measurement(){
         CTRL.I->iab[1+2] = Axis.iabg[4];
     }
 
-
-    // 转子位置和转速接口 以及 转子位置和转速测量
-    {
-        Uint32 QPOSCNT   = EQep1Regs.QPOSCNT;
-        ENC.rpm          = PostionSpeedMeasurement_MovingAvergage(QPOSCNT);
-        ENC.omg_elec     = ENC.rpm * RPM_2_ELEC_RAD_PER_SEC; // 机械转速（单位：RPM）-> 电气角速度（单位：elec.rad/s)
-        ENC.theta_d_elec = ENC.theta_d__state;
-    }
-    //CTRL.I->omg_elec = SPEED_DIRECTION * ENC.omg_elec;
-    CTRL.I->omg_elec = ENC.omg_elec;
-    CTRL.I->rpm = CTRL.I->omg_elec * ELEC_RAD_PER_SEC_2_RPM;
-    CTRL.I->theta_d_elec = ENC.theta_d_elec;
 
     //    这样不能形成保护，必须设置故障状态才行。
     //    if(fabs(G.Current_W)>8 || fabs(G.Current_V)>8){
@@ -664,7 +665,7 @@ void PanGuMainISR(void){
             runtime_command_and_tuning(Axis.Seletc_exp_operation);
             controller(Axis.Set_manual_rpm, Axis.Set_current_loop, Axis.Set_manual_current_iq, Axis.Set_manual_current_id,
                 Axis.flag_overwrite_theta_d, Axis.Overwrite_Current_Frequency,
-                Axis.used_theta_d_elec,
+                //Axis.used_theta_d_elec,
                 Axis.angle_shift_for_first_inverter,
                 Axis.angle_shift_for_second_inverter);
         #else

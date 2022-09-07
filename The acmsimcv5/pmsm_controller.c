@@ -238,10 +238,10 @@ void null_d_control(int set_current_loop, REAL set_iq_cmd, REAL set_id_cmd){
 // REAL angle_shift_for_second_inverter =  2.62570524  - 0.5*M_PI;
 // REAL angle_shift_for_first_inverter  = -2.82372499 - 0.5*M_PI;
 // REAL angle_shift_for_second_inverter = 2.17232847 - 0.5*M_PI;
+REAL used_theta_d_elec = 0.0;
 void controller(REAL set_rpm_speed_command, 
     int set_current_loop, REAL set_iq_cmd, REAL set_id_cmd,
     int flag_overwrite_theta_d, REAL Overwrite_Current_Frequency,
-    REAL used_theta_d_elec,
     REAL angle_shift_for_first_inverter,
     REAL angle_shift_for_second_inverter){
 

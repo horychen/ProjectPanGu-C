@@ -2,7 +2,7 @@
 #define ACMCONFIG_H
 /* 经常要修改的 */
 #define INVERTER_NONLINEARITY_COMPENSATION_INIT 0 // 5（9月1日及以前峣杰实验一直用的5） // 4 // 1:ParkSul12, 2:Sigmoid, 3:LUT(Obsolete), 4:LUT(by index), 5 Slessinv-a2a3Model
-#define INVERTER_NONLINEARITY                   2 // 4 // 1:ModelSul96, 2:ModelExpSigmoid, 3: ModelExpLUT, 4:LUT(by index)
+#define INVERTER_NONLINEARITY                   0 // 4 // 1:ModelSul96, 2:ModelExpSigmoid, 3: ModelExpLUT, 4:LUT(by index)
 #define SENSORLESS_CONTROL FALSE
 #define SENSORLESS_CONTROL_HFSI FALSE
 /* ParkSul2012 梯形波 */
@@ -207,9 +207,9 @@
 	#define NULL_D_AXIS_CURRENT_CONTROL -1
 	#define MTPA -2 // not supported
 #define CONTROL_STRATEGY NULL_D_AXIS_CURRENT_CONTROL
-#define NUMBER_OF_STEPS 250000
+#define NUMBER_OF_STEPS 50000
     #define DOWN_SAMPLE 1
-    #define USE_QEP_RAW TRUE
+    #define USE_QEP_RAW FALSE
     #define VOLTAGE_CURRENT_DECOUPLING_CIRCUIT FALSE
     #define SATURATED_MAGNETIC_CIRCUIT FALSE
 #define CL_TS          (0.0001)
@@ -223,18 +223,8 @@
     #define MACHINE_TS_INVERSE (CL_TS_INVERSE*TS_UPSAMPLING_FREQ_EXE_INVERSE)
 
 #define LOAD_INERTIA    0.0
-#define LOAD_TORQUE     3
+#define LOAD_TORQUE     1.5
 #define VISCOUS_COEFF   0.0007
-
-#define CURRENT_KP (6.39955)
-#define CURRENT_KI (221.908)
-#define SPEED_KP (0.0510446)
-#define SPEED_KI (30.5565)
-
-#define CURRENT_KP (6.39955)
-#define CURRENT_KI (221.908)
-#define SPEED_KP (0.0510446)
-#define SPEED_KI (30.5565)
 
 #define CURRENT_KP (6.39955)
 #define CURRENT_KI (221.908)
@@ -281,5 +271,5 @@
 #define SWEEP_FREQ_C2V FALSE
 #define SWEEP_FREQ_C2C FALSE
 
-#define DATA_FILE_NAME "../dat/SlessInv-OverEstimated-a2-NL-205-1000-13-1477.dat"
+#define DATA_FILE_NAME "../dat/Yaojie_Motor-205-1000-13-1477.dat"
 #endif
