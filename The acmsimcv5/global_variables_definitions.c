@@ -30,13 +30,15 @@ st_controller_outputs   t_O={0};
 st_InverterNonlinearity t_inv={0}; // Because of the sv_count bug, I cannot declare t_inv in this .c file. // extern st_InverterNonlinearity t_inv; 
 st_capture              t_cap={0};
 st_global_variables     t_g={0};
-st_pid_regulator      pid1_iM  = st_pid_regulator_DEFAULTS;
-st_pid_regulator      pid1_iT  = st_pid_regulator_DEFAULTS;
-st_pid_regulator      pid1_spd = st_pid_regulator_DEFAULTS;
-st_pid_regulator      pid1_pos = st_pid_regulator_DEFAULTS;
 
-st_pid_regulator      pid2_iM  = st_pid_regulator_DEFAULTS;
-st_pid_regulator      pid2_iT  = st_pid_regulator_DEFAULTS;
+st_pid_regulator pid1_iM  = st_pid_regulator_DEFAULTS;
+st_pid_regulator pid1_iT  = st_pid_regulator_DEFAULTS;
+st_pid_regulator pid1_spd = st_pid_regulator_DEFAULTS;
+st_pid_regulator pid1_pos = st_pid_regulator_DEFAULTS;
+st_pid_regulator pid2_iM  = st_pid_regulator_DEFAULTS;
+st_pid_regulator pid2_iT  = st_pid_regulator_DEFAULTS;
+st_pid_regulator pid1_dispX = st_pid_regulator_DEFAULTS;
+st_pid_regulator pid1_dispY = st_pid_regulator_DEFAULTS;
 
 
 // 初始化顶级结构体指针，指向定义好的内存空间
@@ -61,8 +63,11 @@ void allocate_CTRL(struct ControllerForExperiment *p){
     p->S->spd = &pid1_spd;
     p->S->pos = &pid1_pos;
 
-    p->S->iM2  = &pid2_iM;
-    p->S->iT2  = &pid2_iT;
+    p->S->iM2 = &pid2_iM;
+    p->S->iT2 = &pid2_iT;
+
+    p->S->dispX = &pid1_dispX;
+    p->S->dispY = &pid1_dispY;
 }
 
 // Global watch variables

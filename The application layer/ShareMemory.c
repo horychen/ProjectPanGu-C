@@ -88,6 +88,7 @@ extern REAL hall_theta_r_elec_incremental[3];
 extern REAL hall_theta_r_elec_local_absolute[3];
 extern REAL normalizer[3];
 extern REAL hall_rotating_direction;
+extern REAL eddy_displacement[2];
 
 void write_DAC_buffer(){
 if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
@@ -257,8 +258,11 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
 //    Axis.dac_watch[56] = CTRL.I->theta_d_elec*0.1;
 //    Axis.dac_watch[57] = CTRL.I->rpm*0.01;
 
-    Axis.dac_watch[58] = current_pole[0]*0.5;
-    Axis.dac_watch[59] = current_pole[1]*0.5;
+    Axis.dac_watch[58] = eddy_displacement[0];
+    Axis.dac_watch[59] = eddy_displacement[1];
+
+//    Axis.dac_watch[58] = current_pole[0]*0.5;
+//    Axis.dac_watch[59] = current_pole[1]*0.5;
 
 
     if(channels_preset==1){channels_preset=0;
@@ -347,10 +351,10 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
         /* Slice motor */
         channels[0] = 50;
         channels[1] = 52;
-        channels[2] = 53;
-        channels[3] = 54;
-        channels[4] = 58;
-        channels[5] = 59;
+        channels[2] = 58;
+        channels[3] = 59;
+        channels[4] = 53;
+        channels[5] = 54;
     }
 
     // 八通道DAC输出，请修改channels数组来确定具体输出哪些Axis.dac_watch数组中的变量。

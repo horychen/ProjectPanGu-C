@@ -70,24 +70,26 @@ void ACMSIMC_PIDTuner(){
     pid1_iM.Kp  = CURRENT_KP;
     pid1_iT.Kp  = CURRENT_KP;
     pid1_spd.Kp = SPEED_KP;
-
-    pid1_iM.Ki = CURRENT_KI_CODE;
-    pid1_iT.Ki = CURRENT_KI_CODE;
+    pid1_iM.Ki  = CURRENT_KI_CODE;
+    pid1_iT.Ki  = CURRENT_KI_CODE;
     pid1_spd.Ki = SPEED_KI_CODE;
-
-    pid1_iM.OutLimit = CURRENT_LOOP_LIMIT_VOLTS;
-    pid1_iT.OutLimit = CURRENT_LOOP_LIMIT_VOLTS;
+    pid1_iM.OutLimit  = CURRENT_LOOP_LIMIT_VOLTS;
+    pid1_iT.OutLimit  = CURRENT_LOOP_LIMIT_VOLTS;
     pid1_spd.OutLimit = SPEED_LOOP_LIMIT_AMPERE;
-
 
     pid2_iM.Kp  = CURRENT_KP;
     pid2_iT.Kp  = CURRENT_KP;
-
     pid2_iM.Ki = CURRENT_KI_CODE;
     pid2_iT.Ki = CURRENT_KI_CODE;
-
     pid2_iM.OutLimit = CURRENT_LOOP_LIMIT_VOLTS;
     pid2_iT.OutLimit = CURRENT_LOOP_LIMIT_VOLTS;
+
+    pid1_disX.Kp       = DISPLACEMENT_KP;
+    pid1_disY.Kp       = DISPLACEMENT_KP;
+    pid1_disX.Ki       = DISPLACEMENT_KI_CODE;
+    pid1_disY.Ki       = DISPLACEMENT_KI_CODE;
+    pid1_disX.OutLimit = DISPLACEMENT_LOOP_LIMIT_AMPERE;
+    pid1_disY.OutLimit = DISPLACEMENT_LOOP_LIMIT_AMPERE;
 
     // pid1_ia.Kp = CURRENT_KP;
     // pid1_ib.Kp = CURRENT_KP;
@@ -101,4 +103,3 @@ void ACMSIMC_PIDTuner(){
 }
 
 struct SweepFreq sf={0.0, 1, SWEEP_FREQ_INIT_FREQ-1, 0.0, 0.0};
-
