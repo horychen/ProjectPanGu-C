@@ -49,6 +49,8 @@ typedef struct {
     st_pid_regulator *pos;
     st_pid_regulator *iM2;
     st_pid_regulator *iT2;
+    st_pid_regulator *dispX;
+    st_pid_regulator *dispY;
     int the_vc_count;
     // Status of Detection
     int PSD_Done;
@@ -250,7 +252,7 @@ struct ControllerForExperiment{
 
     /* Peripheral configurations */
     st_enc *enc;
-    st_enc *enc_hall;
+    // st_enc *enc_hall;
     st_psd *psd; // phase sequence detection
 
     /* Inverter */

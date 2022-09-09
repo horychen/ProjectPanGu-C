@@ -1,6 +1,8 @@
 #include <All_Definition.h>
 st_axis Axis;
 
+REAL eddy_displacement[2] = {0,0};
+
 REAL hall_sensor_read[3] = {0, 0, 0};
 extern REAL hall_qep_angle;
 extern REAL hall_qep_count;
@@ -91,14 +93,28 @@ void init_experiment_AD_gain_and_offset(){
     Axis.adc_offset[8] = 1733; //1671.0;// (1355 - -847) / 2
     Axis.adc_offset[9] = 1850; // (700+3000)/2
 
+    // displacement sensor
+    Axis.adc_offset[10] = 0;
+    Axis.adc_offset[11] = 0;
+
     /* ADC SCALE */
-    Axis.adc_scale[0]  = SCALE_VDC;
-    Axis.adc_scale[1]  = SCALE_U;
-    Axis.adc_scale[2]  = SCALE_V;
-    Axis.adc_scale[3]  = SCALE_W;
-    Axis.adc_scale[4]  = SCALE_R;
-    Axis.adc_scale[5]  = SCALE_S;
-    Axis.adc_scale[6]  = SCALE_T;
+    Axis.adc_scale[0] = SCALE_VDC;
+    Axis.adc_scale[1] = SCALE_U;
+    Axis.adc_scale[2] = SCALE_V;
+    Axis.adc_scale[3] = SCALE_W;
+    Axis.adc_scale[4] = SCALE_R;
+    Axis.adc_scale[5] = SCALE_S;
+    Axis.adc_scale[6] = SCALE_T;
+
+    // hall sensor: the scale does not matter
+
+    // displacement sensor
+    Axis.adc_scale[10]  = 0.0005860805860805861;
+    Axis.adc_scale[11]  = 0.0005860805860805861;
+    //    >>> (5/6*4096) / 4095 * 3 * 2 /5*2
+    //    2.0004884004884005
+    //    >>> 1 / 4095 * 3 * 2 /5*2
+    //    0.0005860805860805861
 
     /* eQEP OFFSET */
     CTRL.enc->OffsetCountBetweenIndexAndUPhaseAxis = OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS;
@@ -109,7 +125,7 @@ void main(void){
     Axis.pCTRL = &CTRL;
     Axis.pAdcaResultRegs = &AdcaResultRegs;
     Axis.pAdcbResultRegs = &AdcbResultRegs;
-    Axis.use_fisrt_set_three_phase = 2;
+    Axis.use_fisrt_set_three_phase = 1;
     Axis.Set_current_loop = TRUE;
     Axis.Set_manual_rpm = 0;
     Axis.Set_manual_current_iq = 0;
@@ -508,10 +524,13 @@ void measurement(){
     Axis.iuvw[3]=((REAL)(AdcbResultRegs.ADCRESULT11) - Axis.adc_offset[4]) * Axis.adc_scale[4]; // AD_scale_U2; offsetD2
     Axis.iuvw[4]=((REAL)(AdcbResultRegs.ADCRESULT9 ) - Axis.adc_offset[5]) * Axis.adc_scale[5]; // AD_scale_V2; offsetB2
     Axis.iuvw[5]=((REAL)(AdcbResultRegs.ADCRESULT8 ) - Axis.adc_offset[6]) * Axis.adc_scale[6]; // AD_scale_W2; offsetA2
-    // 将ADC转换得到的模拟电压量换算有极性的霍尔传感器读数
+    // 将ADC转换得到的单极性的模拟电压量换算有极性的霍尔传感器读数
     hall_sensor_read[1] = (REAL)AdcaResultRegs.ADCRESULT5  - Axis.adc_offset[7]; // ADC_HALL_OFFSET_ADC5; // 32 poles on Aluminum target
     hall_sensor_read[0] = (REAL)AdcaResultRegs.ADCRESULT4  - Axis.adc_offset[8]; // ADC_HALL_OFFSET_ADC4; // 32 poles on Aluminum target
     hall_sensor_read[2] = (REAL)AdcbResultRegs.ADCRESULT10 - Axis.adc_offset[9]; // ADC_HALL_OFFSET_ADC10; // Bogen 40 poles on the top
+    // 涡流位移传感器
+    eddy_displacement[0] = ((REAL)AdcbResultRegs.ADCRESULT6  - Axis.adc_offset[10]) * Axis.adc_scale[10];
+    eddy_displacement[1] = ((REAL)AdcbResultRegs.ADCRESULT7  - Axis.adc_offset[11]) * Axis.adc_scale[11];
 
     // Use two hall sensors for QEP
     last_hall_qep_count = hall_qep_count;

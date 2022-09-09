@@ -14,7 +14,7 @@
     #define PM_SYNCHRONOUS_MACHINE 2
 #define MACHINE_TYPE 2
 	// 电机参数
-	#define PMSM_RESISTANCE                    0.03
+	#define PMSM_RESISTANCE                    0.035
 	#define PMSM_D_AXIS_INDUCTANCE             3.6e-05
 	#define PMSM_Q_AXIS_INDUCTANCE             3.6e-05
 	#define PMSM_PERMANENT_MAGNET_FLUX_LINKAGE 0.0125
@@ -227,7 +227,7 @@
 #define VISCOUS_COEFF   0.0007
 
 #define CURRENT_KP (0.0685171)
-#define CURRENT_KI (833.333)
+#define CURRENT_KI (972.222)
     #define CURRENT_KI_CODE (CURRENT_KI*CURRENT_KP*CL_TS)
 #define CURRENT_LOOP_LIMIT_VOLTS (50)
 
