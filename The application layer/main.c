@@ -4,6 +4,7 @@ st_axis Axis;
 REAL hall_sensor_read[3] = {0, 0, 0};
 extern REAL hall_qep_angle;
 extern REAL hall_qep_count;
+extern REAL hall_theta_r_elec;
 REAL last_hall_qep_count;
 void start_hall_conversion(REAL hall_sensor_read[]);
 
@@ -86,8 +87,8 @@ void init_experiment_AD_gain_and_offset(){
     Axis.adc_offset[6] = OFFSET_T;
 
     // hall sensor
-    Axis.adc_offset[7] = 1659.5;// (1350 - -732) / 2
-    Axis.adc_offset[8] = 1671.0;// (1355 - -847) / 2
+    Axis.adc_offset[7] = 1726; //1659.5;// (1350 - -732) / 2
+    Axis.adc_offset[8] = 1733; //1671.0;// (1355 - -847) / 2
     Axis.adc_offset[9] = 1850; // (700+3000)/2
 
     /* ADC SCALE */
@@ -508,32 +509,16 @@ void measurement(){
     Axis.iuvw[4]=((REAL)(AdcbResultRegs.ADCRESULT9 ) - Axis.adc_offset[5]) * Axis.adc_scale[5]; // AD_scale_V2; offsetB2
     Axis.iuvw[5]=((REAL)(AdcbResultRegs.ADCRESULT8 ) - Axis.adc_offset[6]) * Axis.adc_scale[6]; // AD_scale_W2; offsetA2
     // 将ADC转换得到的模拟电压量换算有极性的霍尔传感器读数
-    hall_sensor_read[0] = (REAL)AdcaResultRegs.ADCRESULT5  - Axis.adc_offset[7]; // ADC_HALL_OFFSET_ADC5; // 32 poles on Aluminum target
-    hall_sensor_read[1] = (REAL)AdcaResultRegs.ADCRESULT4  - Axis.adc_offset[8]; // ADC_HALL_OFFSET_ADC4; // 32 poles on Aluminum target
+    hall_sensor_read[1] = (REAL)AdcaResultRegs.ADCRESULT5  - Axis.adc_offset[7]; // ADC_HALL_OFFSET_ADC5; // 32 poles on Aluminum target
+    hall_sensor_read[0] = (REAL)AdcaResultRegs.ADCRESULT4  - Axis.adc_offset[8]; // ADC_HALL_OFFSET_ADC4; // 32 poles on Aluminum target
     hall_sensor_read[2] = (REAL)AdcbResultRegs.ADCRESULT10 - Axis.adc_offset[9]; // ADC_HALL_OFFSET_ADC10; // Bogen 40 poles on the top
 
     // Use two hall sensors for QEP
     last_hall_qep_count = hall_qep_count;
     start_hall_conversion(hall_sensor_read);
     if(USE_HALL_SENSOR_FOR_QEP){
-        CTRL.enc_hall->theta_d__state = hall_qep_count * (0.015625 * 2*M_PI * MOTOR_NUMBER_OF_POLE_PAIRS);
-
-        /* 获取位置增量 [cnt] 用于滑动平均转速解算 */
-        CTRL.enc_hall->encoder_incremental_cnt = hall_qep_count - last_hall_qep_count;
-        CTRL.enc_hall->sum_qepPosCnt       -= CTRL.enc_hall->MA_qepPosCnt[CTRL.enc_hall->cursor];
-        CTRL.enc_hall->sum_qepPosCnt       += CTRL.enc_hall->encoder_incremental_cnt;
-        CTRL.enc_hall->MA_qepPosCnt[CTRL.enc_hall->cursor] = CTRL.enc_hall->encoder_incremental_cnt;
-        CTRL.enc_hall->cursor+=1; // 完事以后再加一
-        if(CTRL.enc_hall->cursor>=MA_SEQUENCE_LENGTH){
-            CTRL.enc_hall->cursor=0; // Reset CTRL.enc_hall->cursor
-        }
-
-        CTRL.enc_hall->rpm = CTRL.enc_hall->sum_qepPosCnt*SYSTEM_QEP_REV_PER_PULSE * 60 * MA_SEQUENCE_LENGTH_INVERSE * CL_TS_INVERSE;
-        CTRL.enc_hall->omg_elec     = CTRL.enc_hall->rpm * RPM_2_ELEC_RAD_PER_SEC; // 机械转速（单位：RPM）-> 电气角速度（单位：elec.rad/s)
-        CTRL.enc_hall->theta_d_elec = CTRL.enc_hall->theta_d__state;
-
-        CTRL.I->theta_d_elec = CTRL.enc_hall->theta_d_elec;
-        CTRL.I->omg_elec     = CTRL.enc_hall->omg_elec;
+        CTRL.I->theta_d_elec = hall_theta_r_elec;
+        CTRL.I->omg_elec     = 0.0;
     }else{
         CTRL.I->theta_d_elec = ENC.theta_d_elec;
         CTRL.I->omg_elec     = ENC.omg_elec;

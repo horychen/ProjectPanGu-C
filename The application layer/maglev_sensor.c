@@ -47,7 +47,7 @@ int current_trend[3] = {0,0,0};
 int last_trend[3] = {0,0,0};
 int event_extreme[3] = {0,0,0};
 int event_zero_crossing[3] = {0,0,0};
-REAL rotating_direction = 1.0;
+REAL hall_rotating_direction = 1.0;
 int count_magnet[3] = {0, 0, 0};
 int count_extreme[3] = {0, 0, 0};
 // #define CL_TS ctrl.Ts
@@ -63,10 +63,10 @@ REAL hall_readin_extremepoint_most_recent[3];
 REAL hall_timing_midpoint_most_recent[3];
 REAL hall_readin_midpoint_most_recent[3];
 
-REAL hall_omega_r_mech[3];
-REAL hall_theta_r_mech[3];
-REAL hall_theta_r_mech_incremental[3];
-REAL hall_theta_r_mech_local_absolute[3];
+REAL hall_omega_r_elec[3];
+REAL hall_theta_r_elec[3];
+REAL hall_theta_r_elec_incremental[3];
+REAL hall_theta_r_elec_local_absolute[3];
 
 long int pole_change_count = 0;
 long int trend_change_count = 0;
@@ -76,7 +76,7 @@ REAL normalizer[3] = {1e-3, 1e-3, 1e-3};
 
 // 在事件发生点更新速度即可，因为事件发生点的角度是准确的。其他点用匀速假设去更新角度即可。
 
-#define CODE_CALCULATE_SPEED(X) hall_omega_r_mech[0] = 2*M_PI*ONE_OVER_ST_MAGNETS / (CTRL.timebase - hall_timing_eventpoint_most_recent[X])
+#define CODE_CALCULATE_SPEED(X) hall_omega_r_elec[0] = 2*M_PI*ONE_OVER_ST_MAGNETS / (CTRL.timebase - hall_timing_eventpoint_most_recent[X])
 
 REAL hall_sensor_read_max_NORTH[3] = {100,100,100};
 REAL hall_sensor_read_min_SOUTH[3] = {100,100,100};
@@ -94,6 +94,7 @@ REAL event_falling_threhold[3] = {FALSE, FALSE, FALSE};
 int event_rising_crossing[3] = {FALSE, FALSE, FALSE};
 int event_falling_crossing[3] = {FALSE, FALSE, FALSE};
 
+REAL hall_qep_count_raw[3] = {0, 0, 0};
 REAL hall_qep_count = 0.0;
 REAL hall_qep_angle = 0.0;
 
@@ -170,7 +171,7 @@ void start_hall_conversion(REAL hall_sensor_read[]){
 
                 // 完整走过的永磁体个数
                 count_magnet[0] += 1;
-                hall_theta_r_mech_incremental[0] = count_magnet[0] * M_PI*ONE_OVER_ST_MAGNETS;
+                hall_theta_r_elec_incremental[0] = count_magnet[0] * M_PI*ONE_OVER_ST_MAGNETS;
                 if(count_magnet[0]>=ST_MAGNETS){
                     count_magnet[0] = 0;
 
@@ -189,6 +190,7 @@ void start_hall_conversion(REAL hall_sensor_read[]){
                 // 记录最近一次零点间的最大值，拿来算normalizer
                 hall_sensor_read_max_NORTH_last[0] = hall_sensor_read_max_NORTH[0];
                 normalizer[0] = 1.0 / hall_sensor_read_max_NORTH_last[0];
+                hall_sensor_read_max_NORTH[0] =  100;
 
                 // 记录一些信息（不一定用起来的）
                 hall_timing[0][_T0] = CTRL.timebase;       hall_timing_eventpoint_most_recent[0] = CTRL.timebase;
@@ -209,6 +211,12 @@ void start_hall_conversion(REAL hall_sensor_read[]){
                 }
             }
 
+
+            // 记录最近一次零点间的最小值，拿来算normalizer
+            hall_sensor_read_min_SOUTH_last[0] = hall_sensor_read_min_SOUTH[0];
+            normalizer[0] = 1.0 / -hall_sensor_read_min_SOUTH_last[0];
+            hall_sensor_read_min_SOUTH[0] = -100;
+
             // if(event_rising_threhold[0]==TRUE){
             //     // 至此可以确定北极的极值已经达到（rising crossing threshold -> falling crossing zero）
             //     event_rising_threhold[0] = FALSE;
@@ -225,7 +233,6 @@ void start_hall_conversion(REAL hall_sensor_read[]){
             // normalizer[0] = 1.0 / fabs(hall_sensor_read_min_SOUTH_last[0]);
         }
 
-        hall_sensor_read_min_SOUTH[0] = -100;
     }
 
 
@@ -293,7 +300,7 @@ void start_hall_conversion(REAL hall_sensor_read[]){
                 }
 
                 // hall_qep_count += 1;
-                hall_theta_r_mech_incremental[1] = count_magnet[1] * M_PI*ONE_OVER_ST_MAGNETS;
+                hall_theta_r_elec_incremental[1] = count_magnet[1] * M_PI*ONE_OVER_ST_MAGNETS;
 
                 // if(current_pole[0]-last_pole[0]>0){
                 //     event_rising_crossing[0] = TRUE;
@@ -306,6 +313,7 @@ void start_hall_conversion(REAL hall_sensor_read[]){
                 // 记录最近一次零点间的最大值，拿来算normalizer
                 hall_sensor_read_max_NORTH_last[1] = hall_sensor_read_max_NORTH[1];
                 normalizer[1] = 1.0 / hall_sensor_read_max_NORTH_last[1];
+                hall_sensor_read_max_NORTH[1] =  100;
 
                 // 记录一些信息（不一定用起来的）
                 hall_timing[1][_T0] = CTRL.timebase;       hall_timing_eventpoint_most_recent[1] = CTRL.timebase;
@@ -335,6 +343,11 @@ void start_hall_conversion(REAL hall_sensor_read[]){
 
             }
 
+            // 记录最近一次零点间的最小值，拿来算normalizer
+            hall_sensor_read_min_SOUTH_last[1] = hall_sensor_read_min_SOUTH[1];
+            normalizer[1] = 1.0 / -hall_sensor_read_min_SOUTH_last[1];
+            hall_sensor_read_min_SOUTH[1] = -100;
+
             // if(event_rising_threhold[1]==TRUE){
             //     // 至此可以确定北极的极值已经达到（rising crossing threshold -> falling crossing zero）
             //     event_rising_threhold[1] = FALSE;
@@ -351,7 +364,6 @@ void start_hall_conversion(REAL hall_sensor_read[]){
             // normalizer[1] = 1.0 / fabs(hall_sensor_read_min_SOUTH_last[1]);
         }
 
-        hall_sensor_read_min_SOUTH[1] = -100;
     }
 
 
@@ -368,10 +380,14 @@ void start_hall_conversion(REAL hall_sensor_read[]){
                 if(event_rising_crossing[1]==TRUE){
                     event_rising_crossing[1] = FALSE; // 重置事件标志位
                     hall_qep_count -= 1; // 定义为正交编码器反转
+                    hall_qep_count_raw[0] -= 1;
+                    hall_rotating_direction = -1;
                 }
                 if(event_falling_crossing[1]==TRUE){
-                    event_falling_crossing[1]==FALSE;
+                    event_falling_crossing[1] = FALSE;
                     hall_qep_count += 1; // 定义为正交编码器正转（从霍尔输出电压波形上看就是向右传播）
+                    hall_qep_count_raw[0] += 1;
+                    hall_rotating_direction = +1;
                 }
             }
             // 对本次上升过零事件进行记录
@@ -387,10 +403,14 @@ void start_hall_conversion(REAL hall_sensor_read[]){
                 if(event_rising_crossing[1]==TRUE){
                     event_rising_crossing[1] = FALSE; // 重置事件标志位
                     hall_qep_count += 1; // 定义为正交编码器正转（从霍尔输出电压波形上看就是向右传播）
+                    hall_qep_count_raw[0] += 1;
+                    hall_rotating_direction = +1;
                 }
                 if(event_falling_crossing[1]==TRUE){
-                    event_falling_crossing[1]==FALSE; // 重置事件标志位
+                    event_falling_crossing[1] = FALSE; // 重置事件标志位
                     hall_qep_count -= 1; // 定义为正交编码器反转
+                    hall_qep_count_raw[0] -= 1;
+                    hall_rotating_direction = -1;
                 }
             }
             // 对本次下降过零事件进行记录
@@ -409,11 +429,15 @@ void start_hall_conversion(REAL hall_sensor_read[]){
             }else if(recent_zero_crossing_hall_is==HALL_X){
                 if(event_rising_crossing[0]==TRUE){
                     event_rising_crossing[0] = FALSE; // 重置事件标志位
-                    hall_qep_count += 1; // 和 HALL X 反一反
+                    hall_qep_count += 1; // 和 HALL X 一样
+                    hall_qep_count_raw[1] += 1;
+                    hall_rotating_direction = +1;
                 }
                 if(event_falling_crossing[0]==TRUE){
-                    event_falling_crossing[0]==FALSE;
-                    hall_qep_count -= 1; // 和 HALL X 反一反
+                    event_falling_crossing[0] = FALSE;
+                    hall_qep_count -= 1; // 和 HALL X 一样
+                    hall_qep_count_raw[1] -= 1;
+                    hall_rotating_direction = -1;
                 }
             }
             // 对本次上升过零事件进行记录
@@ -428,11 +452,15 @@ void start_hall_conversion(REAL hall_sensor_read[]){
             }else if(recent_zero_crossing_hall_is==HALL_X){
                 if(event_rising_crossing[0]==TRUE){
                     event_rising_crossing[0] = FALSE; // 重置事件标志位
-                    hall_qep_count -= 1; // 和 HALL X 反一反
+                    hall_qep_count -= 1; // 和 HALL X 一样
+                    hall_qep_count_raw[1] -= 1;
+                    hall_rotating_direction = -1;
                 }
                 if(event_falling_crossing[0]==TRUE){
-                    event_falling_crossing[0]==FALSE; // 重置事件标志位
-                    hall_qep_count += 1; // 和 HALL X 反一反
+                    event_falling_crossing[0] = FALSE; // 重置事件标志位
+                    hall_qep_count += 1; // 和 HALL X 一样
+                    hall_qep_count_raw[1] += 1;
+                    hall_rotating_direction = +1;
                 }
             }
             // 对本次下降过零事件进行记录
@@ -442,96 +470,6 @@ void start_hall_conversion(REAL hall_sensor_read[]){
         last_pole[1] = current_pole[1]; // 重置事件标志位
     }
 
-
-    // /* HALL Y */
-    // if(hall_sensor_read[1]>0 && hall_sensor_read_last[1]>0){ // 本次和上次均大于零
-    //     pole_change_count += 1;
-    //     current_pole[1] = 0;
-    //     // if(pole_change_count>=???){
-    //     //     current_pole[1] = NORTH_POLE;
-    //     // }
-    // }else if(hall_sensor_read[1]<0 && hall_sensor_read_last[1]<0){ // 本次和上次均小于零
-    //     pole_change_count -= 1;
-    //     current_pole[1] = 0;
-    //     if(hall_sensor_read[0]<=THRESHOLD_RATIO*hall_sensor_read_min_SOUTH_last[0]){
-    //         current_pole[1] = SOUTH_POLE;
-    //     }
-    // }else{
-    //     pole_change_count = 0;
-    //     current_pole[1] = 0;
-    // }
-    // // 极性改变了？
-    // if(current_pole[1]*last_pole[1]==-1){
-    //     // 极性改变且不为零
-
-    //     // 判断旋转方向 one hall sensor cannot decide the rotating direction
-    //     if (current_pole[0]==NORTH_POLE && current_pole[1]-last_pole[1]>0 ) rotating_direction = CW_DIRECTION;
-    //     if (current_pole[0]==NORTH_POLE && current_pole[1]-last_pole[1]<0 ) rotating_direction = COUNTER_CW_DIRECTION;
-    //     if (current_pole[0]==SOUTH_POLE && current_pole[1]-last_pole[1]<0 ) rotating_direction = CW_DIRECTION;
-    //     if (current_pole[0]==SOUTH_POLE && current_pole[1]-last_pole[1]>0 ) rotating_direction = COUNTER_CW_DIRECTION;
-
-    //     count_magnet[1] += 1;
-    //     hall_theta_r_mech_incremental[1] = count_magnet[1] * M_PI*ONE_OVER_ST_MAGNETS;
-    //     if(count_magnet[1]>=ST_MAGNETS){
-    //         count_magnet[1] = 0;
-    //     }
-
-    //     last_pole[1] = current_pole[1]; // last_pole的更新意味着正式进入新的变化趋势了。
-    //     CODE_CALCULATE_SPEED(1);
-    //     if(current_pole[1] == NORTH_POLE){
-    //         hall_timing[1][_T0] = CTRL.timebase;       hall_timing_eventpoint_most_recent[1] = CTRL.timebase;
-    //         hall_readin[1][_T0] = hall_sensor_read[1]; // hall_readin_eventpoint_most_recent[1] = hall_sensor_read[1];
-    //         event_zero_crossing[1] = RISING_CROSSING;
-    //         normalizer[1] = 1.0 / hall_sensor_read_max_NORTH[1];
-    //     }else if(current_pole[1] == SOUTH_POLE){
-    //         hall_timing[1][_T4] = CTRL.timebase;       hall_timing_eventpoint_most_recent[1] = CTRL.timebase;
-    //         hall_readin[1][_T4] = hall_sensor_read[1]; // hall_readin_eventpoint_most_recent[1] = hall_sensor_read[1];
-    //         event_zero_crossing[1] = FALLING_CROSSING;
-    //         normalizer[1] = 1.0 / fabs(hall_sensor_read_min_SOUTH[1]);
-    //     }
-
-    //     hall_sensor_read_max_NORTH[1] =  100;
-    //     hall_sensor_read_min_SOUTH[1] = -100;
-    // }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    // 事件发生，更新霍尔T法测量到的转速
-    // /* HALL X */
-    // if(event_extreme[0]==PEAKING){event_extreme[0]=0;
-    // }else if(event_extreme[0]==VALLEY){event_extreme[0]=0;
-    // }else if(event_zero_crossing[0]==RISING_CROSSING){event_zero_crossing[0]=0;
-    // }else if(event_zero_crossing[0]==FALLING_CROSSING){event_zero_crossing[0]=0;
-    // }else{ // 无事发生，乖乖记录中间点，以一个六十度点为例
-    // //        if(current_pole[0]==NORTH_POLE && current_trend[0]==UPWARD_TREND   && hall_sensor_read[0]> 0.866*hall_readin[0][_T2]) {hall_timing[0][_T1]=CTRL.timebase; delta_time[0]=CTRL.timebase-hall_timing_eventpoint_most_recent[0]; delta_voltage[0]=hall_sensor_read[0]-hall_readin_eventpoint_most_recent[0];}
-    // //        if(current_pole[0]==NORTH_POLE && current_trend[0]==DOWNWARD_TREND && hall_sensor_read[0]< 0.866*hall_readin[0][_T2]) {hall_timing[0][_T3]=CTRL.timebase; delta_time[0]=CTRL.timebase-hall_timing_eventpoint_most_recent[0]; delta_voltage[0]=hall_sensor_read[0]-hall_readin_eventpoint_most_recent[0];}
-    // //        if(current_pole[0]==SOUTH_POLE && current_trend[0]==UPWARD_TREND   && hall_sensor_read[0]>-0.866*hall_readin[0][_T6]) {hall_timing[0][_T7]=CTRL.timebase; delta_time[0]=CTRL.timebase-hall_timing_eventpoint_most_recent[0]; delta_voltage[0]=hall_sensor_read[0]-hall_readin_eventpoint_most_recent[0];}
-    // //        if(current_pole[0]==SOUTH_POLE && current_trend[0]==DOWNWARD_TREND && hall_sensor_read[0]<-0.866*hall_readin[0][_T6]) {hall_timing[0][_T5]=CTRL.timebase; delta_time[0]=CTRL.timebase-hall_timing_eventpoint_most_recent[0]; delta_voltage[0]=hall_sensor_read[0]-hall_readin_eventpoint_most_recent[0];}
-    // }
-    // /* HALL Y */
-    // if(event_extreme[1]==PEAKING){event_extreme[1]=0;
-    // }else if(event_extreme[1]==VALLEY){event_extreme[1]=0;
-    // }else if(event_zero_crossing[1]==RISING_CROSSING){event_zero_crossing[1]=0;
-    // }else if(event_zero_crossing[1]==FALLING_CROSSING){event_zero_crossing[1]=0;
-    // }else{ // 无事发生，乖乖记录中间点，以一个六十度点为例
-    // //        if(current_pole[1]==NORTH_POLE && current_trend[1]==UPWARD_TREND   && hall_sensor_read[1]> 0.866*hall_readin[1][_T2]) {hall_timing[1][_T1]=CTRL.timebase; delta_time[1]=CTRL.timebase-hall_timing_eventpoint_most_recent[1]; delta_voltage[1]=hall_sensor_read[1]-hall_readin_eventpoint_most_recent[1];}
-    // //        if(current_pole[1]==NORTH_POLE && current_trend[1]==DOWNWARD_TREND && hall_sensor_read[1]< 0.866*hall_readin[1][_T2]) {hall_timing[1][_T3]=CTRL.timebase; delta_time[1]=CTRL.timebase-hall_timing_eventpoint_most_recent[1]; delta_voltage[1]=hall_sensor_read[1]-hall_readin_eventpoint_most_recent[1];}
-    // //        if(current_pole[1]==SOUTH_POLE && current_trend[1]==UPWARD_TREND   && hall_sensor_read[1]>-0.866*hall_readin[1][_T6]) {hall_timing[1][_T7]=CTRL.timebase; delta_time[1]=CTRL.timebase-hall_timing_eventpoint_most_recent[1]; delta_voltage[1]=hall_sensor_read[1]-hall_readin_eventpoint_most_recent[1];}
-    // //        if(current_pole[1]==SOUTH_POLE && current_trend[1]==DOWNWARD_TREND && hall_sensor_read[1]<-0.866*hall_readin[1][_T6]) {hall_timing[1][_T5]=CTRL.timebase; delta_time[1]=CTRL.timebase-hall_timing_eventpoint_most_recent[1]; delta_voltage[1]=hall_sensor_read[1]-hall_readin_eventpoint_most_recent[1];}
-    // }
 
     // 记录最大、最小霍尔读数
     if(hall_sensor_read[0] > hall_sensor_read_max_global[0]) hall_sensor_read_max_global[0] = hall_sensor_read[0];
@@ -551,14 +489,17 @@ void start_hall_conversion(REAL hall_sensor_read[]){
 
     // 解算霍尔测量电压为转子角度
     // 速度积分方案
-    // hall_theta_r_mech_incremental[0] += CL_TS*hall_omega_r_mech[0] * rotating_direction;
-    // hall_theta_r_mech_incremental[1] += CL_TS*hall_omega_r_mech[1] * rotating_direction;
+    // hall_theta_r_elec_incremental[0] += CL_TS*hall_omega_r_elec[0] * hall_rotating_direction;
+    // hall_theta_r_elec_incremental[1] += CL_TS*hall_omega_r_elec[1] * hall_rotating_direction;
     // 局部一对极映射方案
-    // hall_theta_r_mech_local_absolute[0] = hall_sensor_read[0] * normalizer[0] * 0.5*M_PI;
-    // hall_theta_r_mech_local_absolute[1] = hall_sensor_read[1] * normalizer[1] * 0.5*M_PI;
-    // hall_theta_r_mech[0] = hall_theta_r_mech_incremental[0] + hall_theta_r_mech_local_absolute[0];
-    // hall_theta_r_mech[1] = hall_theta_r_mech_incremental[1] + hall_theta_r_mech_local_absolute[1];
+    hall_theta_r_elec_incremental[0] = hall_qep_count * (0.015625 * 2*M_PI * MOTOR_NUMBER_OF_POLE_PAIRS);
+    if(recent_zero_crossing_hall_is == HALL_X){
+        hall_theta_r_elec_local_absolute[0] = hall_rotating_direction * fabs(hall_sensor_read[0]) * normalizer[0] * 0.5*M_PI * 1.375; // 1.375 = 22 / 16 (npp / st magnet pole pair number)
+    }else if(recent_zero_crossing_hall_is == HALL_Y){
+        hall_theta_r_elec_local_absolute[0] = hall_rotating_direction * fabs(hall_sensor_read[1]) * normalizer[1] * 0.5*M_PI * 1.375; // 1.375 = 22 / 16 (npp / st magnet pole pair number)        
+    }
+    hall_theta_r_elec[0] = hall_theta_r_elec_incremental[0] + hall_theta_r_elec_local_absolute[0];
 
-    hall_qep_angle = hall_qep_count * ONE_OVER_ST_MAGNETS * M_PI;
 
+    hall_qep_angle = hall_qep_count * (ONE_OVER_ST_MAGNETS * 0.5) * M_PI;
 }

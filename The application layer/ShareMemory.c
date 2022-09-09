@@ -83,7 +83,11 @@ extern REAL hall_sensor_read[3];
 extern int current_pole[3];
 extern REAL hall_qep_count;
 extern int count_magnet[3];
-extern REAL hall_theta_r_mech_incremental[3];
+extern REAL hall_theta_r_elec[3];
+extern REAL hall_theta_r_elec_incremental[3];
+extern REAL hall_theta_r_elec_local_absolute[3];
+extern REAL normalizer[3];
+extern REAL hall_rotating_direction;
 
 void write_DAC_buffer(){
 if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
@@ -243,16 +247,18 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
 
     Axis.dac_watch[50] = hall_sensor_read[0] * 0.0005;
     Axis.dac_watch[51] = hall_sensor_read[1] * 0.0005;
-    Axis.dac_watch[52] = current_pole[0]*0.5;
-    Axis.dac_watch[53] = current_pole[1]*0.5;
-    Axis.dac_watch[54] = count_magnet[0] * 0.02;
-    Axis.dac_watch[55] = count_magnet[1] * 0.02;
+    Axis.dac_watch[52] = hall_theta_r_elec_local_absolute[0] * 0.1;
+    Axis.dac_watch[53] = hall_rotating_direction;
+    Axis.dac_watch[54] = 1.0/normalizer[0]*0.0005;
+    Axis.dac_watch[55] = hall_qep_count*0.01;
+    Axis.dac_watch[56] = hall_theta_r_elec[0] * 0.1;
+    Axis.dac_watch[57] = hall_theta_r_elec_incremental[0] * 0.1;
 
-    Axis.dac_watch[56] = CTRL.I->theta_d_elec*0.1;
-    Axis.dac_watch[57] = CTRL.I->rpm*0.01;
+//    Axis.dac_watch[56] = CTRL.I->theta_d_elec*0.1;
+//    Axis.dac_watch[57] = CTRL.I->rpm*0.01;
 
-    Axis.dac_watch[58] = hall_qep_count * 0.003;
-    Axis.dac_watch[59] = hall_qep_count * 0.003;
+    Axis.dac_watch[58] = current_pole[0]*0.5;
+    Axis.dac_watch[59] = current_pole[1]*0.5;
 
 
     if(channels_preset==1){channels_preset=0;
@@ -340,11 +346,11 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
     }else if(channels_preset==9){channels_preset=0;
         /* Slice motor */
         channels[0] = 50;
-        channels[1] = 51;
-        channels[2] = 58;
-        channels[3] = 59;
-        channels[4] = 52;
-        channels[5] = 53;
+        channels[1] = 52;
+        channels[2] = 53;
+        channels[3] = 54;
+        channels[4] = 58;
+        channels[5] = 59;
     }
 
     // 八通道DAC输出，请修改channels数组来确定具体输出哪些Axis.dac_watch数组中的变量。
