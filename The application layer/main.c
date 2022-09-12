@@ -48,33 +48,31 @@ void start_hall_conversion(REAL hall_sensor_read[]);
     #define SCALE_T -0.034
 #endif
 
-// #define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS -976 // for 750W MOTOR1 (w/ hall sensor)
-// #define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS -2668 // for 750W MOTOR2
-//#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS 0 // for Slice FSPM
-//#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS 55 // for 400W reducer sdcq motor, 3 A, 2445, 7433, 2442, 9943
-//#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS -100 // for 400W reducer sdcq motor, 3 A, 2445, 7433, 2442, 9943
+//#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS -976 // for 750W MOTOR1 (w/ hall sensor)
+//#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS -2668 // for 750W MOTOR2
+//#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS 330 // for Yaojie linear-rotary motor 相序接回去后，第一套
+//#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS -149 // for 400W sdcq 减速比电机
 
-//#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS -27807 // for yaojie linear-rotary motor
-//#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS -51107 // for yaojie linear-rotary motor
-//#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS -27900 // 堵转给id转矩测量为0Nm
-//#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS -49800 // 堵转给id转矩测量为0Nm
-//#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS 14429
+//#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS 336
+//#define ANGLE_SHIFT_FOR_FIRST_INVERTER  -3.49 //-3.3499999 //  -1.26608086 - 0.5*M_PI; // (for Yaojie Motor)
+//#define ANGLE_SHIFT_FOR_SECOND_INVERTER -4.67 //-4.5 // -2.50660658 - 0.5*M_PI; // (for Yaojie Motor)
 
-//#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS 236 // 第一套
-//#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS 203 // 第二套
+#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS -9 // cnt
+#define ANGLE_SHIFT_FOR_FIRST_INVERTER  3.03999996
+#define ANGLE_SHIFT_FOR_SECOND_INVERTER 2.0331552
+#define YAOJIE_MOTOR_IQ_RPM_REVERSED 1
 
-//#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS 205 // 相序反接后，第一套
-//#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS 182 // 相序反接后，第二套
+// 38637, 38597
 
-//#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS 330 // 相序接回去后，第一套
-//#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS 0 // 相序接回去后，第二套
+//-3.49
+//-4.67
 
-#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS -149 // 400W sdcq 减速比电机
-#define ANGLE_SHIFT_FOR_FIRST_INVERTER 0 // -2.82372499 - 0.5*M_PI; // (for Yaojie Motor)
-#define ANGLE_SHIFT_FOR_SECOND_INVERTER 0 // 2.17232847 - 0.5*M_PI; // (for Yaojie Motor)
+// 0.09 mm per cnt
+// 4 elec.deg per cnt
 
-#define USE_3_CURRENT_SENSORS 1
-#define USE_HALL_SENSOR_FOR_QEP 1
+
+int USE_3_CURRENT_SENSORS = FALSE;
+#define USE_HALL_SENSOR_FOR_QEP FALSE
 
 void init_experiment_AD_gain_and_offset(){
     /* ADC OFFSET */
@@ -513,7 +511,7 @@ void measurement(){
 
     // 转子位置和转速接口 以及 转子位置和转速测量
     Uint32 QPOSCNT   = EQep1Regs.QPOSCNT;
-    ENC.rpm          = PostionSpeedMeasurement_MovingAvergage(QPOSCNT, CTRL.enc);
+    ENC.rpm          = YAOJIE_MOTOR_IQ_RPM_REVERSED*PostionSpeedMeasurement_MovingAvergage(QPOSCNT, CTRL.enc);
 
     // Convert adc results
     Axis.vdc    =((REAL)(AdcaResultRegs.ADCRESULT0 ) - Axis.adc_offset[0]) * Axis.adc_scale[0];
@@ -540,7 +538,7 @@ void measurement(){
         CTRL.I->omg_elec     = 0.0;
     }else{
         CTRL.I->theta_d_elec = ENC.theta_d_elec;
-        CTRL.I->omg_elec     = ENC.omg_elec;
+        CTRL.I->omg_elec     = YAOJIE_MOTOR_IQ_RPM_REVERSED*ENC.omg_elec;
     }
     CTRL.I->rpm = CTRL.I->omg_elec * ELEC_RAD_PER_SEC_2_RPM;
 
@@ -553,21 +551,21 @@ void measurement(){
     pid2_iT.OutLimit = Axis.vdc * 0.5773672;
 
     // 电流接口
-    #if USE_3_CURRENT_SENSORS
+    if(USE_3_CURRENT_SENSORS){
         Axis.iabg[0] = UVW2A_AI(Axis.iuvw[0], Axis.iuvw[1], Axis.iuvw[2]);
         Axis.iabg[1] = UVW2B_AI(Axis.iuvw[0], Axis.iuvw[1], Axis.iuvw[2]);
         Axis.iabg[2] = UVW2G_AI(Axis.iuvw[0], Axis.iuvw[1], Axis.iuvw[2]);
         Axis.iabg[3] = UVW2A_AI(Axis.iuvw[3], Axis.iuvw[4], Axis.iuvw[5]);
         Axis.iabg[4] = UVW2B_AI(Axis.iuvw[3], Axis.iuvw[4], Axis.iuvw[5]);
         Axis.iabg[5] = UVW2G_AI(Axis.iuvw[3], Axis.iuvw[4], Axis.iuvw[5]);
-    #else
+    }else{
         REAL phase_V_current = -Axis.iuvw[0] - Axis.iuvw[2];
         Axis.iabg[0] = UV2A_AI(Axis.iuvw[0], phase_V_current);
         Axis.iabg[1] = UV2B_AI(Axis.iuvw[0], phase_V_current);
         phase_V_current = -Axis.iuvw[3] - Axis.iuvw[5];
         Axis.iabg[3] = UV2A_AI(Axis.iuvw[3], phase_V_current);
         Axis.iabg[4] = UV2B_AI(Axis.iuvw[3], phase_V_current);
-    #endif
+    }
 
     if(Axis.use_fisrt_set_three_phase==1){
         // 只用第一套三相
@@ -700,15 +698,19 @@ void PanGuMainISR(void){
 
         if(Axis.Seletc_exp_operation == XCUBE_TaTbTc_DEBUG_MODE){
             //   CTRL.svgen1.Ta = 0.6; CTRL.svgen1.Tb = 0.4; CTRL.svgen1.Tc = 0.5;
-            if(CTRL.svgen1.Ta>0.7) CTRL.svgen1.Ta=0.7;
-            if(CTRL.svgen1.Ta<0.3) CTRL.svgen1.Ta=0.3;
-            if(CTRL.svgen1.Tb>0.7) CTRL.svgen1.Tb=0.7;
-            if(CTRL.svgen1.Tb<0.3) CTRL.svgen1.Tb=0.3;
-            if(CTRL.svgen1.Tc>0.7) CTRL.svgen1.Tc=0.7;
-            if(CTRL.svgen1.Tc<0.3) CTRL.svgen1.Tc=0.3;
+            //            if(CTRL.svgen1.Ta>0.7) CTRL.svgen1.Ta=0.7;
+            //            if(CTRL.svgen1.Ta<0.3) CTRL.svgen1.Ta=0.3;
+            //            if(CTRL.svgen1.Tb>0.7) CTRL.svgen1.Tb=0.7;
+            //            if(CTRL.svgen1.Tb<0.3) CTRL.svgen1.Tb=0.3;
+            //            if(CTRL.svgen1.Tc>0.7) CTRL.svgen1.Tc=0.7;
+            //            if(CTRL.svgen1.Tc<0.3) CTRL.svgen1.Tc=0.3;
             EPwm1Regs.CMPA.bit.CMPA = CTRL.svgen1.Ta*50000000*CL_TS;
             EPwm2Regs.CMPA.bit.CMPA = CTRL.svgen1.Tb*50000000*CL_TS;
             EPwm3Regs.CMPA.bit.CMPA = CTRL.svgen1.Tc*50000000*CL_TS;
+
+            EPwm4Regs.CMPA.bit.CMPA = CTRL.svgen2.Ta*50000000*CL_TS;
+            EPwm5Regs.CMPA.bit.CMPA = CTRL.svgen2.Tb*50000000*CL_TS;
+            EPwm6Regs.CMPA.bit.CMPA = CTRL.svgen2.Tc*50000000*CL_TS;
         }
         else
             voltage_commands_to_pwm();

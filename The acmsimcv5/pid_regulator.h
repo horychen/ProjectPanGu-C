@@ -55,6 +55,8 @@ extern st_pid_regulator pid2_iT;
 #define pid2_id pid2_iM
 #define pid2_iq pid2_iT
 
+extern st_pid_regulator pid1_disX;
+extern st_pid_regulator pid1_disY;
 
 void ACMSIMC_PIDTuner();
 
