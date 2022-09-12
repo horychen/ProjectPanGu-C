@@ -84,12 +84,16 @@ void ACMSIMC_PIDTuner(){
     pid2_iM.OutLimit = CURRENT_LOOP_LIMIT_VOLTS;
     pid2_iT.OutLimit = CURRENT_LOOP_LIMIT_VOLTS;
 
-    pid1_disX.Kp       = DISPLACEMENT_KP;
-    pid1_disY.Kp       = DISPLACEMENT_KP;
-    pid1_disX.Ki       = DISPLACEMENT_KI_CODE;
-    pid1_disY.Ki       = DISPLACEMENT_KI_CODE;
-    pid1_disX.OutLimit = DISPLACEMENT_LOOP_LIMIT_AMPERE;
-    pid1_disY.OutLimit = DISPLACEMENT_LOOP_LIMIT_AMPERE;
+    #define DISPLACEMENT_KP 0
+    #define DISPLACEMENT_KI_CODE 0
+    #define DISPLACEMENT_LOOP_LIMIT_AMPERE 0
+
+    // pid1_disX.Kp       = DISPLACEMENT_KP;
+    // pid1_disY.Kp       = DISPLACEMENT_KP;
+    // pid1_disX.Ki       = DISPLACEMENT_KI_CODE;
+    // pid1_disY.Ki       = DISPLACEMENT_KI_CODE;
+    // pid1_disX.OutLimit = DISPLACEMENT_LOOP_LIMIT_AMPERE;
+    // pid1_disY.OutLimit = DISPLACEMENT_LOOP_LIMIT_AMPERE;
 
     // pid1_ia.Kp = CURRENT_KP;
     // pid1_ib.Kp = CURRENT_KP;

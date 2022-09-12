@@ -84,8 +84,8 @@ typedef struct {
     REAL Js_inv;    
 } st_pmsm_parameters;
 
-#define MA_SEQUENCE_LENGTH         10 // 20 * CL_TS = window of moving average in seconds
-#define MA_SEQUENCE_LENGTH_INVERSE 0.1 // 20 MA gives speed resolution of 3 rpm for 2500 ppr encoder
+#define MA_SEQUENCE_LENGTH         40    // 10 // 20 * CL_TS = window of moving average in seconds
+#define MA_SEQUENCE_LENGTH_INVERSE 0.025 // 0.1 // 20 MA gives speed resolution of 3 rpm for 2500 ppr encoder
 // #define MA_SEQUENCE_LENGTH         20 // 20 * CL_TS = window of moving average in seconds
 // #define MA_SEQUENCE_LENGTH_INVERSE 0.05 // 20 MA gives speed resolution of 3 rpm for 2500 ppr encoder
 // #define MA_SEQUENCE_LENGTH         80
