@@ -72,7 +72,7 @@ void start_hall_conversion(REAL hall_sensor_read[]);
 
 
 int USE_3_CURRENT_SENSORS = FALSE;
-#define USE_HALL_SENSOR_FOR_QEP FALSE
+int USE_HALL_SENSOR_FOR_QEP = FALSE;
 
 void init_experiment_AD_gain_and_offset(){
     /* ADC OFFSET */
@@ -125,9 +125,9 @@ void main(void){
     Axis.pAdcbResultRegs = &AdcbResultRegs;
     Axis.use_fisrt_set_three_phase = 1;
     Axis.Set_current_loop = TRUE;
-    Axis.Set_manual_rpm = 0;
-    Axis.Set_manual_current_iq = 0;
-    Axis.Set_manual_current_id = 2;
+    Axis.Set_manual_rpm = 0.0;
+    Axis.Set_manual_current_iq = 0.0;
+    Axis.Set_manual_current_id = 0.0;
     Axis.Seletc_exp_operation = 0;
     Axis.pFLAG_INVERTER_NONLINEARITY_COMPENSATION = &G.FLAG_INVERTER_NONLINEARITY_COMPENSATION;
     Axis.flag_overwrite_theta_d = 0;
@@ -533,14 +533,18 @@ void measurement(){
     // Use two hall sensors for QEP
     last_hall_qep_count = hall_qep_count;
     start_hall_conversion(hall_sensor_read);
-    if(USE_HALL_SENSOR_FOR_QEP){
+    if(USE_HALL_SENSOR_FOR_QEP == 1){
         CTRL.I->theta_d_elec = hall_theta_r_elec;
+        CTRL.I->omg_elec     = 0.0;
+    }else if(USE_HALL_SENSOR_FOR_QEP == 2){
+        CTRL.I->theta_d_elec = hall_sensor_read[2] * 0.0222222223 * M_PI; // 4 / 180
         CTRL.I->omg_elec     = 0.0;
     }else{
         CTRL.I->theta_d_elec = ENC.theta_d_elec;
         CTRL.I->omg_elec     = YAOJIE_MOTOR_IQ_RPM_REVERSED*ENC.omg_elec;
     }
     CTRL.I->rpm = CTRL.I->omg_elec * ELEC_RAD_PER_SEC_2_RPM;
+
 
     // 线电压测量（基于占空比和母线电压）
     voltage_measurement_based_on_eCAP();
