@@ -245,6 +245,8 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
     //temp_xOmg = (CTRL.O->udq_cmd[0] - CTRL.motor->R * CTRL.I->idq[0] ) / -CTRL.motor->Lq*CTRL.I->idq[1];
     //temp_xOmg_filtered = _lpf(temp_xOmg, temp_xOmg_filtered, 20.0);
 
+    Axis.dac_watch[25] = hall_sensor_read[2] * 0.0005;
+
 
     Axis.dac_watch[50] = hall_sensor_read[0] * 0.0005;
     Axis.dac_watch[51] = hall_sensor_read[1] * 0.0005;
@@ -349,7 +351,7 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
         channels[7] = 43; // theta_trapezoidal
     }else if(channels_preset==9){channels_preset=0;
         /* Slice motor */
-        channels[0] = 50;
+        channels[0] = 25;
         channels[1] = 52;
         channels[2] = 58;
         channels[3] = 59;
