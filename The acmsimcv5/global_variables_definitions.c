@@ -35,8 +35,8 @@ st_pid_regulator pid1_iM  = st_pid_regulator_DEFAULTS;
 st_pid_regulator pid1_iT  = st_pid_regulator_DEFAULTS;
 st_pid_regulator pid1_spd = st_pid_regulator_DEFAULTS;
 st_pid_regulator pid1_pos = st_pid_regulator_DEFAULTS;
-st_pid_regulator pid2_iM  = st_pid_regulator_DEFAULTS;
-st_pid_regulator pid2_iT  = st_pid_regulator_DEFAULTS;
+st_pid_regulator pid2_ix  = st_pid_regulator_DEFAULTS;
+st_pid_regulator pid2_iy  = st_pid_regulator_DEFAULTS;
 
 /* Controller parameters */
 #define SUSPENSION_PID_KP  0.5
@@ -80,8 +80,8 @@ void allocate_CTRL(struct ControllerForExperiment *p){
     p->S->spd = &pid1_spd;
     p->S->pos = &pid1_pos;
 
-    p->S->iM2 = &pid2_iM;
-    p->S->iT2 = &pid2_iT;
+    p->S->ix = &pid2_ix;
+    p->S->iy = &pid2_iy;
 
     p->S->dispX = &pid1_dispX;
     p->S->dispY = &pid1_dispY;

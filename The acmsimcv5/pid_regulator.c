@@ -130,12 +130,12 @@ void ACMSIMC_PIDTuner(){
     pid1_iT.OutLimit  = CURRENT_LOOP_LIMIT_VOLTS;
     pid1_spd.OutLimit = SPEED_LOOP_LIMIT_AMPERE;
 
-    pid2_iM.Kp  = CURRENT_KP;
-    pid2_iT.Kp  = CURRENT_KP;
-    pid2_iM.Ki = CURRENT_KI_CODE;
-    pid2_iT.Ki = CURRENT_KI_CODE;
-    pid2_iM.OutLimit = CURRENT_LOOP_LIMIT_VOLTS;
-    pid2_iT.OutLimit = CURRENT_LOOP_LIMIT_VOLTS;
+    pid2_ix.Kp = CURRENT_KP;
+    pid2_iy.Kp = CURRENT_KP;
+    pid2_ix.Ki = CURRENT_KI_CODE;
+    pid2_iy.Ki = CURRENT_KI_CODE;
+    pid2_ix.OutLimit = CURRENT_LOOP_LIMIT_VOLTS;
+    pid2_iy.OutLimit = CURRENT_LOOP_LIMIT_VOLTS;
 
     PIDController_Init(&pid1_dispX);
     PIDController_Init(&pid1_dispY);

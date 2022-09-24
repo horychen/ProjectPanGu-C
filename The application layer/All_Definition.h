@@ -85,12 +85,15 @@
 typedef struct{
     struct ControllerForExperiment *pCTRL;
     // Commonly used for prototype motor testing
-        int use_fisrt_set_three_phase;
+        int use_first_set_three_phase;
         int Set_current_loop;
+        int Set_suspension_current_loop;
         REAL Set_manual_rpm;
-        REAL Set_manual_current_iq;
         REAL Set_manual_current_id;
-        int Seletc_exp_operation;
+        REAL Set_manual_current_iq;
+        REAL Set_manual_current_ix;
+        REAL Set_manual_current_iy;
+        int Select_exp_operation;
         int *pFLAG_INVERTER_NONLINEARITY_COMPENSATION;
         int flag_overwrite_theta_d;
         REAL Overwrite_Current_Frequency;
