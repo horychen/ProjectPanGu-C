@@ -96,34 +96,34 @@ void sci_poll(int16 ch){
         {
             /* Default mode is to change speed. */
             case '1':
-                G.sendSpeedCommandFlag = TRUE; Axis.Seletc_exp_operation = -500;
+                G.sendSpeedCommandFlag = TRUE; Axis.Select_exp_operation = -500;
                 break;
             case '2':
-                G.sendSpeedCommandFlag = TRUE; Axis.Seletc_exp_operation = -300;
+                G.sendSpeedCommandFlag = TRUE; Axis.Select_exp_operation = -300;
                 break;
             case '3':
-                G.sendSpeedCommandFlag = TRUE; Axis.Seletc_exp_operation = 50;
+                G.sendSpeedCommandFlag = TRUE; Axis.Select_exp_operation = 50;
                 break;
             case '4':
-                G.sendSpeedCommandFlag = TRUE; Axis.Seletc_exp_operation = 100;
+                G.sendSpeedCommandFlag = TRUE; Axis.Select_exp_operation = 100;
                 break;
             case '5':
-                G.sendSpeedCommandFlag = TRUE; Axis.Seletc_exp_operation = 300;
+                G.sendSpeedCommandFlag = TRUE; Axis.Select_exp_operation = 300;
                 break;
             case '6':
-                G.sendSpeedCommandFlag = TRUE; Axis.Seletc_exp_operation = 500;
+                G.sendSpeedCommandFlag = TRUE; Axis.Select_exp_operation = 500;
                 break;
             case '7':
-                G.sendSpeedCommandFlag = TRUE; Axis.Seletc_exp_operation = 800;
+                G.sendSpeedCommandFlag = TRUE; Axis.Select_exp_operation = 800;
                 break;
             case '8':
-                G.sendSpeedCommandFlag = TRUE; Axis.Seletc_exp_operation = 1500;
+                G.sendSpeedCommandFlag = TRUE; Axis.Select_exp_operation = 1500;
                 break;
             case '9':
-                G.sendSpeedCommandFlag = TRUE; Axis.Seletc_exp_operation = 2000;
+                G.sendSpeedCommandFlag = TRUE; Axis.Select_exp_operation = 2000;
                 break;
             case '0':
-                G.sendSpeedCommandFlag = TRUE; Axis.Seletc_exp_operation = 0;
+                G.sendSpeedCommandFlag = TRUE; Axis.Select_exp_operation = 0;
                 break;
             case '-':
                 reverse_speed_flag = TRUE; // not used

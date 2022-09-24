@@ -4,36 +4,36 @@ void init_experiment_overwrite(){
 
     /* Mode Changing During Experiment */
     #ifdef _XCUBE1
-        Axis.Seletc_exp_operation = AS_LOAD_MOTOR_CONST;
+        Axis.Select_exp_operation = AS_LOAD_MOTOR_CONST;
         G.dac_watch_stator_resistance = 1.703;
 
         // 2021-07-17
-        //Axis.Seletc_exp_operation = NSOAF_LOW_SPEED_OPERATION;
+        //Axis.Select_exp_operation = NSOAF_LOW_SPEED_OPERATION;
 
     #else
-        // Axis.Seletc_exp_operation = NSOAF_LOW_SPEED_OPERATION;
-        // Axis.Seletc_exp_operation = NSOAF_HIGH_SPEED_OPERATION;
-        // Axis.Seletc_exp_operation = NSOAF_RAMP_SPEED_OPERATION;
+        // Axis.Select_exp_operation = NSOAF_LOW_SPEED_OPERATION;
+        // Axis.Select_exp_operation = NSOAF_HIGH_SPEED_OPERATION;
+        // Axis.Select_exp_operation = NSOAF_RAMP_SPEED_OPERATION;
         Axis.dac_watch_stator_resistance = 1.69;
 
-        // Axis.Seletc_exp_operation = AS_LOAD_MOTOR_CONST;
-        // Axis.Seletc_exp_operation = SLESSINV_CONST_LOAD_PAA;
-        // Axis.Seletc_exp_operation = 0;
+        // Axis.Select_exp_operation = AS_LOAD_MOTOR_CONST;
+        // Axis.Select_exp_operation = SLESSINV_CONST_LOAD_PAA;
+        // Axis.Select_exp_operation = 0;
     #endif
 
-    if(Axis.Seletc_exp_operation == AS_LOAD_MOTOR_CONST){
+    if(Axis.Select_exp_operation == AS_LOAD_MOTOR_CONST){
         pid1_spd.OutLimit = 2.1; //2.0;
         Axis.Set_manual_rpm = -600;  // motoring + regeneration for low speed test
         //Axis.Set_manual_rpm = 0;    // motoring for high speed test
     }
-    else if(Axis.Seletc_exp_operation == AS_LOAD_MOTOR_RAMP){
+    else if(Axis.Select_exp_operation == AS_LOAD_MOTOR_RAMP){
         pid1_spd.OutLimit = 0.01;
         Axis.Set_manual_rpm = -1200;
     }
-    else if(Axis.Seletc_exp_operation == NSOAF_LOW_SPEED_OPERATION){
+    else if(Axis.Select_exp_operation == NSOAF_LOW_SPEED_OPERATION){
         low_speed_operation_init();
     }
-    else if(Axis.Seletc_exp_operation == NSOAF_HIGH_SPEED_OPERATION){
+    else if(Axis.Select_exp_operation == NSOAF_HIGH_SPEED_OPERATION){
         high_speed_operation_init();
     }
     else{
@@ -42,7 +42,7 @@ void init_experiment_overwrite(){
 
     Axis.DAC_MAX5307_FLAG = FALSE;
     Axis.AD_offset_flag2 = FALSE;
-    if(Axis.Seletc_exp_operation == AS_LOAD_MOTOR_CONST){
+    if(Axis.Select_exp_operation == AS_LOAD_MOTOR_CONST){
         CTRL.g->FLAG_INVERTER_NONLINEARITY_COMPENSATION = 2; // use sigmoid as compensation
     }else{
         CTRL.g->FLAG_INVERTER_NONLINEARITY_COMPENSATION = INVERTER_NONLINEARITY_COMPENSATION_INIT;
@@ -135,7 +135,7 @@ void init_experiment_overwrite(){
 }
 
 void runtime_command_and_tuning(){
-    if(Axis.Seletc_exp_operation == AS_LOAD_MOTOR_CONST){
+    if(Axis.Select_exp_operation == AS_LOAD_MOTOR_CONST){
         CTRL.S->go_sensorless = 0;
         G.FLAG_INVERTER_NONLINEARITY_COMPENSATION = 0;
         if(CTRL.timebase < 2){
@@ -156,7 +156,7 @@ void runtime_command_and_tuning(){
             }
         }
     }
-    if(Axis.Seletc_exp_operation == AS_LOAD_MOTOR_RAMP){
+    if(Axis.Select_exp_operation == AS_LOAD_MOTOR_RAMP){
         CTRL.S->go_sensorless = 0;
         if(CTRL.timebase < 0.4){
             pid1_spd.OutLimit = 4.2;
@@ -176,7 +176,7 @@ void runtime_command_and_tuning(){
 
 
     /* Inverter Model Parameter Adaptation */
-    if(Axis.Seletc_exp_operation == SLESSINV_CONST_LOAD_PAA){
+    if(Axis.Select_exp_operation == SLESSINV_CONST_LOAD_PAA){
         if(CTRL.timebase>11){
             ;
         }else if(CTRL.timebase>10){
@@ -191,7 +191,7 @@ void runtime_command_and_tuning(){
     }
 
     /* Low Speed Operation*/
-    if(Axis.Seletc_exp_operation == NSOAF_LOW_SPEED_OPERATION){
+    if(Axis.Select_exp_operation == NSOAF_LOW_SPEED_OPERATION){
         if(FALSE){
             zero_speed_stopping();
             zero_speed_stopping_tuning();
@@ -203,13 +203,13 @@ void runtime_command_and_tuning(){
     }
 
     /* High Speed Reversal Operation */
-    if(Axis.Seletc_exp_operation == NSOAF_HIGH_SPEED_OPERATION){
+    if(Axis.Select_exp_operation == NSOAF_HIGH_SPEED_OPERATION){
         high_speed_operation();
         high_speed_operation_tuning();
     }
 
     /* Ramp High Speed Operation */
-    if(Axis.Seletc_exp_operation == NSOAF_RAMP_SPEED_OPERATION){
+    if(Axis.Select_exp_operation == NSOAF_RAMP_SPEED_OPERATION){
         ramp_speed_operation();
         //ramp_speed_operation_tuning();
     }

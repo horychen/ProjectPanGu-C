@@ -115,12 +115,13 @@ void main(void){
     Axis.pCTRL = &CTRL;
     Axis.pAdcaResultRegs = &AdcaResultRegs;
     Axis.pAdcbResultRegs = &AdcbResultRegs;
-    Axis.use_fisrt_set_three_phase = 1;
+    Axis.use_first_set_three_phase = -1;
     Axis.Set_current_loop = TRUE;
+    Axis.Set_suspension_current_loop = TRUE;
     Axis.Set_manual_rpm = 0.0;
     Axis.Set_manual_current_iq = 0.0;
     Axis.Set_manual_current_id = 0.0;
-    Axis.Seletc_exp_operation = 101;
+    Axis.Select_exp_operation = 101;
     Axis.pFLAG_INVERTER_NONLINEARITY_COMPENSATION = &G.FLAG_INVERTER_NONLINEARITY_COMPENSATION;
     Axis.flag_overwrite_theta_d = 1;
     Axis.Overwrite_Current_Frequency = 0;
@@ -388,7 +389,7 @@ void DeadtimeCompensation(REAL Current_U, REAL Current_V, REAL Current_W, REAL C
     CMPA_DBC[2] = (Uint16)temp;
 }
 void voltage_commands_to_pwm(){
-    if(Axis.use_fisrt_set_three_phase==1){
+    if(Axis.use_first_set_three_phase==1){
         // SVPWM of the motor 3-phase
         CTRL.svgen1.Ualpha= CTRL.O->uab_cmd_to_inverter[0];
         CTRL.svgen1.Ubeta = CTRL.O->uab_cmd_to_inverter[1];
@@ -398,7 +399,7 @@ void voltage_commands_to_pwm(){
         //    svgen2.Ubeta  = svgen1.Ualpha*-0.8660254 + svgen1.Ubeta*0.5;
         CTRL.svgen2.Ualpha = 0;
         CTRL.svgen2.Ubeta  = 0;
-    }else if(Axis.use_fisrt_set_three_phase==2){
+    }else if(Axis.use_first_set_three_phase==2){
         // SVPWM of the motor 3-phase
         CTRL.svgen1.Ualpha= 0;
         CTRL.svgen1.Ubeta = 0;
@@ -406,7 +407,7 @@ void voltage_commands_to_pwm(){
         // SVPWM of the suspension 3-phase
         CTRL.svgen2.Ualpha = CTRL.O->uab_cmd_to_inverter[0+2];
         CTRL.svgen2.Ubeta  = CTRL.O->uab_cmd_to_inverter[1+2];
-    }else if(Axis.use_fisrt_set_three_phase==-1){
+    }else if(Axis.use_first_set_three_phase==-1){
 
         // SVPWM of the motor 3-phase
         CTRL.svgen1.Ualpha= CTRL.O->uab_cmd_to_inverter[0];
@@ -530,10 +531,6 @@ void measurement(){
     if(USE_HALL_SENSOR_FOR_QEP == 1){
         CTRL.I->theta_d_elec = hall_theta_r_elec;
         CTRL.I->omg_elec     = 0.0;
-    }else if(USE_HALL_SENSOR_FOR_QEP == 2){
-        // Yaojie linear motion distance LVDT sensor
-        CTRL.I->theta_d_elec = hall_sensor_read[2] * 0.0222222223 * M_PI; // 4 / 180
-        CTRL.I->omg_elec     = 0.0;
     }else{
         CTRL.I->theta_d_elec = ENC.theta_d_elec;
         CTRL.I->omg_elec     = ENC.omg_elec;
@@ -542,12 +539,13 @@ void measurement(){
 
 
     // 线电压测量（基于占空比和母线电压）
-    voltage_measurement_based_on_eCAP();
+    //voltage_measurement_based_on_eCAP();
+
     // Vdc用于实时更新电流环限幅
     pid1_iM.OutLimit = Axis.vdc * 0.5773672;
     pid1_iT.OutLimit = Axis.vdc * 0.5773672;
-    pid2_iM.OutLimit = Axis.vdc * 0.5773672;
-    pid2_iT.OutLimit = Axis.vdc * 0.5773672;
+    pid2_ix.OutLimit = Axis.vdc * 0.5773672;
+    pid2_iy.OutLimit = Axis.vdc * 0.5773672;
 
     // 电流接口
     if(USE_3_CURRENT_SENSORS){
@@ -566,25 +564,25 @@ void measurement(){
         Axis.iabg[4] = UV2B_AI(Axis.iuvw[3], phase_V_current);
     }
 
-    if(Axis.use_fisrt_set_three_phase==1){
+    if(Axis.use_first_set_three_phase==1){
         // 只用第一套三相
         IS_C(0)        = Axis.iabg[0];
         IS_C(1)        = Axis.iabg[1];
         CTRL.I->iab[0] = Axis.iabg[0];
         CTRL.I->iab[1] = Axis.iabg[1];
-    }else if(Axis.use_fisrt_set_three_phase==2){
+    }else if(Axis.use_first_set_three_phase==2){
         // 只用第二套三相
         IS_C(0)        = Axis.iabg[3];
         IS_C(1)        = Axis.iabg[4];
         CTRL.I->iab[0+2] = Axis.iabg[3];
         CTRL.I->iab[1+2] = Axis.iabg[4];
-    }else if(Axis.use_fisrt_set_three_phase==-1){
-        IS_C(0)        = Axis.iabg[0];
-        IS_C(1)        = Axis.iabg[1];
-        CTRL.I->iab[0] = Axis.iabg[0];
-        CTRL.I->iab[1] = Axis.iabg[1];
-        CTRL.I->iab[0+2] = Axis.iabg[3];
-        CTRL.I->iab[1+2] = Axis.iabg[4];
+    }else if(Axis.use_first_set_three_phase==-1){
+        IS_C(0)        = Axis.iabg[3];
+        IS_C(1)        = Axis.iabg[4];
+        CTRL.I->iab[0] = Axis.iabg[3];
+        CTRL.I->iab[1] = Axis.iabg[4];
+        CTRL.I->iab[0+2] = Axis.iabg[0];
+        CTRL.I->iab[1+2] = Axis.iabg[1];
     }
 
 
@@ -665,7 +663,7 @@ void PanGuMainISR(void){
             G.flag_experimental_initialized = TRUE;
 
             init_experiment();
-            //G.Seletc_exp_operation = 3; // fixed
+            //G.Select_exp_operation = 3; // fixed
             init_experiment_AD_gain_and_offset();
             init_experiment_overwrite();
         }
@@ -682,50 +680,73 @@ void PanGuMainISR(void){
         timebase_counter += 1;
         CTRL.timebase = CL_TS * timebase_counter; //CTRL.timebase += CL_TS; // 2048 = float/double max
 
-        if(Axis.Seletc_exp_operation == 100){
-            static long counter = 0;
-            counter += 1;
-            if(counter<SQUARE_WAVE_PERIOD*0.5){
-                Axis.Set_manual_current_id = 20;
-            }else{
-                Axis.Set_manual_current_id = -20;
-                if(counter>=SQUARE_WAVE_PERIOD) counter = 0;
-            }
-        }else if(Axis.Seletc_exp_operation == 101){
-            static long counter = 0;
-            counter += 1;
-            if(counter<SQUARE_WAVE_PERIOD*0.5){
-                Axis.Set_manual_current_iq = 20;
-            }else{
-                Axis.Set_manual_current_iq = -20;
-                if(counter>=SQUARE_WAVE_PERIOD) counter = 0;
-            }
-        }else if(Axis.Seletc_exp_operation == 200){
-            pid1_dispX.setpoint;
-            pid1_dispY.setpoint;
-            pid1_dispX.measurement = eddy_displacement[0];
-            pid1_dispY.measurement = eddy_displacement[1];
-            PIDController_Update(&pid1_dispX);
-            PIDController_Update(&pid1_dispY);
-            Axis.Set_manual_current_id = -pid1_dispY.out;
-            Axis.Set_manual_current_iq = -pid1_dispX.out;
-            完成双自由度，给定一个torque id的同时再做悬浮力控制防止转子转动？
-        }
-
         // 根据指令，产生控制输出（电压）
         #if ENABLE_COMMISSIONING == FALSE
             //CTRL.S->Motor_or_Gnerator = sign(CTRL.I->idq_cmd[1]) == sign(ENC.rpm); // sign(CTRL.I->idq_cmd[1]) != sign(CTRL.I->cmd_speed_rpm))
-            runtime_command_and_tuning(Axis.Seletc_exp_operation);
-            controller(Axis.Set_manual_rpm, Axis.Set_current_loop, Axis.Set_manual_current_iq, Axis.Set_manual_current_id,
+            runtime_command_and_tuning(Axis.Select_exp_operation);
+            Axis.used_theta_d_elec = controller(Axis.Set_manual_rpm, Axis.Set_current_loop, Axis.Set_manual_current_iq, Axis.Set_manual_current_id,
                 Axis.flag_overwrite_theta_d, Axis.Overwrite_Current_Frequency,
                 //Axis.used_theta_d_elec,
                 Axis.angle_shift_for_first_inverter,
                 Axis.angle_shift_for_second_inverter);
-        #else
+
+            // 悬浮逆变器的电流指令
+            if(Axis.Select_exp_operation == 100){
+                static long counter = 0;
+                counter += 1;
+                if(counter<SQUARE_WAVE_PERIOD*0.5){
+                    Axis.Set_manual_current_ix = 20;
+                }else{
+                    Axis.Set_manual_current_ix = -20;
+                    if(counter>=SQUARE_WAVE_PERIOD) counter = 0;
+                }
+            }else if(Axis.Select_exp_operation == 101){
+                static long counter = 0;
+                counter += 1;
+                if(counter<SQUARE_WAVE_PERIOD*0.5){
+                    Axis.Set_manual_current_iy = 20;
+                }else{
+                    Axis.Set_manual_current_iy = -20;
+                    if(counter>=SQUARE_WAVE_PERIOD) counter = 0;
+                }
+            }else if(Axis.Select_exp_operation == 200){
+                pid1_dispX.setpoint;
+                pid1_dispY.setpoint;
+                pid1_dispX.measurement = eddy_displacement[0];
+                pid1_dispY.measurement = eddy_displacement[1];
+                PIDController_Update(&pid1_dispX);
+                PIDController_Update(&pid1_dispY);
+                Axis.Set_manual_current_ix = -pid1_dispY.out*0.0 - 0.5 * CTRL.I->idq_cmd[0];
+                Axis.Set_manual_current_iy = -pid1_dispX.out*0.0 - 0.5 * CTRL.I->idq_cmd[1];
+                // 完成双自由度，给定一个torque id的同时再做悬浮力控制防止转子转动？
+            }
+
+            // Park Transform for Suspension Inverter
+            CTRL.S->cosT2 = cos(- Axis.used_theta_d_elec); //  + Axis.angle_shift_for_second_inverter
+            CTRL.S->sinT2 = sin(- Axis.used_theta_d_elec);
+            CTRL.I->idq[0+2] = AB2M(CTRL.I->iab[0+2], CTRL.I->iab[1+2], CTRL.S->cosT2, CTRL.S->sinT2);
+            CTRL.I->idq[1+2] = AB2T(CTRL.I->iab[0+2], CTRL.I->iab[1+2], CTRL.S->cosT2, CTRL.S->sinT2);
+
+            /// 6. 电流环
+            // x-axis
+            pid2_ix.Fbk = CTRL.I->idq[0+2];
+            pid2_ix.Ref = CTRL.I->idq_cmd[0+2]; if(Axis.Set_suspension_current_loop==1){pid2_ix.Ref = Axis.Set_manual_current_iy;}
+            pid2_ix.calc(&pid2_ix);
+            // y-axis
+            pid2_iy.Fbk = CTRL.I->idq[1+2];
+            pid2_iy.Ref = CTRL.I->idq_cmd[1+2]; if(Axis.Set_suspension_current_loop==1){pid2_iy.Ref = Axis.Set_manual_current_ix;}
+            pid2_iy.calc(&pid2_iy);
+
+            CTRL.O->udq_cmd[0+2] = pid2_ix.Out;
+            CTRL.O->udq_cmd[1+2] = pid2_iy.Out;
+            CTRL.O->uab_cmd[0+2] = MT2A(CTRL.O->udq_cmd[0+2], CTRL.O->udq_cmd[1+2], CTRL.S->cosT2, CTRL.S->sinT2);
+            CTRL.O->uab_cmd[1+2] = MT2B(CTRL.O->udq_cmd[0+2], CTRL.O->udq_cmd[1+2], CTRL.S->cosT2, CTRL.S->sinT2);
+
+            #else
             commissioning();
         #endif
 
-        if(Axis.Seletc_exp_operation == XCUBE_TaTbTc_DEBUG_MODE){
+        if(Axis.Select_exp_operation == XCUBE_TaTbTc_DEBUG_MODE){
             //   CTRL.svgen1.Ta = 0.6; CTRL.svgen1.Tb = 0.4; CTRL.svgen1.Tc = 0.5;
             //            if(CTRL.svgen1.Ta>0.7) CTRL.svgen1.Ta=0.7;
             //            if(CTRL.svgen1.Ta<0.3) CTRL.svgen1.Ta=0.3;

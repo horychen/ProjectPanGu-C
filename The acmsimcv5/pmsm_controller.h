@@ -47,8 +47,8 @@ typedef struct {
     st_pid_regulator *iT;
     st_pid_regulator *spd;
     st_pid_regulator *pos;
-    st_pid_regulator *iM2;
-    st_pid_regulator *iT2;
+    st_pid_regulator *ix;
+    st_pid_regulator *iy;
     st_PIDController *dispX;
     st_PIDController *dispY;
     int the_vc_count;
@@ -81,11 +81,11 @@ typedef struct {
     REAL npp;
     REAL npp_inv;
     REAL Js;
-    REAL Js_inv;    
+    REAL Js_inv;
 } st_pmsm_parameters;
 
-#define MA_SEQUENCE_LENGTH         40    // 10 // 20 * CL_TS = window of moving average in seconds
-#define MA_SEQUENCE_LENGTH_INVERSE 0.025 // 0.1 // 20 MA gives speed resolution of 3 rpm for 2500 ppr encoder
+#define MA_SEQUENCE_LENGTH         10 // 40 for Yaojie large Lq motor  // Note MA_SEQUENCE_LENGTH * CL_TS = window of moving average in seconds
+#define MA_SEQUENCE_LENGTH_INVERSE 0.1 // 0.025                        // 20 MA gives speed resolution of 3 rpm for 2500 ppr encoder
 // #define MA_SEQUENCE_LENGTH         20 // 20 * CL_TS = window of moving average in seconds
 // #define MA_SEQUENCE_LENGTH_INVERSE 0.05 // 20 MA gives speed resolution of 3 rpm for 2500 ppr encoder
 // #define MA_SEQUENCE_LENGTH         80
@@ -289,7 +289,7 @@ extern struct ControllerForExperiment CTRL;
 void init_experiment();
 void init_CTRL();
 void commissioning();
-void controller(REAL set_rpm_speed_command, 
+REAL controller(REAL set_rpm_speed_command, 
     int set_current_loop, REAL set_iq_cmd, REAL set_id_cmd,
     int flag_overwrite_theta_d, REAL Overwrite_Current_Frequency,
     REAL angle_shift_for_first_inverter,

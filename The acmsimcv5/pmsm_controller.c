@@ -132,7 +132,7 @@ void null_d_control(int set_current_loop, REAL set_iq_cmd, REAL set_id_cmd){
         pid1_spd.Fbk = CTRL.I->omg_elec;
         pid1_spd.calc(&pid1_spd);
         CTRL.I->idq_cmd[1] = pid1_spd.Out;
-        CTRL.I->idq_cmd[1+2] = pid1_spd.Out;
+        // CTRL.I->idq_cmd[1+2] = pid1_spd.Out;
     }
     // 磁链环
     #if CONTROL_STRATEGY == NULL_D_AXIS_CURRENT_CONTROL
@@ -165,7 +165,7 @@ void null_d_control(int set_current_loop, REAL set_iq_cmd, REAL set_id_cmd){
         /* Overwrite if set_id_cmd is set [Both are POSITIVE] */
         // if(set_id_cmd!=0){
             CTRL.I->idq_cmd[0] = set_id_cmd;
-            CTRL.I->idq_cmd[0+2] = set_id_cmd;
+            // CTRL.I->idq_cmd[0+2] = set_id_cmd;
         // }
     #else
         CTRL.I->cmd_rotor_flux_Wb = MOTOR.Ld * set_id_cmd;
@@ -198,16 +198,16 @@ void null_d_control(int set_current_loop, REAL set_iq_cmd, REAL set_id_cmd){
     pid1_id.Fbk = CTRL.I->idq[0];
     pid1_id.Ref = CTRL.I->idq_cmd[0];
     pid1_id.calc(&pid1_id);
-    pid2_id.Fbk = CTRL.I->idq[0+2];
-    pid2_id.Ref = CTRL.I->idq_cmd[0+2];
-    pid2_id.calc(&pid2_id);
+    // pid2_id.Fbk = CTRL.I->idq[0+2];
+    // pid2_id.Ref = CTRL.I->idq_cmd[0+2];
+    // pid2_id.calc(&pid2_id);
     // q-axis
     pid1_iq.Fbk = CTRL.I->idq[1];
     pid1_iq.Ref = CTRL.I->idq_cmd[1]; if(set_current_loop==1){pid1_iq.Ref = set_iq_cmd;}
     pid1_iq.calc(&pid1_iq);
-    pid2_iq.Fbk = CTRL.I->idq[1+2];
-    pid2_iq.Ref = CTRL.I->idq_cmd[1+2]; if(set_current_loop==1){pid2_iq.Ref = set_iq_cmd;}
-    pid2_iq.calc(&pid2_iq);
+    // pid2_iq.Fbk = CTRL.I->idq[1+2];
+    // pid2_iq.Ref = CTRL.I->idq_cmd[1+2]; if(set_current_loop==1){pid2_iq.Ref = set_iq_cmd;}
+    // pid2_iq.calc(&pid2_iq);
     // 电压电流解耦
     #if VOLTAGE_CURRENT_DECOUPLING_CIRCUIT == TRUE
         REAL decoupled_d_axis_voltage = pid1_id.Out -             pid1_iq.Fbk*MOTOR.Lq *CTRL.I->omg_elec;
@@ -218,28 +218,12 @@ void null_d_control(int set_current_loop, REAL set_iq_cmd, REAL set_id_cmd){
     #endif
     CTRL.O->udq_cmd[0] = decoupled_d_axis_voltage;
     CTRL.O->udq_cmd[1] = decoupled_q_axis_voltage;
-    CTRL.O->udq_cmd[0+2] = pid2_id.Out;
-    CTRL.O->udq_cmd[1+2] = pid2_iq.Out;
+    // CTRL.O->udq_cmd[0+2] = pid2_id.Out;
+    // CTRL.O->udq_cmd[1+2] = pid2_iq.Out;
 }
 
-
-// #if PC_SIMULATION
-//     REAL Set_maunal_current_id=0.0;
-// #else
-//     extern float Set_maunal_current_id;
-// #endif
-
-// int flag_overwrite_theta_d=FALSE;
-// REAL Overwrite_Current_Frequency = 0.0;
-// REAL used_theta_d_elec = 0.0;
-// REAL angle_shift_for_first_inverter  =  0.435288906 - 0.5*M_PI;
-// REAL angle_shift_for_second_inverter = -1.57021952  - 0.5*M_PI;
-// REAL angle_shift_for_first_inverter  = -0.445220411 - 0.5*M_PI;
-// REAL angle_shift_for_second_inverter =  2.62570524  - 0.5*M_PI;
-// REAL angle_shift_for_first_inverter  = -2.82372499 - 0.5*M_PI;
-// REAL angle_shift_for_second_inverter = 2.17232847 - 0.5*M_PI;
 REAL used_theta_d_elec = 0.0;
-void controller(REAL set_rpm_speed_command, 
+REAL controller(REAL set_rpm_speed_command, 
     int set_current_loop, REAL set_iq_cmd, REAL set_id_cmd,
     int flag_overwrite_theta_d, REAL Overwrite_Current_Frequency,
     REAL angle_shift_for_first_inverter,
@@ -290,10 +274,10 @@ void controller(REAL set_rpm_speed_command,
     CTRL.I->idq[0] = AB2M(CTRL.I->iab[0], CTRL.I->iab[1], CTRL.S->cosT, CTRL.S->sinT);
     CTRL.I->idq[1] = AB2T(CTRL.I->iab[0], CTRL.I->iab[1], CTRL.S->cosT, CTRL.S->sinT);
 
-    CTRL.S->cosT2 = cos(used_theta_d_elec + angle_shift_for_second_inverter);
-    CTRL.S->sinT2 = sin(used_theta_d_elec + angle_shift_for_second_inverter);
-    CTRL.I->idq[0+2] = AB2M(CTRL.I->iab[0+2], CTRL.I->iab[1+2], CTRL.S->cosT2, CTRL.S->sinT2);
-    CTRL.I->idq[1+2] = AB2T(CTRL.I->iab[0+2], CTRL.I->iab[1+2], CTRL.S->cosT2, CTRL.S->sinT2);
+    // CTRL.S->cosT2 = cos(used_theta_d_elec + angle_shift_for_second_inverter);
+    // CTRL.S->sinT2 = sin(used_theta_d_elec + angle_shift_for_second_inverter);
+    // CTRL.I->idq[0+2] = AB2M(CTRL.I->iab[0+2], CTRL.I->iab[1+2], CTRL.S->cosT2, CTRL.S->sinT2);
+    // CTRL.I->idq[1+2] = AB2T(CTRL.I->iab[0+2], CTRL.I->iab[1+2], CTRL.S->cosT2, CTRL.S->sinT2);
 
     /* 更新依赖于dq轴电流的物理量 */
     // MOTOR.KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * CTRL.I->idq_cmd[0];
@@ -317,8 +301,8 @@ void controller(REAL set_rpm_speed_command,
     CTRL.O->iab_cmd[0] = MT2A(CTRL.I->idq_cmd[0], CTRL.I->idq_cmd[1], CTRL.S->cosT_compensated_1p5omegaTs, CTRL.S->sinT_compensated_1p5omegaTs);
     CTRL.O->iab_cmd[1] = MT2B(CTRL.I->idq_cmd[0], CTRL.I->idq_cmd[1], CTRL.S->cosT_compensated_1p5omegaTs, CTRL.S->sinT_compensated_1p5omegaTs);
 
-    CTRL.O->uab_cmd[0+2] = MT2A(CTRL.O->udq_cmd[0+2], CTRL.O->udq_cmd[1+2], CTRL.S->cosT2, CTRL.S->sinT2);
-    CTRL.O->uab_cmd[1+2] = MT2B(CTRL.O->udq_cmd[0+2], CTRL.O->udq_cmd[1+2], CTRL.S->cosT2, CTRL.S->sinT2);
+    // CTRL.O->uab_cmd[0+2] = MT2A(CTRL.O->udq_cmd[0+2], CTRL.O->udq_cmd[1+2], CTRL.S->cosT2, CTRL.S->sinT2);
+    // CTRL.O->uab_cmd[1+2] = MT2B(CTRL.O->udq_cmd[0+2], CTRL.O->udq_cmd[1+2], CTRL.S->cosT2, CTRL.S->sinT2);
 
     /// 8. 补偿逆变器非线性
     main_inverter_voltage_command(1);
@@ -329,6 +313,8 @@ void controller(REAL set_rpm_speed_command,
         ACM.rpm_cmd = set_rpm_speed_command;
         // CTRL.speed_ctrl_err = set_rpm_speed_command*RPM_2_ELEC_RAD_PER_SEC - CTRL.I->omg_elec;
     #endif
+
+    return used_theta_d_elec;
 }
 
 
