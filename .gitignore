@@ -1,0 +1,41 @@
+*.code-workspace
+.vscode/
+
+/Debug/
+/Release/
+/lib/
+/targetConfigs/
+/NewTargetConfiguration.ccxml
+# /.ccsproject
+# /.cproject
+# /.gitignore
+# /.project
+# /.settings
+
+Release/*
+.xdchelp
+config/*
+.launches/*
+
+
+*.sublime-project
+*.sublime-workspace
+
+
+*.d
+*.obj
+*.map
+*.out
+*.xml
+*.mk
+# *.ccxml
+*.opt
+# *.ccsproject
+# *.cproject
+# *.project
+*.prefs
+*.launch
+makefile
+/RAM/
+/FLASH/
+/Flash/
