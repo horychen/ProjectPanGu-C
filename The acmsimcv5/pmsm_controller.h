@@ -49,8 +49,8 @@ typedef struct {
     st_pid_regulator *pos;
     st_pid_regulator *iM2;
     st_pid_regulator *iT2;
-    st_pid_regulator *dispX;
-    st_pid_regulator *dispY;
+    st_PIDController *dispX;
+    st_PIDController *dispY;
     int the_vc_count;
     // Status of Detection
     int PSD_Done;

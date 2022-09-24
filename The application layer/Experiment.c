@@ -17,8 +17,8 @@ void init_experiment_overwrite(){
         Axis.dac_watch_stator_resistance = 1.69;
 
         // Axis.Seletc_exp_operation = AS_LOAD_MOTOR_CONST;
-        Axis.Seletc_exp_operation = SLESSINV_CONST_LOAD_PAA;
-        Axis.Seletc_exp_operation = 0;
+        // Axis.Seletc_exp_operation = SLESSINV_CONST_LOAD_PAA;
+        // Axis.Seletc_exp_operation = 0;
     #endif
 
     if(Axis.Seletc_exp_operation == AS_LOAD_MOTOR_CONST){

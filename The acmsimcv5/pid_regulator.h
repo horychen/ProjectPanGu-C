@@ -55,11 +55,47 @@ extern st_pid_regulator pid2_iT;
 #define pid2_id pid2_iM
 #define pid2_iq pid2_iT
 
-extern st_pid_regulator pid1_disX;
-extern st_pid_regulator pid1_disY;
-
 void ACMSIMC_PIDTuner();
 
 void commands(REAL *p_set_rpm_speed_command, REAL *p_set_iq_cmd, REAL *p_set_id_cmd);
+
+
+
+typedef struct{
+    /* Controller gains */
+    float Kp;
+    float Ki;
+    float Kd;
+
+    /* Derivative low-pass filter time constant */
+    float tau;
+
+    /* Output limits */
+    float outLimit;
+
+    /* Integrator limits */
+    float intLimit;
+
+    /* Sample time (in seconds) */
+    float Ts;
+
+    /* Controller "memory" */
+    float integrator;
+    float prevError;      /* Required for integrator */
+    float differentiator;
+    float prevMeasurement;    /* Required for differentiator */
+
+    /* Controller output */
+    float out;
+
+    /* Controller input */
+    float setpoint;
+    float measurement;
+} st_PIDController;
+extern st_PIDController pid1_dispX;
+extern st_PIDController pid1_dispY;
+void  PIDController_Init(st_PIDController *pid);
+float PIDController_Update(st_PIDController *pid);
+
 
 #endif

@@ -120,6 +120,8 @@ typedef struct{
         REAL dac_time;
         REAL dac_watch[80];
         REAL dac_watch_stator_resistance;
+        int channels[NO_OF_DAC_CHANNELS];
+        int channels_preset;
 } st_axis;
 extern st_axis Axis;
 
