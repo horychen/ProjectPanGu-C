@@ -37,8 +37,25 @@ st_pid_regulator pid1_spd = st_pid_regulator_DEFAULTS;
 st_pid_regulator pid1_pos = st_pid_regulator_DEFAULTS;
 st_pid_regulator pid2_iM  = st_pid_regulator_DEFAULTS;
 st_pid_regulator pid2_iT  = st_pid_regulator_DEFAULTS;
-st_pid_regulator pid1_dispX = st_pid_regulator_DEFAULTS;
-st_pid_regulator pid1_dispY = st_pid_regulator_DEFAULTS;
+
+/* Controller parameters */
+#define SUSPENSION_PID_KP  0.5
+#define SUSPENSION_PID_KI  0.0
+#define SUSPENSION_PID_KD  0.05
+#define SUSPENSION_PID_TAU 0.05
+#define SUSPENSION_PID_OUT_LIMIT 20.0
+#define SUSPENSION_PID_INT_LIMIT 20.0
+
+st_PIDController pid1_dispX = {
+                      SUSPENSION_PID_KP, SUSPENSION_PID_KI, SUSPENSION_PID_KD,
+                      SUSPENSION_PID_TAU,
+                      SUSPENSION_PID_OUT_LIMIT,
+                      SUSPENSION_PID_INT_LIMIT, CL_TS };
+st_PIDController pid1_dispY = {
+                      SUSPENSION_PID_KP, SUSPENSION_PID_KI, SUSPENSION_PID_KD,
+                      SUSPENSION_PID_TAU,
+                      SUSPENSION_PID_OUT_LIMIT,
+                      SUSPENSION_PID_INT_LIMIT, CL_TS };
 
 
 // 初始化顶级结构体指针，指向定义好的内存空间

@@ -30,22 +30,22 @@ void start_hall_conversion(REAL hall_sensor_read[]);
 #endif
 
 #ifdef _XCUBE2 // At Process Instrumentation Lab
-    #define OFFSET_VDC 11
-    #define OFFSET_U   2053
-    #define OFFSET_V   2062
-    #define OFFSET_W   2046
-    #define OFFSET_R   2056
-    #define OFFSET_S   2061
-    #define OFFSET_T   2057
+    #define OFFSET_VDC 11   // ADC0
+    #define OFFSET_U   2054 // 2
+    #define OFFSET_V   2065 // 3
+    #define OFFSET_W   2047 // 1
+    #define OFFSET_R   2058 // 11
+    #define OFFSET_S   2062 // 9
+    #define OFFSET_T   2059 // 8
 
     // Sensor Board 6 Phase SiC MOSFET Inverter
     #define SCALE_VDC 0.0949
-    #define SCALE_U  0.03367
-    #define SCALE_V  0.03388
-    #define SCALE_W  0.0340136
-    #define SCALE_R -0.032
-    #define SCALE_S -0.032
-    #define SCALE_T -0.034
+    #define SCALE_U  0.0325 // 0.03367
+    #define SCALE_V  0.0320 // 0.03388
+    #define SCALE_W  0.0320 // 0.0340136
+    #define SCALE_R -0.0295 //-0.032
+    #define SCALE_S -0.0295 //-0.032
+    #define SCALE_T -0.0290 //-0.034
 #endif
 
 //#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS -976 // for 750W MOTOR1 (w/ hall sensor)
@@ -53,38 +53,30 @@ void start_hall_conversion(REAL hall_sensor_read[]);
 //#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS 330 // for Yaojie linear-rotary motor 相序接回去后，第一套
 //#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS -149 // for 400W sdcq 减速比电机
 
-//#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS 336
-//#define ANGLE_SHIFT_FOR_FIRST_INVERTER  -3.49 //-3.3499999 //  -1.26608086 - 0.5*M_PI; // (for Yaojie Motor)
-//#define ANGLE_SHIFT_FOR_SECOND_INVERTER -4.67 //-4.5 // -2.50660658 - 0.5*M_PI; // (for Yaojie Motor)
+// Yaojie linear rotary stator PM motor
+//#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS -9 // cnt
+//#define ANGLE_SHIFT_FOR_FIRST_INVERTER  3.03999996
+//#define ANGLE_SHIFT_FOR_SECOND_INVERTER 2.0331552
 
-#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS -9 // cnt
-#define ANGLE_SHIFT_FOR_FIRST_INVERTER  3.03999996
-#define ANGLE_SHIFT_FOR_SECOND_INVERTER 2.0331552
-#define YAOJIE_MOTOR_IQ_RPM_REVERSED 1
+#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS 0
+#define ANGLE_SHIFT_FOR_FIRST_INVERTER  0.0 // Suspension Inverter
+#define ANGLE_SHIFT_FOR_SECOND_INVERTER 0.0 // Torque Inverter
 
-// 38637, 38597
-
-//-3.49
-//-4.67
-
-// 0.09 mm per cnt
-// 4 elec.deg per cnt
-
-
-int USE_3_CURRENT_SENSORS = FALSE;
-int USE_HALL_SENSOR_FOR_QEP = FALSE;
+int USE_3_CURRENT_SENSORS = TRUE;
+int USE_HALL_SENSOR_FOR_QEP = TRUE;
+long SQUARE_WAVE_PERIOD = 10000;
 
 void init_experiment_AD_gain_and_offset(){
     /* ADC OFFSET */
     // dc bus sensor
     Axis.adc_offset[0] = OFFSET_VDC;
     // phase current sensor
-    Axis.adc_offset[1] = OFFSET_U;
-    Axis.adc_offset[2] = OFFSET_V;
-    Axis.adc_offset[3] = OFFSET_W;
-    Axis.adc_offset[4] = OFFSET_R;
-    Axis.adc_offset[5] = OFFSET_S;
-    Axis.adc_offset[6] = OFFSET_T;
+    Axis.adc_offset[1] = OFFSET_U; // 2
+    Axis.adc_offset[2] = OFFSET_V; // 3
+    Axis.adc_offset[3] = OFFSET_W; // 1
+    Axis.adc_offset[4] = OFFSET_R; // 11
+    Axis.adc_offset[5] = OFFSET_S; // 9
+    Axis.adc_offset[6] = OFFSET_T; // 7
 
     // hall sensor
     Axis.adc_offset[7] = 1726; //1659.5;// (1350 - -732) / 2
@@ -107,8 +99,8 @@ void init_experiment_AD_gain_and_offset(){
     // hall sensor: the scale does not matter
 
     // displacement sensor
-    Axis.adc_scale[10]  = 0.0005860805860805861;
-    Axis.adc_scale[11]  = 0.0005860805860805861;
+    Axis.adc_scale[10] = 1.0; //0.0005860805860805861;
+    Axis.adc_scale[11] = 1.0; //0.0005860805860805861;
     //    >>> (5/6*4096) / 4095 * 3 * 2 /5*2
     //    2.0004884004884005
     //    >>> 1 / 4095 * 3 * 2 /5*2
@@ -128,9 +120,9 @@ void main(void){
     Axis.Set_manual_rpm = 0.0;
     Axis.Set_manual_current_iq = 0.0;
     Axis.Set_manual_current_id = 0.0;
-    Axis.Seletc_exp_operation = 0;
+    Axis.Seletc_exp_operation = 101;
     Axis.pFLAG_INVERTER_NONLINEARITY_COMPENSATION = &G.FLAG_INVERTER_NONLINEARITY_COMPENSATION;
-    Axis.flag_overwrite_theta_d = 0;
+    Axis.flag_overwrite_theta_d = 1;
     Axis.Overwrite_Current_Frequency = 0;
     Axis.used_theta_d_elec = 0.0;
 //    Axis.angle_shift_for_first_inverter  = -2.82372499 - 0.5*M_PI;
@@ -139,6 +131,11 @@ void main(void){
     Axis.angle_shift_for_second_inverter = ANGLE_SHIFT_FOR_SECOND_INVERTER;
     Axis.OverwriteSpeedOutLimitDuringInit = 3; // A
     Axis.FLAG_ENABLE_PWM_OUTPUT = FALSE;
+    Axis.channels_preset = 9;
+
+    pid1_dispX.setpoint = (-22 + 1456)*0.5; // angle_shift_for_first_inverter = 6.0
+    pid1_dispY.setpoint = (200 + 1300)*0.5;
+
 
     InitSysCtrl();        // 1. Initialize System Control: PLL, WatchDog, enable Peripheral Clocks.
     Gpio_initialize();    // 2. Initialize GPIO and assign GPIO to peripherals.
@@ -342,9 +339,6 @@ void main(void){
     }
 }
 
-
-
-
 /* Below is moved from PanGuMainISR.c */
 #if SYSTEM_PROGRAM_MODE==223
 void DeadtimeCompensation(REAL Current_U, REAL Current_V, REAL Current_W, REAL CMPA[], REAL CMPA_DBC[]){
@@ -511,7 +505,7 @@ void measurement(){
 
     // 转子位置和转速接口 以及 转子位置和转速测量
     Uint32 QPOSCNT   = EQep1Regs.QPOSCNT;
-    ENC.rpm          = YAOJIE_MOTOR_IQ_RPM_REVERSED*PostionSpeedMeasurement_MovingAvergage(QPOSCNT, CTRL.enc);
+    ENC.rpm          = PostionSpeedMeasurement_MovingAvergage(QPOSCNT, CTRL.enc);
 
     // Convert adc results
     Axis.vdc    =((REAL)(AdcaResultRegs.ADCRESULT0 ) - Axis.adc_offset[0]) * Axis.adc_scale[0];
@@ -537,11 +531,12 @@ void measurement(){
         CTRL.I->theta_d_elec = hall_theta_r_elec;
         CTRL.I->omg_elec     = 0.0;
     }else if(USE_HALL_SENSOR_FOR_QEP == 2){
+        // Yaojie linear motion distance LVDT sensor
         CTRL.I->theta_d_elec = hall_sensor_read[2] * 0.0222222223 * M_PI; // 4 / 180
         CTRL.I->omg_elec     = 0.0;
     }else{
         CTRL.I->theta_d_elec = ENC.theta_d_elec;
-        CTRL.I->omg_elec     = YAOJIE_MOTOR_IQ_RPM_REVERSED*ENC.omg_elec;
+        CTRL.I->omg_elec     = ENC.omg_elec;
     }
     CTRL.I->rpm = CTRL.I->omg_elec * ELEC_RAD_PER_SEC_2_RPM;
 
@@ -686,6 +681,36 @@ void PanGuMainISR(void){
         // DSP中控制器的时间
         timebase_counter += 1;
         CTRL.timebase = CL_TS * timebase_counter; //CTRL.timebase += CL_TS; // 2048 = float/double max
+
+        if(Axis.Seletc_exp_operation == 100){
+            static long counter = 0;
+            counter += 1;
+            if(counter<SQUARE_WAVE_PERIOD*0.5){
+                Axis.Set_manual_current_id = 20;
+            }else{
+                Axis.Set_manual_current_id = -20;
+                if(counter>=SQUARE_WAVE_PERIOD) counter = 0;
+            }
+        }else if(Axis.Seletc_exp_operation == 101){
+            static long counter = 0;
+            counter += 1;
+            if(counter<SQUARE_WAVE_PERIOD*0.5){
+                Axis.Set_manual_current_iq = 20;
+            }else{
+                Axis.Set_manual_current_iq = -20;
+                if(counter>=SQUARE_WAVE_PERIOD) counter = 0;
+            }
+        }else if(Axis.Seletc_exp_operation == 200){
+            pid1_dispX.setpoint;
+            pid1_dispY.setpoint;
+            pid1_dispX.measurement = eddy_displacement[0];
+            pid1_dispY.measurement = eddy_displacement[1];
+            PIDController_Update(&pid1_dispX);
+            PIDController_Update(&pid1_dispY);
+            Axis.Set_manual_current_id = -pid1_dispY.out;
+            Axis.Set_manual_current_iq = -pid1_dispX.out;
+            完成双自由度，给定一个torque id的同时再做悬浮力控制防止转子转动？
+        }
 
         // 根据指令，产生控制输出（电压）
         #if ENABLE_COMMISSIONING == FALSE

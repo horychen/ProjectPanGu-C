@@ -15,56 +15,56 @@ struct IPC_MEMORY_READ Read;
 #pragma DATA_SECTION( Read, "SHARERAMGS0");
 
 
-//int channels[4]={2,3,14,15}; // 自整定
-//int channels[4]={2,3,14,16}; // 自整定
-//int channels[4]={4,5,6,7};
-//int channels[4]={10,12,6,7};
-//int channels[4]={10,11,20,21}; // 磁链和位置观测实验
-//int channels[4]={6,7,20,21}; // 低速运行实验
+//int Axis.channels[4]={2,3,14,15}; // 自整定
+//int Axis.channels[4]={2,3,14,16}; // 自整定
+//int Axis.channels[4]={4,5,6,7};
+//int Axis.channels[4]={10,12,6,7};
+//int Axis.channels[4]={10,11,20,21}; // 磁链和位置观测实验
+//int Axis.channels[4]={6,7,20,21}; // 低速运行实验
 
-//int channels[NO_OF_DAC_CHANNELS]={5,23,4,21,6,7}; // 低速运行实验
-//int channels[NO_OF_DAC_CHANNELS]={5,23,20,21,6,7}; // 低速运行实验
+//int Axis.channels[NO_OF_DAC_Axis.channels]={5,23,4,21,6,7}; // 低速运行实验
+//int Axis.channels[NO_OF_DAC_Axis.channels]={5,23,20,21,6,7}; // 低速运行实验
 
 
-//int channels[4]={26,27,5,22}; // 高速运行实验
-//int channels[NO_OF_DAC_CHANNELS]={5,23,26,27,22,19}; // 高速运行实验
-//int channels[NO_OF_DAC_CHANNELS]={5,23,26,27,12,22}; // 高速运行实验
+//int Axis.channels[4]={26,27,5,22}; // 高速运行实验
+//int Axis.channels[NO_OF_DAC_Axis.channels]={5,23,26,27,22,19}; // 高速运行实验
+//int Axis.channels[NO_OF_DAC_Axis.channels]={5,23,26,27,12,22}; // 高速运行实验
 
 
 // ECAP
-//int channels[NO_OF_DAC_CHANNELS]={0,1,4,5,6,7};
-//int channels[NO_OF_DAC_CHANNELS]={0,1,32,34,33,35};
-//int channels[NO_OF_DAC_CHANNELS]={0,1,4,38,32,33};
+//int Axis.channels[NO_OF_DAC_Axis.channels]={0,1,4,5,6,7};
+//int Axis.channels[NO_OF_DAC_Axis.channels]={0,1,32,34,33,35};
+//int Axis.channels[NO_OF_DAC_Axis.channels]={0,1,4,38,32,33};
 
 // NSOAF-Rev1
-//int channels[NO_OF_DAC_CHANNELS]={6,7,20,21,5,23};
-//int channels[NO_OF_DAC_CHANNELS]={6,7,30,32,31,33};
-//int channels[NO_OF_DAC_CHANNELS]={6,7,20,21,32,33};
+//int Axis.channels[NO_OF_DAC_Axis.channels]={6,7,20,21,5,23};
+//int Axis.channels[NO_OF_DAC_Axis.channels]={6,7,30,32,31,33};
+//int Axis.channels[NO_OF_DAC_Axis.channels]={6,7,20,21,32,33};
 
 // ECAP
-//int channels[NO_OF_DAC_CHANNELS]={6,7,40,42,41,43};
-//int channels[NO_OF_DAC_CHANNELS]={6,7,44,45,46,47};
-//int channels[NO_OF_DAC_CHANNELS]={46,47,20,21,6,7};
+//int Axis.channels[NO_OF_DAC_Axis.channels]={6,7,40,42,41,43};
+//int Axis.channels[NO_OF_DAC_Axis.channels]={6,7,44,45,46,47};
+//int Axis.channels[NO_OF_DAC_Axis.channels]={46,47,20,21,6,7};
 
-//int channels[NO_OF_DAC_CHANNELS]={46,47,20,21,6,7,59,59}; // ecap dq
-//int channels[NO_OF_DAC_CHANNELS]={10,11,20,21,6,7,59,59}; // psi_2
-//int channels[NO_OF_DAC_CHANNELS]={10,11,20,21,6,39,39,59}; // park trapezoidal
-//int channels[NO_OF_DAC_CHANNELS]={10,11,20,21,6,7,39,59}; // park trapezoidal
-//int channels[NO_OF_DAC_CHANNELS]={10,11,20,21,6,7,5,23}; // rev1 sensorless slow reversal
+//int Axis.channels[NO_OF_DAC_Axis.channels]={46,47,20,21,6,7,59,59}; // ecap dq
+//int Axis.channels[NO_OF_DAC_Axis.channels]={10,11,20,21,6,7,59,59}; // psi_2
+//int Axis.channels[NO_OF_DAC_Axis.channels]={10,11,20,21,6,39,39,59}; // park trapezoidal
+//int Axis.channels[NO_OF_DAC_Axis.channels]={10,11,20,21,6,7,39,59}; // park trapezoidal
+//int Axis.channels[NO_OF_DAC_Axis.channels]={10,11,20,21,6,7,5,23}; // rev1 sensorless slow reversal
 
-//int channels[NO_OF_DAC_CHANNELS]={51,52,20,21,6,7,54,59}; // test huwu 1998
-//int channels[NO_OF_DAC_CHANNELS]={10,11,20,21,6,7,55,59}; // Compare to CM-VM fusion with only KP
+//int Axis.channels[NO_OF_DAC_Axis.channels]={51,52,20,21,6,7,54,59}; // test huwu 1998
+//int Axis.channels[NO_OF_DAC_Axis.channels]={10,11,20,21,6,7,55,59}; // Compare to CM-VM fusion with only KP
 
-//int channels[NO_OF_DAC_CHANNELS]={50,9,20,21,6,7,52,59}; // Chi.Xu 2009 SSR
-//int channels[NO_OF_DAC_CHANNELS]={50,9,52,53,26,27,49,59}; // Chi.Xu 2009 High speed
-//int channels[NO_OF_DAC_CHANNELS]={56,57,3,5,26,27,49,59}; // Chi.Xu 2009 High speed
-//int channels[NO_OF_DAC_CHANNELS]={56,57,3,5,26,27,23,59}; // NSOAF High Speed
+//int Axis.channels[NO_OF_DAC_Axis.channels]={50,9,20,21,6,7,52,59}; // Chi.Xu 2009 SSR
+//int Axis.channels[NO_OF_DAC_Axis.channels]={50,9,52,53,26,27,49,59}; // Chi.Xu 2009 High speed
+//int Axis.channels[NO_OF_DAC_Axis.channels]={56,57,3,5,26,27,49,59}; // Chi.Xu 2009 High speed
+//int Axis.channels[NO_OF_DAC_Axis.channels]={56,57,3,5,26,27,23,59}; // NSOAF High Speed
 
-//int channels[NO_OF_DAC_CHANNELS]={6,7,49,59,20,21,47,48}; // ESOAF
+//int Axis.channels[NO_OF_DAC_Axis.channels]={6,7,49,59,20,21,47,48}; // ESOAF
 
-int channels[NO_OF_DAC_CHANNELS]={3,5,49,59,20,21,47,48}; // ESOAF
+//int Axis.channels[NO_OF_DAC_Axis.channels]={3,5,49,59,20,21,47,48}; // ESOAF
 
-int channels_preset = 9; //6
+//int Axis.channels_preset = 9; //6
 
 //REAL dac_time_that_cannot_be_modified = 0;
 //REAL if_you_define_an_extra_global_variable_here_you_cannot_modify_dac_time_anymore = 0;
@@ -89,6 +89,7 @@ extern REAL hall_theta_r_elec_local_absolute[3];
 extern REAL normalizer[3];
 extern REAL hall_rotating_direction;
 extern REAL eddy_displacement[2];
+extern REAL used_theta_d_elec;
 
 void write_DAC_buffer(){
 if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
@@ -248,126 +249,132 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
     Axis.dac_watch[25] = hall_sensor_read[2] * 0.0005;
 
 
-    Axis.dac_watch[50] = hall_sensor_read[0] * 0.0005;
-    Axis.dac_watch[51] = hall_sensor_read[1] * 0.0005;
-    Axis.dac_watch[52] = hall_theta_r_elec_local_absolute[0] * 0.1;
-    Axis.dac_watch[53] = hall_rotating_direction;
-    Axis.dac_watch[54] = 1.0/normalizer[0]*0.0005;
-    Axis.dac_watch[55] = hall_qep_count*0.01;
+//    Axis.dac_watch[50] = hall_sensor_read[0] * 0.0005;
+//    Axis.dac_watch[51] = hall_sensor_read[1] * 0.0005;
+//    Axis.dac_watch[52] = hall_theta_r_elec_local_absolute[0] * 0.1;
+//    Axis.dac_watch[53] = hall_rotating_direction;
+//    Axis.dac_watch[54] = 1.0/normalizer[0]*0.0005;
+//    Axis.dac_watch[55] = hall_qep_count*0.01;
     Axis.dac_watch[56] = hall_theta_r_elec[0] * 0.1;
     Axis.dac_watch[57] = hall_theta_r_elec_incremental[0] * 0.1;
 
 //    Axis.dac_watch[56] = CTRL.I->theta_d_elec*0.1;
 //    Axis.dac_watch[57] = CTRL.I->rpm*0.01;
 
-    Axis.dac_watch[58] = eddy_displacement[0];
-    Axis.dac_watch[59] = eddy_displacement[1];
+    Axis.dac_watch[50] = used_theta_d_elec * 0.1;
+    Axis.dac_watch[51] = Axis.iuvw[0] * 0.02;
+
+    Axis.dac_watch[52] = pid1_dispX.prevError * 0.001;
+    Axis.dac_watch[53] = pid1_dispY.prevError * 0.001;
+
+    Axis.dac_watch[54] = eddy_displacement[0]*0.0004;
+    Axis.dac_watch[55] = eddy_displacement[1]*0.0004;
 
 //    Axis.dac_watch[58] = current_pole[0]*0.5;
 //    Axis.dac_watch[59] = current_pole[1]*0.5;
 
 
-    if(channels_preset==1){channels_preset=0;
+    if(Axis.channels_preset==1){Axis.channels_preset=0;
         /*Sensorless using ECAP*/
-        channels[0] = 46;
-        channels[1] = 47;
-        channels[2] = 20;
-        channels[3] = 21;
-        channels[4] =  6;
-        channels[5] =  7;
-        channels[6] = 59;
-    }else if(channels_preset==2){channels_preset=0;
+        Axis.channels[0] = 46;
+        Axis.channels[1] = 47;
+        Axis.channels[2] = 20;
+        Axis.channels[3] = 21;
+        Axis.channels[4] =  6;
+        Axis.channels[5] =  7;
+        Axis.channels[6] = 59;
+    }else if(Axis.channels_preset==2){Axis.channels_preset=0;
         /*ECAP Periods*/
-        channels[0] = 38;
-        channels[1] = 39;
-        channels[2] = 40;
-        channels[3] = 41;
-        channels[4] = 42;
-        channels[5] = 43;
-    }else if(channels_preset==3){channels_preset=0;
+        Axis.channels[0] = 38;
+        Axis.channels[1] = 39;
+        Axis.channels[2] = 40;
+        Axis.channels[3] = 41;
+        Axis.channels[4] = 42;
+        Axis.channels[5] = 43;
+    }else if(Axis.channels_preset==3){Axis.channels_preset=0;
         /*ECAP U phase on/off 1/2*/
-        channels[0] = 48;
-        channels[1] = 49;
-        channels[2] = 50;
-        channels[3] = 51;
-        channels[4] = 46;
-        channels[5] = 47;
-    }else if(channels_preset==4){channels_preset=0;
+        Axis.channels[0] = 48;
+        Axis.channels[1] = 49;
+        Axis.channels[2] = 50;
+        Axis.channels[3] = 51;
+        Axis.channels[4] = 46;
+        Axis.channels[5] = 47;
+    }else if(Axis.channels_preset==4){Axis.channels_preset=0;
         /* Test Holtz03 for online invnonl id. */
-        channels[0] = 30;
-        channels[1] = 31;
-        channels[2] = 32;
-        channels[3] = 33;
-        channels[4] = 34;
-        channels[5] = 59; //35;
-        channels[7] = 55;
-    }else if(channels_preset==5){channels_preset=0;
+        Axis.channels[0] = 30;
+        Axis.channels[1] = 31;
+        Axis.channels[2] = 32;
+        Axis.channels[3] = 33;
+        Axis.channels[4] = 34;
+        Axis.channels[5] = 59; //35;
+        Axis.channels[7] = 55;
+    }else if(Axis.channels_preset==5){Axis.channels_preset=0;
         /* Test Holtz03 for online invnonl id. */
-        channels[0] = 36; // sig_a2
-        channels[1] = 37; // sig_a3
-        channels[2] = 32; // ampl error
-        channels[3] = 59; // angle error
-        channels[4] = 33; // htz.psi_2[0]
-        channels[5] = 12; // AFEOE.psi_2[0]
-        channels[6] = 38; // htz.u_offset[0]
-        channels[7] = 39; // htz.u_offset[1]
-    }else if(channels_preset==6){channels_preset=0;
+        Axis.channels[0] = 36; // sig_a2
+        Axis.channels[1] = 37; // sig_a3
+        Axis.channels[2] = 32; // ampl error
+        Axis.channels[3] = 59; // angle error
+        Axis.channels[4] = 33; // htz.psi_2[0]
+        Axis.channels[5] = 12; // AFEOE.psi_2[0]
+        Axis.channels[6] = 38; // htz.u_offset[0]
+        Axis.channels[7] = 39; // htz.u_offset[1]
+    }else if(Axis.channels_preset==6){Axis.channels_preset=0;
         /* Test Holtz03 for online invnonl id. */
-        channels[0] = 36; // sig_a2
-        channels[1] = 37; // sig_a3
-        channels[2] = 59; // angle error
-        channels[3] = 40; // Vdc
-        //channels[3] = 5; // iq
-        //channels[4] = 30; // htz.psi_2_ampl
-        //channels[5] = 31; // htz.psi_2_ampl_lpf
-        //channels[4] = 33; // htz.psi_2[0]
-        //channels[5] = 12; // AFEOE.psi_2[0]
-        channels[4] = 41; // Compensation Voltage alpha
-        channels[5] = 42; // Compensation Voltage beta
-        channels[6] = 26; // Speed
-        channels[7] = 27; // Speed Estimate
-        //channels[6] = 38; // htz.u_offset[0]
-        //channels[7] = 39; // htz.u_offset[1]
-    }else if(channels_preset==7){channels_preset=0;
+        Axis.channels[0] = 36; // sig_a2
+        Axis.channels[1] = 37; // sig_a3
+        Axis.channels[2] = 59; // angle error
+        Axis.channels[3] = 40; // Vdc
+        //Axis.channels[3] = 5; // iq
+        //Axis.channels[4] = 30; // htz.psi_2_ampl
+        //Axis.channels[5] = 31; // htz.psi_2_ampl_lpf
+        //Axis.channels[4] = 33; // htz.psi_2[0]
+        //Axis.channels[5] = 12; // AFEOE.psi_2[0]
+        Axis.channels[4] = 41; // Compensation Voltage alpha
+        Axis.channels[5] = 42; // Compensation Voltage beta
+        Axis.channels[6] = 26; // Speed
+        Axis.channels[7] = 27; // Speed Estimate
+        //Axis.channels[6] = 38; // htz.u_offset[0]
+        //Axis.channels[7] = 39; // htz.u_offset[1]
+    }else if(Axis.channels_preset==7){Axis.channels_preset=0;
         /* TIE.R1 Slessinv SS */
-        channels[0] = 3; // iq cmd
-        channels[1] = 5; // iq
-        channels[2] = 59; // angle error
-        channels[3] = 39; // u offset beta
-        channels[4] = 38; // psi_2 alpha
-        channels[5] = 1; // dc bus
-        channels[6] = 26; // Speed
-        channels[7] = 27; // Speed Estimate
-    }else if(channels_preset==8){channels_preset=0;
+        Axis.channels[0] = 3; // iq cmd
+        Axis.channels[1] = 5; // iq
+        Axis.channels[2] = 59; // angle error
+        Axis.channels[3] = 39; // u offset beta
+        Axis.channels[4] = 38; // psi_2 alpha
+        Axis.channels[5] = 1; // dc bus
+        Axis.channels[6] = 26; // Speed
+        Axis.channels[7] = 27; // Speed Estimate
+    }else if(Axis.channels_preset==8){Axis.channels_preset=0;
         /* TIE.R1 Slessinv SS */
-        channels[0] = 59; // angle error
-        channels[1] = 5;  // iq
-        channels[2] = 20; // theta_d
-        channels[3] = 21; // hat theta_d
-        channels[4] = 36; //a2 //41; // ual_comp
-        channels[5] = 37; //a3 //42; // ube_comp
-        channels[6] = 26; // Speed
-        //channels[7] = 27; // Speed Estimate
-        channels[7] = 43; // theta_trapezoidal
-    }else if(channels_preset==9){channels_preset=0;
+        Axis.channels[0] = 59; // angle error
+        Axis.channels[1] = 5;  // iq
+        Axis.channels[2] = 20; // theta_d
+        Axis.channels[3] = 21; // hat theta_d
+        Axis.channels[4] = 36; //a2 //41; // ual_comp
+        Axis.channels[5] = 37; //a3 //42; // ube_comp
+        Axis.channels[6] = 26; // Speed
+        //Axis.channels[7] = 27; // Speed Estimate
+        Axis.channels[7] = 43; // theta_trapezoidal
+    }else if(Axis.channels_preset==9){Axis.channels_preset=0;
         /* Slice motor */
-        channels[0] = 25;
-        channels[1] = 52;
-        channels[2] = 58;
-        channels[3] = 59;
-        channels[4] = 53;
-        channels[5] = 54;
+        Axis.channels[0] = 50;
+        Axis.channels[1] = 51;
+        Axis.channels[2] = 54;
+        Axis.channels[3] = 55;
+        Axis.channels[4] = 52;
+        Axis.channels[5] = 53;
     }
 
-    // 八通道DAC输出，请修改channels数组来确定具体输出哪些Axis.dac_watch数组中的变量。
-    Write.dac_buffer[0] = Axis.dac_watch[channels[0]] + Axis.dac_offset[0];
-    Write.dac_buffer[1] = Axis.dac_watch[channels[1]] + Axis.dac_offset[1];
-    Write.dac_buffer[2] = Axis.dac_watch[channels[2]] + Axis.dac_offset[2];
-    Write.dac_buffer[3] = Axis.dac_watch[channels[3]] + Axis.dac_offset[3];
-    Write.dac_buffer[4] = Axis.dac_watch[channels[4]] + Axis.dac_offset[4];
-    Write.dac_buffer[5] = Axis.dac_watch[channels[5]] + Axis.dac_offset[5];
-    Write.dac_buffer[6] = Axis.dac_watch[channels[6]] + Axis.dac_offset[6];
-    Write.dac_buffer[7] = Axis.dac_watch[channels[7]] + Axis.dac_offset[7];
+    // 八通道DAC输出，请修改Axis.channels数组来确定具体输出哪些Axis.dac_watch数组中的变量。
+    Write.dac_buffer[0] = Axis.dac_watch[Axis.channels[0]] + Axis.dac_offset[0];
+    Write.dac_buffer[1] = Axis.dac_watch[Axis.channels[1]] + Axis.dac_offset[1];
+    Write.dac_buffer[2] = Axis.dac_watch[Axis.channels[2]] + Axis.dac_offset[2];
+    Write.dac_buffer[3] = Axis.dac_watch[Axis.channels[3]] + Axis.dac_offset[3];
+    Write.dac_buffer[4] = Axis.dac_watch[Axis.channels[4]] + Axis.dac_offset[4];
+    Write.dac_buffer[5] = Axis.dac_watch[Axis.channels[5]] + Axis.dac_offset[5];
+    Write.dac_buffer[6] = Axis.dac_watch[Axis.channels[6]] + Axis.dac_offset[6];
+    Write.dac_buffer[7] = Axis.dac_watch[Axis.channels[7]] + Axis.dac_offset[7];
 
     Axis.dac_time += CL_TS;
     if((Axis.dac_time)<3){
