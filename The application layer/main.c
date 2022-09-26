@@ -409,13 +409,13 @@ void voltage_commands_to_pwm(){
         CTRL.svgen2.Ubeta  = CTRL.O->uab_cmd_to_inverter[1+2];
     }else if(Axis.use_first_set_three_phase==-1){
 
-        // SVPWM of the motor 3-phase
-        CTRL.svgen1.Ualpha= CTRL.O->uab_cmd_to_inverter[0];
-        CTRL.svgen1.Ubeta = CTRL.O->uab_cmd_to_inverter[1];
+        // SVPWM of the motor 3-phase 第二套逆变器控制转矩
+        CTRL.svgen2.Ualpha = CTRL.O->uab_cmd_to_inverter[0];
+        CTRL.svgen2.Ubeta  = CTRL.O->uab_cmd_to_inverter[1];
 
         // SVPWM of the suspension 3-phase
-        CTRL.svgen2.Ualpha = CTRL.O->uab_cmd_to_inverter[0+2];
-        CTRL.svgen2.Ubeta  = CTRL.O->uab_cmd_to_inverter[1+2];
+        CTRL.svgen1.Ualpha = CTRL.O->uab_cmd_to_inverter[0+2];
+        CTRL.svgen1.Ubeta  = CTRL.O->uab_cmd_to_inverter[1+2];
     }
     SVGEN_Drive(&CTRL.svgen1);
     SVGEN_Drive(&CTRL.svgen2); //, -ctrl.UNot);
@@ -579,7 +579,7 @@ void measurement(){
     }else if(Axis.use_first_set_three_phase==-1){
         IS_C(0)        = Axis.iabg[3];
         IS_C(1)        = Axis.iabg[4];
-        CTRL.I->iab[0] = Axis.iabg[3];
+        CTRL.I->iab[0] = Axis.iabg[3]; // 第二套逆变器控制转矩
         CTRL.I->iab[1] = Axis.iabg[4];
         CTRL.I->iab[0+2] = Axis.iabg[0];
         CTRL.I->iab[1+2] = Axis.iabg[1];
@@ -730,11 +730,11 @@ void PanGuMainISR(void){
             /// 6. 电流环
             // x-axis
             pid2_ix.Fbk = CTRL.I->idq[0+2];
-            pid2_ix.Ref = CTRL.I->idq_cmd[0+2]; if(Axis.Set_suspension_current_loop==1){pid2_ix.Ref = Axis.Set_manual_current_iy;}
+            pid2_ix.Ref = CTRL.I->idq_cmd[0+2]; if(Axis.Set_suspension_current_loop==1){pid2_ix.Ref = Axis.Set_manual_current_ix;}
             pid2_ix.calc(&pid2_ix);
             // y-axis
             pid2_iy.Fbk = CTRL.I->idq[1+2];
-            pid2_iy.Ref = CTRL.I->idq_cmd[1+2]; if(Axis.Set_suspension_current_loop==1){pid2_iy.Ref = Axis.Set_manual_current_ix;}
+            pid2_iy.Ref = CTRL.I->idq_cmd[1+2]; if(Axis.Set_suspension_current_loop==1){pid2_iy.Ref = Axis.Set_manual_current_iy;}
             pid2_iy.calc(&pid2_iy);
 
             CTRL.O->udq_cmd[0+2] = pid2_ix.Out;
