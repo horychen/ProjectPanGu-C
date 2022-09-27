@@ -75,6 +75,7 @@ void init_CTRL(){
 /* Console */
     // See init_experiment_overwrite() in CJHMainISR.c
     G.flag_do_inverter_characteristics = SELF_COMM_INVERTER;
+    G.overwrite_vdc = 20;
 
 /* Black Box Model | Controller quantities */
 
@@ -203,7 +204,7 @@ void null_d_control(int set_current_loop, REAL set_iq_cmd, REAL set_id_cmd){
     // pid2_id.calc(&pid2_id);
     // q-axis
     pid1_iq.Fbk = CTRL.I->idq[1];
-    pid1_iq.Ref = CTRL.I->idq_cmd[1]; if(set_current_loop==1){pid1_iq.Ref = set_iq_cmd;}
+    pid1_iq.Ref = CTRL.I->idq_cmd[1]; if(set_current_loop==1){pid1_iq.Ref = set_iq_cmd; CTRL.I->idq_cmd[1] = set_iq_cmd;}
     pid1_iq.calc(&pid1_iq);
     // pid2_iq.Fbk = CTRL.I->idq[1+2];
     // pid2_iq.Ref = CTRL.I->idq_cmd[1+2]; if(set_current_loop==1){pid2_iq.Ref = set_iq_cmd;}

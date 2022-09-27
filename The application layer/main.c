@@ -117,11 +117,11 @@ void main(void){
     Axis.pAdcbResultRegs = &AdcbResultRegs;
     Axis.use_first_set_three_phase = -1;
     Axis.Set_current_loop = TRUE;
-    Axis.Set_suspension_current_loop = TRUE;
+    Axis.Set_suspension_current_loop = FALSE;
     Axis.Set_manual_rpm = 0.0;
     Axis.Set_manual_current_iq = 0.0;
     Axis.Set_manual_current_id = 0.0;
-    Axis.Select_exp_operation = 101;
+    Axis.Select_exp_operation = 101; //101;
     Axis.pFLAG_INVERTER_NONLINEARITY_COMPENSATION = &G.FLAG_INVERTER_NONLINEARITY_COMPENSATION;
     Axis.flag_overwrite_theta_d = 1;
     Axis.Overwrite_Current_Frequency = 0;
@@ -650,7 +650,7 @@ void PanGuMainISR(void){
     #endif
 
     // 采样，包括DSP中的ADC采样等
-    DELAY_US(2); // wait for adc conversion TODO: check adc eoc flag?
+    // DELAY_US(2); // wait for adc conversion TODO: check adc eoc flag?
     measurement();
 
     if(!Axis.FLAG_ENABLE_PWM_OUTPUT){
@@ -700,6 +700,8 @@ void PanGuMainISR(void){
                     Axis.Set_manual_current_ix = -20;
                     if(counter>=SQUARE_WAVE_PERIOD) counter = 0;
                 }
+                CTRL.I->idq_cmd[0+2] = Axis.Set_manual_current_ix - 0.5 * CTRL.I->idq_cmd[0];
+                CTRL.I->idq_cmd[1+2] = Axis.Set_manual_current_iy - 0.5 * CTRL.I->idq_cmd[1];
             }else if(Axis.Select_exp_operation == 101){
                 static long counter = 0;
                 counter += 1;
@@ -709,6 +711,8 @@ void PanGuMainISR(void){
                     Axis.Set_manual_current_iy = -20;
                     if(counter>=SQUARE_WAVE_PERIOD) counter = 0;
                 }
+                CTRL.I->idq_cmd[0+2] = Axis.Set_manual_current_ix - 0.5 * CTRL.I->idq_cmd[0];
+                CTRL.I->idq_cmd[1+2] = Axis.Set_manual_current_iy - 0.5 * CTRL.I->idq_cmd[1];
             }else if(Axis.Select_exp_operation == 200){
                 pid1_dispX.setpoint;
                 pid1_dispY.setpoint;
@@ -719,11 +723,14 @@ void PanGuMainISR(void){
                 Axis.Set_manual_current_ix = -pid1_dispY.out*0.0 - 0.5 * CTRL.I->idq_cmd[0];
                 Axis.Set_manual_current_iy = -pid1_dispX.out*0.0 - 0.5 * CTRL.I->idq_cmd[1];
                 // 完成双自由度，给定一个torque id的同时再做悬浮力控制防止转子转动？
+            }else if(Axis.Select_exp_operation == 201){
+                CTRL.I->idq_cmd[0+2] = Axis.Set_manual_current_ix - 0.5 * CTRL.I->idq_cmd[0];
+                CTRL.I->idq_cmd[1+2] = Axis.Set_manual_current_iy - 0.5 * CTRL.I->idq_cmd[1];
             }
 
             // Park Transform for Suspension Inverter
-            CTRL.S->cosT2 = cos(- Axis.used_theta_d_elec); //  + Axis.angle_shift_for_second_inverter
-            CTRL.S->sinT2 = sin(- Axis.used_theta_d_elec);
+            CTRL.S->cosT2 = cos( - Axis.used_theta_d_elec); //  + Axis.angle_shift_for_second_inverter
+            CTRL.S->sinT2 = sin( - Axis.used_theta_d_elec);
             CTRL.I->idq[0+2] = AB2M(CTRL.I->iab[0+2], CTRL.I->iab[1+2], CTRL.S->cosT2, CTRL.S->sinT2);
             CTRL.I->idq[1+2] = AB2T(CTRL.I->iab[0+2], CTRL.I->iab[1+2], CTRL.S->cosT2, CTRL.S->sinT2);
 
