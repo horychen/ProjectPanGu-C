@@ -1,6 +1,15 @@
 #include <All_Definition.h>
 st_axis Axis;
 
+REAL Prototype_Sensor_Install_Angle = -1.25; // 0.785398; // (60.0/180.0*M_PI);
+REAL cos_Prototype_Sensor_Install_Angle; // = (60.0/180.0*M_PI);
+REAL sin_Prototype_Sensor_Install_Angle; // = (60.0/180.0*M_PI);
+
+long int X_DISPLACEMENT_LOOP_CEILING = 10;
+long int Y_DISPLACEMENT_LOOP_CEILING = 10;
+long int the_x_disp_control_count = 1;
+long int the_y_disp_control_count = 1;
+
 REAL eddy_displacement[2] = {0,0};
 
 REAL hall_sensor_read[3] = {0, 0, 0};
@@ -59,8 +68,8 @@ void start_hall_conversion(REAL hall_sensor_read[]);
 //#define ANGLE_SHIFT_FOR_SECOND_INVERTER 2.0331552
 
 #define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS 0
-#define ANGLE_SHIFT_FOR_FIRST_INVERTER  0.0 // Suspension Inverter
-#define ANGLE_SHIFT_FOR_SECOND_INVERTER 0.0 // Torque Inverter
+#define ANGLE_SHIFT_FOR_FIRST_INVERTER  0.0 // Torque Inverter
+#define ANGLE_SHIFT_FOR_SECOND_INVERTER 0.0 // Suspension Inverter
 
 int USE_3_CURRENT_SENSORS = TRUE;
 int USE_HALL_SENSOR_FOR_QEP = TRUE;
@@ -84,8 +93,8 @@ void init_experiment_AD_gain_and_offset(){
     Axis.adc_offset[9] = 1850; // (700+3000)/2
 
     // displacement sensor
-    Axis.adc_offset[10] = 0;
-    Axis.adc_offset[11] = 0;
+    Axis.adc_offset[10] = (1711 - 210)*0.5 + 210; // 767;
+    Axis.adc_offset[11] = (1540 -  25)*0.5 +  25; // 683;
 
     /* ADC SCALE */
     Axis.adc_scale[0] = SCALE_VDC;
@@ -99,8 +108,8 @@ void init_experiment_AD_gain_and_offset(){
     // hall sensor: the scale does not matter
 
     // displacement sensor
-    Axis.adc_scale[10] = 1.0; //0.0005860805860805861;
-    Axis.adc_scale[11] = 1.0; //0.0005860805860805861;
+    Axis.adc_scale[10] =  1.0; //0.0005860805860805861;
+    Axis.adc_scale[11] =  1.0; //0.0005860805860805861;
     //    >>> (5/6*4096) / 4095 * 3 * 2 /5*2
     //    2.0004884004884005
     //    >>> 1 / 4095 * 3 * 2 /5*2
@@ -117,14 +126,16 @@ void main(void){
     Axis.pAdcbResultRegs = &AdcbResultRegs;
     Axis.use_first_set_three_phase = -1;
     Axis.Set_current_loop = TRUE;
-    Axis.Set_suspension_current_loop = FALSE;
+    Axis.Set_x_suspension_current_loop = FALSE;
+    Axis.Set_y_suspension_current_loop = FALSE;
     Axis.Set_manual_rpm = 0.0;
     Axis.Set_manual_current_iq = 0.0;
-    Axis.Set_manual_current_id = 0.0;
-    Axis.Select_exp_operation = 101; //101;
+    Axis.Set_manual_current_id = 20.0;
+    Axis.Select_exp_operation = 200; //101;
     Axis.pFLAG_INVERTER_NONLINEARITY_COMPENSATION = &G.FLAG_INVERTER_NONLINEARITY_COMPENSATION;
     Axis.flag_overwrite_theta_d = 1;
     Axis.Overwrite_Current_Frequency = 0;
+    Axis.Overwrite_Suspension_Current_Frequency = 0.5;
     Axis.used_theta_d_elec = 0.0;
 //    Axis.angle_shift_for_first_inverter  = -2.82372499 - 0.5*M_PI;
 //    Axis.angle_shift_for_second_inverter =  2.17232847 - 0.5*M_PI;
@@ -134,8 +145,10 @@ void main(void){
     Axis.FLAG_ENABLE_PWM_OUTPUT = FALSE;
     Axis.channels_preset = 9;
 
-    pid1_dispX.setpoint = (-22 + 1456)*0.5; // angle_shift_for_first_inverter = 6.0
-    pid1_dispY.setpoint = (200 + 1300)*0.5;
+    pid1_dispX.setpoint = -210; //-150; // -210;  //(-22 + 1456)*0.5; // angle_shift_for_first_inverter = 6.0
+    pid1_dispY.setpoint =  275; // 275;  //(200 + 1300)*0.5;
+
+    //pid1_dispY.outLimit = 0.0;
 
 
     InitSysCtrl();        // 1. Initialize System Control: PLL, WatchDog, enable Peripheral Clocks.
@@ -690,7 +703,12 @@ void PanGuMainISR(void){
                 Axis.angle_shift_for_first_inverter,
                 Axis.angle_shift_for_second_inverter);
 
-            // 悬浮逆变器的电流指令
+            // 按实际涡流位移传感器的安装角度对测量结果进行调整
+            cos_Prototype_Sensor_Install_Angle = cos(Prototype_Sensor_Install_Angle);
+            sin_Prototype_Sensor_Install_Angle = sin(Prototype_Sensor_Install_Angle);
+            pid1_dispX.measurement = AB2M(eddy_displacement[0], eddy_displacement[1], cos_Prototype_Sensor_Install_Angle, sin_Prototype_Sensor_Install_Angle);
+            pid1_dispY.measurement = AB2T(eddy_displacement[0], eddy_displacement[1], cos_Prototype_Sensor_Install_Angle, sin_Prototype_Sensor_Install_Angle);
+
             if(Axis.Select_exp_operation == 100){
                 static long counter = 0;
                 counter += 1;
@@ -700,8 +718,6 @@ void PanGuMainISR(void){
                     Axis.Set_manual_current_ix = -20;
                     if(counter>=SQUARE_WAVE_PERIOD) counter = 0;
                 }
-                CTRL.I->idq_cmd[0+2] = Axis.Set_manual_current_ix - 0.5 * CTRL.I->idq_cmd[0];
-                CTRL.I->idq_cmd[1+2] = Axis.Set_manual_current_iy - 0.5 * CTRL.I->idq_cmd[1];
             }else if(Axis.Select_exp_operation == 101){
                 static long counter = 0;
                 counter += 1;
@@ -711,37 +727,59 @@ void PanGuMainISR(void){
                     Axis.Set_manual_current_iy = -20;
                     if(counter>=SQUARE_WAVE_PERIOD) counter = 0;
                 }
-                CTRL.I->idq_cmd[0+2] = Axis.Set_manual_current_ix - 0.5 * CTRL.I->idq_cmd[0];
-                CTRL.I->idq_cmd[1+2] = Axis.Set_manual_current_iy - 0.5 * CTRL.I->idq_cmd[1];
             }else if(Axis.Select_exp_operation == 200){
                 pid1_dispX.setpoint;
                 pid1_dispY.setpoint;
-                pid1_dispX.measurement = eddy_displacement[0];
-                pid1_dispY.measurement = eddy_displacement[1];
-                PIDController_Update(&pid1_dispX);
-                PIDController_Update(&pid1_dispY);
-                Axis.Set_manual_current_ix = -pid1_dispY.out*0.0 - 0.5 * CTRL.I->idq_cmd[0];
-                Axis.Set_manual_current_iy = -pid1_dispX.out*0.0 - 0.5 * CTRL.I->idq_cmd[1];
+                if(the_x_disp_control_count++ >= X_DISPLACEMENT_LOOP_CEILING){
+                    the_x_disp_control_count = 1;
+                    PIDController_Update(&pid1_dispX);
+                    if(Axis.Set_x_suspension_current_loop==FALSE){
+                        Axis.Set_manual_current_ix = pid1_dispX.out;
+                    }
+                   }
+                if(the_y_disp_control_count++ >= Y_DISPLACEMENT_LOOP_CEILING){
+                    the_y_disp_control_count = 1;
+                    PIDController_Update(&pid1_dispY);
+                    if(Axis.Set_y_suspension_current_loop==FALSE){
+                        Axis.Set_manual_current_iy = pid1_dispY.out;
+                    }
+                }
+
                 // 完成双自由度，给定一个torque id的同时再做悬浮力控制防止转子转动？
-            }else if(Axis.Select_exp_operation == 201){
+
+            }else if(Axis.Select_exp_operation == 300){
+                // 需要人为给定一个恒定的id，悬浮电流矢量迅速旋转，观察位移轨迹
+                if(Axis.flag_overwrite_theta_d == TRUE){
+                    Axis.angle_shift_for_second_inverter += CL_TS*Axis.Overwrite_Suspension_Current_Frequency;
+
+                    if(Axis.angle_shift_for_second_inverter>M_PI){
+                        Axis.angle_shift_for_second_inverter-=2*M_PI;
+                    }else if(Axis.angle_shift_for_second_inverter<-M_PI){
+                        Axis.angle_shift_for_second_inverter+=2*M_PI;
+                    }
+                }
+            }
+
+            // 悬浮逆变器的电流指令
+            if(Axis.use_first_set_three_phase==-1){
                 CTRL.I->idq_cmd[0+2] = Axis.Set_manual_current_ix - 0.5 * CTRL.I->idq_cmd[0];
                 CTRL.I->idq_cmd[1+2] = Axis.Set_manual_current_iy - 0.5 * CTRL.I->idq_cmd[1];
             }
 
             // Park Transform for Suspension Inverter
-            CTRL.S->cosT2 = cos( - Axis.used_theta_d_elec); //  + Axis.angle_shift_for_second_inverter
-            CTRL.S->sinT2 = sin( - Axis.used_theta_d_elec);
+            CTRL.S->cosT2 = cos( - Axis.used_theta_d_elec + Axis.angle_shift_for_second_inverter); //  + Axis.angle_shift_for_second_inverter
+            CTRL.S->sinT2 = sin( - Axis.used_theta_d_elec + Axis.angle_shift_for_second_inverter);
             CTRL.I->idq[0+2] = AB2M(CTRL.I->iab[0+2], CTRL.I->iab[1+2], CTRL.S->cosT2, CTRL.S->sinT2);
             CTRL.I->idq[1+2] = AB2T(CTRL.I->iab[0+2], CTRL.I->iab[1+2], CTRL.S->cosT2, CTRL.S->sinT2);
 
             /// 6. 电流环
             // x-axis
             pid2_ix.Fbk = CTRL.I->idq[0+2];
-            pid2_ix.Ref = CTRL.I->idq_cmd[0+2]; if(Axis.Set_suspension_current_loop==1){pid2_ix.Ref = Axis.Set_manual_current_ix;}
+            pid2_ix.Ref = CTRL.I->idq_cmd[0+2]; //{pid2_ix.Ref = Axis.Set_manual_current_ix;}
             pid2_ix.calc(&pid2_ix);
             // y-axis
             pid2_iy.Fbk = CTRL.I->idq[1+2];
-            pid2_iy.Ref = CTRL.I->idq_cmd[1+2]; if(Axis.Set_suspension_current_loop==1){pid2_iy.Ref = Axis.Set_manual_current_iy;}
+            pid2_iy.Ref = CTRL.I->idq_cmd[1+2]; if(Axis.Set_y_suspension_current_loop==1){pid2_iy.Ref = Axis.Set_manual_current_iy;}
             pid2_iy.calc(&pid2_iy);
 
             CTRL.O->udq_cmd[0+2] = pid2_ix.Out;
@@ -817,3 +855,4 @@ __interrupt void EPWM1ISR(void){
 }
 
 #endif
+

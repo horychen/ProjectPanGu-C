@@ -39,11 +39,11 @@ st_pid_regulator pid2_ix  = st_pid_regulator_DEFAULTS;
 st_pid_regulator pid2_iy  = st_pid_regulator_DEFAULTS;
 
 /* Controller parameters */
-#define SUSPENSION_PID_KP  0.5
-#define SUSPENSION_PID_KI  0.0
-#define SUSPENSION_PID_KD  0.05
+#define SUSPENSION_PID_KP  0.1 // 0.05 // 0.4 // 0.05
+#define SUSPENSION_PID_KI  1.0 // 4
+#define SUSPENSION_PID_KD  0.04 // 0.02 // 1.2 // 0.01
 #define SUSPENSION_PID_TAU 0.05
-#define SUSPENSION_PID_OUT_LIMIT 20.0
+#define SUSPENSION_PID_OUT_LIMIT 25.0
 #define SUSPENSION_PID_INT_LIMIT 20.0
 
 st_PIDController pid1_dispX = {

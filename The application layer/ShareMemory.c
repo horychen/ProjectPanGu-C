@@ -261,14 +261,26 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
 //    Axis.dac_watch[56] = CTRL.I->theta_d_elec*0.1;
 //    Axis.dac_watch[57] = CTRL.I->rpm*0.01;
 
-    Axis.dac_watch[50] = used_theta_d_elec * 0.1;
+    //Axis.dac_watch[50] = used_theta_d_elec * 0.1;
+    Axis.dac_watch[50] = Axis.angle_shift_for_second_inverter*0.1;
     Axis.dac_watch[51] = Axis.iuvw[0] * 0.02;
 
-    Axis.dac_watch[52] = pid1_dispX.prevError * 0.001;
-    Axis.dac_watch[53] = pid1_dispY.prevError * 0.001;
+//    Axis.dac_watch[52] = pid1_dispX.prevError * 0.001;
+//    Axis.dac_watch[53] = pid1_dispY.prevError * 0.001;
 
-    Axis.dac_watch[54] = eddy_displacement[0]*0.0004;
-    Axis.dac_watch[55] = eddy_displacement[1]*0.0004;
+    Axis.dac_watch[52] = pid2_ix.Ref * 0.02;
+    Axis.dac_watch[53] = pid2_ix.Fbk * 0.02;
+
+    //Axis.dac_watch[54] = eddy_displacement[0]*0.0004;
+    //Axis.dac_watch[55] = eddy_displacement[1]*0.0004;
+    //Axis.dac_watch[54] = pid1_dispX.measurement*0.001;
+    //Axis.dac_watch[55] = pid1_dispY.measurement*0.001;
+    Axis.dac_watch[54] = pid1_dispX.prevError*0.001;
+    Axis.dac_watch[55] = pid1_dispY.prevError*0.001;
+
+    Axis.dac_watch[56] = pid2_iy.Ref * 0.02;
+    Axis.dac_watch[57] = pid2_iy.Fbk * 0.02;
+
 
 //    Axis.dac_watch[58] = current_pole[0]*0.5;
 //    Axis.dac_watch[59] = current_pole[1]*0.5;
@@ -283,6 +295,14 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
         Axis.channels[4] =  6;
         Axis.channels[5] =  7;
         Axis.channels[6] = 59;
+    }else if(Axis.channels_preset==9){Axis.channels_preset=0;
+        /* Slice motor */
+        Axis.channels[0] = 53;
+        Axis.channels[1] = 57;
+        Axis.channels[2] = 54;
+        Axis.channels[3] = 55;
+        Axis.channels[4] = 50;
+        Axis.channels[5] = 51;
     }else if(Axis.channels_preset==2){Axis.channels_preset=0;
         /*ECAP Periods*/
         Axis.channels[0] = 38;
@@ -356,14 +376,7 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
         Axis.channels[6] = 26; // Speed
         //Axis.channels[7] = 27; // Speed Estimate
         Axis.channels[7] = 43; // theta_trapezoidal
-    }else if(Axis.channels_preset==9){Axis.channels_preset=0;
-        /* Slice motor */
-        Axis.channels[0] = 50;
-        Axis.channels[1] = 51;
-        Axis.channels[2] = 54;
-        Axis.channels[3] = 55;
-        Axis.channels[4] = 52;
-        Axis.channels[5] = 53;
+
     }
 
     // 八通道DAC输出，请修改Axis.channels数组来确定具体输出哪些Axis.dac_watch数组中的变量。
