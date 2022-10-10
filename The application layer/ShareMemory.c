@@ -140,8 +140,8 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
 
     //Axis.dac_watch[26] = CTRL.I->rpm*0.0005;
     //Axis.dac_watch[27] = ELECTRICAL_SPEED_FEEDBACK*ELEC_RAD_PER_SEC_2_RPM*0.0005;
-    Axis.dac_watch[26] = CTRL.I->rpm*0.001;
-    Axis.dac_watch[27] = ELECTRICAL_SPEED_FEEDBACK*ELEC_RAD_PER_SEC_2_RPM*0.001;
+    Axis.dac_watch[26] = CTRL.I->rpm*0.02;
+    Axis.dac_watch[27] = ELECTRICAL_SPEED_FEEDBACK*ELEC_RAD_PER_SEC_2_RPM*0.02;
 
     Axis.dac_watch[30] = htz.psi_2_ampl;
     Axis.dac_watch[31] = htz.psi_2_ampl_lpf;
@@ -288,7 +288,7 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
 
     if(Axis.channels_preset==101){Axis.channels_preset=0;
         /* Slice motor + sensorless */
-        Axis.channels[0] = 47; // ESOAF theta_d
+        Axis.channels[0] = 27; // ESOAF theta_d
         Axis.channels[1] = 21; // AFEOE theta_d
         Axis.channels[2] = 58; // Hall sensor theta_d
         Axis.channels[3] = 10; // AFEOE psi_2[0]
