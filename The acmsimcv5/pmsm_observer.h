@@ -159,7 +159,7 @@ struct ObserverForExperiment{
         REAL x[NS_CHEN_2021];
         REAL ell[NS_CHEN_2021];
 
-        REAL bool_ramp_load_torque; // TRUE for 4th order ESO
+        int bool_ramp_load_torque; // TRUE for 4th order ESO
         REAL omega_ob; // one parameter tuning
         REAL set_omega_ob;
 

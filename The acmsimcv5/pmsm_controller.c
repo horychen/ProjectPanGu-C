@@ -255,12 +255,12 @@ REAL controller(REAL set_rpm_speed_command,
     if(CTRL.S->go_sensorless == TRUE){
         //（无感）
         CTRL.I->omg_elec     = ELECTRICAL_SPEED_FEEDBACK;    //harnefors.omg_elec;
-        CTRL.I->theta_d_elec = ELECTRICAL_POSITION_FEEDBACK; //harnefors.theta_d;        
+        CTRL.I->theta_d_elec = ELECTRICAL_POSITION_FEEDBACK; //harnefors.theta_d;
     }
 
     /// 4. 帕克变换（使用反馈位置）
     if(flag_overwrite_theta_d){
-        if(fabs(Overwrite_Current_Frequency)>0){        
+        if(fabs(Overwrite_Current_Frequency)>0){
             used_theta_d_elec += CL_TS * Overwrite_Current_Frequency * 2*M_PI ;
             while(used_theta_d_elec> M_PI) used_theta_d_elec -= 2*M_PI;
             while(used_theta_d_elec<-M_PI) used_theta_d_elec += 2*M_PI;

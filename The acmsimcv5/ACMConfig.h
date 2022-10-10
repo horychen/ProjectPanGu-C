@@ -3,7 +3,7 @@
 /* 经常要修改的 */
 #define INVERTER_NONLINEARITY_COMPENSATION_INIT 0 // 5（9月1日及以前峣杰实验一直用的5） // 4 // 1:ParkSul12, 2:Sigmoid, 3:LUT(Obsolete), 4:LUT(by index), 5 Slessinv-a2a3Model
 #define INVERTER_NONLINEARITY                   0 // 4 // 1:ModelSul96, 2:ModelExpSigmoid, 3: ModelExpLUT, 4:LUT(by index)
-#define SENSORLESS_CONTROL FALSE
+#define SENSORLESS_CONTROL TRUE
 #define SENSORLESS_CONTROL_HFSI FALSE
 /* ParkSul2012 梯形波 */
 #define GAIN_THETA_TRAPEZOIDAL (40) //(500) // 20
@@ -17,11 +17,11 @@
 	#define PMSM_RESISTANCE                    0.035
 	#define PMSM_D_AXIS_INDUCTANCE             3.6e-05
 	#define PMSM_Q_AXIS_INDUCTANCE             3.6e-05
-	#define PMSM_PERMANENT_MAGNET_FLUX_LINKAGE 0.0125
+	#define PMSM_PERMANENT_MAGNET_FLUX_LINKAGE 0.0108
 	// 铭牌值
 	#define MOTOR_NUMBER_OF_POLE_PAIRS         22
 	#define MOTOR_RATED_CURRENT_RMS            5.516265912305517
-	#define MOTOR_RATED_POWER_WATT             108.79157315091942
+	#define MOTOR_RATED_POWER_WATT             93.99591920239436
 	#define MOTOR_RATED_SPEED_RPM              400
 	#define MOTOR_SHAFT_INERTIA                4.4000000000000006e-05
 	// 参数误差
@@ -46,9 +46,9 @@
     #endif
 
     /* Select Algorithm 1 */
-    // #define AFE_USED AFEOE
+    #define AFE_USED AFEOE
     // #define AFE_USED huwu
-    #define AFE_USED htz
+    // #define AFE_USED htz
 
     /* Tuning Algorithm 1 */
         /* AFEOE or CM-VM Fusion */
@@ -85,7 +85,7 @@
             #define ELECTRICAL_SPEED_FEEDBACK    nsoaf.xOmg // harnefors.omg_elec
             #define ELECTRICAL_POSITION_FEEDBACK AFE_USED.theta_d // harnefors.theta_d
         #elif SELECT_ALGORITHM == ALG_ESOAF
-            #define ELECTRICAL_SPEED_FEEDBACK    esoaf.xOmg
+            #define ELECTRICAL_SPEED_FEEDBACK    (-esoaf.xOmg) // 薄片电机实验正iq产生负转速
             #define ELECTRICAL_POSITION_FEEDBACK AFE_USED.theta_d
         #else
             // #define ELECTRICAL_SPEED_FEEDBACK    G.omg_elec
@@ -158,9 +158,10 @@
             #define NSOAF_TL_D (0)
 
     /* CHEN 2021 ESO with Active Flux Concept */
+        // #define ESOAF_OMEGA_OBSERVER 10
         // #define ESOAF_OMEGA_OBSERVER 30 // 30 gives acceptable steady state speed ripple, 200
-        #define ESOAF_OMEGA_OBSERVER 150 // 150 gives acceptable disturbance rejection when sudden 3 A load is applied and keeps the system not stop when Vdc changes from 150 V to 300 V.
-        // #define ESOAF_OMEGA_OBSERVER 200 // 200 gives acceptable disturbance rejection when load changes between 1.5 A and 3 A.
+        // #define ESOAF_OMEGA_OBSERVER 150 // 150 gives acceptable disturbance rejection when sudden 3 A load is applied and keeps the system not stop when Vdc changes from 150 V to 300 V.
+        #define ESOAF_OMEGA_OBSERVER 200 // 200 gives acceptable disturbance rejection when load changes between 1.5 A and 3 A.
 
     /* Farza 2009 for EMMF */
         #define FARZA09_HGO_EEMF_VARTHETA 10
@@ -223,16 +224,16 @@
     #define MACHINE_TS_INVERSE (CL_TS_INVERSE*TS_UPSAMPLING_FREQ_EXE_INVERSE)
 
 #define LOAD_INERTIA    0.0
-#define LOAD_TORQUE     1.5
+#define LOAD_TORQUE     0.0
 #define VISCOUS_COEFF   0.0007
 
-#define CURRENT_KP (0.151129)
+#define CURRENT_KP (0.0508442)
 #define CURRENT_KI (972.222)
     #define CURRENT_KI_CODE (CURRENT_KI*CURRENT_KP*CL_TS)
 #define CURRENT_LOOP_LIMIT_VOLTS (50)
 
-#define SPEED_KP (0.00254426)
-#define SPEED_KI (65.5943)
+#define SPEED_KP (0.00121932)
+#define SPEED_KI (33.4282)
     #define MOTOR_RATED_TORQUE ( MOTOR_RATED_POWER_WATT / (MOTOR_RATED_SPEED_RPM/60.0*2*3.1415926) )
     #define MOTOR_TORQUE_CONSTANT ( MOTOR_RATED_TORQUE / (MOTOR_RATED_CURRENT_RMS*1.414) )
     #define MOTOR_BACK_EMF_CONSTANT ( MOTOR_TORQUE_CONSTANT / 1.5 / MOTOR_NUMBER_OF_POLE_PAIRS )
@@ -244,10 +245,11 @@
     // increase to 3 times because of the bug in dynamics clamping
 
 /* Encoder QEP TODO: should read from excel */
-// #define SYSTEM_QEP_PULSES_PER_REV  (10000)
-// #define SYSTEM_QEP_REV_PER_PULSE  (1e-4)
-// #define CNT_2_ELEC_RAD (SYSTEM_QEP_REV_PER_PULSE * 2*M_PI * MOTOR_NUMBER_OF_POLE_PAIRS)
-// #define SYSTEM_QEP_QPOSMAX (9999)
+#define SYSTEM_QEP_PULSES_PER_REV  (10000)
+#define SYSTEM_QEP_REV_PER_PULSE  (1e-4)
+#define CNT_2_ELEC_RAD (SYSTEM_QEP_REV_PER_PULSE * 2*M_PI * MOTOR_NUMBER_OF_POLE_PAIRS)
+#define SYSTEM_QEP_QPOSMAX (9999)
+#define SYSTEM_QEP_QPOSMAX_PLUS_1 (10000)
 
 // #define RESOLVER_NUMBER_OF_POLE_PAIRS 4 // Receive 4 Z-pulses per mechnical revolution from the resolver 
 // #define ONE_OVER_RESOLVER_NUMBER_OF_POLE_PAIRS 0.25 // 1/RESOLVER_NUMBER_OF_POLE_PAIRS
@@ -257,13 +259,13 @@
 // #define SYSTEM_QEP_REV_PER_PULSE   (1.52587890625e-05*ONE_OVER_RESOLVER_NUMBER_OF_POLE_PAIRS) // (1e-4)
 // #define CNT_2_ELEC_RAD (SYSTEM_QEP_REV_PER_PULSE * 2*M_PI * MOTOR_NUMBER_OF_POLE_PAIRS)
 
-#define RESOLVER_NUMBER_OF_POLE_PAIRS 4 // Receive 4 Z-pulses per mechnical revolution from the resolver 
-#define ONE_OVER_RESOLVER_NUMBER_OF_POLE_PAIRS 0.25 // 1/RESOLVER_NUMBER_OF_POLE_PAIRS
-#define SYSTEM_QEP_QPOSMAX (4095) // (9999)
-#define SYSTEM_QEP_QPOSMAX_PLUS_1 (4096)
-#define SYSTEM_QEP_PULSES_PER_REV  (4096*RESOLVER_NUMBER_OF_POLE_PAIRS) // (10000)
-#define SYSTEM_QEP_REV_PER_PULSE   (0.000244140625*ONE_OVER_RESOLVER_NUMBER_OF_POLE_PAIRS) // (1e-4)
-#define CNT_2_ELEC_RAD (SYSTEM_QEP_REV_PER_PULSE * 2*M_PI * MOTOR_NUMBER_OF_POLE_PAIRS)
+// #define RESOLVER_NUMBER_OF_POLE_PAIRS 4 // Receive 4 Z-pulses per mechnical revolution from the resolver 
+// #define ONE_OVER_RESOLVER_NUMBER_OF_POLE_PAIRS 0.25 // 1/RESOLVER_NUMBER_OF_POLE_PAIRS
+// #define SYSTEM_QEP_QPOSMAX (4095) // (9999)
+// #define SYSTEM_QEP_QPOSMAX_PLUS_1 (4096)
+// #define SYSTEM_QEP_PULSES_PER_REV  (4096*RESOLVER_NUMBER_OF_POLE_PAIRS) // (10000)
+// #define SYSTEM_QEP_REV_PER_PULSE   (0.000244140625*ONE_OVER_RESOLVER_NUMBER_OF_POLE_PAIRS) // (1e-4)
+// #define CNT_2_ELEC_RAD (SYSTEM_QEP_REV_PER_PULSE * 2*M_PI * MOTOR_NUMBER_OF_POLE_PAIRS)
 
 
 /* 指令类型 */
@@ -280,5 +282,5 @@
 #define SWEEP_FREQ_C2V FALSE
 #define SWEEP_FREQ_C2C FALSE
 
-#define DATA_FILE_NAME "../dat/TEST_PHIL_LAB_PID_CODES-668-1000-9-4538.dat"
+#define DATA_FILE_NAME "../dat/TEST_PHIL_LAB_PID_CODES-225-1000-4-4825.dat"
 #endif
