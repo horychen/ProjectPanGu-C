@@ -15,7 +15,8 @@ REAL eddy_displacement[2] = {0,0};
 REAL hall_sensor_read[3] = {0, 0, 0};
 extern REAL hall_qep_angle;
 extern REAL hall_qep_count;
-extern REAL hall_theta_r_elec;
+extern REAL hall_theta_r_elec[3];
+extern REAL hall_omega_r_elec[3];
 REAL last_hall_qep_count;
 void start_hall_conversion(REAL hall_sensor_read[]);
 
@@ -124,16 +125,16 @@ void main(void){
     Axis.pCTRL = &CTRL;
     Axis.pAdcaResultRegs = &AdcaResultRegs;
     Axis.pAdcbResultRegs = &AdcbResultRegs;
-    Axis.use_first_set_three_phase = -1;
-    Axis.Set_current_loop = TRUE;
+    Axis.use_first_set_three_phase = 2;
+    Axis.Set_current_loop = FALSE;
     Axis.Set_x_suspension_current_loop = FALSE;
     Axis.Set_y_suspension_current_loop = FALSE;
     Axis.Set_manual_rpm = 0.0;
     Axis.Set_manual_current_iq = 0.0;
-    Axis.Set_manual_current_id = 20.0;
-    Axis.Select_exp_operation = 200; //101;
+    Axis.Set_manual_current_id = 0.0;
+    Axis.Select_exp_operation = 0; //200; //101;
     Axis.pFLAG_INVERTER_NONLINEARITY_COMPENSATION = &G.FLAG_INVERTER_NONLINEARITY_COMPENSATION;
-    Axis.flag_overwrite_theta_d = 1;
+    Axis.flag_overwrite_theta_d = FALSE;
     Axis.Overwrite_Current_Frequency = 0;
     Axis.Overwrite_Suspension_Current_Frequency = 0.5;
     Axis.used_theta_d_elec = 0.0;
@@ -141,9 +142,9 @@ void main(void){
 //    Axis.angle_shift_for_second_inverter =  2.17232847 - 0.5*M_PI;
     Axis.angle_shift_for_first_inverter  = ANGLE_SHIFT_FOR_FIRST_INVERTER;
     Axis.angle_shift_for_second_inverter = ANGLE_SHIFT_FOR_SECOND_INVERTER;
-    Axis.OverwriteSpeedOutLimitDuringInit = 3; // A
+    Axis.OverwriteSpeedOutLimitDuringInit = 9; // A
     Axis.FLAG_ENABLE_PWM_OUTPUT = FALSE;
-    Axis.channels_preset = 9;
+    Axis.channels_preset = 101;
 
     pid1_dispX.setpoint = -210; //-150; // -210;  //(-22 + 1456)*0.5; // angle_shift_for_first_inverter = 6.0
     pid1_dispY.setpoint =  275; // 275;  //(200 + 1300)*0.5;
@@ -408,22 +409,25 @@ void voltage_commands_to_pwm(){
         CTRL.svgen1.Ubeta = CTRL.O->uab_cmd_to_inverter[1];
 
         // SVPWM of the suspension 3-phase
-        //    svgen2.Ualpha = svgen1.Ualpha*0.5        + svgen1.Ubeta*0.8660254; // rotate 60 deg
-        //    svgen2.Ubeta  = svgen1.Ualpha*-0.8660254 + svgen1.Ubeta*0.5;
         CTRL.svgen2.Ualpha = 0;
         CTRL.svgen2.Ubeta  = 0;
+
+        //    svgen2.Ualpha = svgen1.Ualpha*0.5        + svgen1.Ubeta*0.8660254; // rotate 60 deg
+        //    svgen2.Ubeta  = svgen1.Ualpha*-0.8660254 + svgen1.Ubeta*0.5;
     }else if(Axis.use_first_set_three_phase==2){
         // SVPWM of the motor 3-phase
         CTRL.svgen1.Ualpha= 0;
         CTRL.svgen1.Ubeta = 0;
 
         // SVPWM of the suspension 3-phase
-        CTRL.svgen2.Ualpha = CTRL.O->uab_cmd_to_inverter[0+2];
-        CTRL.svgen2.Ubeta  = CTRL.O->uab_cmd_to_inverter[1+2];
+        //CTRL.svgen2.Ualpha = CTRL.O->uab_cmd_to_inverter[0+2];
+        //CTRL.svgen2.Ubeta  = CTRL.O->uab_cmd_to_inverter[1+2]; // uab_cmd的第零个和第一个分量传给svgen2第二套逆变器！！！
+        CTRL.svgen2.Ualpha = CTRL.O->uab_cmd_to_inverter[0];
+        CTRL.svgen2.Ubeta  = CTRL.O->uab_cmd_to_inverter[1];
     }else if(Axis.use_first_set_three_phase==-1){
 
         // SVPWM of the motor 3-phase 第二套逆变器控制转矩
-        CTRL.svgen2.Ualpha = CTRL.O->uab_cmd_to_inverter[0];
+        CTRL.svgen2.Ualpha = CTRL.O->uab_cmd_to_inverter[0]; // uab_cmd的第零个和第一个分量传给svgen2第二套逆变器！！！
         CTRL.svgen2.Ubeta  = CTRL.O->uab_cmd_to_inverter[1];
 
         // SVPWM of the suspension 3-phase
@@ -542,8 +546,8 @@ void measurement(){
     last_hall_qep_count = hall_qep_count;
     start_hall_conversion(hall_sensor_read);
     if(USE_HALL_SENSOR_FOR_QEP == 1){
-        CTRL.I->theta_d_elec = hall_theta_r_elec;
-        CTRL.I->omg_elec     = 0.0;
+        CTRL.I->theta_d_elec = hall_theta_r_elec[0];
+        CTRL.I->omg_elec     = hall_omega_r_elec[0];
     }else{
         CTRL.I->theta_d_elec = ENC.theta_d_elec;
         CTRL.I->omg_elec     = ENC.omg_elec;
@@ -587,8 +591,8 @@ void measurement(){
         // 只用第二套三相
         IS_C(0)        = Axis.iabg[3];
         IS_C(1)        = Axis.iabg[4];
-        CTRL.I->iab[0+2] = Axis.iabg[3];
-        CTRL.I->iab[1+2] = Axis.iabg[4];
+        CTRL.I->iab[0] = Axis.iabg[3];
+        CTRL.I->iab[1] = Axis.iabg[4];
     }else if(Axis.use_first_set_three_phase==-1){
         IS_C(0)        = Axis.iabg[3];
         IS_C(1)        = Axis.iabg[4];

@@ -65,6 +65,8 @@ REAL hall_readin_midpoint_most_recent[3];
 
 REAL hall_omega_r_elec[3];
 REAL hall_theta_r_elec[3];
+REAL hall_theta_r_elec_0 = 0.0;
+REAL hall_theta_r_elec_0_last = 0.0;
 REAL hall_theta_r_elec_incremental[3];
 REAL hall_theta_r_elec_local_absolute[3];
 
@@ -493,13 +495,17 @@ void start_hall_conversion(REAL hall_sensor_read[]){
     // hall_theta_r_elec_incremental[1] += CL_TS*hall_omega_r_elec[1] * hall_rotating_direction;
     // 局部一对极映射方案
     hall_theta_r_elec_incremental[0] = hall_qep_count * (0.015625 * 2*M_PI * MOTOR_NUMBER_OF_POLE_PAIRS);
+
     if(recent_zero_crossing_hall_is == HALL_X){
         hall_theta_r_elec_local_absolute[0] = hall_rotating_direction * fabs(hall_sensor_read[0]) * normalizer[0] * 0.5*M_PI * 1.375; // 1.375 = 22 / 16 (npp / st magnet pole pair number)
     }else if(recent_zero_crossing_hall_is == HALL_Y){
         hall_theta_r_elec_local_absolute[0] = hall_rotating_direction * fabs(hall_sensor_read[1]) * normalizer[1] * 0.5*M_PI * 1.375; // 1.375 = 22 / 16 (npp / st magnet pole pair number)        
     }
-    hall_theta_r_elec[0] = hall_theta_r_elec_incremental[0] + hall_theta_r_elec_local_absolute[0];
+    hall_theta_r_elec_0 = hall_theta_r_elec_incremental[0] + hall_theta_r_elec_local_absolute[0];
+    hall_omega_r_elec[0] = (hall_theta_r_elec_0 - hall_theta_r_elec_0_last) * CL_TS_INVERSE;
+    hall_theta_r_elec_0_last = hall_theta_r_elec_0;
 
+    hall_theta_r_elec[0] = fmod(hall_theta_r_elec_0, 2*M_PI);
 
     hall_qep_angle = hall_qep_count * (ONE_OVER_ST_MAGNETS * 0.5) * M_PI;
 }

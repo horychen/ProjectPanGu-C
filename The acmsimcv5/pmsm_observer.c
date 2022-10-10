@@ -29,24 +29,29 @@ void rhf_dynamics_ESO(REAL t, REAL *x, REAL *fx){
     /* Output Error = sine of angle error */
     esoaf.output_error_sine = sin(AFE_USED.theta_d - xPos);
     esoaf.output_error = AFE_USED.theta_d - xPos;
-    // yuefei said you should check for sudden change in angle error.
+    // you should check for sudden change in angle error.
     if(fabs(esoaf.output_error)>M_PI){
         esoaf.output_error -= sign(esoaf.output_error) * 2*M_PI;
     }
 
     /* Extended State Observer */
     // xPos
-    fx[0] = + esoaf.ell[0]*esoaf.output_error + xOmg;
+    fx[0] = + esoaf.ell[0]*esoaf.output_error_sine + xOmg;
     // xOmg
-    fx[1] = + esoaf.ell[1]*esoaf.output_error + (esoaf.xTem - xTL) * (MOTOR.Js_inv*MOTOR.npp);
+    fx[1] = + esoaf.ell[1]*esoaf.output_error_sine + (esoaf.bool_ramp_load_torque>=0) * (esoaf.xTem - xTL) * (MOTOR.Js_inv*MOTOR.npp);
     // xTL
-    fx[2] = - esoaf.ell[2]*esoaf.output_error + xPL;
+    fx[2] = - esoaf.ell[2]*esoaf.output_error_sine + xPL;
     // xPL
-    fx[3] = - esoaf.ell[3]*esoaf.output_error;
+    fx[3] = - esoaf.ell[3]*esoaf.output_error_sine;
 }
 void eso_one_parameter_tuning(REAL omega_ob){
     // Luenberger Observer Framework
-    if(esoaf.bool_ramp_load_torque == FALSE){
+    if(esoaf.bool_ramp_load_torque == -1){
+        esoaf.ell[0] = 2*omega_ob;
+        esoaf.ell[1] = omega_ob*omega_ob;
+        esoaf.ell[2] = 0.0;
+        esoaf.ell[3] = 0.0;        
+    }else if(esoaf.bool_ramp_load_torque == FALSE){
         esoaf.ell[0] =                            3*omega_ob;
         esoaf.ell[1] =                            3*omega_ob*omega_ob;
         esoaf.ell[2] = (MOTOR.Js*MOTOR.npp_inv) * 1*omega_ob*omega_ob*omega_ob;
@@ -107,6 +112,7 @@ void init_esoaf(){
     esoaf.ell[2] = 0.0;
     esoaf.ell[3] = 0.0;
     esoaf.set_omega_ob = ESOAF_OMEGA_OBSERVER;
+    esoaf.bool_ramp_load_torque = -1;
 
     esoaf.omega_ob = esoaf.set_omega_ob;
     eso_one_parameter_tuning(esoaf.omega_ob);
