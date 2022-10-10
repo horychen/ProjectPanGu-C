@@ -125,7 +125,7 @@ void main(void){
     Axis.pCTRL = &CTRL;
     Axis.pAdcaResultRegs = &AdcaResultRegs;
     Axis.pAdcbResultRegs = &AdcbResultRegs;
-    Axis.use_first_set_three_phase = 2;
+    Axis.use_first_set_three_phase = -1;
     Axis.Set_current_loop = FALSE;
     Axis.Set_x_suspension_current_loop = FALSE;
     Axis.Set_y_suspension_current_loop = FALSE;
@@ -142,7 +142,7 @@ void main(void){
 //    Axis.angle_shift_for_second_inverter =  2.17232847 - 0.5*M_PI;
     Axis.angle_shift_for_first_inverter  = ANGLE_SHIFT_FOR_FIRST_INVERTER;
     Axis.angle_shift_for_second_inverter = ANGLE_SHIFT_FOR_SECOND_INVERTER;
-    Axis.OverwriteSpeedOutLimitDuringInit = 9; // A
+    Axis.OverwriteSpeedOutLimitDuringInit = 30; // A
     Axis.FLAG_ENABLE_PWM_OUTPUT = FALSE;
     Axis.channels_preset = 101;
 
