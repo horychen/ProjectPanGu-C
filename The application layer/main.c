@@ -9,6 +9,9 @@ long int X_DISPLACEMENT_LOOP_CEILING = 10;
 long int Y_DISPLACEMENT_LOOP_CEILING = 10;
 long int the_x_disp_control_count = 1;
 long int the_y_disp_control_count = 1;
+REAL disp_setpoint_offset = -500;
+REAL disp_setpoint_frequency = 0.2;
+REAL apply_force_angle = 0.0;
 
 REAL eddy_displacement[2] = {0,0};
 
@@ -126,15 +129,15 @@ void main(void){
     Axis.pAdcaResultRegs = &AdcaResultRegs;
     Axis.pAdcbResultRegs = &AdcbResultRegs;
     Axis.use_first_set_three_phase = -1;
-    Axis.Set_current_loop = FALSE;
+    Axis.Set_current_loop = TRUE;
     Axis.Set_x_suspension_current_loop = FALSE;
     Axis.Set_y_suspension_current_loop = FALSE;
     Axis.Set_manual_rpm = 0.0;
     Axis.Set_manual_current_iq = 0.0;
-    Axis.Set_manual_current_id = 0.0;
-    Axis.Select_exp_operation = 0; //200; //101;
+    Axis.Set_manual_current_id = 20.0;
+    Axis.Select_exp_operation = 202; //200; //101;
     Axis.pFLAG_INVERTER_NONLINEARITY_COMPENSATION = &G.FLAG_INVERTER_NONLINEARITY_COMPENSATION;
-    Axis.flag_overwrite_theta_d = FALSE;
+    Axis.flag_overwrite_theta_d = TRUE;
     Axis.Overwrite_Current_Frequency = 0;
     Axis.Overwrite_Suspension_Current_Frequency = 0.5;
     Axis.used_theta_d_elec = 0.0;
@@ -144,9 +147,10 @@ void main(void){
     Axis.angle_shift_for_second_inverter = ANGLE_SHIFT_FOR_SECOND_INVERTER;
     Axis.OverwriteSpeedOutLimitDuringInit = 30; // A
     Axis.FLAG_ENABLE_PWM_OUTPUT = FALSE;
-    Axis.channels_preset = 101;
+    Axis.channels_preset = 9; // 101;
 
     pid1_dispX.setpoint = -210; //-150; // -210;  //(-22 + 1456)*0.5; // angle_shift_for_first_inverter = 6.0
+    pid1_dispX.outLimit = 0.0;
     pid1_dispY.setpoint =  275; // 275;  //(200 + 1300)*0.5;
 
     //pid1_dispY.outLimit = 0.0;
@@ -731,6 +735,17 @@ void PanGuMainISR(void){
                     Axis.Set_manual_current_iy = -20;
                     if(counter>=SQUARE_WAVE_PERIOD) counter = 0;
                 }
+            }else if(Axis.Select_exp_operation == 102){
+                static long counter = 0;
+                counter += 1;
+                if(counter<SQUARE_WAVE_PERIOD*0.5){
+                    Axis.Set_manual_current_ix = 20*cos(apply_force_angle);
+                    Axis.Set_manual_current_iy = 20*sin(apply_force_angle);
+                }else{
+                    Axis.Set_manual_current_ix = -20*cos(apply_force_angle);
+                    Axis.Set_manual_current_iy = -20*sin(apply_force_angle);
+                    if(counter>=SQUARE_WAVE_PERIOD) {counter = 0; apply_force_angle += 0.01*2*M_PI;}
+                }
             }else if(Axis.Select_exp_operation == 200){
                 pid1_dispX.setpoint;
                 pid1_dispY.setpoint;
@@ -751,8 +766,43 @@ void PanGuMainISR(void){
 
                 // 完成双自由度，给定一个torque id的同时再做悬浮力控制防止转子转动？
 
+            }else if(Axis.Select_exp_operation == 201){
+                pid1_dispX.setpoint = 500 * sin(disp_setpoint_frequency*2*M_PI*CTRL.timebase) + disp_setpoint_offset;
+                pid1_dispY.setpoint;
+                if(the_x_disp_control_count++ >= X_DISPLACEMENT_LOOP_CEILING){
+                    the_x_disp_control_count = 1;
+                    PIDController_Update(&pid1_dispX);
+                    if(Axis.Set_x_suspension_current_loop==FALSE){
+                        Axis.Set_manual_current_ix = pid1_dispX.out;
+                    }
+                   }
+                if(the_y_disp_control_count++ >= Y_DISPLACEMENT_LOOP_CEILING){
+                    the_y_disp_control_count = 1;
+                    PIDController_Update(&pid1_dispY);
+                    if(Axis.Set_y_suspension_current_loop==FALSE){
+                        Axis.Set_manual_current_iy = pid1_dispY.out;
+                    }
+                }
+            }else if(Axis.Select_exp_operation == 202){
+                pid1_dispX.setpoint;
+                pid1_dispY.setpoint = 500 * sin(disp_setpoint_frequency*2*M_PI*CTRL.timebase) + disp_setpoint_offset;
+                if(the_x_disp_control_count++ >= X_DISPLACEMENT_LOOP_CEILING){
+                    the_x_disp_control_count = 1;
+                    PIDController_Update(&pid1_dispX);
+                    if(Axis.Set_x_suspension_current_loop==FALSE){
+                        Axis.Set_manual_current_ix = pid1_dispX.out;
+                    }
+                   }
+                if(the_y_disp_control_count++ >= Y_DISPLACEMENT_LOOP_CEILING){
+                    the_y_disp_control_count = 1;
+                    PIDController_Update(&pid1_dispY);
+                    if(Axis.Set_y_suspension_current_loop==FALSE){
+                        Axis.Set_manual_current_iy = pid1_dispY.out;
+                    }
+                }
+
             }else if(Axis.Select_exp_operation == 300){
-                // 需要人为给定一个恒定的id，悬浮电流矢量迅速旋转，观察位移轨迹
+                // 需要人为给定一个恒定的id，悬浮电流矢量匀速旋转，观察位移轨迹
                 if(Axis.flag_overwrite_theta_d == TRUE){
                     Axis.angle_shift_for_second_inverter += CL_TS*Axis.Overwrite_Suspension_Current_Frequency;
 
@@ -779,7 +829,7 @@ void PanGuMainISR(void){
             /// 6. 电流环
             // x-axis
             pid2_ix.Fbk = CTRL.I->idq[0+2];
-            pid2_ix.Ref = CTRL.I->idq_cmd[0+2]; //{pid2_ix.Ref = Axis.Set_manual_current_ix;}
+            pid2_ix.Ref = CTRL.I->idq_cmd[0+2]; if(Axis.Set_x_suspension_current_loop==1){pid2_ix.Ref = Axis.Set_manual_current_ix;}
             pid2_ix.calc(&pid2_ix);
             // y-axis
             pid2_iy.Fbk = CTRL.I->idq[1+2];
