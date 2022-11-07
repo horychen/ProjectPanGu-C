@@ -124,20 +124,24 @@ void init_experiment_AD_gain_and_offset(){
     CTRL.enc->theta_d_offset = CTRL.enc->OffsetCountBetweenIndexAndUPhaseAxis * CNT_2_ELEC_RAD;
 }
 void main(void){
+//    PID for x disp
+//    0.05
+//    2
+//    0.01
 
     Axis.pCTRL = &CTRL;
     Axis.pAdcaResultRegs = &AdcaResultRegs;
     Axis.pAdcbResultRegs = &AdcbResultRegs;
     Axis.use_first_set_three_phase = -1;
-    Axis.Set_current_loop = TRUE;
+    Axis.Set_current_loop = FALSE;
     Axis.Set_x_suspension_current_loop = FALSE;
     Axis.Set_y_suspension_current_loop = FALSE;
-    Axis.Set_manual_rpm = 0.0;
+    Axis.Set_manual_rpm = 50.0;
     Axis.Set_manual_current_iq = 0.0;
-    Axis.Set_manual_current_id = 20.0;
-    Axis.Select_exp_operation = 202; //200; //101;
+    Axis.Set_manual_current_id = 0.0; // 20
+    Axis.Select_exp_operation = 200; //202; //200; //101;
     Axis.pFLAG_INVERTER_NONLINEARITY_COMPENSATION = &G.FLAG_INVERTER_NONLINEARITY_COMPENSATION;
-    Axis.flag_overwrite_theta_d = TRUE;
+    Axis.flag_overwrite_theta_d = FALSE;
     Axis.Overwrite_Current_Frequency = 0;
     Axis.Overwrite_Suspension_Current_Frequency = 0.5;
     Axis.used_theta_d_elec = 0.0;
@@ -147,10 +151,10 @@ void main(void){
     Axis.angle_shift_for_second_inverter = ANGLE_SHIFT_FOR_SECOND_INVERTER;
     Axis.OverwriteSpeedOutLimitDuringInit = 30; // A
     Axis.FLAG_ENABLE_PWM_OUTPUT = FALSE;
-    Axis.channels_preset = 9; // 101;
+    Axis.channels_preset = 101; // 9; // 101;
 
     pid1_dispX.setpoint = -210; //-150; // -210;  //(-22 + 1456)*0.5; // angle_shift_for_first_inverter = 6.0
-    pid1_dispX.outLimit = 0.0;
+    //pid1_dispX.outLimit = 0.0;
     pid1_dispY.setpoint =  275; // 275;  //(200 + 1300)*0.5;
 
     //pid1_dispY.outLimit = 0.0;
