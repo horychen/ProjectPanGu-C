@@ -21,7 +21,7 @@
 struct ControllerForExperiment CTRL;
 
 // 定义内存空间（结构体）
-st_pmsm_parameters      t_motor={0};
+st_motor_parameters     t_motor={0};
 st_enc                  t_enc={0};
 st_psd                  t_psd={0};
 st_controller_inputs    t_I={0};
@@ -88,13 +88,14 @@ void allocate_CTRL(struct ControllerForExperiment *p){
 }
 
 // Global watch variables
-// struct GlobalWatch watch;
+struct GlobalWatch watch;
 
 /* Structs for Algorithm */
-#if MACHINE_TYPE == PM_SYNCHRONOUS_MACHINE
 
     struct ObserverForExperiment OBSV;
     struct SharedFluxEstimatorForExperiment FE;
+
+#if MACHINE_TYPE == PM_SYNCHRONOUS_MACHINE
 
     // 游离在顶级之外的算法结构体
     // struct RK4_DATA rk4;
@@ -104,22 +105,23 @@ void allocate_CTRL(struct ControllerForExperiment *p){
     // struct Chen20_NSO_AF nsoaf={0};
 
 #else
+
     // 游离在顶级之外的算法结构体
-    struct RK4_DATA rk4;
+    // struct RK4_DATA rk4;
     struct Marino2005 marino={0};
 
     struct Variables_SimulatedVM                         simvm      ={0};
-    struct Variables_Ohtani1992                          ohtani     ={0};
-    struct Variables_HuWu1998                            huwu       ={0};
-    struct Variables_HoltzQuan2002                       holtz02    ={0};
-    struct Variables_Holtz2003                           htz        ={0};
-    struct Variables_Harnefors2003_SCVM                  harnefors  ={0};
-    struct Variables_LascuAndreescus2006                 lascu      ={0};
-    struct Variables_Stojic2015                          stojic     ={0};
-    struct Variables_fluxModulusEstimator                fme        ={0};
-    struct Variables_ExactCompensationMethod             exact      ={0};
-    struct Variables_ProposedxRhoFramePICorrectionMethod picorr     ={0};
-    struct Variables_ClosedLoopFluxEstimator             clest      ={0};
+    // struct Variables_Ohtani1992                          ohtani     ={0};
+    // struct Variables_HuWu1998                            huwu       ={0};
+    // struct Variables_HoltzQuan2002                       holtz02    ={0};
+    // struct Variables_Holtz2003                           htz        ={0};
+    // struct Variables_Harnefors2003_SCVM                  harnefors  ={0};
+    // struct Variables_LascuAndreescus2006                 lascu      ={0};
+    // struct Variables_Stojic2015                          stojic     ={0};
+    // struct Variables_fluxModulusEstimator                fme        ={0};
+    // struct Variables_ExactCompensationMethod             exact      ={0};
+    // struct Variables_ProposedxRhoFramePICorrectionMethod picorr     ={0};
+    // struct Variables_ClosedLoopFluxEstimator             clest      ={0};
 #endif
 
 

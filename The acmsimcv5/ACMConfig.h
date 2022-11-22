@@ -3,7 +3,7 @@
 /* 经常要修改的 */
 #define INVERTER_NONLINEARITY_COMPENSATION_INIT 0 // 5（9月1日及以前峣杰实验一直用的5） // 4 // 1:ParkSul12, 2:Sigmoid, 3:LUT(Obsolete), 4:LUT(by index), 5 Slessinv-a2a3Model
 #define INVERTER_NONLINEARITY                   0 // 4 // 1:ModelSul96, 2:ModelExpSigmoid, 3: ModelExpLUT, 4:LUT(by index)
-#define SENSORLESS_CONTROL TRUE
+#define SENSORLESS_CONTROL FALSE
 #define SENSORLESS_CONTROL_HFSI FALSE
 /* ParkSul2012 梯形波 */
 #define GAIN_THETA_TRAPEZOIDAL (40) //(500) // 20
@@ -12,45 +12,46 @@
     #define INDUCTION_MACHINE_CLASSIC_MODEL 1
     #define INDUCTION_MACHINE_FLUX_ONLY_MODEL 11
     #define PM_SYNCHRONOUS_MACHINE 2
-#define MACHINE_TYPE 2
+#define MACHINE_TYPE 1
 	// 电机参数
-	#define PMSM_RESISTANCE                    0.035
-	#define PMSM_D_AXIS_INDUCTANCE             3.6e-05
-	#define PMSM_Q_AXIS_INDUCTANCE             3.6e-05
-	#define PMSM_PERMANENT_MAGNET_FLUX_LINKAGE 0.0108
+	#define IM_STAOTR_RESISTANCE        5.5
+	#define IM_ROTOR_RESISTANCE         2.1
+	#define IM_TOTAL_LEAKAGE_INDUCTANCE 0.022
+	#define MOTOR_SHAFT_INERTIA         0.063
+	// 磁链给定
+	#define IM_MAGNETIZING_INDUCTANCE   0.558
+	#define IM_FLUX_COMMAND_DC_PART     0.9
+	#define IM_FLUX_COMMAND_SINE_PART   0.0
+	#define IM_FLUX_COMMAND_SINE_HERZ   10.0
 	// 铭牌值
-	#define MOTOR_NUMBER_OF_POLE_PAIRS         22
-	#define MOTOR_RATED_CURRENT_RMS            5.516265912305517
-	#define MOTOR_RATED_POWER_WATT             93.99591920239436
-	#define MOTOR_RATED_SPEED_RPM              400
-	#define MOTOR_SHAFT_INERTIA                4.4000000000000006e-05
+	#define MOTOR_NUMBER_OF_POLE_PAIRS  2
+	#define MOTOR_RATED_CURRENT_RMS     4.6
+	#define MOTOR_RATED_POWER_WATT      4000
+	#define MOTOR_RATED_SPEED_RPM       1440.0
 	// 参数误差
-		#define MISMATCH_R   100
-		#define MISMATCH_LD  100
-		#define MISMATCH_LQ  100
-		#define MISMATCH_KE  100
+		#define MISMATCH_RS               100
+		#define MISMATCH_RREQ             100
+		#define MISMATCH_LMU              100
+		#define MISMATCH_LSIGMA           100
+
+
+#if MACHINE_TYPE % 10 == 2
+	#define CORRECTION_4_SHARED_FLUX_EST PMSM_PERMANENT_MAGNET_FLUX_LINKAGE
+#else
+	#define CORRECTION_4_SHARED_FLUX_EST    IM_FLUX_COMMAND_DC_PART
+    #define U_MOTOR_R                       IM_STAOTR_RESISTANCE    // typo!
+    #define U_MOTOR_RREQ                    IM_ROTOR_RESISTANCE
+
+#endif
 
 /* Algorithms */
-#if /* PM Motor */ MACHINE_TYPE % 10 == 2
-    /* Commissioning */
-    #define EXCITE_BETA_AXIS_AND_MEASURE_PHASE_B TRUE
-    #if PC_SIMULATION
-        #define ENABLE_COMMISSIONING FALSE /*Simulation*/
-        #define SELF_COMM_INVERTER FALSE
-        #define TUNING_CURRENT_SCALE_FACTOR_INIT FALSE
-    #else
-        #define ENABLE_COMMISSIONING FALSE /*Experiment*/
-        #define SELF_COMM_INVERTER FALSE
-        #define TUNING_CURRENT_SCALE_FACTOR_INIT FALSE
-        /*As we use CTRL.O->iab_cmd for look up, now dead-time compensation during ENABLE_COMMISSIONING is not active*/
-    #endif
 
-    /* Select Algorithm 1 */
-    #define AFE_USED AFEOE
-    // #define AFE_USED huwu
-    // #define AFE_USED htz
+    /* Select [Shared Flux Estimator] */
+    // #define AFE_USED FE.AFEOE
+    // #define AFE_USED FE.huwu
+    #define AFE_USED FE.htz
 
-    /* Tuning Algorithm 1 */
+    /* Tuning [Shared Flux Estimator] */
         /* AFEOE or CM-VM Fusion */
         #define AFEOE_OMEGA_ESTIMATOR 5 // [rad/s] //0.5 // 5 for slow reversal
             #define AFEOE_KP (200) // (200) // ONLY KP
@@ -63,6 +64,23 @@
         // #define AFE_21_HUWU_TAU_1_INVERSE (7.5) // [rad/s] Alg 3: increase this will reduce the transient converging time
         #define AFE_21_HUWU_KP (0.2)  //[rad/s]
         #define AFE_21_HUWU_KI (0.5) //[rad/s]
+
+        /* Holtz 2002 */
+        #define HOLTZ_2002_GAIN_OFFSET 20
+
+#if /* PM Motor Observer */ MACHINE_TYPE % 10 == 2
+    /* Commissioning */
+    #define EXCITE_BETA_AXIS_AND_MEASURE_PHASE_B TRUE
+    #if PC_SIMULATION
+        #define ENABLE_COMMISSIONING FALSE /*Simulation*/
+        #define SELF_COMM_INVERTER FALSE
+        #define TUNING_CURRENT_SCALE_FACTOR_INIT FALSE
+    #else
+        #define ENABLE_COMMISSIONING FALSE /*Experiment*/
+        #define SELF_COMM_INVERTER FALSE
+        #define TUNING_CURRENT_SCALE_FACTOR_INIT FALSE
+        /*As we use CTRL.O->iab_cmd for look up, now dead-time compensation during ENABLE_COMMISSIONING is not active*/
+    #endif
 
     /* Select Algorithm 2*/
         #define ALG_NSOAF 1
@@ -174,15 +192,15 @@
 
     /* Harnefors 2006 */
 
-#elif /* Induction Motor */ MACHINE_TYPE % 10 == 1
+#elif /* Induction Motor Observer */ MACHINE_TYPE % 10 == 1
     // Marino05 调参 /// default: (17143), (2700.0), (1000), (1), (0)
-    #define GAMMA_INV_xTL 17142.85714285714
+    #define GAMMA_INV_xTL 3000 // 17142.85714285714
     #define LAMBDA_INV_xOmg 2700.0
     #define DELTA_INV_alpha (0*1000)
     #define xAlpha_LAW_TERM_D 1 // regressor is commanded d-axis rotor current, and error is d-axis flux control error.
     #define xAlpha_LAW_TERM_Q 0 // regressor is commanded q-axis stator current, and error is q-axis flux control error.
     // 磁链反馈用谁 /// "htz",,ohtani",picorr",lascu",clest",harnefors
-    #define IFE htz
+    #define IFE FE.htz
     #define FLUX_FEEDBACK_ALPHA         IFE.psi_2[0]
     #define FLUX_FEEDBACK_BETA          IFE.psi_2[1]
     #define OFFSET_COMPENSATION_ALPHA   IFE.u_offset[0]
@@ -202,18 +220,24 @@
     #define HOLTZ_2002_GAIN_OFFSET 20
     /* Harnefors SCVM 2003 */// default: 2
     #define GAIN_HARNEFORS_LAMBDA 2
+
+    #define SELECT_ALGORITHM -1111
+	// #if 1
+        #define ELECTRICAL_SPEED_FEEDBACK    marino.xOmg // CTRL.I->omg_elec
+        #define ELECTRICAL_POSITION_FEEDBACK marino.xRho // CTRL.I->theta_d_elec
+	// #endif
 #endif
 
 /* 控制策略 */
-	#define NULL_D_AXIS_CURRENT_CONTROL -1
-	#define MTPA -2 // not supported
-#define CONTROL_STRATEGY NULL_D_AXIS_CURRENT_CONTROL
-#define NUMBER_OF_STEPS 50000
+	#define INDIRECT_FOC 1
+	#define MARINO_2005_ADAPTIVE_SENSORLESS_CONTROL 2
+#define CONTROL_STRATEGY MARINO_2005_ADAPTIVE_SENSORLESS_CONTROL
+#define NUMBER_OF_STEPS 150000
     #define DOWN_SAMPLE 1
     #define USE_QEP_RAW FALSE
     #define VOLTAGE_CURRENT_DECOUPLING_CIRCUIT FALSE
     #define SATURATED_MAGNETIC_CIRCUIT FALSE
-#define CL_TS          (0.0001)
+#define CL_TS          (1e-4)
 #define CL_TS_INVERSE  (10000)
     #define TS_UPSAMPLING_FREQ_EXE 1.0 //0.5
     #define TS_UPSAMPLING_FREQ_EXE_INVERSE 1 //2
@@ -224,16 +248,21 @@
     #define MACHINE_TS_INVERSE (CL_TS_INVERSE*TS_UPSAMPLING_FREQ_EXE_INVERSE)
 
 #define LOAD_INERTIA    0.0
-#define LOAD_TORQUE     0.0
-#define VISCOUS_COEFF   0.0007
+#define LOAD_TORQUE     5
+#define VISCOUS_COEFF   0.7e-2
 
-#define CURRENT_KP (0.120205)
-#define CURRENT_KI (972.222)
+#define CL_SERIES_KP (27.646)
+#define CL_SERIES_KI (250)
+#define VL_SERIES_KP (1.47851)
+#define VL_SERIES_KI (29.7429)
+
+#define CURRENT_KP (667.896)
+#define CURRENT_KI (6.42842)
     #define CURRENT_KI_CODE (CURRENT_KI*CURRENT_KP*CL_TS)
-#define CURRENT_LOOP_LIMIT_VOLTS (50)
+#define CURRENT_LOOP_LIMIT_VOLTS (600)
 
-#define SPEED_KP (0.00288268)
-#define SPEED_KI (79.0299)
+#define SPEED_KP (3.72441)
+#define SPEED_KI (33.4282)
     #define MOTOR_RATED_TORQUE ( MOTOR_RATED_POWER_WATT / (MOTOR_RATED_SPEED_RPM/60.0*2*3.1415926) )
     #define MOTOR_TORQUE_CONSTANT ( MOTOR_RATED_TORQUE / (MOTOR_RATED_CURRENT_RMS*1.414) )
     #define MOTOR_BACK_EMF_CONSTANT ( MOTOR_TORQUE_CONSTANT / 1.5 / MOTOR_NUMBER_OF_POLE_PAIRS )
@@ -282,5 +311,5 @@
 #define SWEEP_FREQ_C2V FALSE
 #define SWEEP_FREQ_C2C FALSE
 
-#define DATA_FILE_NAME "../dat/TEST_PHIL_LAB_PID_CODES-531-1000-10-4825.dat"
+#define DATA_FILE_NAME "../dat/10_Flux_Estimator_Simulation_Report.dat"
 #endif

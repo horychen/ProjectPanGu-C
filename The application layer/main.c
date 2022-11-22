@@ -1,29 +1,69 @@
 #include <All_Definition.h>
 st_axis Axis;
 
-REAL Prototype_Sensor_Install_Angle = -1.25; // 0.785398; // (60.0/180.0*M_PI);
-REAL cos_Prototype_Sensor_Install_Angle; // = (60.0/180.0*M_PI);
-REAL sin_Prototype_Sensor_Install_Angle; // = (60.0/180.0*M_PI);
+#ifdef _XCUBE1 // At Water Energy Lab (Green)
+    #define OFFSET_VDC 1430
+    #define OFFSET_U   2047
+    #define OFFSET_V   2052
+    #define OFFSET_W   2032
+    #define OFFSET_R   2048 // not implemented
+    #define OFFSET_S   2048 // not implemented
+    #define OFFSET_T   2048 // not implemented
 
-long int X_DISPLACEMENT_LOOP_CEILING = 10;
-long int Y_DISPLACEMENT_LOOP_CEILING = 10;
-long int the_x_disp_control_count = 1;
-long int the_y_disp_control_count = 1;
-REAL disp_setpoint_offset = -500;
-REAL disp_setpoint_frequency = 0.2;
-REAL apply_force_angle = 0.0;
+    // MINI IGBT IPM INVERTER
+    #define SCALE_VDC 0.3546099     //(MINI INVERTER)    // SENSOR+SIC inverter: 0.1897533207//0-800V
+    #define SCALE_U  0.0109649      //(MINI INVERTER)    // SENSOR+SIC inverter:  0.0056072670 //-11.8-11.8A
+    #define SCALE_V  0.01125872551  //(MINI INVERTER)    // SENSOR+SIC inverter:  0.0056072670 //-11.8-11.8A
+    #define SCALE_W  0.01134558656  //(MINI INVERTER)    // SENSOR+SIC inverter: 0.0057316444 //-11.8-11.8A
+    #define SCALE_R -0.0 // not implemented
+    #define SCALE_S -0.0 // not implemented
+    #define SCALE_T -0.0 // not implemented
+#endif
 
-REAL eddy_displacement[2] = {0,0};
+#ifdef _XCUBE4 // At Water Energy Lab (Red, RM = 24 Ohm) + My Sensor Board!!!
+    #define OFFSET_VDC 0   // ADC0
+    #define OFFSET_U   2054 // 2
+    #define OFFSET_V   2065 // 3
+    #define OFFSET_W   2047 // 1
+    #define OFFSET_R   2044 // 11
+    #define OFFSET_S   2044 // 9
+    #define OFFSET_T   2048 // 8
 
-REAL hall_sensor_read[3] = {0, 0, 0};
-extern REAL hall_qep_angle;
-extern REAL hall_qep_count;
-extern REAL hall_theta_r_elec[3];
-extern REAL hall_omega_r_elec[3];
-REAL last_hall_qep_count;
-void start_hall_conversion(REAL hall_sensor_read[]);
+    // Sensor Board 6 Phase SiC MOSFET Inverter
+    #define SCALE_VDC 0.0949
+    #define SCALE_U  0.0325 // 0.03367
+    #define SCALE_V  0.0320 // 0.03388
+    #define SCALE_W  0.0320 // 0.0340136
+    #define SCALE_R (-0.0295*1.09090909091)
+    #define SCALE_S (-0.0295*1.09090909091)
+    #define SCALE_T (-0.0290*1.09090909091)
+#endif
 
-#ifdef _XCUBE1 // At Water Energy Lab
+#ifdef _XCUBE2 // At Process Instrumentation Lab
+    #define OFFSET_VDC 0   // ADC0
+    #define OFFSET_U   2054 // 2
+    #define OFFSET_V   2065 // 3
+    #define OFFSET_W   2047 // 1
+    #define OFFSET_R   2058 // 11
+    #define OFFSET_S   2062 // 9
+    #define OFFSET_T   2059 // 8
+
+//Axis.iuvw[0]=((REAL)(AdcaResultRegs.ADCRESULT2 ) - Axis.adc_offset[1]) * Axis.adc_scale[1];
+//Axis.iuvw[1]=((REAL)(AdcaResultRegs.ADCRESULT3 ) - Axis.adc_offset[2]) * Axis.adc_scale[2];
+//Axis.iuvw[2]=((REAL)(AdcaResultRegs.ADCRESULT1 ) - Axis.adc_offset[3]) * Axis.adc_scale[3];
+
+
+    // Sensor Board 6 Phase SiC MOSFET Inverter
+    #define SCALE_VDC 0.0949
+    #define SCALE_U  0.0325 // 0.03367
+    #define SCALE_V  0.0320 // 0.03388
+    #define SCALE_W  0.0320 // 0.0340136
+    #define SCALE_R -0.0295 //-0.032
+    #define SCALE_S -0.0295 //-0.032
+    #define SCALE_T -0.0290 //-0.034
+#endif
+
+#ifdef _XCUBE3 // At Water Energy Lab (XCUBE v2 in red)
     #define OFFSET_UDC 1430
     #define OFFSET_U   2047
     #define OFFSET_V   2052
@@ -42,42 +82,10 @@ void start_hall_conversion(REAL hall_sensor_read[]);
     #define SCALE_T -0.0 // not implemented
 #endif
 
-#ifdef _XCUBE2 // At Process Instrumentation Lab
-    #define OFFSET_VDC 11   // ADC0
-    #define OFFSET_U   2054 // 2
-    #define OFFSET_V   2065 // 3
-    #define OFFSET_W   2047 // 1
-    #define OFFSET_R   2058 // 11
-    #define OFFSET_S   2062 // 9
-    #define OFFSET_T   2059 // 8
-
-    // Sensor Board 6 Phase SiC MOSFET Inverter
-    #define SCALE_VDC 0.0949
-    #define SCALE_U  0.0325 // 0.03367
-    #define SCALE_V  0.0320 // 0.03388
-    #define SCALE_W  0.0320 // 0.0340136
-    #define SCALE_R -0.0295 //-0.032
-    #define SCALE_S -0.0295 //-0.032
-    #define SCALE_T -0.0290 //-0.034
-#endif
-
-//#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS -976 // for 750W MOTOR1 (w/ hall sensor)
-//#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS -2668 // for 750W MOTOR2
-//#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS 330 // for Yaojie linear-rotary motor 相序接回去后，第一套
-//#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS -149 // for 400W sdcq 减速比电机
-
-// Yaojie linear rotary stator PM motor
-//#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS -9 // cnt
-//#define ANGLE_SHIFT_FOR_FIRST_INVERTER  3.03999996
-//#define ANGLE_SHIFT_FOR_SECOND_INVERTER 2.0331552
-
-#define OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS 0
+#define OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS 0
 #define ANGLE_SHIFT_FOR_FIRST_INVERTER  0.0 // Torque Inverter
 #define ANGLE_SHIFT_FOR_SECOND_INVERTER 0.0 // Suspension Inverter
-
 int USE_3_CURRENT_SENSORS = TRUE;
-int USE_HALL_SENSOR_FOR_QEP = TRUE;
-long SQUARE_WAVE_PERIOD = 10000;
 
 void init_experiment_AD_gain_and_offset(){
     /* ADC OFFSET */
@@ -91,15 +99,6 @@ void init_experiment_AD_gain_and_offset(){
     Axis.adc_offset[5] = OFFSET_S; // 9
     Axis.adc_offset[6] = OFFSET_T; // 7
 
-    // hall sensor
-    Axis.adc_offset[7] = 1726; //1659.5;// (1350 - -732) / 2
-    Axis.adc_offset[8] = 1733; //1671.0;// (1355 - -847) / 2
-    Axis.adc_offset[9] = 1850; // (700+3000)/2
-
-    // displacement sensor
-    Axis.adc_offset[10] = (1711 - 210)*0.5 + 210; // 767;
-    Axis.adc_offset[11] = (1540 -  25)*0.5 +  25; // 683;
-
     /* ADC SCALE */
     Axis.adc_scale[0] = SCALE_VDC;
     Axis.adc_scale[1] = SCALE_U;
@@ -109,55 +108,33 @@ void init_experiment_AD_gain_and_offset(){
     Axis.adc_scale[5] = SCALE_S;
     Axis.adc_scale[6] = SCALE_T;
 
-    // hall sensor: the scale does not matter
-
-    // displacement sensor
-    Axis.adc_scale[10] =  1.0; //0.0005860805860805861;
-    Axis.adc_scale[11] =  1.0; //0.0005860805860805861;
-    //    >>> (5/6*4096) / 4095 * 3 * 2 /5*2
-    //    2.0004884004884005
-    //    >>> 1 / 4095 * 3 * 2 /5*2
-    //    0.0005860805860805861
-
     /* eQEP OFFSET */
-    CTRL.enc->OffsetCountBetweenIndexAndUPhaseAxis = OFFSET_COUNT_BETWEEN_INDEX_AND_U_PHASE_AXIS;
+    CTRL.enc->OffsetCountBetweenIndexAndUPhaseAxis = OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
     CTRL.enc->theta_d_offset = CTRL.enc->OffsetCountBetweenIndexAndUPhaseAxis * CNT_2_ELEC_RAD;
 }
 void main(void){
-//    PID for x disp
-//    0.05
-//    2
-//    0.01
 
     Axis.pCTRL = &CTRL;
     Axis.pAdcaResultRegs = &AdcaResultRegs;
     Axis.pAdcbResultRegs = &AdcbResultRegs;
-    Axis.use_first_set_three_phase = -1;
+    Axis.use_first_set_three_phase = 2; // -1;
     Axis.Set_current_loop = FALSE;
     Axis.Set_x_suspension_current_loop = FALSE;
     Axis.Set_y_suspension_current_loop = FALSE;
     Axis.Set_manual_rpm = 50.0;
     Axis.Set_manual_current_iq = 0.0;
     Axis.Set_manual_current_id = 0.0; // 20
-    Axis.Select_exp_operation = 200; //202; //200; //101;
+    Axis.Select_exp_operation = 0; //200; //202; //200; //101;
     Axis.pFLAG_INVERTER_NONLINEARITY_COMPENSATION = &G.FLAG_INVERTER_NONLINEARITY_COMPENSATION;
     Axis.flag_overwrite_theta_d = FALSE;
     Axis.Overwrite_Current_Frequency = 0;
     Axis.Overwrite_Suspension_Current_Frequency = 0.5;
     Axis.used_theta_d_elec = 0.0;
-//    Axis.angle_shift_for_first_inverter  = -2.82372499 - 0.5*M_PI;
-//    Axis.angle_shift_for_second_inverter =  2.17232847 - 0.5*M_PI;
     Axis.angle_shift_for_first_inverter  = ANGLE_SHIFT_FOR_FIRST_INVERTER;
     Axis.angle_shift_for_second_inverter = ANGLE_SHIFT_FOR_SECOND_INVERTER;
-    Axis.OverwriteSpeedOutLimitDuringInit = 30; // A
+    Axis.OverwriteSpeedOutLimitDuringInit = 6; // 30; // A
     Axis.FLAG_ENABLE_PWM_OUTPUT = FALSE;
-    Axis.channels_preset = 101; // 9; // 101;
-
-    pid1_dispX.setpoint = -210; //-150; // -210;  //(-22 + 1456)*0.5; // angle_shift_for_first_inverter = 6.0
-    //pid1_dispX.outLimit = 0.0;
-    pid1_dispY.setpoint =  275; // 275;  //(200 + 1300)*0.5;
-
-    //pid1_dispY.outLimit = 0.0;
+    Axis.channels_preset = 1; // 9; // 101;
 
 
     InitSysCtrl();        // 1. Initialize System Control: PLL, WatchDog, enable Peripheral Clocks.
@@ -227,6 +204,7 @@ void main(void){
 
     // 4.4 Initialize algorithms
     init_experiment();
+    init_experiment_AD_gain_and_offset();
 
     // 5. Handle Interrupts
     /* Re-map PIE Vector Table to user defined ISR functions. */
@@ -334,11 +312,6 @@ void main(void){
 
     // 7. Main loop
     while(1){
-        //STATE_APP_MachineState();
-        //System_Checking();  //状态机第一个状态 ：系统自检
-        //System_Protection();//IU/IV/VOLTAGE保护
-
-        //#define Motor_mode_START    GpioDataRegs.GPADAT.bit.GPIO26          //DI Start Button
         if (Motor_mode_START==1){
             Axis.FLAG_ENABLE_PWM_OUTPUT = 1;
             DSP_START_LED1
@@ -365,6 +338,9 @@ void main(void){
 /* Below is moved from PanGuMainISR.c */
 #if SYSTEM_PROGRAM_MODE==223
 void DeadtimeCompensation(REAL Current_U, REAL Current_V, REAL Current_W, REAL CMPA[], REAL CMPA_DBC[]){
+
+    // TODO: Add transitional linear range to dead time compensation
+
     int temp = 0;
     // ------------U--------------
     if (Current_U>=0){
@@ -410,11 +386,20 @@ void DeadtimeCompensation(REAL Current_U, REAL Current_V, REAL Current_W, REAL C
     }
     CMPA_DBC[2] = (Uint16)temp;
 }
+
+REAL vvvf_voltage = 25;
+REAL vvvf_frequency = 8;
+REAL enable_vvvf = FALSE;
+
+
 void voltage_commands_to_pwm(){
     if(Axis.use_first_set_three_phase==1){
         // SVPWM of the motor 3-phase
         CTRL.svgen1.Ualpha= CTRL.O->uab_cmd_to_inverter[0];
         CTRL.svgen1.Ubeta = CTRL.O->uab_cmd_to_inverter[1];
+
+//        CTRL.svgen1.Ualpha= vvvf_voltage * cos(vvvf_frequency*2*M_PI*CTRL.timebase);
+//        CTRL.svgen1.Ubeta = vvvf_voltage * sin(vvvf_frequency*2*M_PI*CTRL.timebase);
 
         // SVPWM of the suspension 3-phase
         CTRL.svgen2.Ualpha = 0;
@@ -432,6 +417,12 @@ void voltage_commands_to_pwm(){
         //CTRL.svgen2.Ubeta  = CTRL.O->uab_cmd_to_inverter[1+2]; // uab_cmd的第零个和第一个分量传给svgen2第二套逆变器！！！
         CTRL.svgen2.Ualpha = CTRL.O->uab_cmd_to_inverter[0];
         CTRL.svgen2.Ubeta  = CTRL.O->uab_cmd_to_inverter[1];
+
+        if(enable_vvvf){
+            CTRL.svgen2.Ualpha= vvvf_voltage * cos(vvvf_frequency*2*M_PI*CTRL.timebase);
+            CTRL.svgen2.Ubeta = vvvf_voltage * sin(vvvf_frequency*2*M_PI*CTRL.timebase);
+        }
+
     }else if(Axis.use_first_set_three_phase==-1){
 
         // SVPWM of the motor 3-phase 第二套逆变器控制转矩
@@ -453,11 +444,15 @@ void voltage_commands_to_pwm(){
     CTRL.svgen2.CMPA[2] = CTRL.svgen2.Tc*SYSTEM_TBPRD;
 
     #if USE_DEATIME_PRECOMP
-        DeadtimeCompensation(Axis.iuvw[0], Axis.iuvw[1], Axis.iuvw[2],
-                            CTRL.svgen1.CMPA, CTRL.svgen1.CMPA_DBC);
-        EPwm1Regs.CMPA.bit.CMPA = CTRL.svgen1.CMPA_DBC[0];
-        EPwm2Regs.CMPA.bit.CMPA = CTRL.svgen1.CMPA_DBC[1];
-        EPwm3Regs.CMPA.bit.CMPA = CTRL.svgen1.CMPA_DBC[2];
+        DeadtimeCompensation(Axis.iuvw[0], Axis.iuvw[1], Axis.iuvw[2], CTRL.svgen1.CMPA, CTRL.svgen1.CMPA_DBC);
+        EPwm1Regs.CMPA.bit.CMPA = (Uint16)CTRL.svgen1.CMPA_DBC[0];
+        EPwm2Regs.CMPA.bit.CMPA = (Uint16)CTRL.svgen1.CMPA_DBC[1];
+        EPwm3Regs.CMPA.bit.CMPA = (Uint16)CTRL.svgen1.CMPA_DBC[2];
+        DeadtimeCompensation(Axis.iuvw[3], Axis.iuvw[4], Axis.iuvw[5], CTRL.svgen2.CMPA, CTRL.svgen2.CMPA_DBC);
+        EPwm4Regs.CMPA.bit.CMPA = (Uint16)CTRL.svgen2.CMPA_DBC[0];
+        EPwm5Regs.CMPA.bit.CMPA = (Uint16)CTRL.svgen2.CMPA_DBC[1];
+        EPwm6Regs.CMPA.bit.CMPA = (Uint16)CTRL.svgen2.CMPA_DBC[2];
+
     #else
         EPwm1Regs.CMPA.bit.CMPA = (Uint16)CTRL.svgen1.CMPA[0];
         EPwm2Regs.CMPA.bit.CMPA = (Uint16)CTRL.svgen1.CMPA[1];
@@ -536,32 +531,13 @@ void measurement(){
     // Convert adc results
     Axis.vdc    =((REAL)(AdcaResultRegs.ADCRESULT0 ) - Axis.adc_offset[0]) * Axis.adc_scale[0];
     if(G.flag_overwite_vdc) Axis.vdc = G.overwrite_vdc;
+
     Axis.iuvw[0]=((REAL)(AdcaResultRegs.ADCRESULT2 ) - Axis.adc_offset[1]) * Axis.adc_scale[1];
     Axis.iuvw[1]=((REAL)(AdcaResultRegs.ADCRESULT3 ) - Axis.adc_offset[2]) * Axis.adc_scale[2];
     Axis.iuvw[2]=((REAL)(AdcaResultRegs.ADCRESULT1 ) - Axis.adc_offset[3]) * Axis.adc_scale[3];
     Axis.iuvw[3]=((REAL)(AdcbResultRegs.ADCRESULT11) - Axis.adc_offset[4]) * Axis.adc_scale[4]; // AD_scale_U2; offsetD2
     Axis.iuvw[4]=((REAL)(AdcbResultRegs.ADCRESULT9 ) - Axis.adc_offset[5]) * Axis.adc_scale[5]; // AD_scale_V2; offsetB2
     Axis.iuvw[5]=((REAL)(AdcbResultRegs.ADCRESULT8 ) - Axis.adc_offset[6]) * Axis.adc_scale[6]; // AD_scale_W2; offsetA2
-    // 将ADC转换得到的单极性的模拟电压量换算有极性的霍尔传感器读数
-    hall_sensor_read[1] = (REAL)AdcaResultRegs.ADCRESULT5  - Axis.adc_offset[7]; // ADC_HALL_OFFSET_ADC5; // 32 poles on Aluminum target
-    hall_sensor_read[0] = (REAL)AdcaResultRegs.ADCRESULT4  - Axis.adc_offset[8]; // ADC_HALL_OFFSET_ADC4; // 32 poles on Aluminum target
-    hall_sensor_read[2] = (REAL)AdcbResultRegs.ADCRESULT10 - Axis.adc_offset[9]; // ADC_HALL_OFFSET_ADC10; // Bogen 40 poles on the top
-    // 涡流位移传感器
-    eddy_displacement[0] = ((REAL)AdcbResultRegs.ADCRESULT6  - Axis.adc_offset[10]) * Axis.adc_scale[10];
-    eddy_displacement[1] = ((REAL)AdcbResultRegs.ADCRESULT7  - Axis.adc_offset[11]) * Axis.adc_scale[11];
-
-    // Use two hall sensors for QEP
-    last_hall_qep_count = hall_qep_count;
-    start_hall_conversion(hall_sensor_read);
-    if(USE_HALL_SENSOR_FOR_QEP == 1){
-        CTRL.I->theta_d_elec = hall_theta_r_elec[0];
-        CTRL.I->omg_elec     = hall_omega_r_elec[0];
-    }else{
-        CTRL.I->theta_d_elec = ENC.theta_d_elec;
-        CTRL.I->omg_elec     = ENC.omg_elec;
-    }
-    CTRL.I->rpm = CTRL.I->omg_elec * ELEC_RAD_PER_SEC_2_RPM;
-
 
     // 线电压测量（基于占空比和母线电压）
     //voltage_measurement_based_on_eCAP();
@@ -595,12 +571,26 @@ void measurement(){
         IS_C(1)        = Axis.iabg[1];
         CTRL.I->iab[0] = Axis.iabg[0];
         CTRL.I->iab[1] = Axis.iabg[1];
+
+        US_C(0) = CTRL.O->uab_cmd[0]; // 后缀_P表示上一步的电压，P = Previous
+        US_C(1) = CTRL.O->uab_cmd[1]; // 后缀_C表示当前步的电压，C = Current
+
+        US_P(0) = US_C(0);
+        US_P(1) = US_C(1);
+
     }else if(Axis.use_first_set_three_phase==2){
         // 只用第二套三相
         IS_C(0)        = Axis.iabg[3];
         IS_C(1)        = Axis.iabg[4];
         CTRL.I->iab[0] = Axis.iabg[3];
         CTRL.I->iab[1] = Axis.iabg[4];
+
+        US_C(0) = CTRL.O->uab_cmd[0+2]; // 后缀_P表示上一步的电压，P = Previous
+        US_C(1) = CTRL.O->uab_cmd[1+2]; // 后缀_C表示当前步的电压，C = Current
+
+        US_P(0) = US_C(0);
+        US_P(1) = US_C(1);
+
     }else if(Axis.use_first_set_three_phase==-1){
         IS_C(0)        = Axis.iabg[3];
         IS_C(1)        = Axis.iabg[4];
@@ -685,12 +675,17 @@ void PanGuMainISR(void){
 
         /* Only init once for easy debug */
         if(!G.flag_experimental_initialized){
-            G.flag_experimental_initialized = TRUE;
 
             init_experiment();
             //G.Select_exp_operation = 3; // fixed
-            init_experiment_AD_gain_and_offset();
             init_experiment_overwrite();
+
+            if(CTRL.g->overwrite_vdc<5){
+                CTRL.g->overwrite_vdc = 20;
+            }
+            CTRL.g->flag_overwite_vdc = 1;
+
+            G.flag_experimental_initialized = TRUE;
         }
 
         DELAY_US(11);
@@ -714,149 +709,11 @@ void PanGuMainISR(void){
                 //Axis.used_theta_d_elec,
                 Axis.angle_shift_for_first_inverter,
                 Axis.angle_shift_for_second_inverter);
-
-            // 按实际涡流位移传感器的安装角度对测量结果进行调整
-            cos_Prototype_Sensor_Install_Angle = cos(Prototype_Sensor_Install_Angle);
-            sin_Prototype_Sensor_Install_Angle = sin(Prototype_Sensor_Install_Angle);
-            pid1_dispX.measurement = AB2M(eddy_displacement[0], eddy_displacement[1], cos_Prototype_Sensor_Install_Angle, sin_Prototype_Sensor_Install_Angle);
-            pid1_dispY.measurement = AB2T(eddy_displacement[0], eddy_displacement[1], cos_Prototype_Sensor_Install_Angle, sin_Prototype_Sensor_Install_Angle);
-
-            if(Axis.Select_exp_operation == 100){
-                static long counter = 0;
-                counter += 1;
-                if(counter<SQUARE_WAVE_PERIOD*0.5){
-                    Axis.Set_manual_current_ix = 20;
-                }else{
-                    Axis.Set_manual_current_ix = -20;
-                    if(counter>=SQUARE_WAVE_PERIOD) counter = 0;
-                }
-            }else if(Axis.Select_exp_operation == 101){
-                static long counter = 0;
-                counter += 1;
-                if(counter<SQUARE_WAVE_PERIOD*0.5){
-                    Axis.Set_manual_current_iy = 20;
-                }else{
-                    Axis.Set_manual_current_iy = -20;
-                    if(counter>=SQUARE_WAVE_PERIOD) counter = 0;
-                }
-            }else if(Axis.Select_exp_operation == 102){
-                static long counter = 0;
-                counter += 1;
-                if(counter<SQUARE_WAVE_PERIOD*0.5){
-                    Axis.Set_manual_current_ix = 20*cos(apply_force_angle);
-                    Axis.Set_manual_current_iy = 20*sin(apply_force_angle);
-                }else{
-                    Axis.Set_manual_current_ix = -20*cos(apply_force_angle);
-                    Axis.Set_manual_current_iy = -20*sin(apply_force_angle);
-                    if(counter>=SQUARE_WAVE_PERIOD) {counter = 0; apply_force_angle += 0.01*2*M_PI;}
-                }
-            }else if(Axis.Select_exp_operation == 200){
-                pid1_dispX.setpoint;
-                pid1_dispY.setpoint;
-                if(the_x_disp_control_count++ >= X_DISPLACEMENT_LOOP_CEILING){
-                    the_x_disp_control_count = 1;
-                    PIDController_Update(&pid1_dispX);
-                    if(Axis.Set_x_suspension_current_loop==FALSE){
-                        Axis.Set_manual_current_ix = pid1_dispX.out;
-                    }
-                   }
-                if(the_y_disp_control_count++ >= Y_DISPLACEMENT_LOOP_CEILING){
-                    the_y_disp_control_count = 1;
-                    PIDController_Update(&pid1_dispY);
-                    if(Axis.Set_y_suspension_current_loop==FALSE){
-                        Axis.Set_manual_current_iy = pid1_dispY.out;
-                    }
-                }
-
-                // 完成双自由度，给定一个torque id的同时再做悬浮力控制防止转子转动？
-
-            }else if(Axis.Select_exp_operation == 201){
-                pid1_dispX.setpoint = 500 * sin(disp_setpoint_frequency*2*M_PI*CTRL.timebase) + disp_setpoint_offset;
-                pid1_dispY.setpoint;
-                if(the_x_disp_control_count++ >= X_DISPLACEMENT_LOOP_CEILING){
-                    the_x_disp_control_count = 1;
-                    PIDController_Update(&pid1_dispX);
-                    if(Axis.Set_x_suspension_current_loop==FALSE){
-                        Axis.Set_manual_current_ix = pid1_dispX.out;
-                    }
-                   }
-                if(the_y_disp_control_count++ >= Y_DISPLACEMENT_LOOP_CEILING){
-                    the_y_disp_control_count = 1;
-                    PIDController_Update(&pid1_dispY);
-                    if(Axis.Set_y_suspension_current_loop==FALSE){
-                        Axis.Set_manual_current_iy = pid1_dispY.out;
-                    }
-                }
-            }else if(Axis.Select_exp_operation == 202){
-                pid1_dispX.setpoint;
-                pid1_dispY.setpoint = 500 * sin(disp_setpoint_frequency*2*M_PI*CTRL.timebase) + disp_setpoint_offset;
-                if(the_x_disp_control_count++ >= X_DISPLACEMENT_LOOP_CEILING){
-                    the_x_disp_control_count = 1;
-                    PIDController_Update(&pid1_dispX);
-                    if(Axis.Set_x_suspension_current_loop==FALSE){
-                        Axis.Set_manual_current_ix = pid1_dispX.out;
-                    }
-                   }
-                if(the_y_disp_control_count++ >= Y_DISPLACEMENT_LOOP_CEILING){
-                    the_y_disp_control_count = 1;
-                    PIDController_Update(&pid1_dispY);
-                    if(Axis.Set_y_suspension_current_loop==FALSE){
-                        Axis.Set_manual_current_iy = pid1_dispY.out;
-                    }
-                }
-
-            }else if(Axis.Select_exp_operation == 300){
-                // 需要人为给定一个恒定的id，悬浮电流矢量匀速旋转，观察位移轨迹
-                if(Axis.flag_overwrite_theta_d == TRUE){
-                    Axis.angle_shift_for_second_inverter += CL_TS*Axis.Overwrite_Suspension_Current_Frequency;
-
-                    if(Axis.angle_shift_for_second_inverter>M_PI){
-                        Axis.angle_shift_for_second_inverter-=2*M_PI;
-                    }else if(Axis.angle_shift_for_second_inverter<-M_PI){
-                        Axis.angle_shift_for_second_inverter+=2*M_PI;
-                    }
-                }
-            }
-
-            // 悬浮逆变器的电流指令
-            if(Axis.use_first_set_three_phase==-1){
-                CTRL.I->idq_cmd[0+2] = Axis.Set_manual_current_ix - 0.5 * CTRL.I->idq_cmd[0];
-                CTRL.I->idq_cmd[1+2] = Axis.Set_manual_current_iy - 0.5 * CTRL.I->idq_cmd[1];
-            }
-
-            // Park Transform for Suspension Inverter
-            CTRL.S->cosT2 = cos( - Axis.used_theta_d_elec + Axis.angle_shift_for_second_inverter); //  + Axis.angle_shift_for_second_inverter
-            CTRL.S->sinT2 = sin( - Axis.used_theta_d_elec + Axis.angle_shift_for_second_inverter);
-            CTRL.I->idq[0+2] = AB2M(CTRL.I->iab[0+2], CTRL.I->iab[1+2], CTRL.S->cosT2, CTRL.S->sinT2);
-            CTRL.I->idq[1+2] = AB2T(CTRL.I->iab[0+2], CTRL.I->iab[1+2], CTRL.S->cosT2, CTRL.S->sinT2);
-
-            /// 6. 电流环
-            // x-axis
-            pid2_ix.Fbk = CTRL.I->idq[0+2];
-            pid2_ix.Ref = CTRL.I->idq_cmd[0+2]; if(Axis.Set_x_suspension_current_loop==1){pid2_ix.Ref = Axis.Set_manual_current_ix;}
-            pid2_ix.calc(&pid2_ix);
-            // y-axis
-            pid2_iy.Fbk = CTRL.I->idq[1+2];
-            pid2_iy.Ref = CTRL.I->idq_cmd[1+2]; if(Axis.Set_y_suspension_current_loop==1){pid2_iy.Ref = Axis.Set_manual_current_iy;}
-            pid2_iy.calc(&pid2_iy);
-
-            CTRL.O->udq_cmd[0+2] = pid2_ix.Out;
-            CTRL.O->udq_cmd[1+2] = pid2_iy.Out;
-            CTRL.O->uab_cmd[0+2] = MT2A(CTRL.O->udq_cmd[0+2], CTRL.O->udq_cmd[1+2], CTRL.S->cosT2, CTRL.S->sinT2);
-            CTRL.O->uab_cmd[1+2] = MT2B(CTRL.O->udq_cmd[0+2], CTRL.O->udq_cmd[1+2], CTRL.S->cosT2, CTRL.S->sinT2);
-
-            #else
+        #else
             commissioning();
         #endif
 
         if(Axis.Select_exp_operation == XCUBE_TaTbTc_DEBUG_MODE){
-            //   CTRL.svgen1.Ta = 0.6; CTRL.svgen1.Tb = 0.4; CTRL.svgen1.Tc = 0.5;
-            //            if(CTRL.svgen1.Ta>0.7) CTRL.svgen1.Ta=0.7;
-            //            if(CTRL.svgen1.Ta<0.3) CTRL.svgen1.Ta=0.3;
-            //            if(CTRL.svgen1.Tb>0.7) CTRL.svgen1.Tb=0.7;
-            //            if(CTRL.svgen1.Tb<0.3) CTRL.svgen1.Tb=0.3;
-            //            if(CTRL.svgen1.Tc>0.7) CTRL.svgen1.Tc=0.7;
-            //            if(CTRL.svgen1.Tc<0.3) CTRL.svgen1.Tc=0.3;
             EPwm1Regs.CMPA.bit.CMPA = CTRL.svgen1.Ta*50000000*CL_TS;
             EPwm2Regs.CMPA.bit.CMPA = CTRL.svgen1.Tb*50000000*CL_TS;
             EPwm3Regs.CMPA.bit.CMPA = CTRL.svgen1.Tc*50000000*CL_TS;
@@ -913,4 +770,3 @@ __interrupt void EPWM1ISR(void){
 }
 
 #endif
-

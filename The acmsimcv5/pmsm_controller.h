@@ -1,6 +1,5 @@
 #ifndef PMSM_CONTROLLER_H
-#define PMSM_CONTROLLER_H
-#if MACHINE_TYPE == 2
+// #if MACHINE_TYPE == 2
 typedef struct { 
     REAL  Ualpha; // Input: reference alpha-axis phase voltage
     REAL  Ubeta;  // Input: reference beta-axis phase voltage
@@ -16,8 +15,9 @@ typedef struct {
     REAL cmd_position_rad;  // mechanical
     REAL cmd_speed_rpm;     // mechanical
     REAL cmd_omg_elec;      // electrical
+    REAL cmd_deriv_omg_elec;  // electrical
+    REAL cmd_dderiv_omg_elec; // electrical
     REAL cmd_rotor_flux_Wb;
-    REAL cmd_psi; // this is not used for PMSM
     REAL idq_cmd[4];
     REAL Tem_cmd;
     // feedback
@@ -29,11 +29,25 @@ typedef struct {
     REAL idq[4];
     REAL psi_mu[2];
     REAL Tem;
+    REAL TLoad;
+    // flux commands
+    REAL cmd_psi_raw;
+    REAL cmd_psi;
+    REAL cmd_psi_inv;
+    REAL cmd_deriv_psi;
+    REAL cmd_dderiv_psi;
+    REAL cmd_psi_ABmu[2];
+    REAL m0;
+    REAL m1;
+    REAL omega1;
 } st_controller_inputs;
 typedef struct {
     // controller strategy
     int ctrl_strategy;
     int go_sensorless;
+    // ???
+    REAL e_M;
+    REAL e_T;
     // field oriented control
     REAL cosT;
     REAL sinT;
@@ -42,6 +56,7 @@ typedef struct {
     REAL cosT2;
     REAL sinT2;
     REAL omega_syn;
+    REAL omega_sl;
     // states
     st_pid_regulator *iM;
     st_pid_regulator *iT;
@@ -61,8 +76,8 @@ typedef struct {
 typedef struct {
     // voltage commands
     REAL uab_cmd[4];
-    REAL uab_cmd_to_inverter[4]; // foc control output + inverter nonlinearity compensation
     REAL udq_cmd[4];
+    REAL uab_cmd_to_inverter[4]; // foc control output + inverter nonlinearity compensation
     REAL udq_cmd_to_inverter[4];
     // current commands
     REAL iab_cmd[4];
@@ -77,12 +92,19 @@ typedef struct {
     REAL DeltaL; // Ld - Lq for IPMSM
     REAL KActive;
     REAL Rreq;
+    // electrical for induction motor
+    REAL Lsigma;
+    REAL Lsigma_inv;
+    REAL Lmu;
+    REAL Lmu_inv;
+    REAL alpha;
+    REAL alpha_inv;
     // mechanical
     REAL npp;
     REAL npp_inv;
     REAL Js;
     REAL Js_inv;
-} st_pmsm_parameters;
+} st_motor_parameters;
 
 #define MA_SEQUENCE_LENGTH         10 // 40 for Yaojie large Lq motor  // Note MA_SEQUENCE_LENGTH * CL_TS = window of moving average in seconds
 #define MA_SEQUENCE_LENGTH_INVERSE 0.1 // 0.025                        // 20 MA gives speed resolution of 3 rpm for 2500 ppr encoder
@@ -248,7 +270,7 @@ struct ControllerForExperiment{
     REAL timebase;
 
     /* Machine parameters */
-    st_pmsm_parameters *motor;
+    st_motor_parameters *motor;
 
     /* Peripheral configurations */
     st_enc *enc;
@@ -322,4 +344,4 @@ void Online_PAA_Based_Compensation(void);
 void main_inverter_voltage_command(int bool_use_iab_cmd);
 
 #endif
-#endif
+// #endif

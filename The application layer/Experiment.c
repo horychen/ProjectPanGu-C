@@ -125,7 +125,7 @@ void init_experiment_overwrite(){
     //    AFEOE.limiter_KE = 1.15 * MOTOR.KE; // this depends on KE value
 
     /* SlessInv */
-    htz.psi_aster_max = CTRL.motor->KE - 0.003;
+    FE.htz.psi_aster_max = CTRL.motor->KE - 0.003;
 
     // for debug
     CTRL.S->PSD_Done = FALSE;

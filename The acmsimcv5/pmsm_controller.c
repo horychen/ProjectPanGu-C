@@ -1,328 +1,5 @@
 #include "ACMSim.h"
 
-#if MACHINE_TYPE == 2
-void init_experiment(){
-
-    #if ENABLE_COMMISSIONING
-        // init_COMM(); // 参数自整定初始化，不要在这里做！
-    #endif
-
-    init_CTRL(); // 控制器结构体初始化
-    init_pmsm_observers(); // 永磁电机观测器初始化
-    init_FE();
-}
-
-// 初始化函数
-void init_CTRL(){
-
-    allocate_CTRL(&CTRL);
-
-/* Basic quantities */
-    CTRL.timebase = 0.0;
-
-/* Machine parameters */
-    // elec
-    CTRL.motor->R  = PMSM_RESISTANCE;
-    CTRL.motor->KE = PMSM_PERMANENT_MAGNET_FLUX_LINKAGE; // * (0.1/0.1342); // 【实验编号：】
-    CTRL.motor->Ld = PMSM_D_AXIS_INDUCTANCE;
-    CTRL.motor->Lq = PMSM_Q_AXIS_INDUCTANCE;
-    CTRL.motor->Lq_inv = 1.0/CTRL.motor->Lq;
-    CTRL.motor->DeltaL = CTRL.motor->Ld - CTRL.motor->Lq; // for IPMSM
-    CTRL.motor->KActive = CTRL.motor->KE; // TODO
-    CTRL.motor->Rreq = U_MOTOR_RREQ;
-    // mech
-    CTRL.motor->npp     = MOTOR_NUMBER_OF_POLE_PAIRS;
-    CTRL.motor->npp_inv = 1.0 / CTRL.motor->npp;
-    CTRL.motor->Js      = MOTOR_SHAFT_INERTIA * (1.0+LOAD_INERTIA);
-    CTRL.motor->Js_inv  = 1.0 / CTRL.motor->Js;
-
-// /* Peripheral configurations */
-
-/* Inverter */
-    CTRL.inv->filter_pole = 3000*2*M_PI;
-    inverterNonlinearity_Initialization();
-    G.FLAG_INVERTER_NONLINEARITY_COMPENSATION = INVERTER_NONLINEARITY_COMPENSATION_INIT;
-    G.FLAG_TUNING_CURRENT_SCALE_FACTOR = TUNING_CURRENT_SCALE_FACTOR_INIT;
-
-/* Capture */
-    CTRL.cap->flag_nonlinear_filtering = FALSE;
-    CTRL.cap->flag_bad_U_capture = FALSE;
-    CTRL.cap->flag_bad_V_capture = FALSE;
-    CTRL.cap->flag_bad_W_capture = FALSE;
-    CTRL.cap->good_capture_U[0] = SYSTEM_HALF_PWM_MAX_COUNT;
-    CTRL.cap->good_capture_U[1] = SYSTEM_HALF_PWM_MAX_COUNT;
-    CTRL.cap->good_capture_U[2] = SYSTEM_HALF_PWM_MAX_COUNT;
-    CTRL.cap->good_capture_U[3] = SYSTEM_HALF_PWM_MAX_COUNT;
-    CTRL.cap->good_capture_V[0] = SYSTEM_HALF_PWM_MAX_COUNT;
-    CTRL.cap->good_capture_V[1] = SYSTEM_HALF_PWM_MAX_COUNT;
-    CTRL.cap->good_capture_V[2] = SYSTEM_HALF_PWM_MAX_COUNT;
-    CTRL.cap->good_capture_V[3] = SYSTEM_HALF_PWM_MAX_COUNT;
-    CTRL.cap->good_capture_W[0] = SYSTEM_HALF_PWM_MAX_COUNT;
-    CTRL.cap->good_capture_W[1] = SYSTEM_HALF_PWM_MAX_COUNT;
-    CTRL.cap->good_capture_W[2] = SYSTEM_HALF_PWM_MAX_COUNT;
-    CTRL.cap->good_capture_W[3] = SYSTEM_HALF_PWM_MAX_COUNT;
-    CTRL.cap->ECapIntCount[0] = 0;
-    CTRL.cap->ECapIntCount[1] = 0;
-    CTRL.cap->ECapIntCount[2] = 0;
-    CTRL.cap->ECapPassCount[0]= 0;
-    CTRL.cap->ECapPassCount[1]= 0;
-    CTRL.cap->ECapPassCount[2]= 0;
-
-/* Peripheral configurations */
-    CTRL.enc->OffsetCountBetweenIndexAndUPhaseAxis = 0;
-    CTRL.enc->theta_d_offset = CTRL.enc->OffsetCountBetweenIndexAndUPhaseAxis * CNT_2_ELEC_RAD;
-
-/* Console */
-    // See init_experiment_overwrite() in CJHMainISR.c
-    G.flag_do_inverter_characteristics = SELF_COMM_INVERTER;
-    G.overwrite_vdc = 20;
-
-/* Black Box Model | Controller quantities */
-
-    // PID调谐
-    ACMSIMC_PIDTuner();
-
-    // PID regulators
-    CTRL.S->iM  = &pid1_iM;
-    CTRL.S->iT  = &pid1_iT;
-    CTRL.S->spd = &pid1_spd;
-    CTRL.S->pos = &pid1_pos;
-
-    // commands
-    CTRL.I->cmd_psi = U_MOTOR_KE;
-    // CTRL.I->idq_cmd[0] = 0.0;
-    // CTRL.I->idq_cmd[1] = 0.0;
-    // // error
-    // CTRL.omg_ctrl_err = 0.0;
-    // CTRL.speed_ctrl_err = 0.0;
-    // // feedback
-    // CTRL.I->omg_elec = 0.0;
-    // CTRL.I->theta_d_elec = 0.0;
-    // CTRL.I->iab[0] = 0.0;
-    // CTRL.I->iab[1] = 0.0;
-    // CTRL.I->idq[0] = 0.0;
-    // CTRL.I->idq[1] = 0.0;
-    // CTRL.psi_mu_al__fb = 0.0;
-    // CTRL.psi_mu_be__fb = 0.0;
-    // CTRL.Tem = 0.0;
-    // // indirect field oriented control
-    CTRL.S->cosT = 1.0;
-    CTRL.S->sinT = 0.0;
-    CTRL.S->cosT_compensated_1p5omegaTs = 1.0;
-    CTRL.S->sinT_compensated_1p5omegaTs = 0.0;
-    CTRL.S->cosT2 = 1.0;
-    CTRL.S->sinT2 = 0.0;
-    // CTRL.S->omega_syn = 0.0;
-    CTRL.S->the_vc_count = 1; // starts from 1
-
-    CTRL.S->ctrl_strategy = CONTROL_STRATEGY;
-    CTRL.S->go_sensorless = SENSORLESS_CONTROL;
-
-}
-
-/* id=0控制 */
-void null_d_control(int set_current_loop, REAL set_iq_cmd, REAL set_id_cmd){
-    // 定义局部变量，减少对CTRL的直接调用
-    #define MOTOR  (*CTRL.motor)
-
-    /// 5. 转速环（使用反馈转速）
-    if(CTRL.S->the_vc_count++ >= SPEED_LOOP_CEILING){
-        CTRL.S->the_vc_count = 1;
-
-        pid1_spd.Ref = CTRL.I->cmd_speed_rpm*RPM_2_ELEC_RAD_PER_SEC;
-        pid1_spd.Fbk = CTRL.I->omg_elec;
-        pid1_spd.calc(&pid1_spd);
-        CTRL.I->idq_cmd[1] = pid1_spd.Out;
-        // CTRL.I->idq_cmd[1+2] = pid1_spd.Out;
-    }
-    // 磁链环
-    #if CONTROL_STRATEGY == NULL_D_AXIS_CURRENT_CONTROL
-        // CTRL.I->cmd_rotor_flux_Wb = 0.0;
-        // CTRL.I->idq_cmd[0] = CTRL.I->cmd_rotor_flux_Wb / MOTOR.Ld;
-
-        #if PC_SIMULATION == TRUE
-            REAL IMIN = 2;
-            // if(CTRL.timebase>23){
-            //     IMIN = 8;
-            // }else if(CTRL.timebase>20){
-            //     IMIN = 6;
-            // }else if(CTRL.timebase>15){
-            //     IMIN = 5;
-            // }else if(CTRL.timebase>10){
-            //     IMIN = 3;
-            // }else if(CTRL.timebase>5){
-            //     IMIN = 2;
-            // }
-        #else
-            REAL IMIN = 2; //2;
-        #endif
-        /* 逆变器非线性在线校正更新theta_t需要空载时电流不为零 */
-        // if(fabs(CTRL.I->idq_cmd[1])<IMIN){
-        //     CTRL.I->idq_cmd[0] = IMIN;
-        // }else{
-        //     CTRL.I->idq_cmd[0] = 0;
-        // }
-
-        /* Overwrite if set_id_cmd is set [Both are POSITIVE] */
-        // if(set_id_cmd!=0){
-            CTRL.I->idq_cmd[0] = set_id_cmd;
-            // CTRL.I->idq_cmd[0+2] = set_id_cmd;
-        // }
-    #else
-        CTRL.I->cmd_rotor_flux_Wb = MOTOR.Ld * set_id_cmd;
-        CTRL.I->idq_cmd[0] = set_id_cmd;
-        #if PC_SIMULATION
-            printf("CONTROL_STRATEGY Not Implemented: %s", CONTROL_STRATEGY);getch();
-        #endif
-    #endif
-    // 转矩 For luenberger position observer for HFSI
-    CTRL.I->Tem     = MOTOR.npp * (MOTOR.KE*CTRL.I->idq[1]     + (MOTOR.Ld-MOTOR.Lq)*CTRL.I->idq[0]    *CTRL.I->idq[1]);
-    CTRL.I->Tem_cmd = MOTOR.npp * (MOTOR.KE*CTRL.I->idq_cmd[1] + (MOTOR.Ld-MOTOR.Lq)*CTRL.I->idq_cmd[0]*CTRL.I->idq_cmd[1]);
-
-    /// 5.Sweep 扫频将覆盖上面产生的励磁、转矩电流指令
-    #if EXCITATION_TYPE == EXCITATION_SWEEP_FREQUENCY
-        #if SWEEP_FREQ_C2V == TRUE
-            pid1_iq.Ref = set_iq_cmd; 
-        #endif
-        #if SWEEP_FREQ_C2C == TRUE
-            pid1_iq.Ref = 0.0;
-            pid1_id.Ref = set_iq_cmd; // 故意反的
-        #endif
-    #endif
-
-    // debug
-    // set_current_loop = 1;
-    // set_iq_cmd = 1;
-
-    /// 6. 电流环
-    // d-axis
-    pid1_id.Fbk = CTRL.I->idq[0];
-    pid1_id.Ref = CTRL.I->idq_cmd[0];
-    pid1_id.calc(&pid1_id);
-    // pid2_id.Fbk = CTRL.I->idq[0+2];
-    // pid2_id.Ref = CTRL.I->idq_cmd[0+2];
-    // pid2_id.calc(&pid2_id);
-    // q-axis
-    pid1_iq.Fbk = CTRL.I->idq[1];
-    pid1_iq.Ref = CTRL.I->idq_cmd[1]; if(set_current_loop==1){pid1_iq.Ref = set_iq_cmd; CTRL.I->idq_cmd[1] = set_iq_cmd;}
-    pid1_iq.calc(&pid1_iq);
-    // pid2_iq.Fbk = CTRL.I->idq[1+2];
-    // pid2_iq.Ref = CTRL.I->idq_cmd[1+2]; if(set_current_loop==1){pid2_iq.Ref = set_iq_cmd;}
-    // pid2_iq.calc(&pid2_iq);
-    // 电压电流解耦
-    #if VOLTAGE_CURRENT_DECOUPLING_CIRCUIT == TRUE
-        REAL decoupled_d_axis_voltage = pid1_id.Out -             pid1_iq.Fbk*MOTOR.Lq *CTRL.I->omg_elec;
-        REAL decoupled_q_axis_voltage = pid1_iq.Out + ( MOTOR.KE + pid1_id.Fbk*MOTOR.Ld)*CTRL.I->omg_elec;
-    #else
-        REAL decoupled_d_axis_voltage = pid1_id.Out;
-        REAL decoupled_q_axis_voltage = pid1_iq.Out;
-    #endif
-    CTRL.O->udq_cmd[0] = decoupled_d_axis_voltage;
-    CTRL.O->udq_cmd[1] = decoupled_q_axis_voltage;
-    // CTRL.O->udq_cmd[0+2] = pid2_id.Out;
-    // CTRL.O->udq_cmd[1+2] = pid2_iq.Out;
-}
-
-REAL used_theta_d_elec = 0.0;
-REAL controller(REAL set_rpm_speed_command, 
-    int set_current_loop, REAL set_iq_cmd, REAL set_id_cmd,
-    int flag_overwrite_theta_d, REAL Overwrite_Current_Frequency,
-    REAL angle_shift_for_first_inverter,
-    REAL angle_shift_for_second_inverter){
-
-    /// 0. 参数时变
-    // if (fabs(CTRL.timebase-2.0)<CL_TS){
-    //     printf("[Runtime] Rotor resistance of the simulated IM has changed!\n");
-    //     ACM.alpha = 0.5*IM_ROTOR_RESISTANCE / IM_MAGNETIZING_INDUCTANCE;
-    //     ACM.rreq = ACM.alpha*ACM.Lmu;
-    //     ACM.rr   = ACM.alpha*(ACM.Lm+ACM.Llr);
-    // }
-
-    /// 1. 生成转速指令
-    CTRL.I->cmd_position_rad    = 0.0;  // mechanical
-    CTRL.I->cmd_speed_rpm       = set_rpm_speed_command;     // mechanical
-    CTRL.I->cmd_omg_elec        = CTRL.I->cmd_speed_rpm * RPM_2_ELEC_RAD_PER_SEC; // electrical
-
-    /// 2. 生成磁链指令
-    if(set_id_cmd==0.0){
-        // if(set_iq_cmd<1){
-        //     set_id_cmd = 1; // 2;
-        // }
-    }
-
-    /// 3. 调用观测器：估计的电气转子位置和电气转子转速反馈
-    pmsm_observers();
-    if(CTRL.S->go_sensorless == TRUE){
-        //（无感）
-        CTRL.I->omg_elec     = ELECTRICAL_SPEED_FEEDBACK;    //harnefors.omg_elec;
-        CTRL.I->theta_d_elec = ELECTRICAL_POSITION_FEEDBACK; //harnefors.theta_d;
-    }
-
-    /// 4. 帕克变换（使用反馈位置）
-    if(flag_overwrite_theta_d){
-        if(fabs(Overwrite_Current_Frequency)>0){
-            used_theta_d_elec += CL_TS * Overwrite_Current_Frequency * 2*M_PI ;
-            while(used_theta_d_elec> M_PI) used_theta_d_elec -= 2*M_PI;
-            while(used_theta_d_elec<-M_PI) used_theta_d_elec += 2*M_PI;
-        }else{
-            used_theta_d_elec = 0.0;
-        }
-    }else{
-        used_theta_d_elec = CTRL.I->theta_d_elec;
-    }
-    CTRL.S->cosT = cos(used_theta_d_elec + angle_shift_for_first_inverter);
-    CTRL.S->sinT = sin(used_theta_d_elec + angle_shift_for_first_inverter);
-    CTRL.I->idq[0] = AB2M(CTRL.I->iab[0], CTRL.I->iab[1], CTRL.S->cosT, CTRL.S->sinT);
-    CTRL.I->idq[1] = AB2T(CTRL.I->iab[0], CTRL.I->iab[1], CTRL.S->cosT, CTRL.S->sinT);
-
-    // CTRL.S->cosT2 = cos(used_theta_d_elec + angle_shift_for_second_inverter);
-    // CTRL.S->sinT2 = sin(used_theta_d_elec + angle_shift_for_second_inverter);
-    // CTRL.I->idq[0+2] = AB2M(CTRL.I->iab[0+2], CTRL.I->iab[1+2], CTRL.S->cosT2, CTRL.S->sinT2);
-    // CTRL.I->idq[1+2] = AB2T(CTRL.I->iab[0+2], CTRL.I->iab[1+2], CTRL.S->cosT2, CTRL.S->sinT2);
-
-    /* 更新依赖于dq轴电流的物理量 */
-    // MOTOR.KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * CTRL.I->idq_cmd[0];
-    MOTOR.KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * CTRL.I->idq[0];
-
-    /// 调用具体的控制器
-    #if CONTROL_STRATEGY == NULL_D_AXIS_CURRENT_CONTROL
-        null_d_control(set_current_loop, set_iq_cmd, set_id_cmd);
-        CTRL.S->Motor_or_Generator = sign(CTRL.I->omg_elec * CTRL.I->idq_cmd[1]); // sign(CTRL.I->cmd_omg_elec);
-    #endif
-
-
-    /// 7. 反帕克变换
-    // See D:\Users\horyc\Downloads\Documents\2003 TIA Bae SK Sul A compensation method for time delay of.pdf
-    // CTRL.S->cosT_compensated_1p5omegaTs = cos(used_theta_d_elec + 1.5*CTRL.I->omg_elec*CL_TS);
-    // CTRL.S->sinT_compensated_1p5omegaTs = sin(used_theta_d_elec + 1.5*CTRL.I->omg_elec*CL_TS);
-    CTRL.S->cosT_compensated_1p5omegaTs = CTRL.S->cosT;
-    CTRL.S->sinT_compensated_1p5omegaTs = CTRL.S->sinT;
-    CTRL.O->uab_cmd[0] = MT2A(CTRL.O->udq_cmd[0], CTRL.O->udq_cmd[1], CTRL.S->cosT_compensated_1p5omegaTs, CTRL.S->sinT_compensated_1p5omegaTs);
-    CTRL.O->uab_cmd[1] = MT2B(CTRL.O->udq_cmd[0], CTRL.O->udq_cmd[1], CTRL.S->cosT_compensated_1p5omegaTs, CTRL.S->sinT_compensated_1p5omegaTs);
-    CTRL.O->iab_cmd[0] = MT2A(CTRL.I->idq_cmd[0], CTRL.I->idq_cmd[1], CTRL.S->cosT_compensated_1p5omegaTs, CTRL.S->sinT_compensated_1p5omegaTs);
-    CTRL.O->iab_cmd[1] = MT2B(CTRL.I->idq_cmd[0], CTRL.I->idq_cmd[1], CTRL.S->cosT_compensated_1p5omegaTs, CTRL.S->sinT_compensated_1p5omegaTs);
-
-    // CTRL.O->uab_cmd[0+2] = MT2A(CTRL.O->udq_cmd[0+2], CTRL.O->udq_cmd[1+2], CTRL.S->cosT2, CTRL.S->sinT2);
-    // CTRL.O->uab_cmd[1+2] = MT2B(CTRL.O->udq_cmd[0+2], CTRL.O->udq_cmd[1+2], CTRL.S->cosT2, CTRL.S->sinT2);
-
-    /// 8. 补偿逆变器非线性
-    main_inverter_voltage_command(1);
-
-    /// 9. 结束
-    #if PC_SIMULATION
-        // for plot
-        ACM.rpm_cmd = set_rpm_speed_command;
-        // CTRL.speed_ctrl_err = set_rpm_speed_command*RPM_2_ELEC_RAD_PER_SEC - CTRL.I->omg_elec;
-    #endif
-
-    return used_theta_d_elec;
-}
-
-
-
-
-
-
 /* 逆变器非线性 */
 
 /* 拟合法 */
@@ -897,7 +574,7 @@ void Online_PAA_Based_Compensation(void){
         // INV.sig_a2 += CL_TS * -100 * AFEOE.output_error_dq[0];
 
         // use nonlinear (saturation) FE
-        INV.sig_a2 += CL_TS * -INV.gamma_a2 * CTRL.S->Motor_or_Generator * (MOTOR.KActive - htz.psi_2_ampl_lpf);
+        INV.sig_a2 += CL_TS * -INV.gamma_a2 * CTRL.S->Motor_or_Generator * (MOTOR.KActive - FE.htz.psi_2_ampl_lpf);
 
         /* Sensored: Adaptive a2 based on position error */
         /* To use this, you must have a large enough stator current */
@@ -1067,6 +744,336 @@ void main_inverter_voltage_command(int bool_use_iab_cmd){
         CTRL.O->uab_cmd_to_inverter[1] = CTRL.O->uab_cmd[1] + INV.ube_comp;
     }
 }
+
+
+
+#if MACHINE_TYPE % 10 == 2
+
+void init_experiment(){
+
+    #if ENABLE_COMMISSIONING
+        // init_COMM(); // 参数自整定初始化，不要在这里做！
+    #endif
+
+    init_CTRL(); // 控制器结构体初始化
+
+    #if MACHINE_TYPE == 2
+        init_pmsm_observers(); // 永磁电机观测器初始化
+        init_FE();
+    #else
+        rk4_init();     // 龙格库塔法结构体初始化
+        observer_init();
+    #endif
+}
+
+// 初始化函数
+void init_CTRL(){
+
+    allocate_CTRL(&CTRL);
+
+/* Basic quantities */
+    CTRL.timebase = 0.0;
+
+/* Machine parameters */
+    // elec
+    CTRL.motor->R  = PMSM_RESISTANCE;
+    CTRL.motor->KE = PMSM_PERMANENT_MAGNET_FLUX_LINKAGE; // * (0.1/0.1342); // 【实验编号：】
+    CTRL.motor->Ld = PMSM_D_AXIS_INDUCTANCE;
+    CTRL.motor->Lq = PMSM_Q_AXIS_INDUCTANCE;
+    CTRL.motor->Lq_inv = 1.0/CTRL.motor->Lq;
+    CTRL.motor->DeltaL = CTRL.motor->Ld - CTRL.motor->Lq; // for IPMSM
+    CTRL.motor->KActive = CTRL.motor->KE; // TODO
+    CTRL.motor->Rreq = U_MOTOR_RREQ;
+    // mech
+    CTRL.motor->npp     = MOTOR_NUMBER_OF_POLE_PAIRS;
+    CTRL.motor->npp_inv = 1.0 / CTRL.motor->npp;
+    CTRL.motor->Js      = MOTOR_SHAFT_INERTIA * (1.0+LOAD_INERTIA);
+    CTRL.motor->Js_inv  = 1.0 / CTRL.motor->Js;
+
+// /* Peripheral configurations */
+
+/* Inverter */
+    CTRL.inv->filter_pole = 3000*2*M_PI;
+    inverterNonlinearity_Initialization();
+    G.FLAG_INVERTER_NONLINEARITY_COMPENSATION = INVERTER_NONLINEARITY_COMPENSATION_INIT;
+    G.FLAG_TUNING_CURRENT_SCALE_FACTOR = TUNING_CURRENT_SCALE_FACTOR_INIT;
+
+/* Capture */
+    CTRL.cap->flag_nonlinear_filtering = FALSE;
+    CTRL.cap->flag_bad_U_capture = FALSE;
+    CTRL.cap->flag_bad_V_capture = FALSE;
+    CTRL.cap->flag_bad_W_capture = FALSE;
+    CTRL.cap->good_capture_U[0] = SYSTEM_HALF_PWM_MAX_COUNT;
+    CTRL.cap->good_capture_U[1] = SYSTEM_HALF_PWM_MAX_COUNT;
+    CTRL.cap->good_capture_U[2] = SYSTEM_HALF_PWM_MAX_COUNT;
+    CTRL.cap->good_capture_U[3] = SYSTEM_HALF_PWM_MAX_COUNT;
+    CTRL.cap->good_capture_V[0] = SYSTEM_HALF_PWM_MAX_COUNT;
+    CTRL.cap->good_capture_V[1] = SYSTEM_HALF_PWM_MAX_COUNT;
+    CTRL.cap->good_capture_V[2] = SYSTEM_HALF_PWM_MAX_COUNT;
+    CTRL.cap->good_capture_V[3] = SYSTEM_HALF_PWM_MAX_COUNT;
+    CTRL.cap->good_capture_W[0] = SYSTEM_HALF_PWM_MAX_COUNT;
+    CTRL.cap->good_capture_W[1] = SYSTEM_HALF_PWM_MAX_COUNT;
+    CTRL.cap->good_capture_W[2] = SYSTEM_HALF_PWM_MAX_COUNT;
+    CTRL.cap->good_capture_W[3] = SYSTEM_HALF_PWM_MAX_COUNT;
+    CTRL.cap->ECapIntCount[0] = 0;
+    CTRL.cap->ECapIntCount[1] = 0;
+    CTRL.cap->ECapIntCount[2] = 0;
+    CTRL.cap->ECapPassCount[0]= 0;
+    CTRL.cap->ECapPassCount[1]= 0;
+    CTRL.cap->ECapPassCount[2]= 0;
+
+/* Peripheral configurations */
+    CTRL.enc->OffsetCountBetweenIndexAndUPhaseAxis = 0;
+    CTRL.enc->theta_d_offset = CTRL.enc->OffsetCountBetweenIndexAndUPhaseAxis * CNT_2_ELEC_RAD;
+
+/* Console */
+    // See init_experiment_overwrite() in CJHMainISR.c
+    G.flag_do_inverter_characteristics = SELF_COMM_INVERTER;
+    G.overwrite_vdc = 20;
+
+/* Black Box Model | Controller quantities */
+
+    // PID调谐
+    ACMSIMC_PIDTuner();
+
+    // PID regulators
+    CTRL.S->iM  = &pid1_iM;
+    CTRL.S->iT  = &pid1_iT;
+    CTRL.S->spd = &pid1_spd;
+    CTRL.S->pos = &pid1_pos;
+
+    // commands
+    CTRL.I->cmd_psi = U_MOTOR_KE;
+    // CTRL.I->idq_cmd[0] = 0.0;
+    // CTRL.I->idq_cmd[1] = 0.0;
+    // // error
+    // CTRL.omg_ctrl_err = 0.0;
+    // CTRL.speed_ctrl_err = 0.0;
+    // // feedback
+    // CTRL.I->omg_elec = 0.0;
+    // CTRL.I->theta_d_elec = 0.0;
+    // CTRL.I->iab[0] = 0.0;
+    // CTRL.I->iab[1] = 0.0;
+    // CTRL.I->idq[0] = 0.0;
+    // CTRL.I->idq[1] = 0.0;
+    // CTRL.psi_mu_al__fb = 0.0;
+    // CTRL.psi_mu_be__fb = 0.0;
+    // CTRL.Tem = 0.0;
+    // // indirect field oriented control
+    CTRL.S->cosT = 1.0;
+    CTRL.S->sinT = 0.0;
+    CTRL.S->cosT_compensated_1p5omegaTs = 1.0;
+    CTRL.S->sinT_compensated_1p5omegaTs = 0.0;
+    CTRL.S->cosT2 = 1.0;
+    CTRL.S->sinT2 = 0.0;
+    // CTRL.S->omega_syn = 0.0;
+    CTRL.S->the_vc_count = 1; // starts from 1
+
+    CTRL.S->ctrl_strategy = CONTROL_STRATEGY;
+    CTRL.S->go_sensorless = SENSORLESS_CONTROL;
+
+}
+
+/* id=0控制 */
+void null_d_control(int set_current_loop, REAL set_iq_cmd, REAL set_id_cmd){
+    // 定义局部变量，减少对CTRL的直接调用
+    #define MOTOR  (*CTRL.motor)
+
+    /// 5. 转速环（使用反馈转速）
+    if(CTRL.S->the_vc_count++ >= SPEED_LOOP_CEILING){
+        CTRL.S->the_vc_count = 1;
+
+        pid1_spd.Ref = CTRL.I->cmd_speed_rpm*RPM_2_ELEC_RAD_PER_SEC;
+        pid1_spd.Fbk = CTRL.I->omg_elec;
+        pid1_spd.calc(&pid1_spd);
+        CTRL.I->idq_cmd[1] = pid1_spd.Out;
+        // CTRL.I->idq_cmd[1+2] = pid1_spd.Out;
+    }
+    // 磁链环
+    #if CONTROL_STRATEGY == NULL_D_AXIS_CURRENT_CONTROL
+        // CTRL.I->cmd_rotor_flux_Wb = 0.0;
+        // CTRL.I->idq_cmd[0] = CTRL.I->cmd_rotor_flux_Wb / MOTOR.Ld;
+
+        #if PC_SIMULATION == TRUE
+            REAL IMIN = 2;
+            // if(CTRL.timebase>23){
+            //     IMIN = 8;
+            // }else if(CTRL.timebase>20){
+            //     IMIN = 6;
+            // }else if(CTRL.timebase>15){
+            //     IMIN = 5;
+            // }else if(CTRL.timebase>10){
+            //     IMIN = 3;
+            // }else if(CTRL.timebase>5){
+            //     IMIN = 2;
+            // }
+        #else
+            REAL IMIN = 2; //2;
+        #endif
+        /* 逆变器非线性在线校正更新theta_t需要空载时电流不为零 */
+        // if(fabs(CTRL.I->idq_cmd[1])<IMIN){
+        //     CTRL.I->idq_cmd[0] = IMIN;
+        // }else{
+        //     CTRL.I->idq_cmd[0] = 0;
+        // }
+
+        /* Overwrite if set_id_cmd is set [Both are POSITIVE] */
+        // if(set_id_cmd!=0){
+            CTRL.I->idq_cmd[0] = set_id_cmd;
+            // CTRL.I->idq_cmd[0+2] = set_id_cmd;
+        // }
+    #else
+        CTRL.I->cmd_rotor_flux_Wb = MOTOR.Ld * set_id_cmd;
+        CTRL.I->idq_cmd[0] = set_id_cmd;
+        #if PC_SIMULATION
+            printf("CONTROL_STRATEGY Not Implemented: %s", CONTROL_STRATEGY);getch();
+        #endif
+    #endif
+    // 转矩 For luenberger position observer for HFSI
+    CTRL.I->Tem     = MOTOR.npp * (MOTOR.KE*CTRL.I->idq[1]     + (MOTOR.Ld-MOTOR.Lq)*CTRL.I->idq[0]    *CTRL.I->idq[1]);
+    CTRL.I->Tem_cmd = MOTOR.npp * (MOTOR.KE*CTRL.I->idq_cmd[1] + (MOTOR.Ld-MOTOR.Lq)*CTRL.I->idq_cmd[0]*CTRL.I->idq_cmd[1]);
+
+    /// 5.Sweep 扫频将覆盖上面产生的励磁、转矩电流指令
+    #if EXCITATION_TYPE == EXCITATION_SWEEP_FREQUENCY
+        #if SWEEP_FREQ_C2V == TRUE
+            pid1_iq.Ref = set_iq_cmd; 
+        #endif
+        #if SWEEP_FREQ_C2C == TRUE
+            pid1_iq.Ref = 0.0;
+            pid1_id.Ref = set_iq_cmd; // 故意反的
+        #endif
+    #endif
+
+    // debug
+    // set_current_loop = 1;
+    // set_iq_cmd = 1;
+
+    /// 6. 电流环
+    // d-axis
+    pid1_id.Fbk = CTRL.I->idq[0];
+    pid1_id.Ref = CTRL.I->idq_cmd[0];
+    pid1_id.calc(&pid1_id);
+    // pid2_id.Fbk = CTRL.I->idq[0+2];
+    // pid2_id.Ref = CTRL.I->idq_cmd[0+2];
+    // pid2_id.calc(&pid2_id);
+    // q-axis
+    pid1_iq.Fbk = CTRL.I->idq[1];
+    pid1_iq.Ref = CTRL.I->idq_cmd[1]; if(set_current_loop==1){pid1_iq.Ref = set_iq_cmd; CTRL.I->idq_cmd[1] = set_iq_cmd;}
+    pid1_iq.calc(&pid1_iq);
+    // pid2_iq.Fbk = CTRL.I->idq[1+2];
+    // pid2_iq.Ref = CTRL.I->idq_cmd[1+2]; if(set_current_loop==1){pid2_iq.Ref = set_iq_cmd;}
+    // pid2_iq.calc(&pid2_iq);
+    // 电压电流解耦
+    #if VOLTAGE_CURRENT_DECOUPLING_CIRCUIT == TRUE
+        REAL decoupled_d_axis_voltage = pid1_id.Out -             pid1_iq.Fbk*MOTOR.Lq *CTRL.I->omg_elec;
+        REAL decoupled_q_axis_voltage = pid1_iq.Out + ( MOTOR.KE + pid1_id.Fbk*MOTOR.Ld)*CTRL.I->omg_elec;
+    #else
+        REAL decoupled_d_axis_voltage = pid1_id.Out;
+        REAL decoupled_q_axis_voltage = pid1_iq.Out;
+    #endif
+    CTRL.O->udq_cmd[0] = decoupled_d_axis_voltage;
+    CTRL.O->udq_cmd[1] = decoupled_q_axis_voltage;
+    // CTRL.O->udq_cmd[0+2] = pid2_id.Out;
+    // CTRL.O->udq_cmd[1+2] = pid2_iq.Out;
+}
+
+REAL used_theta_d_elec = 0.0;
+REAL controller(REAL set_rpm_speed_command, 
+    int set_current_loop, REAL set_iq_cmd, REAL set_id_cmd,
+    int flag_overwrite_theta_d, REAL Overwrite_Current_Frequency,
+    REAL angle_shift_for_first_inverter,
+    REAL angle_shift_for_second_inverter){
+
+    /// 0. 参数时变
+    // if (fabs(CTRL.timebase-2.0)<CL_TS){
+    //     printf("[Runtime] Rotor resistance of the simulated IM has changed!\n");
+    //     ACM.alpha = 0.5*IM_ROTOR_RESISTANCE / IM_MAGNETIZING_INDUCTANCE;
+    //     ACM.rreq = ACM.alpha*ACM.Lmu;
+    //     ACM.rr   = ACM.alpha*(ACM.Lm+ACM.Llr);
+    // }
+
+    /// 1. 生成转速指令
+    CTRL.I->cmd_position_rad    = 0.0;  // mechanical
+    CTRL.I->cmd_speed_rpm       = set_rpm_speed_command;     // mechanical
+    CTRL.I->cmd_omg_elec        = CTRL.I->cmd_speed_rpm * RPM_2_ELEC_RAD_PER_SEC; // electrical
+
+    /// 2. 生成磁链指令
+    if(set_id_cmd==0.0){
+        // if(set_iq_cmd<1){
+        //     set_id_cmd = 1; // 2;
+        // }
+    }
+
+    /// 3. 调用观测器：估计的电气转子位置和电气转子转速反馈
+    pmsm_observers();
+    if(CTRL.S->go_sensorless == TRUE){
+        //（无感）
+        CTRL.I->omg_elec     = ELECTRICAL_SPEED_FEEDBACK;    //harnefors.omg_elec;
+        CTRL.I->theta_d_elec = ELECTRICAL_POSITION_FEEDBACK; //harnefors.theta_d;
+    }
+
+    /// 4. 帕克变换（使用反馈位置）
+    if(flag_overwrite_theta_d){
+        if(fabs(Overwrite_Current_Frequency)>0){
+            used_theta_d_elec += CL_TS * Overwrite_Current_Frequency * 2*M_PI ;
+            while(used_theta_d_elec> M_PI) used_theta_d_elec -= 2*M_PI;
+            while(used_theta_d_elec<-M_PI) used_theta_d_elec += 2*M_PI;
+        }else{
+            used_theta_d_elec = 0.0;
+        }
+    }else{
+        used_theta_d_elec = CTRL.I->theta_d_elec;
+    }
+    CTRL.S->cosT = cos(used_theta_d_elec + angle_shift_for_first_inverter);
+    CTRL.S->sinT = sin(used_theta_d_elec + angle_shift_for_first_inverter);
+    CTRL.I->idq[0] = AB2M(CTRL.I->iab[0], CTRL.I->iab[1], CTRL.S->cosT, CTRL.S->sinT);
+    CTRL.I->idq[1] = AB2T(CTRL.I->iab[0], CTRL.I->iab[1], CTRL.S->cosT, CTRL.S->sinT);
+
+    // CTRL.S->cosT2 = cos(used_theta_d_elec + angle_shift_for_second_inverter);
+    // CTRL.S->sinT2 = sin(used_theta_d_elec + angle_shift_for_second_inverter);
+    // CTRL.I->idq[0+2] = AB2M(CTRL.I->iab[0+2], CTRL.I->iab[1+2], CTRL.S->cosT2, CTRL.S->sinT2);
+    // CTRL.I->idq[1+2] = AB2T(CTRL.I->iab[0+2], CTRL.I->iab[1+2], CTRL.S->cosT2, CTRL.S->sinT2);
+
+    /* 更新依赖于dq轴电流的物理量 */
+    // MOTOR.KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * CTRL.I->idq_cmd[0];
+    MOTOR.KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * CTRL.I->idq[0];
+
+    /// 调用具体的控制器
+    #if CONTROL_STRATEGY == NULL_D_AXIS_CURRENT_CONTROL
+        null_d_control(set_current_loop, set_iq_cmd, set_id_cmd);
+        CTRL.S->Motor_or_Generator = sign(CTRL.I->omg_elec * CTRL.I->idq_cmd[1]); // sign(CTRL.I->cmd_omg_elec);
+    #endif
+
+
+    /// 7. 反帕克变换
+    // See D:\Users\horyc\Downloads\Documents\2003 TIA Bae SK Sul A compensation method for time delay of.pdf
+    // CTRL.S->cosT_compensated_1p5omegaTs = cos(used_theta_d_elec + 1.5*CTRL.I->omg_elec*CL_TS);
+    // CTRL.S->sinT_compensated_1p5omegaTs = sin(used_theta_d_elec + 1.5*CTRL.I->omg_elec*CL_TS);
+    CTRL.S->cosT_compensated_1p5omegaTs = CTRL.S->cosT;
+    CTRL.S->sinT_compensated_1p5omegaTs = CTRL.S->sinT;
+    CTRL.O->uab_cmd[0] = MT2A(CTRL.O->udq_cmd[0], CTRL.O->udq_cmd[1], CTRL.S->cosT_compensated_1p5omegaTs, CTRL.S->sinT_compensated_1p5omegaTs);
+    CTRL.O->uab_cmd[1] = MT2B(CTRL.O->udq_cmd[0], CTRL.O->udq_cmd[1], CTRL.S->cosT_compensated_1p5omegaTs, CTRL.S->sinT_compensated_1p5omegaTs);
+    CTRL.O->iab_cmd[0] = MT2A(CTRL.I->idq_cmd[0], CTRL.I->idq_cmd[1], CTRL.S->cosT_compensated_1p5omegaTs, CTRL.S->sinT_compensated_1p5omegaTs);
+    CTRL.O->iab_cmd[1] = MT2B(CTRL.I->idq_cmd[0], CTRL.I->idq_cmd[1], CTRL.S->cosT_compensated_1p5omegaTs, CTRL.S->sinT_compensated_1p5omegaTs);
+
+    // CTRL.O->uab_cmd[0+2] = MT2A(CTRL.O->udq_cmd[0+2], CTRL.O->udq_cmd[1+2], CTRL.S->cosT2, CTRL.S->sinT2);
+    // CTRL.O->uab_cmd[1+2] = MT2B(CTRL.O->udq_cmd[0+2], CTRL.O->udq_cmd[1+2], CTRL.S->cosT2, CTRL.S->sinT2);
+
+    /// 8. 补偿逆变器非线性
+    main_inverter_voltage_command(1);
+
+    /// 9. 结束
+    #if PC_SIMULATION
+        // for plot
+        ACM.rpm_cmd = set_rpm_speed_command;
+        // CTRL.speed_ctrl_err = set_rpm_speed_command*RPM_2_ELEC_RAD_PER_SEC - CTRL.I->omg_elec;
+    #endif
+
+    return used_theta_d_elec;
+}
+
+
+
 
 
 #endif
