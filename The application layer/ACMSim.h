@@ -2,13 +2,13 @@
 #define ACMSIM_H
 
 /* Try to use Holtz03 developed for IM for PMSM */
-#define U_MOTOR_R       PMSM_RESISTANCE
-#define U_MOTOR_LD      PMSM_D_AXIS_INDUCTANCE
-#define U_MOTOR_LQ      PMSM_Q_AXIS_INDUCTANCE
-#define U_MOTOR_KE      PMSM_PERMANENT_MAGNET_FLUX_LINKAGE
-#define U_MOTOR_RREQ    0
-#define IM_FLUX_COMMAND_SINE_PART 0
-#define HOLTZ_2002_GAIN_OFFSET 20
+//#define U_MOTOR_R       PMSM_RESISTANCE
+//#define U_MOTOR_LD      PMSM_D_AXIS_INDUCTANCE
+//#define U_MOTOR_LQ      PMSM_Q_AXIS_INDUCTANCE
+//#define U_MOTOR_KE      PMSM_PERMANENT_MAGNET_FLUX_LINKAGE
+//#define U_MOTOR_RREQ    0
+//#define IM_FLUX_COMMAND_SINE_PART 0
+//#define HOLTZ_2002_GAIN_OFFSET 20
 
 
 #define PC_SIMULATION FALSE
@@ -30,7 +30,8 @@
         #define SYSTEM_TBPRD                       5000  // =SYSTEM_CARRIER_PERIOD/2
         //#define SYSTEM_PWM_DEADTIME_CNT            500 // 500 ¸ö TBCLK = EPWMCLK/1 = 100 MHz
         #define SYSTEM_PWM_DEADTIME_CNT            200
-        #define SYSTEM_PWM_DEADTIME_COMPENSATION   483
+        #define SYSTEM_PWM_DEADTIME_COMPENSATION   200
+            // #define SYSTEM_PWM_DEADTIME_COMPENSATION   483
             // Td = 5.0us; Ton = 0.15us; Toff = 0.32us;
             // TM = Td + Ton -Toff;
             // CJH: (5.0 + 0.15 - 0.32 )*1e-6 * TBCLK (100 MHz) = 483
@@ -123,26 +124,27 @@ typedef float32 REAL;
 #include "ACMConfig.h"
 #include "pid_regulator.h"
 #include "shared_flux_estimator.h"
+#include "im_controller.h"
+#include "im_observer.h"
 #include "pmsm_controller.h"
 #include "pmsm_observer.h"
 #include "pmsm_comm.h"
 #include "sweep_frequency.h"
 
 
-//struct GlobalWatch
-//{
-//    #if MACHINE_TYPE % 10 == 1
-//        // induction motor
-//        double offset[2];
-//        double offset_compensation[2];
-//        double psi_2[2];
-//    #elif MACHINE_TYPE % 10 == 2
-//        // PM motor
-//    #endif
-//};
-//extern struct GlobalWatch watch;
-
-
+// Header for global_variabels_definition.c
+struct GlobalWatch
+{
+    #if MACHINE_TYPE % 10 == 1
+        // induction motor
+        double offset[2];
+        double offset_compensation[2];
+        double psi_2[2];
+    #elif MACHINE_TYPE % 10 == 2
+        // PM motor
+    #endif
+};
+extern struct GlobalWatch watch;
 
 
 /* Declaration of Utility Function */

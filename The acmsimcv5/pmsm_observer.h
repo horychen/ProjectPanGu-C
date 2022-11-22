@@ -43,7 +43,7 @@ struct ObserverForExperiment{
         REAL adapt_gain;
         REAL mras_gain;
     } qiaoxia;
-#define qiaoxia OBSV.qiaoxia
+// #define qiaoxia OBSV.qiaoxia
 #endif
 
 /* Chi.Xu 2009 SMO for Emf for SPMSM */
@@ -69,7 +69,7 @@ struct ObserverForExperiment{
         REAL PLL_KI;
         REAL smo_gain_scale; // 几倍反电势
     } chixu;
-#define chixu OBSV.chixu
+// #define chixu OBSV.chixu
 #endif
 
 /* Park.Sul 2014 FADO in replace of CM */
@@ -111,7 +111,7 @@ struct ObserverForExperiment{
         REAL limiter_KE;
         REAL limiter_Flag;
     } parksul;
-#define parksul OBSV.parksul
+// #define parksul OBSV.parksul
 #endif
 
 /* Natural Speed Observer with active flux concept Chen2020 */
@@ -144,7 +144,7 @@ struct ObserverForExperiment{
         REAL load_torque_pid_output;
         REAL q_axis_voltage;
     } nsoaf;
-#define nsoaf OBSV.nsoaf
+// #define nsoaf OBSV.nsoaf
 #endif
 
 /* Extended State Observer with active flux concept Chen2021 */
@@ -168,7 +168,7 @@ struct ObserverForExperiment{
 
         REAL xTem;
     } esoaf;
-#define esoaf OBSV.esoaf
+// #define esoaf OBSV.esoaf
 #endif
 
 /* Farza 2009 HGO */
@@ -189,7 +189,7 @@ struct ObserverForExperiment{
         REAL vartheta;
         REAL vartheta_inv;
     } hgo4eemf;
-#define hgo4eemf OBSV.hgo4eemf
+// #define hgo4eemf OBSV.hgo4eemf
 #endif
 
 /* CJH EEMF AO Design */
@@ -217,7 +217,7 @@ struct ObserverForExperiment{
         REAL k2;
         REAL gamma_omg;
     } cjheemf;
-#define cjheemf OBSV.cjheemf
+// #define cjheemf OBSV.cjheemf
 #endif
 
 /* Harnefors 2006 */
@@ -239,22 +239,11 @@ struct ObserverForExperiment{
         REAL is_dq_prev[2];
         REAL pis_dq[2];
     } harnefors;
-#define harnefors OBSV.harnefors
+// #define harnefors OBSV.harnefors
 #endif
 };
 extern struct ObserverForExperiment OBSV;
 
-#if PC_SIMULATION
-// Allow for easy access to child structs
-// #define qiaoxia OBSV.qiaoxia
-// #define chixu OBSV.chixu
-// #define parksul OBSV.parksul
-// #define nsoaf OBSV.nsoaf
-// #define hgo4eemf OBSV.hgo4eemf
-// #define cjheemf OBSV.cjheemf
-// #define harnefors OBSV.harnefors
-#else
-#endif
 
 void init_QiaoXia2013();
 void init_ChiXu2009();
@@ -264,17 +253,6 @@ void init_hgo4eemf();
 void init_cjheemf();
 void init_harnefors();
 
-
-#define rk4 OBSV.rk4
-void init_rk4();
-
-/* Macro for External Access Interface */
-#define US(X)   rk4.us[X]
-#define IS(X)   rk4.is[X]
-#define US_C(X) rk4.us_curr[X] // 当前步电压是伪概念，测量的时候，没有电压传感器，所以也测量不到当前电压；就算有电压传感器，由于PWM比较寄存器没有更新，输出电压也是没有变化的。
-#define IS_C(X) rk4.is_curr[X]
-#define US_P(X) rk4.us_prev[X]
-#define IS_P(X) rk4.is_prev[X]
 
 /* Call all pmsm observers at one place here */
 void pmsm_observers();
