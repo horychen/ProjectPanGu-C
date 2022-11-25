@@ -57,6 +57,7 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
     Axis.dac_watch[17] = marino.xOmg * ELEC_RAD_PER_SEC_2_RPM *0.002;
     Axis.dac_watch[18] = marino.xTL*0.05;
     Axis.dac_watch[19] = marino.xRho*0.1;
+    Axis.dac_watch[20] = marino.xAlpha*0.1;
 
     if(Axis.channels_preset==1){Axis.channels_preset=0;
         /* Marino 2005 Sensorless Control */
@@ -68,7 +69,7 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
         //        Axis.channels[5] = 16;
         Axis.channels[3] = 17;
         Axis.channels[4] = 18;
-        Axis.channels[5] = 19;
+        Axis.channels[5] = 20;
     }else if(Axis.channels_preset==8){Axis.channels_preset=0;
     }
 

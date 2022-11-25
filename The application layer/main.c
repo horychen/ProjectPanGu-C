@@ -681,7 +681,7 @@ void PanGuMainISR(void){
             init_experiment_overwrite();
 
             if(CTRL.g->overwrite_vdc<5){
-                CTRL.g->overwrite_vdc = 20;
+                CTRL.g->overwrite_vdc = 80;
             }
             CTRL.g->flag_overwite_vdc = 1;
 
