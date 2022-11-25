@@ -21,7 +21,7 @@
 	// 磁链给定
 	#define IM_MAGNETIZING_INDUCTANCE   0.558
 	#define IM_FLUX_COMMAND_DC_PART     0.9
-	#define IM_FLUX_COMMAND_SINE_PART   0.0
+	#define IM_FLUX_COMMAND_SINE_PART   0.15
 	#define IM_FLUX_COMMAND_SINE_HERZ   10.0
 	// 铭牌值
 	#define MOTOR_NUMBER_OF_POLE_PAIRS  2
@@ -194,9 +194,9 @@
 
 #elif /* Induction Motor Observer */ MACHINE_TYPE % 10 == 1
     // Marino05 调参 /// default: (17143), (2700.0), (1000), (1), (0)
-    #define GAMMA_INV_xTL 3000 // 17142.85714285714
-    #define LAMBDA_INV_xOmg 2700.0
-    #define DELTA_INV_alpha (0*1000)
+    #define GAMMA_INV_xTL 17142.85714285714
+    #define LAMBDA_INV_xOmg 1000 // 2700.0 is too large, leading to unstable flux amplitude contorl
+    #define DELTA_INV_alpha (1*500) // 1000
     #define xAlpha_LAW_TERM_D 1 // regressor is commanded d-axis rotor current, and error is d-axis flux control error.
     #define xAlpha_LAW_TERM_Q 0 // regressor is commanded q-axis stator current, and error is q-axis flux control error.
     // 磁链反馈用谁 /// "htz",,ohtani",picorr",lascu",clest",harnefors

@@ -24,6 +24,7 @@ REAL deriv_sat_kappa(REAL x){
 }
 
 // 控制器
+int bool_apply_sinusoidal_speed_cmd = FALSE;
 REAL controller(REAL set_rpm_speed_command, 
     int set_current_loop, REAL set_iq_cmd, REAL set_id_cmd,
     int flag_overwrite_theta_d, REAL Overwrite_Current_Frequency,
@@ -50,7 +51,7 @@ REAL controller(REAL set_rpm_speed_command,
         REAL OMG1;
         #define DELAY 100
         #define OFF 1000
-        if(CTRL.timebase>6){/*Variable Speed: Sinusoidal Speed + Ramp Speed*/
+        if(CTRL.timebase>6 && bool_apply_sinusoidal_speed_cmd){/*Variable Speed: Sinusoidal Speed + Ramp Speed*/
             if      (CTRL.timebase>3.875){
                 OMG1 = (2*M_PI*32);
             }else if(CTRL.timebase>3.75){
@@ -417,7 +418,7 @@ void init_CTRL(){
     // marino.gamma_inv  = 10 * 3e0 * 180/MOTOR_SHAFT_INERTIA; // TL    磁链反馈为实际值时，这两个增益取再大都没有意义。
     // marino.delta_inv  = 0*75.0; // alpha 要求磁链幅值时变
 
-    marino.lambda_inv = LAMBDA_INV_xOmg;
+    marino.lambda_inv = LAMBDA_INV_xOmg;  // 2022-11-22 实验中发现这个过大（2700）导致系统整个一个正弦波动，母线功率持续400W，减小为1000以后母线功率37W。
     marino.gamma_inv  = GAMMA_INV_xTL;
     marino.delta_inv  = DELTA_INV_alpha;
 
