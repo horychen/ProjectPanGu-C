@@ -24,7 +24,7 @@ REAL deriv_sat_kappa(REAL x){
 }
 
 // 控制器
-int bool_apply_sinusoidal_speed_cmd = FALSE;
+int bool_apply_sinusoidal_speed_cmd = TRUE;
 REAL controller(REAL set_rpm_speed_command, 
     int set_current_loop, REAL set_iq_cmd, REAL set_id_cmd,
     int flag_overwrite_theta_d, REAL Overwrite_Current_Frequency,
@@ -65,7 +65,7 @@ REAL controller(REAL set_rpm_speed_command,
             // OMG1 = 0;
 
             // 反转
-            if(CTRL.timebase>5+OFF && CTRL.timebase<40){/*Reversal*/
+            if(CTRL.timebase>10 && CTRL.timebase<15){/*Reversal*/
                 // OMG1 = 0;
                 // TODO: test positive and negative high speed
                 local_dc_rpm_cmd_deriv = -200;
@@ -485,7 +485,8 @@ void init_CTRL(){
         CTRL.motor->npp    = MOTOR_NUMBER_OF_POLE_PAIRS;
         CTRL.motor->Lsigma = IM_TOTAL_LEAKAGE_INDUCTANCE;
         CTRL.motor->Lmu    = IM_MAGNETIZING_INDUCTANCE;
-        CTRL.motor->Js     = MOTOR_SHAFT_INERTIA * (1.0+LOAD_INERTIA);
+        // CTRL.motor->Js     = MOTOR_SHAFT_INERTIA * (1.0+LOAD_INERTIA);
+        CTRL.motor->Js     = MOTOR_SHAFT_INERTIA;
 
         CTRL.motor->alpha  = CTRL.motor->Rreq/CTRL.motor->Lmu;
         CTRL.motor->alpha_inv = 1.0/CTRL.motor->alpha;
