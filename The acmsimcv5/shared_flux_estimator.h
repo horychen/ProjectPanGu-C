@@ -124,6 +124,9 @@ struct SharedFluxEstimatorForExperiment{
             REAL psi_2_ampl;
             REAL psi_2_ampl_lpf;
             REAL u_offset[2];
+            // REAL u_offset_intermediate[2];
+            // REAL u_offset_ultra_low_frequency_component[2];
+            REAL sat_time_offset[2];
             REAL psi_2_prev[2];
 
             REAL psi_1_nonSat[2];
@@ -145,14 +148,21 @@ struct SharedFluxEstimatorForExperiment{
             REAL Delta_t_last;
 
             REAL u_off_direct_calculated[2];          //
-
             REAL u_off_original_lpf_input[2];         // holtz03 original (but I uses integrator instead of LPF)
             REAL u_off_saturation_time_correction[2]; // saturation time based correction
             REAL u_off_calculated_increment[2];       // exact offset calculation for compensation
             REAL gain_off;
 
-            long int count_negative;
-            long int count_positive;
+            REAL accumulated__u_off_saturation_time_correction[2];
+            REAL sign__u_off_saturation_time_correction[2];
+
+            long int count_negative_cycle;
+            long int count_positive_cycle;
+
+            long int count_negative_in_one_cycle[2];
+            long int count_positive_in_one_cycle[2];
+            long int negative_cycle_in_count[2];
+            long int positive_cycle_in_count[2];
 
             int    flag_pos2negLevelA[2];
             int    flag_pos2negLevelB[2];
@@ -166,6 +176,8 @@ struct SharedFluxEstimatorForExperiment{
 
             REAL psi_aster_max;
 
+            REAL maximum_of_sat_min_time[2];
+            REAL maximum_of_sat_max_time[2];
             REAL sat_min_time[2];
             REAL sat_max_time[2];
             REAL sat_min_time_reg[2];

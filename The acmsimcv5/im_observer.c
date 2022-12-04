@@ -2,8 +2,8 @@
 #if MACHINE_TYPE == 1 || MACHINE_TYPE == 11
 
 #if PC_SIMULATION
-    #define OFFSET_VOLTAGE_ALPHA (1*-0.1 *(CTRL.timebase>4)) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
-    #define OFFSET_VOLTAGE_BETA  (1*+0.1 *(CTRL.timebase>4)) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
+    #define OFFSET_VOLTAGE_ALPHA (1*+0.1 *(CTRL.timebase>20)) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
+    #define OFFSET_VOLTAGE_BETA  (0*+0.1 *(CTRL.timebase>4)) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
 #else
     #define OFFSET_VOLTAGE_ALPHA (0.0)
     #define OFFSET_VOLTAGE_BETA  (0.0)
@@ -278,7 +278,7 @@ void flux_observer(){
     // VM_LascuAndreescus2006();
     // VM_Stojic2015();
     // VM_ExactCompensation();
-    // VM_ProposedCmdErrFdkCorInFrameRho();
+    VM_ProposedCmdErrFdkCorInFrameRho();
     // VM_ClosedLoopFluxEstimator();
     // stableFME();
 
@@ -297,7 +297,7 @@ void flux_observer(){
         emf[0] = US(0) - CTRL.motor->R*IS(0) + OFFSET_VOLTAGE_ALPHA + VM_OHTANI_CORRECTION_GAIN_P * ( CTRL.I->cmd_psi_ABmu[0] - (x[0]-CTRL.motor->Lsigma*IS(0)) );
         emf[1] = US(1) - CTRL.motor->R*IS(1) + OFFSET_VOLTAGE_BETA  + VM_OHTANI_CORRECTION_GAIN_P * ( CTRL.I->cmd_psi_ABmu[1] - (x[1]-CTRL.motor->Lsigma*IS(1)) );
         fx[0] = emf[0];
-        fx[1] = emf[1];    
+        fx[1] = emf[1];
     }
     void VM_Ohtani1992(){
         if(FALSE){
@@ -918,6 +918,7 @@ void init_FE_htz(){
 
         FE.htz.Delta_t = 1;
         FE.htz.u_offset[ind] = 0;
+        // FE.htz.u_offset_intermediate[ind] = 0;
         FE.htz.u_off_original_lpf_input[ind]=0.0; // holtz03 original (but I uses integrator instead of LPF)
         FE.htz.u_off_saturation_time_correction[ind]=0.0; // exact offset calculation for compensation
         FE.htz.u_off_calculated_increment[ind]=0.0;    // saturation time based correction
@@ -931,10 +932,12 @@ void init_FE_htz(){
         FE.htz.flag_neg2posLevelA[ind] = 0;
         FE.htz.flag_neg2posLevelB[ind] = 0;
         FE.htz.time_neg2pos[ind] = 0;
-        FE.htz.time_neg2pos_prev[ind] = 0;    
+        FE.htz.time_neg2pos_prev[ind] = 0;
 
         FE.htz.psi_aster_max = IM_FLUX_COMMAND_DC_PART + IM_FLUX_COMMAND_SINE_PART;
 
+        FE.htz.maximum_of_sat_min_time[ind] = 0.0;
+        FE.htz.maximum_of_sat_max_time[ind] = 0.0;
         FE.htz.sat_min_time[ind] = 0.0;
         FE.htz.sat_max_time[ind] = 0.0;
         FE.htz.sat_min_time_reg[ind] = 0.0;
@@ -982,19 +985,41 @@ void VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit(){
     // FE.htz.psi_aster_max = CTRL.taao_flux_cmd;
 
     // 限幅是针对转子磁链限幅的
-    if(FE.htz.psi_2[0]    > PSI_MU_ASTER_MAX){
-        FE.htz.psi_2[0]   = PSI_MU_ASTER_MAX;
-        FE.htz.sat_max_time[0] += CL_TS;
-    }else if(FE.htz.psi_2[0] < -PSI_MU_ASTER_MAX){
-        FE.htz.psi_2[0]   = -PSI_MU_ASTER_MAX;
-        FE.htz.sat_min_time[0] += CL_TS;
+    int ind;
+    for(ind=0;ind<2;++ind){
+        if(FE.htz.psi_2[ind]    > PSI_MU_ASTER_MAX){ // TODO BUG呀！这里怎么可以是>应该是大于等于啊！
+            FE.htz.psi_2[ind]   = PSI_MU_ASTER_MAX;
+            FE.htz.sat_max_time[ind] += CL_TS;
+        }else if(FE.htz.psi_2[ind] < -PSI_MU_ASTER_MAX){
+            FE.htz.psi_2[ind]   = -PSI_MU_ASTER_MAX;
+            FE.htz.sat_min_time[ind] += CL_TS;
+        }else{ 
+            // 这样可以及时清零饱和时间
+            if(FE.htz.sat_max_time[ind]>0){FE.htz.sat_max_time[ind] -= CL_TS;}
+            if(FE.htz.sat_min_time[ind]>0){FE.htz.sat_min_time[ind] -= CL_TS;}
+        }
+        // 上限饱和减去下限饱和作为误差，主要为了消除实际磁链幅值大于给定的情况，实际上这种现象在常见工况下出现次数不多。
+        FE.htz.u_off_saturation_time_correction[ind] = FE.htz.sat_max_time[ind] - FE.htz.sat_min_time[ind];
+        // u_offset波动会导致sat_min_time和sat_max_time的波动，这个时候最有效的办法是减少gain_off。
+        // 但是同时，观察饱和时间sat_min_time等的波形，可以发现它里面也会出现一个正弦波包络线。
+        if(FE.htz.sat_min_time[ind] > FE.htz.maximum_of_sat_min_time[ind]){FE.htz.maximum_of_sat_min_time[ind] = FE.htz.sat_min_time[ind];}
+        if(FE.htz.sat_max_time[ind] > FE.htz.maximum_of_sat_max_time[ind]){FE.htz.maximum_of_sat_max_time[ind] = FE.htz.sat_max_time[ind];}
     }
-    if(FE.htz.psi_2[1]    > PSI_MU_ASTER_MAX){
-        FE.htz.psi_2[1]   = PSI_MU_ASTER_MAX;
-        FE.htz.sat_max_time[1] += CL_TS;
-    }else if(FE.htz.psi_2[1] < -PSI_MU_ASTER_MAX){
-        FE.htz.psi_2[1]   = -PSI_MU_ASTER_MAX;
-        FE.htz.sat_min_time[1] += CL_TS;
+
+    // 数数，算磁链周期
+    if(FE.htz.psi_2[0]    > 0.0){
+        FE.htz.count_positive_in_one_cycle[0] += 1;
+        if(FE.htz.count_negative_in_one_cycle[0]!=0){ FE.htz.negative_cycle_in_count[0] = FE.htz.count_negative_in_one_cycle[0]; FE.htz.count_negative_in_one_cycle[0] = 0;}
+    }else if(FE.htz.psi_2[0] < -0.0){
+        FE.htz.count_negative_in_one_cycle[0] += 1;
+        if(FE.htz.count_positive_in_one_cycle[0]!=0){ FE.htz.positive_cycle_in_count[0] = FE.htz.count_positive_in_one_cycle[0]; FE.htz.count_positive_in_one_cycle[0] = 0;}
+    }
+    if(FE.htz.psi_2[1]    > 0.0){
+        FE.htz.count_positive_in_one_cycle[1] += 1;
+        if(FE.htz.count_negative_in_one_cycle[1]!=0){ FE.htz.negative_cycle_in_count[1] = FE.htz.count_negative_in_one_cycle[1]; FE.htz.count_negative_in_one_cycle[1] = 0;}
+    }else if(FE.htz.psi_2[1] < -0.0){
+        FE.htz.count_negative_in_one_cycle[1] += 1;
+        if(FE.htz.count_positive_in_one_cycle[1]!=0){ FE.htz.positive_cycle_in_count[1] = FE.htz.count_positive_in_one_cycle[1]; FE.htz.count_positive_in_one_cycle[1] = 0;}
     }
     // 限幅后的转子磁链，再求取限幅后的定子磁链
     FE.htz.psi_1[0] = FE.htz.psi_2[0] + CTRL.motor->Lsigma*IS_C(0);
@@ -1018,12 +1043,11 @@ void VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit(){
 
 
     // TODO My proposed saturation time based correction method NOTE VERY COOL
-    int ind;
     #define CALCULATE_OFFSET_VOLTAGE_COMPENSATION_TERMS \
         FE.htz.u_off_original_lpf_input[ind]         = 0.5*(FE.htz.psi_2_min[ind] + FE.htz.psi_2_max[ind]) /  (FE.htz.Delta_t+FE.htz.Delta_t_last); \
         FE.htz.u_off_calculated_increment[ind]       = 0.5*(FE.htz.psi_2_min[ind] + FE.htz.psi_2_max[ind]) / ((FE.htz.Delta_t+FE.htz.Delta_t_last) - (FE.htz.sat_max_time[ind]+FE.htz.sat_min_time[ind])); \
         FE.htz.u_off_saturation_time_correction[ind] = FE.htz.sat_max_time[ind] - FE.htz.sat_min_time[ind]; \
-        FE.htz.u_off_direct_calculated[ind] += (FE.htz.count_negative+FE.htz.count_positive>4) * FE.htz.u_off_calculated_increment[ind]; // if(BOOL_USE_METHOD_DIFFERENCE_INPUT) 
+        FE.htz.u_off_direct_calculated[ind] += (FE.htz.count_negative_cycle+FE.htz.count_positive_cycle>4) * FE.htz.u_off_calculated_increment[ind]; // if(BOOL_USE_METHOD_DIFFERENCE_INPUT) 
         // 引入 count：刚起动时的几个磁链正负半周里，Delta_t_last 存在巨大的计算误差，所以要放弃更新哦。
 
     for(ind=0;ind<2;++ind){ // Loop for alpha & beta components // destroy integer outside this loop to avoid accidentally usage 
@@ -1038,7 +1062,7 @@ void VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit(){
         if(FE.htz.flag_pos2negLevelA[ind] == TRUE){ 
             if(FE.htz.psi_2_prev[ind]<0 && FE.htz.psi_2[ind]<0){ // 二次检查，磁链已经是负的了  <- 可以改为施密特触发器
                 if(FE.htz.flag_pos2negLevelB[ind] == FALSE){
-                    FE.htz.count_negative+=1;
+                    FE.htz.count_negative_cycle+=1; // FE.htz.count_positive_cycle = 0;
                     // printf("POS2NEG: %g, %d\n", CTRL.timebase, ind);
                     // printf("%g, %g\n", FE.htz.psi_2_prev[ind], FE.htz.psi_2[ind]);
                     // getch();
@@ -1051,7 +1075,14 @@ void VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit(){
                     FE.htz.flag_neg2posLevelA[ind] = FALSE;
                     FE.htz.flag_neg2posLevelB[ind] = FALSE;
 
+                    // 注意这里是正半周到负半周切换的时候才执行一次的哦！
                     CALCULATE_OFFSET_VOLTAGE_COMPENSATION_TERMS
+                    // FE.htz.accumulated__u_off_saturation_time_correction[ind] += FE.htz.u_off_saturation_time_correction[ind];
+                    FE.htz.sign__u_off_saturation_time_correction[ind] = -1.0;
+                    // 饱和时间的正弦包络线的正负半周的频率比磁链频率低多啦！需要再额外加一个低频u_offset校正
+                    FE.htz.sat_time_offset[ind] = FE.htz.maximum_of_sat_max_time[ind] - FE.htz.maximum_of_sat_min_time[ind];
+                    FE.htz.maximum_of_sat_max_time[ind] = 0.0;
+                    FE.htz.maximum_of_sat_min_time[ind] = 0.0;
 
                     FE.htz.psi_1_min[ind] = 0.0;
                     FE.htz.psi_2_min[ind] = 0.0;
@@ -1071,7 +1102,7 @@ void VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit(){
                     }
                     FE.htz.sat_min_time[ind] = 0.0;
                 }
-                FE.htz.flag_pos2negLevelB[ind] = TRUE; 
+                FE.htz.flag_pos2negLevelB[ind] = TRUE;
                 if(FE.htz.flag_pos2negLevelB[ind] == TRUE){ // 寻找磁链最小值
                     if(FE.htz.psi_2[ind] < FE.htz.psi_2_min[ind]){
                         FE.htz.psi_2_min[ind] = FE.htz.psi_2[ind];
@@ -1090,7 +1121,7 @@ void VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit(){
         if(FE.htz.flag_neg2posLevelA[ind] == TRUE){ 
             if(FE.htz.psi_2_prev[ind]>0 && FE.htz.psi_2[ind]>0){ // 二次检查，磁链已经是正的了
                 if(FE.htz.flag_neg2posLevelB[ind] == FALSE){
-                    FE.htz.count_positive+=1;
+                    FE.htz.count_positive_cycle+=1; // FE.htz.count_negative_cycle = 0;
                     // 第一次进入寻找最大值的levelB，说明最小值已经检测到。
                     FE.htz.psi_1_min[ind] = FE.htz.psi_2_min[ind]; // 不区别定转子磁链，区别：psi_2是连续更新的，而psi_1是离散更新的。
                     FE.htz.Delta_t_last = FE.htz.Delta_t;
@@ -1101,6 +1132,8 @@ void VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit(){
                     FE.htz.flag_pos2negLevelB[ind] = FALSE;
 
                     CALCULATE_OFFSET_VOLTAGE_COMPENSATION_TERMS
+                    // FE.htz.accumulated__u_off_saturation_time_correction[ind] += FE.htz.u_off_saturation_time_correction[ind];
+                    FE.htz.sign__u_off_saturation_time_correction[ind] = 1.0;
 
                     FE.htz.psi_1_max[ind] = 0.0;
                     FE.htz.psi_2_max[ind] = 0.0;
@@ -1145,9 +1178,34 @@ void VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit(){
     // 积分方法：（从上面的程序来看，u_off的LPF的输入是每半周更新一次的。
     #if BOOL_USE_METHOD_INTEGRAL_INPUT
         #define INTEGRAL_INPUT(X)   FE.htz.u_off_saturation_time_correction[X] // exact offset calculation for compensation
+        // FE.htz.sat_time_offset[X]
+        // #define INTEGRAL_INPUT(X)   FE.htz.accumulated__u_off_saturation_time_correction[X]
         // #define INTEGRAL_INPUT(X)   FE.htz.u_off_original_lpf_input[X]
+
+        long int local_sum = FE.htz.negative_cycle_in_count[0] + FE.htz.positive_cycle_in_count[0] + FE.htz.negative_cycle_in_count[1] + FE.htz.positive_cycle_in_count[1];
+        if(local_sum>0){
+            FE.htz.gain_off = HOLTZ_2002_GAIN_OFFSET / ((REAL)local_sum*CL_TS);
+        }
         FE.htz.u_offset[0] += FE.htz.gain_off * CL_TS * INTEGRAL_INPUT(0);
         FE.htz.u_offset[1] += FE.htz.gain_off * CL_TS * INTEGRAL_INPUT(1);
+
+        // 想法是好的，但是没有用，因为咱们要的不是磁链正负半周的饱和时间最大和最小相互抵消；实际上观察到正负半周是饱和时间的正弦包络线的正负半周，频率比磁链频率低多啦！
+        // FE.htz.accumulated__u_off_saturation_time_correction[0] += FE.htz.gain_off * CL_TS * INTEGRAL_INPUT(0);
+        // FE.htz.accumulated__u_off_saturation_time_correction[1] += FE.htz.gain_off * CL_TS * INTEGRAL_INPUT(1);
+        // if(FE.htz.sign__u_off_saturation_time_correction[0]>0){
+        //     FE.htz.u_offset[0] = FE.htz.accumulated__u_off_saturation_time_correction[0];
+        //     FE.htz.sign__u_off_saturation_time_correction[0] = 0;
+        // }
+        // if(FE.htz.sign__u_off_saturation_time_correction[1]>0){
+        //     FE.htz.u_offset[1] = FE.htz.accumulated__u_off_saturation_time_correction[1];
+        //     FE.htz.sign__u_off_saturation_time_correction[1] = 0;
+        // }
+
+        // 本来想二重积分消除交流波动，但是我发现饱和时间误差波动的原因是上下饱和时间清零不及时导致的。但是哦……好像也没有有效地及时清零的方法，所以还是试试双重积分吧：
+        // FE.htz.u_offset_intermediate[0] += FE.htz.gain_off * CL_TS * INTEGRAL_INPUT(0);
+        // FE.htz.u_offset_intermediate[1] += FE.htz.gain_off * CL_TS * INTEGRAL_INPUT(1);
+        // FE.htz.u_offset[0] += CL_TS * FE.htz.u_offset_intermediate[0];
+        // FE.htz.u_offset[1] += CL_TS * FE.htz.u_offset_intermediate[1];
     #endif
 
     // 低通
