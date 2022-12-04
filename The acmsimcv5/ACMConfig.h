@@ -20,7 +20,7 @@
 	// 磁链给定
 	#define IM_MAGNETIZING_INDUCTANCE   0.558
 	#define IM_FLUX_COMMAND_DC_PART     1.3593784874408608
-	#define IM_FLUX_COMMAND_SINE_PART   0.13593784874408607
+	#define IM_FLUX_COMMAND_SINE_PART   0.0
 	#define IM_FLUX_COMMAND_SINE_HERZ   10
 	// 铭牌值
 	#define MOTOR_NUMBER_OF_POLE_PAIRS  2
@@ -41,7 +41,6 @@
 	#define CORRECTION_4_SHARED_FLUX_EST    IM_FLUX_COMMAND_DC_PART
     #define U_MOTOR_R                       IM_STAOTR_RESISTANCE    // typo!
     #define U_MOTOR_RREQ                    IM_ROTOR_RESISTANCE
-
 #endif
 
 /* Algorithms */
@@ -66,7 +65,7 @@
         #define AFE_21_HUWU_KI (0.5) //[rad/s]
 
         /* Holtz 2002 */
-        #define HOLTZ_2002_GAIN_OFFSET 20
+        // #define HOLTZ_2002_GAIN_OFFSET 20
 
 #if /* PM Motor Observer */ MACHINE_TYPE % 10 == 2
     /* Commissioning */
@@ -196,28 +195,30 @@
     // Marino05 调参 /// default: (17143), (2700.0), (1000), (1), (0)
     #define GAMMA_INV_xTL 17142.85714285714
     #define LAMBDA_INV_xOmg 1000 // 2700.0 is too large, leading to unstable flux amplitude contorl
-    #define DELTA_INV_alpha (1*500) // 1000
+    #define DELTA_INV_alpha (0*500) // 1000
     #define xAlpha_LAW_TERM_D 1 // regressor is commanded d-axis rotor current, and error is d-axis flux control error.
     #define xAlpha_LAW_TERM_Q 0 // regressor is commanded q-axis stator current, and error is q-axis flux control error.
     // 磁链反馈用谁 /// "htz",,ohtani",picorr",lascu",clest",harnefors
+    // #define IFE FE.picorr
     #define IFE FE.htz
     #define FLUX_FEEDBACK_ALPHA         IFE.psi_2[0]
     #define FLUX_FEEDBACK_BETA          IFE.psi_2[1]
     #define OFFSET_COMPENSATION_ALPHA   IFE.u_offset[0]
     #define OFFSET_COMPENSATION_BETA    IFE.u_offset[1]
+
     // Ohtani 磁链观测系数配置/// default: 5
     // Ohtani 建议取值和转子时间常数相等
     #define GAIN_OHTANI (5)
     #define VM_OHTANI_CORRECTION_GAIN_P (5)
     /* B *//// default: P=5, I=2.5
-    #define VM_PROPOSED_PI_CORRECTION_GAIN_P (5)
-    #define VM_PROPOSED_PI_CORRECTION_GAIN_I (2.5)
+    #define VM_PROPOSED_PI_CORRECTION_GAIN_P 10 // (5)
+    #define VM_PROPOSED_PI_CORRECTION_GAIN_I 2   // (2.5)
     /* C *//// default: P=0.125*5, I=0.125*2.5, KCM=0
     #define OUTPUT_ERROR_CLEST_GAIN_KP (0.125*5)
     #define OUTPUT_ERROR_CLEST_GAIN_KI (0.125*2.5)
     #define OUTPUT_ERROR_CLEST_GAIN_KCM (0*0.8)
     /* Holtz 2002 */// default: 20
-    #define HOLTZ_2002_GAIN_OFFSET 20
+    #define HOLTZ_2002_GAIN_OFFSET 10 //1 // 20 is too large, causing unstable control during reversal
     /* Harnefors SCVM 2003 */// default: 2
     #define GAIN_HARNEFORS_LAMBDA 2
 
@@ -232,7 +233,7 @@
 	#define INDIRECT_FOC 1
 	#define MARINO_2005_ADAPTIVE_SENSORLESS_CONTROL 2
 #define CONTROL_STRATEGY MARINO_2005_ADAPTIVE_SENSORLESS_CONTROL
-#define NUMBER_OF_STEPS 320000
+#define NUMBER_OF_STEPS 500000
     #define DOWN_SAMPLE 1
     #define USE_QEP_RAW FALSE
     #define VOLTAGE_CURRENT_DECOUPLING_CIRCUIT FALSE
@@ -247,8 +248,8 @@
     #define MACHINE_TS         (CL_TS*TS_UPSAMPLING_FREQ_EXE)
     #define MACHINE_TS_INVERSE (CL_TS_INVERSE*TS_UPSAMPLING_FREQ_EXE_INVERSE)
 
-#define LOAD_INERTIA    1.0
-#define LOAD_TORQUE     0
+#define LOAD_INERTIA    0.0
+#define LOAD_TORQUE     5
 #define VISCOUS_COEFF   0.007
 
 #define CL_SERIES_KP (27.646)
@@ -261,7 +262,7 @@
     #define CURRENT_KI_CODE (CURRENT_KI*CURRENT_KP*CL_TS)
 #define CURRENT_LOOP_LIMIT_VOLTS (600)
 
-#define SPEED_KP (1.94685)
+#define SPEED_KP (1.67832)
 #define SPEED_KI (33.4282)
     #define MOTOR_RATED_TORQUE ( MOTOR_RATED_POWER_WATT / (MOTOR_RATED_SPEED_RPM/60.0*2*3.1415926) )
     #define MOTOR_TORQUE_CONSTANT ( MOTOR_RATED_TORQUE / (MOTOR_RATED_CURRENT_RMS*1.414) )

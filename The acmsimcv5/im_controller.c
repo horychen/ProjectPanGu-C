@@ -44,13 +44,14 @@ REAL controller(REAL set_rpm_speed_command,
     static REAL rpm_speed_command=0.0, amp_current_command=0.0;
     {
         // commands(&rpm_speed_command, &amp_current_command);
-        static REAL local_dc_rpm_cmd = 0.0; 
-        static REAL local_dc_rpm_cmd_deriv = 0.0; 
+        static REAL local_dc_rpm_cmd = 0.0;
+        static REAL local_dc_rpm_cmd_deriv = 0.0;
 
         static REAL last_omg_cmd=0.0;
         REAL OMG1;
         #define DELAY 100
         #define OFF 1000
+        #define SINE_AMPL (0*100)
         if(CTRL.timebase>6 && bool_apply_sinusoidal_speed_cmd){/*Variable Speed: Sinusoidal Speed + Ramp Speed*/
             if      (CTRL.timebase>3.875){
                 OMG1 = (2*M_PI*32);
@@ -68,16 +69,17 @@ REAL controller(REAL set_rpm_speed_command,
             if(CTRL.timebase>10 && CTRL.timebase<15){/*Reversal*/
                 // OMG1 = 0;
                 // TODO: test positive and negative high speed
-                local_dc_rpm_cmd_deriv = -200;
-                local_dc_rpm_cmd      += CL_TS * local_dc_rpm_cmd_deriv;
+                local_dc_rpm_cmd_deriv = -100;
             }else{
                 local_dc_rpm_cmd_deriv = 0.0;
             }
 
-            rpm_speed_command           = (100          * sin(OMG1*CTRL.timebase) + local_dc_rpm_cmd       );
-            CTRL.I->cmd_omg_elec        = (100          * sin(OMG1*CTRL.timebase) + local_dc_rpm_cmd       )*RPM_2_ELEC_RAD_PER_SEC;
-            CTRL.I->cmd_deriv_omg_elec  = (100*OMG1     * cos(OMG1*CTRL.timebase) + local_dc_rpm_cmd_deriv )*RPM_2_ELEC_RAD_PER_SEC;
-            CTRL.I->cmd_dderiv_omg_elec = (100*OMG1*OMG1*-sin(OMG1*CTRL.timebase) + 0                      )*RPM_2_ELEC_RAD_PER_SEC;
+            local_dc_rpm_cmd            += CL_TS * local_dc_rpm_cmd_deriv;
+
+            rpm_speed_command           = (SINE_AMPL          * sin(OMG1*CTRL.timebase) + local_dc_rpm_cmd       );
+            CTRL.I->cmd_omg_elec        = (SINE_AMPL          * sin(OMG1*CTRL.timebase) + local_dc_rpm_cmd       )*RPM_2_ELEC_RAD_PER_SEC;
+            CTRL.I->cmd_deriv_omg_elec  = (SINE_AMPL*OMG1     * cos(OMG1*CTRL.timebase) + local_dc_rpm_cmd_deriv )*RPM_2_ELEC_RAD_PER_SEC;
+            CTRL.I->cmd_dderiv_omg_elec = (SINE_AMPL*OMG1*OMG1*-sin(OMG1*CTRL.timebase) + 0                      )*RPM_2_ELEC_RAD_PER_SEC;
         }else if(CTRL.timebase>5+OFF){/*Constant Speed*/
             rpm_speed_command           = local_dc_rpm_cmd;
             CTRL.I->cmd_omg_elec        = rpm_speed_command*RPM_2_ELEC_RAD_PER_SEC;
@@ -99,7 +101,7 @@ REAL controller(REAL set_rpm_speed_command,
             CTRL.I->cmd_dderiv_omg_elec = 0;
 
             last_omg_cmd = CTRL.I->cmd_omg_elec;
-        }else if(CTRL.timebase>1+OFF){/*Ramp Speed*/
+        }else if(CTRL.timebase>1.5+OFF){/*Ramp Speed*/
             rpm_speed_command += CL_TS*150;
             local_dc_rpm_cmd            = rpm_speed_command;
             CTRL.I->cmd_omg_elec        = rpm_speed_command*RPM_2_ELEC_RAD_PER_SEC;
@@ -107,13 +109,13 @@ REAL controller(REAL set_rpm_speed_command,
             CTRL.I->cmd_dderiv_omg_elec = 0;
 
             last_omg_cmd = CTRL.I->cmd_omg_elec;
-        }else if(CTRL.timebase>1+0.0){ /*Constant Speed*/
+        }else if(CTRL.timebase>1.5+0.0){ /*Constant Speed*/
             rpm_speed_command           = local_dc_rpm_cmd;
             CTRL.I->cmd_omg_elec        = rpm_speed_command*RPM_2_ELEC_RAD_PER_SEC;
             CTRL.I->cmd_deriv_omg_elec  = 0;
             CTRL.I->cmd_dderiv_omg_elec = 0;
         }else if(CTRL.timebase>0.5+0.0){ /*Ramp Speed*/
-            rpm_speed_command           += CL_TS*500;
+            rpm_speed_command           += CL_TS*200;
             local_dc_rpm_cmd            = rpm_speed_command;
             CTRL.I->cmd_omg_elec        = rpm_speed_command*RPM_2_ELEC_RAD_PER_SEC;
             CTRL.I->cmd_deriv_omg_elec  = (CTRL.I->cmd_omg_elec - last_omg_cmd)*CL_TS_INVERSE;
@@ -219,10 +221,16 @@ void controller_marino2005(){
     // TODO: 反馈磁链用谁？
     marino.psi_Dmu = AB2M(FLUX_FEEDBACK_ALPHA, FLUX_FEEDBACK_BETA, CTRL.S->cosT, CTRL.S->sinT);
     marino.psi_Qmu = AB2T(FLUX_FEEDBACK_ALPHA, FLUX_FEEDBACK_BETA, CTRL.S->cosT, CTRL.S->sinT);
+    #if PC_SIMULATION
+        // marino.psi_Dmu = AB2M(ACM.psi_Amu, ACM.psi_Bmu, CTRL.S->cosT, CTRL.S->sinT);
+        // marino.psi_Qmu = AB2T(ACM.psi_Amu, ACM.psi_Bmu, CTRL.S->cosT, CTRL.S->sinT);
+    #endif
 
     // /*Simulation only flux*/
     // marino.psi_Dmu = simvm.psi_D2_ode1;
     // marino.psi_Qmu = simvm.psi_Q2_ode1;
+    // marino.psi_Dmu = ACM.psi_Dmu; // nonono, the dq flux should be obtained using CTRL.S->cosT/sinT.
+    // marino.psi_Qmu = ACM.psi_Qmu; // nonono, the dq flux should be obtained using CTRL.S->cosT/sinT.
 
     // flux error quantities should be updated when feedback is updated | verified: this has nothing to do with the biased xTL at high speeds
     marino.e_psi_Dmu = marino.psi_Dmu - CTRL.I->cmd_psi;
