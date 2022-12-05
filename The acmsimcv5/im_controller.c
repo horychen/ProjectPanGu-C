@@ -25,6 +25,8 @@ REAL deriv_sat_kappa(REAL x){
 
 // 控制器
 int bool_apply_sinusoidal_speed_cmd = TRUE;
+REAL imife_accerleration = 50;
+REAL imife_ramp_slope = 100;
 REAL controller(REAL set_rpm_speed_command, 
     int set_current_loop, REAL set_iq_cmd, REAL set_id_cmd,
     int flag_overwrite_theta_d, REAL Overwrite_Current_Frequency,
@@ -69,7 +71,7 @@ REAL controller(REAL set_rpm_speed_command,
             if(CTRL.timebase>10 && CTRL.timebase<15){/*Reversal*/
                 // OMG1 = 0;
                 // TODO: test positive and negative high speed
-                local_dc_rpm_cmd_deriv = -100;
+                local_dc_rpm_cmd_deriv = -imife_accerleration;
             }else{
                 local_dc_rpm_cmd_deriv = 0.0;
             }
@@ -115,7 +117,7 @@ REAL controller(REAL set_rpm_speed_command,
             CTRL.I->cmd_deriv_omg_elec  = 0;
             CTRL.I->cmd_dderiv_omg_elec = 0;
         }else if(CTRL.timebase>0.5+0.0){ /*Ramp Speed*/
-            rpm_speed_command           += CL_TS*200;
+            rpm_speed_command           += CL_TS*imife_ramp_slope;
             local_dc_rpm_cmd            = rpm_speed_command;
             CTRL.I->cmd_omg_elec        = rpm_speed_command*RPM_2_ELEC_RAD_PER_SEC;
             CTRL.I->cmd_deriv_omg_elec  = (CTRL.I->cmd_omg_elec - last_omg_cmd)*CL_TS_INVERSE;
