@@ -120,7 +120,7 @@ void marino05_dedicated_rk4_solver(REAL hs){
     // Projection Algorithm
     // xRho   \in [-M_PI, M_PI]
     if(marino.xRho > M_PI){
-        marino.xRho -= 2*M_PI;        
+        marino.xRho -= 2*M_PI;
     }else if(marino.xRho < -M_PI){
         marino.xRho += 2*M_PI; // 反转！
     }
@@ -896,6 +896,7 @@ void flux_observer(){
 
 
 /* Holtz 2003 implemented in ACMSIMC-V4 */
+REAL imife_realtime_gain_off = 1.0;
 void init_FE_htz(){
     int ind;
     for(ind=0;ind<2;++ind){
@@ -1184,7 +1185,7 @@ void VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit(){
 
         long int local_sum = FE.htz.negative_cycle_in_count[0] + FE.htz.positive_cycle_in_count[0] + FE.htz.negative_cycle_in_count[1] + FE.htz.positive_cycle_in_count[1];
         if(local_sum>0){
-            FE.htz.gain_off = HOLTZ_2002_GAIN_OFFSET / ((REAL)local_sum*CL_TS);
+            FE.htz.gain_off = imife_realtime_gain_off * HOLTZ_2002_GAIN_OFFSET / ((REAL)local_sum*CL_TS);
         }
         FE.htz.u_offset[0] += FE.htz.gain_off * CL_TS * INTEGRAL_INPUT(0);
         FE.htz.u_offset[1] += FE.htz.gain_off * CL_TS * INTEGRAL_INPUT(1);
