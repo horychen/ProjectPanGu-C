@@ -3,7 +3,7 @@
 /* 经常要修改的 */
 #define INVERTER_NONLINEARITY_COMPENSATION_INIT 0 // 5（9月1日及以前峣杰实验一直用的5） // 4 // 1:ParkSul12, 2:Sigmoid, 3:LUT(Obsolete), 4:LUT(by index), 5 Slessinv-a2a3Model
 #define INVERTER_NONLINEARITY                   0 // 4 // 1:ModelSul96, 2:ModelExpSigmoid, 3: ModelExpLUT, 4:LUT(by index)
-#define SENSORLESS_CONTROL TRUE
+#define SENSORLESS_CONTROL FALSE
 #define SENSORLESS_CONTROL_HFSI FALSE
 /* ParkSul2012 梯形波 */
 #define GAIN_THETA_TRAPEZOIDAL (40) //(500) // 20

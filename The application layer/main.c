@@ -23,6 +23,8 @@ extern REAL hall_omega_r_elec[3];
 REAL last_hall_qep_count;
 void start_hall_conversion(REAL hall_sensor_read[]);
 
+REAL SUSPENSION_CURRENT = 5;
+
 #ifdef _XCUBE1 // At Water Energy Lab
     #define OFFSET_UDC 1430
     #define OFFSET_U   2047
@@ -43,7 +45,7 @@ void start_hall_conversion(REAL hall_sensor_read[]);
 #endif
 
 #ifdef _XCUBE2 // At Process Instrumentation Lab
-    #define OFFSET_VDC 11   // ADC0
+    #define OFFSET_VDC 0 // 11   // ADC0
     #define OFFSET_U   2054 // 2
     #define OFFSET_V   2065 // 3
     #define OFFSET_W   2047 // 1
@@ -97,8 +99,8 @@ void init_experiment_AD_gain_and_offset(){
     Axis.adc_offset[9] = 1850; // (700+3000)/2
 
     // displacement sensor
-    Axis.adc_offset[10] = (1711 - 210)*0.5 + 210; // 767;
-    Axis.adc_offset[11] = (1540 -  25)*0.5 +  25; // 683;
+    Axis.adc_offset[10] = (1641 - 134)*0.5;
+    Axis.adc_offset[11] = (1517 - 5)*0.5;
 
     /* ADC SCALE */
     Axis.adc_scale[0] = SCALE_VDC;
@@ -133,13 +135,13 @@ void main(void){
     Axis.pAdcaResultRegs = &AdcaResultRegs;
     Axis.pAdcbResultRegs = &AdcbResultRegs;
     Axis.use_first_set_three_phase = -1;
-    Axis.Set_current_loop = FALSE;
+    Axis.Set_current_loop = TRUE;
     Axis.Set_x_suspension_current_loop = FALSE;
     Axis.Set_y_suspension_current_loop = FALSE;
     Axis.Set_manual_rpm = 50.0;
     Axis.Set_manual_current_iq = 0.0;
-    Axis.Set_manual_current_id = 0.0; // 20
-    Axis.Select_exp_operation = 200; //202; //200; //101;
+    Axis.Set_manual_current_id = 2.0; // 20
+    Axis.Select_exp_operation = 0; // 200; //202; //200; //101;
     Axis.pFLAG_INVERTER_NONLINEARITY_COMPENSATION = &G.FLAG_INVERTER_NONLINEARITY_COMPENSATION;
     Axis.flag_overwrite_theta_d = FALSE;
     Axis.Overwrite_Current_Frequency = 0;
@@ -725,29 +727,29 @@ void PanGuMainISR(void){
                 static long counter = 0;
                 counter += 1;
                 if(counter<SQUARE_WAVE_PERIOD*0.5){
-                    Axis.Set_manual_current_ix = 20;
+                    Axis.Set_manual_current_ix = SUSPENSION_CURRENT;
                 }else{
-                    Axis.Set_manual_current_ix = -20;
+                    Axis.Set_manual_current_ix = -SUSPENSION_CURRENT;
                     if(counter>=SQUARE_WAVE_PERIOD) counter = 0;
                 }
             }else if(Axis.Select_exp_operation == 101){
                 static long counter = 0;
                 counter += 1;
                 if(counter<SQUARE_WAVE_PERIOD*0.5){
-                    Axis.Set_manual_current_iy = 20;
+                    Axis.Set_manual_current_iy = SUSPENSION_CURRENT;
                 }else{
-                    Axis.Set_manual_current_iy = -20;
+                    Axis.Set_manual_current_iy = -SUSPENSION_CURRENT;
                     if(counter>=SQUARE_WAVE_PERIOD) counter = 0;
                 }
             }else if(Axis.Select_exp_operation == 102){
                 static long counter = 0;
                 counter += 1;
                 if(counter<SQUARE_WAVE_PERIOD*0.5){
-                    Axis.Set_manual_current_ix = 20*cos(apply_force_angle);
-                    Axis.Set_manual_current_iy = 20*sin(apply_force_angle);
+                    Axis.Set_manual_current_ix = SUSPENSION_CURRENT*cos(apply_force_angle);
+                    Axis.Set_manual_current_iy = SUSPENSION_CURRENT*sin(apply_force_angle);
                 }else{
-                    Axis.Set_manual_current_ix = -20*cos(apply_force_angle);
-                    Axis.Set_manual_current_iy = -20*sin(apply_force_angle);
+                    Axis.Set_manual_current_ix = -SUSPENSION_CURRENT*cos(apply_force_angle);
+                    Axis.Set_manual_current_iy = -SUSPENSION_CURRENT*sin(apply_force_angle);
                     if(counter>=SQUARE_WAVE_PERIOD) {counter = 0; apply_force_angle += 0.01*2*M_PI;}
                 }
             }else if(Axis.Select_exp_operation == 200){
