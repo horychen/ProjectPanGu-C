@@ -1,9 +1,13 @@
 #include <All_Definition.h>
 st_axis Axis;
 
-REAL Prototype_Sensor_Install_Angle = 0*-1.25; // 0.785398; // (60.0/180.0*M_PI);
-REAL cos_Prototype_Sensor_Install_Angle; // = (60.0/180.0*M_PI);
-REAL sin_Prototype_Sensor_Install_Angle; // = (60.0/180.0*M_PI);
+REAL Prototype_Sensor_Install_Angle = 1.45000005; // 0.785398; // (60.0/180.0*M_PI);
+REAL cos_Prototype_Sensor_Install_Angle = 1.0; // = (60.0/180.0*M_PI);
+REAL sin_Prototype_Sensor_Install_Angle = 0.0; // = (60.0/180.0*M_PI);
+
+REAL Prototype_Applied_Force_Angle = M_PI;
+REAL cos_Prototype_Applied_Force_Angle = 1.0;
+REAL sin_Prototype_Applied_Force_Angle = 0.0;
 
 long int X_DISPLACEMENT_LOOP_CEILING = 10;
 long int Y_DISPLACEMENT_LOOP_CEILING = 10;
@@ -14,6 +18,7 @@ REAL disp_setpoint_frequency = 0.2;
 REAL apply_force_angle = 0.0;
 
 REAL eddy_displacement[2] = {0,0};
+REAL eddy_displacement_state[2] = {0,0};
 
 REAL hall_sensor_read[3] = {0, 0, 0};
 extern REAL hall_qep_angle;
@@ -99,8 +104,8 @@ void init_experiment_AD_gain_and_offset(){
     Axis.adc_offset[9] = 1850; // (700+3000)/2
 
     // displacement sensor
-    Axis.adc_offset[10] = (1641 - 134)*0.5;
-    Axis.adc_offset[11] = (1517 - 5)*0.5;
+    Axis.adc_offset[10] = (1488 - 145)*0.5;
+    Axis.adc_offset[11] = (1510 - 80)*0.5;
 
     /* ADC SCALE */
     Axis.adc_scale[0] = SCALE_VDC;
@@ -131,6 +136,7 @@ void main(void){
 //    2
 //    0.01
 
+
     Axis.pCTRL = &CTRL;
     Axis.pAdcaResultRegs = &AdcaResultRegs;
     Axis.pAdcbResultRegs = &AdcbResultRegs;
@@ -140,8 +146,8 @@ void main(void){
     Axis.Set_y_suspension_current_loop = FALSE;
     Axis.Set_manual_rpm = 50.0;
     Axis.Set_manual_current_iq = 0.0;
-    Axis.Set_manual_current_id = 5.0; // 20
-    Axis.Select_exp_operation = 103; // 200; //202; //200; //101;
+    Axis.Set_manual_current_id = 5.0;
+    Axis.Select_exp_operation = 200; // 104; // 200; //202; //200; //101;
     Axis.pFLAG_INVERTER_NONLINEARITY_COMPENSATION = &G.FLAG_INVERTER_NONLINEARITY_COMPENSATION;
     Axis.flag_overwrite_theta_d = FALSE;
     Axis.Overwrite_Current_Frequency = 0;
@@ -155,9 +161,9 @@ void main(void){
     Axis.FLAG_ENABLE_PWM_OUTPUT = FALSE;
     Axis.channels_preset = 101; // 9; // 101;
 
-    pid1_dispX.setpoint = -210; //-150; // -210;  //(-22 + 1456)*0.5; // angle_shift_for_first_inverter = 6.0
+    pid1_dispX.setpoint = 0; //-150; // -210;  //(-22 + 1456)*0.5; // angle_shift_for_first_inverter = 6.0
     //pid1_dispX.outLimit = 0.0;
-    pid1_dispY.setpoint =  275; // 275;  //(200 + 1300)*0.5;
+    pid1_dispY.setpoint = 0; // 275;  //(200 + 1300)*0.5;
 
     //pid1_dispY.outLimit = 0.0;
 
@@ -529,6 +535,13 @@ void voltage_measurement_based_on_eCAP(){
     CAP.dq_mismatch[1] = CTRL.O->udq_cmd_to_inverter[1] - CAP.dq[1];
 }
 
+REAL lpf1_eddycurrentsensor_time_constant = 0.04; // 0.05 // 0.00020829;
+REAL lpf1_eddycurrentsensor(REAL x, REAL y_tminus1){
+    // #define LPF1_RC 0.6 // 0.7, 0.8, 1.2, 3太大滤得过分了 /* 观察I5+I7_LPF的动态情况进行确定 */
+    // #define ALPHA_RC (TS/(LPF1_RC + TS)) // TODO：优化
+    // return y_tminus1 + ALPHA_RC * (x - y_tminus1); // 0.00020828993959591752
+    return y_tminus1 + lpf1_eddycurrentsensor_time_constant * (x - y_tminus1);
+}
 void measurement(){
 
     // 转子位置和转速接口 以及 转子位置和转速测量
@@ -549,21 +562,24 @@ void measurement(){
     hall_sensor_read[0] = (REAL)AdcaResultRegs.ADCRESULT4  - Axis.adc_offset[8]; // ADC_HALL_OFFSET_ADC4; // 32 poles on Aluminum target
     hall_sensor_read[2] = (REAL)AdcbResultRegs.ADCRESULT10 - Axis.adc_offset[9]; // ADC_HALL_OFFSET_ADC10; // Bogen 40 poles on the top
     // 涡流位移传感器
-    eddy_displacement[0] = ((REAL)AdcbResultRegs.ADCRESULT6  - Axis.adc_offset[10]) * Axis.adc_scale[10];
-    eddy_displacement[1] = ((REAL)AdcbResultRegs.ADCRESULT7  - Axis.adc_offset[11]) * Axis.adc_scale[11];
+    eddy_displacement_state[0] = ((REAL)AdcbResultRegs.ADCRESULT6  - Axis.adc_offset[10]) * Axis.adc_scale[10];
+    eddy_displacement_state[1] = ((REAL)AdcbResultRegs.ADCRESULT7  - Axis.adc_offset[11]) * Axis.adc_scale[11];
+    eddy_displacement[0] = lpf1_eddycurrentsensor(eddy_displacement_state[0], eddy_displacement[0]);
+    eddy_displacement[1] = lpf1_eddycurrentsensor(eddy_displacement_state[1], eddy_displacement[1]);
 
     // Use two hall sensors for QEP
-    last_hall_qep_count = hall_qep_count;
-    start_hall_conversion(hall_sensor_read);
-    if(USE_HALL_SENSOR_FOR_QEP == 1){
-        CTRL.I->theta_d_elec = hall_theta_r_elec[0];
-        CTRL.I->omg_elec     = hall_omega_r_elec[0];
-    }else{
-        CTRL.I->theta_d_elec = ENC.theta_d_elec;
-        CTRL.I->omg_elec     = ENC.omg_elec;
+    if(FALSE){
+        last_hall_qep_count = hall_qep_count;
+        start_hall_conversion(hall_sensor_read);
+        if(USE_HALL_SENSOR_FOR_QEP == 1){
+            CTRL.I->theta_d_elec = hall_theta_r_elec[0];
+            CTRL.I->omg_elec     = hall_omega_r_elec[0];
+        }else{
+            CTRL.I->theta_d_elec = ENC.theta_d_elec;
+            CTRL.I->omg_elec     = ENC.omg_elec;
+        }
+        CTRL.I->rpm = CTRL.I->omg_elec * ELEC_RAD_PER_SEC_2_RPM;
     }
-    CTRL.I->rpm = CTRL.I->omg_elec * ELEC_RAD_PER_SEC_2_RPM;
-
 
     // 线电压测量（基于占空比和母线电压）
     //voltage_measurement_based_on_eCAP();
@@ -680,6 +696,12 @@ void PanGuMainISR(void){
     // DELAY_US(2); // wait for adc conversion TODO: check adc eoc flag?
     measurement();
 
+    // 按实际涡流位移传感器的安装角度对测量结果进行调整
+    cos_Prototype_Sensor_Install_Angle = cos(Prototype_Sensor_Install_Angle);
+    sin_Prototype_Sensor_Install_Angle = sin(Prototype_Sensor_Install_Angle);
+    pid1_dispX.measurement = AB2M(eddy_displacement[0], eddy_displacement[1], cos_Prototype_Sensor_Install_Angle, sin_Prototype_Sensor_Install_Angle);
+    pid1_dispY.measurement = AB2T(eddy_displacement[0], eddy_displacement[1], cos_Prototype_Sensor_Install_Angle, sin_Prototype_Sensor_Install_Angle);
+
     if(!Axis.FLAG_ENABLE_PWM_OUTPUT){
 
         DSP_PWM_DISABLE
@@ -717,12 +739,6 @@ void PanGuMainISR(void){
                 Axis.angle_shift_for_first_inverter,
                 Axis.angle_shift_for_second_inverter);
 
-            // 按实际涡流位移传感器的安装角度对测量结果进行调整
-            cos_Prototype_Sensor_Install_Angle = cos(Prototype_Sensor_Install_Angle);
-            sin_Prototype_Sensor_Install_Angle = sin(Prototype_Sensor_Install_Angle);
-            pid1_dispX.measurement = AB2M(eddy_displacement[0], eddy_displacement[1], cos_Prototype_Sensor_Install_Angle, sin_Prototype_Sensor_Install_Angle);
-            pid1_dispY.measurement = AB2T(eddy_displacement[0], eddy_displacement[1], cos_Prototype_Sensor_Install_Angle, sin_Prototype_Sensor_Install_Angle);
-
             if(Axis.Select_exp_operation == 100){
                 static long counter = 0;
                 counter += 1;
@@ -757,12 +773,45 @@ void PanGuMainISR(void){
                 counter += 1;
                 if(counter<SQUARE_WAVE_PERIOD*0.25){
                     Axis.Set_manual_current_ix = SUSPENSION_CURRENT;
+                    Axis.Set_manual_current_iy = 0.0;
                 }else if(counter<SQUARE_WAVE_PERIOD*0.5){
+                    Axis.Set_manual_current_ix = 0.0;
                     Axis.Set_manual_current_iy = SUSPENSION_CURRENT;
                 }else if(counter<SQUARE_WAVE_PERIOD*0.75){
                     Axis.Set_manual_current_ix = -SUSPENSION_CURRENT;
+                    Axis.Set_manual_current_iy = 0.0;
                 }else{
+                    Axis.Set_manual_current_ix = 0.0;
                     Axis.Set_manual_current_iy = -SUSPENSION_CURRENT;
+                    if(counter>=SQUARE_WAVE_PERIOD) {counter = 0;}
+                }
+            }else if(Axis.Select_exp_operation == 104){
+                static long counter = 0;
+                counter += 1;
+                if(counter<SQUARE_WAVE_PERIOD*0.125){
+                    Axis.Set_manual_current_ix = SUSPENSION_CURRENT;
+                    Axis.Set_manual_current_iy = 0.0;
+                }else if(counter<SQUARE_WAVE_PERIOD*0.25){
+                    Axis.Set_manual_current_ix = 0.707*SUSPENSION_CURRENT;
+                    Axis.Set_manual_current_iy = 0.707*SUSPENSION_CURRENT;
+                }else if(counter<SQUARE_WAVE_PERIOD*0.375){
+                    Axis.Set_manual_current_ix = 0.0;
+                    Axis.Set_manual_current_iy = SUSPENSION_CURRENT;
+                }else if(counter<SQUARE_WAVE_PERIOD*0.5){
+                    Axis.Set_manual_current_ix = -0.707*SUSPENSION_CURRENT;
+                    Axis.Set_manual_current_iy = 0.707*SUSPENSION_CURRENT;
+                }else if(counter<SQUARE_WAVE_PERIOD*0.625){
+                    Axis.Set_manual_current_ix = -SUSPENSION_CURRENT;
+                    Axis.Set_manual_current_iy = 0.0;
+                }else if(counter<SQUARE_WAVE_PERIOD*0.75){
+                    Axis.Set_manual_current_ix = -0.707*SUSPENSION_CURRENT;
+                    Axis.Set_manual_current_iy = -0.707*SUSPENSION_CURRENT;
+                }else if(counter<SQUARE_WAVE_PERIOD*0.875){
+                    Axis.Set_manual_current_ix = 0.0;
+                    Axis.Set_manual_current_iy = -SUSPENSION_CURRENT;
+                }else{
+                    Axis.Set_manual_current_ix = 0.707*SUSPENSION_CURRENT;
+                    Axis.Set_manual_current_iy = -0.707*SUSPENSION_CURRENT;
                     if(counter>=SQUARE_WAVE_PERIOD) {counter = 0;}
                 }
             }else if(Axis.Select_exp_operation == 200){
@@ -782,6 +831,14 @@ void PanGuMainISR(void){
                         Axis.Set_manual_current_iy = pid1_dispY.out;
                     }
                 }
+                // 这里电流环输出取反，因为发现给ix=-15A的时候，无法将正x最大位移处移走（吸得很死）
+                //pid1_dispX.out = -pid1_dispX.out;
+                //pid1_dispY.out = -pid1_dispY.out;
+
+                cos_Prototype_Applied_Force_Angle = cos(Prototype_Applied_Force_Angle);
+                sin_Prototype_Applied_Force_Angle = sin(Prototype_Applied_Force_Angle);
+                Axis.Set_manual_current_ix = AB2M(Axis.Set_manual_current_ix, Axis.Set_manual_current_iy, cos_Prototype_Applied_Force_Angle, sin_Prototype_Applied_Force_Angle);
+                Axis.Set_manual_current_iy = AB2T(Axis.Set_manual_current_ix, Axis.Set_manual_current_iy, cos_Prototype_Applied_Force_Angle, sin_Prototype_Applied_Force_Angle);
 
                 // 完成双自由度，给定一个torque id的同时再做悬浮力控制防止转子转动？
 

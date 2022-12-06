@@ -89,6 +89,7 @@ extern REAL hall_theta_r_elec_local_absolute[3];
 extern REAL normalizer[3];
 extern REAL hall_rotating_direction;
 extern REAL eddy_displacement[2];
+extern REAL eddy_displacement_state[2];
 extern REAL used_theta_d_elec;
 
 void write_DAC_buffer(){
@@ -255,8 +256,8 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
 //    Axis.dac_watch[53] = hall_rotating_direction;
 //    Axis.dac_watch[54] = 1.0/normalizer[0]*0.0005;
 //    Axis.dac_watch[55] = hall_qep_count*0.01;
-    Axis.dac_watch[58] = hall_theta_r_elec[0] * 0.1;
-    Axis.dac_watch[59] = hall_theta_r_elec_incremental[0] * 0.1;
+//    Axis.dac_watch[58] = hall_theta_r_elec[0] * 0.1;
+//    Axis.dac_watch[59] = hall_theta_r_elec_incremental[0] * 0.1;
 
 //    Axis.dac_watch[56] = CTRL.I->theta_d_elec*0.1;
 //    Axis.dac_watch[57] = CTRL.I->rpm*0.01;
@@ -274,18 +275,30 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
 
 //    Axis.dac_watch[52] = pid2_ix.Ref * 0.02;
 //    Axis.dac_watch[53] = pid2_ix.Fbk * 0.02;
-    Axis.dac_watch[52] = pid2_ix.Fbk * 0.02;
-    Axis.dac_watch[53] = pid2_iy.Fbk * 0.02;
+    Axis.dac_watch[52] = pid2_ix.Fbk * 0.05;
+    Axis.dac_watch[53] = pid2_iy.Fbk * 0.05;
+
+    Axis.dac_watch[54] = (pid2_ix.Fbk + 0.5 * CTRL.I->idq[0]) * 0.05;
+    Axis.dac_watch[55] = (pid2_iy.Fbk + 0.5 * CTRL.I->idq[1]) * 0.05;
+
+
+
+    Axis.dac_watch[46] = eddy_displacement_state[0] * 0.001;
+    Axis.dac_watch[47] = eddy_displacement_state[1] * 0.001;
+    Axis.dac_watch[48] = eddy_displacement[0] * 0.001;
+    Axis.dac_watch[49] = eddy_displacement[1] * 0.001;
 
 //    Axis.dac_watch[54] = eddy_displacement[0]*0.0004;
 //    Axis.dac_watch[55] = eddy_displacement[1]*0.0004;
-    Axis.dac_watch[54] = pid1_dispX.setpoint*0.001;
-    Axis.dac_watch[55] = pid1_dispY.setpoint*0.001;
+//    Axis.dac_watch[54] = pid1_dispX.setpoint*0.001;
+//    Axis.dac_watch[55] = pid1_dispY.setpoint*0.001;
     Axis.dac_watch[56] = pid1_dispX.measurement*0.001;
     Axis.dac_watch[57] = pid1_dispY.measurement*0.001;
-    Axis.dac_watch[58] = pid1_dispX.prevError*0.001;
-    Axis.dac_watch[59] = pid1_dispY.prevError*0.001;
+//    Axis.dac_watch[58] = pid1_dispX.prevError*0.001;
+//    Axis.dac_watch[59] = pid1_dispY.prevError*0.001;
 
+    Axis.dac_watch[58] = Axis.Set_manual_current_ix*0.05;
+    Axis.dac_watch[59] = Axis.Set_manual_current_iy*0.05;
 
 
 //    Axis.dac_watch[58] = current_pole[0]*0.5;
@@ -296,11 +309,11 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
         /* Slice motor + sensorless */
         Axis.channels[0] = 56; //27; // ESOAF theta_d
         Axis.channels[1] = 57; //21; // AFEOE theta_d
-        Axis.channels[2] = 58; // Hall sensor theta_d
-        Axis.channels[3] = 10; // AFEOE psi_2[0]
-        Axis.channels[4] = 26;
-        Axis.channels[5] = 27;
-        Axis.channels[6] = 50;
+        Axis.channels[2] = 52; //58; // Hall sensor theta_d
+        Axis.channels[3] = 53; //10; // AFEOE psi_2[0]
+        Axis.channels[4] = 58; //26;
+        Axis.channels[5] = 59; //27;
+        Axis.channels[6] = 0;
     }else if(Axis.channels_preset==102){Axis.channels_preset=0;
         /* Slice motor + sensorless */
         Axis.channels[0] = 26;
