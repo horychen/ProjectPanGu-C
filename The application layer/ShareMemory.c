@@ -294,8 +294,8 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
 
     if(Axis.channels_preset==101){Axis.channels_preset=0;
         /* Slice motor + sensorless */
-        Axis.channels[0] = 27; // ESOAF theta_d
-        Axis.channels[1] = 21; // AFEOE theta_d
+        Axis.channels[0] = 56; //27; // ESOAF theta_d
+        Axis.channels[1] = 57; //21; // AFEOE theta_d
         Axis.channels[2] = 58; // Hall sensor theta_d
         Axis.channels[3] = 10; // AFEOE psi_2[0]
         Axis.channels[4] = 26;

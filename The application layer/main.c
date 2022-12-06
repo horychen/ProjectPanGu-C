@@ -1,7 +1,7 @@
 #include <All_Definition.h>
 st_axis Axis;
 
-REAL Prototype_Sensor_Install_Angle = -1.25; // 0.785398; // (60.0/180.0*M_PI);
+REAL Prototype_Sensor_Install_Angle = 0*-1.25; // 0.785398; // (60.0/180.0*M_PI);
 REAL cos_Prototype_Sensor_Install_Angle; // = (60.0/180.0*M_PI);
 REAL sin_Prototype_Sensor_Install_Angle; // = (60.0/180.0*M_PI);
 
@@ -140,8 +140,8 @@ void main(void){
     Axis.Set_y_suspension_current_loop = FALSE;
     Axis.Set_manual_rpm = 50.0;
     Axis.Set_manual_current_iq = 0.0;
-    Axis.Set_manual_current_id = 2.0; // 20
-    Axis.Select_exp_operation = 0; // 200; //202; //200; //101;
+    Axis.Set_manual_current_id = 5.0; // 20
+    Axis.Select_exp_operation = 103; // 200; //202; //200; //101;
     Axis.pFLAG_INVERTER_NONLINEARITY_COMPENSATION = &G.FLAG_INVERTER_NONLINEARITY_COMPENSATION;
     Axis.flag_overwrite_theta_d = FALSE;
     Axis.Overwrite_Current_Frequency = 0;
@@ -751,6 +751,19 @@ void PanGuMainISR(void){
                     Axis.Set_manual_current_ix = -SUSPENSION_CURRENT*cos(apply_force_angle);
                     Axis.Set_manual_current_iy = -SUSPENSION_CURRENT*sin(apply_force_angle);
                     if(counter>=SQUARE_WAVE_PERIOD) {counter = 0; apply_force_angle += 0.01*2*M_PI;}
+                }
+            }else if(Axis.Select_exp_operation == 103){
+                static long counter = 0;
+                counter += 1;
+                if(counter<SQUARE_WAVE_PERIOD*0.25){
+                    Axis.Set_manual_current_ix = SUSPENSION_CURRENT;
+                }else if(counter<SQUARE_WAVE_PERIOD*0.5){
+                    Axis.Set_manual_current_iy = SUSPENSION_CURRENT;
+                }else if(counter<SQUARE_WAVE_PERIOD*0.75){
+                    Axis.Set_manual_current_ix = -SUSPENSION_CURRENT;
+                }else{
+                    Axis.Set_manual_current_iy = -SUSPENSION_CURRENT;
+                    if(counter>=SQUARE_WAVE_PERIOD) {counter = 0;}
                 }
             }else if(Axis.Select_exp_operation == 200){
                 pid1_dispX.setpoint;
