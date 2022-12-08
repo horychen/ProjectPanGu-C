@@ -66,14 +66,11 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
 
     if(Axis.channels_preset==1){Axis.channels_preset=0;
         /* Marino 2005 Sensorless Control */
-        Axis.channels[0] = 15; //12;
-        Axis.channels[1] = 16; //13;
+        Axis.channels[0] = 12; //12;
+        Axis.channels[1] = 13; //13;
         Axis.channels[2] = 24;
-        //        Axis.channels[3] = 14;
-        //        Axis.channels[4] = 15;
-        //        Axis.channels[5] = 16;
-        Axis.channels[3] = 17;
-        Axis.channels[4] = 18;
+        Axis.channels[3] = 18;
+        Axis.channels[4] = 17;
         Axis.channels[5] = 21;
     }else if(Axis.channels_preset==8){Axis.channels_preset=0;
     }
