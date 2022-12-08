@@ -24,10 +24,10 @@ REAL deriv_sat_kappa(REAL x){
 }
 
 // 控制器
-int bool_apply_sinusoidal_speed_cmd = TRUE;
-REAL imife_accerleration = 50;
+int bool_apply_sinusoidal_speed_cmd = FALSE;
 REAL imife_ramp_slope = 100;
-REAL imife_reversal_end_time = 0.0;
+REAL imife_accerleration = 20;
+REAL imife_reversal_end_time = 5.0;
 REAL controller(REAL set_rpm_speed_command, 
     int set_current_loop, REAL set_iq_cmd, REAL set_id_cmd,
     int flag_overwrite_theta_d, REAL Overwrite_Current_Frequency,
@@ -54,7 +54,7 @@ REAL controller(REAL set_rpm_speed_command,
         REAL OMG1;
         #define DELAY 100
         #define OFF 1000
-        #define SINE_AMPL (0*100)
+        #define SINE_AMPL (100)
         if(CTRL.timebase>6 && bool_apply_sinusoidal_speed_cmd){/*Variable Speed: Sinusoidal Speed + Ramp Speed*/
             if      (CTRL.timebase>3.875){
                 OMG1 = (2*M_PI*32);
