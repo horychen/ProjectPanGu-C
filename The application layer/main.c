@@ -136,7 +136,6 @@ void main(void){
     Axis.FLAG_ENABLE_PWM_OUTPUT = FALSE;
     Axis.channels_preset = 1; // 9; // 101;
 
-
     InitSysCtrl();        // 1. Initialize System Control: PLL, WatchDog, enable Peripheral Clocks.
     Gpio_initialize();    // 2. Initialize GPIO and assign GPIO to peripherals.
     DINT;                 // 3.1 Clear all interrupts and initialize PIE vector table.
@@ -679,6 +678,8 @@ void PanGuMainISR(void){
             init_experiment();
             //G.Select_exp_operation = 3; // fixed
             init_experiment_overwrite();
+
+            FE.htz.rs_est = 3.8; // 通过调节电阻值等效补偿死区电压误差（按慢反转实验效果调节获得）
 
             if(CTRL.g->overwrite_vdc<5){
                 CTRL.g->overwrite_vdc = 80;
