@@ -679,10 +679,16 @@ void PanGuMainISR(void){
             //G.Select_exp_operation = 3; // fixed
             init_experiment_overwrite();
 
-            FE.htz.rs_est = 3.8; // 通过调节电阻值等效补偿死区电压误差（按慢反转实验效果调节获得）
+            //FE.htz.rs_est = 3.8; // 通过调节电阻值等效补偿死区电压误差（按慢反转实验效果调节获得）
+
+            FE.htz.rs_est = 4.2; // Ohm 通过调节电阻值等效补偿死区电压误差（按慢反转实验效果调节获得）
+            CTRL.motor->Lmu_inv = 1.55; // H^-1
+            CTRL.I->m0 = 2.5; // Wb
+            // load motor is iq=-10 A
 
             if(CTRL.g->overwrite_vdc<5){
-                CTRL.g->overwrite_vdc = 80;
+                //CTRL.g->overwrite_vdc = 80;
+                CTRL.g->overwrite_vdc = 120;
             }
             CTRL.g->flag_overwite_vdc = 1;
 
