@@ -75,12 +75,15 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
     Axis.dac_watch[25] = marino.e_psi_Dmu;
     Axis.dac_watch[26] = marino.e_psi_Qmu;
 
+    Axis.dac_watch[27] = CTRL.I->idq_cmd[0]*0.1;
+    Axis.dac_watch[28] = CTRL.I->idq_cmd[1]*0.1;
+
     if(Axis.channels_preset==1){Axis.channels_preset=0;
         /* Marino 2005 Sensorless Control */
-        Axis.channels[0] = 2; //12;
-        Axis.channels[1] = 3; //13;
-        Axis.channels[2] = 4;
-        Axis.channels[3] = 5;
+        Axis.channels[0] = 12; //12;
+        Axis.channels[1] = 13; //13;
+        Axis.channels[2] = 27;
+        Axis.channels[3] = 28;
         Axis.channels[4] = 21;
         Axis.channels[5] = 22;
     }else if(Axis.channels_preset==8){Axis.channels_preset=0;

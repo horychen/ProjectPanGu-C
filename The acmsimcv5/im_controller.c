@@ -26,7 +26,7 @@ REAL deriv_sat_kappa(REAL x){
 // 控制器
 REAL SINE_AMPL = 0.0;
 REAL imife_ramp_slope = 100;
-REAL imife_accerleration = 0*20;
+REAL imife_accerleration = 20;
 REAL imife_reversal_end_time = 5.0;
 REAL controller(REAL set_rpm_speed_command, 
     int set_current_loop, REAL set_iq_cmd, REAL set_id_cmd,
