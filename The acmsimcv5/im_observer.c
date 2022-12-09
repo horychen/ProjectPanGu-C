@@ -960,7 +960,7 @@ REAL marino_sat_q_axis_flux_control = 1.0;
 int bool_positive_extra_limit = TRUE;
 void VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit(){
     #define PSI_MU_ASTER_MAX FE.htz.psi_aster_max // Holtz缺点就是实际磁链超过给定磁链时，失效！自动检测上下界同时饱和的情况，然后增大限幅？
-    #define BOOL_TURN_ON_ADAPTIVE_EXTRA_LIMIT TRUE // The limit is extended when both upper and lower limit are reached in a cycle.
+    #define BOOL_TURN_ON_ADAPTIVE_EXTRA_LIMIT FALSE // The limit is extended when both upper and lower limit are reached in a cycle.
 
     #define BOOL_USE_METHOD_LPF_INPUT      FALSE
     #define BOOL_USE_METHOD_INTEGRAL_INPUT TRUE
