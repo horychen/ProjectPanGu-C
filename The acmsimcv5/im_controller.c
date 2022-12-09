@@ -24,9 +24,9 @@ REAL deriv_sat_kappa(REAL x){
 }
 
 // 控制器
-int bool_apply_sinusoidal_speed_cmd = FALSE;
+REAL SINE_AMPL = 0.0;
 REAL imife_ramp_slope = 100;
-REAL imife_accerleration = 20;
+REAL imife_accerleration = 0*20;
 REAL imife_reversal_end_time = 5.0;
 REAL controller(REAL set_rpm_speed_command, 
     int set_current_loop, REAL set_iq_cmd, REAL set_id_cmd,
@@ -54,8 +54,7 @@ REAL controller(REAL set_rpm_speed_command,
         REAL OMG1;
         #define DELAY 100
         #define OFF 1000
-        #define SINE_AMPL (100)
-        if(CTRL.timebase>6 && bool_apply_sinusoidal_speed_cmd){/*Variable Speed: Sinusoidal Speed + Ramp Speed*/
+        if(CTRL.timebase>6){/*Variable Speed: Sinusoidal Speed + Ramp Speed*/
             if      (CTRL.timebase>3.875){
                 OMG1 = (2*M_PI*32);
             }else if(CTRL.timebase>3.75){
@@ -169,6 +168,8 @@ REAL controller(REAL set_rpm_speed_command,
 
     return 0.0; //used_theta_d_elec;
 }
+extern REAL marino_sat_d_axis_flux_control;
+extern REAL marino_sat_q_axis_flux_control;
 void controller_marino2005(){
 
     // Cascaded from other system
@@ -239,6 +240,9 @@ void controller_marino2005(){
     marino.e_psi_Dmu = marino.psi_Dmu - CTRL.I->cmd_psi;
     marino.e_psi_Qmu = marino.psi_Qmu - 0.0;
 
+    // marino.e_psi_Dmu *= marino_sat_d_axis_flux_control; // no luck
+    // marino.e_psi_Qmu *= marino_sat_q_axis_flux_control; // no luck
+
     // API to the fourth-order system of observer and identifiers
     observer_marino2005();
     CTRL.I->theta_d_elec = marino.xRho;
@@ -307,6 +311,10 @@ void controller_marino2005(){
     // use the second 3 phase inverter
     CTRL.O->uab_cmd[0+2] = CTRL.O->uab_cmd[0];
     CTRL.O->uab_cmd[1+2] = CTRL.O->uab_cmd[1];
+
+    // for view in scope
+    CTRL.O->iab_cmd[0] = MT2A(CTRL.I->idq_cmd[0], CTRL.I->idq_cmd[1], CTRL.S->cosT, CTRL.S->sinT);
+    CTRL.O->iab_cmd[1] = MT2B(CTRL.I->idq_cmd[0], CTRL.I->idq_cmd[1], CTRL.S->cosT, CTRL.S->sinT);
 }
 void controller_IFOC(){
 
