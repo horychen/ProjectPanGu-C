@@ -46,10 +46,10 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
     Axis.dac_watch[3] = CTRL.I->iab[1]*0.2;
     Axis.dac_watch[4] = CTRL.O->uab_cmd[0]*0.01;
     Axis.dac_watch[5] = CTRL.O->uab_cmd[1]*0.01;
-    Axis.dac_watch[10] = FE.htz.psi_2_ampl*0.5;
-    Axis.dac_watch[11] = FE.htz.psi_2_ampl_lpf*0.5;
-    Axis.dac_watch[12] = FE.htz.psi_2[0]*0.5;
-    Axis.dac_watch[13] = FE.htz.psi_2[1]*0.5;
+    Axis.dac_watch[10] = FE.htz.psi_2_ampl*0.25;
+    Axis.dac_watch[11] = FE.htz.psi_2_ampl_lpf*0.25;
+    Axis.dac_watch[12] = FE.htz.psi_2[0]*0.25;
+    Axis.dac_watch[13] = FE.htz.psi_2[1]*0.25;
     Axis.dac_watch[14] = FE.htz.theta_d*0.1;
     Axis.dac_watch[15] = FE.htz.u_offset[0]*2;
     Axis.dac_watch[16] = FE.htz.u_offset[1]*2;
@@ -68,22 +68,24 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
     Axis.dac_watch[39] = FE.htz.theta_d*0.1;
 
     Axis.dac_watch[21] = marino.xOmg * ELEC_RAD_PER_SEC_2_RPM *0.002;
-    Axis.dac_watch[22] = marino.xTL*0.1;
+    Axis.dac_watch[22] = marino.xTL*0.025;
     Axis.dac_watch[23] = marino.xRho*0.1;
     Axis.dac_watch[24] = marino.xAlpha*0.1;
 
     Axis.dac_watch[25] = marino.e_psi_Dmu;
     Axis.dac_watch[26] = marino.e_psi_Qmu;
 
-    Axis.dac_watch[27] = CTRL.I->idq_cmd[0]*0.1;
-    Axis.dac_watch[28] = CTRL.I->idq_cmd[1]*0.1;
+    Axis.dac_watch[27] = CTRL.I->idq_cmd[0]*0.2;
+    Axis.dac_watch[28] = CTRL.I->idq_cmd[1]*0.2;
+    Axis.dac_watch[40] = CTRL.I->idq[0]*0.2;
+    Axis.dac_watch[41] = CTRL.I->idq[1]*0.2;
 
     if(Axis.channels_preset==1){Axis.channels_preset=0;
         /* Marino 2005 Sensorless Control */
         Axis.channels[0] = 12; //12;
-        Axis.channels[1] = 13; //13;
-        Axis.channels[2] = 27;
-        Axis.channels[3] = 28;
+        Axis.channels[1] = 4; //13;
+        Axis.channels[2] = 28;
+        Axis.channels[3] = 41;
         Axis.channels[4] = 21;
         Axis.channels[5] = 22;
     }else if(Axis.channels_preset==8){Axis.channels_preset=0;
