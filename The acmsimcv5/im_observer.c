@@ -996,25 +996,25 @@ void VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit(){
             if(FE.htz.psi_2[ind]    > PSI_MU_ASTER_MAX){ // TODO BUG呀！这里怎么可以是>应该是大于等于啊！
                 FE.htz.psi_2[ind]   = PSI_MU_ASTER_MAX;
                 FE.htz.sat_max_time[ind] += CL_TS;
-                marino.lambda_inv = marino_saturation_gain_scale_factor1*LAMBDA_INV_xOmg;
-                marino.gamma_inv  = marino_saturation_gain_scale_factor2*GAMMA_INV_xTL;
-                marino_sat_d_axis_flux_control = 0.0;
-                marino_sat_q_axis_flux_control = 0.0;
+                // marino.lambda_inv = marino_saturation_gain_scale_factor1*LAMBDA_INV_xOmg;
+                // marino.gamma_inv  = marino_saturation_gain_scale_factor2*GAMMA_INV_xTL;
+                // marino_sat_d_axis_flux_control = 0.0;
+                // marino_sat_q_axis_flux_control = 0.0;
             }else if(FE.htz.psi_2[ind] < -PSI_MU_ASTER_MAX){
                 FE.htz.psi_2[ind]   = -PSI_MU_ASTER_MAX;
                 FE.htz.sat_min_time[ind] += CL_TS;
-                marino.lambda_inv = marino_saturation_gain_scale_factor1*LAMBDA_INV_xOmg;
-                marino.gamma_inv  = marino_saturation_gain_scale_factor2*GAMMA_INV_xTL;
-                marino_sat_d_axis_flux_control = 0.0;
-                marino_sat_q_axis_flux_control = 0.0;
+            //     marino.lambda_inv = marino_saturation_gain_scale_factor1*LAMBDA_INV_xOmg;
+            //     marino.gamma_inv  = marino_saturation_gain_scale_factor2*GAMMA_INV_xTL;
+            //     marino_sat_d_axis_flux_control = 0.0;
+            //     marino_sat_q_axis_flux_control = 0.0;
             }else{
                 // 这样可以及时清零饱和时间
                 if(FE.htz.sat_max_time[ind]>0){FE.htz.sat_max_time[ind] -= CL_TS;}
                 if(FE.htz.sat_min_time[ind]>0){FE.htz.sat_min_time[ind] -= CL_TS;}
-                marino.lambda_inv = LAMBDA_INV_xOmg;
-                marino.gamma_inv  = GAMMA_INV_xTL;
-                marino_sat_d_axis_flux_control = 1.0;
-                marino_sat_q_axis_flux_control = 1.0;
+                // marino.lambda_inv = LAMBDA_INV_xOmg;
+                // marino.gamma_inv  = GAMMA_INV_xTL;
+                // marino_sat_d_axis_flux_control = 1.0;
+                // marino_sat_q_axis_flux_control = 1.0;
             }
         }
         // 上限饱和减去下限饱和作为误差，主要为了消除实际磁链幅值大于给定的情况，实际上这种现象在常见工况下出现次数不多。
