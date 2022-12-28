@@ -705,7 +705,9 @@ void PanGuMainISR(void){
         G.flag_experimental_initialized = FALSE;
         DSP_PWM_ENABLE
         DSP_2PWM_ENABLE
-
+        if (FE.htz.u_offset[0] > 0.1){
+            FE.htz.u_offset[0] = 0;
+        }
         // DSP中控制器的时间
         timebase_counter += 1;
         CTRL.timebase = CL_TS * timebase_counter; //CTRL.timebase += CL_TS; // 2048 = float/double max
