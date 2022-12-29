@@ -25,10 +25,10 @@ REAL deriv_sat_kappa(REAL x){
 
 // 控制器
 REAL SINE_AMPL = 100.0;
-REAL imife_ramp_slope = 100; // rpm/s
+REAL imife_ramp_slope = 100; // 400; // rpm/s
 REAL imife_accerleration_slow = 20; // rpm/s
 REAL imife_reversal_end_time = 5.0; // s
-REAL imife_accerleration_fast = 1000; // rpm/s
+REAL imife_accerleration_fast = -6400; // rpm/s
 REAL marino_speed_freq = 1; // Hz
 REAL controller(REAL set_rpm_speed_command,
     int set_current_loop, REAL set_iq_cmd, REAL set_id_cmd,
@@ -69,24 +69,34 @@ REAL controller(REAL set_rpm_speed_command,
                 OMG1 = (2*M_PI*4);
             }
             //OMG1 = (2*M_PI*4);
-            // OMG1 = 0;
+            OMG1 = 0;
 
-            // 反转
+            // 反转(step speed)
             if(FALSE){
+                if((int)(CTRL.timebase*8)%10==0){
+                    local_dc_rpm_cmd_deriv = -imife_accerleration_fast;
+                }else if((int)(CTRL.timebase*8)%10==5){
+                    local_dc_rpm_cmd_deriv = imife_accerleration_fast;
+                }
+                else 
+                    local_dc_rpm_cmd_deriv = 0;
+            }
+            // 反转
+            if(TRUE){
                 if(CTRL.timebase>10 && CTRL.timebase<15+imife_reversal_end_time){/*Reversal*/
                     // OMG1 = 0;
                     // TODO: test positive and negative high speed
                     local_dc_rpm_cmd_deriv = -imife_accerleration_slow;
                 }else if(CTRL.timebase>15+imife_reversal_end_time && CTRL.timebase<15.2+imife_reversal_end_time){
-                    local_dc_rpm_cmd_deriv = imife_accerleration_fast;
+                    local_dc_rpm_cmd_deriv =  1000; //imife_accerleration_fast;
                 }else if(CTRL.timebase>15.2+imife_reversal_end_time && CTRL.timebase<15.4+imife_reversal_end_time){
-                    local_dc_rpm_cmd_deriv = -imife_accerleration_fast;
+                    local_dc_rpm_cmd_deriv = - 1000; //imife_accerleration_fast;
                 }else if(CTRL.timebase>15.4+imife_reversal_end_time && CTRL.timebase<15.6+imife_reversal_end_time){
-                    local_dc_rpm_cmd_deriv = imife_accerleration_fast;
+                    local_dc_rpm_cmd_deriv =  1000; //imife_accerleration_fast;
                 }else if(CTRL.timebase>15.6+imife_reversal_end_time && CTRL.timebase<15.8+imife_reversal_end_time){
-                    local_dc_rpm_cmd_deriv = -imife_accerleration_fast;
+                    local_dc_rpm_cmd_deriv = - 1000; //imife_accerleration_fast;
                 }else if(CTRL.timebase>15.8+imife_reversal_end_time && CTRL.timebase<16.0+imife_reversal_end_time){
-                    local_dc_rpm_cmd_deriv = imife_accerleration_fast;
+                    local_dc_rpm_cmd_deriv =  1000; //imife_accerleration_fast;
                 }else{
                     local_dc_rpm_cmd_deriv = 0.0;
                 }
