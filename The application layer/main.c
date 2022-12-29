@@ -654,6 +654,7 @@ void measurement(){
 }
 // int down_freq_ecap_counter = 1;
 Uint64 timebase_counter = 0;
+extern REAL imife_realtime_gain_off;
 void PanGuMainISR(void){
     #if NUMBER_OF_DSP_CORES == 2
         write_DAC_buffer();
@@ -690,8 +691,16 @@ void PanGuMainISR(void){
 
             if(CTRL.g->overwrite_vdc<5){
                 //CTRL.g->overwrite_vdc = 80;
-                CTRL.g->overwrite_vdc = 120;
+//                CTRL.g->overwrite_vdc = 120;
                 //CTRL.g->overwrite_vdc = 200;
+                //正弦实验
+                CTRL.g->overwrite_vdc = 120;
+//                FE.htz.rs_est=4.45;
+//                marino.gamma_inv=150000;
+//                marino.lambda_inv=2000;
+//                marino.xAlpha=6.25; // 使得正弦转速的波头跟踪变好
+//                imife_realtime_gain_off=0.01;
+//                CTRL.motor->Js_inv=30; // 使得负载转矩估计值变成常数而不是正弦波（正弦波是惯量误差*加速度形成的惯性负载）
             }
             CTRL.g->flag_overwite_vdc = 1;
 
