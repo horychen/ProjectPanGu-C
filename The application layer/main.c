@@ -755,6 +755,12 @@ Uint64 EPWM1IntCount=0;
 __interrupt void EPWM1ISR(void){
     EPWM1IntCount += 1;
 
+#if PC_SIMULATION==FALSE
+double CpuTimer_Delta = 0;
+Uint32 CpuTimer_Before = 0;
+Uint32 CpuTimer_After = 0;
+#endif
+
 #if USE_ECAP_CEVT2_INTERRUPT == 1
     CAP.password_isr_nesting = 178; // only if you can stop EPWM ISR, or else you won't know the value of password_isr_nesting.
     /* Step 1. [eCAP] Set the global priority */
@@ -774,8 +780,21 @@ __interrupt void EPWM1ISR(void){
 #endif
 
     /* Step 4. [ePWM] Execute EPWM ISR */
+        #if PC_SIMULATION==FALSE
+        EALLOW;
+        CpuTimer1.RegsAddr->TCR.bit.TRB = 1; // reset cpu timer to period value
+        CpuTimer1.RegsAddr->TCR.bit.TSS = 0; // start/restart
+        CpuTimer_Before = CpuTimer1.RegsAddr->TIM.all; // get count
+        EDIS;
+        #endif
     PanGuMainISR();
-
+        #if PC_SIMULATION==FALSE
+        CpuTimer_After = CpuTimer1.RegsAddr->TIM.all; // get count
+        CpuTimer_Delta = (double)CpuTimer_Before - (double)CpuTimer_After;
+        // EALLOW;
+        // CpuTimer1.RegsAddr->TCR.bit.TSS = 1; // stop (not needed because of the line TRB=1)
+        // EDIS;
+        #endif
 #if USE_ECAP_CEVT2_INTERRUPT == 1
     /* Step 5. [eCAP] Disable interrupts */
     DINT;
