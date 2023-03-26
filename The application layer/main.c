@@ -820,4 +820,4 @@ CpuTimer_Delta = (double)CpuTimer_Before - (double)CpuTimer_After;
 // CpuTimer1.RegsAddr->TCR.bit.TSS = 1; // stop (not needed because of the line TRB=1)
 // EDIS;
 #endif
-/*
+*/

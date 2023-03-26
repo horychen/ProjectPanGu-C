@@ -31,12 +31,13 @@ REAL deriv_sat_kappa(REAL x){
 }
 
 // 控制器
+int32 BOOL_FAST_REVERSAL = TRUE;
 int32 CONSTANT_SPEED_OPERATION = 0;
 REAL SINE_AMPL = 100.0;
-REAL imife_ramp_slope = 100; // 400; // rpm/s
+REAL imife_ramp_slope = -200; // 400; // rpm/s
 REAL imife_accerleration_slow = 20; // rpm/s
 REAL imife_reversal_end_time = 5.0; // s
-REAL imife_accerleration_fast = -6400; // rpm/s
+REAL imife_accerleration_fast = 3200; // 6400 rpm/s
 REAL marino_speed_freq = 1; // Hz
 REAL controller(REAL set_rpm_speed_command,
     int set_current_loop, REAL set_iq_cmd, REAL set_id_cmd,
@@ -80,17 +81,17 @@ REAL controller(REAL set_rpm_speed_command,
             OMG1 = 0;
 
             // 反转(step speed)
-            if(FALSE){
-                if((int)(CTRL.timebase*8)%10==0){
+            if(BOOL_FAST_REVERSAL){
+                if((int)(CTRL.timebase*4)%10==0){
                     local_dc_rpm_cmd_deriv = -imife_accerleration_fast;
-                }else if((int)(CTRL.timebase*8)%10==5){
+                }else if((int)(CTRL.timebase*4)%10==5){
                     local_dc_rpm_cmd_deriv = imife_accerleration_fast;
                 }
                 else 
                     local_dc_rpm_cmd_deriv = 0;
             }
             // 反转
-            if(TRUE){
+            if(BOOL_FAST_REVERSAL==FALSE){
                 if(CTRL.timebase>10 && CTRL.timebase<15+imife_reversal_end_time){/*Reversal*/
                     // OMG1 = 0;
                     // TODO: test positive and negative high speed
@@ -264,13 +265,13 @@ void controller_marino2005(){
             marino.psi_Qmu = AB2T(FE.htz.psi_2[0], FE.htz.psi_2[1], CTRL.S->cosT, CTRL.S->sinT);
         }
 
-    #if PC_SIMULATION==FALSE
-    EALLOW;
-    CpuTimer1.RegsAddr->TCR.bit.TRB = 1; // reset cpu timer to period value
-    CpuTimer1.RegsAddr->TCR.bit.TSS = 0; // start/restart
-    CpuTimer_Before = CpuTimer1.RegsAddr->TIM.all; // get count
-    EDIS;
-    #endif
+    // #if PC_SIMULATION==FALSE
+    // EALLOW;
+    // CpuTimer1.RegsAddr->TCR.bit.TRB = 1; // reset cpu timer to period value
+    // CpuTimer1.RegsAddr->TCR.bit.TSS = 0; // start/restart
+    // CpuTimer_Before = CpuTimer1.RegsAddr->TIM.all; // get count
+    // EDIS;
+    // #endif
 
     // TODO: 反馈磁链用谁？
     marino.psi_Dmu = AB2M(FLUX_FEEDBACK_ALPHA, FLUX_FEEDBACK_BETA, CTRL.S->cosT, CTRL.S->sinT);
@@ -358,10 +359,10 @@ void controller_marino2005(){
     CTRL.O->uab_cmd[0] = MT2A(CTRL.O->udq_cmd[0], CTRL.O->udq_cmd[1], CTRL.S->cosT, CTRL.S->sinT);
     CTRL.O->uab_cmd[1] = MT2B(CTRL.O->udq_cmd[0], CTRL.O->udq_cmd[1], CTRL.S->cosT, CTRL.S->sinT);
 
-    #if PC_SIMULATION==FALSE
-    CpuTimer_After = CpuTimer1.RegsAddr->TIM.all; // get count
-    CpuTimer_Delta = (double)CpuTimer_Before - (double)CpuTimer_After;
-    #endif
+    // #if PC_SIMULATION==FALSE
+    // CpuTimer_After = CpuTimer1.RegsAddr->TIM.all; // get count
+    // CpuTimer_Delta = (double)CpuTimer_Before - (double)CpuTimer_After;
+    // #endif
 
     // use the second 3 phase inverter
     CTRL.O->uab_cmd[0+2] = CTRL.O->uab_cmd[0];
