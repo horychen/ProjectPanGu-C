@@ -48,7 +48,7 @@
     /* Select [Shared Flux Estimator] */
     // #define AFE_USED FE.AFEOE
     // #define AFE_USED FE.huwu
-    #define AFE_USED FE.htz
+    #define AFE_USED FE.htz // this is not used for induction motor control
 
     /* Tuning [Shared Flux Estimator] */
         /* AFEOE or CM-VM Fusion */
@@ -252,9 +252,9 @@
 #define LOAD_TORQUE     5
 #define VISCOUS_COEFF   0.007
 
-#define CL_SERIES_KP (27.646)
-#define CL_SERIES_KI (250)
-#define VL_SERIES_KP (1.47851)
+#define CL_SERIES_KP (31.2903)
+#define CL_SERIES_KI (122.088)
+#define VL_SERIES_KP (1.79885)
 #define VL_SERIES_KI (29.7429)
 
 #define CURRENT_KP (819.157)

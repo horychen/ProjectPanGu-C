@@ -1,4 +1,11 @@
 #include "ACMSim.h"
+
+#if PC_SIMULATION==FALSE
+double CpuTimer_Delta = 0;
+Uint32 CpuTimer_Before = 0;
+Uint32 CpuTimer_After = 0;
+#endif
+
 #if MACHINE_TYPE % 10 == 1
 
 #define IM ACM // 权宜之计
@@ -24,6 +31,7 @@ REAL deriv_sat_kappa(REAL x){
 }
 
 // 控制器
+int32 CONSTANT_SPEED_OPERATION = 0;
 REAL SINE_AMPL = 100.0;
 REAL imife_ramp_slope = 100; // 400; // rpm/s
 REAL imife_accerleration_slow = 20; // rpm/s
@@ -158,11 +166,13 @@ REAL controller(REAL set_rpm_speed_command,
         }
     }
 
-    rpm_speed_command           = 0;
-    CTRL.I->cmd_omg_elec        = SINE_AMPL*RPM_2_ELEC_RAD_PER_SEC;
-    CTRL.I->cmd_deriv_omg_elec  = 0;
-    CTRL.I->cmd_dderiv_omg_elec = 0;
-
+    // Overwrite speed command
+    if(CONSTANT_SPEED_OPERATION!=0){
+        rpm_speed_command           = 0;
+        CTRL.I->cmd_omg_elec        = CONSTANT_SPEED_OPERATION*RPM_2_ELEC_RAD_PER_SEC;
+        CTRL.I->cmd_deriv_omg_elec  = 0;
+        CTRL.I->cmd_dderiv_omg_elec = 0;
+    }
 
     /// 2. 生成磁链指令
     #define TIME_COST 0.1
@@ -254,6 +264,14 @@ void controller_marino2005(){
             marino.psi_Qmu = AB2T(FE.htz.psi_2[0], FE.htz.psi_2[1], CTRL.S->cosT, CTRL.S->sinT);
         }
 
+    #if PC_SIMULATION==FALSE
+    EALLOW;
+    CpuTimer1.RegsAddr->TCR.bit.TRB = 1; // reset cpu timer to period value
+    CpuTimer1.RegsAddr->TCR.bit.TSS = 0; // start/restart
+    CpuTimer_Before = CpuTimer1.RegsAddr->TIM.all; // get count
+    EDIS;
+    #endif
+
     // TODO: 反馈磁链用谁？
     marino.psi_Dmu = AB2M(FLUX_FEEDBACK_ALPHA, FLUX_FEEDBACK_BETA, CTRL.S->cosT, CTRL.S->sinT);
     marino.psi_Qmu = AB2T(FLUX_FEEDBACK_ALPHA, FLUX_FEEDBACK_BETA, CTRL.S->cosT, CTRL.S->sinT);
@@ -339,6 +357,11 @@ void controller_marino2005(){
     CTRL.O->udq_cmd[1] = CTRL.motor->Lsigma * (-(marino.kz+0.25*CTRL.motor->Lsigma*CTRL.motor->Lmu*marino.xAlpha_Max)*marino.zQ - marino.Gamma_Q);
     CTRL.O->uab_cmd[0] = MT2A(CTRL.O->udq_cmd[0], CTRL.O->udq_cmd[1], CTRL.S->cosT, CTRL.S->sinT);
     CTRL.O->uab_cmd[1] = MT2B(CTRL.O->udq_cmd[0], CTRL.O->udq_cmd[1], CTRL.S->cosT, CTRL.S->sinT);
+
+    #if PC_SIMULATION==FALSE
+    CpuTimer_After = CpuTimer1.RegsAddr->TIM.all; // get count
+    CpuTimer_Delta = (double)CpuTimer_Before - (double)CpuTimer_After;
+    #endif
 
     // use the second 3 phase inverter
     CTRL.O->uab_cmd[0+2] = CTRL.O->uab_cmd[0];
@@ -652,4 +675,5 @@ void init_experiment(){
     rk4_init();     // 龙格库塔法结构体初始化
     observer_init();
 }
+
 #endif

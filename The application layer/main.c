@@ -751,12 +751,6 @@ void PanGuMainISR(void){
         #endif
     }
 }
-#if PC_SIMULATION==FALSE
-double CpuTimer_Delta = 0;
-Uint32 CpuTimer_Before = 0;
-Uint32 CpuTimer_After = 0;
-#endif
-
 Uint64 EPWM1IntCount=0;
 __interrupt void EPWM1ISR(void){
     EPWM1IntCount += 1;
@@ -781,21 +775,7 @@ __interrupt void EPWM1ISR(void){
 #endif
 
     /* Step 4. [ePWM] Execute EPWM ISR */
-        #if PC_SIMULATION==FALSE
-        EALLOW;
-        CpuTimer1.RegsAddr->TCR.bit.TRB = 1; // reset cpu timer to period value
-        CpuTimer1.RegsAddr->TCR.bit.TSS = 0; // start/restart
-        CpuTimer_Before = CpuTimer1.RegsAddr->TIM.all; // get count
-        EDIS;
-        #endif
     PanGuMainISR();
-        #if PC_SIMULATION==FALSE
-        CpuTimer_After = CpuTimer1.RegsAddr->TIM.all; // get count
-        CpuTimer_Delta = (double)CpuTimer_Before - (double)CpuTimer_After;
-        // EALLOW;
-        // CpuTimer1.RegsAddr->TCR.bit.TSS = 1; // stop (not needed because of the line TRB=1)
-        // EDIS;
-        #endif
 #if USE_ECAP_CEVT2_INTERRUPT == 1
     /* Step 5. [eCAP] Disable interrupts */
     DINT;
@@ -811,3 +791,33 @@ __interrupt void EPWM1ISR(void){
 }
 
 #endif
+
+
+
+/*
+声明全局变量
+#if PC_SIMULATION==FALSE
+double CpuTimer_Delta = 0;
+Uint32 CpuTimer_Before = 0;
+Uint32 CpuTimer_After = 0;
+#endif
+
+
+这段放需要测时间的代码前面
+#if PC_SIMULATION==FALSE
+EALLOW;
+CpuTimer1.RegsAddr->TCR.bit.TRB = 1; // reset cpu timer to period value
+CpuTimer1.RegsAddr->TCR.bit.TSS = 0; // start/restart
+CpuTimer_Before = CpuTimer1.RegsAddr->TIM.all; // get count
+EDIS;
+#endif
+
+这段放需要测时间的代码后面前面，观察CpuTimer_Delta的取值，代表经过了多少个 1/200e6 秒。
+#if PC_SIMULATION==FALSE
+CpuTimer_After = CpuTimer1.RegsAddr->TIM.all; // get count
+CpuTimer_Delta = (double)CpuTimer_Before - (double)CpuTimer_After;
+// EALLOW;
+// CpuTimer1.RegsAddr->TCR.bit.TSS = 1; // stop (not needed because of the line TRB=1)
+// EDIS;
+#endif
+/*

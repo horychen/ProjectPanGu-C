@@ -1,4 +1,12 @@
 #include "ACMSim.h"
+
+// #if PC_SIMULATION==FALSE
+// double CpuTimer_Delta = 0;
+// Uint32 CpuTimer_Before = 0;
+// Uint32 CpuTimer_After = 0;
+// #endif
+
+
 #if MACHINE_TYPE == 1 || MACHINE_TYPE == 11
 
 #if PC_SIMULATION
@@ -273,7 +281,22 @@ void flux_observer(){
     // VM_Ohtani1992();
     // VM_HuWu1998();
     // VM_HoltzQuan2002();
+
+    // #if PC_SIMULATION==FALSE
+    // EALLOW;
+    // CpuTimer1.RegsAddr->TCR.bit.TRB = 1; // reset cpu timer to period value
+    // CpuTimer1.RegsAddr->TCR.bit.TSS = 0; // start/restart
+    // CpuTimer_Before = CpuTimer1.RegsAddr->TIM.all; // get count
+    // EDIS;
+    // #endif
+
     VM_HoltzQuan2003(); // VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
+
+    // #if PC_SIMULATION==FALSE
+    // CpuTimer_After = CpuTimer1.RegsAddr->TIM.all; // get count
+    // CpuTimer_Delta = (double)CpuTimer_Before - (double)CpuTimer_After;
+    // #endif
+
     // VM_Harnefors2003_SCVM();
     // VM_LascuAndreescus2006();
     // VM_Stojic2015();
