@@ -146,7 +146,7 @@ void main(void){
 
     // for Slessinv TIE.R1 for measuring the execution time
     InitCpuTimers();
-    ConfigCpuTimer(&CpuTimer1, 200, 1000000); // 200MHz, period = 1e6 us
+    ConfigCpuTimer(&CpuTimer1, 200, 1000000); // 200MHz, INTERRUPT_period = 1e6 us
 
     // 4.1 IPC
     #if NUMBER_OF_DSP_CORES == 2
@@ -751,15 +751,16 @@ void PanGuMainISR(void){
         #endif
     }
 }
-Uint64 EPWM1IntCount=0;
-__interrupt void EPWM1ISR(void){
-    EPWM1IntCount += 1;
-
 #if PC_SIMULATION==FALSE
 double CpuTimer_Delta = 0;
 Uint32 CpuTimer_Before = 0;
 Uint32 CpuTimer_After = 0;
 #endif
+
+Uint64 EPWM1IntCount=0;
+__interrupt void EPWM1ISR(void){
+    EPWM1IntCount += 1;
+
 
 #if USE_ECAP_CEVT2_INTERRUPT == 1
     CAP.password_isr_nesting = 178; // only if you can stop EPWM ISR, or else you won't know the value of password_isr_nesting.
