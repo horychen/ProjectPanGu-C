@@ -158,6 +158,11 @@ REAL controller(REAL set_rpm_speed_command,
         }
     }
 
+    rpm_speed_command           = 0;
+    CTRL.I->cmd_omg_elec        = SINE_AMPL*RPM_2_ELEC_RAD_PER_SEC;
+    CTRL.I->cmd_deriv_omg_elec  = 0;
+    CTRL.I->cmd_dderiv_omg_elec = 0;
+
 
     /// 2. 生成磁链指令
     #define TIME_COST 0.1
