@@ -312,8 +312,9 @@ void controller_marino2005(){
     // flux error quantities (moved up)
     // marino.e_psi_Dmu = marino.psi_Dmu - CTRL.I->cmd_psi;
     // marino.e_psi_Qmu = marino.psi_Qmu - 0.0;
-
     CTRL.motor->alpha_inv = 1.0/CTRL.motor->alpha;
+    CTRL.motor->Lmu = CTRL.motor->Rreq * CTRL.motor->alpha_inv;
+    CTRL.motor->Lmu_inv = 1.0 / CTRL.motor->Lmu;
 
     // αβ to DQ
     CTRL.S->cosT = cos(CTRL.I->theta_d_elec);
