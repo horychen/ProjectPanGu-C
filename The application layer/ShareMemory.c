@@ -82,13 +82,28 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
 
     if(Axis.channels_preset==1){Axis.channels_preset=0;
         /* Marino 2005 Sensorless Control */
-        Axis.channels[0] = 12; //12;
+        Axis.channels[0] = 12;
         Axis.channels[1] = 4; //13;
         Axis.channels[2] = 20;//28;
         Axis.channels[3] = 41;
         Axis.channels[4] = 21;
         Axis.channels[5] = 22;
     }else if(Axis.channels_preset==8){Axis.channels_preset=0;
+        /* Marino 2005 Sensorless Control */
+        Axis.channels[0] = 2; //12;
+        Axis.channels[1] = 3;//4; //13;
+        Axis.channels[2] = 20;//28;
+        Axis.channels[3] = 41;
+        Axis.channels[4] = 21;
+        Axis.channels[5] = 22;
+    }else if(Axis.channels_preset==8){Axis.channels_preset=0;
+            /* Marino 2005 Sensorless Control */
+            Axis.channels[0] = 2; //12;
+            Axis.channels[1] = 3;//4; //13;
+            Axis.channels[2] = 12;//28;
+            Axis.channels[3] = 13;
+            Axis.channels[4] = 21;
+            Axis.channels[5] = 22;
     }
 
     // 八通道DAC输出，请修改Axis.channels数组来确定具体输出哪些Axis.dac_watch数组中的变量。
