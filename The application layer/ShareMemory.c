@@ -57,7 +57,7 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
     Axis.dac_watch[17] = CTRL.svgen2.Ta;
     Axis.dac_watch[18] = CTRL.svgen2.Tb;
     Axis.dac_watch[19] = CTRL.svgen2.Tc;
-    Axis.dac_watch[20] = CTRL.S->omega_syn * ELEC_RAD_PER_SEC_2_RPM *0.002;
+    Axis.dac_watch[20] = CTRL.S->omega_syn * ELEC_RAD_PER_SEC_2_RPM *0.001;
 
     Axis.dac_watch[30] = CTRL.O->iab_cmd[0]*0.2;
     Axis.dac_watch[31] = CTRL.O->iab_cmd[1]*0.2;
