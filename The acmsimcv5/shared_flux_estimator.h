@@ -346,6 +346,9 @@ struct SharedFluxEstimatorForExperiment{
         REAL psi_2_ampl;
         REAL u_offset[2];
         REAL correction_integral_term[2];
+        REAL theta_d;
+        REAL cosT;
+        REAL sinT;
     } picorr;
     struct Variables_ClosedLoopFluxEstimator{
         REAL x[5];
