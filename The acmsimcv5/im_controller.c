@@ -31,20 +31,21 @@ REAL deriv_sat_kappa(REAL x){
 }
 
 // 控制器
-int32 BOOL_FAST_REVERSAL = TRUE;
+int32 BOOL_FAST_REVERSAL = FALSE;
 int32 CONSTANT_SPEED_OPERATION = 0;
 int32 Jerk = 0;
 // REAL Jerk_value = 1;
 REAL acc = 0.0;
 // REAL delta_speed = 800;
-REAL imife_accerleration_fast = 6400; // 6400 rpm/s
+REAL imife_accerleration_fast = 1600; // 6400 rpm/s
 REAL Jerk_time = 0.002;
 REAL jerk = 6400 / 0.002; // rpm/s / s
 REAL SINE_AMPL = 100.0;
-REAL imife_ramp_slope = 400; // 400; // rpm/s
+REAL imife_ramp_slope = 100; // 400; // 400; // rpm/s
 REAL accerleration_time_inv=8;
 REAL imife_accerleration_slow = 20; // rpm/s
 REAL imife_reversal_end_time = 5.0; // s
+REAL marino_speed_freq = 4;
 REAL controller(REAL set_rpm_speed_command,
     int set_current_loop, REAL set_iq_cmd, REAL set_id_cmd,
     int flag_overwrite_theta_d, REAL Overwrite_Current_Frequency,
@@ -236,8 +237,8 @@ REAL controller(REAL set_rpm_speed_command,
     #if CONTROL_STRATEGY == INDIRECT_FOC
         controller_IFOC();
     #elif CONTROL_STRATEGY == MARINO_2005_ADAPTIVE_SENSORLESS_CONTROL
-        // controller_IFOC();
-        controller_marino2005();
+        controller_IFOC();
+        // controller_marino2005();
     #endif
 
     main_inverter_voltage_command(0);
@@ -363,7 +364,7 @@ void controller_marino2005(){
     CTRL.I->idq[0] = AB2M(IS_C(0), IS_C(1), CTRL.S->cosT, CTRL.S->sinT);
     CTRL.I->idq[1] = AB2T(IS_C(0), IS_C(1), CTRL.S->cosT, CTRL.S->sinT);
 
-    if(FALSE){
+    if(TRUE){
         // 当磁链幅值给定平稳时，这项就是零。
         marino.deriv_iD_cmd = 1.0*CTRL.motor->Lmu_inv*(  CTRL.I->cmd_deriv_psi \
                                                 + CTRL.I->cmd_dderiv_psi*CTRL.motor->alpha_inv \
@@ -401,6 +402,9 @@ void controller_marino2005(){
         CTRL.O->udq_cmd[1] = CTRL.motor->Lsigma * (-(marino.kz+0.25*CTRL.motor->Lsigma*CTRL.motor->Lmu*marino.xAlpha_Max)*marino.zQ - marino.Gamma_Q);
 
     }else{
+        // PI control with marino observer works if 
+        // damping factor = 6.5
+        // VLBW = 5 Hz
         pid1_iM.Fbk = CTRL.I->idq[0];
         pid1_iT.Fbk = CTRL.I->idq[1];
 
@@ -454,18 +458,26 @@ void controller_marino2005(){
 void controller_IFOC(){
 
     /// 3. 电气转子位置和电气转子转速反馈
+
+    flux_observer(); // FLUX_FEEDBACK_ALPHA, FLUX_FEEDBACK_BETA
+    // CTRL.I->omg_elec = FE.htz.omg_est;
+    Main_esoaf_chen2021();
+    CTRL.I->omg_elec = esoaf.xOmg;
+
         //（编码器反馈）
         // CTRL.I->omg_elec     = qep.omg_elec;
         // CTRL.I->theta_d_elec__fb = qep.theta_d;
 
-    //（实际反馈，实验中不可能）
-    // CTRL.I->omg_elec     = ENC.omg_elec ;
-    CTRL.I->omg_elec     = ACM.omg_elec ;
+        //（实际反馈，实验中不可能）
+        // CTRL.I->omg_elec     = ENC.omg_elec ;
+        // CTRL.I->omg_elec     = ACM.omg_elec ;
+        // CTRL.I->omg_elec     = ACM.x[4] ;
 
         //（无感）
         // harnefors_scvm();
         // CTRL.I->omg_elec     = omg_harnefors;
         // CTRL.I->theta_d_elec__fb = theta_d_harnefors;
+
 
     /// 4. 帕克变换
     #define THE_FIELD_IS_KNOWN FALSE
