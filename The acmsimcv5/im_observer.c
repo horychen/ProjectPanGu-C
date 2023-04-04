@@ -265,7 +265,7 @@ void observer_marino2005(){
 /* 4rd-order ESO (Copied from PMSM_observer.c)
  ********************************************/
 struct Chen21_ESO_AF esoaf;
-#define ESOAF_OMEGA_OBSERVER (2*M_PI*100)
+#define ESOAF_OMEGA_OBSERVER (2*M_PI*200)
 /* The 4rd-order dynamic system */
 void rhf_dynamics_ESO(REAL t, REAL *x, REAL *fx){
 
