@@ -694,7 +694,7 @@ void PanGuMainISR(void){
 //                CTRL.g->overwrite_vdc = 120;
                 //CTRL.g->overwrite_vdc = 200;
                 //ีýฯาสตั้
-                CTRL.g->overwrite_vdc = 120;
+                CTRL.g->overwrite_vdc = 200;
 //                FE.htz.rs_est=4.45;
 //                marino.gamma_inv=150000;
 //                marino.lambda_inv=2000;

@@ -33,11 +33,18 @@ REAL deriv_sat_kappa(REAL x){
 // 控制器
 int32 BOOL_FAST_REVERSAL = TRUE;
 int32 CONSTANT_SPEED_OPERATION = 0;
+int32 Jerk = 0;
+// REAL Jerk_value = 1;
+REAL acc = 0.0;
+// REAL delta_speed = 800;
+REAL imife_accerleration_fast = 6400; // 6400 rpm/s
+REAL Jerk_time = 0.002;
+REAL jerk = 6400 / 0.002; // rpm/s / s
 REAL SINE_AMPL = 100.0;
-REAL imife_ramp_slope = -200; // 400; // rpm/s
+REAL imife_ramp_slope = 400; // 400; // rpm/s
+REAL accerleration_time_inv=8;
 REAL imife_accerleration_slow = 20; // rpm/s
 REAL imife_reversal_end_time = 5.0; // s
-REAL imife_accerleration_fast = 3200; // 6400 rpm/s
 REAL marino_speed_freq = 1; // Hz
 REAL controller(REAL set_rpm_speed_command,
     int set_current_loop, REAL set_iq_cmd, REAL set_id_cmd,
@@ -82,14 +89,16 @@ REAL controller(REAL set_rpm_speed_command,
 
             // 反转(step speed)
             if(BOOL_FAST_REVERSAL){
-                if((int)(CTRL.timebase*4)%10==0){
+                if((int)(CTRL.timebase*accerleration_time_inv)%10==0){ //*8*400/750
                     local_dc_rpm_cmd_deriv = -imife_accerleration_fast;
-                }else if((int)(CTRL.timebase*4)%10==5){
+                }else if((int)(CTRL.timebase*accerleration_time_inv)%10==5){
                     local_dc_rpm_cmd_deriv = imife_accerleration_fast;
                 }
                 else 
                     local_dc_rpm_cmd_deriv = 0;
+
             }
+
             // 反转
             if(BOOL_FAST_REVERSAL==FALSE){
                 if(CTRL.timebase>10 && CTRL.timebase<15+imife_reversal_end_time){/*Reversal*/
@@ -110,7 +119,37 @@ REAL controller(REAL set_rpm_speed_command,
                     local_dc_rpm_cmd_deriv = 0.0;
                 }
             }
+            // local_dc_rpm_cmd_deriv = 0.0;
 
+            //Jerk Hugh
+            if(Jerk==1){
+                if((int)(CTRL.timebase*8)%10==0){
+                    if( CTRL.timebase-(int)(CTRL.timebase)>=0 && CTRL.timebase-(int)(CTRL.timebase)<=Jerk_time){ //0-0.125
+                        acc = (CTRL.timebase-(int)(CTRL.timebase)) * jerk;
+                        acc = - acc;
+                    }
+                    else if(CTRL.timebase-(int)(CTRL.timebase)>=(0.125-Jerk_time) && CTRL.timebase-(int)(CTRL.timebase)<=0.125){
+                        acc = imife_accerleration_fast-((CTRL.timebase-(int)(CTRL.timebase))-(0.125-Jerk_time)) * jerk;
+                        acc = - acc;
+                    }
+                    else
+                    acc = -imife_accerleration_fast;
+                }else if((int)(CTRL.timebase*8)%10==5){
+                    if( CTRL.timebase-(int)(CTRL.timebase)>=0 && CTRL.timebase-(int)(CTRL.timebase)<=Jerk_time){ //0-0.125
+                        acc = (CTRL.timebase-(int)(CTRL.timebase)) * jerk;
+                        acc = acc;
+                    }
+                    else if(CTRL.timebase-(int)(CTRL.timebase)>=(0.125-Jerk_time) && CTRL.timebase-(int)(CTRL.timebase)<=0.125){
+                        acc = imife_accerleration_fast-((CTRL.timebase-(int)(CTRL.timebase))-(0.125-Jerk_time)) * jerk;
+                        acc = acc;
+                    }
+                    else
+                    acc = imife_accerleration_fast;
+                }
+                else 
+                    acc = 0;
+            }
+            // local_dc_rpm_cmd_deriv = acc; // jerk
 
             local_dc_rpm_cmd            += CL_TS * local_dc_rpm_cmd_deriv;
 
@@ -174,6 +213,8 @@ REAL controller(REAL set_rpm_speed_command,
         CTRL.I->cmd_deriv_omg_elec  = 0;
         CTRL.I->cmd_dderiv_omg_elec = 0;
     }
+
+
 
     /// 2. 生成磁链指令
     #define TIME_COST 0.1

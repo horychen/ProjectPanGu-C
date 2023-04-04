@@ -44,8 +44,8 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
     Axis.dac_watch[1] = Axis.iuvw[1]*0.2;
     Axis.dac_watch[2] = CTRL.I->iab[0]*0.2;
     Axis.dac_watch[3] = CTRL.I->iab[1]*0.2;
-    Axis.dac_watch[4] = CTRL.O->uab_cmd[0]*0.01;
-    Axis.dac_watch[5] = CTRL.O->uab_cmd[1]*0.01;
+    Axis.dac_watch[4] = CTRL.O->uab_cmd[0]*0.001;
+    Axis.dac_watch[5] = CTRL.O->uab_cmd[1]*0.001;
     Axis.dac_watch[10] = FE.htz.psi_2_ampl*0.25;
     Axis.dac_watch[11] = FE.htz.psi_2_ampl_lpf*0.25;
     Axis.dac_watch[12] = FE.htz.psi_2[0]*0.25;
@@ -67,7 +67,7 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
     Axis.dac_watch[35] = FE.htz.sat_min_time[1]*100;
     Axis.dac_watch[39] = FE.htz.theta_d*0.1;
 
-    Axis.dac_watch[21] = marino.xOmg * ELEC_RAD_PER_SEC_2_RPM *0.002;
+    Axis.dac_watch[21] = marino.xOmg * ELEC_RAD_PER_SEC_2_RPM *0.001;
     Axis.dac_watch[22] = marino.xTL*0.025;
     Axis.dac_watch[23] = marino.xRho*0.1;
     Axis.dac_watch[24] = marino.xAlpha*0.1;
@@ -77,8 +77,8 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
 
     Axis.dac_watch[27] = CTRL.I->idq_cmd[0]*0.2;
     Axis.dac_watch[28] = CTRL.I->idq_cmd[1]*0.2;
-    Axis.dac_watch[40] = CTRL.I->idq[0]*0.2;
-    Axis.dac_watch[41] = CTRL.I->idq[1]*0.2;
+    Axis.dac_watch[40] = CTRL.I->idq[0]*0.1;
+    Axis.dac_watch[41] = CTRL.I->idq[1]*0.1;
 
     if(Axis.channels_preset==1){Axis.channels_preset=0;
         /* Marino 2005 Sensorless Control */
@@ -96,7 +96,7 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
         Axis.channels[3] = 41;
         Axis.channels[4] = 21;
         Axis.channels[5] = 22;
-    }else if(Axis.channels_preset==8){Axis.channels_preset=0;
+    }else if(Axis.channels_preset==2){Axis.channels_preset=0;
             /* Marino 2005 Sensorless Control */
             Axis.channels[0] = 2; //12;
             Axis.channels[1] = 3;//4; //13;
@@ -104,6 +104,8 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
             Axis.channels[3] = 13;
             Axis.channels[4] = 21;
             Axis.channels[5] = 22;
+            Axis.channels[6] = 41;
+            Axis.channels[7] = 41;
     }
 
     // 八通道DAC输出，请修改Axis.channels数组来确定具体输出哪些Axis.dac_watch数组中的变量。
