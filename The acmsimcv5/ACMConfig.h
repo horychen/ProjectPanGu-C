@@ -48,7 +48,8 @@
     /* Select [Shared Flux Estimator] */
     // #define AFE_USED FE.AFEOE
     // #define AFE_USED FE.huwu
-    #define AFE_USED FE.htz // this is not used for induction motor control
+    // #define AFE_USED FE.htz // this is not used for induction motor control
+    #define AFE_USED FE.picorr
 
     /* Tuning [Shared Flux Estimator] */
         /* AFEOE or CM-VM Fusion */
@@ -249,7 +250,7 @@
     #define MACHINE_TS_INVERSE (CL_TS_INVERSE*TS_UPSAMPLING_FREQ_EXE_INVERSE)
 
 #define LOAD_INERTIA    0.0
-#define LOAD_TORQUE     0
+#define LOAD_TORQUE     1
 #define VISCOUS_COEFF   0.007
 
 #define CL_SERIES_KP (31.2903)
@@ -257,13 +258,13 @@
 #define VL_SERIES_KP (1.79885)
 #define VL_SERIES_KI (29.7429)
 
-#define CURRENT_KP (377.716)
+#define CURRENT_KP (819.157)
 #define CURRENT_KI (9.48276)
     #define CURRENT_KI_CODE (CURRENT_KI*CURRENT_KP*CL_TS)
 #define CURRENT_LOOP_LIMIT_VOLTS (600)
 
-#define SPEED_KP (0.773879)
-#define SPEED_KI (15.4138)
+#define SPEED_KP (1.67832)
+#define SPEED_KI (33.4282)
     #define MOTOR_RATED_TORQUE ( MOTOR_RATED_POWER_WATT / (MOTOR_RATED_SPEED_RPM/60.0*2*3.1415926) )
     #define MOTOR_TORQUE_CONSTANT ( MOTOR_RATED_TORQUE / (MOTOR_RATED_CURRENT_RMS*1.414) )
     #define MOTOR_BACK_EMF_CONSTANT ( MOTOR_TORQUE_CONSTANT / 1.5 / MOTOR_NUMBER_OF_POLE_PAIRS )
@@ -312,5 +313,5 @@
 #define SWEEP_FREQ_C2V FALSE
 #define SWEEP_FREQ_C2C FALSE
 
-#define DATA_FILE_NAME "../dat/IM_Marino05_IFE_Comparison-104-1000-2-5019.dat"
+#define DATA_FILE_NAME "../dat/IM_Marino05_IFE_Comparison-225-1000-4-5019.dat"
 #endif

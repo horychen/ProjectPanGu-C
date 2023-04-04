@@ -577,6 +577,11 @@ void flux_observer(){
         FE.picorr.psi_2[0] = FE.picorr.psi_1[0] - LSIGMA*IS_C(0);
         FE.picorr.psi_2[1] = FE.picorr.psi_1[1] - LSIGMA*IS_C(1);
         FE.picorr.psi_2_ampl = sqrt(FE.picorr.psi_2[0]*FE.picorr.psi_2[0]+FE.picorr.psi_2[1]*FE.picorr.psi_2[1]);
+
+        FE.picorr.theta_d = atan2(FE.picorr.psi_2[1], FE.picorr.psi_2[0]);
+        FE.picorr.cosT = cos(FE.picorr.theta_d);
+        FE.picorr.sinT = sin(FE.picorr.theta_d);
+
     }
 
 /********************************************
@@ -1121,8 +1126,8 @@ void VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit(){
 
     // 限幅前求角度还是应该限幅后？
     FE.htz.theta_d = atan2(FE.htz.psi_2[1], FE.htz.psi_2[0]);
-    AFE_USED.cosT = cos(FE.htz.theta_d);
-    AFE_USED.sinT = sin(FE.htz.theta_d);
+    FE.htz.cosT = cos(FE.htz.theta_d);
+    FE.htz.sinT = sin(FE.htz.theta_d);
 
     FE.htz.psi_1_nonSat[0] += CL_TS*(FE.htz.emf_stator[0]);
     FE.htz.psi_1_nonSat[1] += CL_TS*(FE.htz.emf_stator[1]);
