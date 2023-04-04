@@ -45,7 +45,6 @@ REAL imife_ramp_slope = 400; // 400; // rpm/s
 REAL accerleration_time_inv=8;
 REAL imife_accerleration_slow = 20; // rpm/s
 REAL imife_reversal_end_time = 5.0; // s
-REAL marino_speed_freq = 1; // Hz
 REAL controller(REAL set_rpm_speed_command,
     int set_current_loop, REAL set_iq_cmd, REAL set_id_cmd,
     int flag_overwrite_theta_d, REAL Overwrite_Current_Frequency,
@@ -119,6 +118,7 @@ REAL controller(REAL set_rpm_speed_command,
                     local_dc_rpm_cmd_deriv = 0.0;
                 }
             }
+
             // local_dc_rpm_cmd_deriv = 0.0;
 
             //Jerk Hugh
@@ -214,8 +214,6 @@ REAL controller(REAL set_rpm_speed_command,
         CTRL.I->cmd_dderiv_omg_elec = 0;
     }
 
-
-
     /// 2. 生成磁链指令
     #define TIME_COST 0.1
     if(CTRL.timebase<TIME_COST){
@@ -238,6 +236,7 @@ REAL controller(REAL set_rpm_speed_command,
     #if CONTROL_STRATEGY == INDIRECT_FOC
         controller_IFOC();
     #elif CONTROL_STRATEGY == MARINO_2005_ADAPTIVE_SENSORLESS_CONTROL
+        // controller_IFOC();
         controller_marino2005();
     #endif
 
@@ -347,15 +346,16 @@ void controller_marino2005(){
     // marino.psi_Qmu = simvm.psi_Q2;
     // CTRL.I->theta_d_elec = ACM.theta_M;
     // CTRL.I->omg_elec = CTRL.I->omg_elec;
-    // CTRL.motor->alpha   = ACM.alpha;
-    // CTRL.I->TLoad   = ACM.TLoad;
+    // CTRL.motor->alpha = ACM.alpha;
+    // CTRL.I->TLoad = ACM.TLoad;
 
     // flux error quantities (moved up)
     // marino.e_psi_Dmu = marino.psi_Dmu - CTRL.I->cmd_psi;
     // marino.e_psi_Qmu = marino.psi_Qmu - 0.0;
+
     CTRL.motor->alpha_inv = 1.0/CTRL.motor->alpha;
-    CTRL.motor->Lmu = CTRL.motor->Rreq * CTRL.motor->alpha_inv;
-    CTRL.motor->Lmu_inv = 1.0 / CTRL.motor->Lmu;
+    // CTRL.motor->Lmu = CTRL.motor->Rreq * CTRL.motor->alpha_inv;
+    // CTRL.motor->Lmu_inv = 1.0 / CTRL.motor->Lmu;
 
     // αβ to DQ
     CTRL.S->cosT = cos(CTRL.I->theta_d_elec);
@@ -363,41 +363,78 @@ void controller_marino2005(){
     CTRL.I->idq[0] = AB2M(IS_C(0), IS_C(1), CTRL.S->cosT, CTRL.S->sinT);
     CTRL.I->idq[1] = AB2T(IS_C(0), IS_C(1), CTRL.S->cosT, CTRL.S->sinT);
 
-    // 当磁链幅值给定平稳时，这项就是零。
-    marino.deriv_iD_cmd = 1.0*CTRL.motor->Lmu_inv*(  CTRL.I->cmd_deriv_psi \
-                                            + CTRL.I->cmd_dderiv_psi*CTRL.motor->alpha_inv \
-                                            - CTRL.I->cmd_deriv_psi*CTRL.motor->alpha_inv*CTRL.motor->alpha_inv*marino.deriv_xAlpha);
-    // 重新写！
-    // REAL mu_temp     = CTRL.motor->npp_inv*CTRL.motor->Js * CLARKE_TRANS_TORQUE_GAIN_INVERSE*CTRL.motor->npp_inv;
-    // REAL mu_temp_inv = CTRL.motor->npp*CTRL.motor->Js_inv * CLARKE_TRANS_TORQUE_GAIN*CTRL.motor->npp;
-    // 第一项很有用，第二项无用。
-    marino.deriv_iQ_cmd =   CTRL.motor->npp_inv*CTRL.motor->Js * CLARKE_TRANS_TORQUE_GAIN_INVERSE*CTRL.motor->npp_inv * (\
-        1.0*(-marino.k_omega*deriv_sat_kappa(CTRL.I->omg_elec-CTRL.I->cmd_omg_elec) * (marino.deriv_xOmg - CTRL.I->cmd_deriv_omg_elec) + CTRL.motor->Js_inv*CTRL.motor->npp*marino.deriv_xTL + CTRL.I->cmd_dderiv_omg_elec ) * CTRL.I->cmd_psi_inv\
-      - 1.0*(-marino.k_omega*      sat_kappa(CTRL.I->omg_elec-CTRL.I->cmd_omg_elec) + CTRL.motor->Js_inv*CTRL.motor->npp*CTRL.I->TLoad + CTRL.I->cmd_deriv_omg_elec) * (CTRL.I->cmd_deriv_psi * CTRL.I->cmd_psi_inv*CTRL.I->cmd_psi_inv)
-        );
+    if(FALSE){
+        // 当磁链幅值给定平稳时，这项就是零。
+        marino.deriv_iD_cmd = 1.0*CTRL.motor->Lmu_inv*(  CTRL.I->cmd_deriv_psi \
+                                                + CTRL.I->cmd_dderiv_psi*CTRL.motor->alpha_inv \
+                                                - CTRL.I->cmd_deriv_psi*CTRL.motor->alpha_inv*CTRL.motor->alpha_inv*marino.deriv_xAlpha);
+        // 重新写！
+        // REAL mu_temp     = CTRL.motor->npp_inv*CTRL.motor->Js * CLARKE_TRANS_TORQUE_GAIN_INVERSE*CTRL.motor->npp_inv;
+        // REAL mu_temp_inv = CTRL.motor->npp*CTRL.motor->Js_inv * CLARKE_TRANS_TORQUE_GAIN*CTRL.motor->npp;
+        // 第一项很有用，第二项无用。
+        marino.deriv_iQ_cmd =   CTRL.motor->npp_inv*CTRL.motor->Js * CLARKE_TRANS_TORQUE_GAIN_INVERSE*CTRL.motor->npp_inv * (\
+            1.0*(-marino.k_omega*deriv_sat_kappa(CTRL.I->omg_elec-CTRL.I->cmd_omg_elec) * (marino.deriv_xOmg - CTRL.I->cmd_deriv_omg_elec) + CTRL.motor->Js_inv*CTRL.motor->npp*marino.deriv_xTL + CTRL.I->cmd_dderiv_omg_elec ) * CTRL.I->cmd_psi_inv\
+        - 1.0*(-marino.k_omega*      sat_kappa(CTRL.I->omg_elec-CTRL.I->cmd_omg_elec) + CTRL.motor->Js_inv*CTRL.motor->npp*CTRL.I->TLoad + CTRL.I->cmd_deriv_omg_elec) * (CTRL.I->cmd_deriv_psi * CTRL.I->cmd_psi_inv*CTRL.I->cmd_psi_inv)
+            );
 
-    // current error quantities
-    CTRL.I->idq_cmd[0] = ( CTRL.I->cmd_psi + CTRL.I->cmd_deriv_psi*CTRL.motor->alpha_inv ) * CTRL.motor->Lmu_inv;
-    CTRL.I->idq_cmd[1] = ( CTRL.motor->npp_inv*CTRL.motor->Js *( 1*CTRL.I->cmd_deriv_omg_elec - marino.k_omega*sat_kappa(CTRL.I->omg_elec-CTRL.I->cmd_omg_elec) ) + CTRL.I->TLoad ) * (CLARKE_TRANS_TORQUE_GAIN_INVERSE*CTRL.motor->npp_inv*CTRL.I->cmd_psi_inv);
-    marino.e_iDs = CTRL.I->idq[0] - CTRL.I->idq_cmd[0];
-    marino.e_iQs = CTRL.I->idq[1] - CTRL.I->idq_cmd[1];
+        // current error quantities
+        CTRL.I->idq_cmd[0] = ( CTRL.I->cmd_psi + CTRL.I->cmd_deriv_psi*CTRL.motor->alpha_inv ) * CTRL.motor->Lmu_inv;
+        CTRL.I->idq_cmd[1] = ( CTRL.motor->npp_inv*CTRL.motor->Js *( 1*CTRL.I->cmd_deriv_omg_elec - marino.k_omega*sat_kappa(CTRL.I->omg_elec-CTRL.I->cmd_omg_elec) ) + CTRL.I->TLoad ) * (CLARKE_TRANS_TORQUE_GAIN_INVERSE*CTRL.motor->npp_inv*CTRL.I->cmd_psi_inv);
+        marino.e_iDs = CTRL.I->idq[0] - CTRL.I->idq_cmd[0];
+        marino.e_iQs = CTRL.I->idq[1] - CTRL.I->idq_cmd[1];
 
-    marino.torque_cmd = CLARKE_TRANS_TORQUE_GAIN * CTRL.motor->npp * (CTRL.I->idq_cmd[1] * CTRL.I->cmd_psi   - CTRL.I->idq_cmd[0]*(0));
-    marino.torque__fb = CLARKE_TRANS_TORQUE_GAIN * CTRL.motor->npp * (CTRL.I->idq[1]     * marino.psi_Dmu - CTRL.I->idq[0] * marino.psi_Qmu);
-    // marino.torque__fb = CLARKE_TRANS_TORQUE_GAIN * CTRL.motor->npp * (CTRL.I->idq[1]     * marino.psi_Dmu);
+        marino.torque_cmd = CLARKE_TRANS_TORQUE_GAIN * CTRL.motor->npp * (CTRL.I->idq_cmd[1] * CTRL.I->cmd_psi   - CTRL.I->idq_cmd[0]*(0));
+        marino.torque__fb = CLARKE_TRANS_TORQUE_GAIN * CTRL.motor->npp * (CTRL.I->idq[1]     * marino.psi_Dmu - CTRL.I->idq[0] * marino.psi_Qmu);
+        // marino.torque__fb = CLARKE_TRANS_TORQUE_GAIN * CTRL.motor->npp * (CTRL.I->idq[1]     * marino.psi_Dmu);
 
 
-    // linear combination of error
-    marino.zD = marino.e_iDs + CTRL.motor->Lsigma_inv*marino.e_psi_Dmu;
-    marino.zQ = marino.e_iQs + CTRL.motor->Lsigma_inv*marino.e_psi_Qmu;
+        // linear combination of error
+        marino.zD = marino.e_iDs + CTRL.motor->Lsigma_inv*marino.e_psi_Dmu;
+        marino.zQ = marino.e_iQs + CTRL.motor->Lsigma_inv*marino.e_psi_Qmu;
 
-    // known signals to feedforward (to cancel)
-    marino.Gamma_D = CTRL.motor->Lsigma_inv * (-CTRL.motor->R*CTRL.I->idq[0] -CTRL.motor->alpha*CTRL.motor->Lmu*CTRL.I->idq_cmd[0] +CTRL.motor->alpha  *CTRL.I->cmd_psi +CTRL.S->omega_syn*marino.e_psi_Qmu) +CTRL.S->omega_syn*CTRL.I->idq[1] - marino.deriv_iD_cmd;
-    marino.Gamma_Q = CTRL.motor->Lsigma_inv * (-CTRL.motor->R*CTRL.I->idq[1] -CTRL.motor->alpha*CTRL.motor->Lmu*CTRL.I->idq_cmd[1] -CTRL.I->omg_elec*CTRL.I->cmd_psi -CTRL.S->omega_syn*marino.e_psi_Dmu) -CTRL.S->omega_syn*CTRL.I->idq[0] - marino.deriv_iQ_cmd;
+        // known signals to feedforward (to cancel)
+        marino.Gamma_D = CTRL.motor->Lsigma_inv * (-CTRL.motor->R*CTRL.I->idq[0] -CTRL.motor->alpha*CTRL.motor->Lmu*CTRL.I->idq_cmd[0] +CTRL.motor->alpha  *CTRL.I->cmd_psi +CTRL.S->omega_syn*marino.e_psi_Qmu) +CTRL.S->omega_syn*CTRL.I->idq[1] - marino.deriv_iD_cmd;
+        marino.Gamma_Q = CTRL.motor->Lsigma_inv * (-CTRL.motor->R*CTRL.I->idq[1] -CTRL.motor->alpha*CTRL.motor->Lmu*CTRL.I->idq_cmd[1] -CTRL.I->omg_elec*CTRL.I->cmd_psi -CTRL.S->omega_syn*marino.e_psi_Dmu) -CTRL.S->omega_syn*CTRL.I->idq[0] - marino.deriv_iQ_cmd;
 
-    // voltage commands
-    CTRL.O->udq_cmd[0] = CTRL.motor->Lsigma * (-(marino.kz+0.25*CTRL.motor->Lsigma*CTRL.motor->Lmu*marino.xAlpha_Max)*marino.zD - marino.Gamma_D);
-    CTRL.O->udq_cmd[1] = CTRL.motor->Lsigma * (-(marino.kz+0.25*CTRL.motor->Lsigma*CTRL.motor->Lmu*marino.xAlpha_Max)*marino.zQ - marino.Gamma_Q);
+        // voltage commands
+        CTRL.O->udq_cmd[0] = CTRL.motor->Lsigma * (-(marino.kz+0.25*CTRL.motor->Lsigma*CTRL.motor->Lmu*marino.xAlpha_Max)*marino.zD - marino.Gamma_D);
+        CTRL.O->udq_cmd[1] = CTRL.motor->Lsigma * (-(marino.kz+0.25*CTRL.motor->Lsigma*CTRL.motor->Lmu*marino.xAlpha_Max)*marino.zQ - marino.Gamma_Q);
+
+    }else{
+        pid1_iM.Fbk = CTRL.I->idq[0];
+        pid1_iT.Fbk = CTRL.I->idq[1];
+
+        /// 5. 转速环
+        static int im_vc_count = 1;
+        if(im_vc_count++ == SPEED_LOOP_CEILING){
+            im_vc_count = 1;
+
+            pid1_spd.Ref = CTRL.I->cmd_omg_elec; //rpm_speed_command*RPM_2_ELEC_RAD_PER_SEC;
+            pid1_spd.Fbk = CTRL.I->omg_elec;
+            pid1_spd.calc(&pid1_spd);
+            pid1_iT.Ref = pid1_spd.Out;
+            CTRL.I->idq_cmd[1] = pid1_iT.Ref;
+        }
+        CTRL.I->cmd_psi = IM_FLUX_COMMAND_DC_PART;
+        CTRL.I->idq_cmd[0] = CTRL.I->cmd_psi * CTRL.motor->Lmu_inv;
+        pid1_iM.Ref = CTRL.I->idq_cmd[0];
+
+        /// 6. 电流环
+        REAL decoupled_M_axis_voltage=0.0, decoupled_T_axis_voltage=0.0;
+        pid1_iM.calc(&pid1_iM);
+        pid1_iT.calc(&pid1_iT);
+
+        decoupled_M_axis_voltage = pid1_iM.Out;
+        decoupled_T_axis_voltage = pid1_iT.Out;
+
+        CTRL.O->udq_cmd[0] = decoupled_M_axis_voltage;
+        CTRL.O->udq_cmd[1] = decoupled_T_axis_voltage;
+
+        /// 7. 反帕克变换
+        // CTRL.O->uab_cmd[0] = MT2A(decoupled_M_axis_voltage, decoupled_T_axis_voltage, CTRL.S->cosT, CTRL.S->sinT);
+        // CTRL.O->uab_cmd[1] = MT2B(decoupled_M_axis_voltage, decoupled_T_axis_voltage, CTRL.S->cosT, CTRL.S->sinT);
+    }
+
     CTRL.O->uab_cmd[0] = MT2A(CTRL.O->udq_cmd[0], CTRL.O->udq_cmd[1], CTRL.S->cosT, CTRL.S->sinT);
     CTRL.O->uab_cmd[1] = MT2B(CTRL.O->udq_cmd[0], CTRL.O->udq_cmd[1], CTRL.S->cosT, CTRL.S->sinT);
 
@@ -422,7 +459,8 @@ void controller_IFOC(){
         // CTRL.I->theta_d_elec__fb = qep.theta_d;
 
     //（实际反馈，实验中不可能）
-    // CTRL.I->omg_elec     = im.omg_elec;
+    // CTRL.I->omg_elec     = ENC.omg_elec ;
+    CTRL.I->omg_elec     = ACM.omg_elec ;
 
         //（无感）
         // harnefors_scvm();

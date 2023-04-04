@@ -130,6 +130,15 @@ void ACMSIMC_PIDTuner(){
     pid1_iT.OutLimit  = CURRENT_LOOP_LIMIT_VOLTS;
     pid1_spd.OutLimit = SPEED_LOOP_LIMIT_AMPERE;
 
+    #if PC_SIMULATION
+    printf("%f\n", pid1_iM.Kp);
+    printf("%f\n", pid1_iM.Ki);
+    printf("%f\n", pid1_iT.Kp);
+    printf("%f\n", pid1_iT.Ki);
+    printf("%f\n", pid1_spd.Kp);
+    printf("%f\n", pid1_spd.Ki);
+    #endif
+
     pid2_ix.Kp = CURRENT_KP;
     pid2_iy.Kp = CURRENT_KP;
     pid2_ix.Ki = CURRENT_KI_CODE;

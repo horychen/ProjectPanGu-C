@@ -118,7 +118,8 @@ void marino05_dedicated_rk4_solver(REAL hs){
     marino.xOmg        += (increment_1[3] + 2*(increment_2[3] + increment_3[3]) + increment_4[3])*0.166666666666667; // 3
 
     // Also get derivatives:
-    CTRL.S->omega_syn = marino.xOmg + marino.xAlpha*CTRL.motor->Lmu*CTRL.I->idq_cmd[1]*CTRL.I->cmd_psi_inv;
+    CTRL.S->omega_sl    = marino.xAlpha*CTRL.motor->Lmu*CTRL.I->idq_cmd[1]*CTRL.I->cmd_psi_inv;
+    CTRL.S->omega_syn   = marino.xOmg + CTRL.S->omega_sl;
     marino.deriv_xTL    = (increment_1[1] + 2*(increment_2[1] + increment_3[1]) + increment_4[1])*0.166666666666667 * CL_TS_INVERSE;
     marino.deriv_xAlpha = (increment_1[2] + 2*(increment_2[2] + increment_3[2]) + increment_4[2])*0.166666666666667 * CL_TS_INVERSE;
     marino.deriv_xOmg   = (increment_1[3] + 2*(increment_2[3] + increment_3[3]) + increment_4[3])*0.166666666666667 * CL_TS_INVERSE;
