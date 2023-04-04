@@ -10,8 +10,8 @@
 #if MACHINE_TYPE == 1 || MACHINE_TYPE == 11
 
 #if PC_SIMULATION
-    #define OFFSET_VOLTAGE_ALPHA (1*+0.1 *(CTRL.timebase>20)) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
-    #define OFFSET_VOLTAGE_BETA  (0*+0.1 *(CTRL.timebase>4)) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
+    #define OFFSET_VOLTAGE_ALPHA (0*0.1 *(CTRL.timebase>20)) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
+    #define OFFSET_VOLTAGE_BETA  (0*0.1 *(CTRL.timebase>4)) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
 #else
     #define OFFSET_VOLTAGE_ALPHA (0.0)
     #define OFFSET_VOLTAGE_BETA  (0.0)
@@ -295,13 +295,21 @@ void rhf_dynamics_ESO(REAL t, REAL *x, REAL *fx){
 
     /* Extended State Observer */
     // xPos
-    fx[0] = + esoaf.ell[0]*esoaf.output_error_sine + xOmg;
+    fx[0] = + esoaf.ell[0]*esoaf.output_error + xOmg;
     // xOmg
-    fx[1] = + esoaf.ell[1]*esoaf.output_error_sine + (esoaf.bool_ramp_load_torque>=0) * (esoaf.xTem - xTL) * (MOTOR.Js_inv*MOTOR.npp);
+    fx[1] = + esoaf.ell[1]*esoaf.output_error + (esoaf.bool_ramp_load_torque>=0) * (esoaf.xTem - xTL) * (MOTOR.Js_inv*MOTOR.npp);
     // xTL
-    fx[2] = - esoaf.ell[2]*esoaf.output_error_sine + xPL;
+    fx[2] = - esoaf.ell[2]*esoaf.output_error + xPL;
     // xPL
-    fx[3] = - esoaf.ell[3]*esoaf.output_error_sine;
+    fx[3] = - esoaf.ell[3]*esoaf.output_error;
+    // // xPos
+    // fx[0] = + esoaf.ell[0]*esoaf.output_error_sine + xOmg;
+    // // xOmg
+    // fx[1] = + esoaf.ell[1]*esoaf.output_error_sine + (esoaf.bool_ramp_load_torque>=0) * (esoaf.xTem - xTL) * (MOTOR.Js_inv*MOTOR.npp);
+    // // xTL
+    // fx[2] = - esoaf.ell[2]*esoaf.output_error_sine + xPL;
+    // // xPL
+    // fx[3] = - esoaf.ell[3]*esoaf.output_error_sine;
 }
 void eso_one_parameter_tuning(REAL omega_ob){
     // Luenberger Observer Framework
@@ -581,7 +589,6 @@ void flux_observer(){
         FE.picorr.theta_d = atan2(FE.picorr.psi_2[1], FE.picorr.psi_2[0]);
         FE.picorr.cosT = cos(FE.picorr.theta_d);
         FE.picorr.sinT = sin(FE.picorr.theta_d);
-
     }
 
 /********************************************

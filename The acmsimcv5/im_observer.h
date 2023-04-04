@@ -126,6 +126,7 @@ struct Chen21_ESO_AF{
     REAL xTem;
 };
 extern struct Chen21_ESO_AF esoaf;
+void Main_esoaf_chen2021();
 
 /********************************************
  * Collections of VM based Flux Estimators 

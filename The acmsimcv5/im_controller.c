@@ -462,7 +462,7 @@ void controller_IFOC(){
     flux_observer(); // FLUX_FEEDBACK_ALPHA, FLUX_FEEDBACK_BETA
     // CTRL.I->omg_elec = FE.htz.omg_est;
     Main_esoaf_chen2021();
-    CTRL.I->omg_elec = esoaf.xOmg;
+    CTRL.I->omg_elec = esoaf.xOmg; // - CTRL.S->omega_sl;
 
         //（编码器反馈）
         // CTRL.I->omg_elec     = qep.omg_elec;
