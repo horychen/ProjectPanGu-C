@@ -212,7 +212,7 @@
     #define GAIN_OHTANI (5)
     #define VM_OHTANI_CORRECTION_GAIN_P (5)
     /* B *//// default: P=5, I=2.5
-    #define VM_PROPOSED_PI_CORRECTION_GAIN_P 50   //10 // (5)
+    #define VM_PROPOSED_PI_CORRECTION_GAIN_P 200   //10 // (5)
     #define VM_PROPOSED_PI_CORRECTION_GAIN_I 0.0 //2.5 //2  // (2.5)
     /* C *//// default: P=0.125*5, I=0.125*2.5, KCM=0
     #define OUTPUT_ERROR_CLEST_GAIN_KP (0.125*5)
