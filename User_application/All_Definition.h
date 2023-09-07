@@ -55,10 +55,14 @@
     //#define MAX_CURRENT_P                       11.8       //12A   // Set your positive current trip threshold here in [0, 4095]
     //#define MAX_OVERVOLTAGE                    400      //400V  // Set your unipolar trip Over-voltage threshold in [0, 4095]
     //GPIO
-    #define DSP_PWM_DISABLE        GpioDataRegs.GPDSET.bit.GPIO105=1;    // 低有效，置位封波
-    #define DSP_PWM_ENABLE         GpioDataRegs.GPDCLEAR.bit.GPIO105=1;  // 低有效，清零有效
-    #define DSP_2PWM_DISABLE       GpioDataRegs.GPASET.bit.GPIO27=1;
-    #define DSP_2PWM_ENABLE        GpioDataRegs.GPACLEAR.bit.GPIO27=1;
+//    #define DSP_PWM_DISABLE        GpioDataRegs.GPDSET.bit.GPIO105=1;    // 低有效，置位封波
+//    #define DSP_PWM_ENABLE         GpioDataRegs.GPDCLEAR.bit.GPIO105=1;  // 低有效，清零有效
+//    #define DSP_2PWM_DISABLE       GpioDataRegs.GPASET.bit.GPIO27=1;
+//    #define DSP_2PWM_ENABLE        GpioDataRegs.GPACLEAR.bit.GPIO27=1;
+#define DSP_PWM_DISABLE        GpioDataRegs.GPDSET.bit.GPIO108=1;    // 低有效，置位封波
+#define DSP_PWM_ENABLE         GpioDataRegs.GPDCLEAR.bit.GPIO108=1;  // 低有效，清零有效
+#define DSP_2PWM_DISABLE       GpioDataRegs.GPCSET.bit.GPIO93=1;
+#define DSP_2PWM_ENABLE        GpioDataRegs.GPCCLEAR.bit.GPIO93=1;
 
     #define INVERTER_FLT_FAULT     GpioDataRegs.GPDDAT.bit.GPIO104  //Inverter_error signal
 
@@ -76,7 +80,8 @@
         BOOL CurrentOVER_FLAG;
     };
     extern struct Trip_Variables trip;//trip flag
-    #define Motor_mode_START    GpioDataRegs.GPADAT.bit.GPIO26          //DI Start Button
+    //#define Motor_mode_START    GpioDataRegs.GPADAT.bit.GPIO26          //DI Start Button
+    #define Motor_mode_START    digital_virtual_button          //virtual DI Start Button
     int Motor_MODE_START(void);
     int Motor_MODE_STOP(void);
     int Motor_MODE_REVERSE(void);

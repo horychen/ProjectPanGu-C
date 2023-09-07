@@ -1,5 +1,6 @@
 #include <All_Definition.h>
 st_axis Axis;
+int digital_virtual_button = 0;
 
 #ifdef _XCUBE1 // At Water Energy Lab (Green)
     #define OFFSET_VDC 1430

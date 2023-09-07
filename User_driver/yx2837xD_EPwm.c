@@ -95,8 +95,8 @@ void InitEPwm1Gpio(void)
     // Pull-ups can be enabled or disabled by the user.
     // Comment out other unwanted lines.
     //
-   // GpioCtrlRegs.GPAPUD.bit.GPIO0 = 1;    // Disable pull-up on GPIO0 (EPWM1A)
-  //  GpioCtrlRegs.GPAPUD.bit.GPIO1 = 1;    // Disable pull-up on GPIO1 (EPWM1B)
+    //GpioCtrlRegs.GPAPUD.bit.GPIO0 = 1;    // Disable pull-up on GPIO0 (EPWM1A)
+    //GpioCtrlRegs.GPAPUD.bit.GPIO1 = 1;    // Disable pull-up on GPIO1 (EPWM1B)
     GpioCtrlRegs.GPEPUD.bit.GPIO145 = 1;    // Disable pull-up on GPIO145 (EPWM1A)
     GpioCtrlRegs.GPEPUD.bit.GPIO146 = 1;    // Disable pull-up on GPIO146 (EPWM1B)
 
@@ -107,9 +107,9 @@ void InitEPwm1Gpio(void)
     // Comment out other unwanted lines.
     //
     //GpioCtrlRegs.GPAMUX1.bit.GPIO0 = 1;   // Configure GPIO0 as EPWM1A
-   // GpioCtrlRegs.GPAMUX1.bit.GPIO1 = 1;   // Configure GPIO1 as EPWM1B
-     GpioCtrlRegs.GPEMUX2.bit.GPIO145 = 1;   // Configure GPIO145 as EPWM1A
-     GpioCtrlRegs.GPEMUX2.bit.GPIO146 = 1;   // Configure GPIO0146 as EPWM1B
+    //GpioCtrlRegs.GPAMUX1.bit.GPIO1 = 1;   // Configure GPIO1 as EPWM1B
+    GpioCtrlRegs.GPEMUX2.bit.GPIO145 = 1;   // Configure GPIO145 as EPWM1A
+    GpioCtrlRegs.GPEMUX2.bit.GPIO146 = 1;   // Configure GPIO146 as EPWM1B
 
     EDIS;
 }
@@ -128,10 +128,10 @@ void InitEPwm2Gpio(void)
     // This will enable the pullups for the specified pins.
     // Comment out other unwanted lines.
     //
-   // GpioCtrlRegs.GPAPUD.bit.GPIO2 = 1;    // Disable pull-up on GPIO2 (EPWM2A)
-   // GpioCtrlRegs.GPAPUD.bit.GPIO3 = 1;    // Disable pull-up on GPIO3 (EPWM2B)
-     GpioCtrlRegs.GPEPUD.bit.GPIO147 = 1;    // Disable pull-up on GPIO147 (EPWM2A)
-     GpioCtrlRegs.GPEPUD.bit.GPIO148 = 1;    // Disable pull-up on GPIO148 (EPWM2B)
+    //GpioCtrlRegs.GPAPUD.bit.GPIO2 = 1;    // Disable pull-up on GPIO2 (EPWM2A)
+    //GpioCtrlRegs.GPAPUD.bit.GPIO3 = 1;    // Disable pull-up on GPIO3 (EPWM2B)
+    GpioCtrlRegs.GPEPUD.bit.GPIO147 = 1;    // Disable pull-up on GPIO147 (EPWM2A)
+    GpioCtrlRegs.GPEPUD.bit.GPIO148 = 1;    // Disable pull-up on GPIO148 (EPWM2B)
 
     //
     // Configure EPwm-2 pins using GPIO regs
@@ -160,10 +160,10 @@ void InitEPwm3Gpio(void)
     // This will enable the pullups for the specified pins.
     // Comment out other unwanted lines.
     //
-   // GpioCtrlRegs.GPAPUD.bit.GPIO4 = 1;    // Disable pull-up on GPIO4 (EPWM3A)
+    // GpioCtrlRegs.GPAPUD.bit.GPIO4 = 1;    // Disable pull-up on GPIO4 (EPWM3A)
     //GpioCtrlRegs.GPAPUD.bit.GPIO5 = 1;    // Disable pull-up on GPIO5 (EPWM3B)
-     GpioCtrlRegs.GPEPUD.bit.GPIO149 = 1;    // Disable pull-up on GPIO149 (EPWM3A)
-     GpioCtrlRegs.GPEPUD.bit.GPIO150 = 1;    // Disable pull-up on GPIO150 (EPWM3B)
+    GpioCtrlRegs.GPEPUD.bit.GPIO149 = 1;    // Disable pull-up on GPIO149 (EPWM3A)
+    GpioCtrlRegs.GPEPUD.bit.GPIO150 = 1;    // Disable pull-up on GPIO150 (EPWM3B)
 
     //
     // Configure EPwm-3 pins using GPIO regs
@@ -171,9 +171,9 @@ void InitEPwm3Gpio(void)
     // Comment out other unwanted lines.
     //
     //GpioCtrlRegs.GPAMUX1.bit.GPIO4 = 1;   // Configure GPIO4 as EPWM3A
-   // GpioCtrlRegs.GPAMUX1.bit.GPIO5 = 1;   // Configure GPIO5 as EPWM3B
-     GpioCtrlRegs.GPEMUX2.bit.GPIO149 = 1;   // Configure GPIO149 as EPWM3A
-     GpioCtrlRegs.GPEMUX2.bit.GPIO150 = 1;   // Configure GPIO150 as EPWM3B
+    // GpioCtrlRegs.GPAMUX1.bit.GPIO5 = 1;   // Configure GPIO5 as EPWM3B
+    GpioCtrlRegs.GPEMUX2.bit.GPIO149 = 1;   // Configure GPIO149 as EPWM3A
+    GpioCtrlRegs.GPEMUX2.bit.GPIO150 = 1;   // Configure GPIO150 as EPWM3B
 
     EDIS;
 }
@@ -192,10 +192,10 @@ void InitEPwm4Gpio(void)
     // This will enable the pullups for the specified pins.
     // Comment out other unwanted lines.
     //
-   // GpioCtrlRegs.GPAPUD.bit.GPIO6 = 1;    // Disable pull-up on GPIO6 (EPWM4A)
-  //  GpioCtrlRegs.GPAPUD.bit.GPIO7 = 1;    // Disable pull-up on GPIO7 (EPWM4B)
-     GpioCtrlRegs.GPEPUD.bit.GPIO151 = 1;    // Disable pull-up on GPIO151 (EPWM4A)
-     GpioCtrlRegs.GPEPUD.bit.GPIO152 = 1;    // Disable pull-up on GPIO152 (EPWM4B)
+    // GpioCtrlRegs.GPAPUD.bit.GPIO6 = 1;      // Disable pull-up on GPIO6 (EPWM4A)
+    // GpioCtrlRegs.GPAPUD.bit.GPIO7 = 1;      // Disable pull-up on GPIO7 (EPWM4B)
+    GpioCtrlRegs.GPEPUD.bit.GPIO151 = 1;       // Disable pull-up on GPIO151 (EPWM4A)
+    GpioCtrlRegs.GPEPUD.bit.GPIO152 = 1;       // Disable pull-up on GPIO152 (EPWM4B)
 
      //
      // Configure EPWM-4 pins using GPIO regs
@@ -203,10 +203,11 @@ void InitEPwm4Gpio(void)
      // pins.
      // Comment out other unwanted lines.
      //
-  //  GpioCtrlRegs.GPAMUX1.bit.GPIO6 = 1;   // Configure GPIO6 as EPWM4A
- //   GpioCtrlRegs.GPAMUX1.bit.GPIO7 = 1;   // Configure GPIO7 as EPWM4B
-     GpioCtrlRegs.GPEMUX2.bit.GPIO151 = 1;   // Configure GPIO151 as EPWM4A
-     GpioCtrlRegs.GPEMUX2.bit.GPIO152 = 1;   // Configure GPIO152 as EPWM4B
+     //  GpioCtrlRegs.GPAMUX1.bit.GPIO6 = 1;   // Configure GPIO6 as EPWM4A
+     //  GpioCtrlRegs.GPAMUX1.bit.GPIO7 = 1;   // Configure GPIO7 as EPWM4B
+    GpioCtrlRegs.GPEMUX2.bit.GPIO151 = 1;      // Configure GPIO151 as EPWM4A
+    GpioCtrlRegs.GPEMUX2.bit.GPIO152 = 1;      // Configure GPIO152 as EPWM4B
+
 
     EDIS;
 }
@@ -224,10 +225,11 @@ void InitEPwm5Gpio(void)
     // This will enable the pullups for the specified pins.
     // Comment out other unwanted lines.
     //
-  //  GpioCtrlRegs.GPAPUD.bit.GPIO8 = 1;    // Disable pull-up on GPIO8 (EPWM5A)
- //   GpioCtrlRegs.GPAPUD.bit.GPIO9 = 1;    // Disable pull-up on GPIO9 (EPWM5B)
-     GpioCtrlRegs.GPEPUD.bit.GPIO153 = 1;    // Disable pull-up on GPIO153 (EPWM5A)
-     GpioCtrlRegs.GPEPUD.bit.GPIO154 = 1;    // Disable pull-up on GPIO154 (EPWM5B)
+    //  GpioCtrlRegs.GPAPUD.bit.GPIO8 = 1;     // Disable pull-up on GPIO8 (EPWM5A)
+    //  GpioCtrlRegs.GPAPUD.bit.GPIO9 = 1;     // Disable pull-up on GPIO9 (EPWM5B)
+    GpioCtrlRegs.GPEPUD.bit.GPIO153 = 1;       // Disable pull-up on GPIO153 (EPWM5A)
+    GpioCtrlRegs.GPEPUD.bit.GPIO154 = 1;       // Disable pull-up on GPIO154 (EPWM5B)
+
 
     //
     // Configure EPWM-5 pins using GPIO regs
@@ -235,10 +237,11 @@ void InitEPwm5Gpio(void)
     // pins.
     // Comment out other unwanted lines.
     //
-  //  GpioCtrlRegs.GPAMUX1.bit.GPIO8 = 1;   // Configure GPIO8 as EPWM5A
-  //  GpioCtrlRegs.GPAMUX1.bit.GPIO9 = 1;   // Configure GPIO9 as EPWM5B
-     GpioCtrlRegs.GPEMUX2.bit.GPIO153 = 1;   // Configure GPIO153 as EPWM5A
-     GpioCtrlRegs.GPEMUX2.bit.GPIO154 = 1;   // Configure GPIO0154 as EPWM5B
+    //  GpioCtrlRegs.GPAMUX1.bit.GPIO8 = 1;    // Configure GPIO8 as EPWM5A
+    //  GpioCtrlRegs.GPAMUX1.bit.GPIO9 = 1;    // Configure GPIO9 as EPWM5B
+    GpioCtrlRegs.GPEMUX2.bit.GPIO153 = 1;      // Configure GPIO153 as EPWM5A
+    GpioCtrlRegs.GPEMUX2.bit.GPIO154 = 1;      // Configure GPIO154 as EPWM5B
+
 
     EDIS;
 }
@@ -256,10 +259,11 @@ void InitEPwm6Gpio(void)
     // This will enable the pullups for the specified pins.
     // Comment out other unwanted lines.
     //
-  //  GpioCtrlRegs.GPAPUD.bit.GPIO10 = 1;    // Disable pull-up on GPIO10 (EPWM6A)
-   // GpioCtrlRegs.GPAPUD.bit.GPIO11 = 1;    // Disable pull-up on GPIO11 (EPWM6B)
+    // GpioCtrlRegs.GPAPUD.bit.GPIO10 = 1;     // Disable pull-up on GPIO10 (EPWM6A)
+    // GpioCtrlRegs.GPAPUD.bit.GPIO11 = 1;     // Disable pull-up on GPIO11 (EPWM6B)
      GpioCtrlRegs.GPEPUD.bit.GPIO155 = 1;    // Disable pull-up on GPIO155 (EPWM6A)
      GpioCtrlRegs.GPEPUD.bit.GPIO156 = 1;    // Disable pull-up on GPIO156 (EPWM6B)
+
 
     //
     // Configure EPWM-6 pins using GPIO regs
@@ -267,8 +271,8 @@ void InitEPwm6Gpio(void)
     // pins.
     // Comment out other unwanted lines.
     //
-  //  GpioCtrlRegs.GPAMUX1.bit.GPIO10 = 1;   // Configure GPIO10 as EPWM6A
-  //  GpioCtrlRegs.GPAMUX1.bit.GPIO11 = 1;   // Configure GPIO11 as EPWM6B
+    //  GpioCtrlRegs.GPAMUX1.bit.GPIO10 = 1;   // Configure GPIO10 as EPWM6A
+    //  GpioCtrlRegs.GPAMUX1.bit.GPIO11 = 1;   // Configure GPIO11 as EPWM6B
      GpioCtrlRegs.GPEMUX2.bit.GPIO155 = 1;   // Configure GPIO155 as EPWM6A
      GpioCtrlRegs.GPEMUX2.bit.GPIO156 = 1;   // Configure GPIO156 as EPWM6B
 
@@ -289,10 +293,10 @@ void InitEPwm7Gpio(void)
     // This will enable the pullups for the specified pins.
     // Comment out other unwanted lines.
     //
-    GpioCtrlRegs.GPAPUD.bit.GPIO12 = 1;    // Disable pull-up on GPIO12 (EPWM7A)
-    GpioCtrlRegs.GPAPUD.bit.GPIO13 = 1;    // Disable pull-up on GPIO13 (EPWM7B)
-    // GpioCtrlRegs.GPEPUD.bit.GPIO157 = 1;    // Disable pull-up on GPIO157 (EPWM7A)
-    // GpioCtrlRegs.GPEPUD.bit.GPIO158 = 1;    // Disable pull-up on GPIO158 (EPWM7B)
+    //GpioCtrlRegs.GPAPUD.bit.GPIO12 = 1;    // Disable pull-up on GPIO12 (EPWM7A)
+    //GpioCtrlRegs.GPAPUD.bit.GPIO13 = 1;    // Disable pull-up on GPIO13 (EPWM7B)
+     GpioCtrlRegs.GPEPUD.bit.GPIO157 = 1;    // Disable pull-up on GPIO157 (EPWM7A)
+     GpioCtrlRegs.GPEPUD.bit.GPIO158 = 1;    // Disable pull-up on GPIO158 (EPWM7B)
 
     //
     // Configure EPWM-6 pins using GPIO regs
@@ -300,10 +304,10 @@ void InitEPwm7Gpio(void)
     // pins.
     // Comment out other unwanted lines.
     //
-    GpioCtrlRegs.GPAMUX1.bit.GPIO12 = 1;   // Configure GPIO12 as EPWM7A
-    GpioCtrlRegs.GPAMUX1.bit.GPIO13 = 1;   // Configure GPIO13 as EPWM7B
-    // GpioCtrlRegs.GPEMUX2.bit.GPIO157 = 1;   // Configure GPIO157 as EPWM7A
-    // GpioCtrlRegs.GPEMUX2.bit.GPIO158 = 1;   // Configure GPIO158 as EPWM7B
+    //GpioCtrlRegs.GPAMUX1.bit.GPIO12 = 1;   // Configure GPIO12 as EPWM7A
+    //GpioCtrlRegs.GPAMUX1.bit.GPIO13 = 1;   // Configure GPIO13 as EPWM7B
+     GpioCtrlRegs.GPEMUX2.bit.GPIO157 = 1;   // Configure GPIO157 as EPWM7A
+     GpioCtrlRegs.GPEMUX2.bit.GPIO158 = 1;   // Configure GPIO158 as EPWM7B
 
     EDIS;
 }
@@ -321,21 +325,21 @@ void InitEPwm8Gpio(void)
     // This will enable the pullups for the specified pins.
     // Comment out other unwanted lines.
     //
-    GpioCtrlRegs.GPAPUD.bit.GPIO14 = 1;    // Disable pull-up on GPIO14 (EPWM8A)
-    GpioCtrlRegs.GPAPUD.bit.GPIO15 = 1;    // Disable pull-up on GPIO15 (EPWM8B)
-//  GpioCtrlRegs.GPEPUD.bit.GPIO159 = 1;    // Disable pull-up on GPIO159 (EPWM8A)
-//  GpioCtrlRegs.GPFPUD.bit.GPIO160 = 1;    // Disable pull-up on GPIO160 (EPWM8B)
+    //GpioCtrlRegs.GPAPUD.bit.GPIO14 = 1;    // Disable pull-up on GPIO14 (EPWM8A)
+    //GpioCtrlRegs.GPAPUD.bit.GPIO15 = 1;    // Disable pull-up on GPIO15 (EPWM8B)
+      GpioCtrlRegs.GPEPUD.bit.GPIO159 = 1;    // Disable pull-up on GPIO159 (EPWM8A)
+      GpioCtrlRegs.GPFPUD.bit.GPIO160 = 1;    // Disable pull-up on GPIO160 (EPWM8B)
 
-     //
-     // Configure EPWM-6 pins using GPIO regs
-     // This specifies which of the possible GPIO pins will be EPWM6 functional
-     // pins.
-     // Comment out other unwanted lines.
-     //
-    GpioCtrlRegs.GPAMUX1.bit.GPIO14 = 1;   // Configure GPIO14 as EPWM8A
-    GpioCtrlRegs.GPAMUX1.bit.GPIO15 = 1;   // Configure GPIO15 as EPWM8B
-    // GpioCtrlRegs.GPEMUX2.bit.GPIO159 = 1;   // Configure GPIO159 as EPWM8A
-    // GpioCtrlRegs.GPFMUX1.bit.GPIO160 = 1;   // Configure GPIO160 as EPWM8B
+    //
+    // Configure EPWM-6 pins using GPIO regs
+    // This specifies which of the possible GPIO pins will be EPWM6 functional
+    // pins.
+    // Comment out other unwanted lines.
+    //
+    //GpioCtrlRegs.GPAMUX1.bit.GPIO14 = 1;   // Configure GPIO14 as EPWM8A
+    //GpioCtrlRegs.GPAMUX1.bit.GPIO15 = 1;   // Configure GPIO15 as EPWM8B
+     GpioCtrlRegs.GPEMUX2.bit.GPIO159 = 1;   // Configure GPIO159 as EPWM8A
+     GpioCtrlRegs.GPFMUX1.bit.GPIO160 = 1;   // Configure GPIO160 as EPWM8B
 
     EDIS;
 }
@@ -355,6 +359,7 @@ void InitEPwm9Gpio(void)
     //
     GpioCtrlRegs.GPFPUD.bit.GPIO161 = 1;    // Disable pull-up on GPIO161 (EPWM9A)
     GpioCtrlRegs.GPFPUD.bit.GPIO162 = 1;    // Disable pull-up on GPIO162 (EPWM9B)
+
 
     //
     // Configure EPWM-6 pins using GPIO regs
