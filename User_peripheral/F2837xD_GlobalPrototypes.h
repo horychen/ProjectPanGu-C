@@ -61,6 +61,7 @@ extern void InitAuxPll(Uint16 clock_source, Uint16 imult, Uint16 fmult,
 extern void InitSpi(void);
 extern void InitSpiGpio(void);
 extern void InitSpiaGpio(void);
+extern void InitSpicGpio(void);
 extern void InitSci(void);
 extern void InitSciGpio(void);
 extern void InitScicGpio(void);

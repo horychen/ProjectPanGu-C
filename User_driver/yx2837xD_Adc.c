@@ -90,11 +90,14 @@ void ADC_initialize(void)
 	EDIS;
 
 	EALLOW;
-	// VDC @ A0
-		// ********************************
-	AdcaRegs.ADCSOC0CTL.bit.CHSEL     = 0;    // SOC0 will convert pin A0
-	AdcaRegs.ADCSOC0CTL.bit.ACQPS     = 30;   // sample window in SYSCLK cycles
-	AdcaRegs.ADCSOC0CTL.bit.TRIGSEL   = 5;    // trigger on ePWM1 SOCA/C
+
+    /* A Group */
+
+        // VDC @ A0
+            // ********************************
+        AdcaRegs.ADCSOC0CTL.bit.CHSEL     = 0;    // SOC0 will convert pin A0
+        AdcaRegs.ADCSOC0CTL.bit.ACQPS     = 30;   // sample window in SYSCLK cycles
+        AdcaRegs.ADCSOC0CTL.bit.TRIGSEL   = 5;    // trigger on ePWM1 SOCA/C
 
 		// CURRENT W @ A1
 		// ********************************
@@ -128,42 +131,122 @@ void ADC_initialize(void)
         AdcaRegs.ADCSOC5CTL.bit.ACQPS     = 30;   // sample window in SYSCLK cycles
         AdcaRegs.ADCSOC5CTL.bit.TRIGSEL   = 5;    // trigger on ePWM1 SOCA/C
 
+    /* B Group */
+
         //  TEMP3 @ B0
         // ***************************
-        AdcbRegs.ADCSOC6CTL.bit.CHSEL     = 0;    // SOC5 will convert pin B0,
+        AdcbRegs.ADCSOC6CTL.bit.CHSEL     = 0;    // SOC6 will convert pin B0,
         AdcbRegs.ADCSOC6CTL.bit.ACQPS     = 30;   // sample window in SYSCLK cycles
         AdcbRegs.ADCSOC6CTL.bit.TRIGSEL   = 5;    // trigger on ePWM1 SOCA/C
 
         //  TEMP2 @ B1
         // ***************************
-        AdcbRegs.ADCSOC7CTL.bit.CHSEL     = 1;    // SOC5 will convert pin B1,
+        AdcbRegs.ADCSOC7CTL.bit.CHSEL     = 1;    // SOC7 will convert pin B1,
         AdcbRegs.ADCSOC7CTL.bit.ACQPS     = 30;   // sample window in SYSCLK cycles
         AdcbRegs.ADCSOC7CTL.bit.TRIGSEL   = 5;    // trigger on ePWM1 SOCA/C
 
         //  TEMP5 @ B2
         // ***************************
-        AdcbRegs.ADCSOC8CTL.bit.CHSEL     = 2;    // SOC5 will convert pin B2,
+        AdcbRegs.ADCSOC8CTL.bit.CHSEL     = 2;    // SOC8 will convert pin B2,
         AdcbRegs.ADCSOC8CTL.bit.ACQPS     = 30;   // sample window in SYSCLK cycles
         AdcbRegs.ADCSOC8CTL.bit.TRIGSEL   = 5;    // trigger on ePWM1 SOCA/C
 
         //  TEMP4 @ B3
         // ***************************
-        AdcbRegs.ADCSOC9CTL.bit.CHSEL     = 3;    // SOC5 will convert pin B3,
+        AdcbRegs.ADCSOC9CTL.bit.CHSEL     = 3;    // SOC9 will convert pin B3,
         AdcbRegs.ADCSOC9CTL.bit.ACQPS     = 30;   // sample window in SYSCLK cycles
         AdcbRegs.ADCSOC9CTL.bit.TRIGSEL   = 5;    // trigger on ePWM1 SOCA/C
 
         //  TEMP7 @ B4
         // ***************************
-        AdcbRegs.ADCSOC10CTL.bit.CHSEL     = 4;    // SOC5 will convert pin B4,
+        AdcbRegs.ADCSOC10CTL.bit.CHSEL     = 4;    // SOC10 will convert pin B4,
         AdcbRegs.ADCSOC10CTL.bit.ACQPS     = 30;   // sample window in SYSCLK cycles
         AdcbRegs.ADCSOC10CTL.bit.TRIGSEL   = 5;    // trigger on ePWM1 SOCA/C
 
         //  TEMP6 @ B5
         // ***************************
-        AdcbRegs.ADCSOC11CTL.bit.CHSEL     = 5;    // SOC5 will convert pin B5,
+        AdcbRegs.ADCSOC11CTL.bit.CHSEL     = 5;    // SOC11 will convert pin B5,
         AdcbRegs.ADCSOC11CTL.bit.ACQPS     = 30;   // sample window in SYSCLK cycles
         AdcbRegs.ADCSOC11CTL.bit.TRIGSEL   = 5;    // trigger on ePWM1 SOCA/C
-		EDIS;
+
+    /* C Group */
+
+        // ? @ C0
+            // ********************************
+        AdccRegs.ADCSOC0CTL.bit.CHSEL     = 0;    // SOC0 will convert pin A0
+        AdccRegs.ADCSOC0CTL.bit.ACQPS     = 30;   // sample window in SYSCLK cycles
+        AdccRegs.ADCSOC0CTL.bit.TRIGSEL   = 5;    // trigger on ePWM1 SOCA/C
+
+        // ? @ C1
+        // ********************************
+        AdccRegs.ADCSOC1CTL.bit.CHSEL     = 1;    // SOC1 will convert pin A1
+        AdccRegs.ADCSOC1CTL.bit.ACQPS     = 30;   // sample window in SYSCLK cycles
+        AdccRegs.ADCSOC1CTL.bit.TRIGSEL   = 5;    // trigger on ePWM1 SOCA/C
+
+        // ? @ C2
+        // ********************************
+        AdccRegs.ADCSOC2CTL.bit.CHSEL     = 2;    // SOC2 will convert pin A2
+        AdccRegs.ADCSOC2CTL.bit.ACQPS     = 30;   // sample window in SYSCLK cycles
+        AdccRegs.ADCSOC2CTL.bit.TRIGSEL   = 5;    // trigger on ePWM1 SOCA/C
+
+        // ? @ C3
+        // ********************************
+        AdccRegs.ADCSOC3CTL.bit.CHSEL     = 3;    // SOC3 will convert pin A3
+        AdccRegs.ADCSOC3CTL.bit.ACQPS     = 30;   // sample window in SYSCLK cycles
+        AdccRegs.ADCSOC3CTL.bit.TRIGSEL   = 5;    // trigger on ePWM1 SOCA/C
+
+        // ? @ C4
+        // ***************************
+        AdccRegs.ADCSOC4CTL.bit.CHSEL     = 4;    // SOC4 will convert pin A4,
+        AdccRegs.ADCSOC4CTL.bit.ACQPS     = 30;   // sample window in SYSCLK cycles
+        AdccRegs.ADCSOC4CTL.bit.TRIGSEL   = 5;    // trigger on ePWM1 SOCA/C
+
+        // ? @ C5
+        // ***************************
+        AdccRegs.ADCSOC5CTL.bit.CHSEL     = 5;    // SOC5 will convert pin A5,
+        AdccRegs.ADCSOC5CTL.bit.ACQPS     = 30;   // sample window in SYSCLK cycles
+        AdccRegs.ADCSOC5CTL.bit.TRIGSEL   = 5;    // trigger on ePWM1 SOCA/C
+
+    /* D Group */
+
+        // ? @ D0
+        // ***************************
+        AdccRegs.ADCSOC6CTL.bit.CHSEL     = 0;    // SOC6 will convert pin B0,
+        AdccRegs.ADCSOC6CTL.bit.ACQPS     = 30;   // sample window in SYSCLK cycles
+        AdcdRegs.ADCSOC6CTL.bit.TRIGSEL   = 5;    // trigger on ePWM1 SOCA/C
+
+        // ? @ D1
+        // ***************************
+        AdcdRegs.ADCSOC7CTL.bit.CHSEL     = 1;    // SOC7 will convert pin B1,
+        AdcdRegs.ADCSOC7CTL.bit.ACQPS     = 30;   // sample window in SYSCLK cycles
+        AdcdRegs.ADCSOC7CTL.bit.TRIGSEL   = 5;    // trigger on ePWM1 SOCA/C
+
+        // ? @ D2
+        // ***************************
+        AdcdRegs.ADCSOC8CTL.bit.CHSEL     = 2;    // SOC8 will convert pin B2,
+        AdcdRegs.ADCSOC8CTL.bit.ACQPS     = 30;   // sample window in SYSCLK cycles
+        AdcdRegs.ADCSOC8CTL.bit.TRIGSEL   = 5;    // trigger on ePWM1 SOCA/C
+
+        // ? @ D3
+        // ***************************
+        AdcdRegs.ADCSOC9CTL.bit.CHSEL     = 3;    // SOC9 will convert pin B3,
+        AdcdRegs.ADCSOC9CTL.bit.ACQPS     = 30;   // sample window in SYSCLK cycles
+        AdcdRegs.ADCSOC9CTL.bit.TRIGSEL   = 5;    // trigger on ePWM1 SOCA/C
+
+        // ? @ D4
+        // ***************************
+        AdcdRegs.ADCSOC10CTL.bit.CHSEL     = 4;    // SOC10 will convert pin B4,
+        AdcdRegs.ADCSOC10CTL.bit.ACQPS     = 30;   // sample window in SYSCLK cycles
+        AdcdRegs.ADCSOC10CTL.bit.TRIGSEL   = 5;    // trigger on ePWM1 SOCA/C
+
+        // ? @ D5
+        // ***************************
+        AdcdRegs.ADCSOC11CTL.bit.CHSEL     = 5;    // SOC11 will convert pin B5,
+        AdcdRegs.ADCSOC11CTL.bit.ACQPS     = 30;   // sample window in SYSCLK cycles
+        AdcdRegs.ADCSOC11CTL.bit.TRIGSEL   = 5;    // trigger on ePWM1 SOCA/C
+        EDIS;
+
+    EDIS;
 }
 
 
@@ -237,7 +320,7 @@ void ADC_initialize(void)
             case ADC_ADCC:
                 AdccRegs.ADCCTL2.bit.RESOLUTION = resolution;
                 AdccRegs.ADCCTL2.bit.SIGNALMODE = signalmode;
-                AdccRegs.ADCOFFTRIM.all = adcOffsetTrim;
+                AdcdRegs.ADCOFFTRIM.all = adcOffsetTrim;
                 if(ADC_RESOLUTION_12BIT == resolution)
                 {
                     //
