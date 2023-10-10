@@ -117,9 +117,34 @@ void InitSpi(void)
 //               Only one GPIO pin should be enabled for SPISTE  operation.
 //               Comment out other unwanted lines.
 //
-void InitSpiGpio()
-{
-   InitSpicGpio();
+//void InitSpiGpio()
+//{
+//   InitSpicGpio();
+//}
+
+void InitSpicGpio(){
+
+    EALLOW;
+
+    GpioCtrlRegs.GPDPUD.bit.GPIO100 = 0;  // Enable pull-up on GPIO54 (SPISIMOA)
+    GpioCtrlRegs.GPDQSEL1.bit.GPIO100 = 3;  // Asynch input GPIO54 (SPISIMOA)
+    GpioCtrlRegs.GPDMUX1.bit.GPIO100 = 1; // Configure GPIO54 as SPISIMOA
+
+    //    GPIO_SetupPinOptions(56, GPIO_PULLUP, GPIO_ASYNC);
+    //    GPIO_SetupPinMux(56,GPIO_MUX_CPU2,0);
+    GpioCtrlRegs.GPDPUD.bit.GPIO102 = 0;  // Enable pull-up on GPIO56 (SPICLKA)
+    GpioCtrlRegs.GPDQSEL1.bit.GPIO102 = 3; // Asynch input GPIO55 (SPICLKA)
+    GpioCtrlRegs.GPDMUX1.bit.GPIO102 = 1; // Configure GPIO56 as SPICLKA
+
+    // SPISTEA for SPI with D/A chip MAX5307
+    GPIO_SetupPinOptions(103, GPIO_OUTPUT, GPIO_SYNC);
+    #if NUMBER_OF_DSP_CORES == 1
+        GPIO_SetupPinMux(103,GPIO_MUX_CPU1,0);
+    #else
+        GPIO_SetupPinMux(103,GPIO_MUX_CPU2,0);
+    #endif
+
+    EDIS;
 }
 
 //
@@ -273,6 +298,7 @@ void InitHighSpeedSpiGpio()
     GpioCtrlRegs.GPCMUX1.bit.GPIO70 = 3; // Configure GPIO70 as SPISOMIC
     GpioCtrlRegs.GPCMUX1.bit.GPIO71 = 3; // Configure GPIO71 as SPICLKC
     GpioCtrlRegs.GPCMUX1.bit.GPIO72 = 3; // Configure GPIO72 as SPISTEC
+
 
     EDIS;
 }

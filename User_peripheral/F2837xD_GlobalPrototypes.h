@@ -58,8 +58,9 @@ extern void InitSysPll(Uint16 clock_source, Uint16 imult, Uint16 fmult,
 extern void InitAuxPll(Uint16 clock_source, Uint16 imult, Uint16 fmult,
                        Uint16 divsel);
 // serial communication (SCI and SPI)
+extern void InitHighSpeedSpiGpio(void);
 extern void InitSpi(void);
-extern void InitSpiGpio(void);
+//extern void InitSpiGpio(void);
 extern void InitSpiaGpio(void);
 extern void InitSpicGpio(void);
 extern void InitSci(void);

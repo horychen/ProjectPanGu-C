@@ -128,11 +128,14 @@ void main(void){
         DevCfgRegs.CPUSEL5.bit.SCI_C = 1; // assign sci-c to cpu2
         EDIS;
 
-        InitHighSpeedSpiGpio();
+        // Í¬²½£¡£¡£¡£¡£¡
+        //InitHighSpeedSpiGpio();
+        InitSpicGpio();
         //InitSpiaGpio();
-
         //InitSpi(); // this is moved to CPU02
 
+
+        // Òì²½£¡£¡£¡£¡£¡
         InitScicGpio();
         //InitSci(); // this is moved to CPU02
 

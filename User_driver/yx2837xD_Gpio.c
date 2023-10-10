@@ -526,13 +526,15 @@ void Gpio_initialize(void)
     // SPI is init'd in CPU02 (see F2837xD_Sci.c)
 
 
-    // SPISTEA for SPI with D/A chip MAX5307
-    GPIO_SetupPinOptions(61, GPIO_OUTPUT, GPIO_SYNC);
-    #if NUMBER_OF_DSP_CORES == 1
-        GPIO_SetupPinMux(61,GPIO_MUX_CPU1,0);
-    #else
-        GPIO_SetupPinMux(61,GPIO_MUX_CPU2,0);
-    #endif
+    // 初始化移到了SPI.C文件中，这边别搞了，231010，cjh
+        // SPISTEA for SPI with D/A chip MAX5307
+        //    GPIO_SetupPinOptions(61, GPIO_OUTPUT, GPIO_SYNC);
+        //    #if NUMBER_OF_DSP_CORES == 1
+        //        GPIO_SetupPinMux(61,GPIO_MUX_CPU1,0);
+        //    #else
+        //        GPIO_SetupPinMux(61,GPIO_MUX_CPU2,0);
+        //    #endif
+
 
     /* 双核配置例子：
     // Give GPIO31 Control to CPU02
