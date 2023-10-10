@@ -1,5 +1,6 @@
 #include <All_Definition.h>
 st_axis Axis;
+int digital_virtual_button = 0;
 
 #ifdef _MMDv1 // mmlab drive version 1
     #define OFFSET_VDC 0   // ADC0
@@ -111,8 +112,10 @@ void main(void){
     // 4.3 Assign peripherals to CPU02
     /* SPI and SCI */
     #if NUMBER_OF_DSP_CORES == 1
-        InitSpiaGpio();
+        //InitSpiaGpio();
+        InitSpicGpio();
         InitSpi();
+
         InitSciGpio();
         InitSci();
     #elif NUMBER_OF_DSP_CORES == 2
@@ -120,13 +123,16 @@ void main(void){
         // 初始化SPI，用于与DAC芯片MAX5307通讯。
         EALLOW;
         DevCfgRegs.CPUSEL6.bit.SPI_A = 1; // assign spi-a to cpu2
-        DevCfgRegs.CPUSEL5.bit.SCI_C = 1; // assign sci-ca to cpu2
+        DevCfgRegs.CPUSEL6.bit.SPI_C = 1; // assign spi-c to cpu2
+
+        DevCfgRegs.CPUSEL5.bit.SCI_C = 1; // assign sci-c to cpu2
         EDIS;
 
         InitHighSpeedSpiGpio();
         //InitSpiaGpio();
 
         //InitSpi(); // this is moved to CPU02
+
         InitScicGpio();
         //InitSci(); // this is moved to CPU02
 
@@ -474,9 +480,12 @@ void measurement(){
     Axis.iuvw[0]=((REAL)(AdcaResultRegs.ADCRESULT2 ) - Axis.adc_offset[1]) * Axis.adc_scale[1];
     Axis.iuvw[1]=((REAL)(AdcaResultRegs.ADCRESULT3 ) - Axis.adc_offset[2]) * Axis.adc_scale[2];
     Axis.iuvw[2]=((REAL)(AdcaResultRegs.ADCRESULT1 ) - Axis.adc_offset[3]) * Axis.adc_scale[3];
-    Axis.iuvw[3]=((REAL)(AdcbResultRegs.ADCRESULT11) - Axis.adc_offset[4]) * Axis.adc_scale[4]; // AD_scale_U2; offsetD2
-    Axis.iuvw[4]=((REAL)(AdcbResultRegs.ADCRESULT9 ) - Axis.adc_offset[5]) * Axis.adc_scale[5]; // AD_scale_V2; offsetB2
-    Axis.iuvw[5]=((REAL)(AdcbResultRegs.ADCRESULT8 ) - Axis.adc_offset[6]) * Axis.adc_scale[6]; // AD_scale_W2; offsetA2
+//    Axis.iuvw[3]=((REAL)(AdcbResultRegs.ADCRESULT11) - Axis.adc_offset[4]) * Axis.adc_scale[4]; // AD_scale_U2; offsetD2
+//    Axis.iuvw[4]=((REAL)(AdcbResultRegs.ADCRESULT9 ) - Axis.adc_offset[5]) * Axis.adc_scale[5]; // AD_scale_V2; offsetB2
+//    Axis.iuvw[5]=((REAL)(AdcbResultRegs.ADCRESULT8 ) - Axis.adc_offset[6]) * Axis.adc_scale[6]; // AD_scale_W2; offsetA2
+    Axis.iuvw[3]=((REAL)(AdcbResultRegs.ADCRESULT7 ) - Axis.adc_offset[4]) * Axis.adc_scale[4]; // AD_scale_U2; offsetD2
+    Axis.iuvw[4]=((REAL)(AdcbResultRegs.ADCRESULT8 ) - Axis.adc_offset[5]) * Axis.adc_scale[5]; // AD_scale_V2; offsetB2
+    Axis.iuvw[5]=((REAL)(AdcbResultRegs.ADCRESULT9 ) - Axis.adc_offset[6]) * Axis.adc_scale[6]; // AD_scale_W2; offsetA2
 
     // 线电压测量（基于占空比和母线电压）
     //voltage_measurement_based_on_eCAP();
@@ -600,9 +609,31 @@ void PanGuMainISR(void){
         write_DAC_buffer();
     #endif
 
-    do something
+    static long int ii = 0;
+    if(++ii%5000 == 0){
+        //        EPwm1Regs.CMPA.bit.CMPA = CTRL.svgen1.Ta*50000000*CL_TS;
+        //        EPwm2Regs.CMPA.bit.CMPA = CTRL.svgen1.Tb*50000000*CL_TS;
+        //        EPwm3Regs.CMPA.bit.CMPA = CTRL.svgen1.Tc*50000000*CL_TS;
+        //        EPwm4Regs.CMPA.bit.CMPA = CTRL.svgen2.Ta*50000000*CL_TS;
+        //        EPwm5Regs.CMPA.bit.CMPA = CTRL.svgen2.Tb*50000000*CL_TS;
 
+        if(EPwm1Regs.CMPA.bit.CMPA==5000){
+            EPwm1Regs.CMPA.bit.CMPA = 0;
+        }else{
+            EPwm1Regs.CMPA.bit.CMPA = 5000;
+        }
+    }
+
+    static long int jj = 0;
+    if(++jj%10000 == 0){
+        if(EPwm2Regs.CMPA.bit.CMPA==5000){
+            EPwm2Regs.CMPA.bit.CMPA = 0;
+        }else{
+            EPwm2Regs.CMPA.bit.CMPA = 5000;
+        }
+    }
     return;
+
 
     #if ENABLE_ECAP
         do_enhanced_capture();
@@ -611,6 +642,7 @@ void PanGuMainISR(void){
     // 采样，包括DSP中的ADC采样等
     // DELAY_US(2); // wait for adc conversion TODO: check adc eoc flag?
     measurement();
+
 
     if(!Axis.FLAG_ENABLE_PWM_OUTPUT){
 
@@ -695,6 +727,7 @@ void PanGuMainISR(void){
         #endif
     }
 }
+
 Uint64 EPWM1IntCount=0;
 __interrupt void EPWM1ISR(void){
     EPWM1IntCount += 1;

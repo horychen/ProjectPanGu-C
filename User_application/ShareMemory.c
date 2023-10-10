@@ -35,17 +35,23 @@ extern REAL normalizer[3];
 extern REAL hall_rotating_direction;
 extern REAL eddy_displacement[2];
 extern REAL used_theta_d_elec;
+REAL time;
 
 void write_DAC_buffer(){
 if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
 
     // 所有曾经看过的变量都在列在这里，记得有效范围是 [-1, 1]。
-    Axis.dac_watch[0] = Axis.iuvw[2]*0.2;
+    Axis.dac_watch[0] = Axis.iuvw[0]*0.2;
     Axis.dac_watch[1] = Axis.iuvw[1]*0.2;
-    Axis.dac_watch[2] = CTRL.I->iab[0]*0.2;
-    Axis.dac_watch[3] = CTRL.I->iab[1]*0.2;
-    Axis.dac_watch[4] = CTRL.O->uab_cmd[0]*0.001;
-    Axis.dac_watch[5] = CTRL.O->uab_cmd[1]*0.001;
+    Axis.dac_watch[2] = Axis.iuvw[2]*0.2;
+    Axis.dac_watch[3] = Axis.iuvw[3]*0.2;
+    Axis.dac_watch[4] = Axis.iuvw[4]*0.2;
+    Axis.dac_watch[5] = Axis.iuvw[5]*0.2;
+
+//    Axis.dac_watch[2] = CTRL.I->iab[0]*0.2;
+//    Axis.dac_watch[3] = CTRL.I->iab[1]*0.2;
+//    Axis.dac_watch[4] = CTRL.O->uab_cmd[0]*0.001;
+//    Axis.dac_watch[5] = CTRL.O->uab_cmd[1]*0.001;
     Axis.dac_watch[10] = FE.htz.psi_2_ampl*0.25;
     Axis.dac_watch[11] = FE.htz.psi_2_ampl_lpf*0.25;
     Axis.dac_watch[12] = FE.htz.psi_2[0]*0.25;
@@ -89,7 +95,7 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
         Axis.channels[3] = 41;
         Axis.channels[4] = 21;
         Axis.channels[5] = 22;
-    }else if(Axis.channels_preset==8){Axis.channels_preset=0;
+    }else if(Axis.channels_preset==2){Axis.channels_preset=0;
         /* Marino 2005 Sensorless Control */
         Axis.channels[0] = 2; //12;
         Axis.channels[1] = 3;//4; //13;
@@ -97,27 +103,45 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
         Axis.channels[3] = 41;
         Axis.channels[4] = 21;
         Axis.channels[5] = 22;
-    }else if(Axis.channels_preset==2){Axis.channels_preset=0;
-            /* Marino 2005 Sensorless Control */
-            Axis.channels[0] = 2; //12;
-            Axis.channels[1] = 3;//4; //13;
-            Axis.channels[2] = 12;//28;
-            Axis.channels[3] = 13;
-            Axis.channels[4] = 21;
-            Axis.channels[5] = 22;
-            Axis.channels[6] = 41;
-            Axis.channels[7] = 41;
+    }else if(Axis.channels_preset==3){Axis.channels_preset=0;
+        /* Marino 2005 Sensorless Control */
+        Axis.channels[0] = 2; //12;
+        Axis.channels[1] = 3;//4; //13;
+        Axis.channels[2] = 12;//28;
+        Axis.channels[3] = 13;
+        Axis.channels[4] = 21;
+        Axis.channels[5] = 22;
+        Axis.channels[6] = 41;
+        Axis.channels[7] = 41;
+    }else if(Axis.channels_preset==4){Axis.channels_preset=0;
+        Axis.channels[0] = 3;
+        Axis.channels[1] = 4;
+        Axis.channels[2] = 5;
+        Axis.channels[3] = 4;
+        Axis.channels[4] = 4;
+        Axis.channels[5] = 5;
+        Axis.channels[6] = 3;
+        Axis.channels[7] = 4;
     }
 
     // 八通道DAC输出，请修改Axis.channels数组来确定具体输出哪些Axis.dac_watch数组中的变量。
-    Write.dac_buffer[0] = Axis.dac_watch[Axis.channels[0]] + Axis.dac_offset[0];
-    Write.dac_buffer[1] = Axis.dac_watch[Axis.channels[1]] + Axis.dac_offset[1];
-    Write.dac_buffer[2] = Axis.dac_watch[Axis.channels[2]] + Axis.dac_offset[2];
-    Write.dac_buffer[3] = Axis.dac_watch[Axis.channels[3]] + Axis.dac_offset[3];
-    Write.dac_buffer[4] = Axis.dac_watch[Axis.channels[4]] + Axis.dac_offset[4];
-    Write.dac_buffer[5] = Axis.dac_watch[Axis.channels[5]] + Axis.dac_offset[5];
-    Write.dac_buffer[6] = Axis.dac_watch[Axis.channels[6]] + Axis.dac_offset[6];
-    Write.dac_buffer[7] = Axis.dac_watch[Axis.channels[7]] + Axis.dac_offset[7];
+//    Write.dac_buffer[0] = Axis.dac_watch[Axis.channels[0]] + Axis.dac_offset[0];
+//    Write.dac_buffer[1] = Axis.dac_watch[Axis.channels[1]] + Axis.dac_offset[1];
+//    Write.dac_buffer[2] = Axis.dac_watch[Axis.channels[2]] + Axis.dac_offset[2];
+//    Write.dac_buffer[3] = Axis.dac_watch[Axis.channels[3]] + Axis.dac_offset[3];
+//    Write.dac_buffer[4] = Axis.dac_watch[Axis.channels[4]] + Axis.dac_offset[4];
+//    Write.dac_buffer[5] = Axis.dac_watch[Axis.channels[5]] + Axis.dac_offset[5];
+//    Write.dac_buffer[6] = Axis.dac_watch[Axis.channels[6]] + Axis.dac_offset[6];
+//    Write.dac_buffer[7] = Axis.dac_watch[Axis.channels[7]] + Axis.dac_offset[7];
+    Write.dac_buffer[0] = sin(CL_TS*time);
+    Write.dac_buffer[1] = cos(CL_TS*time);
+    Write.dac_buffer[2] = sin(CL_TS*time);
+    Write.dac_buffer[3] = cos(CL_TS*time);
+    Write.dac_buffer[4] = sin(CL_TS*time);
+    Write.dac_buffer[5] = cos(CL_TS*time);
+    Write.dac_buffer[6] = sin(CL_TS*time);
+    Write.dac_buffer[7] = cos(CL_TS*time);
+    time += 1;
 
     Axis.dac_time += CL_TS;
     if((Axis.dac_time)<3){
@@ -150,39 +174,43 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
 #elif NUMBER_OF_DSP_CORES == 1
 
     void single_core_dac(){
-        G.DAC_MAX5307_FLAG++;
-        if (G.DAC_MAX5307_FLAG==1)
+        Axis.dac_time += CL_TS;
+        Axis.DAC_MAX5307_FLAG++;
+        if (Axis.DAC_MAX5307_FLAG==1)
         {
-            DAC_MAX5307(1, G.Current_V*0.1 );//71us 10khz
+            DAC_MAX5307(1, sin(CL_TS*Axis.dac_time) ); //71us 10khz
         }
-        if (G.DAC_MAX5307_FLAG==2)
+        if (Axis.DAC_MAX5307_FLAG==2)
         {
-            DAC_MAX5307(2, G.Current_W*0.1 );
+            DAC_MAX5307(2, sin(CL_TS*Axis.dac_time) ); //71us 10khz
         }
-        if (G.DAC_MAX5307_FLAG==3)
+        if (Axis.DAC_MAX5307_FLAG==3)
         {
-            DAC_MAX5307(3, G.Current_W*0.1 );//phase w
+            DAC_MAX5307(3, sin(CL_TS*Axis.dac_time) ); //71us 10khz
         }
-        if (G.DAC_MAX5307_FLAG==4)
+        if (Axis.DAC_MAX5307_FLAG==4)
         {
-            DAC_MAX5307(4, 0.1 );//Id
+            DAC_MAX5307(4, sin(CL_TS*Axis.dac_time) ); //71us 10khz
+            Axis.DAC_MAX5307_FLAG = 1;
         }
-        if (G.DAC_MAX5307_FLAG==5)
+
+        if (Axis.DAC_MAX5307_FLAG==5)
         {
-            DAC_MAX5307(5, 0.1 );
+            DAC_MAX5307(5, sin(CL_TS*Axis.dac_time) ); //71us 10khz
         }
-        if (G.DAC_MAX5307_FLAG==6)
+        if (Axis.DAC_MAX5307_FLAG==6)
         {
-            DAC_MAX5307(6, 0.1 );//iq
-            G.DAC_MAX5307_FLAG=2;//4 means from 3 to 6;
+            DAC_MAX5307(6, sin(CL_TS*Axis.dac_time) ); //71us 10khz
+            //Axis.DAC_MAX5307_FLAG=2;//4 means from 3 to 6;
         }
-        if (G.DAC_MAX5307_FLAG==7)
+        if (Axis.DAC_MAX5307_FLAG==7)
         {
-            DAC_MAX5307(7, 0.1 );
+            DAC_MAX5307(7, sin(CL_TS*Axis.dac_time) ); //71us 10khz
         }
-        if (G.DAC_MAX5307_FLAG==8)
+        if (Axis.DAC_MAX5307_FLAG==8)
         {
-            DAC_MAX5307(8, 0.1 );
+            DAC_MAX5307(8, sin(CL_TS*Axis.dac_time) ); //71us 10khz
+            Axis.DAC_MAX5307_FLAG = 1;
         }
     }
 #endif

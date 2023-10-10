@@ -57,48 +57,49 @@ void InitSpi(void)
     // Clock polarity (0 == rising, 1 == falling)
     // 16-bit character
     // Disnable loop-back
-    SpiaRegs.SPICCR.bit.SPISWRESET = 0;
-    SpiaRegs.SPICCR.bit.CLKPOLARITY = 0;
-    SpiaRegs.SPICCR.bit.SPICHAR = (16-1);
-    SpiaRegs.SPICCR.bit.SPILBK = 0;
+    SpicRegs.SPICCR.bit.SPISWRESET = 0;
+    SpicRegs.SPICCR.bit.CLKPOLARITY = 0;
+    SpicRegs.SPICCR.bit.SPICHAR = (16-1);
+    SpicRegs.SPICCR.bit.SPILBK = 0;
 
-    //SpiaRegs.SPICTL.all =0x0006;    // CLOCK PHASE=0, Master Mode, enable talk, and SPI int disabled.
+
+    //SpicRegs.SPICTL.all =0x0006;    // CLOCK PHASE=0, Master Mode, enable talk, and SPI int disabled.
     // Enable master (0 == slave, 1 == master)
     // Enable transmission (Talk)
     // Clock phase (0 == normal, 1 == delayed)
     // SPI interrupts are disabled
-    SpiaRegs.SPICTL.bit.MASTER_SLAVE = 1;
-    SpiaRegs.SPICTL.bit.TALK = 1;
-    SpiaRegs.SPICTL.bit.CLK_PHASE = 0;
-    SpiaRegs.SPICTL.bit.SPIINTENA = 0;
+    SpicRegs.SPICTL.bit.MASTER_SLAVE = 1;
+    SpicRegs.SPICTL.bit.TALK = 1;
+    SpicRegs.SPICTL.bit.CLK_PHASE = 0;
+    SpicRegs.SPICTL.bit.SPIINTENA = 0;
 
     // Set the baud rate
-    SpiaRegs.SPIBRR.bit.SPI_BIT_RATE = SPI_BRR;
-    //SpiaRegs.SPIBRR = 0x1;           // SPI Baud Rate = LSPCLK/(SPIBRR+1), 根据书上公式，LSPCLK=37.5MHz so=37.5/4=9.375MHz
+    SpicRegs.SPIBRR.bit.SPI_BIT_RATE = SPI_BRR;
+    //SpicRegs.SPIBRR = 0x1;           // SPI Baud Rate = LSPCLK/(SPIBRR+1), 根据书上公式，LSPCLK=37.5MHz so=37.5/4=9.375MHz
 
-    SpiaRegs.SPICCR.all = 0x008F;    // 在改变设置前将RESET清零，并在设置结束后将其置位
+    SpicRegs.SPICCR.all = 0x008F;    // 在改变设置前将RESET清零，并在设置结束后将其置位
 
     // Set FREE bit
     // Halting on a breakpoint will not halt the SPI
-    SpiaRegs.SPIPRI.bit.FREE = 1;   // breakpoints don't disturb xmission
+    SpicRegs.SPIPRI.bit.FREE = 1;   // breakpoints don't disturb xmission
 
     //GpioCtrlRegs.GPBMUX2.bit.GPIO57 = 0; // Configure GPIO57 as C\S\ signal for MAX5307
     // 唤醒MAX5307
-    GpioDataRegs.GPBSET.bit.GPIO57 = 1;             //cs=1
+    GpioDataRegs.GPDSET.bit.GPIO103 = 1;             //cs=1
     NOP;
     NOP;
-    GpioDataRegs.GPBCLEAR.bit.GPIO57 = 1;           //cs=0
+    GpioDataRegs.GPDCLEAR.bit.GPIO103 = 1;           //cs=0
 
-    SpiaRegs.SPITXBUF=0xfffc;                       //MAX5307唤醒字符
-    while(SpiaRegs.SPISTS.bit.INT_FLAG!=1){NOP;}    // 数据传完后INT_FLAG会置位
+    SpicRegs.SPITXBUF=0xfffc;                       //MAX5307唤醒字符
+    while(SpicRegs.SPISTS.bit.INT_FLAG!=1){NOP;}    // 数据传完后INT_FLAG会置位
 
-    GpioDataRegs.GPBSET.bit.GPIO57 = 1;             //cs=1为下一次做准备
+    GpioDataRegs.GPDSET.bit.GPIO103 = 1;             //cs=1为下一次做准备
 
-    SpiaRegs.SPICCR.bit.SPISWRESET=0;               //通过reset 清楚SPI中断标志INT_FLAG
+    SpicRegs.SPICCR.bit.SPISWRESET=0;               //通过reset 清楚SPI中断标志INT_FLAG
     NOP;
     NOP;
     // Release the SPI from reset
-    SpiaRegs.SPICCR.bit.SPISWRESET=1;               // Relinquish SPI from Reset
+    SpicRegs.SPICCR.bit.SPISWRESET=1;               // Relinquish SPI from Reset
 
 }
 
@@ -118,7 +119,7 @@ void InitSpi(void)
 //
 void InitSpiGpio()
 {
-   InitSpiaGpio();
+   InitSpicGpio();
 }
 
 //
@@ -145,26 +146,26 @@ void InitSpiaGpio()
 
 //    GPIO_SetupPinOptions(54, GPIO_PULLUP, GPIO_ASYNC);
 //    GPIO_SetupPinMux(54,GPIO_MUX_CPU2,0);
-    GpioCtrlRegs.GPBPUD.bit.GPIO54 = 0;  // Enable pull-up on GPIO54 (SPISIMOA)
-    GpioCtrlRegs.GPBQSEL2.bit.GPIO54 = 3;  // Asynch input GPIO54 (SPISIMOA)
-    GpioCtrlRegs.GPBMUX2.bit.GPIO54 = 1; // Configure GPIO54 as SPISIMOA
+    GpioCtrlRegs.GPBPUD.bit.GPIO58 = 0;  // Enable pull-up on GPIO54 (SPISIMOA)
+    GpioCtrlRegs.GPBQSEL2.bit.GPIO58 = 3;  // Asynch input GPIO54 (SPISIMOA)
+    GpioCtrlRegs.GPBMUX2.bit.GPIO58 = 1; // Configure GPIO54 as SPISIMOA
 
-    //GpioCtrlRegs.GPBPUD.bit.GPIO55 = 0;  // Enable pull-up on GPIO55 (SPISOMIA)
-    //GpioCtrlRegs.GPBQSEL2.bit.GPIO55 = 3;  // Asynch input GPIO55 (SPISOMIA)
-    //GpioCtrlRegs.GPBMUX2.bit.GPIO55 = 1; // Configure GPIO55 as SPISOMIA
+    //GpioCtrlRegs.GPBPUD.bit.GPIO59 = 0;  // Enable pull-up on GPIO55 (SPISOMIA)
+    //GpioCtrlRegs.GPBQSEL2.bit.GPIO59 = 3;  // Asynch input GPIO55 (SPISOMIA)
+    //GpioCtrlRegs.GPBMUX2.bit.GPIO59 = 1; // Configure GPIO55 as SPISOMIA
 
 //    GPIO_SetupPinOptions(56, GPIO_PULLUP, GPIO_ASYNC);
 //    GPIO_SetupPinMux(56,GPIO_MUX_CPU2,0);
-    GpioCtrlRegs.GPBPUD.bit.GPIO56 = 0;  // Enable pull-up on GPIO56 (SPICLKA)
-    GpioCtrlRegs.GPBQSEL2.bit.GPIO56 = 3; // Asynch input GPIO55 (SPICLKA)
-    GpioCtrlRegs.GPBMUX2.bit.GPIO56 = 1; // Configure GPIO56 as SPICLKA
+    GpioCtrlRegs.GPBPUD.bit.GPIO60 = 0;  // Enable pull-up on GPIO56 (SPICLKA)
+    GpioCtrlRegs.GPBQSEL2.bit.GPIO60 = 3; // Asynch input GPIO55 (SPICLKA)
+    GpioCtrlRegs.GPBMUX2.bit.GPIO60 = 1; // Configure GPIO56 as SPICLKA
 
     // SPISTEA for SPI with D/A chip MAX5307
-    GPIO_SetupPinOptions(57, GPIO_OUTPUT, GPIO_SYNC);
+    GPIO_SetupPinOptions(61, GPIO_OUTPUT, GPIO_SYNC);
     #if NUMBER_OF_DSP_CORES == 1
-        GPIO_SetupPinMux(57,GPIO_MUX_CPU1,0);
+        GPIO_SetupPinMux(61,GPIO_MUX_CPU1,0);
     #else
-        GPIO_SetupPinMux(57,GPIO_MUX_CPU2,0);
+        GPIO_SetupPinMux(61,GPIO_MUX_CPU2,0);
     #endif
     //GpioCtrlRegs.GPBPUD.bit.GPIO57 = 0;  // Enable pull-up on GPIO57 (SPISTEA)
     //GpioCtrlRegs.GPBQSEL2.bit.GPIO57 = 3; // Asynch input GPIO56 (SPISTEA)

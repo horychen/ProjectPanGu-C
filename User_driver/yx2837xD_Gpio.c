@@ -497,11 +497,16 @@ void Gpio_initialize(void)
 	GPIO_SetupPinOptions(26, GPIO_INPUT, GPIO_SYNC);//
 	GPIO_SetupPinMux(26,0,0);//
 
-	// DSP_ENPWM
-	GPIO_SetupPinOptions(105, GPIO_OUTPUT, GPIO_SYNC);//
-	GPIO_SetupPinMux(105,0,0);//
-    GPIO_SetupPinOptions(27, GPIO_OUTPUT, GPIO_SYNC);//
-    GPIO_SetupPinMux(27,0,0);//
+//	// DSP_ENPWM
+//	GPIO_SetupPinOptions(105, GPIO_OUTPUT, GPIO_SYNC);//
+//	GPIO_SetupPinMux(105,0,0);//
+//    GPIO_SetupPinOptions(27, GPIO_OUTPUT, GPIO_SYNC);//
+//    GPIO_SetupPinMux(27,0,0);//
+    // DSP_ENPWM
+    GPIO_SetupPinOptions(108, GPIO_OUTPUT, GPIO_SYNC);//
+    GPIO_SetupPinMux(108,0,0);//
+    GPIO_SetupPinOptions(93, GPIO_OUTPUT, GPIO_SYNC);//
+    GPIO_SetupPinMux(93,0,0);//
 
     // Inverter_error signal
 	GPIO_SetupPinOptions(104, GPIO_INPUT, GPIO_SYNC);//
