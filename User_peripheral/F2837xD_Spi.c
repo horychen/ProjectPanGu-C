@@ -23,7 +23,7 @@
 // BRR          = (LSPCLK freq / SPI CLK freq) - 1
 //
 #if CPU_FRQ_200MHZ
-//#define SPI_BRR        ((200E6 / 4) / 500E3) - 1
+//#define SPI_BRR        ((200E6 / 4) / 500E3) - 1 // 用这个BRR也能跑，就是SPI输出的频率就是降低了大概十倍吧……
 #define SPI_BRR        ((200E6 / 4) / 5E6) - 1 // 12.5 MHz for high speed SPI
 #endif
 
