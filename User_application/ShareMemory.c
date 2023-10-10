@@ -35,7 +35,7 @@ extern REAL normalizer[3];
 extern REAL hall_rotating_direction;
 extern REAL eddy_displacement[2];
 extern REAL used_theta_d_elec;
-REAL time;
+long int REAL counter;
 
 void write_DAC_buffer(){
 if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
@@ -133,15 +133,15 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
 //    Write.dac_buffer[5] = Axis.dac_watch[Axis.channels[5]] + Axis.dac_offset[5];
 //    Write.dac_buffer[6] = Axis.dac_watch[Axis.channels[6]] + Axis.dac_offset[6];
 //    Write.dac_buffer[7] = Axis.dac_watch[Axis.channels[7]] + Axis.dac_offset[7];
-    Write.dac_buffer[0] = sin(CL_TS*time);
-    Write.dac_buffer[1] = cos(CL_TS*time);
-    Write.dac_buffer[2] = sin(CL_TS*time);
-    Write.dac_buffer[3] = cos(CL_TS*time);
-    Write.dac_buffer[4] = sin(CL_TS*time);
-    Write.dac_buffer[5] = cos(CL_TS*time);
-    Write.dac_buffer[6] = sin(CL_TS*time);
-    Write.dac_buffer[7] = cos(CL_TS*time);
-    time += 1;
+    Write.dac_buffer[0] = sin(CL_TS*counter);
+    Write.dac_buffer[1] = cos(CL_TS*counter);
+    Write.dac_buffer[2] = sin(CL_TS*counter);
+    Write.dac_buffer[3] = cos(CL_TS*counter);
+    Write.dac_buffer[4] = sin(CL_TS*counter);
+    Write.dac_buffer[5] = cos(CL_TS*counter);
+    Write.dac_buffer[6] = sin(CL_TS*counter);
+    Write.dac_buffer[7] = cos(CL_TS*counter);
+    counter += 1;
 
     Axis.dac_time += CL_TS;
     if((Axis.dac_time)<3){
@@ -173,51 +173,67 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
 
 #elif NUMBER_OF_DSP_CORES == 1
 
+    float temp = 0.0;
     void single_core_dac(){
         Axis.dac_time += CL_TS;
         Axis.DAC_MAX5307_FLAG++;
 
-
-
-        if (Axis.DAC_MAX5307_FLAG==1)
-        {
-            DAC_MAX5307(1, sin(CL_TS*Axis.dac_time) ); //71us 10khz
-        }
-        if (Axis.DAC_MAX5307_FLAG==2)
-        {
-            DAC_MAX5307(2, sin(CL_TS*Axis.dac_time) ); //71us 10khz
-        }
-        if (Axis.DAC_MAX5307_FLAG==3)
-        {
-            DAC_MAX5307(3, sin(CL_TS*Axis.dac_time) ); //71us 10khz
-        }
-        if (Axis.DAC_MAX5307_FLAG==4)
-        {
-            DAC_MAX5307(4, sin(CL_TS*Axis.dac_time) ); //71us 10khz
-            Axis.DAC_MAX5307_FLAG = 1;
-        }
-
-
-
-        if (Axis.DAC_MAX5307_FLAG==5)
-        {
-            DAC_MAX5307(5, sin(CL_TS*Axis.dac_time) ); //71us 10khz
-        }
-        if (Axis.DAC_MAX5307_FLAG==6)
-        {
-            DAC_MAX5307(6, sin(CL_TS*Axis.dac_time) ); //71us 10khz
-            //Axis.DAC_MAX5307_FLAG=2;//4 means from 3 to 6;
-        }
-        if (Axis.DAC_MAX5307_FLAG==7)
-        {
-            DAC_MAX5307(7, sin(CL_TS*Axis.dac_time) ); //71us 10khz
-        }
-        if (Axis.DAC_MAX5307_FLAG==8)
-        {
-            DAC_MAX5307(8, sin(CL_TS*Axis.dac_time) ); //71us 10khz
-            Axis.DAC_MAX5307_FLAG = 1;
-        }
+        temp = sin(Axis.dac_time);
+        DAC_MAX5307(1, temp ); //71us 10khz
+        DAC_MAX5307(2, temp  ); //71us 10khz
+        DAC_MAX5307(3, temp  ); //71us 10khz
+        DAC_MAX5307(4, temp  ); //71us 10khz
+        DAC_MAX5307(5, temp  ); //71us 10khz
+        DAC_MAX5307(6, temp  ); //71us 10khz
+        DAC_MAX5307(7, temp  ); //71us 10khz
+        DAC_MAX5307(8, temp  ); //71us 10khz
     }
+
+    //    void single_core_dac(){
+    //        Axis.dac_time += CL_TS;
+    //        Axis.DAC_MAX5307_FLAG++;
+    //
+    //
+    //
+    //        if (Axis.DAC_MAX5307_FLAG==1)
+    //        {
+    //            DAC_MAX5307(1, sin(CL_TS*Axis.dac_time) ); //71us 10khz
+    //        }
+    //        if (Axis.DAC_MAX5307_FLAG==2)
+    //        {
+    //            DAC_MAX5307(2, sin(CL_TS*Axis.dac_time) ); //71us 10khz
+    //        }
+    //        if (Axis.DAC_MAX5307_FLAG==3)
+    //        {
+    //            DAC_MAX5307(3, sin(CL_TS*Axis.dac_time) ); //71us 10khz
+    //        }
+    //        if (Axis.DAC_MAX5307_FLAG==4)
+    //        {
+    //            DAC_MAX5307(4, sin(CL_TS*Axis.dac_time) ); //71us 10khz
+    //            Axis.DAC_MAX5307_FLAG = 1;
+    //        }
+    //
+    //
+    //
+    //        if (Axis.DAC_MAX5307_FLAG==5)
+    //        {
+    //            DAC_MAX5307(5, sin(CL_TS*Axis.dac_time) ); //71us 10khz
+    //        }
+    //        if (Axis.DAC_MAX5307_FLAG==6)
+    //        {
+    //            DAC_MAX5307(6, sin(CL_TS*Axis.dac_time) ); //71us 10khz
+    //            //Axis.DAC_MAX5307_FLAG=2;//4 means from 3 to 6;
+    //        }
+    //        if (Axis.DAC_MAX5307_FLAG==7)
+    //        {
+    //            DAC_MAX5307(7, sin(CL_TS*Axis.dac_time) ); //71us 10khz
+    //        }
+    //        if (Axis.DAC_MAX5307_FLAG==8)
+    //        {
+    //            DAC_MAX5307(8, sin(CL_TS*Axis.dac_time) ); //71us 10khz
+    //            Axis.DAC_MAX5307_FLAG = 1;
+    //        }
+    //    }
 #endif
 
 

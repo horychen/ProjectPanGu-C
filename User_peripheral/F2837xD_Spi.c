@@ -23,7 +23,8 @@
 // BRR          = (LSPCLK freq / SPI CLK freq) - 1
 //
 #if CPU_FRQ_200MHZ
-#define SPI_BRR        ((200E6 / 4) / 500E3) - 1
+//#define SPI_BRR        ((200E6 / 4) / 500E3) - 1
+#define SPI_BRR        ((200E6 / 4) / 5E6) - 1 // 12.5 MHz for high speed SPI
 #endif
 
 #if CPU_FRQ_150MHZ
@@ -60,7 +61,7 @@ void InitSpi(void)
     SpiaRegs.SPICCR.bit.SPISWRESET = 0;
     SpiaRegs.SPICCR.bit.CLKPOLARITY = 0;
     SpiaRegs.SPICCR.bit.SPICHAR = (16-1);
-    SpiaRegs.SPICCR.bit.SPILBK = 0;
+    SpiaRegs.SPICCR.bit.SPILBK = 1; // loop back
 
 
     //SpicRegs.SPICTL.all =0x0006;    // CLOCK PHASE=0, Master Mode, enable talk, and SPI int disabled.

@@ -169,8 +169,8 @@ void main(void){
         PieVectTable.EQEP1_INT = &EQEP_UTO_INT;      // eQEP
         #endif
         #if NUMBER_OF_DSP_CORES == 1
-        PieVectTable.SCIC_RX_INT = &scicRxFifoIsr;   // SCI Receive
-        PieVectTable.SCIC_TX_INT = &scicTxFifoIsr;   // SCI Transmit
+        //PieVectTable.SCIC_RX_INT = &scicRxFifoIsr;   // SCI Receive (Part 1/3)
+        //PieVectTable.SCIC_TX_INT = &scicTxFifoIsr;   // SCI Transmit
         #endif
         EDIS; // This is needed to disable write to EALLOW protected registers
     /* PIE Control */
@@ -178,8 +178,8 @@ void main(void){
         PieCtrlRegs.PIEIER3.bit.INTx1 = 1;      // PWM1 interrupt (Interrupt 3.1)
         /* SCI */
         #if NUMBER_OF_DSP_CORES == 1
-            PieCtrlRegs.PIEIER8.bit.INTx5 = 1;   // PIE Group 8, INT5, SCI-C Rx
-            PieCtrlRegs.PIEIER8.bit.INTx6 = 1;   // PIE Group 8, INT6, SCI-C Tx
+            //PieCtrlRegs.PIEIER8.bit.INTx5 = 1;   // PIE Group 8, INT5, SCI-C Rx (Part 2/3)
+            //PieCtrlRegs.PIEIER8.bit.INTx6 = 1;   // PIE Group 8, INT6, SCI-C Tx
         #endif
         /* eCAP */
         #if USE_ECAP_CEVT2_INTERRUPT == 1 && ENABLE_ECAP
@@ -194,7 +194,7 @@ void main(void){
     /* CPU Interrupt Enable Register (IER) */
         IER |= M_INT3;  // EPWM1_INT
         #if NUMBER_OF_DSP_CORES == 1
-            IER |= M_INT8; // SCI-C
+            //IER |= M_INT8; // SCI-C (Part 3/3)
         #endif
         #if USE_ECAP_CEVT2_INTERRUPT == 1 && ENABLE_ECAP
             IER |= M_INT4;  // ECAP1_INT // CPU INT4 which is connected to ECAP1-4 INT
@@ -231,37 +231,38 @@ void main(void){
             //SendChar = 0;
             ScicRegs.SCITXBUF.all = (SendChar);
 
-           //
-           // wait for RRDY/RXFFST =1 for 1 data available in FIFO
-           //
-           while(ScicRegs.SCIFFRX.bit.RXFFST == 0) {
-           }
-           CTRL.S->go_sensorless = 100;
+            //
+            // wait for RRDY/RXFFST =1 for 1 data available in FIFO
+            //
+            while(ScicRegs.SCIFFRX.bit.RXFFST == 0) {
+            }
+            CTRL.S->go_sensorless = 100;
 
-           //
-           // Check received character
-           //
-           ReceivedChar = ScicRegs.SCIRXBUF.all;
-           if(ReceivedChar != SendChar)
-           {
+            //
+            // Check received character
+            //
+            ReceivedChar = ScicRegs.SCIRXBUF.all;
+            if(ReceivedChar != SendChar)
+            {
                //error();
-           }
+            }
 
-           //
-           // Move to the next character and repeat the test
-           //
-           SendChar++;
+            //
+            // Move to the next character and repeat the test
+            //
+            SendChar++;
 
-           //
-           // Limit the character to 8-bits
-           //
-           SendChar &= 0x00F;
-           LoopCount++;
+            //
+            // Limit the character to 8-bits
+            //
+            SendChar &= 0x00F;
+            LoopCount++;
         }
     }
 
     // 7. Main loop
     while(1){
+
         if (Motor_mode_START==1){
             Axis.FLAG_ENABLE_PWM_OUTPUT = 1;
             DSP_START_LED1
@@ -281,6 +282,9 @@ void main(void){
                 sci_poll(Read.SCI_char);
                 IPCRtoLFlagAcknowledge (IPC_FLAG10);
             }
+        #endif
+        #if NUMBER_OF_DSP_CORES == 1
+            single_core_dac();
         #endif
     }
 }
@@ -615,10 +619,6 @@ void PanGuMainISR(void){
     #endif
 
 
-#if NUMBER_OF_DSP_CORES == 1
-    single_core_dac();
-#endif
-
     static long int ii = 0;
     if(++ii%5000 == 0){
         //        EPwm1Regs.CMPA.bit.CMPA = CTRL.svgen1.Ta*50000000*CL_TS;
@@ -733,9 +733,9 @@ void PanGuMainISR(void){
             voltage_commands_to_pwm();
 
 
-        #if NUMBER_OF_DSP_CORES == 1
-            single_core_dac();
-        #endif
+        //        #if NUMBER_OF_DSP_CORES == 1
+        //            single_core_dac();
+        //        #endif
 
     }
 }
