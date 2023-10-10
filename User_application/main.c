@@ -112,8 +112,10 @@ void main(void){
     // 4.3 Assign peripherals to CPU02
     /* SPI and SCI */
     #if NUMBER_OF_DSP_CORES == 1
+        // 同步！！！！！
+        InitHighSpeedSpiGpio();
         //InitSpiaGpio();
-        InitSpicGpio();
+        //InitSpicGpio();
         InitSpi();
 
         InitSciGpio();
@@ -129,8 +131,8 @@ void main(void){
         EDIS;
 
         // 同步！！！！！
-        //InitHighSpeedSpiGpio();
-        InitSpicGpio();
+        InitHighSpeedSpiGpio();
+        //InitSpicGpio();
         //InitSpiaGpio();
         //InitSpi(); // this is moved to CPU02
 
@@ -612,6 +614,11 @@ void PanGuMainISR(void){
         write_DAC_buffer();
     #endif
 
+
+#if NUMBER_OF_DSP_CORES == 1
+    single_core_dac();
+#endif
+
     static long int ii = 0;
     if(++ii%5000 == 0){
         //        EPwm1Regs.CMPA.bit.CMPA = CTRL.svgen1.Ta*50000000*CL_TS;
@@ -725,9 +732,11 @@ void PanGuMainISR(void){
         else
             voltage_commands_to_pwm();
 
+
         #if NUMBER_OF_DSP_CORES == 1
             single_core_dac();
         #endif
+
     }
 }
 

@@ -57,10 +57,10 @@ void InitSpi(void)
     // Clock polarity (0 == rising, 1 == falling)
     // 16-bit character
     // Disnable loop-back
-    SpicRegs.SPICCR.bit.SPISWRESET = 0;
-    SpicRegs.SPICCR.bit.CLKPOLARITY = 0;
-    SpicRegs.SPICCR.bit.SPICHAR = (16-1);
-    SpicRegs.SPICCR.bit.SPILBK = 0;
+    SpiaRegs.SPICCR.bit.SPISWRESET = 0;
+    SpiaRegs.SPICCR.bit.CLKPOLARITY = 0;
+    SpiaRegs.SPICCR.bit.SPICHAR = (16-1);
+    SpiaRegs.SPICCR.bit.SPILBK = 0;
 
 
     //SpicRegs.SPICTL.all =0x0006;    // CLOCK PHASE=0, Master Mode, enable talk, and SPI int disabled.
@@ -68,38 +68,38 @@ void InitSpi(void)
     // Enable transmission (Talk)
     // Clock phase (0 == normal, 1 == delayed)
     // SPI interrupts are disabled
-    SpicRegs.SPICTL.bit.MASTER_SLAVE = 1;
-    SpicRegs.SPICTL.bit.TALK = 1;
-    SpicRegs.SPICTL.bit.CLK_PHASE = 0;
-    SpicRegs.SPICTL.bit.SPIINTENA = 0;
+    SpiaRegs.SPICTL.bit.MASTER_SLAVE = 1;
+    SpiaRegs.SPICTL.bit.TALK = 1;
+    SpiaRegs.SPICTL.bit.CLK_PHASE = 0;
+    SpiaRegs.SPICTL.bit.SPIINTENA = 0;
 
     // Set the baud rate
-    SpicRegs.SPIBRR.bit.SPI_BIT_RATE = SPI_BRR;
-    //SpicRegs.SPIBRR = 0x1;           // SPI Baud Rate = LSPCLK/(SPIBRR+1), 根据书上公式，LSPCLK=37.5MHz so=37.5/4=9.375MHz
+    SpiaRegs.SPIBRR.bit.SPI_BIT_RATE = SPI_BRR;
+    //SpiaRegs.SPIBRR = 0x1;           // SPI Baud Rate = LSPCLK/(SPIBRR+1), 根据书上公式，LSPCLK=37.5MHz so=37.5/4=9.375MHz
 
-    SpicRegs.SPICCR.all = 0x008F;    // 在改变设置前将RESET清零，并在设置结束后将其置位
+    SpiaRegs.SPICCR.all = 0x008F;    // 在改变设置前将RESET清零，并在设置结束后将其置位
 
     // Set FREE bit
     // Halting on a breakpoint will not halt the SPI
-    SpicRegs.SPIPRI.bit.FREE = 1;   // breakpoints don't disturb xmission
+    SpiaRegs.SPIPRI.bit.FREE = 1;   // breakpoints don't disturb xmission
 
     //GpioCtrlRegs.GPBMUX2.bit.GPIO57 = 0; // Configure GPIO57 as C\S\ signal for MAX5307
     // 唤醒MAX5307
-    GpioDataRegs.GPDSET.bit.GPIO103 = 1;             //cs=1
+    GpioDataRegs.GPBSET.bit.GPIO61 = 1;             //cs=1
     NOP;
     NOP;
-    GpioDataRegs.GPDCLEAR.bit.GPIO103 = 1;           //cs=0
+    GpioDataRegs.GPBCLEAR.bit.GPIO61 = 1;           //cs=0
 
-    SpicRegs.SPITXBUF=0xfffc;                       //MAX5307唤醒字符
-    while(SpicRegs.SPISTS.bit.INT_FLAG!=1){NOP;}    // 数据传完后INT_FLAG会置位
+    SpiaRegs.SPITXBUF=0xfffc;                       //MAX5307唤醒字符
+    while(SpiaRegs.SPISTS.bit.INT_FLAG!=1){NOP;}    // 数据传完后INT_FLAG会置位
 
-    GpioDataRegs.GPDSET.bit.GPIO103 = 1;             //cs=1为下一次做准备
+    GpioDataRegs.GPBSET.bit.GPIO61 = 1;             //cs=1为下一次做准备
 
-    SpicRegs.SPICCR.bit.SPISWRESET=0;               //通过reset 清楚SPI中断标志INT_FLAG
+    SpiaRegs.SPICCR.bit.SPISWRESET=0;               //通过reset 清楚SPI中断标志INT_FLAG
     NOP;
     NOP;
     // Release the SPI from reset
-    SpicRegs.SPICCR.bit.SPISWRESET=1;               // Relinquish SPI from Reset
+    SpiaRegs.SPICCR.bit.SPISWRESET=1;               // Relinquish SPI from Reset
 
 }
 

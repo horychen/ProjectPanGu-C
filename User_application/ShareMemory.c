@@ -176,6 +176,9 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
     void single_core_dac(){
         Axis.dac_time += CL_TS;
         Axis.DAC_MAX5307_FLAG++;
+
+
+
         if (Axis.DAC_MAX5307_FLAG==1)
         {
             DAC_MAX5307(1, sin(CL_TS*Axis.dac_time) ); //71us 10khz
@@ -193,6 +196,8 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
             DAC_MAX5307(4, sin(CL_TS*Axis.dac_time) ); //71us 10khz
             Axis.DAC_MAX5307_FLAG = 1;
         }
+
+
 
         if (Axis.DAC_MAX5307_FLAG==5)
         {
