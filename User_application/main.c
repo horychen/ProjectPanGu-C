@@ -1,45 +1,7 @@
 #include <All_Definition.h>
 st_axis Axis;
 
-#ifdef _XCUBE1 // At Water Energy Lab (Green)
-    #define OFFSET_VDC 1430
-    #define OFFSET_U   2047
-    #define OFFSET_V   2052
-    #define OFFSET_W   2032
-    #define OFFSET_R   2048 // not implemented
-    #define OFFSET_S   2048 // not implemented
-    #define OFFSET_T   2048 // not implemented
-
-    // MINI IGBT IPM INVERTER
-    #define SCALE_VDC 0.3546099     //(MINI INVERTER)    // SENSOR+SIC inverter: 0.1897533207//0-800V
-    #define SCALE_U  0.0109649      //(MINI INVERTER)    // SENSOR+SIC inverter:  0.0056072670 //-11.8-11.8A
-    #define SCALE_V  0.01125872551  //(MINI INVERTER)    // SENSOR+SIC inverter:  0.0056072670 //-11.8-11.8A
-    #define SCALE_W  0.01134558656  //(MINI INVERTER)    // SENSOR+SIC inverter: 0.0057316444 //-11.8-11.8A
-    #define SCALE_R -0.0 // not implemented
-    #define SCALE_S -0.0 // not implemented
-    #define SCALE_T -0.0 // not implemented
-#endif
-
-#ifdef _XCUBE4 // At Water Energy Lab (Red, RM = 24 Ohm) + My Sensor Board!!!
-    #define OFFSET_VDC 0   // ADC0
-    #define OFFSET_U   2054 // 2
-    #define OFFSET_V   2065 // 3
-    #define OFFSET_W   2047 // 1
-    #define OFFSET_R   2044 // 11
-    #define OFFSET_S   2044 // 9
-    #define OFFSET_T   2048 // 8
-
-    // Sensor Board 6 Phase SiC MOSFET Inverter
-    #define SCALE_VDC 0.0949
-    #define SCALE_U  0.0325 // 0.03367
-    #define SCALE_V  0.0320 // 0.03388
-    #define SCALE_W  0.0320 // 0.0340136
-    #define SCALE_R (-0.0295*1.09090909091)
-    #define SCALE_S (-0.0295*1.09090909091)
-    #define SCALE_T (-0.0290*1.09090909091)
-#endif
-
-#ifdef _XCUBE2 // At Process Instrumentation Lab
+#ifdef _MMDv1 // mmlab drive version 1
     #define OFFSET_VDC 0   // ADC0
     #define OFFSET_U   2054 // 2
     #define OFFSET_V   2065 // 3
@@ -47,11 +9,6 @@ st_axis Axis;
     #define OFFSET_R   2058 // 11
     #define OFFSET_S   2062 // 9
     #define OFFSET_T   2059 // 8
-
-//Axis.iuvw[0]=((REAL)(AdcaResultRegs.ADCRESULT2 ) - Axis.adc_offset[1]) * Axis.adc_scale[1];
-//Axis.iuvw[1]=((REAL)(AdcaResultRegs.ADCRESULT3 ) - Axis.adc_offset[2]) * Axis.adc_scale[2];
-//Axis.iuvw[2]=((REAL)(AdcaResultRegs.ADCRESULT1 ) - Axis.adc_offset[3]) * Axis.adc_scale[3];
-
 
     // Sensor Board 6 Phase SiC MOSFET Inverter
     #define SCALE_VDC 0.0949
@@ -61,25 +18,6 @@ st_axis Axis;
     #define SCALE_R -0.0295 //-0.032
     #define SCALE_S -0.0295 //-0.032
     #define SCALE_T -0.0290 //-0.034
-#endif
-
-#ifdef _XCUBE3 // At Water Energy Lab (XCUBE v2 in red)
-    #define OFFSET_UDC 1430
-    #define OFFSET_U   2047
-    #define OFFSET_V   2052
-    #define OFFSET_W   2032
-    #define OFFSET_R   2048 // not implemented
-    #define OFFSET_S   2048 // not implemented
-    #define OFFSET_T   2048 // not implemented
-
-    // MINI IGBT IPM INVERTER
-    #define SCALE_VDC 0.3546099     //(MINI INVERTER)    // SENSOR+SIC inverter: 0.1897533207//0-800V
-    #define SCALE_U  0.0109649      //(MINI INVERTER)    // SENSOR+SIC inverter:  0.0056072670 //-11.8-11.8A
-    #define SCALE_V  0.01125872551  //(MINI INVERTER)    // SENSOR+SIC inverter:  0.0056072670 //-11.8-11.8A
-    #define SCALE_W  0.01134558656  //(MINI INVERTER)    // SENSOR+SIC inverter: 0.0057316444 //-11.8-11.8A
-    #define SCALE_R -0.0 // not implemented
-    #define SCALE_S -0.0 // not implemented
-    #define SCALE_T -0.0 // not implemented
 #endif
 
 #define OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS 0
@@ -185,7 +123,9 @@ void main(void){
         DevCfgRegs.CPUSEL5.bit.SCI_C = 1; // assign sci-ca to cpu2
         EDIS;
 
-        InitSpiaGpio();
+        InitHighSpeedSpiGpio();
+        //InitSpiaGpio();
+
         //InitSpi(); // this is moved to CPU02
         InitScicGpio();
         //InitSci(); // this is moved to CPU02
@@ -660,6 +600,10 @@ void PanGuMainISR(void){
         write_DAC_buffer();
     #endif
 
+    do something
+
+    return;
+
     #if ENABLE_ECAP
         do_enhanced_capture();
     #endif
@@ -776,6 +720,7 @@ __interrupt void EPWM1ISR(void){
 
     /* Step 4. [ePWM] Execute EPWM ISR */
     PanGuMainISR();
+
 #if USE_ECAP_CEVT2_INTERRUPT == 1
     /* Step 5. [eCAP] Disable interrupts */
     DINT;

@@ -471,13 +471,18 @@ void GPIO_WritePin(Uint16 pin, Uint16 outVal)
 void Gpio_initialize(void)
 {
 	InitGpio();
-    // LED start_XCUBE BOARD
-	GPIO_SetupPinOptions(24, GPIO_OUTPUT, GPIO_SYNC);//  led1
-	GPIO_SetupPinMux(24,0,0);
-	GPIO_SetupPinOptions(25, GPIO_OUTPUT, GPIO_SYNC);//  led2
-	GPIO_SetupPinMux(25,0,0);//
 
-	// LED start_DSP28377D BOARD
+	// LED control
+	GPIO_SetupPinOptions(3, GPIO_OUTPUT, GPIO_SYNC);//  led1
+	GPIO_SetupPinMux(3,GPIO_MUX_CPU2,0);
+	GPIO_SetupPinOptions(2, GPIO_OUTPUT, GPIO_SYNC);//  led2
+	GPIO_SetupPinMux(2,GPIO_MUX_CPU2,0);
+    GPIO_SetupPinOptions(9, GPIO_OUTPUT, GPIO_SYNC);//  led3
+    GPIO_SetupPinMux(9,GPIO_MUX_CPU2,0);
+    GPIO_SetupPinOptions(8, GPIO_OUTPUT, GPIO_SYNC);//  led4
+    GPIO_SetupPinMux(8,GPIO_MUX_CPU2,0);
+
+	// LED?
 	GPIO_SetupPinOptions(124, GPIO_OUTPUT, GPIO_SYNC);//
 	GPIO_SetupPinOptions(33, GPIO_OUTPUT, GPIO_SYNC);//
     #if NUMBER_OF_DSP_CORES == 1
@@ -514,6 +519,15 @@ void Gpio_initialize(void)
     // SCI is init'd in CPU02 (see F2837xD_Spi.c)
 
     // SPI is init'd in CPU02 (see F2837xD_Sci.c)
+
+
+    // SPISTEA for SPI with D/A chip MAX5307
+    GPIO_SetupPinOptions(61, GPIO_OUTPUT, GPIO_SYNC);
+    #if NUMBER_OF_DSP_CORES == 1
+        GPIO_SetupPinMux(61,GPIO_MUX_CPU1,0);
+    #else
+        GPIO_SetupPinMux(61,GPIO_MUX_CPU2,0);
+    #endif
 
     /* Ë«ºËÅäÖÃÀý×Ó£º
     // Give GPIO31 Control to CPU02
