@@ -464,6 +464,12 @@ void ePWM_initialize(void)
     InitEPwm4Gpio();
     InitEPwm5Gpio();
     InitEPwm6Gpio();
+    InitEPwm7Gpio();
+    InitEPwm8Gpio();
+    InitEPwm9Gpio();
+    InitEPwm10Gpio();
+    InitEPwm11Gpio();
+    InitEPwm12Gpio();
 
     EALLOW;
     /* PLLSYSCLK / EPWMCLKDIV = EPWMCLK
@@ -477,6 +483,13 @@ void ePWM_initialize(void)
         PWM_1ch_UpDwnCnt_CNF(4,SYSTEM_CARRIER_PERIOD,SYSTEM_PWM_DEADTIME_CNT);
         PWM_1ch_UpDwnCnt_CNF(5,SYSTEM_CARRIER_PERIOD,SYSTEM_PWM_DEADTIME_CNT);
         PWM_1ch_UpDwnCnt_CNF(6,SYSTEM_CARRIER_PERIOD,SYSTEM_PWM_DEADTIME_CNT);
+
+        PWM_1ch_UpDwnCnt_CNF(7,SYSTEM_CARRIER_PERIOD,SYSTEM_PWM_DEADTIME_CNT);   //10k, 5us   10000,500
+        PWM_1ch_UpDwnCnt_CNF(8,SYSTEM_CARRIER_PERIOD,SYSTEM_PWM_DEADTIME_CNT);
+        PWM_1ch_UpDwnCnt_CNF(9,SYSTEM_CARRIER_PERIOD,SYSTEM_PWM_DEADTIME_CNT);
+        PWM_1ch_UpDwnCnt_CNF(10,SYSTEM_CARRIER_PERIOD,SYSTEM_PWM_DEADTIME_CNT);
+        PWM_1ch_UpDwnCnt_CNF(11,SYSTEM_CARRIER_PERIOD,SYSTEM_PWM_DEADTIME_CNT);
+        PWM_1ch_UpDwnCnt_CNF(12,SYSTEM_CARRIER_PERIOD,SYSTEM_PWM_DEADTIME_CNT);
 
     /*-- Setup Event-Trigger (ET) Submodule --*/
         // Event-Trigger Selection and Event-Trigger Pre-Scale Register
@@ -492,5 +505,18 @@ void ePWM_initialize(void)
         EPwm5Regs.ETPS.all = (EPwm5Regs.ETPS.all & ~0x3303) | 0x1101;
         EPwm6Regs.ETSEL.all = (EPwm6Regs.ETSEL.all & ~0xFF0F) | 0x9901;
         EPwm6Regs.ETPS.all = (EPwm6Regs.ETPS.all & ~0x3303) | 0x1101;
+
+        EPwm7Regs.ETSEL.all = (EPwm7Regs.ETSEL.all & ~0xFF0F) | 0x9909;
+        EPwm7Regs.ETPS.all = (EPwm7Regs.ETPS.all & ~0x3303) | 0x1101;
+        EPwm8Regs.ETSEL.all = (EPwm8Regs.ETSEL.all & ~0xFF0F) | 0x9901;
+        EPwm8Regs.ETPS.all = (EPwm8Regs.ETPS.all & ~0x3303) | 0x1101;
+        EPwm9Regs.ETSEL.all = (EPwm9Regs.ETSEL.all & ~0xFF0F) | 0x9901;
+        EPwm9Regs.ETPS.all = (EPwm9Regs.ETPS.all & ~0x3303) | 0x1101;
+        EPwm10Regs.ETSEL.all = (EPwm10Regs.ETSEL.all & ~0xFF0F) | 0x9909;
+        EPwm10Regs.ETPS.all = (EPwm10Regs.ETPS.all & ~0x3303) | 0x1101;
+        EPwm11Regs.ETSEL.all = (EPwm11Regs.ETSEL.all & ~0xFF0F) | 0x9901;
+        EPwm11Regs.ETPS.all = (EPwm11Regs.ETPS.all & ~0x3303) | 0x1101;
+        EPwm12Regs.ETSEL.all = (EPwm12Regs.ETSEL.all & ~0xFF0F) | 0x9901;
+        EPwm12Regs.ETPS.all = (EPwm12Regs.ETPS.all & ~0x3303) | 0x1101;
     EDIS;
 }

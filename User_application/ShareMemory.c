@@ -35,7 +35,7 @@ extern REAL normalizer[3];
 extern REAL hall_rotating_direction;
 extern REAL eddy_displacement[2];
 extern REAL used_theta_d_elec;
-long int REAL counter;
+long int counter;
 
 void write_DAC_buffer(){
 if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
