@@ -4,9 +4,13 @@ int digital_virtual_button = 0;
 
 #ifdef _MMDv1 // mmlab drive version 1
     #define OFFSET_VDC 0   // ADC0
-    #define OFFSET_U   2054 // 2
-    #define OFFSET_V   2065 // 3
-    #define OFFSET_W   2047 // 1
+//    #define OFFSET_U   2023 // 2
+//    #define OFFSET_V   2060 // 3
+//    #define OFFSET_W   2020 // 1
+//Lem
+     #define OFFSET_U   2040 // 2
+    #define OFFSET_V   2070 // 3
+    #define OFFSET_W   2075 // 1
     #define OFFSET_R   2058 // 11
     #define OFFSET_S   2062 // 9
     #define OFFSET_T   2059 // 8
@@ -56,7 +60,8 @@ void main(void){
     Axis.pCTRL = &CTRL;
     Axis.pAdcaResultRegs = &AdcaResultRegs;
     Axis.pAdcbResultRegs = &AdcbResultRegs;
-    Axis.use_first_set_three_phase = 2; // -1;
+    Axis.pAdccResultRegs = &AdccResultRegs;
+    Axis.use_first_set_three_phase = 1; // -1;
     Axis.Set_current_loop = FALSE;
     Axis.Set_x_suspension_current_loop = FALSE;
     Axis.Set_y_suspension_current_loop = FALSE;
@@ -358,7 +363,10 @@ void voltage_commands_to_pwm(){
         // SVPWM of the suspension 3-phase
         CTRL.svgen2.Ualpha = 0;
         CTRL.svgen2.Ubeta  = 0;
-
+        if(enable_vvvf){
+            CTRL.svgen1.Ualpha= vvvf_voltage * cos(vvvf_frequency*2*M_PI*CTRL.timebase);
+            CTRL.svgen1.Ubeta = vvvf_voltage * sin(vvvf_frequency*2*M_PI*CTRL.timebase);
+        }
         //    svgen2.Ualpha = svgen1.Ualpha*0.5        + svgen1.Ubeta*0.8660254; // rotate 60 deg
         //    svgen2.Ubeta  = svgen1.Ualpha*-0.8660254 + svgen1.Ubeta*0.5;
     }else if(Axis.use_first_set_three_phase==2){
@@ -486,9 +494,13 @@ void measurement(){
     Axis.vdc    =((REAL)(AdcaResultRegs.ADCRESULT0 ) - Axis.adc_offset[0]) * Axis.adc_scale[0];
     if(G.flag_overwite_vdc) Axis.vdc = G.overwrite_vdc;
 
-    Axis.iuvw[0]=((REAL)(AdcaResultRegs.ADCRESULT2 ) - Axis.adc_offset[1]) * Axis.adc_scale[1];
-    Axis.iuvw[1]=((REAL)(AdcaResultRegs.ADCRESULT3 ) - Axis.adc_offset[2]) * Axis.adc_scale[2];
-    Axis.iuvw[2]=((REAL)(AdcaResultRegs.ADCRESULT1 ) - Axis.adc_offset[3]) * Axis.adc_scale[3];
+//    Axis.iuvw[0]=((REAL)(AdcaResultRegs.ADCRESULT1 ) - Axis.adc_offset[1]) * Axis.adc_scale[1];
+//    Axis.iuvw[1]=((REAL)(AdcaResultRegs.ADCRESULT2 ) - Axis.adc_offset[2]) * Axis.adc_scale[2];
+//    Axis.iuvw[2]=((REAL)(AdcaResultRegs.ADCRESULT3 ) - Axis.adc_offset[3]) * Axis.adc_scale[3];
+    //LEM
+    Axis.iuvw[0]=((REAL)(AdccResultRegs.ADCRESULT2 ) - Axis.adc_offset[1]) * Axis.adc_scale[1];
+    Axis.iuvw[1]=((REAL)(AdccResultRegs.ADCRESULT4 ) - Axis.adc_offset[2]) * Axis.adc_scale[2];
+    Axis.iuvw[2]=((REAL)(AdccResultRegs.ADCRESULT5 ) - Axis.adc_offset[3]) * Axis.adc_scale[3];
 //    Axis.iuvw[3]=((REAL)(AdcbResultRegs.ADCRESULT11) - Axis.adc_offset[4]) * Axis.adc_scale[4]; // AD_scale_U2; offsetD2
 //    Axis.iuvw[4]=((REAL)(AdcbResultRegs.ADCRESULT9 ) - Axis.adc_offset[5]) * Axis.adc_scale[5]; // AD_scale_V2; offsetB2
 //    Axis.iuvw[5]=((REAL)(AdcbResultRegs.ADCRESULT8 ) - Axis.adc_offset[6]) * Axis.adc_scale[6]; // AD_scale_W2; offsetA2
@@ -565,50 +577,50 @@ void measurement(){
     //    }
 
     // 电流采样ADC温飘校准 // TODO 改成用ADC Raw Results校准。
-    if(Axis.AD_offset_flag2==FALSE)
-    {
-        Axis.offset_counter += 1;
-        Axis.iuvw_offset_online[0] += Axis.iuvw[0];
-        Axis.iuvw_offset_online[1] += Axis.iuvw[1];
-        Axis.iuvw_offset_online[2] += Axis.iuvw[2];
-        Axis.iuvw_offset_online[3] += Axis.iuvw[0];
-        Axis.iuvw_offset_online[4] += Axis.iuvw[1];
-        Axis.iuvw_offset_online[5] += Axis.iuvw[2];
-        if(Axis.offset_counter>=5000){
-            Axis.iuvw_offset_online[0] = Axis.iuvw_offset_online[0] / 5000;
-            Axis.iuvw_offset_online[1] = Axis.iuvw_offset_online[1] / 5000;
-            Axis.iuvw_offset_online[2] = Axis.iuvw_offset_online[2] / 5000;
-            Axis.iuvw_offset_online[3] = Axis.iuvw_offset_online[3] / 5000;
-            Axis.iuvw_offset_online[4] = Axis.iuvw_offset_online[4] / 5000;
-            Axis.iuvw_offset_online[5] = Axis.iuvw_offset_online[5] / 5000;
-            Axis.AD_offset_flag2 = TRUE;
-            Axis.offset_counter = 0;
-        }
-
-        // 来不及完成偏置检测（比如刚上电数字开关就是开的），采用默认值
-        /* 427-1401：添加开关信号滤波。今天发现在刚上电的时候，XCUBE-II的前两个中断里，数字开关是打开的，然后才变成关闭。*/
-        if(Axis.FLAG_ENABLE_PWM_OUTPUT && Axis.offset_counter>100){
-            Axis.iuvw_offset_online[0] = 0.0;
-            Axis.iuvw_offset_online[1] = 0.0;
-            Axis.iuvw_offset_online[2] = 0.0;
-            Axis.iuvw_offset_online[3] = 0.0;
-            Axis.iuvw_offset_online[4] = 0.0;
-            Axis.iuvw_offset_online[5] = 0.0;
-            Axis.AD_offset_flag2 = TRUE;
-        }
-
-        // 上电的时候，电机可能在转，此时根据电流判断是否还要额外进行偏置补偿。
-        if( fabs(Axis.iuvw[0])>0.05 || fabs(Axis.iuvw[1])>0.05 || fabs(Axis.iuvw[2])>0.05 || \
-            fabs(Axis.iuvw[3])>0.05 || fabs(Axis.iuvw[4])>0.05 || fabs(Axis.iuvw[5])>0.05){
-            Axis.iuvw_offset_online[0] = 0.0;
-            Axis.iuvw_offset_online[1] = 0.0;
-            Axis.iuvw_offset_online[2] = 0.0;
-            Axis.iuvw_offset_online[3] = 0.0;
-            Axis.iuvw_offset_online[4] = 0.0;
-            Axis.iuvw_offset_online[5] = 0.0;
-            Axis.AD_offset_flag2 = TRUE;
-        }
-    }
+//    if(Axis.AD_offset_flag2==FALSE)
+//    {
+//        Axis.offset_counter += 1;
+//        Axis.iuvw_offset_online[0] += Axis.iuvw[0];
+//        Axis.iuvw_offset_online[1] += Axis.iuvw[1];
+//        Axis.iuvw_offset_online[2] += Axis.iuvw[2];
+//        Axis.iuvw_offset_online[3] += Axis.iuvw[0];
+//        Axis.iuvw_offset_online[4] += Axis.iuvw[1];
+//        Axis.iuvw_offset_online[5] += Axis.iuvw[2];
+//        if(Axis.offset_counter>=5000){
+//            Axis.iuvw_offset_online[0] = Axis.iuvw_offset_online[0] / 5000;
+//            Axis.iuvw_offset_online[1] = Axis.iuvw_offset_online[1] / 5000;
+//            Axis.iuvw_offset_online[2] = Axis.iuvw_offset_online[2] / 5000;
+//            Axis.iuvw_offset_online[3] = Axis.iuvw_offset_online[3] / 5000;
+//            Axis.iuvw_offset_online[4] = Axis.iuvw_offset_online[4] / 5000;
+//            Axis.iuvw_offset_online[5] = Axis.iuvw_offset_online[5] / 5000;
+//            Axis.AD_offset_flag2 = TRUE;
+//            Axis.offset_counter = 0;
+//        }
+//
+//        // 来不及完成偏置检测（比如刚上电数字开关就是开的），采用默认值
+//        /* 427-1401：添加开关信号滤波。今天发现在刚上电的时候，XCUBE-II的前两个中断里，数字开关是打开的，然后才变成关闭。*/
+//        if(Axis.FLAG_ENABLE_PWM_OUTPUT && Axis.offset_counter>100){
+//            Axis.iuvw_offset_online[0] = 0.0;
+//            Axis.iuvw_offset_online[1] = 0.0;
+//            Axis.iuvw_offset_online[2] = 0.0;
+//            Axis.iuvw_offset_online[3] = 0.0;
+//            Axis.offset_counter[4] = 0.0;
+//            Axis.iuvw_offset_online[5] = 0.0;
+//            Axis.AD_offset_flag2 = TRUE;
+//        }
+//
+//        // 上电的时候，电机可能在转，此时根据电流判断是否还要额外进行偏置补偿。
+//        if( fabs(Axis.iuvw[0])>0.05 || fabs(Axis.iuvw[1])>0.05 || fabs(Axis.iuvw[2])>0.05 || \
+//            fabs(Axis.iuvw[3])>0.05 || fabs(Axis.iuvw[4])>0.05 || fabs(Axis.iuvw[5])>0.05){
+//            Axis.iuvw_offset_online[0] = 0.0;
+//            Axis.iuvw_offset_online[1] = 0.0;
+//            Axis.iuvw_offset_online[2] = 0.0;
+//            Axis.iuvw_offset_online[3] = 0.0;
+//            Axis.iuvw_offset_online[4] = 0.0;
+//            Axis.iuvw_offset_online[5] = 0.0;
+//            Axis.AD_offset_flag2 = TRUE;
+//        }
+//    }
 }
 // int down_freq_ecap_counter = 1;
 Uint64 timebase_counter = 0;
@@ -619,30 +631,30 @@ void PanGuMainISR(void){
     #endif
 
 
-    static long int ii = 0;
-    if(++ii%5000 == 0){
-        //        EPwm1Regs.CMPA.bit.CMPA = CTRL.svgen1.Ta*50000000*CL_TS;
-        //        EPwm2Regs.CMPA.bit.CMPA = CTRL.svgen1.Tb*50000000*CL_TS;
-        //        EPwm3Regs.CMPA.bit.CMPA = CTRL.svgen1.Tc*50000000*CL_TS;
-        //        EPwm4Regs.CMPA.bit.CMPA = CTRL.svgen2.Ta*50000000*CL_TS;
-        //        EPwm5Regs.CMPA.bit.CMPA = CTRL.svgen2.Tb*50000000*CL_TS;
-
-        if(EPwm1Regs.CMPA.bit.CMPA==5000){
-            EPwm1Regs.CMPA.bit.CMPA = 0;
-        }else{
-            EPwm1Regs.CMPA.bit.CMPA = 5000;
-        }
-    }
-
-    static long int jj = 0;
-    if(++jj%10000 == 0){
-        if(EPwm2Regs.CMPA.bit.CMPA==5000){
-            EPwm2Regs.CMPA.bit.CMPA = 0;
-        }else{
-            EPwm2Regs.CMPA.bit.CMPA = 5000;
-        }
-    }
-    return;
+//    static long int ii = 0;
+//    if(++ii%5000 == 0){
+//        //        EPwm1Regs.CMPA.bit.CMPA = CTRL.svgen1.Ta*50000000*CL_TS;
+//        //        EPwm2Regs.CMPA.bit.CMPA = CTRL.svgen1.Tb*50000000*CL_TS;
+//        //        EPwm3Regs.CMPA.bit.CMPA = CTRL.svgen1.Tc*50000000*CL_TS;
+//        //        EPwm4Regs.CMPA.bit.CMPA = CTRL.svgen2.Ta*50000000*CL_TS;
+//        //        EPwm5Regs.CMPA.bit.CMPA = CTRL.svgen2.Tb*50000000*CL_TS;
+//
+//        if(EPwm1Regs.CMPA.bit.CMPA==5000){
+//            EPwm1Regs.CMPA.bit.CMPA = 0;
+//        }else{
+//            EPwm1Regs.CMPA.bit.CMPA = 5000;
+//        }
+//    }
+//
+//    static long int jj = 0;
+//    if(++jj%10000 == 0){
+//        if(EPwm2Regs.CMPA.bit.CMPA==5000){
+//            EPwm2Regs.CMPA.bit.CMPA = 0;
+//        }else{
+//            EPwm2Regs.CMPA.bit.CMPA = 5000;
+//        }
+//    }
+//    return;
 
 
     #if ENABLE_ECAP

@@ -114,9 +114,9 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
         Axis.channels[6] = 41;
         Axis.channels[7] = 41;
     }else if(Axis.channels_preset==4){Axis.channels_preset=0;
-        Axis.channels[0] = 3;
-        Axis.channels[1] = 4;
-        Axis.channels[2] = 5;
+        Axis.channels[0] = 0;
+        Axis.channels[1] = 1;
+        Axis.channels[2] = 2;
         Axis.channels[3] = 4;
         Axis.channels[4] = 4;
         Axis.channels[5] = 5;

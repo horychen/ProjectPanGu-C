@@ -119,6 +119,7 @@ typedef struct{
         REAL adc_scale[12];
         volatile struct ADC_RESULT_REGS *pAdcaResultRegs;
         volatile struct ADC_RESULT_REGS *pAdcbResultRegs;
+        volatile struct ADC_RESULT_REGS *pAdccResultRegs;
     // Sensor - Raw measurement
         REAL vdc;
         REAL iabg[6];
