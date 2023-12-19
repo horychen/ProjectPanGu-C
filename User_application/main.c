@@ -346,8 +346,8 @@ void DeadtimeCompensation(REAL Current_U, REAL Current_V, REAL Current_W, REAL C
     CMPA_DBC[2] = (Uint16)temp;
 }
 
-REAL vvvf_voltage = 25;
-REAL vvvf_frequency = 8;
+REAL vvvf_voltage = 100;
+REAL vvvf_frequency = 2;
 REAL enable_vvvf = FALSE;
 
 
@@ -494,19 +494,20 @@ void measurement(){
     Axis.vdc    =((REAL)(AdcaResultRegs.ADCRESULT0 ) - Axis.adc_offset[0]) * Axis.adc_scale[0];
     if(G.flag_overwite_vdc) Axis.vdc = G.overwrite_vdc;
 
-//    Axis.iuvw[0]=((REAL)(AdcaResultRegs.ADCRESULT1 ) - Axis.adc_offset[1]) * Axis.adc_scale[1];
-//    Axis.iuvw[1]=((REAL)(AdcaResultRegs.ADCRESULT2 ) - Axis.adc_offset[2]) * Axis.adc_scale[2];
-//    Axis.iuvw[2]=((REAL)(AdcaResultRegs.ADCRESULT3 ) - Axis.adc_offset[3]) * Axis.adc_scale[3];
+    Axis.iuvw[0]=((REAL)(AdcaResultRegs.ADCRESULT1 ) - Axis.adc_offset[1]) * Axis.adc_scale[1];
+    Axis.iuvw[1]=((REAL)(AdcaResultRegs.ADCRESULT2 ) - Axis.adc_offset[2]) * Axis.adc_scale[2];
+    Axis.iuvw[2]=((REAL)(AdcaResultRegs.ADCRESULT3 ) - Axis.adc_offset[3]) * Axis.adc_scale[3];
+    Axis.iuvw[3]=((REAL)(AdcbResultRegs.ADCRESULT11) - Axis.adc_offset[4]) * Axis.adc_scale[4]; // AD_scale_U2; offsetD2
+    Axis.iuvw[4]=((REAL)(AdcbResultRegs.ADCRESULT9 ) - Axis.adc_offset[5]) * Axis.adc_scale[5]; // AD_scale_V2; offsetB2
+    Axis.iuvw[5]=((REAL)(AdcbResultRegs.ADCRESULT8 ) - Axis.adc_offset[6]) * Axis.adc_scale[6]; // AD_scale_W2; offsetA2
+
     //LEM
-    Axis.iuvw[0]=((REAL)(AdccResultRegs.ADCRESULT2 ) - Axis.adc_offset[1]) * Axis.adc_scale[1];
-    Axis.iuvw[1]=((REAL)(AdccResultRegs.ADCRESULT4 ) - Axis.adc_offset[2]) * Axis.adc_scale[2];
-    Axis.iuvw[2]=((REAL)(AdccResultRegs.ADCRESULT5 ) - Axis.adc_offset[3]) * Axis.adc_scale[3];
-//    Axis.iuvw[3]=((REAL)(AdcbResultRegs.ADCRESULT11) - Axis.adc_offset[4]) * Axis.adc_scale[4]; // AD_scale_U2; offsetD2
-//    Axis.iuvw[4]=((REAL)(AdcbResultRegs.ADCRESULT9 ) - Axis.adc_offset[5]) * Axis.adc_scale[5]; // AD_scale_V2; offsetB2
-//    Axis.iuvw[5]=((REAL)(AdcbResultRegs.ADCRESULT8 ) - Axis.adc_offset[6]) * Axis.adc_scale[6]; // AD_scale_W2; offsetA2
-    Axis.iuvw[3]=((REAL)(AdcbResultRegs.ADCRESULT7 ) - Axis.adc_offset[4]) * Axis.adc_scale[4]; // AD_scale_U2; offsetD2
-    Axis.iuvw[4]=((REAL)(AdcbResultRegs.ADCRESULT8 ) - Axis.adc_offset[5]) * Axis.adc_scale[5]; // AD_scale_V2; offsetB2
-    Axis.iuvw[5]=((REAL)(AdcbResultRegs.ADCRESULT9 ) - Axis.adc_offset[6]) * Axis.adc_scale[6]; // AD_scale_W2; offsetA2
+//    Axis.iuvw[0]=((REAL)(AdccResultRegs.ADCRESULT2 ) - Axis.adc_offset[1]) * Axis.adc_scale[1];
+//    Axis.iuvw[1]=((REAL)(AdccResultRegs.ADCRESULT4 ) - Axis.adc_offset[2]) * Axis.adc_scale[2];
+//    Axis.iuvw[2]=((REAL)(AdccResultRegs.ADCRESULT5 ) - Axis.adc_offset[3]) * Axis.adc_scale[3];
+//    Axis.iuvw[3]=((REAL)(AdcbResultRegs.ADCRESULT7 ) - Axis.adc_offset[4]) * Axis.adc_scale[4]; // AD_scale_U2; offsetD2
+//    Axis.iuvw[4]=((REAL)(AdcbResultRegs.ADCRESULT8 ) - Axis.adc_offset[5]) * Axis.adc_scale[5]; // AD_scale_V2; offsetB2
+//    Axis.iuvw[5]=((REAL)(AdcbResultRegs.ADCRESULT9 ) - Axis.adc_offset[6]) * Axis.adc_scale[6]; // AD_scale_W2; offsetA2
 
     // 线电压测量（基于占空比和母线电压）
     //voltage_measurement_based_on_eCAP();
