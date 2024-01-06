@@ -36,8 +36,16 @@ extern "C" {
 //
 // Common CPU Definitions:
 //
-extern __cregister volatile unsigned int IFR;
-extern __cregister volatile unsigned int IER;
+//extern __cregister volatile unsigned int IFR; // this leads to  Symbol 'IER' could not be resolved error
+//extern __cregister volatile unsigned int IER;
+
+cregister volatile unsigned int IFR;
+cregister volatile unsigned int IER;
+
+__cregister volatile unsigned int IFR;
+__cregister volatile unsigned int IER;
+
+
 
 #define  EINT   __asm(" clrc INTM")
 #define  DINT   __asm(" setc INTM")
