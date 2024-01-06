@@ -134,23 +134,23 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
 //    Write.dac_buffer[6] = Axis.dac_watch[Axis.channels[6]] + Axis.dac_offset[6];
 //    Write.dac_buffer[7] = Axis.dac_watch[Axis.channels[7]] + Axis.dac_offset[7];
 
-//    Write.dac_buffer[0] = sin(CL_TS*counter);
-//    Write.dac_buffer[1] = cos(CL_TS*counter);
-//    Write.dac_buffer[2] = sin(CL_TS*counter);
-//    Write.dac_buffer[3] = cos(CL_TS*counter);
-//    Write.dac_buffer[4] = sin(CL_TS*counter);
-//    Write.dac_buffer[5] = cos(CL_TS*counter);
-//    Write.dac_buffer[6] = sin(CL_TS*counter);
-//    Write.dac_buffer[7] = cos(CL_TS*counter);
-//
-//    Write.dac_buffer[0] = AdcaResultRegs.ADCRESULT3 * 0.000244140625;
-//    Write.dac_buffer[1] = AdccResultRegs.ADCRESULT2 * 0.000244140625;
-    Write.dac_buffer[2] = AdcaResultRegs.ADCRESULT1 * 0.000244140625; //VSO3
-//    Write.dac_buffer[3] = AdccResultRegs.ADCRESULT4 * 0.000244140625;
-//    Write.dac_buffer[4] = AdccResultRegs.ADCRESULT5 * 0.000244140625;
-//    Write.dac_buffer[5] = AdccResultRegs.ADCRESULT5 * 0.000244140625;
-    Write.dac_buffer[6] = AdccResultRegs.ADCRESULT5 * 0.000244140625;
-//    Write.dac_buffer[7] = AdccResultRegs.ADCRESULT2 * 0.000244140625;
+    Write.dac_buffer[0] = sin(CL_TS*counter);
+    Write.dac_buffer[1] = cos(CL_TS*counter);
+    Write.dac_buffer[2] = sin(CL_TS*counter);
+    Write.dac_buffer[3] = cos(CL_TS*counter);
+    Write.dac_buffer[4] = sin(CL_TS*counter);
+    Write.dac_buffer[5] = cos(CL_TS*counter);
+    Write.dac_buffer[6] = sin(CL_TS*counter);
+    Write.dac_buffer[7] = cos(CL_TS*counter);
+////
+////    Write.dac_buffer[0] = AdcaResultRegs.ADCRESULT3 * 0.000244140625;
+////    Write.dac_buffer[1] = AdccResultRegs.ADCRESULT2 * 0.000244140625;
+//    Write.dac_buffer[2] = AdcaResultRegs.ADCRESULT1 * 0.000244140625; //VSO3
+////    Write.dac_buffer[3] = AdccResultRegs.ADCRESULT4 * 0.000244140625;
+////    Write.dac_buffer[4] = AdccResultRegs.ADCRESULT5 * 0.000244140625;
+////    Write.dac_buffer[5] = AdccResultRegs.ADCRESULT5 * 0.000244140625;
+//    Write.dac_buffer[6] = AdccResultRegs.ADCRESULT5 * 0.000244140625;
+////    Write.dac_buffer[7] = AdccResultRegs.ADCRESULT2 * 0.000244140625;
 
 //    Write.dac_buffer[0] = AdcaResultRegs.ADCRESULT1 * 0.000244140625;
 //    Write.dac_buffer[1] = AdcaResultRegs.ADCRESULT1 * 0.000244140625;
