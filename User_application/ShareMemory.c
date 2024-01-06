@@ -35,7 +35,7 @@ extern REAL normalizer[3];
 extern REAL hall_rotating_direction;
 extern REAL eddy_displacement[2];
 extern REAL used_theta_d_elec;
-long int counter;
+long int counter=0;
 
 void write_DAC_buffer(){
 if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
@@ -142,15 +142,15 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
 //    Write.dac_buffer[5] = cos(CL_TS*counter);
 //    Write.dac_buffer[6] = sin(CL_TS*counter);
 //    Write.dac_buffer[7] = cos(CL_TS*counter);
-
-    Write.dac_buffer[0] = AdccResultRegs.ADCRESULT2 * 0.000244140625;
-    Write.dac_buffer[1] = AdccResultRegs.ADCRESULT2 * 0.000244140625;
-    Write.dac_buffer[2] = AdccResultRegs.ADCRESULT4 * 0.000244140625;
-    Write.dac_buffer[3] = AdccResultRegs.ADCRESULT4 * 0.000244140625;
-    Write.dac_buffer[4] = AdccResultRegs.ADCRESULT5 * 0.000244140625;
-    Write.dac_buffer[5] = AdccResultRegs.ADCRESULT5 * 0.000244140625;
+//
+//    Write.dac_buffer[0] = AdcaResultRegs.ADCRESULT3 * 0.000244140625;
+//    Write.dac_buffer[1] = AdccResultRegs.ADCRESULT2 * 0.000244140625;
+    Write.dac_buffer[2] = AdcaResultRegs.ADCRESULT1 * 0.000244140625; //VSO3
+//    Write.dac_buffer[3] = AdccResultRegs.ADCRESULT4 * 0.000244140625;
+//    Write.dac_buffer[4] = AdccResultRegs.ADCRESULT5 * 0.000244140625;
+//    Write.dac_buffer[5] = AdccResultRegs.ADCRESULT5 * 0.000244140625;
     Write.dac_buffer[6] = AdccResultRegs.ADCRESULT5 * 0.000244140625;
-    Write.dac_buffer[7] = AdccResultRegs.ADCRESULT5 * 0.000244140625;
+//    Write.dac_buffer[7] = AdccResultRegs.ADCRESULT2 * 0.000244140625;
 
 //    Write.dac_buffer[0] = AdcaResultRegs.ADCRESULT1 * 0.000244140625;
 //    Write.dac_buffer[1] = AdcaResultRegs.ADCRESULT1 * 0.000244140625;

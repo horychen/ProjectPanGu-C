@@ -13,7 +13,7 @@
 
 #ifndef F2837xD_DEVICE_H
 #define F2837xD_DEVICE_H
-#define CPU1 1
+
 #if (!defined(CPU1) && !defined(CPU2))
 #error "You must define CPU1 or CPU2 in your project properties.  Otherwise, the offsets in your header files will be inaccurate."
 #endif

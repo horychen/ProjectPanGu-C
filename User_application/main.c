@@ -1,6 +1,6 @@
 #include <All_Definition.h>
 st_axis Axis;
-int digital_virtual_button = 0;
+int digital_virtual_button = 1;
 
 #ifdef _MMDv1 // mmlab drive version 1
     #define OFFSET_VDC 0   // ADC0
@@ -346,9 +346,12 @@ void DeadtimeCompensation(REAL Current_U, REAL Current_V, REAL Current_W, REAL C
     CMPA_DBC[2] = (Uint16)temp;
 }
 
-REAL vvvf_voltage = 100;
-REAL vvvf_frequency = 2;
-REAL enable_vvvf = FALSE;
+REAL vvvf_voltage = 4;
+REAL vvvf_frequency = 5;
+REAL enable_vvvf = TRUE;
+REAL enable_currentCalibre = FALSE;
+REAL currentCalibreScale = 0;
+REAL currentCalibreAngle = 0;
 
 
 void voltage_commands_to_pwm(){
@@ -366,6 +369,12 @@ void voltage_commands_to_pwm(){
         if(enable_vvvf){
             CTRL.svgen1.Ualpha= vvvf_voltage * cos(vvvf_frequency*2*M_PI*CTRL.timebase);
             CTRL.svgen1.Ubeta = vvvf_voltage * sin(vvvf_frequency*2*M_PI*CTRL.timebase);
+        }
+
+        if(enable_currentCalibre)
+        {
+            CTRL.svgen1.Ualpha= vvvf_voltage * currentCalibreScale * cos(currentCalibreAngle*M_PI*2/3);
+            CTRL.svgen1.Ubeta = vvvf_voltage * currentCalibreScale * sin(currentCalibreAngle*M_PI*2/3);
         }
         //    svgen2.Ualpha = svgen1.Ualpha*0.5        + svgen1.Ubeta*0.8660254; // rotate 60 deg
         //    svgen2.Ubeta  = svgen1.Ualpha*-0.8660254 + svgen1.Ubeta*0.5;
@@ -502,9 +511,9 @@ void measurement(){
     Axis.iuvw[5]=((REAL)(AdcbResultRegs.ADCRESULT8 ) - Axis.adc_offset[6]) * Axis.adc_scale[6]; // AD_scale_W2; offsetA2
 
     //LEM
-//    Axis.iuvw[0]=((REAL)(AdccResultRegs.ADCRESULT2 ) - Axis.adc_offset[1]) * Axis.adc_scale[1];
-//    Axis.iuvw[1]=((REAL)(AdccResultRegs.ADCRESULT4 ) - Axis.adc_offset[2]) * Axis.adc_scale[2];
-//    Axis.iuvw[2]=((REAL)(AdccResultRegs.ADCRESULT5 ) - Axis.adc_offset[3]) * Axis.adc_scale[3];
+    Axis.iuvw[0]=((REAL)(AdccResultRegs.ADCRESULT2 ) - Axis.adc_offset[1]) * Axis.adc_scale[1];
+    Axis.iuvw[1]=((REAL)(AdccResultRegs.ADCRESULT4 ) - Axis.adc_offset[2]) * Axis.adc_scale[2];
+    Axis.iuvw[2]=((REAL)(AdccResultRegs.ADCRESULT5 ) - Axis.adc_offset[3]) * Axis.adc_scale[3];
 //    Axis.iuvw[3]=((REAL)(AdcbResultRegs.ADCRESULT7 ) - Axis.adc_offset[4]) * Axis.adc_scale[4]; // AD_scale_U2; offsetD2
 //    Axis.iuvw[4]=((REAL)(AdcbResultRegs.ADCRESULT8 ) - Axis.adc_offset[5]) * Axis.adc_scale[5]; // AD_scale_V2; offsetB2
 //    Axis.iuvw[5]=((REAL)(AdcbResultRegs.ADCRESULT9 ) - Axis.adc_offset[6]) * Axis.adc_scale[6]; // AD_scale_W2; offsetA2
@@ -581,12 +590,12 @@ void measurement(){
 //    if(Axis.AD_offset_flag2==FALSE)
 //    {
 //        Axis.offset_counter += 1;
-//        Axis.iuvw_offset_online[0] += Axis.iuvw[0];
-//        Axis.iuvw_offset_online[1] += Axis.iuvw[1];
-//        Axis.iuvw_offset_online[2] += Axis.iuvw[2];
-//        Axis.iuvw_offset_online[3] += Axis.iuvw[0];
-//        Axis.iuvw_offset_online[4] += Axis.iuvw[1];
-//        Axis.iuvw_offset_online[5] += Axis.iuvw[2];
+//        Axis.iuvw_offset_online[0] += (REAL)(AdcaResultRegs.ADCRESULT1 ) ;
+//        Axis.iuvw_offset_online[1] += (REAL)(AdcaResultRegs.ADCRESULT2 ) ;
+//        Axis.iuvw_offset_online[2] += (REAL)(AdcaResultRegs.ADCRESULT3 ) ;
+//        Axis.iuvw_offset_online[3] += (REAL)(AdcaResultRegs.ADCRESULT11 ) ;
+//        Axis.iuvw_offset_online[4] += (REAL)(AdcaResultRegs.ADCRESULT9 ) ;
+//        Axis.iuvw_offset_online[5] += (REAL)(AdcaResultRegs.ADCRESULT8 ) ;
 //        if(Axis.offset_counter>=5000){
 //            Axis.iuvw_offset_online[0] = Axis.iuvw_offset_online[0] / 5000;
 //            Axis.iuvw_offset_online[1] = Axis.iuvw_offset_online[1] / 5000;
@@ -605,7 +614,7 @@ void measurement(){
 //            Axis.iuvw_offset_online[1] = 0.0;
 //            Axis.iuvw_offset_online[2] = 0.0;
 //            Axis.iuvw_offset_online[3] = 0.0;
-//            Axis.offset_counter[4] = 0.0;
+//            Axis.iuvw_offset_online[4] = 0.0;
 //            Axis.iuvw_offset_online[5] = 0.0;
 //            Axis.AD_offset_flag2 = TRUE;
 //        }
@@ -693,7 +702,7 @@ void PanGuMainISR(void){
 //                CTRL.g->overwrite_vdc = 120;
                 //CTRL.g->overwrite_vdc = 200;
                 //ีýฯาสตั้
-                CTRL.g->overwrite_vdc = 200;
+                CTRL.g->overwrite_vdc = 28;
 //                FE.htz.rs_est=4.45;
 //                marino.gamma_inv=150000;
 //                marino.lambda_inv=2000;

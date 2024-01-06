@@ -242,12 +242,12 @@ void InitHighSpeedSpiGpio()
     GpioCtrlRegs.GPBPUD.bit.GPIO63 = 0;   // Enable pull-up on GPIO63 (SPISIMOB)
     GpioCtrlRegs.GPCPUD.bit.GPIO64 = 0;   // Enable pull-up on GPIO64 (SPISOMIB)
     GpioCtrlRegs.GPCPUD.bit.GPIO65 = 0;   // Enable pull-up on GPIO65 (SPICLKB)
-    GpioCtrlRegs.GPCPUD.bit.GPIO66 = 0;   // Enable pull-up on GPIO66 (SPISTEB)
+    //GpioCtrlRegs.GPCPUD.bit.GPIO66 = 0;   // Enable pull-up on GPIO66 (SPISTEB)
 
     GpioCtrlRegs.GPCPUD.bit.GPIO69 = 0;   // Enable pull-up on GPIO69 (SPISIMOC)
     GpioCtrlRegs.GPCPUD.bit.GPIO70 = 0;   // Enable pull-up on GPIO70 (SPISOMIC)
     GpioCtrlRegs.GPCPUD.bit.GPIO71 = 0;   // Enable pull-up on GPIO71 (SPICLKC)
-    GpioCtrlRegs.GPCPUD.bit.GPIO72 = 0;   // Enable pull-up on GPIO72 (SPISTEC)
+    //GpioCtrlRegs.GPCPUD.bit.GPIO72 = 0;   // Enable pull-up on GPIO72 (SPISTEC)
 
 /* Set qualification for selected pins to asynch only */
 // This will select asynch (no qualification) for the selected pins.
@@ -261,12 +261,12 @@ void InitHighSpeedSpiGpio()
     GpioCtrlRegs.GPBQSEL2.bit.GPIO63 = 3; // Asynch input GPIO63 (SPISIMOB)
     GpioCtrlRegs.GPCQSEL1.bit.GPIO64 = 3; // Asynch input GPIO64 (SPISOMIB)
     GpioCtrlRegs.GPCQSEL1.bit.GPIO65 = 3; // Asynch input GPIO65 (SPICLKB)
-    GpioCtrlRegs.GPCQSEL1.bit.GPIO66 = 3; // Asynch input GPIO66 (SPISTEB)
+    //GpioCtrlRegs.GPCQSEL1.bit.GPIO66 = 3; // Asynch input GPIO66 (SPISTEB)
 
     GpioCtrlRegs.GPCQSEL1.bit.GPIO69 = 3; // Asynch input GPIO69 (SPISIMOCC)
     GpioCtrlRegs.GPCQSEL1.bit.GPIO70 = 3; // Asynch input GPIO70 (SPISOMIC)
     GpioCtrlRegs.GPCQSEL1.bit.GPIO71 = 3; // Asynch input GPIO71 (SPICLKC)
-    GpioCtrlRegs.GPCQSEL1.bit.GPIO72 = 3; // Asynch input GPIO72 (SPISTEC)
+    //GpioCtrlRegs.GPCQSEL1.bit.GPIO72 = 3; // Asynch input GPIO72 (SPISTEC)
 
 /* Configure SPI-A pins using GPIO regs*/
 // This specifies which of the possible GPIO pins will be SPI functional pins.
@@ -285,20 +285,20 @@ void InitHighSpeedSpiGpio()
     GpioCtrlRegs.GPBGMUX2.bit.GPIO63 = 3;
     GpioCtrlRegs.GPCGMUX1.bit.GPIO64 = 3;
     GpioCtrlRegs.GPCGMUX1.bit.GPIO65 = 3;
-    GpioCtrlRegs.GPCGMUX1.bit.GPIO66 = 3;
+    //GpioCtrlRegs.GPCGMUX1.bit.GPIO66 = 3;
     GpioCtrlRegs.GPBMUX2.bit.GPIO63 = 3; // Configure GPIO63 as SPISIMOB
     GpioCtrlRegs.GPCMUX1.bit.GPIO64 = 3; // Configure GPIO64 as SPISOMIB
     GpioCtrlRegs.GPCMUX1.bit.GPIO65 = 3; // Configure GPIO65 as SPICLKB
-    GpioCtrlRegs.GPCMUX1.bit.GPIO66 = 3; // Configure GPIO66 as SPISTEB
+    //GpioCtrlRegs.GPCMUX1.bit.GPIO66 = 3; // Configure GPIO66 as SPISTEB
 
     GpioCtrlRegs.GPCGMUX1.bit.GPIO69 = 3;
     GpioCtrlRegs.GPCGMUX1.bit.GPIO70 = 3;
     GpioCtrlRegs.GPCGMUX1.bit.GPIO71 = 3;
-    GpioCtrlRegs.GPCGMUX1.bit.GPIO72 = 3;
+    //GpioCtrlRegs.GPCGMUX1.bit.GPIO72 = 3;
     GpioCtrlRegs.GPCMUX1.bit.GPIO69 = 3; // Configure GPIO69 as SPISIMOC
     GpioCtrlRegs.GPCMUX1.bit.GPIO70 = 3; // Configure GPIO70 as SPISOMIC
     GpioCtrlRegs.GPCMUX1.bit.GPIO71 = 3; // Configure GPIO71 as SPICLKC
-    GpioCtrlRegs.GPCMUX1.bit.GPIO72 = 3; // Configure GPIO72 as SPISTEC
+    //GpioCtrlRegs.GPCMUX1.bit.GPIO72 = 3; // Configure GPIO72 as SPISTEC
 
 
     EDIS;

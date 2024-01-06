@@ -535,6 +535,22 @@ void Gpio_initialize(void)
             GPIO_SetupPinMux(61,GPIO_MUX_CPU2,0);
         #endif
 
+        // SPISTEB for SPI with D/A chip MAX5307
+        GPIO_SetupPinOptions(66, GPIO_OUTPUT, GPIO_SYNC);
+        #if NUMBER_OF_DSP_CORES == 1
+            GPIO_SetupPinMux(66,GPIO_MUX_CPU1,0);
+        #else
+            GPIO_SetupPinMux(66,GPIO_MUX_CPU2,0);
+        #endif
+
+        // SPISTEC for SPI with D/A chip MAX5307
+        GPIO_SetupPinOptions(72, GPIO_OUTPUT, GPIO_SYNC);
+        #if NUMBER_OF_DSP_CORES == 1
+            GPIO_SetupPinMux(72,GPIO_MUX_CPU1,0);
+        #else
+            GPIO_SetupPinMux(72,GPIO_MUX_CPU2,0);
+        #endif
+
 
     /* Ë«ºËÅäÖÃÀý×Ó£º
     // Give GPIO31 Control to CPU02
