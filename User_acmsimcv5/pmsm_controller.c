@@ -783,7 +783,10 @@ void init_CTRL(){
     CTRL.motor->Lq_inv = 1.0/CTRL.motor->Lq;
     CTRL.motor->DeltaL = CTRL.motor->Ld - CTRL.motor->Lq; // for IPMSM
     CTRL.motor->KActive = CTRL.motor->KE; // TODO
-    CTRL.motor->Rreq = U_MOTOR_RREQ;
+
+    #if MACHINE_TYPE % 10 == 1
+        CTRL.motor->Rreq = U_MOTOR_RREQ;
+    #endif
     // mech
     CTRL.motor->npp     = MOTOR_NUMBER_OF_POLE_PAIRS;
     CTRL.motor->npp_inv = 1.0 / CTRL.motor->npp;
@@ -1005,7 +1008,7 @@ REAL controller(REAL set_rpm_speed_command,
     }
 
     /// 3. 调用观测器：估计的电气转子位置和电气转子转速反馈
-    pmsm_observers();
+    // pmsm_observers();
     if(CTRL.S->go_sensorless == TRUE){
         //（无感）
         CTRL.I->omg_elec     = ELECTRICAL_SPEED_FEEDBACK;    //harnefors.omg_elec;

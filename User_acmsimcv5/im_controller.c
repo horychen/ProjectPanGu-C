@@ -375,7 +375,7 @@ void controller_marino2005(){
         // 第一项很有用，第二项无用。
         marino.deriv_iQ_cmd =   CTRL.motor->npp_inv*CTRL.motor->Js * CLARKE_TRANS_TORQUE_GAIN_INVERSE*CTRL.motor->npp_inv * (\
             1.0*(-marino.k_omega*deriv_sat_kappa(CTRL.I->omg_elec-CTRL.I->cmd_omg_elec) * (marino.deriv_xOmg - CTRL.I->cmd_deriv_omg_elec) + CTRL.motor->Js_inv*CTRL.motor->npp*marino.deriv_xTL + CTRL.I->cmd_dderiv_omg_elec ) * CTRL.I->cmd_psi_inv\
-        - 1.0*(-marino.k_omega*      sat_kappa(CTRL.I->omg_elec-CTRL.I->cmd_omg_elec) + CTRL.motor->Js_inv*CTRL.motor->npp*CTRL.I->TLoad + CTRL.I->cmd_deriv_omg_elec) * (CTRL.I->cmd_deriv_psi * CTRL.I->cmd_psi_inv*CTRL.I->cmd_psi_inv)
+          - 1.0*(-marino.k_omega*      sat_kappa(CTRL.I->omg_elec-CTRL.I->cmd_omg_elec) + CTRL.motor->Js_inv*CTRL.motor->npp*CTRL.I->TLoad + CTRL.I->cmd_deriv_omg_elec) * (CTRL.I->cmd_deriv_psi * CTRL.I->cmd_psi_inv*CTRL.I->cmd_psi_inv)
             );
 
         // current error quantities
@@ -460,9 +460,10 @@ void controller_IFOC(){
     /// 3. 电气转子位置和电气转子转速反馈
 
     flux_observer(); // FLUX_FEEDBACK_ALPHA, FLUX_FEEDBACK_BETA
-    // CTRL.I->omg_elec = FE.htz.omg_est;
+    CTRL.I->omg_elec = FE.htz.omg_est;
     Main_esoaf_chen2021();
-    CTRL.I->omg_elec = esoaf.xOmg; // - CTRL.S->omega_sl;
+    // CTRL.I->omg_elec = esoaf.xOmg - (esoaf.bool_ramp_load_torque<0) * CTRL.S->omega_sl;
+    // CTRL.I->omg_elec = esoaf.xOmg;
 
         //（编码器反馈）
         // CTRL.I->omg_elec     = qep.omg_elec;

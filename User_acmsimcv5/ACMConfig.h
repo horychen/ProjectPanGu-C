@@ -12,31 +12,28 @@
     #define INDUCTION_MACHINE_CLASSIC_MODEL 1
     #define INDUCTION_MACHINE_FLUX_ONLY_MODEL 11
     #define PM_SYNCHRONOUS_MACHINE 2
-#define MACHINE_TYPE 1
+#define MACHINE_TYPE 2
 	// 电机参数
-	#define IM_STAOTR_RESISTANCE        5.5
-	#define IM_ROTOR_RESISTANCE         2.1
-	#define IM_TOTAL_LEAKAGE_INDUCTANCE 0.022
-	// 磁链给定
-	#define IM_MAGNETIZING_INDUCTANCE   0.558
-	#define IM_FLUX_COMMAND_DC_PART     1.3593784874408608
-	#define IM_FLUX_COMMAND_SINE_PART   0.0
-	#define IM_FLUX_COMMAND_SINE_HERZ   10
+	#define PMSM_RESISTANCE                    1.1
+	#define PMSM_D_AXIS_INDUCTANCE             0.004957
+	#define PMSM_Q_AXIS_INDUCTANCE             0.004957
+	#define PMSM_PERMANENT_MAGNET_FLUX_LINKAGE 0.1
 	// 铭牌值
-	#define MOTOR_NUMBER_OF_POLE_PAIRS  2
-	#define MOTOR_RATED_CURRENT_RMS     4.6
-	#define MOTOR_RATED_POWER_WATT      4000
-	#define MOTOR_RATED_SPEED_RPM       1440
-	#define MOTOR_SHAFT_INERTIA         0.063
+	#define MOTOR_NUMBER_OF_POLE_PAIRS         4
+	#define MOTOR_RATED_CURRENT_RMS            3
+	#define MOTOR_RATED_POWER_WATT             750
+	#define MOTOR_RATED_SPEED_RPM              1500
+	#define MOTOR_SHAFT_INERTIA                0.0006168
 	// 参数误差
-		#define MISMATCH_RS               100
-		#define MISMATCH_RREQ             100
-		#define MISMATCH_LMU              100
-		#define MISMATCH_LSIGMA           100
+		#define MISMATCH_R   100
+		#define MISMATCH_LD  100
+		#define MISMATCH_LQ  100
+		#define MISMATCH_KE  100
 
 
 #if MACHINE_TYPE % 10 == 2
 	#define CORRECTION_4_SHARED_FLUX_EST PMSM_PERMANENT_MAGNET_FLUX_LINKAGE
+    #define U_MOTOR_KE                   PMSM_PERMANENT_MAGNET_FLUX_LINKAGE
 #else
 	#define CORRECTION_4_SHARED_FLUX_EST    IM_FLUX_COMMAND_DC_PART
     #define U_MOTOR_R                       IM_STAOTR_RESISTANCE    // typo!
@@ -48,8 +45,8 @@
     /* Select [Shared Flux Estimator] */
     // #define AFE_USED FE.AFEOE
     // #define AFE_USED FE.huwu
-    // #define AFE_USED FE.htz // this is not used for induction motor control
-    #define AFE_USED FE.picorr
+    // #define AFE_USED FE.htz // this is for ESO speed estimation
+    #define AFE_USED FE.picorr // this is for ESO speed estimation
 
     /* Tuning [Shared Flux Estimator] */
         /* AFEOE or CM-VM Fusion */
@@ -92,8 +89,8 @@
         #define ALG_Harnefors_2006 7
         #define ALG_ESOAF 10
 
-    #define SELECT_ALGORITHM ALG_ESOAF
-    // #define SELECT_ALGORITHM ALG_NSOAF
+    // #define SELECT_ALGORITHM ALG_ESOAF
+    #define SELECT_ALGORITHM ALG_NSOAF
     // #define SELECT_ALGORITHM ALG_Chi_Xu
 
         #if SELECT_ALGORITHM == ALG_Chi_Xu
@@ -212,7 +209,7 @@
     #define GAIN_OHTANI (5)
     #define VM_OHTANI_CORRECTION_GAIN_P (5)
     /* B *//// default: P=5, I=2.5
-    #define VM_PROPOSED_PI_CORRECTION_GAIN_P 200   //10 // (5)
+    #define VM_PROPOSED_PI_CORRECTION_GAIN_P 50 // 20暂态能跟上但是又滞后，200后面暂态就跟不上了  //10 // (5)
     #define VM_PROPOSED_PI_CORRECTION_GAIN_I 0.0 //2.5 //2  // (2.5)
     /* C *//// default: P=0.125*5, I=0.125*2.5, KCM=0
     #define OUTPUT_ERROR_CLEST_GAIN_KP (0.125*5)
@@ -231,10 +228,10 @@
 #endif
 
 /* 控制策略 */
-	#define INDIRECT_FOC 1
-	#define MARINO_2005_ADAPTIVE_SENSORLESS_CONTROL 2
-#define CONTROL_STRATEGY MARINO_2005_ADAPTIVE_SENSORLESS_CONTROL
-#define NUMBER_OF_STEPS 250000
+	#define NULL_D_AXIS_CURRENT_CONTROL -1
+	#define MTPA -2 // not supported
+#define CONTROL_STRATEGY NULL_D_AXIS_CURRENT_CONTROL
+#define NUMBER_OF_STEPS 50000
     #define DOWN_SAMPLE 1
     #define USE_QEP_RAW FALSE
     #define VOLTAGE_CURRENT_DECOUPLING_CIRCUIT FALSE
@@ -243,28 +240,28 @@
 #define CL_TS_INVERSE  (10000)
     #define TS_UPSAMPLING_FREQ_EXE 1.0 //0.5
     #define TS_UPSAMPLING_FREQ_EXE_INVERSE 1 //2
-#define VL_TS          (0.0004)
+#define VL_TS          (0.0005)
     #define PL_TS VL_TS
     #define SPEED_LOOP_CEILING ((int)(VL_TS*CL_TS_INVERSE))
     #define MACHINE_TS         (CL_TS*TS_UPSAMPLING_FREQ_EXE)
     #define MACHINE_TS_INVERSE (CL_TS_INVERSE*TS_UPSAMPLING_FREQ_EXE_INVERSE)
 
 #define LOAD_INERTIA    0.0
-#define LOAD_TORQUE     1
-#define VISCOUS_COEFF   0.007
+#define LOAD_TORQUE     0.0
+#define VISCOUS_COEFF   0.0007
 
 #define CL_SERIES_KP (31.2903)
 #define CL_SERIES_KI (122.088)
 #define VL_SERIES_KP (1.79885)
 #define VL_SERIES_KI (29.7429)
 
-#define CURRENT_KP (3)//(377.716)
-#define CURRENT_KI (9.48276)
+#define CURRENT_KP (6.39955)
+#define CURRENT_KI (221.908)
     #define CURRENT_KI_CODE (CURRENT_KI*CURRENT_KP*CL_TS)
-#define CURRENT_LOOP_LIMIT_VOLTS (600)
+#define CURRENT_LOOP_LIMIT_VOLTS (110)
 
-#define SPEED_KP (0.773879)
-#define SPEED_KI (15.4138)
+#define SPEED_KP (0.0510446)
+#define SPEED_KI (30.5565)
     #define MOTOR_RATED_TORQUE ( MOTOR_RATED_POWER_WATT / (MOTOR_RATED_SPEED_RPM/60.0*2*3.1415926) )
     #define MOTOR_TORQUE_CONSTANT ( MOTOR_RATED_TORQUE / (MOTOR_RATED_CURRENT_RMS*1.414) )
     #define MOTOR_BACK_EMF_CONSTANT ( MOTOR_TORQUE_CONSTANT / 1.5 / MOTOR_NUMBER_OF_POLE_PAIRS )
@@ -313,5 +310,5 @@
 #define SWEEP_FREQ_C2V FALSE
 #define SWEEP_FREQ_C2C FALSE
 
-#define DATA_FILE_NAME "../dat/IM_Marino05_IFE_Comparison-104-1000-2-5019.dat"
+
 #endif

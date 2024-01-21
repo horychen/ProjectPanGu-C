@@ -43,7 +43,7 @@ struct ObserverForExperiment{
         REAL adapt_gain;
         REAL mras_gain;
     } qiaoxia;
-// #define qiaoxia OBSV.qiaoxia
+#define qiaoxia OBSV.qiaoxia
 #endif
 
 /* Chi.Xu 2009 SMO for Emf for SPMSM */
@@ -69,7 +69,7 @@ struct ObserverForExperiment{
         REAL PLL_KI;
         REAL smo_gain_scale; // 几倍反电势
     } chixu;
-// #define chixu OBSV.chixu
+#define chixu OBSV.chixu
 #endif
 
 /* Park.Sul 2014 FADO in replace of CM */
@@ -111,7 +111,7 @@ struct ObserverForExperiment{
         REAL limiter_KE;
         REAL limiter_Flag;
     } parksul;
-// #define parksul OBSV.parksul
+#define parksul OBSV.parksul
 #endif
 
 /* Natural Speed Observer with active flux concept Chen2020 */
@@ -144,7 +144,7 @@ struct ObserverForExperiment{
         REAL load_torque_pid_output;
         REAL q_axis_voltage;
     } nsoaf;
-// #define nsoaf OBSV.nsoaf
+#define nsoaf OBSV.nsoaf
 #endif
 
 /* Extended State Observer with active flux concept Chen2021 */
@@ -168,7 +168,7 @@ struct ObserverForExperiment{
 
         REAL xTem;
     } esoaf;
-// #define esoaf OBSV.esoaf
+#define esoaf OBSV.esoaf
 #endif
 
 /* Farza 2009 HGO */
@@ -189,7 +189,7 @@ struct ObserverForExperiment{
         REAL vartheta;
         REAL vartheta_inv;
     } hgo4eemf;
-// #define hgo4eemf OBSV.hgo4eemf
+#define hgo4eemf OBSV.hgo4eemf
 #endif
 
 /* CJH EEMF AO Design */
@@ -217,7 +217,7 @@ struct ObserverForExperiment{
         REAL k2;
         REAL gamma_omg;
     } cjheemf;
-// #define cjheemf OBSV.cjheemf
+#define cjheemf OBSV.cjheemf
 #endif
 
 /* Harnefors 2006 */
@@ -239,7 +239,7 @@ struct ObserverForExperiment{
         REAL is_dq_prev[2];
         REAL pis_dq[2];
     } harnefors;
-// #define harnefors OBSV.harnefors
+#define harnefors OBSV.harnefors
 #endif
 };
 extern struct ObserverForExperiment OBSV;

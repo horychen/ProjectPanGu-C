@@ -15,7 +15,7 @@
     #define USE_DEATIME_PRECOMP FALSE
     __interrupt void EPWM1ISR(void);
     #define ENABLE_ECAP 0
-    #define USE_ECAP_CEVT2_INTERRUPT 1
+    #define USE_ECAP_CEVT2_INTERRUPT 0 // measure terminal voltage duty using e-capture
     __interrupt void ecap1_isr(void);
     __interrupt void ecap2_isr(void);
     __interrupt void ecap3_isr(void);
@@ -80,8 +80,8 @@
         BOOL CurrentOVER_FLAG;
     };
     extern struct Trip_Variables trip;//trip flag
-    //#define Motor_mode_START    GpioDataRegs.GPADAT.bit.GPIO26          //DI Start Button
-    #define Motor_mode_START    digital_virtual_button          //virtual DI Start Button
+    #define Motor_mode_START    GpioDataRegs.GPCDAT.bit.GPIO75    //DI Start Button
+    //#define Motor_mode_START    digital_virtual_button          //virtual DI Start Button
     int Motor_MODE_START(void);
     int Motor_MODE_STOP(void);
     int Motor_MODE_REVERSE(void);

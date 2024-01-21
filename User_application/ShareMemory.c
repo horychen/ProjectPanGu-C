@@ -35,7 +35,13 @@ extern REAL normalizer[3];
 extern REAL hall_rotating_direction;
 extern REAL eddy_displacement[2];
 extern REAL used_theta_d_elec;
+extern REAL target_position_cnt;
 long int counter=0;
+
+//extern REAL target_position_cnt = 5000;
+//extern REAL KP = 0.05;
+//extern REAL direction
+
 
 void write_DAC_buffer(){
 if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
@@ -48,10 +54,10 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
     Axis.dac_watch[4] = Axis.iuvw[4]*0.2;
     Axis.dac_watch[5] = Axis.iuvw[5]*0.2;
 
-//    Axis.dac_watch[2] = CTRL.I->iab[0]*0.2;
-//    Axis.dac_watch[3] = CTRL.I->iab[1]*0.2;
-//    Axis.dac_watch[4] = CTRL.O->uab_cmd[0]*0.001;
-//    Axis.dac_watch[5] = CTRL.O->uab_cmd[1]*0.001;
+    Axis.dac_watch[6] = CTRL.I->iab[0]*0.25;      // +-6A ->0-3V
+    Axis.dac_watch[7] = CTRL.I->iab[1]*0.25;
+    Axis.dac_watch[8] = CTRL.O->uab_cmd[0]*0.125; // +-12V -> 0-3V
+    Axis.dac_watch[9] = CTRL.O->uab_cmd[1]*0.125;
     Axis.dac_watch[10] = FE.htz.psi_2_ampl*0.25;
     Axis.dac_watch[11] = FE.htz.psi_2_ampl_lpf*0.25;
     Axis.dac_watch[12] = FE.htz.psi_2[0]*0.25;
@@ -75,12 +81,14 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
 
 //    Axis.dac_watch[21] = marino.xOmg * ELEC_RAD_PER_SEC_2_RPM *0.002;
     Axis.dac_watch[21] = CTRL.I->omg_elec * ELEC_RAD_PER_SEC_2_RPM *0.002;
-    Axis.dac_watch[22] = marino.xTL*0.025;
-    Axis.dac_watch[23] = marino.xRho*0.1;
-    Axis.dac_watch[24] = marino.xAlpha*0.1;
-
-    Axis.dac_watch[25] = marino.e_psi_Dmu;
-    Axis.dac_watch[26] = marino.e_psi_Qmu;
+    Axis.dac_watch[22] = target_position_cnt*0.0003-(CTRL.enc->encoder_abs_cnt)*0.0003;
+    //Axis.dac_watch[23] = ;
+//    Axis.dac_watch[22] = marino.xTL*0.025;
+//    Axis.dac_watch[23] = marino.xRho*0.1;
+//    Axis.dac_watch[24] = marino.xAlpha*0.1;
+//
+//    Axis.dac_watch[25] = marino.e_psi_Dmu;
+//    Axis.dac_watch[26] = marino.e_psi_Qmu;
 
     Axis.dac_watch[27] = CTRL.I->idq_cmd[0]*0.2;
     Axis.dac_watch[28] = CTRL.I->idq_cmd[1]*0.2;
@@ -89,12 +97,14 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
 
     if(Axis.channels_preset==1){Axis.channels_preset=0;
         /* Marino 2005 Sensorless Control */
-        Axis.channels[0] = 12;
-        Axis.channels[1] = 4; //13;
-        Axis.channels[2] = 20;//28;
-        Axis.channels[3] = 41;
+        Axis.channels[0] = 22;
+        Axis.channels[1] = 23;
+        Axis.channels[2] = 8;
+        Axis.channels[3] = 9;
         Axis.channels[4] = 21;
         Axis.channels[5] = 22;
+        Axis.channels[6] = 21;
+        Axis.channels[7] = 22;
     }else if(Axis.channels_preset==2){Axis.channels_preset=0;
         /* Marino 2005 Sensorless Control */
         Axis.channels[0] = 2; //12;
@@ -103,6 +113,8 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
         Axis.channels[3] = 41;
         Axis.channels[4] = 21;
         Axis.channels[5] = 22;
+        Axis.channels[6] = 21;
+        Axis.channels[7] = 22;
     }else if(Axis.channels_preset==3){Axis.channels_preset=0;
         /* Marino 2005 Sensorless Control */
         Axis.channels[0] = 2; //12;
@@ -125,23 +137,23 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
     }
 
     // 八通道DAC输出，请修改Axis.channels数组来确定具体输出哪些Axis.dac_watch数组中的变量。
-//    Write.dac_buffer[0] = Axis.dac_watch[Axis.channels[0]] + Axis.dac_offset[0];
-//    Write.dac_buffer[1] = Axis.dac_watch[Axis.channels[1]] + Axis.dac_offset[1];
-//    Write.dac_buffer[2] = Axis.dac_watch[Axis.channels[2]] + Axis.dac_offset[2];
-//    Write.dac_buffer[3] = Axis.dac_watch[Axis.channels[3]] + Axis.dac_offset[3];
-//    Write.dac_buffer[4] = Axis.dac_watch[Axis.channels[4]] + Axis.dac_offset[4];
-//    Write.dac_buffer[5] = Axis.dac_watch[Axis.channels[5]] + Axis.dac_offset[5];
-//    Write.dac_buffer[6] = Axis.dac_watch[Axis.channels[6]] + Axis.dac_offset[6];
-//    Write.dac_buffer[7] = Axis.dac_watch[Axis.channels[7]] + Axis.dac_offset[7];
+    Write.dac_buffer[0] = Axis.dac_watch[Axis.channels[0]] + Axis.dac_offset[0];
+    Write.dac_buffer[1] = Axis.dac_watch[Axis.channels[1]] + Axis.dac_offset[1];
+    Write.dac_buffer[2] = Axis.dac_watch[Axis.channels[2]] + Axis.dac_offset[2];
+    Write.dac_buffer[3] = Axis.dac_watch[Axis.channels[3]] + Axis.dac_offset[3];
+    Write.dac_buffer[4] = Axis.dac_watch[Axis.channels[4]] + Axis.dac_offset[4];
+    Write.dac_buffer[5] = Axis.dac_watch[Axis.channels[5]] + Axis.dac_offset[5];
+    Write.dac_buffer[6] = Axis.dac_watch[Axis.channels[6]] + Axis.dac_offset[6];
+    Write.dac_buffer[7] = Axis.dac_watch[Axis.channels[7]] + Axis.dac_offset[7];
 
-    Write.dac_buffer[0] = sin(CL_TS*counter);
-    Write.dac_buffer[1] = cos(CL_TS*counter);
-    Write.dac_buffer[2] = sin(CL_TS*counter);
-    Write.dac_buffer[3] = cos(CL_TS*counter);
-    Write.dac_buffer[4] = sin(CL_TS*counter);
-    Write.dac_buffer[5] = cos(CL_TS*counter);
-    Write.dac_buffer[6] = sin(CL_TS*counter);
-    Write.dac_buffer[7] = cos(CL_TS*counter);
+//    Write.dac_buffer[0] = sin(CL_TS*counter);
+//    Write.dac_buffer[1] = cos(CL_TS*counter);
+//    Write.dac_buffer[2] = sin(CL_TS*counter);
+//    Write.dac_buffer[3] = cos(CL_TS*counter);
+//    Write.dac_buffer[4] = sin(CL_TS*counter);
+//    Write.dac_buffer[5] = cos(CL_TS*counter);
+//    Write.dac_buffer[6] = sin(CL_TS*counter);
+//    Write.dac_buffer[7] = cos(CL_TS*counter);
 ////
 ////    Write.dac_buffer[0] = AdcaResultRegs.ADCRESULT3 * 0.000244140625;
 ////    Write.dac_buffer[1] = AdccResultRegs.ADCRESULT2 * 0.000244140625;
@@ -152,15 +164,14 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
 //    Write.dac_buffer[6] = AdccResultRegs.ADCRESULT5 * 0.000244140625;
 ////    Write.dac_buffer[7] = AdccResultRegs.ADCRESULT2 * 0.000244140625;
 
-//    Write.dac_buffer[0] = AdcaResultRegs.ADCRESULT1 * 0.000244140625;
-//    Write.dac_buffer[1] = AdcaResultRegs.ADCRESULT1 * 0.000244140625;
-//    Write.dac_buffer[2] = AdcaResultRegs.ADCRESULT2 * 0.000244140625;
-//    Write.dac_buffer[3] = AdcaResultRegs.ADCRESULT2 * 0.000244140625;
-//    Write.dac_buffer[4] = AdcaResultRegs.ADCRESULT3 * 0.000244140625;
-//    Write.dac_buffer[5] = AdcaResultRegs.ADCRESULT3 * 0.000244140625;
-//    Write.dac_buffer[6] = AdcaResultRegs.ADCRESULT3 * 0.000244140625;
-//    Write.dac_buffer[7] = AdcaResultRegs.ADCRESULT3 * 0.000244140625;
-
+//    Write.dac_buffer[0] = Axis.iuvw[0];
+//    Write.dac_buffer[1] = Axis.iuvw[1];
+//    Write.dac_buffer[2] = Axis.iuvw[2];
+//    Write.dac_buffer[3] = Axis.iuvw[0];
+//    Write.dac_buffer[4] = Axis.iuvw[1];
+//    Write.dac_buffer[5] = Axis.iuvw[2];
+//    Write.dac_buffer[6] = Axis.iuvw[0];
+//    Write.dac_buffer[7] = Axis.iuvw[1];
     counter += 1;
 
     Axis.dac_time += CL_TS;

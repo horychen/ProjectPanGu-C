@@ -728,11 +728,11 @@ void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REA
 void simulation_test_flux_estimators(){
     MainFE_HUWU_1998();
     Main_the_active_flux_estimator();
-    VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
+    // VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
 }
 
 void init_FE(){
     init_FE_huwu();
     init_afe();
-    init_FE_htz();
+    // init_FE_htz();
 }

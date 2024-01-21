@@ -286,6 +286,7 @@ void rhf_dynamics_ESO(REAL t, REAL *x, REAL *fx){
     // esoaf.xTem = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * MOTOR.KActive * CTRL->I.idq_cmd[1];
 
     /* Output Error = sine of angle error */
+    // also try Boldea 2008's idea "Im x"
     esoaf.output_error_sine = sin(AFE_USED.theta_d - xPos);
     esoaf.output_error = AFE_USED.theta_d - xPos;
     // you should check for sudden change in angle error.
@@ -295,7 +296,7 @@ void rhf_dynamics_ESO(REAL t, REAL *x, REAL *fx){
 
     /* Extended State Observer */
     // xPos
-    fx[0] = + esoaf.ell[0]*esoaf.output_error + xOmg;
+    fx[0] = + esoaf.ell[0]*esoaf.output_error + xOmg; // + (esoaf.bool_ramp_load_torque<0) * CTRL.S->omega_sl;
     // xOmg
     fx[1] = + esoaf.ell[1]*esoaf.output_error + (esoaf.bool_ramp_load_torque>=0) * (esoaf.xTem - xTL) * (MOTOR.Js_inv*MOTOR.npp);
     // xTL

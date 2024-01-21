@@ -1267,20 +1267,20 @@ void Main_parksul2014_FADO(){
 void init_rk4(){
     int i;
     for(i=0; i<2; ++i){
-        rk4.us[i] = 0;
-        rk4.is[i] = 0;
-        // rk4.us_curr[i] = 0;
-        rk4.is_curr[i] = 0;
-        rk4.us_prev[i] = 0;
-        rk4.is_prev[i] = 0;
-        rk4.is_lpf[i]  = 0;
-        rk4.is_hpf[i]  = 0;
-        rk4.is_bpf[i]  = 0;
+        OBSV.rk4.us[i] = 0;
+        OBSV.rk4.is[i] = 0;
+        // OBSV.rk4.us_curr[i] = 0;
+        OBSV.rk4.is_curr[i] = 0;
+        OBSV.rk4.us_prev[i] = 0;
+        OBSV.rk4.is_prev[i] = 0;
+        OBSV.rk4.is_lpf[i]  = 0;
+        OBSV.rk4.is_hpf[i]  = 0;
+        OBSV.rk4.is_bpf[i]  = 0;
 
-        rk4.current_lpf_register[i] = 0;
-        rk4.current_hpf_register[i] = 0;
-        rk4.current_bpf_register1[i] = 0;
-        rk4.current_bpf_register2[i] = 0;
+        OBSV.rk4.current_lpf_register[i] = 0;
+        OBSV.rk4.current_hpf_register[i] = 0;
+        OBSV.rk4.current_bpf_register1[i] = 0;
+        OBSV.rk4.current_bpf_register2[i] = 0;
     }
 }
 void pmsm_observers(){
@@ -1289,25 +1289,25 @@ void pmsm_observers(){
     CTRL.motor->KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * CTRL.I->idq_cmd[0];
 
     #if PC_SIMULATION
-        /* Cascaded Flux Estimator */
-        simulation_test_flux_estimators();
-        // nsoaf.theta_d = AFE_USED.theta_d;
+        // /* Cascaded Flux Estimator */
+        // simulation_test_flux_estimators();
+        // // nsoaf.theta_d = AFE_USED.theta_d;
 
-        /* Speed and Position Estimator */
-        Main_harnefors_scvm();
-        // cjh_eemfao();
-        // cjh_eemfhgo_farza09();
-        Main_nsoaf_chen2020();
-        Main_esoaf_chen2021();
-        // Main_QiaoXia2013_emfSMO();
-        Main_ChiXu2009_emfSMO();
-        Main_parksul2014_FADO();
+        // /* Speed and Position Estimator */
+        // Main_harnefors_scvm();
+        // // cjh_eemfao();
+        // // cjh_eemfhgo_farza09();
+        // Main_nsoaf_chen2020();
+        // Main_esoaf_chen2021();
+        // // Main_QiaoXia2013_emfSMO();
+        // Main_ChiXu2009_emfSMO();
+        // Main_parksul2014_FADO();
     #else
         /* 资源有限 */
         #if SELECT_ALGORITHM == ALG_NSOAF
             // MainFE_HuWu_1998(); // use algorithm 2
             Main_the_active_flux_estimator();
-            Main_VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
+            //Main_VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
             Main_nsoaf_chen2020();
         #elif SELECT_ALGORITHM == ALG_ESOAF
             Main_the_active_flux_estimator();
