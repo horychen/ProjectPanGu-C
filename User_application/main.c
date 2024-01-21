@@ -787,6 +787,8 @@ void PanGuMainISR(void){
             //CTRL.S->Motor_or_Gnerator = sign(CTRL.I->idq_cmd[1]) == sign(ENC.rpm); // sign(CTRL.I->idq_cmd[1]) != sign(CTRL.I->cmd_speed_rpm))
             runtime_command_and_tuning(Axis.Select_exp_operation);
 
+            // 位置环
+            // 长弧和短弧，要选短的。
             error_pos = target_position_cnt - CTRL.enc->encoder_abs_cnt;
             if (error_pos > (SYSTEM_QEP_QPOSMAX_PLUS_1/2))
             {
@@ -797,6 +799,7 @@ void PanGuMainISR(void){
                 error_pos += SYSTEM_QEP_QPOSMAX_PLUS_1;
             }
             Axis.Set_manual_rpm = error_pos*KP;
+
             Axis.used_theta_d_elec = controller(Axis.Set_manual_rpm, Axis.Set_current_loop, Axis.Set_manual_current_iq, Axis.Set_manual_current_id,
                 Axis.flag_overwrite_theta_d, Axis.Overwrite_Current_Frequency,
                 //Axis.used_theta_d_elec,
