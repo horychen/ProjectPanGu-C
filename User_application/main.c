@@ -185,6 +185,14 @@ void main(void){
         DevCfgRegs.CPUSEL6.bit.SPI_C = 1; // assign spi-c to cpu2
 
         DevCfgRegs.CPUSEL5.bit.SCI_C = 1; // assign sci-c to cpu2
+        DevCfgRegs.CPUSEL5.bit.SCI_A = 1;// assign sci-a to cpu2
+
+        DevCfgRegs.CPUSEL8.bit.CAN_A=1;// assign can-a to cpu2
+
+        //Allows CPU01 bootrom to take control of clock
+        //configuration registers
+        ClkCfgRegs.CLKSEM.all = 0xA5A50000;
+        ClkCfgRegs.LOSPCP.all = 0x0001; //LSPCLK=100MHz
         EDIS;
 
         // 同步！！！！！
@@ -193,9 +201,47 @@ void main(void){
         //InitSpiaGpio();
         //InitSpi(); // this is moved to CPU02
 
+        // =========FOR EUREKA===========
+        //GPIO62 - CANRXA
+        GPIO_SetupPinMux(62, GPIO_MUX_CPU2, 1);
+        GPIO_SetupPinOptions(62, GPIO_INPUT, GPIO_ASYNC);
+        //GPIO19 - CANTXA
+        GPIO_SetupPinMux(19, GPIO_MUX_CPU2, 1);
+        GPIO_SetupPinOptions(19, GPIO_OUTPUT, GPIO_PUSHPULL);
+        //GPIO136 - 485RX-SCIA
+        GPIO_SetupPinMux(136, GPIO_MUX_CPU2, 1);
+        GPIO_SetupPinOptions(136, GPIO_INPUT, GPIO_PUSHPULL);
+        //GPIO135 - 485TX-SCIA
+        GPIO_SetupPinMux(135, GPIO_MUX_CPU2, 1);
+        GPIO_SetupPinOptions(135, GPIO_OUTPUT, GPIO_PUSHPULL);
+        //GPIO137 - 485WE-(use SCIBTX as GPIO, in UART2 pin8)
+        GPIO_SetupPinMux(137,GPIO_MUX_CPU2,0);
+        GPIO_SetupPinOptions(137, GPIO_OUTPUT, GPIO_ASYNC);
+        // =========FOR EUREKA===========
+
+
+//        // =========TEST BOARD PIN============
+//        // =========NOT FOR EUREKA===========
+//        //GPIO30 - CANRXA
+//        GPIO_SetupPinMux(30, GPIO_MUX_CPU2, 1);
+//        GPIO_SetupPinOptions(30, GPIO_INPUT, GPIO_ASYNC);
+//        //GPIO31 - CANTXA
+//        GPIO_SetupPinMux(31, GPIO_MUX_CPU2, 1);
+//        GPIO_SetupPinOptions(31, GPIO_OUTPUT, GPIO_PUSHPULL);
+//        //GPIO28 - 485RX-SCIA
+//        GPIO_SetupPinMux(28, GPIO_MUX_CPU2, 1);
+//        GPIO_SetupPinOptions(28, GPIO_INPUT, GPIO_PUSHPULL);
+//        //GPIO29 - 485TX-SCIA
+//        GPIO_SetupPinMux(29, GPIO_MUX_CPU2, 1);
+//        GPIO_SetupPinOptions(29, GPIO_OUTPUT, GPIO_PUSHPULL);
+//        //GPIO8 - 485WE
+//        GPIO_SetupPinMux(8,GPIO_MUX_CPU2,0);
+//        GPIO_SetupPinOptions(8, GPIO_OUTPUT, GPIO_ASYNC);
+//        InitScicGpio();
+//        // =========TEST BOARD PIN============
+//        // =========NOT FOR EUREKA===========
 
         // 异步！！！！！
-        InitScicGpio();
         //InitSci(); // this is moved to CPU02
 
         // 在此之前，已经把GPIO和外设的权限转给CPU2了。
