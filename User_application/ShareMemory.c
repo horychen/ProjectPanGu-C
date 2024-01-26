@@ -36,6 +36,7 @@ extern REAL hall_rotating_direction;
 extern REAL eddy_displacement[2];
 extern REAL used_theta_d_elec;
 extern REAL target_position_cnt;
+extern long long sci_pos;
 long int counter=0;
 
 //extern REAL target_position_cnt = 5000;
@@ -82,7 +83,9 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
 //    Axis.dac_watch[21] = marino.xOmg * ELEC_RAD_PER_SEC_2_RPM *0.002;
     Axis.dac_watch[21] = CTRL.I->omg_elec * ELEC_RAD_PER_SEC_2_RPM *0.002;
     Axis.dac_watch[22] = target_position_cnt*0.0003-(CTRL.enc->encoder_abs_cnt)*0.0003;
-    //Axis.dac_watch[23] = ;
+    Axis.dac_watch[23] = GpioDataRegs.GPEDAT.bit.GPIO135;
+    Axis.dac_watch[24] = GpioDataRegs.GPEDAT.bit.GPIO136;
+    Axis.dac_watch[25] = GpioDataRegs.GPEDAT.bit.GPIO137;
 //    Axis.dac_watch[22] = marino.xTL*0.025;
 //    Axis.dac_watch[23] = marino.xRho*0.1;
 //    Axis.dac_watch[24] = marino.xAlpha*0.1;
@@ -97,8 +100,8 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
 
     if(Axis.channels_preset==1){Axis.channels_preset=0;
         /* Marino 2005 Sensorless Control */
-        Axis.channels[0] = 22;
-        Axis.channels[1] = 23;
+        Axis.channels[0] = 23;
+        Axis.channels[1] = 25;
         Axis.channels[2] = 8;
         Axis.channels[3] = 9;
         Axis.channels[4] = 21;

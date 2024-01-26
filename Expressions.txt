@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ExportImportMemento.1>
+<VarMeta IMemento.internal.id="digital_virtual_button"/>
+<VarMeta IMemento.internal.id="Axis.Select_exp_operation"/>
+<VarMeta IMemento.internal.id="Axis.flag_overwrite_theta_d"/>
+<VarMeta IMemento.internal.id="Axis.Overwrite_Current_Frequency"/>
+<VarMeta IMemento.internal.id="Axis.Set_current_loop"/>
+<VarMeta IMemento.internal.id="CTRL.enc-&gt;rpm"/>
+<VarMeta IMemento.internal.id="Axis.Set_manual_current_id"/>
+<VarMeta IMemento.internal.id="Axis.Set_manual_rpm"/>
+<VarMeta IMemento.internal.id="Axis.Set_manual_current_iq"/>
+<VarMeta IMemento.internal.id="Axis.channels_preset"/>
+<VarMeta IMemento.internal.id="EPwm1Regs.CMPA.bit.CMPA"/>
+<VarMeta IMemento.internal.id="CTRL.I-&gt;theta_d_elec"/>
+<VarMeta IMemento.internal.id="(*EQEP[1]).QPOSCNT"/>
+<VarMeta IMemento.internal.id="pid1_spd.Out"/>
+<VarMeta IMemento.internal.id="pid1_spd"/>
+<VarMeta IMemento.internal.id="Axis.channels"/>
+<VarMeta IMemento.internal.id="Axis.channels_preset"/>
+<VarMeta IMemento.internal.id="CTRL.O-&gt;uab_cmd[0]"/>
+<VarMeta IMemento.internal.id="CTRL.I-&gt;iab[0]"/>
+<VarMeta IMemento.internal.id="Read"/>
+<VarMeta IMemento.internal.id="Write"/>
+<VarMeta IMemento.internal.id="CTRL.svgen1"/>
+<VarMeta IMemento.internal.id="Axis.iuvw"/>
+<VarMeta IMemento.internal.id="AdcbResultRegs"/>
+<VarMeta IMemento.internal.id="CTRL.svgen2"/>
+<VarMeta IMemento.internal.id="target_position_cnt"/>
+<VarMeta IMemento.internal.id="CTRL.enc-&gt;encoder_abs_cnt"/>
+<VarMeta IMemento.internal.id="KP"/>
+<VarMeta IMemento.internal.id="CTRL.enc-&gt;encoder_abs_cnt_previous-CTRL.enc-&gt;encoder_abs_cnt"/>
+<VarMeta IMemento.internal.id="AdcaResultRegs.ADCRESULT1"/>
+<VarMeta IMemento.internal.id="AdcaResultRegs.ADCRESULT2"/>
+<VarMeta IMemento.internal.id="AdcaResultRegs.ADCRESULT3"/>
+<VarMeta IMemento.internal.id="enable_vvvf"/>
+<VarMeta IMemento.internal.id="Axis.channels"/>
+</ExportImportMemento.1>

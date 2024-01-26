@@ -2,8 +2,13 @@
 st_axis Axis;
 //int digital_virtual_button = 0;
 REAL target_position_cnt = 5000;
-        REAL KP = 0.05;
-        REAL error_pos;
+REAL KP = 0.00005;
+REAL error_pos;
+//8231199
+Uint32 position_elec_SCI_fromCPU2;
+Uint32 position_elec_CAN_fromCPU2;
+
+int16 positionLoopENABLE = 0;
 
 #ifdef _MMDv1 // mmlab drive version 1
     #define OFFSET_VDC 7   // ADC0
@@ -25,9 +30,10 @@ REAL target_position_cnt = 5000;
     #define OFFSET_LEM1_M   2044 //2043.43859649 // ADCB9
 
 
-    #define OFFSET_LEM2_L   2024 //2023.89473684 // ADCB7
-    #define OFFSET_LEM2_R   2041 //2042.33333333 // ADCB8
-    #define OFFSET_LEM2_M   2044 //2043.43859649 // ADCB9
+//Lem 2
+    #define OFFSET_LEM2_L   2024 //2023.89473684 // ADC
+    #define OFFSET_LEM2_R   2041 //2042.33333333 // ADC
+    #define OFFSET_LEM2_M   2044 //2043.43859649 // ADC
 
     // Sensor Board 6 Phase SiC MOSFET Inverter
     #define SCALE_VDC 0.0949
@@ -46,15 +52,17 @@ REAL target_position_cnt = 5000;
     #define SCALE_LEM1_R   -0.03038256 // ADCB8
     #define SCALE_LEM1_M   -0.03039058 // ADCB9
 
-    #define SCALE_LEM2_L   0.03076297 // ADCB7
-    #define SCALE_LEM2_R   0.03038256 // ADCB8
-    #define SCALE_LEM2_M   0.03039058 // ADCB9
+//Lem 2
+    #define SCALE_LEM2_L   0.03076297 // ADC
+    #define SCALE_LEM2_R   0.03038256 // ADC
+    #define SCALE_LEM2_M   0.03039058 // ADC
 
 #else
     scale and offset...
 #endif
 
-#define OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS 2333 // cjh tuned with id_cmd = 3A 2024-01-19
+    // this offset is moved to ACMconfig.h
+//#define OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS 2333 // cjh tuned with id_cmd = 3A 2024-01-19
 #define ANGLE_SHIFT_FOR_FIRST_INVERTER  0.0 // Torque Inverter
 #define ANGLE_SHIFT_FOR_SECOND_INVERTER 0.0 // Suspension Inverter
 int USE_3_CURRENT_SENSORS = TRUE;
@@ -203,19 +211,19 @@ void main(void){
 
         // =========FOR EUREKA===========
         //GPIO62 - CANRXA
-        GPIO_SetupPinMux(62, GPIO_MUX_CPU2, 1);
+        GPIO_SetupPinMux(62, GPIO_MUX_CPU2, 6);
         GPIO_SetupPinOptions(62, GPIO_INPUT, GPIO_ASYNC);
         //GPIO19 - CANTXA
-        GPIO_SetupPinMux(19, GPIO_MUX_CPU2, 1);
+        GPIO_SetupPinMux(19, GPIO_MUX_CPU2, 3);
         GPIO_SetupPinOptions(19, GPIO_OUTPUT, GPIO_PUSHPULL);
         //GPIO136 - 485RX-SCIA
-        GPIO_SetupPinMux(136, GPIO_MUX_CPU2, 1);
+        GPIO_SetupPinMux(136, GPIO_MUX_CPU2, 6);
         GPIO_SetupPinOptions(136, GPIO_INPUT, GPIO_PUSHPULL);
         //GPIO135 - 485TX-SCIA
-        GPIO_SetupPinMux(135, GPIO_MUX_CPU2, 1);
+        GPIO_SetupPinMux(135, GPIO_MUX_CPU2, 6);
         GPIO_SetupPinOptions(135, GPIO_OUTPUT, GPIO_PUSHPULL);
         //GPIO137 - 485WE-(use SCIBTX as GPIO, in UART2 pin8)
-        GPIO_SetupPinMux(137,GPIO_MUX_CPU2,0);
+        GPIO_SetupPinMux(137, GPIO_MUX_CPU2, 0);
         GPIO_SetupPinOptions(137, GPIO_OUTPUT, GPIO_ASYNC);
         // =========FOR EUREKA===========
 
@@ -382,7 +390,8 @@ void main(void){
          * */
             if(IPCRtoLFlagBusy(IPC_FLAG10) == 1) // if flag
             {
-                sci_poll(Read.SCI_char);
+                position_elec_SCI_fromCPU2 = Read.SCI_position_elec;
+                position_elec_CAN_fromCPU2 = Read.CAN_position_elec;
                 IPCRtoLFlagAcknowledge (IPC_FLAG10);
             }
         #endif
@@ -446,7 +455,7 @@ void DeadtimeCompensation(REAL Current_U, REAL Current_V, REAL Current_W, REAL C
 
 REAL vvvf_voltage = 4;
 REAL vvvf_frequency = 5;
-REAL enable_vvvf = TRUE;
+REAL enable_vvvf = FALSE;
 
 
 void voltage_commands_to_pwm(){
@@ -455,9 +464,10 @@ void voltage_commands_to_pwm(){
         CTRL.svgen1.Ualpha= CTRL.O->uab_cmd_to_inverter[0];
         CTRL.svgen1.Ubeta = CTRL.O->uab_cmd_to_inverter[1];
 
-//        CTRL.svgen1.Ualpha= vvvf_voltage * cos(vvvf_frequency*2*M_PI*CTRL.timebase);
-//        CTRL.svgen1.Ubeta = vvvf_voltage * sin(vvvf_frequency*2*M_PI*CTRL.timebase);
-
+        if(enable_vvvf){
+        CTRL.svgen1.Ualpha= vvvf_voltage * cos(vvvf_frequency*2*M_PI*CTRL.timebase);
+        CTRL.svgen1.Ubeta = vvvf_voltage * sin(vvvf_frequency*2*M_PI*CTRL.timebase);
+        }
         // SVPWM of the suspension 3-phase
         CTRL.svgen2.Ualpha = 0;
         CTRL.svgen2.Ubeta  = 0;
@@ -583,17 +593,33 @@ void voltage_measurement_based_on_eCAP(){
     CAP.dq_mismatch[1] = CTRL.O->udq_cmd_to_inverter[1] - CAP.dq[1];
 }
 
+extern long long sci_pos;
 
 void measurement(){
 
     // 转子位置和转速接口 以及 转子位置和转速测量
-    Uint32 QPOSCNT   = EQep1Regs.QPOSCNT;
+    Uint32 QPOSCNT;
+    if(ENCODER_TYPE == INCREMENTAL_ENCODER_QEP){
+        QPOSCNT = EQep1Regs.QPOSCNT;
+    }
+    // 20240123 腿部电机测试
+    if(ENCODER_TYPE == ABSOLUTE_ENCODER_SCI){
+        QPOSCNT = position_elec_SCI_fromCPU2;
+    }
+    // 使用can编码器
+    if(ENCODER_TYPE == ABSOLUTE_ENCODER_CAN){
+        QPOSCNT = position_elec_CAN_fromCPU2;
+    }
     ENC.rpm          = PostionSpeedMeasurement_MovingAvergage(QPOSCNT, CTRL.enc);
 
     if(CTRL.S->go_sensorless == FALSE){
         CTRL.I->omg_elec     = CTRL.enc->omg_elec;
         CTRL.I->theta_d_elec = CTRL.enc->theta_d_elec;
+
     }
+
+
+
     // Convert adc results
     //Axis.vdc    =((REAL)(AdcaResultRegs.ADCRESULT0 ) - Axis.adc_offset[0]) * Axis.adc_scale[0];
     Axis.vdc    =((REAL)(AdcbResultRegs.ADCRESULT6 ) - Axis.adc_offset[0]) * Axis.adc_scale[0];
@@ -833,27 +859,32 @@ void PanGuMainISR(void){
             //CTRL.S->Motor_or_Gnerator = sign(CTRL.I->idq_cmd[1]) == sign(ENC.rpm); // sign(CTRL.I->idq_cmd[1]) != sign(CTRL.I->cmd_speed_rpm))
             runtime_command_and_tuning(Axis.Select_exp_operation);
 
-            // 位置环
-            // 长弧和短弧，要选短的。
-            error_pos = target_position_cnt - CTRL.enc->encoder_abs_cnt;
-            if (error_pos > (SYSTEM_QEP_QPOSMAX_PLUS_1/2))
+            if(positionLoopENABLE == 1)
             {
-                error_pos -= SYSTEM_QEP_QPOSMAX_PLUS_1;
+                // 位置环
+                // 长弧和短弧，要选短的。
+                error_pos = target_position_cnt - CTRL.enc->encoder_abs_cnt;
+                if (error_pos > (SYSTEM_QEP_QPOSMAX_PLUS_1*0.5))
+                {
+                    error_pos -= SYSTEM_QEP_QPOSMAX_PLUS_1;
+                }
+                if (error_pos < -(SYSTEM_QEP_QPOSMAX_PLUS_1*0.5))
+                {
+                    error_pos += SYSTEM_QEP_QPOSMAX_PLUS_1;
+                }
+                Axis.Set_manual_rpm = error_pos*KP;
             }
-            if (error_pos < -(SYSTEM_QEP_QPOSMAX_PLUS_1/2))
-            {
-                error_pos += SYSTEM_QEP_QPOSMAX_PLUS_1;
-            }
-            Axis.Set_manual_rpm = error_pos*KP;
-
             Axis.used_theta_d_elec = controller(Axis.Set_manual_rpm, Axis.Set_current_loop, Axis.Set_manual_current_iq, Axis.Set_manual_current_id,
                 Axis.flag_overwrite_theta_d, Axis.Overwrite_Current_Frequency,
                 //Axis.used_theta_d_elec,
                 Axis.angle_shift_for_first_inverter,
                 Axis.angle_shift_for_second_inverter);
+
         #else
             commissioning();
         #endif
+
+            //CTRL.O->uab_cmd_to_inverter[0]
 
         if(Axis.Select_exp_operation == XCUBE_TaTbTc_DEBUG_MODE){
             EPwm1Regs.CMPA.bit.CMPA = CTRL.svgen1.Ta*50000000*CL_TS;
@@ -925,7 +956,7 @@ __interrupt void EPWM1ISR(void){
 
 
 /*
-声明全局变量
+//声明全局变量
 #if PC_SIMULATION==FALSE
 double CpuTimer_Delta = 0;
 Uint32 CpuTimer_Before = 0;
@@ -933,7 +964,7 @@ Uint32 CpuTimer_After = 0;
 #endif
 
 
-这段放需要测时间的代码前面
+//这段放需要测时间的代码前面
 #if PC_SIMULATION==FALSE
 EALLOW;
 CpuTimer1.RegsAddr->TCR.bit.TRB = 1; // reset cpu timer to period value
@@ -942,7 +973,7 @@ CpuTimer_Before = CpuTimer1.RegsAddr->TIM.all; // get count
 EDIS;
 #endif
 
-这段放需要测时间的代码后面前面，观察CpuTimer_Delta的取值，代表经过了多少个 1/200e6 秒。
+//这段放需要测时间的代码后面前面，观察CpuTimer_Delta的取值，代表经过了多少个 1/200e6 秒。
 #if PC_SIMULATION==FALSE
 CpuTimer_After = CpuTimer1.RegsAddr->TIM.all; // get count
 CpuTimer_Delta = (double)CpuTimer_Before - (double)CpuTimer_After;
