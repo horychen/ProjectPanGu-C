@@ -863,7 +863,7 @@ void PanGuMainISR(void){
             {
                 // 位置环
                 // 长弧和短弧，要选短的。
-                error_pos = target_position_cnt - CTRL.enc->encoder_abs_cnt;
+                error_pos = target_position_cnt - (REAL)CTRL.enc->encoder_abs_cnt;
                 if (error_pos > (SYSTEM_QEP_QPOSMAX_PLUS_1*0.5))
                 {
                     error_pos -= SYSTEM_QEP_QPOSMAX_PLUS_1;
