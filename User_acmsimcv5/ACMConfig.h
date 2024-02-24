@@ -1,30 +1,30 @@
 #ifndef ACMCONFIG_H
 #define ACMCONFIG_H
-/* 缁忓父瑕佷慨鏀圭殑 */
-#define INVERTER_NONLINEARITY_COMPENSATION_INIT 0 // 5锛�9鏈�1鏃ュ強浠ュ墠宄ｆ澃瀹為獙涓�鐩寸敤鐨�5锛� // 4 // 1:ParkSul12, 2:Sigmoid, 3:LUT(Obsolete), 4:LUT(by index), 5 Slessinv-a2a3Model
+/* 缂佸繐鐖剁憰浣锋叏閺�鍦畱 */
+#define INVERTER_NONLINEARITY_COMPENSATION_INIT 0 // 5閿涳拷9閺堬拷1閺冦儱寮锋禒銉ュ瀹勶絾婢冪�圭偤鐛欐稉锟介惄瀵告暏閻拷5閿涳拷 // 4 // 1:ParkSul12, 2:Sigmoid, 3:LUT(Obsolete), 4:LUT(by index), 5 Slessinv-a2a3Model
 #define INVERTER_NONLINEARITY                   0 // 4 // 1:ModelSul96, 2:ModelExpSigmoid, 3: ModelExpLUT, 4:LUT(by index)
 #define SENSORLESS_CONTROL FALSE
 #define SENSORLESS_CONTROL_HFSI FALSE
-/* ParkSul2012 姊舰娉� */
+/* ParkSul2012 濮婎垰鑸板▔锟� */
 #define GAIN_THETA_TRAPEZOIDAL (40) //(500) // 20
 
-/* 鐢垫満绫诲瀷 */ //锛圱ODO锛氶ケ鍜屾ā鍨嬮噷闈㈢敤鐨勮繕鏄� IM.rr 鑰屼笉鏄� IM.rreq锛�
+/* 閻㈠灚婧�缁鐎� */ //閿涘湵ODO閿涙岸銈遍崪灞灸侀崹瀣櫡闂堛垻鏁ら惃鍕箷閺勶拷 IM.rr 閼板奔绗夐弰锟� IM.rreq閿涳拷
     #define INDUCTION_MACHINE_CLASSIC_MODEL 1
     #define INDUCTION_MACHINE_FLUX_ONLY_MODEL 11
     #define PM_SYNCHRONOUS_MACHINE 2
 #define MACHINE_TYPE 2
-	// 鐢垫満鍙傛暟
+	// 閻㈠灚婧�閸欏倹鏆�
 	#define PMSM_RESISTANCE                    0.1195
 	#define PMSM_D_AXIS_INDUCTANCE             0.000455
 	#define PMSM_Q_AXIS_INDUCTANCE             0.0005600000000000001
 	#define PMSM_PERMANENT_MAGNET_FLUX_LINKAGE 0.01934
-	// 閾墝鍊�
+	// 闁绢厾澧濋崐锟�
 	#define MOTOR_NUMBER_OF_POLE_PAIRS         26
 	#define MOTOR_RATED_CURRENT_RMS            17
 	#define MOTOR_RATED_POWER_WATT             830
 	#define MOTOR_RATED_SPEED_RPM              760
 	#define MOTOR_SHAFT_INERTIA                0.000364
-	// 鍙傛暟璇樊
+	// 閸欏倹鏆熺拠顖氭▕
 		#define MISMATCH_R   100
 		#define MISMATCH_LD  100
 		#define MISMATCH_LQ  100
@@ -100,7 +100,7 @@
             #define ELECTRICAL_SPEED_FEEDBACK    nsoaf.xOmg // harnefors.omg_elec
             #define ELECTRICAL_POSITION_FEEDBACK AFE_USED.theta_d // harnefors.theta_d
         #elif SELECT_ALGORITHM == ALG_ESOAF
-            #define ELECTRICAL_SPEED_FEEDBACK    (-esoaf.xOmg) // 钖勭墖鐢垫満瀹為獙姝q浜х敓璐熻浆閫�
+            #define ELECTRICAL_SPEED_FEEDBACK    (-esoaf.xOmg) // 閽栧嫮澧栭悽鍨簚鐎圭偤鐛欏顤痲娴溠呮晸鐠愮喕娴嗛柅锟�
             #define ELECTRICAL_POSITION_FEEDBACK AFE_USED.theta_d
         #else
             // #define ELECTRICAL_SPEED_FEEDBACK    G.omg_elec
@@ -134,7 +134,7 @@
 
     /* Chi.Xu 2009 SMO for EMF of SPMSM (Coupled position estimation via MRAS) */
     #define CHI_XU_USE_CONSTANT_SMO_GAIN TRUE
-        #define CHI_XU_SIGMOID_COEFF  500 /*姣�200澶т互鍚庯紝鍦ㄥ疄楠屼腑鏃犳劅閫熷害绋虫�佽宸笉浼氬啀鍑忓皬浜嗭紝浣嗘槸浼氬奖鍝嶆參鍙嶈浆*/
+        #define CHI_XU_SIGMOID_COEFF  500 /*濮ｏ拷200婢堆備簰閸氬函绱濋崷銊ョ杽妤犲奔鑵戦弮鐘冲妳闁喎瀹崇粙铏拷浣筋嚖瀹割喕绗夋导姘晙閸戝繐鐨禍鍡礉娴ｅ棙妲告导姘閸濆秵鍙冮崣宥堟祮*/
     #if OPERATION_MODE == LOW_SPEED_OPERATION
         /* note ell4Zeq is -0.5 */
         #define CHI_XU_USE_CONSTANT_LPF_POLE TRUE
@@ -142,8 +142,8 @@
             #define CHI_XU_SMO_GAIN_SCALE 10.0  //2
             #define CHI_XU_LPF_4_ZEQ    5.0   //10.0
         #else
-            #define CHI_XU_SMO_GAIN_SCALE 10 /*鍙�2瀹為獙鏃犳劅绋虫�佷笉绋筹紝鍙�5鎱㈠弽杞媺寮烘垚鍔燂紝鍙�10鎱㈠弽杞垚鍔�*/
-            #define CHI_XU_LPF_4_ZEQ    (5.0) /*杩欓」杩囧ぇ锛坋g=100锛変細瀵艰嚧瑙掑害绋虫�佽宸紝蹇樿浜嗕綘灏辫瘯璇曠湅锛屽彇=2锛�=5锛�=10锛�=100鍒嗗埆浠匡紒鐪燂紒鐪嬬湅銆�*/
+            #define CHI_XU_SMO_GAIN_SCALE 10 /*閸欙拷2鐎圭偤鐛欓弮鐘冲妳缁嬭櫕锟戒椒绗夌粙绛圭礉閸欙拷5閹便垹寮芥潪顒�濯哄鐑樺灇閸旂噦绱濋崣锟�10閹便垹寮芥潪顒佸灇閸旓拷*/
+            #define CHI_XU_LPF_4_ZEQ    (5.0) /*鏉╂瑩銆嶆潻鍥с亣閿涘潒g=100閿涘绱扮�佃壈鍤х憴鎺戝缁嬭櫕锟戒浇顕ゅ顕嗙礉韫囨顔囨禍鍡曠稑鐏忚精鐦拠鏇犳箙閿涘苯褰�=2閿涳拷=5閿涳拷=10閿涳拷=100閸掑棗鍩嗘禒鍖＄磼閻噦绱掗惇瀣箙閵嗭拷*/
         #endif
 
         #define CHI_XU_SPEED_PLL_KP (500*2.0) // [rad/s]
@@ -153,8 +153,8 @@
         #define CHI_XU_SMO_GAIN_SCALE  1.5
         #define CHI_XU_LPF_4_ZEQ       10.0
         #define CHI_XU_USE_CONSTANT_LPF_POLE FALSE
-        #define CHI_XU_SPEED_PLL_KP (2*500) // [rad/s] 3000 = 闃惰穬杞�熶笉闇囪崱锛�8000=闃惰穬杞�熷緢闇囪崱
-        #define CHI_XU_SPEED_PLL_KI (10e4) // 浠�350000鍑忓皯涓�150000锛屽彲浠ュ噺灏戠ǔ鎬佷及璁¤浆閫熺殑娉㈠姩
+        #define CHI_XU_SPEED_PLL_KP (2*500) // [rad/s] 3000 = 闂冩儼绌潪顒勶拷鐔剁瑝闂囧洩宕遍敍锟�8000=闂冩儼绌潪顒勶拷鐔风发闂囧洩宕�
+        #define CHI_XU_SPEED_PLL_KI (10e4) // 娴狅拷350000閸戝繐鐨稉锟�150000閿涘苯褰叉禒銉ュ櫤鐏忔垹菙閹椒鍙婄拋陇娴嗛柅鐔烘畱濞夈垹濮�
     #endif
 
     /* Qiao.Xia 2013 SMO for EMF of SPMSM */
@@ -190,13 +190,13 @@
     /* Harnefors 2006 */
 
 #elif /* Induction Motor Observer */ MACHINE_TYPE % 10 == 1
-    // Marino05 璋冨弬 /// default: (17143), (2700.0), (1000), (1), (0)
+    // Marino05 鐠嬪啫寮� /// default: (17143), (2700.0), (1000), (1), (0)
     #define GAMMA_INV_xTL 17142.85714285714
     #define LAMBDA_INV_xOmg 1000 // 2700.0 is too large, leading to unstable flux amplitude contorl
     #define DELTA_INV_alpha (0*500) // 1000
     #define xAlpha_LAW_TERM_D 1 // regressor is commanded d-axis rotor current, and error is d-axis flux control error.
     #define xAlpha_LAW_TERM_Q 0 // regressor is commanded q-axis stator current, and error is q-axis flux control error.
-    // 纾侀摼鍙嶉鐢ㄨ皝 /// "htz",,ohtani",picorr",lascu",clest",harnefors
+    // 绾句線鎽奸崣宥夘洯閻€劏鐨� /// "htz",,ohtani",picorr",lascu",clest",harnefors
     // #define IFE FE.picorr
     #define IFE FE.htz
     #define FLUX_FEEDBACK_ALPHA         IFE.psi_2[0]
@@ -204,12 +204,12 @@
     #define OFFSET_COMPENSATION_ALPHA   IFE.u_offset[0]
     #define OFFSET_COMPENSATION_BETA    IFE.u_offset[1]
 
-    // Ohtani 纾侀摼瑙傛祴绯绘暟閰嶇疆/// default: 5
-    // Ohtani 寤鸿鍙栧�煎拰杞瓙鏃堕棿甯告暟鐩哥瓑
+    // Ohtani 绾句線鎽肩憴鍌涚ゴ缁粯鏆熼柊宥囩枂/// default: 5
+    // Ohtani 瀵ら缚顔呴崣鏍э拷鐓庢嫲鏉烆剙鐡欓弮鍫曟？鐢憡鏆熼惄鍝ョ搼
     #define GAIN_OHTANI (5)
     #define VM_OHTANI_CORRECTION_GAIN_P (5)
     /* B *//// default: P=5, I=2.5
-    #define VM_PROPOSED_PI_CORRECTION_GAIN_P 50 // 20鏆傛�佽兘璺熶笂浣嗘槸鍙堟粸鍚庯紝200鍚庨潰鏆傛�佸氨璺熶笉涓婁簡  //10 // (5)
+    #define VM_PROPOSED_PI_CORRECTION_GAIN_P 50 // 20閺嗗倹锟戒浇鍏樼捄鐔剁瑐娴ｅ棙妲搁崣鍫熺哺閸氬函绱�200閸氬酣娼伴弳鍌涳拷浣告皑鐠虹喍绗夋稉濠佺啊  //10 // (5)
     #define VM_PROPOSED_PI_CORRECTION_GAIN_I 0.0 //2.5 //2  // (2.5)
     /* C *//// default: P=0.125*5, I=0.125*2.5, KCM=0
     #define OUTPUT_ERROR_CLEST_GAIN_KP (0.125*5)
@@ -227,7 +227,7 @@
 	// #endif
 #endif
 
-/* 鎺у埗绛栫暐 */
+/* 閹貉冨煑缁涙牜鏆� */
 	#define NULL_D_AXIS_CURRENT_CONTROL -1
 	#define MTPA -2 // not supported
 #define CONTROL_STRATEGY NULL_D_AXIS_CURRENT_CONTROL
@@ -275,11 +275,12 @@
 /* Encoder QEP TODO: should read from excel */
 #define INCREMENTAL_ENCODER_QEP 1
 #define ABSOLUTE_ENCODER_SCI 2
-#define ABSOLUTE_ENCODER_CAN 3
-#define RESOLVER_1 4
-#define RESOLVER_2 5
+#define ABSOLUTE_ENCODER_CAN_ID0x01 3
+#define ABSOLUTE_ENCODER_CAN_ID0x03 4
+#define RESOLVER_1 5
+#define RESOLVER_2 6
 
-#define ENCODER_TYPE ABSOLUTE_ENCODER_SCI
+#define ENCODER_TYPE ABSOLUTE_ENCODER_CAN_ID0x01
 
 #if ENCODER_TYPE == INCREMENTAL_ENCODER_QEP
 #define SYSTEM_QEP_PULSES_PER_REV (10000)
@@ -295,12 +296,13 @@
 #define SYSTEM_QEP_QPOSMAX (SYSTEM_QEP_PULSES_PER_REV - 1)
 #define SYSTEM_QEP_QPOSMAX_PLUS_1 (SYSTEM_QEP_PULSES_PER_REV)
 #define OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS 2731723 // ym tuned with id_cmd = 2A 2024-01-31
-#elif ENCODER_TYPE == ABSOLUTE_ENCODER_CAN
+#elif (ENCODER_TYPE == ABSOLUTE_ENCODER_CAN_ID0x01)||(ENCODER_TYPE == ABSOLUTE_ENCODER_CAN_ID0x03)
 #define SYSTEM_QEP_PULSES_PER_REV (131072)
 #define SYSTEM_QEP_REV_PER_PULSE (7.6293945e-6)
 #define CNT_2_ELEC_RAD (SYSTEM_QEP_REV_PER_PULSE * 2 * M_PI * MOTOR_NUMBER_OF_POLE_PAIRS)
 #define SYSTEM_QEP_QPOSMAX (SYSTEM_QEP_PULSES_PER_REV - 1)
 #define SYSTEM_QEP_QPOSMAX_PLUS_1 (SYSTEM_QEP_PULSES_PER_REV)
+#define OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS 27317 // ym tuned with id_cmd = 2A 2024-01-31
 #elif ENCODER_TYPE == RESOLVER_1
 #define RESOLVER_NUMBER_OF_POLE_PAIRS 4             // Receive 4 Z-pulses per mechnical revolution from the resolver
 #define ONE_OVER_RESOLVER_NUMBER_OF_POLE_PAIRS 0.25 // 1/RESOLVER_NUMBER_OF_POLE_PAIRS
@@ -319,7 +321,7 @@
 #define CNT_2_ELEC_RAD (SYSTEM_QEP_REV_PER_PULSE * 2 * M_PI * MOTOR_NUMBER_OF_POLE_PAIRS)
 #endif
 
-/* 鎸囦护绫诲瀷 */
+/* 閹稿洣鎶ょ猾璇茬�� */
     #define EXCITATION_POSITION 0
     #define EXCITATION_VELOCITY 1
     #define EXCITATION_SWEEP_FREQUENCY 2

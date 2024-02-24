@@ -2,13 +2,23 @@
 st_axis Axis;
 //int digital_virtual_button = 0;
 REAL target_position_cnt = 5000;
-REAL KP = 0.00005;
+REAL KP = 0.005;
 REAL error_pos;
 //8231199
 Uint32 position_elec_SCI_fromCPU2;
-Uint32 position_elec_CAN_fromCPU2;
+Uint32 position_elec_CAN_ID0x01_fromCPU2;
+Uint32 position_elec_CAN_ID0x03_fromCPU2;
 
 int16 positionLoopENABLE = 0;
+int16 encoderCAN_as_targetPOS = TRUE;
+
+int16 jitterTEST = FALSE;
+int16 jitterError[838];
+int16 jitterPositionIndex = 0;
+int16 ExtendSecond = 2;
+Uint32 jitterTestInitialPos;
+Uint32 jitterTestPosCmd;
+
 
 #ifdef _MMDv1 // mmlab drive version 1
     #define OFFSET_VDC 7   // ADC0
@@ -196,6 +206,7 @@ void main(void){
         DevCfgRegs.CPUSEL5.bit.SCI_A = 1;// assign sci-a to cpu2
 
         DevCfgRegs.CPUSEL8.bit.CAN_A=1;// assign can-a to cpu2
+        DevCfgRegs.CPUSEL8.bit.CAN_B=1;// assign can-b to cpu2
 
         //Allows CPU01 bootrom to take control of clock
         //configuration registers
@@ -210,12 +221,19 @@ void main(void){
         //InitSpi(); // this is moved to CPU02
 
         // =========FOR EUREKA===========
+        // https://www.ti.com/cn/lit/ds/symlink/tms320f28377d.pdf Chapter 7.2.1
         //GPIO62 - CANRXA
         GPIO_SetupPinMux(62, GPIO_MUX_CPU2, 6);
         GPIO_SetupPinOptions(62, GPIO_INPUT, GPIO_ASYNC);
         //GPIO19 - CANTXA
         GPIO_SetupPinMux(19, GPIO_MUX_CPU2, 3);
         GPIO_SetupPinOptions(19, GPIO_OUTPUT, GPIO_PUSHPULL);
+        //GPIO21 - CANRXB
+        GPIO_SetupPinMux(21, GPIO_MUX_CPU2, 3);
+        GPIO_SetupPinOptions(21, GPIO_INPUT, GPIO_ASYNC);
+        //GPIO20 - CANTXB
+        GPIO_SetupPinMux(20, GPIO_MUX_CPU2, 3);
+        GPIO_SetupPinOptions(20, GPIO_OUTPUT, GPIO_PUSHPULL);
         //GPIO136 - 485RX-SCIA
         GPIO_SetupPinMux(136, GPIO_MUX_CPU2, 6);
         GPIO_SetupPinOptions(136, GPIO_INPUT, GPIO_PUSHPULL);
@@ -391,13 +409,39 @@ void main(void){
             if(IPCRtoLFlagBusy(IPC_FLAG10) == 1) // if flag
             {
                 position_elec_SCI_fromCPU2 = Read.SCI_position_elec;
-                position_elec_CAN_fromCPU2 = Read.CAN_position_elec;
+                position_elec_CAN_ID0x01_fromCPU2 = Read.CAN_position_elec_ID0x01;
+                position_elec_CAN_ID0x03_fromCPU2 = Read.CAN_position_elec_ID0x03;
                 IPCRtoLFlagAcknowledge (IPC_FLAG10);
             }
         #endif
         #if NUMBER_OF_DSP_CORES == 1
             single_core_dac();
         #endif
+
+        if(jitterTEST == TRUE)
+        {
+//            if(CTRL.timebase > jitterPositionIndex*ExtendSecond + 0.001)
+//            {
+//                target_position_cnt = jitterTestPosCmd;
+//                if(CTRL.timebase > (jitterPositionIndex+0.9)*ExtendSecond)
+//                {
+//                    if(error_pos > jitterError[jitterPositionIndex])
+//                    {
+//                        jitterError[jitterPositionIndex] = error_pos;
+//                    }
+//                }
+//            }
+//            if((CTRL.timebase - jitterPositionIndex) >= ExtendSecond)
+//            {
+//                jitterPositionIndex += 1;
+//                jitterTestPosCmd = 10000*jitterPositionIndex + jitterTestInitialPos;
+//                if(jitterTestPosCmd > SYSTEM_QEP_QPOSMAX_PLUS_1)
+//                {
+//                    jitterTestPosCmd -= SYSTEM_QEP_QPOSMAX_PLUS_1;
+//                }
+//            }
+        }
+
     }
 }
 
@@ -606,9 +650,13 @@ void measurement(){
     if(ENCODER_TYPE == ABSOLUTE_ENCODER_SCI){
         QPOSCNT = position_elec_SCI_fromCPU2;
     }
-    // 使用can编码器
-    if(ENCODER_TYPE == ABSOLUTE_ENCODER_CAN){
-        QPOSCNT = position_elec_CAN_fromCPU2;
+    // 使用can_ID0x01编码器
+    if(ENCODER_TYPE == ABSOLUTE_ENCODER_CAN_ID0x01){
+        QPOSCNT = position_elec_CAN_ID0x01_fromCPU2;
+    }
+    // 使用can_ID0x03编码器
+    if(ENCODER_TYPE == ABSOLUTE_ENCODER_CAN_ID0x03){
+        QPOSCNT = position_elec_CAN_ID0x03_fromCPU2;
     }
     ENC.rpm          = PostionSpeedMeasurement_MovingAvergage(QPOSCNT, CTRL.enc);
 
@@ -853,6 +901,10 @@ void PanGuMainISR(void){
         // DSP中控制器的时间
         timebase_counter += 1;
         CTRL.timebase = CL_TS * timebase_counter; //CTRL.timebase += CL_TS; // 2048 = float/double max
+
+        if(encoderCAN_as_targetPOS == TRUE){
+            target_position_cnt = position_elec_CAN_ID0x01_fromCPU2 * 64;
+        }
 
         // 根据指令，产生控制输出（电压）
         #if ENABLE_COMMISSIONING == FALSE
