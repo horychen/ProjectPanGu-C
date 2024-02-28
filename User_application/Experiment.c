@@ -37,7 +37,7 @@ void init_experiment_overwrite(){
         high_speed_operation_init();
     }
     else{
-        Axis.Set_manual_rpm = 0.0; //-200;
+//        Axis.Set_manual_rpm = 0.0; //-200;
     }
 
     Axis.DAC_MAX5307_FLAG = FALSE;

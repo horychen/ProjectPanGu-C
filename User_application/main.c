@@ -1,16 +1,16 @@
 #include <All_Definition.h>
 st_axis Axis;
 //int digital_virtual_button = 0;
-REAL target_position_cnt = 5000;
-REAL KP = 0.005;
+REAL target_position_cnt = 50000;
+REAL KP = 0.000005;
 REAL error_pos;
 //8231199
-Uint32 position_elec_SCI_fromCPU2;
+Uint32 position_elec_SCI_fromCPU2; // TODO: 把 elec 全部改为 count
 Uint32 position_elec_CAN_ID0x01_fromCPU2;
 Uint32 position_elec_CAN_ID0x03_fromCPU2;
 
-int16 positionLoopENABLE = 0;
-int16 encoderCAN_as_targetPOS = TRUE;
+int16 positionLoopENABLE = 1;
+int16 encoderCAN_as_targetPOS = FALSE;
 
 int16 jitterTEST = FALSE;
 int16 jitterError[838];
@@ -146,7 +146,7 @@ void main(void){
     Axis.used_theta_d_elec = 0.0;
     Axis.angle_shift_for_first_inverter  = ANGLE_SHIFT_FOR_FIRST_INVERTER;
     Axis.angle_shift_for_second_inverter = ANGLE_SHIFT_FOR_SECOND_INVERTER;
-    Axis.OverwriteSpeedOutLimitDuringInit = 6; // 30; // A
+    Axis.OverwriteSpeedOutLimitDuringInit = 6; // 10; // A
     Axis.FLAG_ENABLE_PWM_OUTPUT = FALSE;
     Axis.channels_preset = 1; // 9; // 101;
 
@@ -637,18 +637,19 @@ void voltage_measurement_based_on_eCAP(){
     CAP.dq_mismatch[1] = CTRL.O->udq_cmd_to_inverter[1] - CAP.dq[1];
 }
 
-extern long long sci_pos;
+//extern long long sci_pos;
 
 void measurement(){
 
     // 转子位置和转速接口 以及 转子位置和转速测量
-    Uint32 QPOSCNT;
+    int32 QPOSCNT;
     if(ENCODER_TYPE == INCREMENTAL_ENCODER_QEP){
         QPOSCNT = EQep1Regs.QPOSCNT;
     }
     // 20240123 腿部电机测试
     if(ENCODER_TYPE == ABSOLUTE_ENCODER_SCI){
-        QPOSCNT = position_elec_SCI_fromCPU2;
+        QPOSCNT =  - position_elec_SCI_fromCPU2;
+        //QPOSCNT = position_elec_SCI_fromCPU2;
     }
     // 使用can_ID0x01编码器
     if(ENCODER_TYPE == ABSOLUTE_ENCODER_CAN_ID0x01){
@@ -886,6 +887,9 @@ void PanGuMainISR(void){
             CTRL.g->flag_overwite_vdc = 0;
 
             G.flag_experimental_initialized = TRUE;
+            pid1_iM.OutPrev = 0;
+            pid1_iT.OutPrev = 0;
+            pid1_spd.OutPrev = 0;
         }
 
         DELAY_US(11);
