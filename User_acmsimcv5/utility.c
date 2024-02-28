@@ -39,7 +39,7 @@ REAL _hpf(REAL x, REAL *lpf_y, REAL tau_inv){
 // REAL ENC.MA_qepPosCnt[MA_SEQUENCE_LENGTH];
 // REAL sum_qepPosCnt = 0.0;
 // unsigned int ENC.cursor=0; // ENC.cursor is between 0~79, and it decides which element in MA queue should be kicked out.
-REAL PostionSpeedMeasurement_MovingAvergage(Uint32 QPOSCNT, st_enc *p_enc){
+REAL PostionSpeedMeasurement_MovingAvergage(int32 QPOSCNT, st_enc *p_enc){
     // EQep1Regs
     #define enc (*p_enc)
 
