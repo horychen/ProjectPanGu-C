@@ -75,6 +75,9 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
 //    Axis.dac_watch[21] = marino.xOmg * ELEC_RAD_PER_SEC_2_RPM *0.002;
     Axis.dac_watch[21] = Axis.Set_manual_rpm *0.002;
     Axis.dac_watch[22] = CTRL.I->omg_elec * ELEC_RAD_PER_SEC_2_RPM *0.002;
+    Axis.dac_watch[23] = CTRL.I->idq_cmd[0]*0.2;
+    Axis.dac_watch[24] = CTRL.I->idq[0]*0.2;
+
 //    Axis.dac_watch[22] = target_position_cnt*0.0003-(CTRL.enc->encoder_abs_cnt)*0.0003;
 //    Axis.dac_watch[23] = GpioDataRegs.GPEDAT.bit.GPIO135;
 //    Axis.dac_watch[24] = GpioDataRegs.GPEDAT.bit.GPIO136;
@@ -84,8 +87,8 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
 //    Axis.dac_watch[24] = marino.xAlpha*0.1;
 //    Axis.dac_watch[25] = marino.e_psi_Dmu;
 //    Axis.dac_watch[26] = marino.e_psi_Qmu;
-    Axis.dac_watch[27] = CTRL.I->idq_cmd[0]*0.1;
-    Axis.dac_watch[28] = CTRL.I->idq_cmd[1]*0.1;
+    Axis.dac_watch[27] = CTRL.I->idq_cmd[1]*0.1;
+    Axis.dac_watch[28] = CTRL.I->idq[1]*0.1;
 
     Axis.dac_watch[30] = CTRL.O->iab_cmd[0]*0.2;
     Axis.dac_watch[31] = CTRL.O->iab_cmd[1]*0.2;

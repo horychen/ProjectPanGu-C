@@ -133,12 +133,12 @@ void main(void){
     Axis.pAdcbResultRegs = &AdcbResultRegs;
     Axis.pAdccResultRegs = &AdccResultRegs;
     Axis.use_first_set_three_phase = 1; // -1;
-    Axis.Set_current_loop = FALSE;
+    Axis.Set_current_loop = TRUE;
     Axis.Set_x_suspension_current_loop = FALSE;
     Axis.Set_y_suspension_current_loop = FALSE;
     Axis.Set_manual_rpm = 50.0;
     Axis.Set_manual_current_iq = 0.0;
-    Axis.Set_manual_current_id = 0.0; // 20
+    Axis.Set_manual_current_id = 1.0; // 20
     Axis.Select_exp_operation = 0; //200; //202; //200; //101;
     Axis.pFLAG_INVERTER_NONLINEARITY_COMPENSATION = &G.FLAG_INVERTER_NONLINEARITY_COMPENSATION;
     Axis.flag_overwrite_theta_d = FALSE;
@@ -690,7 +690,7 @@ void measurement(){
 
             ENC.encoder_incremental_cnt = CTRL.enc->encoder_abs_cnt - CTRL.enc->encoder_abs_cnt_previous;
             // ENC.rpm_raw =  ENC.encoder_incremental_cnt  * SYSTEM_QEP_REV_PER_PULSE / CpuTimer_Delta * 1200e7; // 200e6 * 60 ;
-            ENC.rpm_raw =  ENC.encoder_incremental_cnt  * SYSTEM_QEP_REV_PER_PULSE * 1052.6 * 60; // 200e6 * 60 ;
+            ENC.rpm_raw =  ENC.encoder_incremental_cnt  * SYSTEM_QEP_REV_PER_PULSE * 1052.6 * 60; // 200e6 * 60 时间是变化的，可能是1ms也可能是0.9ms。
 
             ENC.sum_qepPosCnt            -= ENC.MA_qepPosCnt[ENC.cursor];
             ENC.sum_qepPosCnt            += ENC.rpm_raw;//ENC.encoder_incremental_cnt;
@@ -700,7 +700,9 @@ void measurement(){
                 ENC.cursor=0; // Reset ENC.cursor
             }
 
-            ENC.rpm = ENC.sum_qepPosCnt * MA_SEQUENCE_LENGTH_INVERSE; // CL_TS_INVERSE; 时间放上面考虑了，时间是变化的，可能是1ms也可能是0.9ms。
+            //ENC.rpm = ENC.sum_qepPosCnt * MA_SEQUENCE_LENGTH_INVERSE; // CL_TS_INVERSE;
+            ENC.rpm = ENC.rpm_raw;
+
             CTRL.enc->omg_elec = ENC.rpm * RPM_2_ELEC_RAD_PER_SEC;
 
             //这段放需要测时间的代码前面
