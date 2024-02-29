@@ -9,7 +9,7 @@ Uint32 position_elec_SCI_fromCPU2; // TODO: 把 elec 全部改为 count
 Uint32 position_elec_CAN_ID0x01_fromCPU2;
 Uint32 position_elec_CAN_ID0x03_fromCPU2;
 
-int16 positionLoopENABLE = 2;
+int16 positionLoopENABLE = 3;
 int16 encoderCAN_as_targetPOS = FALSE;
 
 int16 jitterTEST = FALSE;
@@ -151,6 +151,7 @@ void main(void){
     Axis.FLAG_ENABLE_PWM_OUTPUT = FALSE;
     Axis.channels_preset = 1; // 9; // 101;
 
+    ENC.sum_qepPosCnt = 0;
     ENC.cursor = 0;
     ENC.flag_absolute_encoder_powered = FALSE;
 
@@ -1010,6 +1011,12 @@ void PanGuMainISR(void){
                     Axis.Set_manual_rpm = - LEG_BOUCING_SPEED;
                 }else if(position_elec_CAN_ID0x03_fromCPU2 < 30000){
                     Axis.Set_manual_rpm = LEG_BOUCING_SPEED;
+                }
+            }else if(positionLoopENABLE == 3){
+                if(position_elec_CAN_ID0x03_fromCPU2 > 65000){
+                    Axis.Set_manual_current_iq = -1;
+                }else if(position_elec_CAN_ID0x03_fromCPU2 < 30000){
+                    Axis.Set_manual_current_iq = 1;
                 }
             }
             Axis.used_theta_d_elec = controller(Axis.Set_manual_rpm, Axis.Set_current_loop, Axis.Set_manual_current_iq, Axis.Set_manual_current_id,

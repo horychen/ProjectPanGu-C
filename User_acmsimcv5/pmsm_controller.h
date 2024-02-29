@@ -116,7 +116,7 @@ typedef struct {
     // Moving Average for speed calculation
     REAL MA_qepPosCnt[MA_SEQUENCE_LENGTH];
     REAL sum_qepPosCnt;
-    REAL flag_absolute_encoder_powered;
+    int flag_absolute_encoder_powered;
     unsigned int cursor; // cursor is between 0~79, and it decides which element in MA queue should be kicked out.
     // for IPD
     REAL theta_d__state;
