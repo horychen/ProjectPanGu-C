@@ -152,7 +152,7 @@ int isNumber(double x);
 double sign(double x);
 double fabs(double x);
 REAL _lpf(REAL x, REAL y_tminus1, REAL time_const_inv);
-REAL PostionSpeedMeasurement_MovingAvergage(Uint32 QPOSCNT, st_enc *p_enc);
+REAL PostionSpeedMeasurement_MovingAvergage(int32 QPOSCNT, st_enc *p_enc);
 extern REAL one_over_six;
 double difference_between_two_angles(double first, double second);
 

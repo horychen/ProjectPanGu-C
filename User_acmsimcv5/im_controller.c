@@ -1,10 +1,10 @@
 #include "ACMSim.h"
 
-#if PC_SIMULATION==FALSE
-double CpuTimer_Delta = 0;
-Uint32 CpuTimer_Before = 0;
-Uint32 CpuTimer_After = 0;
-#endif
+// #if PC_SIMULATION==FALSE
+// double CpuTimer_Delta = 0;
+// Uint32 CpuTimer_Before = 0;
+// Uint32 CpuTimer_After = 0;
+// #endif
 
 #if MACHINE_TYPE % 10 == 1
 

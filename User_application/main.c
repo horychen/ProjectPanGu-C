@@ -9,7 +9,7 @@ Uint32 position_elec_SCI_fromCPU2; // TODO: 把 elec 全部改为 count
 Uint32 position_elec_CAN_ID0x01_fromCPU2;
 Uint32 position_elec_CAN_ID0x03_fromCPU2;
 
-int16 positionLoopENABLE = 1;
+int16 positionLoopENABLE = 2;
 int16 encoderCAN_as_targetPOS = FALSE;
 
 int16 jitterTEST = FALSE;
@@ -19,6 +19,7 @@ int16 ExtendSecond = 2;
 Uint32 jitterTestInitialPos;
 Uint32 jitterTestPosCmd;
 
+REAL LEG_BOUCING_SPEED = 400;
 
 #ifdef _MMDv1 // mmlab drive version 1
     #define OFFSET_VDC 7   // ADC0
@@ -149,6 +150,9 @@ void main(void){
     Axis.OverwriteSpeedOutLimitDuringInit = 6; // 10; // A
     Axis.FLAG_ENABLE_PWM_OUTPUT = FALSE;
     Axis.channels_preset = 1; // 9; // 101;
+
+    ENC.cursor = 0;
+    ENC.flag_absolute_encoder_powered = FALSE;
 
     InitSysCtrl();        // 1. Initialize System Control: PLL, WatchDog, enable Peripheral Clocks.
     Gpio_initialize();    // 2. Initialize GPIO and assign GPIO to peripherals.
@@ -402,18 +406,6 @@ void main(void){
             DSP_STOP_LED2
         }
 
-        #if NUMBER_OF_DSP_CORES == 2
-        /* CPU02 (Remote) to CPU01 (Local)
-         * The register to check is IPCSTS.
-         * */
-            if(IPCRtoLFlagBusy(IPC_FLAG10) == 1) // if flag
-            {
-                position_elec_SCI_fromCPU2 = Read.SCI_position_elec;
-                position_elec_CAN_ID0x01_fromCPU2 = Read.CAN_position_elec_ID0x01;
-                position_elec_CAN_ID0x03_fromCPU2 = Read.CAN_position_elec_ID0x03;
-                IPCRtoLFlagAcknowledge (IPC_FLAG10);
-            }
-        #endif
         #if NUMBER_OF_DSP_CORES == 1
             single_core_dac();
         #endif
@@ -639,27 +631,101 @@ void voltage_measurement_based_on_eCAP(){
 
 //extern long long sci_pos;
 
+//声明全局变量
+#if PC_SIMULATION==FALSE
+double CpuTimer_Delta = 0;
+Uint32 CpuTimer_Before = 0;
+Uint32 CpuTimer_After = 0;
+#endif
+
 void measurement(){
 
+
+    #if NUMBER_OF_DSP_CORES == 2
+    /* CPU02 (Remote) to CPU01 (Local)
+     * The register to check is IPCSTS.
+     * */
+        if(IPCRtoLFlagBusy(IPC_FLAG10) == 1) // if flag
+        {
+            position_elec_SCI_fromCPU2 = Read.SCI_position_elec;
+            position_elec_CAN_ID0x01_fromCPU2 = Read.CAN_position_elec_ID0x01;
+            position_elec_CAN_ID0x03_fromCPU2 = Read.CAN_position_elec_ID0x03;
+            IPCRtoLFlagAcknowledge (IPC_FLAG10);
+
+            //这段放需要测时间的代码后面前面，观察CpuTimer_Delta的取值，代表经过了多少个 1/200e6 秒。
+            #if PC_SIMULATION==FALSE
+            CpuTimer_After = CpuTimer1.RegsAddr->TIM.all; // get count
+            CpuTimer_Delta = (double)CpuTimer_Before - (double)CpuTimer_After;
+            // EALLOW;
+            // CpuTimer1.RegsAddr->TCR.bit.TSS = 1; // stop (not needed because of the line TRB=1)
+            // EDIS;
+            #endif
+
+            CTRL.enc->encoder_abs_cnt_previous = CTRL.enc->encoder_abs_cnt;
+            // 編碼器讀數是反的，所以這邊偏置也要反一下，改成負值！
+            // 編碼器讀數是反的，所以這邊偏置也要反一下，改成負值！
+            // 編碼器讀數是反的，所以這邊偏置也要反一下，改成負值！
+            CTRL.enc->encoder_abs_cnt = - ( (int32)position_elec_SCI_fromCPU2 + CTRL.enc->OffsetCountBetweenIndexAndUPhaseAxis );
+            if (ENC.flag_absolute_encoder_powered == FALSE){
+                ENC.flag_absolute_encoder_powered = TRUE;
+                // assume there motor is at still when it is ppowered on
+                CTRL.enc->encoder_abs_cnt_previous = CTRL.enc->encoder_abs_cnt;
+            }
+
+            if(CTRL.enc->encoder_abs_cnt > SYSTEM_QEP_QPOSMAX_PLUS_1) {CTRL.enc->encoder_abs_cnt -= SYSTEM_QEP_QPOSMAX_PLUS_1;}
+            if(CTRL.enc->encoder_abs_cnt < 0)                         {CTRL.enc->encoder_abs_cnt += SYSTEM_QEP_QPOSMAX_PLUS_1;}
+            if(CTRL.enc->encoder_abs_cnt < 0)                         {CTRL.enc->encoder_abs_cnt += SYSTEM_QEP_QPOSMAX_PLUS_1;}
+
+            CTRL.enc->theta_d__state = CTRL.enc->encoder_abs_cnt * CNT_2_ELEC_RAD;
+            while(CTRL.enc->theta_d__state> M_PI) CTRL.enc->theta_d__state -= 2*M_PI;
+            while(CTRL.enc->theta_d__state<-M_PI) CTRL.enc->theta_d__state += 2*M_PI;
+            CTRL.enc->theta_d_elec = CTRL.enc->theta_d__state;
+
+            ENC.encoder_incremental_cnt = CTRL.enc->encoder_abs_cnt - CTRL.enc->encoder_abs_cnt_previous;
+
+            ENC.sum_qepPosCnt       -= ENC.MA_qepPosCnt[ENC.cursor];
+            ENC.sum_qepPosCnt       += ENC.encoder_incremental_cnt;
+            ENC.MA_qepPosCnt[ENC.cursor] = ENC.encoder_incremental_cnt;
+            ENC.cursor+=1;
+            if(ENC.cursor>=MA_SEQUENCE_LENGTH){
+                ENC.cursor=0; // Reset ENC.cursor
+            }
+
+            ENC.rpm = ENC.sum_qepPosCnt * SYSTEM_QEP_REV_PER_PULSE * 60 * MA_SEQUENCE_LENGTH_INVERSE * CL_TS_INVERSE;
+            CTRL.enc->omg_elec = ENC.rpm * RPM_2_ELEC_RAD_PER_SEC;
+
+            //这段放需要测时间的代码前面
+            #if PC_SIMULATION==FALSE
+            EALLOW;
+            CpuTimer1.RegsAddr->TCR.bit.TRB = 1; // reset cpu timer to period value
+            CpuTimer1.RegsAddr->TCR.bit.TSS = 0; // start/restart
+            CpuTimer_Before = CpuTimer1.RegsAddr->TIM.all; // get count
+            EDIS;
+            #endif
+        }
+    #endif
+
     // 转子位置和转速接口 以及 转子位置和转速测量
-    int32 QPOSCNT;
-    if(ENCODER_TYPE == INCREMENTAL_ENCODER_QEP){
-        QPOSCNT = EQep1Regs.QPOSCNT;
-    }
-    // 20240123 腿部电机测试
-    if(ENCODER_TYPE == ABSOLUTE_ENCODER_SCI){
-        QPOSCNT =  - position_elec_SCI_fromCPU2;
-        //QPOSCNT = position_elec_SCI_fromCPU2;
-    }
-    // 使用can_ID0x01编码器
-    if(ENCODER_TYPE == ABSOLUTE_ENCODER_CAN_ID0x01){
-        QPOSCNT = position_elec_CAN_ID0x01_fromCPU2;
-    }
-    // 使用can_ID0x03编码器
-    if(ENCODER_TYPE == ABSOLUTE_ENCODER_CAN_ID0x03){
-        QPOSCNT = position_elec_CAN_ID0x03_fromCPU2;
-    }
-    ENC.rpm          = PostionSpeedMeasurement_MovingAvergage(QPOSCNT, CTRL.enc);
+    //    int32 QPOSCNT;
+    //    if(ENCODER_TYPE == INCREMENTAL_ENCODER_QEP){
+    //        QPOSCNT = EQep1Regs.QPOSCNT;
+    //    }
+    //    // 20240123 腿部电机测试
+    //    if(ENCODER_TYPE == ABSOLUTE_ENCODER_SCI){
+    //        QPOSCNT =  - position_elec_SCI_fromCPU2; // TODO: 开环电流矢量正转的时候，电机的编码器读数在减小，所以取个负号。
+    //        //QPOSCNT = position_elec_SCI_fromCPU2;
+    //    }
+    //    // 使用can_ID0x01编码器
+    //    if(ENCODER_TYPE == ABSOLUTE_ENCODER_CAN_ID0x01){
+    //        QPOSCNT = position_elec_CAN_ID0x01_fromCPU2;
+    //    }
+    //    // 使用can_ID0x03编码器
+    //    if(ENCODER_TYPE == ABSOLUTE_ENCODER_CAN_ID0x03){
+    //        QPOSCNT = position_elec_CAN_ID0x03_fromCPU2;
+    //    }
+
+    // ENC.rpm = PostionSpeedMeasurement_MovingAvergage(QPOSCNT, CTRL.enc);
+
 
     if(CTRL.S->go_sensorless == FALSE){
         CTRL.I->omg_elec     = CTRL.enc->omg_elec;
@@ -857,8 +923,10 @@ void PanGuMainISR(void){
 
         /* Only init once for easy debug */
         if(!G.flag_experimental_initialized){
+            G.flag_experimental_initialized = TRUE;
 
             init_experiment();
+            init_experiment_AD_gain_and_offset();
             //G.Select_exp_operation = 3; // fixed
             init_experiment_overwrite();
 
@@ -886,7 +954,6 @@ void PanGuMainISR(void){
             }
             CTRL.g->flag_overwite_vdc = 0;
 
-            G.flag_experimental_initialized = TRUE;
             pid1_iM.OutPrev = 0;
             pid1_iT.OutPrev = 0;
             pid1_spd.OutPrev = 0;
@@ -929,6 +996,13 @@ void PanGuMainISR(void){
                     error_pos += SYSTEM_QEP_QPOSMAX_PLUS_1;
                 }
                 Axis.Set_manual_rpm = error_pos*KP;
+            }
+            else if(positionLoopENABLE == 2){
+                if(position_elec_CAN_ID0x03_fromCPU2 > 65000){
+                    Axis.Set_manual_rpm = - LEG_BOUCING_SPEED;
+                }else if(position_elec_CAN_ID0x03_fromCPU2 < 30000){
+                    Axis.Set_manual_rpm = LEG_BOUCING_SPEED;
+                }
             }
             Axis.used_theta_d_elec = controller(Axis.Set_manual_rpm, Axis.Set_current_loop, Axis.Set_manual_current_iq, Axis.Set_manual_current_id,
                 Axis.flag_overwrite_theta_d, Axis.Overwrite_Current_Frequency,

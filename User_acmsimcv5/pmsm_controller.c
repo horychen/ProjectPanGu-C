@@ -826,8 +826,8 @@ void init_CTRL(){
     CTRL.cap->ECapPassCount[2]= 0;
 
 /* Peripheral configurations */
-    CTRL.enc->OffsetCountBetweenIndexAndUPhaseAxis = 0;
-    CTRL.enc->theta_d_offset = CTRL.enc->OffsetCountBetweenIndexAndUPhaseAxis * CNT_2_ELEC_RAD;
+    //CTRL.enc->OffsetCountBetweenIndexAndUPhaseAxis = 0;
+    //CTRL.enc->theta_d_offset = CTRL.enc->OffsetCountBetweenIndexAndUPhaseAxis * CNT_2_ELEC_RAD;
 
 /* Console */
     // See init_experiment_overwrite() in CJHMainISR.c

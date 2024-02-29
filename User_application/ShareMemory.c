@@ -72,6 +72,21 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
     Axis.dac_watch[19] = CTRL.svgen2.Tc;
     Axis.dac_watch[20] = CTRL.S->omega_syn * ELEC_RAD_PER_SEC_2_RPM *0.002;
 
+//    Axis.dac_watch[21] = marino.xOmg * ELEC_RAD_PER_SEC_2_RPM *0.002;
+    Axis.dac_watch[21] = Axis.Set_manual_rpm *0.002;
+    Axis.dac_watch[22] = CTRL.I->omg_elec * ELEC_RAD_PER_SEC_2_RPM *0.002;
+//    Axis.dac_watch[22] = target_position_cnt*0.0003-(CTRL.enc->encoder_abs_cnt)*0.0003;
+//    Axis.dac_watch[23] = GpioDataRegs.GPEDAT.bit.GPIO135;
+//    Axis.dac_watch[24] = GpioDataRegs.GPEDAT.bit.GPIO136;
+//    Axis.dac_watch[25] = GpioDataRegs.GPEDAT.bit.GPIO137;
+//    Axis.dac_watch[22] = marino.xTL*0.025;
+//    Axis.dac_watch[23] = marino.xRho*0.1;
+//    Axis.dac_watch[24] = marino.xAlpha*0.1;
+//    Axis.dac_watch[25] = marino.e_psi_Dmu;
+//    Axis.dac_watch[26] = marino.e_psi_Qmu;
+    Axis.dac_watch[27] = CTRL.I->idq_cmd[0]*0.1;
+    Axis.dac_watch[28] = CTRL.I->idq_cmd[1]*0.1;
+
     Axis.dac_watch[30] = CTRL.O->iab_cmd[0]*0.2;
     Axis.dac_watch[31] = CTRL.O->iab_cmd[1]*0.2;
     Axis.dac_watch[32] = FE.htz.sat_max_time[0]*100;
@@ -80,30 +95,15 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
     Axis.dac_watch[35] = FE.htz.sat_min_time[1]*100;
     Axis.dac_watch[39] = FE.htz.theta_d*0.1;
 
-//    Axis.dac_watch[21] = marino.xOmg * ELEC_RAD_PER_SEC_2_RPM *0.002;
-    Axis.dac_watch[21] = CTRL.I->omg_elec * ELEC_RAD_PER_SEC_2_RPM *0.002;
-    Axis.dac_watch[22] = target_position_cnt*0.0003-(CTRL.enc->encoder_abs_cnt)*0.0003;
-    Axis.dac_watch[23] = GpioDataRegs.GPEDAT.bit.GPIO135;
-    Axis.dac_watch[24] = GpioDataRegs.GPEDAT.bit.GPIO136;
-    Axis.dac_watch[25] = GpioDataRegs.GPEDAT.bit.GPIO137;
-//    Axis.dac_watch[22] = marino.xTL*0.025;
-//    Axis.dac_watch[23] = marino.xRho*0.1;
-//    Axis.dac_watch[24] = marino.xAlpha*0.1;
-//
-//    Axis.dac_watch[25] = marino.e_psi_Dmu;
-//    Axis.dac_watch[26] = marino.e_psi_Qmu;
-
-    Axis.dac_watch[27] = CTRL.I->idq_cmd[0]*0.2;
-    Axis.dac_watch[28] = CTRL.I->idq_cmd[1]*0.2;
     Axis.dac_watch[40] = CTRL.I->idq[0]*0.1;
     Axis.dac_watch[41] = CTRL.I->idq[1]*0.1;
 
     if(Axis.channels_preset==1){Axis.channels_preset=0;
         /* Marino 2005 Sensorless Control */
-        Axis.channels[0] = 23;
-        Axis.channels[1] = 25;
-        Axis.channels[2] = 8;
-        Axis.channels[3] = 9;
+        Axis.channels[0] = 21;
+        Axis.channels[1] = 22;
+        Axis.channels[2] = 27;
+        Axis.channels[3] = 28;
         Axis.channels[4] = 21;
         Axis.channels[5] = 22;
         Axis.channels[6] = 21;
