@@ -137,8 +137,8 @@ void main(void){
     Axis.Set_x_suspension_current_loop = FALSE;
     Axis.Set_y_suspension_current_loop = FALSE;
     Axis.Set_manual_rpm = 50.0;
-    Axis.Set_manual_current_iq = 0.0;
-    Axis.Set_manual_current_id = 1.0; // 20
+    Axis.Set_manual_current_iq = 1.0;
+    Axis.Set_manual_current_id = 0.0; // id = -1 A is the magic number to get more torque! cjh 2024-02-29
     Axis.Select_exp_operation = 0; //200; //202; //200; //101;
     Axis.pFLAG_INVERTER_NONLINEARITY_COMPENSATION = &G.FLAG_INVERTER_NONLINEARITY_COMPENSATION;
     Axis.flag_overwrite_theta_d = FALSE;
