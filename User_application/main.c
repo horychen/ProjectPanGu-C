@@ -638,6 +638,9 @@ Uint32 CpuTimer_Before = 0;
 Uint32 CpuTimer_After = 0;
 #endif
 
+int counter_missing_position_measurement = 0;
+int max_counter_missing_position_measurement = 0;
+
 void measurement(){
 
 
@@ -645,8 +648,11 @@ void measurement(){
     /* CPU02 (Remote) to CPU01 (Local)
      * The register to check is IPCSTS.
      * */
+        counter_missing_position_measurement +=1;
         if(IPCRtoLFlagBusy(IPC_FLAG10) == 1) // if flag
         {
+            max_counter_missing_position_measurement = counter_missing_position_measurement;
+            counter_missing_position_measurement = 0;
             position_elec_SCI_fromCPU2 = Read.SCI_position_elec;
             position_elec_CAN_ID0x01_fromCPU2 = Read.CAN_position_elec_ID0x01;
             position_elec_CAN_ID0x03_fromCPU2 = Read.CAN_position_elec_ID0x03;
@@ -682,16 +688,18 @@ void measurement(){
             CTRL.enc->theta_d_elec = CTRL.enc->theta_d__state;
 
             ENC.encoder_incremental_cnt = CTRL.enc->encoder_abs_cnt - CTRL.enc->encoder_abs_cnt_previous;
+            // ENC.rpm_raw =  ENC.encoder_incremental_cnt  * SYSTEM_QEP_REV_PER_PULSE / CpuTimer_Delta * 1200e7; // 200e6 * 60 ;
+            ENC.rpm_raw =  ENC.encoder_incremental_cnt  * SYSTEM_QEP_REV_PER_PULSE * 1052.6 * 60; // 200e6 * 60 ;
 
-            ENC.sum_qepPosCnt       -= ENC.MA_qepPosCnt[ENC.cursor];
-            ENC.sum_qepPosCnt       += ENC.encoder_incremental_cnt;
-            ENC.MA_qepPosCnt[ENC.cursor] = ENC.encoder_incremental_cnt;
+            ENC.sum_qepPosCnt            -= ENC.MA_qepPosCnt[ENC.cursor];
+            ENC.sum_qepPosCnt            += ENC.rpm_raw;//ENC.encoder_incremental_cnt;
+            ENC.MA_qepPosCnt[ENC.cursor]  = ENC.rpm_raw;//ENC.encoder_incremental_cnt;
             ENC.cursor+=1;
             if(ENC.cursor>=MA_SEQUENCE_LENGTH){
                 ENC.cursor=0; // Reset ENC.cursor
             }
 
-            ENC.rpm = ENC.sum_qepPosCnt * SYSTEM_QEP_REV_PER_PULSE * 60 * MA_SEQUENCE_LENGTH_INVERSE * CL_TS_INVERSE;
+            ENC.rpm = ENC.sum_qepPosCnt * MA_SEQUENCE_LENGTH_INVERSE; // CL_TS_INVERSE; 时间放上面考虑了，时间是变化的，可能是1ms也可能是0.9ms。
             CTRL.enc->omg_elec = ENC.rpm * RPM_2_ELEC_RAD_PER_SEC;
 
             //这段放需要测时间的代码前面
