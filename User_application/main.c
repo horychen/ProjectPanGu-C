@@ -642,6 +642,7 @@ Uint32 CpuTimer_After = 0;
 int counter_missing_position_measurement = 0;
 int max_counter_missing_position_measurement = 0;
 
+
 void measurement(){
 
 
@@ -673,35 +674,42 @@ void measurement(){
             // 編碼器讀數是反的，所以這邊偏置也要反一下，改成負值！
             // 編碼器讀數是反的，所以這邊偏置也要反一下，改成負值！
             CTRL.enc->encoder_abs_cnt = - ( (int32)position_elec_SCI_fromCPU2 + CTRL.enc->OffsetCountBetweenIndexAndUPhaseAxis );
-            if (ENC.flag_absolute_encoder_powered == FALSE){
-                ENC.flag_absolute_encoder_powered = TRUE;
-                // assume there motor is at still when it is ppowered on
-                CTRL.enc->encoder_abs_cnt_previous = CTRL.enc->encoder_abs_cnt;
-            }
 
-            if(CTRL.enc->encoder_abs_cnt > SYSTEM_QEP_QPOSMAX_PLUS_1) {CTRL.enc->encoder_abs_cnt -= SYSTEM_QEP_QPOSMAX_PLUS_1;}
-            if(CTRL.enc->encoder_abs_cnt < 0)                         {CTRL.enc->encoder_abs_cnt += SYSTEM_QEP_QPOSMAX_PLUS_1;}
-            if(CTRL.enc->encoder_abs_cnt < 0)                         {CTRL.enc->encoder_abs_cnt += SYSTEM_QEP_QPOSMAX_PLUS_1;}
+            // ignoire this please
+                if (ENC.flag_absolute_encoder_powered == FALSE){
+                    ENC.flag_absolute_encoder_powered = TRUE;
+                    // assume there motor is at still when it is powered on
+                    CTRL.enc->encoder_abs_cnt_previous = CTRL.enc->encoder_abs_cnt;
+                }
+
+            while(CTRL.enc->encoder_abs_cnt > SYSTEM_QEP_QPOSMAX_PLUS_1) {CTRL.enc->encoder_abs_cnt -= SYSTEM_QEP_QPOSMAX_PLUS_1;}
+            while(CTRL.enc->encoder_abs_cnt < 0)                         {CTRL.enc->encoder_abs_cnt += SYSTEM_QEP_QPOSMAX_PLUS_1;}
 
             CTRL.enc->theta_d__state = CTRL.enc->encoder_abs_cnt * CNT_2_ELEC_RAD;
             while(CTRL.enc->theta_d__state> M_PI) CTRL.enc->theta_d__state -= 2*M_PI;
             while(CTRL.enc->theta_d__state<-M_PI) CTRL.enc->theta_d__state += 2*M_PI;
             CTRL.enc->theta_d_elec = CTRL.enc->theta_d__state;
 
-            ENC.encoder_incremental_cnt = CTRL.enc->encoder_abs_cnt - CTRL.enc->encoder_abs_cnt_previous;
+            ENC.encoder_incremental_cnt = ENC.encoder_abs_cnt - ENC.encoder_abs_cnt_previous;
+            if(        ENC.encoder_incremental_cnt < -0.5*    SYSTEM_QEP_QPOSMAX_PLUS_1)
+                       ENC.encoder_incremental_cnt += (int32) SYSTEM_QEP_QPOSMAX_PLUS_1;
+            else if (  ENC.encoder_incremental_cnt >  0.5*    SYSTEM_QEP_QPOSMAX_PLUS_1)
+                       ENC.encoder_incremental_cnt -= (int32) SYSTEM_QEP_QPOSMAX_PLUS_1;
+
             // ENC.rpm_raw =  ENC.encoder_incremental_cnt  * SYSTEM_QEP_REV_PER_PULSE / CpuTimer_Delta * 1200e7; // 200e6 * 60 ;
             ENC.rpm_raw =  ENC.encoder_incremental_cnt  * SYSTEM_QEP_REV_PER_PULSE * 1052.6 * 60; // 200e6 * 60 时间是变化的，可能是1ms也可能是0.9ms。
 
             ENC.sum_qepPosCnt            -= ENC.MA_qepPosCnt[ENC.cursor];
             ENC.sum_qepPosCnt            += ENC.rpm_raw;//ENC.encoder_incremental_cnt;
             ENC.MA_qepPosCnt[ENC.cursor]  = ENC.rpm_raw;//ENC.encoder_incremental_cnt;
+
             ENC.cursor+=1;
             if(ENC.cursor>=MA_SEQUENCE_LENGTH){
                 ENC.cursor=0; // Reset ENC.cursor
             }
 
-            //ENC.rpm = ENC.sum_qepPosCnt * MA_SEQUENCE_LENGTH_INVERSE; // CL_TS_INVERSE;
-            ENC.rpm = ENC.rpm_raw;
+            ENC.rpm = ENC.sum_qepPosCnt * MA_SEQUENCE_LENGTH_INVERSE; // CL_TS_INVERSE;
+            //ENC.rpm = ENC.rpm_raw;
 
             CTRL.enc->omg_elec = ENC.rpm * RPM_2_ELEC_RAD_PER_SEC;
 
@@ -1015,9 +1023,9 @@ void PanGuMainISR(void){
                     Axis.Set_manual_rpm = LEG_BOUCING_SPEED;
                 }
             }else if(positionLoopENABLE == 3){
-                if(position_elec_CAN_ID0x03_fromCPU2 > 65000){
+                if(position_elec_CAN_ID0x03_fromCPU2 > 62000){
                     Axis.Set_manual_current_iq = -1;
-                }else if(position_elec_CAN_ID0x03_fromCPU2 < 30000){
+                }else if(position_elec_CAN_ID0x03_fromCPU2 < 33000){
                     Axis.Set_manual_current_iq = 1;
                 }
             }
