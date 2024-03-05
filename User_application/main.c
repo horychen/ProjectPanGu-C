@@ -5,6 +5,8 @@ REAL target_position_cnt = 50000;
 REAL KP = 0.000005;
 REAL error_pos;
 //8231199
+Uint32 position_elec_SCI_knee_fromCPU2; // TODO: 把 elec 全部改为 count
+Uint32 position_elec_SCI_hip_fromCPU2; // TODO: 把 elec 全部改为 count
 Uint32 position_elec_SCI_fromCPU2; // TODO: 把 elec 全部改为 count
 Uint32 position_elec_CAN_ID0x01_fromCPU2;
 Uint32 position_elec_CAN_ID0x03_fromCPU2;
@@ -20,7 +22,7 @@ Uint32 jitterTestInitialPos;
 Uint32 jitterTestPosCmd;
 
 REAL LEG_BOUCING_SPEED = 400;
-
+int bool_use_SCI_encoder = FALSE;
 
 REAL deg_four_bar_map_motor_encoder_angle;
 REAL rad_four_bar_map_motor_encoder_angle=0;
@@ -124,7 +126,7 @@ int32 cnt_four_bar_map_motor_encoder_angle=0;
     }
 
     REAL get_motorpos(REAL angle){
-        REAL deg_four_bar_map_motor_encoder_angle = PositionCal(angle / 180.0 * M_PI) / M_PI * 180.0 + 206.75;
+        REAL deg_four_bar_map_motor_encoder_angle = PositionCal(angle / 180.0 * M_PI) / M_PI * 180.0 + 198.592172;
         while (deg_four_bar_map_motor_encoder_angle > 360.0){
             deg_four_bar_map_motor_encoder_angle -= 360.0;
         }
@@ -251,9 +253,9 @@ void main(void){
     a_length = 80e-3;
     b_length = 139.98e-3;
     c_length = 153.069e-3;
-    offset_length = 81.54e-3;
+    offset_length = 97.96e-3;
     lead = 16e-3;
-    joint_offset =(138.02+185.45) / 180.0 *M_PI;
+    joint_offset =(147.6585661123+175.45166) / 180.0 *M_PI;
 
     Axis.pCTRL = &CTRL;
     Axis.pAdcaResultRegs = &AdcaResultRegs;
@@ -334,8 +336,8 @@ void main(void){
         DevCfgRegs.CPUSEL6.bit.SPI_A = 1; // assign spi-a to cpu2
         DevCfgRegs.CPUSEL6.bit.SPI_C = 1; // assign spi-c to cpu2
 
-        DevCfgRegs.CPUSEL5.bit.SCI_C = 1; // assign sci-c to cpu2
-        DevCfgRegs.CPUSEL5.bit.SCI_A = 1;// assign sci-a to cpu2
+        DevCfgRegs.CPUSEL5.bit.SCI_A = 1; // assign sci-a to cpu2
+        DevCfgRegs.CPUSEL5.bit.SCI_B = 1; // assign sci-b to cpu2
 
         DevCfgRegs.CPUSEL8.bit.CAN_A=1;// assign can-a to cpu2
         DevCfgRegs.CPUSEL8.bit.CAN_B=1;// assign can-b to cpu2
@@ -372,9 +374,18 @@ void main(void){
         //GPIO135 - 485TX-SCIA
         GPIO_SetupPinMux(135, GPIO_MUX_CPU2, 6);
         GPIO_SetupPinOptions(135, GPIO_OUTPUT, GPIO_PUSHPULL);
-        //GPIO137 - 485WE-(use SCIBTX as GPIO, in UART2 pin8)
-        GPIO_SetupPinMux(137, GPIO_MUX_CPU2, 0);
-        GPIO_SetupPinOptions(137, GPIO_OUTPUT, GPIO_ASYNC);
+        //GPIO138 - 485RX-SCIB
+        GPIO_SetupPinMux(138, GPIO_MUX_CPU2, 6);
+        GPIO_SetupPinOptions(138, GPIO_INPUT, GPIO_PUSHPULL);
+        //GPIO137 - 485TX-SCIB
+        GPIO_SetupPinMux(137, GPIO_MUX_CPU2, 6);
+        GPIO_SetupPinOptions(137, GPIO_OUTPUT, GPIO_PUSHPULL);
+        //GPIO140 - 485-SCIB-WE-(use SCICTX as GPIO, in UART3 pin7)
+        GPIO_SetupPinMux(140, GPIO_MUX_CPU2, 0);
+        GPIO_SetupPinOptions(140, GPIO_OUTPUT, GPIO_ASYNC);
+        //GPIO139 - 485-SCIA-WE-(use SCICRX as GPIO, in UART3 pin8)
+        GPIO_SetupPinMux(139, GPIO_MUX_CPU2, 0);
+        GPIO_SetupPinOptions(139, GPIO_OUTPUT, GPIO_ASYNC);
         // =========FOR EUREKA===========
 
 
@@ -781,7 +792,8 @@ void measurement(){
         {
             max_counter_missing_position_measurement = counter_missing_position_measurement;
             counter_missing_position_measurement = 0;
-            position_elec_SCI_fromCPU2 = Read.SCI_position_elec;
+            position_elec_SCI_knee_fromCPU2 = Read.SCI_knee_position_elec;
+            position_elec_SCI_hip_fromCPU2 = Read.SCI_hip_position_elec;
             position_elec_CAN_ID0x01_fromCPU2 = Read.CAN_position_elec_ID0x01;
             position_elec_CAN_ID0x03_fromCPU2 = Read.CAN_position_elec_ID0x03;
             IPCRtoLFlagAcknowledge (IPC_FLAG10);
@@ -805,8 +817,11 @@ void measurement(){
             // 編碼器讀數是反的，所以這邊偏置也要反一下，改成負值！
             // 編碼器讀數是反的，所以這邊偏置也要反一下，改成負值！
             // 編碼器讀數是反的，所以這邊偏置也要反一下，改成負值！
-            //CTRL.enc->encoder_abs_cnt = - ( (int32)position_elec_SCI_fromCPU2 + CTRL.enc->OffsetCountBetweenIndexAndUPhaseAxis );
-            CTRL.enc->encoder_abs_cnt = - ( (int32)cnt_four_bar_map_motor_encoder_angle + CTRL.enc->OffsetCountBetweenIndexAndUPhaseAxis );
+            if(bool_use_SCI_encoder){
+                CTRL.enc->encoder_abs_cnt = - ( (int32)position_elec_SCI_fromCPU2 + CTRL.enc->OffsetCountBetweenIndexAndUPhaseAxis );
+            }else{
+                CTRL.enc->encoder_abs_cnt = - ( (int32)cnt_four_bar_map_motor_encoder_angle + CTRL.enc->OffsetCountBetweenIndexAndUPhaseAxis );
+            }
 
             // ignore this please
                 if (ENC.flag_absolute_encoder_powered == FALSE){
@@ -1032,7 +1047,7 @@ void PanGuMainISR(void){
         write_DAC_buffer();
     #endif
 
-
+// 出厂底板，点灯代码
 //    static long int ii = 0;
 //    if(++ii%5000 == 0){
 //        //        EPwm1Regs.CMPA.bit.CMPA = CTRL.svgen1.Ta*50000000*CL_TS;
