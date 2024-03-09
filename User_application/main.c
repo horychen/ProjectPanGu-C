@@ -10,6 +10,7 @@ Uint32 position_elec_SCI_hip_fromCPU2; // TODO: 把 elec 全部改为 count
 Uint32 position_elec_SCI_fromCPU2; // TODO: 把 elec 全部改为 count
 Uint32 position_elec_CAN_ID0x01_fromCPU2;
 Uint32 position_elec_CAN_ID0x03_fromCPU2;
+Uint32 CPU2_commu_error_counter=0;
 
 int16 positionLoopENABLE = 3;
 int16 encoderCAN_as_targetPOS = FALSE;
@@ -22,7 +23,7 @@ Uint32 jitterTestInitialPos;
 Uint32 jitterTestPosCmd;
 
 REAL LEG_BOUCING_SPEED = 400;
-int bool_use_SCI_encoder = FALSE;
+int bool_use_SCI_encoder = TRUE;
 
 REAL deg_four_bar_map_motor_encoder_angle;
 REAL rad_four_bar_map_motor_encoder_angle=0;
@@ -262,7 +263,7 @@ void main(void){
     Axis.pAdcbResultRegs = &AdcbResultRegs;
     Axis.pAdccResultRegs = &AdccResultRegs;
     Axis.use_first_set_three_phase = 1; // -1;
-    Axis.Set_current_loop = TRUE;
+    Axis.Set_current_loop = FALSE;
     Axis.Set_x_suspension_current_loop = FALSE;
     Axis.Set_y_suspension_current_loop = FALSE;
     Axis.Set_manual_rpm = 50.0;
@@ -798,6 +799,7 @@ void measurement(){
             position_elec_CAN_ID0x03_fromCPU2 = Read.CAN_position_elec_ID0x03;
             IPCRtoLFlagAcknowledge (IPC_FLAG10);
 
+            // CAN encoder convert to motor built-in encoder
             deg_four_bar_map_motor_encoder_angle = get_motorpos(position_elec_CAN_ID0x03_fromCPU2 * 0.00274658203125 ); //1/131072.0*360.0
             //deg_four_bar_map_motor_encoder_angle = lookup(position_elec_CAN_ID0x03_fromCPU2 * 0.00274658203125, &ZJL_table);
             rad_four_bar_map_motor_encoder_angle = deg_four_bar_map_motor_encoder_angle * 0.017453292519943295;
@@ -818,7 +820,8 @@ void measurement(){
             // 編碼器讀數是反的，所以這邊偏置也要反一下，改成負值！
             // 編碼器讀數是反的，所以這邊偏置也要反一下，改成負值！
             if(bool_use_SCI_encoder){
-                CTRL.enc->encoder_abs_cnt = - ( (int32)position_elec_SCI_fromCPU2 + CTRL.enc->OffsetCountBetweenIndexAndUPhaseAxis );
+                // MD1 17bit SCI485hip
+                CTRL.enc->encoder_abs_cnt = - ( (int32)position_elec_SCI_hip_fromCPU2 + CTRL.enc->OffsetCountBetweenIndexAndUPhaseAxis );
             }else{
                 CTRL.enc->encoder_abs_cnt = - ( (int32)cnt_four_bar_map_motor_encoder_angle + CTRL.enc->OffsetCountBetweenIndexAndUPhaseAxis );
             }
@@ -845,7 +848,8 @@ void measurement(){
                        ENC.encoder_incremental_cnt -= (int32) SYSTEM_QEP_QPOSMAX_PLUS_1;
 
             // ENC.rpm_raw =  ENC.encoder_incremental_cnt  * SYSTEM_QEP_REV_PER_PULSE / CpuTimer_Delta * 1200e7; // 200e6 * 60 ;
-            ENC.rpm_raw =  ENC.encoder_incremental_cnt  * SYSTEM_QEP_REV_PER_PULSE * 1052.6 * 60; // 200e6 * 60 时间是变化的，可能是1ms也可能是0.9ms。
+//            ENC.rpm_raw =  ENC.encoder_incremental_cnt  * SYSTEM_QEP_REV_PER_PULSE * 1052.6 * 60; // 200e6 * 60 时间是变化的，可能是1ms也可能是0.9ms。
+            ENC.rpm_raw =  ENC.encoder_incremental_cnt  * SYSTEM_QEP_REV_PER_PULSE * 1e4 * 60; // 1e4指的是EPWM1_ISR中断的频率：10kHz
 
             ENC.sum_qepPosCnt            -= ENC.MA_qepPosCnt[ENC.cursor];
             ENC.sum_qepPosCnt            += ENC.rpm_raw;//ENC.encoder_incremental_cnt;
@@ -869,6 +873,10 @@ void measurement(){
             CpuTimer_Before = CpuTimer1.RegsAddr->TIM.all; // get count
             EDIS;
             #endif
+        }
+        else
+        {
+            CPU2_commu_error_counter++;
         }
     #endif
 
