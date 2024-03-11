@@ -238,7 +238,7 @@ typedef struct {
         Uint32  test_integer;
         REAL    test_float;
     // Mode Changing During Experiment
-        // int FLAG_ENABLE_PWM_OUTPUT; // 电机模式标志位
+        // int FLAG_ENABLE_PWM_OUTPUT; // 鐢垫満妯″紡鏍囧織浣�
         // int DAC_MAX5307_FLAG; // for single core case
         // int AD_offset_flag2;
         // Uint16 Rotor_angle_selection; // delete?
@@ -317,7 +317,8 @@ REAL controller(REAL set_rpm_speed_command,
     int set_current_loop, REAL set_iq_cmd, REAL set_id_cmd,
     int flag_overwrite_theta_d, REAL Overwrite_Current_Frequency,
     REAL angle_shift_for_first_inverter,
-    REAL angle_shift_for_second_inverter);
+    REAL angle_shift_for_second_inverter,
+    struct ControllerForExperiment *pCTRL);
 void allocate_CTRL(struct ControllerForExperiment *p);
 
 // void control(REAL speed_cmd, REAL speed_cmd_dot);
@@ -326,13 +327,13 @@ void cmd_fast_speed_reversal(REAL timebase, REAL instant, REAL interval, REAL rp
 void cmd_slow_speed_reversal(REAL timebase, REAL instant, REAL interval, REAL rpm_cmd);
 
 
-/* 逆变器非线性 */
-/* 查表法 */
+/* 閫嗗彉鍣ㄩ潪绾挎�� */
+/* 鏌ヨ〃娉� */
 void get_distorted_voltage_via_LUT_indexed(REAL ial, REAL ibe, REAL *ualbe_dist);
 void get_distorted_voltage_via_LUT(REAL ual, REAL ube, REAL ial, REAL ibe, REAL *ualbe_dist, REAL *lut_voltage, REAL *lut_current, int length_of_lut);
 void get_distorted_voltage_via_CurveFitting(REAL ual, REAL ube, REAL ial, REAL ibe, REAL *ualbe_dist);
 
-/* ParkSul2012 梯形波 */
+/* ParkSul2012 姊舰娉� */
 // #define GAIN_THETA_TRAPEZOIDAL (20) // 20
 void inverterNonlinearity_Initialization();
 REAL u_comp_per_phase(REAL Vsat, REAL thetaA, REAL theta_trapezoidal, REAL oneOver_theta_trapezoidal);

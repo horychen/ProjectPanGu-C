@@ -17,10 +17,10 @@
 #pragma DATA_SECTION(pid1_spd   ,"MYGLOBALS");
 #endif
 
-// 定义顶级结构体（指针的集合）
+// 瀹氫箟椤剁骇缁撴瀯浣擄紙鎸囬拡鐨勯泦鍚堬級
 struct ControllerForExperiment CTRL;
 
-// 定义内存空间（结构体）
+// 瀹氫箟鍐呭瓨绌洪棿锛堢粨鏋勪綋锛�
 st_motor_parameters     t_motor={0};
 st_enc                  t_enc={0};
 st_psd                  t_psd={0};
@@ -58,10 +58,10 @@ st_PIDController pid1_dispY = {
                       SUSPENSION_PID_INT_LIMIT, CL_TS };
 
 
-// 初始化顶级结构体指针，指向定义好的内存空间
+// 鍒濆鍖栭《绾х粨鏋勪綋鎸囬拡锛屾寚鍚戝畾涔夊ソ鐨勫唴瀛樼┖闂�
 void allocate_CTRL(struct ControllerForExperiment *p){
     /* My attemp to use calloc with TI's compiler in CCS has failed. */
-        // p->motor = calloc(1,sizeof(st_pmsm_parameters)); // 意思是，一个，st_pmsm_parameters那么大的空间
+        // p->motor = calloc(1,sizeof(st_pmsm_parameters)); // 鎰忔�濇槸锛屼竴涓紝st_pmsm_parameters閭ｄ箞澶х殑绌洪棿
         // p->I = calloc(1,sizeof(st_controller_inputs));
         // p->S = calloc(1,sizeof(st_controller_states));
         // p->O = calloc(1,sizeof(st_controller_outputs));
@@ -97,7 +97,7 @@ struct GlobalWatch watch;
 
 #if MACHINE_TYPE == PM_SYNCHRONOUS_MACHINE
 
-    // 游离在顶级之外的算法结构体
+    // 娓哥鍦ㄩ《绾т箣澶栫殑绠楁硶缁撴瀯浣�
     // struct RK4_DATA rk4;
     // struct Harnefors2006 harnefors={0};
     // struct CJH_EEMF_AO_Design cjheemf={0};
@@ -106,7 +106,7 @@ struct GlobalWatch watch;
 
 #else
 
-    // 游离在顶级之外的算法结构体
+    // 娓哥鍦ㄩ《绾т箣澶栫殑绠楁硶缁撴瀯浣�
     // struct RK4_DATA rk4;
     struct Marino2005 marino={0};
 

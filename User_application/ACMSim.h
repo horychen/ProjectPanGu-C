@@ -78,7 +78,7 @@ typedef float32 REAL;
 #define UV2B_AI(U, V) ( (U + 2*(V)) * CONST_1_OVER_SQRT3 )
 
 #define UVW2A_AI(U, V, W) ( 0.666667 * U - 0.333333 * V - 0.333333 * W )
-#define UVW2B_AI(U, V, W) ( (V - W) * CONST_1_OVER_SQRT3 )
+#define UVW2B_AI(U, V, W) ( 0 * U + (V - W) * CONST_1_OVER_SQRT3 )
 #define UVW2G_AI(U, V, W) ( 0.333333 * (U + V + W))
 
 #define AB2U_AI(A, B) ( ( A ) )
