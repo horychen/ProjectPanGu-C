@@ -4,15 +4,16 @@ st_axis Axis;
 REAL target_position_cnt = 50000;
 REAL KP = 0.000005;
 REAL error_pos;
-//8231199
+
 Uint32 position_elec_SCI_knee_fromCPU2; // TODO: 把 elec 全部改为 count
 Uint32 position_elec_SCI_hip_fromCPU2; // TODO: 把 elec 全部改为 count
 Uint32 position_elec_SCI_fromCPU2; // TODO: 把 elec 全部改为 count
 Uint32 position_elec_CAN_ID0x01_fromCPU2;
 Uint32 position_elec_CAN_ID0x03_fromCPU2;
+Uint32 position_elec_CAN_fromCPU2;
 Uint32 CPU2_commu_error_counter=0;
 
-int16 positionLoopENABLE = 3;
+int16 positionLoopENABLE = 2;
 int16 encoderCAN_as_targetPOS = FALSE;
 
 int16 jitterTEST = FALSE;
@@ -138,51 +139,27 @@ int32 cnt_four_bar_map_motor_encoder_angle=0;
 
 
 #ifdef _MMDv1 // mmlab drive version 1
-    #define OFFSET_VDC 7   // ADC0
-//    #define OFFSET_U   2023 // 2
-//    #define OFFSET_V   2060 // 3
-//    #define OFFSET_W   2020 // 1
-//Lem
-     #define OFFSET_U   2040 // 2
-    #define OFFSET_V   2070 // 3
-    #define OFFSET_W   2075 // 1
-    #define OFFSET_R   2058 // 11
-    #define OFFSET_S   2062 // 9
-    #define OFFSET_T   2059 // 8
 
-//Lem 1
+// DC BUS
     #define OFFSET_VDC_BUS_IPM1 -1.01456189
-    #define OFFSET_LEM1_L   2024 //2023.89473684 // ADCB7
-    #define OFFSET_LEM1_R   2041 //2042.33333333 // ADCB8
-    #define OFFSET_LEM1_M   2044 //2043.43859649 // ADCB9
-
-
-//Lem 2
-    #define OFFSET_LEM2_L   2024 //2023.89473684 // ADC
-    #define OFFSET_LEM2_R   2041 //2042.33333333 // ADC
-    #define OFFSET_LEM2_M   2044 //2043.43859649 // ADC
-
-    // Sensor Board 6 Phase SiC MOSFET Inverter
-    #define SCALE_VDC 0.0949
-    #define SCALE_U  0.0325 // 0.03367
-    #define SCALE_V  0.0320 // 0.03388
-    #define SCALE_W  0.0320 // 0.0340136
-    #define SCALE_R -0.0295 //-0.032
-    #define SCALE_S -0.0295 //-0.032
-    #define SCALE_T -0.0290 //-0.034
-
-
-//Lem 1
-// 令逆变器输出端指向电机为正方向，若LEM上的箭头与正方向相同，则SCALE为正数，若LEM上的箭头与正方向相反，则SCALE为负数，
     #define SCALE_VDC_BUS_IPM1 0.17604031
-    #define SCALE_LEM1_L   -0.03076297 // ADCB7
-    #define SCALE_LEM1_R   -0.03038256 // ADCB8
-    #define SCALE_LEM1_M   -0.03039058 // ADCB9
 
-//Lem 2
-    #define SCALE_LEM2_L   0.03076297 // ADC
-    #define SCALE_LEM2_R   0.03038256 // ADC
-    #define SCALE_LEM2_M   0.03039058 // ADC
+//Lem 1的三个蓝色块块分别是adc b7 b8 b9
+    #define OFFSET_LEM_B7   2027 //2023.89473684 // ADCB7
+    #define OFFSET_LEM_B8   2043 //2042.33333333 // ADCB8
+    #define OFFSET_LEM_B9   2048 //2043.43859649 // ADCB9
+    // 令逆变器输出端指向电机为正方向，若LEM上的箭头与正方向相同，则SCALE为正数，若LEM上的箭头与正方向相反，则SCALE为负数，
+    #define SCALE_LEM_B7   0.03076297 // ADCB7
+    #define SCALE_LEM_B8   0.03038256 // ADCB8
+    #define SCALE_LEM_B9   0.03039058 // ADCB9
+
+//Lem 2的三个蓝色块块分别是adc a1 a2 a3
+    #define OFFSET_LEM_A1   2034 //2029.57894737 // ADCA1
+    #define OFFSET_LEM_A2   2046 //2043.08771930 // ADCA2
+    #define OFFSET_LEM_A3   2047 //2042.98245614 // ADCA3
+    #define SCALE_LEM_A1   0.03080704 // ADCA1
+    #define SCALE_LEM_A2   0.03060669 // ADCA2
+    #define SCALE_LEM_A3   0.03045988 // ADCA3
 
 #else
     scale and offset...
@@ -196,47 +173,32 @@ int USE_3_CURRENT_SENSORS = TRUE;
 
 void init_experiment_AD_gain_and_offset(){
     /* ADC OFFSET */
-    // dc bus sensor
-    Axis.adc_offset[0] = OFFSET_VDC;
-    // LEM2
-    Axis.adc_offset[1] = OFFSET_U; // 2
-    Axis.adc_offset[2] = OFFSET_V; // 3
-    Axis.adc_offset[3] = OFFSET_W; // 1
-    // LEM1
-    Axis.adc_offset[0] = OFFSET_VDC_BUS_IPM1;
-    Axis.adc_offset[4] = OFFSET_LEM1_L; // b7
-    Axis.adc_offset[5] = OFFSET_LEM1_R; // b8
-    Axis.adc_offset[6] = OFFSET_LEM1_M; // b9
+//    // LEM1
+//    Axis.adc_offset[0] = OFFSET_VDC_BUS_IPM1;
+//    Axis.adc_offset[4] = OFFSET_LEM1_L; // b7
+//    Axis.adc_offset[5] = OFFSET_LEM1_R; // b8
+//    Axis.adc_offset[6] = OFFSET_LEM1_M; // b9
+//
+//    // LEM2
+//    Axis.adc_offset[1] = OFFSET_LEM2_L; // a1
+//    Axis.adc_offset[2] = OFFSET_LEM2_R; // a2
+//    Axis.adc_offset[3] = OFFSET_LEM2_M; // a3
 
-    Axis.adc_offset[1] = OFFSET_LEM2_L; // b7
-    Axis.adc_offset[2] = OFFSET_LEM2_R; // b8
-    Axis.adc_offset[3] = OFFSET_LEM2_M; // b9
-
-//    Axis.adc_offset[1] = OFFSET_U; // 2
-//    Axis.adc_offset[2] = OFFSET_V; // 3
-//    Axis.adc_offset[3] = OFFSET_W; // 1
-//    Axis.adc_offset[4] = OFFSET_R; // 11
-//    Axis.adc_offset[5] = OFFSET_S; // 9
-//    Axis.adc_offset[6] = OFFSET_T; // 7
-
-    /* ADC SCALE */
-    Axis.adc_scale[0] = SCALE_VDC;
-    Axis.adc_scale[1] = SCALE_U;
-    Axis.adc_scale[2] = SCALE_V;
-    Axis.adc_scale[3] = SCALE_W;
-    Axis.adc_scale[4] = SCALE_R;
-    Axis.adc_scale[5] = SCALE_S;
-    Axis.adc_scale[6] = SCALE_T;
-
-    // LEM1
     Axis.adc_scale[0] = SCALE_VDC_BUS_IPM1;
-    Axis.adc_scale[4] = SCALE_LEM1_L;
-    Axis.adc_scale[5] = SCALE_LEM1_R;
-    Axis.adc_scale[6] = SCALE_LEM1_M;
+    Axis.adc_scale[1] = SCALE_LEM_A1;
+    Axis.adc_scale[2] = SCALE_LEM_A2;
+    Axis.adc_scale[3] = SCALE_LEM_A3;
+    Axis.adc_scale[4] = SCALE_LEM_B7;
+    Axis.adc_scale[5] = SCALE_LEM_B8;
+    Axis.adc_scale[6] = SCALE_LEM_B9;
 
-    Axis.adc_scale[1] = SCALE_LEM2_L;
-    Axis.adc_scale[2] = SCALE_LEM2_R;
-    Axis.adc_scale[3] = SCALE_LEM2_M;
+    Axis.adc_offset[0] = OFFSET_VDC_BUS_IPM1;
+    Axis.adc_offset[1] = OFFSET_LEM_A1;
+    Axis.adc_offset[2] = OFFSET_LEM_A2;
+    Axis.adc_offset[3] = OFFSET_LEM_A3;
+    Axis.adc_offset[4] = OFFSET_LEM_B7;
+    Axis.adc_offset[5] = OFFSET_LEM_B8;
+    Axis.adc_offset[6] = OFFSET_LEM_B9;
 
     /* eQEP OFFSET */
     CTRL.enc->OffsetCountBetweenIndexAndUPhaseAxis = OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
@@ -814,14 +776,17 @@ void measurement(){
             // CpuTimer1.RegsAddr->TCR.bit.TSS = 1; // stop (not needed because of the line TRB=1)
             // EDIS;
             #endif
+            position_elec_SCI_fromCPU2 = position_elec_SCI_knee_fromCPU2;
+//            position_elec_SCI_fromCPU2 = position_elec_SCI_hip_fromCPU2;
+
 
             CTRL.enc->encoder_abs_cnt_previous = CTRL.enc->encoder_abs_cnt;
             // 編碼器讀數是反的，所以這邊偏置也要反一下，改成負值！
             // 編碼器讀數是反的，所以這邊偏置也要反一下，改成負值！
             // 編碼器讀數是反的，所以這邊偏置也要反一下，改成負值！
             if(bool_use_SCI_encoder){
-                // MD1 17bit SCI485hip
-                CTRL.enc->encoder_abs_cnt = - ( (int32)position_elec_SCI_hip_fromCPU2 + CTRL.enc->OffsetCountBetweenIndexAndUPhaseAxis );
+                // MD1 is 17bit, use SCI485hip port
+                CTRL.enc->encoder_abs_cnt = - ( (int32)position_elec_SCI_fromCPU2 + CTRL.enc->OffsetCountBetweenIndexAndUPhaseAxis );
             }else{
                 CTRL.enc->encoder_abs_cnt = - ( (int32)cnt_four_bar_map_motor_encoder_angle + CTRL.enc->OffsetCountBetweenIndexAndUPhaseAxis );
             }
@@ -915,23 +880,31 @@ void measurement(){
     Axis.vdc    =((REAL)(AdcbResultRegs.ADCRESULT6 ) - Axis.adc_offset[0]) * Axis.adc_scale[0];
     if(G.flag_overwite_vdc) Axis.vdc = G.overwrite_vdc;
 
-//    Axis.iuvw[0]=((REAL)(AdcaResultRegs.ADCRESULT1 ) - Axis.adc_offset[1]) * Axis.adc_scale[1];
-//    Axis.iuvw[1]=((REAL)(AdcaResultRegs.ADCRESULT2 ) - Axis.adc_offset[2]) * Axis.adc_scale[2];
-//    Axis.iuvw[2]=((REAL)(AdcaResultRegs.ADCRESULT3 ) - Axis.adc_offset[3]) * Axis.adc_scale[3];
-//    Axis.iuvw[3]=((REAL)(AdcbResultRegs.ADCRESULT11) - Axis.adc_offset[4]) * Axis.adc_scale[4]; // AD_scale_U2; offsetD2
-//    Axis.iuvw[4]=((REAL)(AdcbResultRegs.ADCRESULT9 ) - Axis.adc_offset[5]) * Axis.adc_scale[5]; // AD_scale_V2; offsetB2
-//    Axis.iuvw[5]=((REAL)(AdcbResultRegs.ADCRESULT8 ) - Axis.adc_offset[6]) * Axis.adc_scale[6]; // AD_scale_W2; offsetA2
 
-    //LEM1传感器用于测量第一套绕组的电流，因此，adcb7\b8\b9的ad值给iuvw[0][1][2]
-//    Axis.iuvw[0]=((REAL)(AdccResultRegs.ADCRESULT2 ) - Axis.adc_offset[1]) * Axis.adc_scale[1];
-//    Axis.iuvw[1]=((REAL)(AdccResultRegs.ADCRESULT4 ) - Axis.adc_offset[2]) * Axis.adc_scale[2];
-//    Axis.iuvw[2]=((REAL)(AdccResultRegs.ADCRESULT5 ) - Axis.adc_offset[3]) * Axis.adc_scale[3];
-    Axis.iuvw[0]=((REAL)(AdcbResultRegs.ADCRESULT7 ) - Axis.adc_offset[4]) * Axis.adc_scale[4]; // AD_scale_U2; offsetD2
-    Axis.iuvw[1]=((REAL)(AdcbResultRegs.ADCRESULT8 ) - Axis.adc_offset[5]) * Axis.adc_scale[5]; // AD_scale_V2; offsetB2
-    Axis.iuvw[2]=((REAL)(AdcbResultRegs.ADCRESULT9 ) - Axis.adc_offset[6]) * Axis.adc_scale[6]; // AD_scale_W2; offsetA2
-    Axis.iuvw[3]=((REAL)(AdcaResultRegs.ADCRESULT1 ) - Axis.adc_offset[1]) * Axis.adc_scale[1]; // AD_scale_U2; offsetD2
-    Axis.iuvw[4]=((REAL)(AdcaResultRegs.ADCRESULT2 ) - Axis.adc_offset[2]) * Axis.adc_scale[2]; // AD_scale_V2; offsetB2
-    Axis.iuvw[5]=((REAL)(AdcaResultRegs.ADCRESULT3 ) - Axis.adc_offset[3]) * Axis.adc_scale[3]; // AD_scale_W2; offsetA2
+    // LEM1
+    Axis.iuvw[0]=((REAL)(AdcaResultRegs.ADCRESULT1 ) - Axis.adc_offset[1]) * Axis.adc_scale[1]; //
+    Axis.iuvw[1]=((REAL)(AdcaResultRegs.ADCRESULT2 ) - Axis.adc_offset[2]) * Axis.adc_scale[2]; //
+    Axis.iuvw[2]=((REAL)(AdcaResultRegs.ADCRESULT3 ) - Axis.adc_offset[3]) * Axis.adc_scale[3]; //
+
+    // LEM2 法国 德国 日本
+    Axis.iuvw[3]=((REAL)(AdcbResultRegs.ADCRESULT7 ) - Axis.adc_offset[4]) * Axis.adc_scale[4]; //
+    Axis.iuvw[4]=((REAL)(AdcbResultRegs.ADCRESULT8 ) - Axis.adc_offset[5]) * Axis.adc_scale[5]; //
+    Axis.iuvw[5]=((REAL)(AdcbResultRegs.ADCRESULT9 ) - Axis.adc_offset[6]) * Axis.adc_scale[6]; //
+
+
+
+
+    //    // LEM1 to IPM2
+    //    Axis.iuvw[3]=((REAL)(AdcbResultRegs.ADCRESULT7 ) - Axis.adc_offset[4]) * Axis.adc_scale[4]; //
+    //    Axis.iuvw[4]=((REAL)(AdcbResultRegs.ADCRESULT8 ) - Axis.adc_offset[5]) * Axis.adc_scale[5]; //
+    //    Axis.iuvw[5]=((REAL)(AdcbResultRegs.ADCRESULT9 ) - Axis.adc_offset[6]) * Axis.adc_scale[6]; //
+
+    //    // LEM2 to IPM1
+    //    Axis.iuvw[0]=((REAL)(AdcaResultRegs.ADCRESULT1 ) - Axis.adc_offset[1]) * Axis.adc_scale[1]; //
+    //    Axis.iuvw[1]=((REAL)(AdcaResultRegs.ADCRESULT2 ) - Axis.adc_offset[2]) * Axis.adc_scale[2]; //
+    //    Axis.iuvw[2]=((REAL)(AdcaResultRegs.ADCRESULT3 ) - Axis.adc_offset[3]) * Axis.adc_scale[3]; //
+
+
 
     // 线电压测量（基于占空比和母线电压）
     //voltage_measurement_based_on_eCAP();
@@ -1156,6 +1129,10 @@ void PanGuMainISR(void){
         #if ENABLE_COMMISSIONING == FALSE
             //CTRL.S->Motor_or_Gnerator = sign(CTRL.I->idq_cmd[1]) == sign(ENC.rpm); // sign(CTRL.I->idq_cmd[1]) != sign(CTRL.I->cmd_speed_rpm))
             runtime_command_and_tuning(Axis.Select_exp_operation);
+            // 0x03 is knee
+//            position_elec_CAN_fromCPU2 = position_elec_CAN_ID0x03_fromCPU2;
+            // 0x01 is hip
+            position_elec_CAN_fromCPU2 = position_elec_CAN_ID0x01_fromCPU2;
 
             if(positionLoopENABLE == 1)
             {
@@ -1173,9 +1150,9 @@ void PanGuMainISR(void){
                 Axis.Set_manual_rpm = error_pos*KP;
             }
             else if(positionLoopENABLE == 2){
-                if(position_elec_CAN_ID0x03_fromCPU2 > 65000){
+                if(position_elec_CAN_ID0x03_fromCPU2 > 62000){
                     Axis.Set_manual_rpm = - LEG_BOUCING_SPEED;
-                }else if(position_elec_CAN_ID0x03_fromCPU2 < 30000){
+                }else if(position_elec_CAN_ID0x03_fromCPU2 < 33000){
                     Axis.Set_manual_rpm = LEG_BOUCING_SPEED;
                 }
             }else if(positionLoopENABLE == 3){
@@ -1183,6 +1160,14 @@ void PanGuMainISR(void){
                     Axis.Set_manual_current_iq = -1;
                 }else if(position_elec_CAN_ID0x03_fromCPU2 < 33000){
                     Axis.Set_manual_current_iq = 1;
+                }
+            }else if(positionLoopENABLE == 4){
+                if(position_elec_CAN_ID0x01_fromCPU2 > 58000){
+                    Axis.Overwrite_Current_Frequency = 10;
+                    Axis.Set_manual_current_iq = 5;
+                }else if(position_elec_CAN_ID0x01_fromCPU2 < 48000){
+                    Axis.Overwrite_Current_Frequency = -10;
+                    Axis.Set_manual_current_iq = 5;
                 }
             }
             Axis.used_theta_d_elec = controller(Axis.Set_manual_rpm, Axis.Set_current_loop, Axis.Set_manual_current_iq, Axis.Set_manual_current_id,
