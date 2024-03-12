@@ -20,17 +20,17 @@ void PID_calc(st_pid_regulator *r){
 void PID_calc(st_pid_regulator *r){
     #define DYNAMIC_CLAPMING TRUE
 
-    // 误差
+    // 璇樊
     r->Err = r->Ref - r->Fbk;
 
-    // 比例
+    // 姣斾緥
     r->P_Term = r->Err * r->Kp;
 
-    // 积分
+    // 绉垎
     r->I_Term += r->Err * r->Ki;
     r->OutNonSat = r->I_Term;
 
-    // 添加积分饱和特性
+    // 娣诲姞绉垎楗卞拰鐗规��
     #if DYNAMIC_CLAPMING
         // dynamic clamping
         if( r->I_Term > r->OutLimit - r->Out)
@@ -45,21 +45,21 @@ void PID_calc(st_pid_regulator *r){
             r->I_Term = -r->OutLimit;
     #endif
 
-    // 微分
+    // 寰垎
     // r->D_Term = r->Kd * (r->Err - r->ErrPrev);
 
-    // 输出
+    // 杈撳嚭
     r->Out = r->I_Term + r->P_Term; // + r->D_Term
     r->OutNonSat += r->P_Term; // + r->D_Term
-    // 输出限幅
+    // 杈撳嚭闄愬箙
     if(r->Out > r->OutLimit)
         r->Out = r->OutLimit;
     else if(r->Out < -r->OutLimit)
         r->Out = -r->OutLimit;
 
-    // 当前步误差赋值为上一步误差
+    // 褰撳墠姝ヨ宸祴鍊间负涓婁竴姝ヨ宸�
     r->ErrPrev = r->Err;
-    // 记录饱和输出和未饱和输出的差
+    // 璁板綍楗卞拰杈撳嚭鍜屾湭楗卞拰杈撳嚭鐨勫樊
     r->SatDiff = r->Out - r->OutNonSat;
 }
 #endif
@@ -117,18 +117,18 @@ float PIDController_Update(st_PIDController *pid) {
 }
 
 
-// 初始化函数
+// 鍒濆鍖栧嚱鏁�
 void ACMSIMC_PIDTuner(){
 
-    pid1_iM.Kp  = CURRENT_KP;
-    pid1_iT.Kp  = CURRENT_KP;
-    pid1_spd.Kp = SPEED_KP;
-    pid1_iM.Ki  = CURRENT_KI_CODE;
-    pid1_iT.Ki  = CURRENT_KI_CODE;
-    pid1_spd.Ki = SPEED_KI_CODE;
-    pid1_iM.OutLimit  = CURRENT_LOOP_LIMIT_VOLTS;
-    pid1_iT.OutLimit  = CURRENT_LOOP_LIMIT_VOLTS;
-    pid1_spd.OutLimit = SPEED_LOOP_LIMIT_AMPERE;
+    PID_iD->Kp  = CURRENT_KP;
+    PID_iQ->Kp = CURRENT_KP;
+    PID_spd->Kp = SPEED_KP;
+    PID_iD->Ki  = CURRENT_KI_CODE;
+    PID_iQ->Ki  = CURRENT_KI_CODE;
+    PID_spd->Ki = SPEED_KI_CODE;
+    PID_iD->OutLimit  = CURRENT_LOOP_LIMIT_VOLTS;
+    PID_iQ->OutLimit  = CURRENT_LOOP_LIMIT_VOLTS;
+    PID_spd->OutLimit = SPEED_LOOP_LIMIT_AMPERE;
 
     #if PC_SIMULATION
     printf("%f\n", pid1_iM.Kp);
@@ -139,15 +139,16 @@ void ACMSIMC_PIDTuner(){
     printf("%f\n", pid1_spd.Ki);
     #endif
 
-    pid2_ix.Kp = CURRENT_KP;
-    pid2_iy.Kp = CURRENT_KP;
-    pid2_ix.Ki = CURRENT_KI_CODE;
-    pid2_iy.Ki = CURRENT_KI_CODE;
-    pid2_ix.OutLimit = CURRENT_LOOP_LIMIT_VOLTS;
-    pid2_iy.OutLimit = CURRENT_LOOP_LIMIT_VOLTS;
+    PID_iX->Kp = CURRENT_KP;
+    PID_iY->Kp = CURRENT_KP;
+    PID_iX->Ki = CURRENT_KI_CODE;
+    PID_iY->Ki = CURRENT_KI_CODE;
 
-    PIDController_Init(&pid1_dispX);
-    PIDController_Init(&pid1_dispY);
+    PID_iX->outLimit = CURRENT_LOOP_LIMIT_VOLTS;
+    PID_iY->outLimit = CURRENT_LOOP_LIMIT_VOLTS;
+
+    PIDController_Init(PID_iX); // pid1_dispX
+    PIDController_Init(PID_iY);
 
     // #define DISPLACEMENT_KP 0
     // #define DISPLACEMENT_KI_CODE 0

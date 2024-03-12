@@ -95,8 +95,8 @@ void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REA
     #undef NS
 }
 #if PC_SIMULATION == TRUE
-    #define OFFSET_VOLTAGE_ALPHA (0.5*-0.1 *(CTRL.timebase>3)) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
-    #define OFFSET_VOLTAGE_BETA  (0.5*+0.1 *(CTRL.timebase>3)) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
+    #define OFFSET_VOLTAGE_ALPHA (0.5*-0.1 *((*CTRL).timebase>3)) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
+    #define OFFSET_VOLTAGE_BETA  (0.5*+0.1 *((*CTRL).timebase>3)) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
 #else
     #define OFFSET_VOLTAGE_ALPHA 0
     #define OFFSET_VOLTAGE_BETA  0
@@ -205,15 +205,15 @@ void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REA
     }
     void MainFE_HUWU_1998(){
         // stator flux and integral states update
-        general_3states_rk4_solver(&rhf_HUWU_1998_Dynamics, CTRL.timebase, FE.huwu.x, CL_TS);
+        general_3states_rk4_solver(&rhf_HUWU_1998_Dynamics, (*CTRL).timebase, FE.huwu.x, CL_TS);
         // Unpack x
         FE.huwu.psi_1[0] = FE.huwu.x[0];
         FE.huwu.psi_1[1] = FE.huwu.x[1];
         FE.huwu.psi_comp = FE.huwu.x[2];
 
         // active flux and position
-        FE.huwu.psi_2[0] = FE.huwu.x[0] - CTRL.motor->Lq * IS(0);
-        FE.huwu.psi_2[1] = FE.huwu.x[1] - CTRL.motor->Lq * IS(1);
+        FE.huwu.psi_2[0] = FE.huwu.x[0] - (*CTRL).motor->Lq * IS(0);
+        FE.huwu.psi_2[1] = FE.huwu.x[1] - (*CTRL).motor->Lq * IS(1);
         FE.huwu.active_flux_ampl = sqrt(FE.huwu.psi_2[0]*FE.huwu.psi_2[0] + FE.huwu.psi_2[1]*FE.huwu.psi_2[1]);
         REAL active_flux_ampl_inv=0.0;
         if(FE.huwu.active_flux_ampl!=0){
@@ -284,8 +284,8 @@ void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REA
 
         // #define DEBUG_USING_ACTUAL_CM
         #ifdef DEBUG_USING_ACTUAL_CM
-            cosT = CTRL.S->cosT;
-            sinT = CTRL.S->sinT;
+            cosT = (*CTRL).S->cosT;
+            sinT = (*CTRL).S->sinT;
         #endif
 
         /* Input: Current at dq frame and KActive */
@@ -350,7 +350,7 @@ void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REA
         }
 
         /* Time-varying gains */
-        if(fabs(CTRL.I->cmd_omg_elec)*MOTOR.npp_inv*ONE_OVER_2PI<k_af_speed_Hz){ // [Hz]
+        if(fabs((*CTRL).I->cmd_omg_elec)*MOTOR.npp_inv*ONE_OVER_2PI<k_af_speed_Hz){ // [Hz]
             FE.AFEOE.k_af = 2*M_PI*100;
             FE.AFEOE.limiter_Flag = TRUE;
         }else{
@@ -367,7 +367,7 @@ void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REA
 
         /* Proposed closed loop estimator AB frame + ODE4 */
         // stator flux and integral states update
-        general_4states_rk4_solver(&rhf_ActiveFluxEstimator_Dynamics, CTRL.timebase, FE.AFEOE.x, CL_TS);
+        general_4states_rk4_solver(&rhf_ActiveFluxEstimator_Dynamics, (*CTRL).timebase, FE.AFEOE.x, CL_TS);
         // Unpack x
         FE.AFEOE.psi_1[0]    = FE.AFEOE.x[0];
         FE.AFEOE.psi_1[1]    = FE.AFEOE.x[1];
@@ -375,8 +375,8 @@ void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REA
         FE.AFEOE.u_offset[1] = FE.AFEOE.x[3];
 
         // active flux
-        FE.AFEOE.psi_2[0] = FE.AFEOE.x[0] - CTRL.motor->Lq * IS(0);
-        FE.AFEOE.psi_2[1] = FE.AFEOE.x[1] - CTRL.motor->Lq * IS(1);
+        FE.AFEOE.psi_2[0] = FE.AFEOE.x[0] - (*CTRL).motor->Lq * IS(0);
+        FE.AFEOE.psi_2[1] = FE.AFEOE.x[1] - (*CTRL).motor->Lq * IS(1);
         FE.AFEOE.active_flux_ampl = sqrt(FE.AFEOE.psi_2[0]*FE.AFEOE.psi_2[0] + FE.AFEOE.psi_2[1]*FE.AFEOE.psi_2[1]);
         REAL active_flux_ampl_inv=0.0;
         if(FE.AFEOE.active_flux_ampl!=0){
@@ -391,14 +391,14 @@ void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REA
         FE.AFEOE.theta_d = atan2(FE.AFEOE.psi_2[1], FE.AFEOE.psi_2[0]);
 
         // Convert output error to dq frame
-        // REAL KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * CTRL.I->idq[0];
+        // REAL KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * (*CTRL).I->idq[0];
         /* TODO: 思考这个dq角度怎么选最好，要不要换成电压向量的角度而不是转子角度？ */
         FE.AFEOE.active_flux_ampl_lpf = _lpf(FE.AFEOE.active_flux_ampl, FE.AFEOE.active_flux_ampl_lpf, 5);
         FE.AFEOE.output_error_dq[0] = MOTOR.KActive - FE.AFEOE.active_flux_ampl_lpf;
         FE.AFEOE.output_error[0] = MOTOR.KActive*FE.AFEOE.cosT - FE.AFEOE.psi_2[0];
         FE.AFEOE.output_error[1] = MOTOR.KActive*FE.AFEOE.sinT - FE.AFEOE.psi_2[1];
         FE.AFEOE.output_error_dq[1] = sqrt(FE.AFEOE.output_error[0]*FE.AFEOE.output_error[0] + FE.AFEOE.output_error[1]*FE.AFEOE.output_error[1]);
-        // if(CTRL.I->cmd_speed_rpm>0){
+        // if((*CTRL).I->cmd_speed_rpm>0){
         //     FE.AFEOE.output_error_dq[0] = AB2M(FE.AFEOE.output_error[0], FE.AFEOE.output_error[1], FE.AFEOE.cosT, FE.AFEOE.sinT);
         //     FE.AFEOE.output_error_dq[1] = AB2T(FE.AFEOE.output_error[0], FE.AFEOE.output_error[1], FE.AFEOE.cosT, FE.AFEOE.sinT);
         // }else{
@@ -494,9 +494,9 @@ void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REA
     //     // FE.htz.psi_1[1] += CL_TS*(FE.htz.emf_stator[1]);
 
     //     // rk4 
-    //     general_2states_rk4_solver(&rhf_Holtz2003_Dynamics, CTRL.timebase, FE.htz.psi_1, CL_TS);
-    //     FE.htz.psi_2[0] = FE.htz.psi_1[0] - CTRL.motor->Lq*IS_C(0);
-    //     FE.htz.psi_2[1] = FE.htz.psi_1[1] - CTRL.motor->Lq*IS_C(1);
+    //     general_2states_rk4_solver(&rhf_Holtz2003_Dynamics, (*CTRL).timebase, FE.htz.psi_1, CL_TS);
+    //     FE.htz.psi_2[0] = FE.htz.psi_1[0] - (*CTRL).motor->Lq*IS_C(0);
+    //     FE.htz.psi_2[1] = FE.htz.psi_1[1] - (*CTRL).motor->Lq*IS_C(1);
     //     FE.htz.psi_2_ampl = sqrt(FE.htz.psi_2[0]*FE.htz.psi_2[0]+FE.htz.psi_2[1]*FE.htz.psi_2[1]);
     //     FE.htz.psi_2_ampl_lpf = _lpf(FE.htz.psi_2_ampl, FE.htz.psi_2_ampl_lpf, 5);
     //     if(FE.htz.psi_2_ampl!=0){
@@ -512,13 +512,13 @@ void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REA
 
     //     FE.htz.psi_1_nonSat[0] += CL_TS*(FE.htz.emf_stator[0]);
     //     FE.htz.psi_1_nonSat[1] += CL_TS*(FE.htz.emf_stator[1]);
-    //     FE.htz.psi_2_nonSat[0] = FE.htz.psi_1_nonSat[0] - CTRL.motor->Lq*IS_C(0);
-    //     FE.htz.psi_2_nonSat[1] = FE.htz.psi_1_nonSat[1] - CTRL.motor->Lq*IS_C(1);
+    //     FE.htz.psi_2_nonSat[0] = FE.htz.psi_1_nonSat[0] - (*CTRL).motor->Lq*IS_C(0);
+    //     FE.htz.psi_2_nonSat[1] = FE.htz.psi_1_nonSat[1] - (*CTRL).motor->Lq*IS_C(1);
 
     //     if(BOOL_TURN_ON_ADAPTIVE_EXTRA_LIMIT){
-    //         // FE.htz.psi_aster_max = CTRL.taao_flux_cmd + 0.05;
-    //         FE.htz.psi_aster_max = CTRL.I->cmd_psi + FE.htz.extra_limit;
-    //         // FE.htz.psi_aster_max = CTRL.taao_flux_cmd;            
+    //         // FE.htz.psi_aster_max = (*CTRL).taao_flux_cmd + 0.05;
+    //         FE.htz.psi_aster_max = (*CTRL).I->cmd_psi + FE.htz.extra_limit;
+    //         // FE.htz.psi_aster_max = (*CTRL).taao_flux_cmd;            
     //     }
 
     //     // 限幅是针对转子磁链限幅的
@@ -537,13 +537,13 @@ void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REA
     //         FE.htz.sat_min_time[1] += CL_TS;
     //     }
     //     // 限幅后的转子磁链，再求取限幅后的定子磁链
-    //     FE.htz.psi_1[0] = FE.htz.psi_2[0] + CTRL.motor->Lq*IS_C(0);
-    //     FE.htz.psi_1[1] = FE.htz.psi_2[1] + CTRL.motor->Lq*IS_C(1);
+    //     FE.htz.psi_1[0] = FE.htz.psi_2[0] + (*CTRL).motor->Lq*IS_C(0);
+    //     FE.htz.psi_1[1] = FE.htz.psi_2[1] + (*CTRL).motor->Lq*IS_C(1);
 
     //     // Speed Estimation
     //     if(TRUE){
-    //         // FE.htz.ireq[0] = CTRL.Lmu_inv*FE.htz.psi_2[0] - IS_C(0);
-    //         // FE.htz.ireq[1] = CTRL.Lmu_inv*FE.htz.psi_2[1] - IS_C(1);
+    //         // FE.htz.ireq[0] = (*CTRL).Lmu_inv*FE.htz.psi_2[0] - IS_C(0);
+    //         // FE.htz.ireq[1] = (*CTRL).Lmu_inv*FE.htz.psi_2[1] - IS_C(1);
     //         REAL temp;
     //         temp = (FE.htz.psi_1[0]*FE.htz.psi_1[0]+FE.htz.psi_1[1]*FE.htz.psi_1[1]);
     //         if(temp>0.001){
@@ -551,7 +551,7 @@ void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REA
     //         }
     //         temp = (FE.htz.psi_2[0]*FE.htz.psi_2[0]+FE.htz.psi_2[1]*FE.htz.psi_2[1]);
     //         if(temp>0.001){
-    //             FE.htz.slip_est = CTRL.motor->Rreq*(IS_C(0)*-FE.htz.psi_2[1]+IS_C(1)*FE.htz.psi_2[0]) / temp;
+    //             FE.htz.slip_est = (*CTRL).motor->Rreq*(IS_C(0)*-FE.htz.psi_2[1]+IS_C(1)*FE.htz.psi_2[0]) / temp;
     //         }
     //         FE.htz.omg_est = FE.htz.field_speed_est - FE.htz.slip_est;
     //     }
@@ -579,7 +579,7 @@ void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REA
     //             if(FE.htz.psi_2_prev[ind]<0 && FE.htz.psi_2[ind]<0){ // 二次检查，磁链已经是负的了  <- 可以改为施密特触发器
     //                 if(FE.htz.flag_pos2negLevelB[ind] == FALSE){
     //                     FE.htz.count_negative+=1;
-    //                     // printf("POS2NEG: %g, %d\n", CTRL.timebase, ind);
+    //                     // printf("POS2NEG: %g, %d\n", (*CTRL).timebase, ind);
     //                     // printf("%g, %g\n", FE.htz.psi_2_prev[ind], FE.htz.psi_2[ind]);
     //                     // getch();
     //                     // 第一次进入寻找最小值的levelB，说明最大值已经检测到。
@@ -623,7 +623,7 @@ void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REA
     //         }
     //         if(FE.htz.psi_2_prev[ind]>0 && FE.htz.psi_2[ind]<0){ // 发现磁链由正变负的时刻
     //             FE.htz.flag_pos2negLevelA[ind] = TRUE;
-    //             FE.htz.time_pos2neg[ind] = CTRL.timebase;
+    //             FE.htz.time_pos2neg[ind] = (*CTRL).timebase;
     //         }
 
 
@@ -672,7 +672,7 @@ void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REA
     //         }
     //         if(FE.htz.psi_2_prev[ind]<0 && FE.htz.psi_2[ind]>0){ // 发现磁链由负变正的时刻
     //             FE.htz.flag_neg2posLevelA[ind] = TRUE;
-    //             FE.htz.time_neg2pos[ind] = CTRL.timebase;
+    //             FE.htz.time_neg2pos[ind] = (*CTRL).timebase;
     //         }
     //     }
 

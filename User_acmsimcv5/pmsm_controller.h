@@ -58,14 +58,12 @@ typedef struct {
     REAL omega_syn;
     REAL omega_sl;
     // states
-    st_pid_regulator *iM;
-    st_pid_regulator *iT;
+    st_pid_regulator *iD; // no D term. only PI !!!!
+    st_pid_regulator *iQ;
     st_pid_regulator *spd;
     st_pid_regulator *pos;
-    st_pid_regulator *ix;
-    st_pid_regulator *iy;
-    st_PIDController *dispX;
-    st_PIDController *dispY;
+    st_PIDController *iX;  // has D term. PID !!!!
+    st_PIDController *iY;
     int the_vc_count;
     // Status of Detection
     int PSD_Done;
@@ -235,10 +233,10 @@ typedef struct {
 } st_capture; // eCapture
 typedef struct {
     // To show that REAL type is not very accurate 64 missing by counting 1e-4 sec to 10 sec.
-        Uint32  test_integer;
-        REAL    test_float;
+//        Uint32  test_integer;
+//        REAL    test_float;
     // Mode Changing During Experiment
-        // int FLAG_ENABLE_PWM_OUTPUT; // 鐢垫満妯″紡鏍囧織浣�
+        // int FLAG_ENABLE_PWM_OUTPUT; // 电机模式标志位
         // int DAC_MAX5307_FLAG; // for single core case
         // int AD_offset_flag2;
         // Uint16 Rotor_angle_selection; // delete?
@@ -268,8 +266,11 @@ typedef struct {
 
 struct ControllerForExperiment{
 
+    int ID;
+
     /* Basic quantities */
     REAL timebase;
+    Uint64 timebase_counter;
 
     /* Machine parameters */
     st_motor_parameters *motor;
@@ -296,16 +297,18 @@ struct ControllerForExperiment{
     st_controller_outputs *O;
 };
 
-extern struct ControllerForExperiment CTRL;
-#define MOTOR   (*CTRL.motor)
-#define ENC     (*CTRL.enc)
-#define PSD     (*CTRL.psd)
-#define IN      (*CTRL.I)
-#define STATE   (*CTRL.S)
-#define OUT     (*CTRL.O)
-#define INV     (*CTRL.inv)
-#define CAP     (*CTRL.cap)
-#define G       (*CTRL.g)
+extern struct ControllerForExperiment CTRL_1;
+extern struct ControllerForExperiment CTRL_2;
+extern struct ControllerForExperiment *CTRL;
+#define MOTOR   (*(*CTRL).motor)
+#define ENC     (*(*CTRL).enc)
+#define PSD     (*(*CTRL).psd)
+#define IN      (*(*CTRL).I)
+#define STATE   (*(*CTRL).S)
+#define OUT     (*(*CTRL).O)
+#define INV     (*(*CTRL).inv)
+#define CAP     (*(*CTRL).cap)
+#define G       (*(*CTRL).g)
     // extern st_InverterNonlinearity t_inv;
     // #define INV     t_inv
 
@@ -316,9 +319,9 @@ void commissioning();
 REAL controller(REAL set_rpm_speed_command, 
     int set_current_loop, REAL set_iq_cmd, REAL set_id_cmd,
     int flag_overwrite_theta_d, REAL Overwrite_Current_Frequency,
+    REAL used_theta_d_elec,
     REAL angle_shift_for_first_inverter,
-    REAL angle_shift_for_second_inverter,
-    struct ControllerForExperiment *pCTRL);
+    REAL angle_shift_for_second_inverter);
 void allocate_CTRL(struct ControllerForExperiment *p);
 
 // void control(REAL speed_cmd, REAL speed_cmd_dot);
@@ -327,13 +330,13 @@ void cmd_fast_speed_reversal(REAL timebase, REAL instant, REAL interval, REAL rp
 void cmd_slow_speed_reversal(REAL timebase, REAL instant, REAL interval, REAL rpm_cmd);
 
 
-/* 閫嗗彉鍣ㄩ潪绾挎�� */
-/* 鏌ヨ〃娉� */
+/* 逆变器非线性 */
+/* 查表法 */
 void get_distorted_voltage_via_LUT_indexed(REAL ial, REAL ibe, REAL *ualbe_dist);
 void get_distorted_voltage_via_LUT(REAL ual, REAL ube, REAL ial, REAL ibe, REAL *ualbe_dist, REAL *lut_voltage, REAL *lut_current, int length_of_lut);
 void get_distorted_voltage_via_CurveFitting(REAL ual, REAL ube, REAL ial, REAL ibe, REAL *ualbe_dist);
 
-/* ParkSul2012 姊舰娉� */
+/* ParkSul2012 梯形波 */
 // #define GAIN_THETA_TRAPEZOIDAL (20) // 20
 void inverterNonlinearity_Initialization();
 REAL u_comp_per_phase(REAL Vsat, REAL thetaA, REAL theta_trapezoidal, REAL oneOver_theta_trapezoidal);

@@ -39,19 +39,6 @@ void PID_calc(st_pid_regulator_handle);
   /*Difference between Non-Saturated Output and Saturated Output*/  0.0, \
   (void (*)(Uint32)) PID_calc \
 }
-extern st_pid_regulator pid1_iM;
-extern st_pid_regulator pid1_iT;
-extern st_pid_regulator pid1_spd;
-extern st_pid_regulator pid1_pos;
-extern st_pid_regulator pid1_ia;
-extern st_pid_regulator pid1_ib;
-extern st_pid_regulator pid1_ic;
-
-extern st_pid_regulator pid2_ix;
-extern st_pid_regulator pid2_iy;
-
-#define pid1_id pid1_iM
-#define pid1_iq pid1_iT
 
 void ACMSIMC_PIDTuner();
 
@@ -90,10 +77,36 @@ typedef struct{
     float setpoint;
     float measurement;
 } st_PIDController;
-extern st_PIDController pid1_dispX;
-extern st_PIDController pid1_dispY;
+
 void  PIDController_Init(st_PIDController *pid);
 float PIDController_Update(st_PIDController *pid);
+
+
+extern st_PIDController _pid_iX_1;
+extern st_PIDController _pid_iY_1;
+extern st_pid_regulator _pid_iD_1;
+extern st_pid_regulator _pid_iQ_1;
+extern st_pid_regulator _pid_spd_1;
+extern st_pid_regulator _pid_pos_1;
+
+extern st_PIDController _pid_iX_2;
+extern st_PIDController _pid_iY_2;
+extern st_pid_regulator _pid_iD_2;
+extern st_pid_regulator _pid_iQ_2;
+extern st_pid_regulator _pid_spd_2;
+extern st_pid_regulator _pid_pos_2;
+
+
+//extern st_pid_regulator _pid_ia_1;
+//extern st_pid_regulator _pid_ib_1;
+//extern st_pid_regulator _pid_ic_1;
+
+#define PID_iD  (CTRL->S->iD)
+#define PID_iQ  (CTRL->S->iQ)
+#define PID_iX  (CTRL->S->iX)
+#define PID_iY  (CTRL->S->iY)
+#define PID_spd  (CTRL->S->spd)
+#define PID_pos  (CTRL->S->pos)
 
 
 #endif

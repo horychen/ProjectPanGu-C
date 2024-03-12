@@ -17,6 +17,9 @@
 #define printf DoNotCallPrintFunctionInDSP
 
 #if PC_SIMULATION == FALSE
+    extern int axisCnt;
+    #define NUMBER_OF_AXES 2
+
 /*  SYSTEM Configuration -----------------------------------------------------------------------------------*/
     #define NUMBER_OF_DSP_CORES 2  // 1 or 2
     #define SYSTEM_PROGRAM_MODE 223  //223 for CJHMainISR
@@ -24,11 +27,11 @@
         /* ePWM CONFIGURATION */
         #define SYSTEM_PROGRAM                     EPWM1ISR
         //        #define SYSTEM_PWM_KILO_FREQUENCY               10 // 10kHz
-        //        #define SYSTEM_CARRIER_PERIOD              (100000/SYSTEM_PWM_KILO_FREQUENCY) // = TBCLK (100 MHz) / 10 (kHz) = 100e6/1e4 = 100e2 = 1e4 cnt ¶ÔÓ¦Ò»¸öÔØ²¨ÖÜÆÚ
+        //        #define SYSTEM_CARRIER_PERIOD              (100000/SYSTEM_PWM_KILO_FREQUENCY) // = TBCLK (100 MHz) / 10 (kHz) = 100e6/1e4 = 100e2 = 1e4 cnt é”Ÿæ–¤æ‹·åº”ä¸€é”Ÿæ–¤æ‹·é”Ÿæˆªè¯§æ‹·é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·
         //        #define SYSTEM_TBPRD                       (SYSTEM_CARRIER_PERIOD/2)
         #define SYSTEM_CARRIER_PERIOD              10000 // =100000/10, max is 100kHz
         #define SYSTEM_TBPRD                       5000  // =SYSTEM_CARRIER_PERIOD/2
-        //#define SYSTEM_PWM_DEADTIME_CNT            500 // 500 ¸ö TBCLK = EPWMCLK/1 = 100 MHz
+        //#define SYSTEM_PWM_DEADTIME_CNT            500 // 500 é”Ÿæ–¤æ‹· TBCLK = EPWMCLK/1 = 100 MHz
         #define SYSTEM_PWM_DEADTIME_CNT            200
         #define SYSTEM_PWM_DEADTIME_COMPENSATION   200
             // #define SYSTEM_PWM_DEADTIME_COMPENSATION   483
@@ -39,7 +42,7 @@
         #define SYSTEM_MIN_PWM_DUTY_LIMATATION     0.04
         #define SYSTEM_PWM_UDC_UTILIZATION         SYSTEM_MAX_PWM_DUTY_LIMATATION
 
-        /* eCAP CONFIGURATION */ /* eCAP×î´óµÄ²¨¹È£¿»ò²¨·å£¿ÖÐ¶ÏÖÜÆÚ¼ÆÊýÖµÊÇ20000£¬Õâ½øÒ»²½ÑéÖ¤ÁËTBCLK±»½µÆµÁË£¬²»ÊÇ200MHz£¬¶øÊÇ100MHz¡£ */
+        /* eCAP CONFIGURATION */ /* eCAPé”Ÿæ–¤æ‹·é”Ÿä¾¥è¯§æ‹·é”Ÿé¥ºï½æ‹·é”Ÿæ´¥æ³¢å³°ï¼Ÿé”Ÿå«è®¹æ‹·é”Ÿæ–¤æ‹·é”ŸèŠ‚ç¡·æ‹·é”Ÿæ–¤æ‹·å€¼é”Ÿæ–¤æ‹·20000é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿæ­ä¼™æ‹·é”Ÿæ–¤æ‹·é”Ÿè¡—ã‚æ‹·é”Ÿçµ‹BCLKé”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é¢‘é”Ÿå‰¿ï½æ‹·é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·200MHzé”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·100MHzé”Ÿæ–¤æ‹· */
         #define SYSTEM_PWM_INT_MAX_COUNT               20000
         #define SYSTEM_PWM_INT_MAX_COUNT_INVERSE       5e-5 // = 1 / 20000
         #define SYSTEM_HALF_PWM_MAX_COUNT          10000
@@ -47,7 +50,7 @@
 #endif
 
 
-// ÖØ¶¨Òå±äÁ¿ÀàÐÍ
+// é”Ÿæˆªè®¹æ‹·é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿï¿½
 #ifndef DSP28_DATA_TYPES
 #define DSP28_DATA_TYPES
 typedef          int int16;
@@ -109,10 +112,10 @@ typedef float32 REAL;
 #define SQRT_2_SLASH_3        0.81649658092772603 // sqrt(2.0/3.0)
 #define abs                   use_fabs_instead_or_you_will_regret
 #define prinf                 dont_use_print_in_experiment_codes
-#define ELEC_RAD_PER_SEC_2_RPM ( 60.0*ONE_OVER_2PI*CTRL.motor->npp_inv )
-// #define ELEC_RAD_PER_SEC_2_RPM ( 60.0/(2*M_PI*CTRL.motor->npp) )
-#define RPM_2_ELEC_RAD_PER_SEC ( (2*M_PI*CTRL.motor->npp)*ONE_OVER_60 )
-// #define RPM_2_ELEC_RAD_PER_SEC ( (2*M_PI*CTRL.motor->npp)/60.0 )
+#define ELEC_RAD_PER_SEC_2_RPM ( 60.0*ONE_OVER_2PI*(*CTRL).motor->npp_inv )
+// #define ELEC_RAD_PER_SEC_2_RPM ( 60.0/(2*M_PI*(*CTRL).motor->npp) )
+#define RPM_2_ELEC_RAD_PER_SEC ( (2*M_PI*(*CTRL).motor->npp)*ONE_OVER_60 )
+// #define RPM_2_ELEC_RAD_PER_SEC ( (2*M_PI*(*CTRL).motor->npp)/60.0 )
 #define M_PI_OVER_180   0.017453292519943295
 
 #define CLARKE_TRANS_TORQUE_GAIN (1.5) // consistent with experiment
@@ -155,6 +158,80 @@ REAL _lpf(REAL x, REAL y_tminus1, REAL time_const_inv);
 REAL PostionSpeedMeasurement_MovingAvergage(int32 QPOSCNT, st_enc *p_enc);
 extern REAL one_over_six;
 double difference_between_two_angles(double first, double second);
+
+
+
+
+
+
+
+
+/* Encoder QEP TODO: should read from excel */
+#define ABSOLUTE_ENCODER_SCI_KNEE 1
+#define ABSOLUTE_ENCODER_SCI_HIP  2
+#define ABSOLUTE_ENCODER_CAN_ID0x01 3
+#define ABSOLUTE_ENCODER_CAN_ID0x03 4
+#define RESOLVER_1 5
+#define RESOLVER_2 6
+#define ABSOLUTE_ENCODER_MD1 7
+#define INCREMENTAL_ENCODER_QEP 8
+
+#define ENCODER_TYPE ABSOLUTE_ENCODER_SCI_KNEE
+
+#if ENCODER_TYPE == INCREMENTAL_ENCODER_QEP
+#define SYSTEM_QEP_PULSES_PER_REV (10000)
+#define SYSTEM_QEP_REV_PER_PULSE (1e-4)
+#define CNT_2_ELEC_RAD (SYSTEM_QEP_REV_PER_PULSE * 2 * M_PI * MOTOR_NUMBER_OF_POLE_PAIRS)
+#define SYSTEM_QEP_QPOSMAX (9999)
+#define SYSTEM_QEP_QPOSMAX_PLUS_1 (10000)
+#define OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS 2333 // cjh tuned with id_cmd = 3A 2024-01-19
+#elif (ENCODER_TYPE == ABSOLUTE_ENCODER_SCI_KNEE) || (ENCODER_TYPE == ABSOLUTE_ENCODER_SCI_HIP)
+#define SYSTEM_QEP_PULSES_PER_REV (8388608)
+#define SYSTEM_QEP_REV_PER_PULSE (1.1920929e-7)
+#define CNT_2_ELEC_RAD (SYSTEM_QEP_REV_PER_PULSE * 2 * M_PI * MOTOR_NUMBER_OF_POLE_PAIRS)
+#define SYSTEM_QEP_QPOSMAX (SYSTEM_QEP_PULSES_PER_REV - 1)
+#define SYSTEM_QEP_QPOSMAX_PLUS_1 (SYSTEM_QEP_PULSES_PER_REV)
+
+#define KNEE__OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS 380150 // cjh tuned // 731723 // ym tuned with id_cmd = 2A 2024-01-31
+#define HIP__OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS 1864327 // ym tuned with id_cmd = 3A 2024-03-10
+#elif (ENCODER_TYPE == ABSOLUTE_ENCODER_CAN_ID0x01)
+#define SYSTEM_QEP_PULSES_PER_REV (131072)
+#define SYSTEM_QEP_REV_PER_PULSE (7.6293945e-6)
+#define CNT_2_ELEC_RAD (SYSTEM_QEP_REV_PER_PULSE * 2 * M_PI * MOTOR_NUMBER_OF_POLE_PAIRS)
+#define SYSTEM_QEP_QPOSMAX (SYSTEM_QEP_PULSES_PER_REV - 1)
+#define SYSTEM_QEP_QPOSMAX_PLUS_1 (SYSTEM_QEP_PULSES_PER_REV)
+#define OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS 49476 // ym tuned with
+#elif (ENCODER_TYPE == ABSOLUTE_ENCODER_CAN_ID0x03)
+#define SYSTEM_QEP_PULSES_PER_REV (131072)
+#define SYSTEM_QEP_REV_PER_PULSE (7.6293945e-6)
+#define CNT_2_ELEC_RAD (SYSTEM_QEP_REV_PER_PULSE * 2 * M_PI * MOTOR_NUMBER_OF_POLE_PAIRS)
+#define SYSTEM_QEP_QPOSMAX (SYSTEM_QEP_PULSES_PER_REV - 1)
+#define SYSTEM_QEP_QPOSMAX_PLUS_1 (SYSTEM_QEP_PULSES_PER_REV)
+#define OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS 51203 // ym tuned with id_cmd = 4A 2024-02-27
+#elif ENCODER_TYPE == RESOLVER_1
+#define RESOLVER_NUMBER_OF_POLE_PAIRS 4             // Receive 4 Z-pulses per mechnical revolution from the resolver
+#define ONE_OVER_RESOLVER_NUMBER_OF_POLE_PAIRS 0.25 // 1/RESOLVER_NUMBER_OF_POLE_PAIRS
+#define SYSTEM_QEP_QPOSMAX (65535)                  // (9999)
+#define SYSTEM_QEP_QPOSMAX_PLUS_1 (65536)
+#define SYSTEM_QEP_PULSES_PER_REV (65536 * RESOLVER_NUMBER_OF_POLE_PAIRS)                     // (10000)
+#define SYSTEM_QEP_REV_PER_PULSE (1.52587890625e-05 * ONE_OVER_RESOLVER_NUMBER_OF_POLE_PAIRS) // (1e-4)
+#define CNT_2_ELEC_RAD (SYSTEM_QEP_REV_PER_PULSE * 2 * M_PI * MOTOR_NUMBER_OF_POLE_PAIRS)
+#elif ENCODER_TYPE == RESOLVER_2
+#define RESOLVER_NUMBER_OF_POLE_PAIRS 4             // Receive 4 Z-pulses per mechnical revolution from the resolver
+#define ONE_OVER_RESOLVER_NUMBER_OF_POLE_PAIRS 0.25 // 1/RESOLVER_NUMBER_OF_POLE_PAIRS
+#define SYSTEM_QEP_QPOSMAX (4095)                   // (9999)
+#define SYSTEM_QEP_QPOSMAX_PLUS_1 (4096)
+#define SYSTEM_QEP_PULSES_PER_REV (4096 * RESOLVER_NUMBER_OF_POLE_PAIRS)                   // (10000)
+#define SYSTEM_QEP_REV_PER_PULSE (0.000244140625 * ONE_OVER_RESOLVER_NUMBER_OF_POLE_PAIRS) // (1e-4)
+#define CNT_2_ELEC_RAD (SYSTEM_QEP_REV_PER_PULSE * 2 * M_PI * MOTOR_NUMBER_OF_POLE_PAIRS)
+#elif ENCODER_TYPE == ABSOLUTE_ENCODER_MD1
+#define SYSTEM_QEP_PULSES_PER_REV (131072)
+#define SYSTEM_QEP_REV_PER_PULSE (7.6293945e-6)
+#define CNT_2_ELEC_RAD (SYSTEM_QEP_REV_PER_PULSE * 2 * M_PI * MOTOR_NUMBER_OF_POLE_PAIRS)
+#define SYSTEM_QEP_QPOSMAX (SYSTEM_QEP_PULSES_PER_REV - 1)
+#define SYSTEM_QEP_QPOSMAX_PLUS_1 (SYSTEM_QEP_PULSES_PER_REV)
+#define OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS 117593 // ym tuned with id_cmd = 3A, 20240308
+#endif
 
 
 #endif

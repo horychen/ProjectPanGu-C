@@ -88,9 +88,10 @@
     void System_Checking(void);
 /* Global Variable */
 typedef struct{
+    int ID;
     struct ControllerForExperiment *pCTRL;
     // Commonly used for prototype motor testing
-        int use_first_set_three_phase;
+       //int use_first_set_three_phase;
         int Set_current_loop;
         int Set_x_suspension_current_loop;
         int Set_y_suspension_current_loop;
@@ -100,7 +101,7 @@ typedef struct{
         REAL Set_manual_current_ix;
         REAL Set_manual_current_iy;
         int Select_exp_operation;
-        int *pFLAG_INVERTER_NONLINEARITY_COMPENSATION;
+        //int *pFLAG_INVERTER_NONLINEARITY_COMPENSATION;
         int flag_overwrite_theta_d;
         REAL Overwrite_Current_Frequency;
         REAL Overwrite_Suspension_Current_Frequency;
@@ -117,9 +118,9 @@ typedef struct{
         // Raw
         REAL adc_offset[12]; // ADC offset. U, V, W corresponds to ADCRESULT2, ADCRESULT3, ADCRESULT1.
         REAL adc_scale[12];
-        volatile struct ADC_RESULT_REGS *pAdcaResultRegs;
-        volatile struct ADC_RESULT_REGS *pAdcbResultRegs;
-        volatile struct ADC_RESULT_REGS *pAdccResultRegs;
+//        volatile struct ADC_RESULT_REGS *pAdcaResultRegs;
+//        volatile struct ADC_RESULT_REGS *pAdcbResultRegs;
+//        volatile struct ADC_RESULT_REGS *pAdccResultRegs;
     // Sensor - Raw measurement
         REAL vdc;
         REAL iabg[6];
@@ -134,7 +135,7 @@ typedef struct{
         int channels[NO_OF_DAC_CHANNELS];
         int channels_preset;
 } st_axis;
-extern st_axis Axis;
+extern st_axis *Axis;
 
 
 
