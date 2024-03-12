@@ -759,6 +759,8 @@ int max_counter_missing_position_measurement = 0;
 
 void measurement(){
 
+    CTRL->enc->encoder_abs_cnt_previous = CTRL->enc->encoder_abs_cnt;
+
     if(axisCnt == 0)
     {
         #if (ENCODER_TYPE == ABSOLUTE_ENCODER_SCI_KNEE)
@@ -770,23 +772,29 @@ void measurement(){
         #if NUMBER_OF_AXES == 2
             position_count_SCI_fromCPU2 = position_count_SCI_knee_fromCPU2;
         #endif
+
+        // 編碼器讀數是反的，所以這邊偏置也要反一下，改成負值！
+        // 編碼器讀數是反的，所以這邊偏置也要反一下，改成負值！
+        // 編碼器讀數是反的，所以這邊偏置也要反一下，改成負值！
+        // MD1 is 17bit, use SCI485hip port
+        // 膝盖电机，正转电流导致编码器读数减小：
+        CTRL->enc->encoder_abs_cnt = - ( (int32)position_count_SCI_fromCPU2 - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis );
     }
     if(axisCnt == 1)
     {
         #if NUMBER_OF_AXES == 2
             position_count_SCI_fromCPU2 = position_count_SCI_hip_fromCPU2;
         #endif
+
+        // 大腿电机，正转电流导致编码器读数增大
+        CTRL->enc->encoder_abs_cnt = (int32)position_count_SCI_fromCPU2 - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis;
     }
 
-    CTRL->enc->encoder_abs_cnt_previous = CTRL->enc->encoder_abs_cnt;
-    // 編碼器讀數是反的，所以這邊偏置也要反一下，改成負值！
-    // 編碼器讀數是反的，所以這邊偏置也要反一下，改成負值！
-    // 編碼器讀數是反的，所以這邊偏置也要反一下，改成負值！
-    if(bool_use_SCI_encoder){
-        // MD1 is 17bit, use SCI485hip port
-        CTRL->enc->encoder_abs_cnt = - ( (int32)position_count_SCI_fromCPU2 + CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis );
-    }else{
-        CTRL->enc->encoder_abs_cnt = - ( (int32)cnt_four_bar_map_motor_encoder_angle + CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis );
+    if(! bool_use_SCI_encoder){
+            // 正转电流导致编码器读数减小：
+            CTRL->enc->encoder_abs_cnt = - ( (int32)cnt_four_bar_map_motor_encoder_angle + CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis );
+            // 正转电流导致编码器读数增大：
+            //CTRL->enc->encoder_abs_cnt = (int32)cnt_four_bar_map_motor_encoder_angle - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis;
     }
 
     // ignore this please
@@ -1001,28 +1009,33 @@ void PanGuMainISR(void){
             G.flag_experimental_initialized = TRUE;
 
             init_experiment();
-            init_experiment_AD_gain_and_offset();
-            init_experiment_overwrite();
+            //init_experiment_AD_gain_and_offset();
+            //init_experiment_overwrite();
 
-            //            CTRL_2.S->iD  = &_pid_iD_2;
-            //            CTRL_2.S->iQ  = &_pid_iQ_2;
-            //            CTRL_2.S->spd = &_pid_spd_2;
-            //            CTRL_2.S->pos = &_pid_pos_2;
+            // TODO: use a function for this purpose!
+            // 清空积分缓存
+            PID_spd->OutPrev = 0;
+            PID_iD->OutPrev = 0;
+            PID_iQ->OutPrev = 0;
+            // PID_iX->OutPrev = 0;
+            // PID_iy->OutPrev = 0;
 
-            if((*CTRL).g->overwrite_vdc<5){
+            EPwm1Regs.CMPA.bit.CMPA = 2500;
+            EPwm2Regs.CMPA.bit.CMPA = 2500;
+            EPwm3Regs.CMPA.bit.CMPA = 2500;
+            EPwm4Regs.CMPA.bit.CMPA = 2500;
+            EPwm5Regs.CMPA.bit.CMPA = 2500;
+            EPwm6Regs.CMPA.bit.CMPA = 2500;
+
+                //            CTRL_2.S->iD  = &_pid_iD_2;
+                //            CTRL_2.S->iQ  = &_pid_iQ_2;
+                //            CTRL_2.S->spd = &_pid_spd_2;
+                //            CTRL_2.S->pos = &_pid_pos_2;
+
+            if ((*CTRL).g->overwrite_vdc < 5){
                 (*CTRL).g->overwrite_vdc = 28;
             }
             (*CTRL).g->flag_overwite_vdc = 0;
-
-            {
-                // TODO: use a function for this purpose!
-                // 清空积分缓存
-                PID_spd->OutPrev = 0;
-                PID_iD->OutPrev = 0;
-                PID_iQ->OutPrev = 0;
-                // PID_iX->OutPrev = 0;
-                // PID_iy->OutPrev = 0;
-            }
         }
 
         DELAY_US(5);
