@@ -135,6 +135,8 @@ typedef struct{
         int channels[NO_OF_DAC_CHANNELS];
         int channels_preset;
 } st_axis;
+extern st_axis Axis_1;
+extern st_axis Axis_2;
 extern st_axis *Axis;
 
 

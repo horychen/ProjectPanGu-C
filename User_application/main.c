@@ -193,9 +193,12 @@ int USE_3_CURRENT_SENSORS = TRUE;
 #define POSITION_CONTROL 1
 #define KNEE_LOOP_RUN 2
 #define HIP_LOOP_RUN 3
-int16 positionLoopType = NO_POSITION_CONTROL;
-REAL legBouncingSpeed = 100;
+#define BOTH_LOOP_RUN 4
+int16 positionLoopType = BOTH_LOOP_RUN;
+REAL legBouncingSpeed = 50;
 REAL hipBouncingFreq = 10;
+REAL legBouncingIq = 2;
+REAL hipBouncingIq = 2;
 int bool_use_SCI_encoder = TRUE;
 
 REAL target_position_cnt;
@@ -248,7 +251,7 @@ void init_experiment_AD_gain_and_offset(){
     #endif  
 }
 
-int  use_first_set_three_phase=2;
+int  use_first_set_three_phase=-1;
 //int  FLAG_ENABLE_PWM_OUTPUT = FALSE;
 void main(void){
 
@@ -422,7 +425,7 @@ void main(void){
         Axis->Set_x_suspension_current_loop = FALSE;
         Axis->Set_y_suspension_current_loop = FALSE;
         Axis->Set_manual_rpm = 50.0;
-        Axis->Set_manual_current_iq = 0.0;
+        Axis->Set_manual_current_iq = 1.0;
         Axis->Set_manual_current_id = 0.0; // id = -1 A is the magic number to get more torque! cjh 2024-02-29
         Axis->Select_exp_operation = 0;    // 200; //202; //200; //101;
         //Axis->pFLAG_INVERTER_NONLINEARITY_COMPENSATION = &Axis->pCTRL->g->FLAG_INVERTER_NONLINEARITY_COMPENSATION;
@@ -1061,11 +1064,8 @@ void PanGuMainISR(void){
             // 0x01 is hip
             position_count_CAN_fromCPU2 = position_count_CAN_ID0x01_fromCPU2;
 
-            // int axisCnt = 0;
 
             {
-                // pAxis = list_pointer_to_Axes[axisCnt];
-
                 if(axisCnt == 0)
                 {
                     #if NUMBER_OF_AXES == 2
@@ -1135,6 +1135,34 @@ void PanGuMainISR(void){
                         }
                         else if(position_count_CAN_ID0x01_fromCPU2 < 48000){
                             Axis->Overwrite_Current_Frequency = -hipBouncingFreq;
+                        }
+                    #endif
+                }else if(positionLoopType == BOTH_LOOP_RUN){
+                    #if NUMBER_OF_AXES == 2
+                        if(axisCnt==0){
+                            //CAN03越大，小腿越伸出，legBouncingIq, rpm为正数，小腿伸出
+                            //CAN03越小，小腿越收起，legBouncingIq, rpm为负数，小腿收起
+                            Axis_1.flag_overwrite_theta_d = FALSE;
+                            Axis_1.Set_current_loop = TRUE;
+                            if(position_count_CAN_ID0x03_fromCPU2 > 56000){
+                                Axis_1.Set_manual_current_iq = -legBouncingIq; // CAN03太大，小腿伸出过头，需要iq为负数，收起小腿
+                            }
+                            else if(position_count_CAN_ID0x03_fromCPU2 < 35000){
+                                Axis_1.Set_manual_current_iq = legBouncingIq;
+                            }
+                        }
+                        // 大腿电机
+                        if(axisCnt==1){
+                            //CAN01越小,大腿越抬起,hipBouncingIq为正数，大腿抬起
+                            //CAN01越大,大腿越放下,hipBouncingIq为负数，大腿放下
+                            Axis_2.flag_overwrite_theta_d = FALSE;
+                            Axis_2.Set_current_loop = TRUE;
+                            if(position_count_CAN_ID0x01_fromCPU2 > 58000){
+                                Axis_2.Set_manual_current_iq = hipBouncingIq;// CAN01太大,大腿放下过多,需要iq为正数,抬起大腿
+                            }
+                            else if(position_count_CAN_ID0x01_fromCPU2 < 51000){
+                                Axis_2.Set_manual_current_iq = -hipBouncingIq;
+                            }
                         }
                     #endif
                 }

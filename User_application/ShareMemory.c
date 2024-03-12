@@ -48,12 +48,12 @@ void write_DAC_buffer(){
 if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
 
     // 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟侥憋拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤，锟角碉拷锟斤拷效锟斤拷围锟斤拷 [-1, 1]锟斤拷
-    (*Axis).dac_watch[0] = (*Axis).iuvw[0]*0.2;
-    (*Axis).dac_watch[1] = (*Axis).iuvw[1]*0.2;
-    (*Axis).dac_watch[2] = (*Axis).iuvw[2]*0.2;
-    (*Axis).dac_watch[3] = (*Axis).iuvw[3]*0.2;
-    (*Axis).dac_watch[4] = (*Axis).iuvw[4]*0.2;
-    (*Axis).dac_watch[5] = (*Axis).iuvw[5]*0.2;
+    (*Axis).dac_watch[0] = Axis_1.iuvw[0]*0.2;
+    (*Axis).dac_watch[1] = Axis_1.iuvw[1]*0.2;
+    (*Axis).dac_watch[2] = Axis_1.iuvw[2]*0.2;
+    (*Axis).dac_watch[3] = Axis_2.iuvw[3]*0.2;
+    (*Axis).dac_watch[4] = Axis_2.iuvw[4]*0.2;
+    (*Axis).dac_watch[5] = Axis_2.iuvw[5]*0.2;
 
     (*Axis).dac_watch[6] = (*CTRL).I->iab[0]*0.25;      // +-6A ->0-3V
     (*Axis).dac_watch[7] = (*CTRL).I->iab[1]*0.25;
@@ -75,8 +75,10 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
 //    (*Axis).dac_watch[21] = marino.xOmg * ELEC_RAD_PER_SEC_2_RPM *0.002;
     (*Axis).dac_watch[21] = (*Axis).Set_manual_rpm *0.002;
     (*Axis).dac_watch[22] = (*CTRL).I->omg_elec * ELEC_RAD_PER_SEC_2_RPM *0.002;
-    (*Axis).dac_watch[23] = (*CTRL).I->idq_cmd[0]*0.2;
-    (*Axis).dac_watch[24] = (*CTRL).I->idq[0]*0.2;
+    (*Axis).dac_watch[23] = CTRL_1.I->omg_elec  * ELEC_RAD_PER_SEC_2_RPM *0.002;
+    (*Axis).dac_watch[24] = CTRL_2.I->omg_elec  * ELEC_RAD_PER_SEC_2_RPM *0.002;
+    (*Axis).dac_watch[25] = CTRL_1.I->idq_cmd[1] * 0.1;
+    (*Axis).dac_watch[26] = CTRL_2.I->idq_cmd[1] * 0.1;
 
 //    (*Axis).dac_watch[22] = target_position_cnt*0.0003-((*CTRL).enc->encoder_abs_cnt)*0.0003;
 //    (*Axis).dac_watch[23] = GpioDataRegs.GPEDAT.bit.GPIO135;
@@ -103,10 +105,10 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
 
     if((*Axis).channels_preset==1){(*Axis).channels_preset=0;
         /* Marino 2005 Sensorless Control */
-        (*Axis).channels[0] = 0;
-        (*Axis).channels[1] = 1;
-        (*Axis).channels[2] = 2;
-        (*Axis).channels[3] = 28;
+        (*Axis).channels[0] = 23;
+        (*Axis).channels[1] = 24;
+        (*Axis).channels[2] = 25;
+        (*Axis).channels[3] = 26;
         (*Axis).channels[4] = 21;
         (*Axis).channels[5] = 22;
         (*Axis).channels[6] = 21;
