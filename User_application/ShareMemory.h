@@ -12,7 +12,7 @@ extern struct IPC_MEMORY_WRITE Write;
 
 struct IPC_MEMORY_READ{
     /* read only (RO) shared memory @ GS0 */
-    Uint32 SCI_knee_position_count;
+    Uint32 SCI_shank_position_count;
     Uint32 CAN_position_count_ID0x03;
 
     Uint32 SCI_hip_position_count;

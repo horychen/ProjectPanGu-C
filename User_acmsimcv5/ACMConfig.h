@@ -262,6 +262,8 @@
 #define CURRENT_LOOP_LIMIT_VOLTS (48)
 #define SPEED_KP (0.00256732)
 #define SPEED_KI (21.2794)
+#define POS_KP (5e-6)
+#define POS_KI (0)
 
     #define MOTOR_RATED_TORQUE ( MOTOR_RATED_POWER_WATT / (MOTOR_RATED_SPEED_RPM/60.0*2*3.1415926) )
     #define MOTOR_TORQUE_CONSTANT ( MOTOR_RATED_TORQUE / (MOTOR_RATED_CURRENT_RMS*1.414) )
@@ -271,6 +273,7 @@
     #define SPEED_KI_CODE (SPEED_KI*SPEED_KP*VL_TS)
     #define SPEED_LOOP_LIMIT_NEWTON_METER (1.0*MOTOR_RATED_TORQUE)
     #define SPEED_LOOP_LIMIT_AMPERE       (1.0*1.414*MOTOR_RATED_CURRENT_RMS)
+    #define POS_LOOP_LIMIT_SPEED          (0.1*MOTOR_RATED_SPEED_RPM * MOTOR_NUMBER_OF_POLE_PAIRS/60.0*2*M_PI)
     // increase to 3 times because of the bug in dynamics clamping
 
 /* Encoder QEP TODO: should read from excel */

@@ -87,6 +87,7 @@ SECTIONS
 
     MYGLOBALS_1: >RAMGS9,PAGE = 1
     MYGLOBALS_2: >RAMGS10,PAGE = 1
+    MYTABLE_3: >RAMGS11,PAGE = 1
 
 #ifdef __TI_COMPILER_VERSION__
    ramfuncs            : LOAD = FLASHD,

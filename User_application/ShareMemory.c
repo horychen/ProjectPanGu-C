@@ -7,6 +7,11 @@
 
 #include <All_Definition.h>
 
+extern REAL vvvf_voltage;
+extern REAL vvvf_frequency;
+extern Uint32 position_count_CAN_ID0x01_fromCPU2;
+extern Uint32 position_count_CAN_ID0x03_fromCPU2;
+
 #if NUMBER_OF_DSP_CORES == 2
 
 struct IPC_MEMORY_WRITE Write;
@@ -73,8 +78,8 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
     (*Axis).dac_watch[20] = (*CTRL).S->omega_syn * ELEC_RAD_PER_SEC_2_RPM *0.002;
 
 //    (*Axis).dac_watch[21] = marino.xOmg * ELEC_RAD_PER_SEC_2_RPM *0.002;
-    (*Axis).dac_watch[21] = (*Axis).Set_manual_rpm *0.002;
-    (*Axis).dac_watch[22] = (*CTRL).I->omg_elec * ELEC_RAD_PER_SEC_2_RPM *0.002;
+    (*Axis).dac_watch[21] = CTRL_1.S->pos->Ref *1.52587890625e-05; /// 131072.0 *2;
+    (*Axis).dac_watch[22] = CTRL_2.S->pos->Ref *1.52587890625e-05; /// 131072.0 *2;
     (*Axis).dac_watch[23] = CTRL_1.I->omg_elec  * ELEC_RAD_PER_SEC_2_RPM *0.002;
     (*Axis).dac_watch[24] = CTRL_2.I->omg_elec  * ELEC_RAD_PER_SEC_2_RPM *0.002;
     (*Axis).dac_watch[25] = CTRL_1.I->idq_cmd[1] * 0.1;
@@ -89,8 +94,8 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
 //    (*Axis).dac_watch[24] = marino.xAlpha*0.1;
 //    (*Axis).dac_watch[25] = marino.e_psi_Dmu;
 //    (*Axis).dac_watch[26] = marino.e_psi_Qmu;
-    (*Axis).dac_watch[27] = (*CTRL).I->idq_cmd[1]*0.1;
-    (*Axis).dac_watch[28] = (*CTRL).I->idq[1]*0.1;
+    (*Axis).dac_watch[27] = position_count_CAN_ID0x03_fromCPU2 *1.52587890625e-05; // / 131072.0 *2;
+    (*Axis).dac_watch[28] = position_count_CAN_ID0x01_fromCPU2 *1.52587890625e-05; // / 131072.0 *2;
 
     (*Axis).dac_watch[30] = (*CTRL).O->iab_cmd[0]*0.2;
     (*Axis).dac_watch[31] = (*CTRL).O->iab_cmd[1]*0.2;
@@ -98,10 +103,16 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
     (*Axis).dac_watch[33] = FE.htz.sat_max_time[1]*100;
     (*Axis).dac_watch[34] = FE.htz.sat_min_time[0]*100;
     (*Axis).dac_watch[35] = FE.htz.sat_min_time[1]*100;
+    (*Axis).dac_watch[36] = vvvf_voltage * cos(vvvf_frequency*2*M_PI*(*CTRL).timebase);
     (*Axis).dac_watch[39] = FE.htz.theta_d*0.1;
 
     (*Axis).dac_watch[40] = (*CTRL).I->idq[0]*0.1;
     (*Axis).dac_watch[41] = (*CTRL).I->idq[1]*0.1;
+
+    (*Axis).dac_watch[42] = CTRL_1.S->pos->Ref *1.52587890625e-05; /// 131072.0 *2;
+    (*Axis).dac_watch[43] = CTRL_2.S->pos->Ref *1.52587890625e-05; /// 131072.0 *2;
+    (*Axis).dac_watch[44] = CTRL_1.S->pos->Fbk *1.52587890625e-05; /// 131072.0 *2;
+    (*Axis).dac_watch[45] = CTRL_2.S->pos->Fbk *1.52587890625e-05; /// 131072.0 *2;
 
     if((*Axis).channels_preset==1){(*Axis).channels_preset=0;
         /* Marino 2005 Sensorless Control */
@@ -109,16 +120,16 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
         (*Axis).channels[1] = 24;
         (*Axis).channels[2] = 25;
         (*Axis).channels[3] = 26;
-        (*Axis).channels[4] = 21;
-        (*Axis).channels[5] = 22;
+        (*Axis).channels[4] = 27;
+        (*Axis).channels[5] = 28;
         (*Axis).channels[6] = 21;
         (*Axis).channels[7] = 22;
     }else if((*Axis).channels_preset==2){(*Axis).channels_preset=0;
         /* Marino 2005 Sensorless Control */
-        (*Axis).channels[0] = 3; //12;
-        (*Axis).channels[1] = 4;//4; //13;
-        (*Axis).channels[2] = 5;//28;
-        (*Axis).channels[3] = 41;
+        (*Axis).channels[0] = 42; //12;
+        (*Axis).channels[1] = 43;//4; //13;
+        (*Axis).channels[2] = 44;//28;
+        (*Axis).channels[3] = 45;
         (*Axis).channels[4] = 21;
         (*Axis).channels[5] = 22;
         (*Axis).channels[6] = 21;
