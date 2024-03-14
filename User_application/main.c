@@ -5,20 +5,23 @@
 
 // 假设数据点数量已知
 #define HIP_SHANK_N 106
-REAL HIP_SHANK_FREQUENCY = 0.0001;  // kHz = 1 ms
+REAL HIP_SHANK_FREQUENCY = 0.01;  // kHz = 1 ms
+
+REAL TEST_HIP_KP = 0.3;
+REAL TEST_SHANK_KP = 0.3;
 
 #define HIP_TYPE 0
 #define SHANK_TYPE 1
 
 #define HIP_MIN 0.04
 #define HIP_MAX -0.8 // 为什么这个是负的？而且MAX比MIN小？
-#define CAN01_MIN 48000		//51943
-#define CAN01_MAX 62000		//61584
+#define CAN01_MIN 48500		//51943
+#define CAN01_MAX 61000		//61584
 
 #define SHANK_MIN -0.8855
 #define SHANK_MAX 0.25
-#define CAN03_MIN 30400
-#define CAN03_MAX 51818
+#define CAN03_MIN 31000
+#define CAN03_MAX 58000
 
 #define CAN_QMAX 131072
 
@@ -272,14 +275,14 @@ int32 cnt_four_bar_map_motor_encoder_angle = 0;
 int USE_3_CURRENT_SENSORS = TRUE;
 
 
-int  use_first_set_three_phase=1; //-1 for both motors
+int  use_first_set_three_phase=-1; //-1 for both motors
 #define NO_POSITION_CONTROL 0
 #define TWOMOTOR_POSITION_CONTROL 1
 #define SINGLE_POSITION_CONTROL 2
 #define SHANK_LOOP_RUN 3
 #define HIP_LOOP_RUN 4
 #define BOTH_LOOP_RUN 5
-int positionLoopType = SHANK_LOOP_RUN; //BOTH_LOOP_RUN;
+int positionLoopType = TWOMOTOR_POSITION_CONTROL; // SHANK_LOOP_RUN; //BOTH_LOOP_RUN;
 REAL legBouncingSpeed = 50;
 REAL hipBouncingFreq = 10;
 REAL legBouncingIq = 2;
@@ -287,8 +290,8 @@ REAL hipBouncingIq = 2;
 int bool_use_SCI_encoder = TRUE;
 
 REAL target_position_cnt;
-REAL target_position_cnt_shank = 40000;
-REAL target_position_cnt_hip = 40000;
+REAL target_position_cnt_shank = 55000;
+REAL target_position_cnt_hip = 55000;
 
 void init_experiment_AD_gain_and_offset(){
     /* ADC OFFSET */
@@ -1082,6 +1085,8 @@ void measurement(){
 REAL call_position_loop_controller(int positionLoopType){
     if (positionLoopType == TWOMOTOR_POSITION_CONTROL)
     {
+        CTRL_1.S->pos->Kp = TEST_SHANK_KP;
+        CTRL_2.S->pos->Kp = TEST_HIP_KP;
         Axis->flag_overwrite_theta_d = FALSE;
         Axis->Set_current_loop = FALSE;
         if (axisCnt == 0)
@@ -1093,7 +1098,7 @@ REAL call_position_loop_controller(int positionLoopType){
                             // 11,
                             // 0.0001怎么慢不下来 0.01会不动？
                             // 明哥 ：0.1
-                            target_tick, // 0.1* (double)((*CTRL).timebase_counter),
+                             (*CTRL).timebase_counter,
                             SHANK_TYPE),
                         SHANK_TYPE);
         #endif
@@ -1107,7 +1112,7 @@ REAL call_position_loop_controller(int positionLoopType){
                             // 24,
                             // 明哥 ：0.1
                             // 0.0001怎么慢不下来 0.01会不动？
-                            target_tick, // 0.1* (double)((*CTRL).timebase_counter),
+                             (*CTRL).timebase_counter,
                             HIP_TYPE),
                         HIP_TYPE);
         #endif
@@ -1132,7 +1137,10 @@ REAL call_position_loop_controller(int positionLoopType){
         {
             PID_pos->Out = -PID_pos->OutLimit;
         }
-        Axis->Set_manual_rpm = PID_pos->Out;
+        if(axisCnt == 1)
+            Axis->Set_manual_rpm = -PID_pos->Out;
+        else
+            Axis->Set_manual_rpm = PID_pos->Out;
     }
     else if (positionLoopType == SINGLE_POSITION_CONTROL)
     {
@@ -1144,14 +1152,14 @@ REAL call_position_loop_controller(int positionLoopType){
         {
         #if NUMBER_OF_AXES == 2
                     PID_pos->Fbk = position_count_CAN_ID0x03_fromCPU2;
-                    PID_pos->Ref = target_position_cnt_hip;
+                    PID_pos->Ref = target_position_cnt_shank;
         #endif
         }
         if (axisCnt == 1)
         {
         #if NUMBER_OF_AXES == 2
                     PID_pos->Fbk = position_count_CAN_ID0x01_fromCPU2;
-                    PID_pos->Ref = target_position_cnt_shank;
+                    PID_pos->Ref = target_position_cnt_hip;
         #endif
         }
         PID_pos->Err = PID_pos->Ref - PID_pos->Fbk;
@@ -1172,7 +1180,10 @@ REAL call_position_loop_controller(int positionLoopType){
         {
             PID_pos->Out = -PID_pos->OutLimit;
         }
-        Axis->Set_manual_rpm = PID_pos->Out;
+        if(axisCnt == 1)
+            Axis->Set_manual_rpm = -PID_pos->Out;
+        else
+            Axis->Set_manual_rpm = PID_pos->Out;
     }
     else if (positionLoopType == SHANK_LOOP_RUN)
     { // shank motor only

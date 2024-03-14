@@ -1004,12 +1004,12 @@ REAL controller(REAL set_rpm_speed_command,
     }
 
     /// 3. 调用观测器：估计的电气转子位置和电气转子转速反馈
-    pmsm_observers();
-    if((*CTRL).S->go_sensorless == TRUE){
-        //（无感）
-        (*CTRL).I->omg_elec     = ELECTRICAL_SPEED_FEEDBACK;    //harnefors.omg_elec;
-        (*CTRL).I->theta_d_elec = ELECTRICAL_POSITION_FEEDBACK; //harnefors.theta_d;
-    }
+    // pmsm_observers();
+    // if((*CTRL).S->go_sensorless == TRUE){
+    //     //（无感）
+    //     (*CTRL).I->omg_elec     = ELECTRICAL_SPEED_FEEDBACK;    //harnefors.omg_elec;
+    //     (*CTRL).I->theta_d_elec = ELECTRICAL_POSITION_FEEDBACK; //harnefors.theta_d;
+    // }
 
     /// 4. 帕克变换（使用反馈位置）
     if(flag_overwrite_theta_d){

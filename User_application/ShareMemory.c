@@ -137,10 +137,10 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
         (*Axis4DAC).channels[6] = 21;
         (*Axis4DAC).channels[7] = 22;
     }else if((*Axis4DAC).channels_preset==2){(*Axis4DAC).channels_preset=0;
-        (*Axis4DAC).channels[0] = 49; // 42; //12;
-        (*Axis4DAC).channels[1] = 50; // 43; //4; //13;
-        (*Axis4DAC).channels[2] = 51; // 44; //28;
-        (*Axis4DAC).channels[3] = 52; // 45;
+        (*Axis4DAC).channels[0] = 42;//49; // 42; //12;
+        (*Axis4DAC).channels[1] = 43;//50; // 43; //4; //13;
+        (*Axis4DAC).channels[2] = 44; // 44; //28;
+        (*Axis4DAC).channels[3] = 45;//52; // 45;
         (*Axis4DAC).channels[4] = 21;
         (*Axis4DAC).channels[5] = 22;
         (*Axis4DAC).channels[6] = 21;

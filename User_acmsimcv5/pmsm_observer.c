@@ -296,7 +296,7 @@ void init_nsoaf(){
 
     MOTOR.KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * (*CTRL).I->idq[0];
     nsoaf.omega_ob = nsoaf.set_omega_ob;
-    nso_one_parameter_tuning(nsoaf.omega_ob);
+     nso_one_parameter_tuning(nsoaf.omega_ob);
 }
 #endif
 
@@ -1306,8 +1306,8 @@ void pmsm_observers(){
         /* 资源有限 */
         #if SELECT_ALGORITHM == ALG_NSOAF
             // MainFE_HuWu_1998(); // use algorithm 2
-            // Main_the_active_flux_estimator();
-            //Main_VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
+            Main_the_active_flux_estimator();
+            // Main_VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
             Main_nsoaf_chen2020();
         #elif SELECT_ALGORITHM == ALG_ESOAF
             Main_the_active_flux_estimator();
