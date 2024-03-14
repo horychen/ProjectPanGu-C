@@ -340,7 +340,8 @@ void init_experiment_AD_gain_and_offset(){
 #define SHANK_POS_CMD_FLAG 0
 #define HIP_POS_CMD_FLAG 1
 
-Uint64 mainWhileLoopCounter = 0;
+Uint64 mainWhileLoopCounter1 = 0;
+int64 mainWhileLoopCounter2 = 0;
 
 //int  FLAG_ENABLE_PWM_OUTPUT = FALSE;
 void main(void){
@@ -642,7 +643,7 @@ void main(void){
 
     // 7. Main loop
     while(1){
-        mainWhileLoopCounter++;
+        mainWhileLoopCounter1++;
         if (Motor_mode_START==1){
             Axis_1.FLAG_ENABLE_PWM_OUTPUT = 1;
             DSP_START_LED1
