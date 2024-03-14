@@ -272,13 +272,14 @@ int32 cnt_four_bar_map_motor_encoder_angle = 0;
 int USE_3_CURRENT_SENSORS = TRUE;
 
 
+int  use_first_set_three_phase=1; //-1 for both motors
 #define NO_POSITION_CONTROL 0
 #define TWOMOTOR_POSITION_CONTROL 1
 #define SINGLE_POSITION_CONTROL 2
 #define SHANK_LOOP_RUN 3
 #define HIP_LOOP_RUN 4
 #define BOTH_LOOP_RUN 5
-int positionLoopType = TWOMOTOR_POSITION_CONTROL; //BOTH_LOOP_RUN;
+int positionLoopType = SHANK_LOOP_RUN; //BOTH_LOOP_RUN;
 REAL legBouncingSpeed = 50;
 REAL hipBouncingFreq = 10;
 REAL legBouncingIq = 2;
@@ -338,7 +339,6 @@ void init_experiment_AD_gain_and_offset(){
 
 Uint64 mainWhileLoopCounter = 0;
 
-int  use_first_set_three_phase=-1;
 //int  FLAG_ENABLE_PWM_OUTPUT = FALSE;
 void main(void){
 
@@ -1179,15 +1179,26 @@ REAL call_position_loop_controller(int positionLoopType){
         if (axisCnt == 0)
         {
             Axis->flag_overwrite_theta_d = FALSE;
-            Axis->Set_current_loop = FALSE;
+
+            Axis->Set_current_loop = TRUE;
             if (position_count_CAN_ID0x03_fromCPU2 > 62000)
             {
-                Axis->Set_manual_rpm = -legBouncingSpeed;
+                Axis->Set_manual_current_iq = -1;
             }
             else if (position_count_CAN_ID0x03_fromCPU2 < 33000)
             {
-                Axis->Set_manual_rpm = legBouncingSpeed;
+                Axis->Set_manual_current_iq = 1;
             }
+
+            //            Axis->Set_current_loop = FALSE;
+            //            if (position_count_CAN_ID0x03_fromCPU2 > 62000)
+            //            {
+            //                Axis->Set_manual_rpm = -legBouncingSpeed;
+            //            }
+            //            else if (position_count_CAN_ID0x03_fromCPU2 < 33000)
+            //            {
+            //                Axis->Set_manual_rpm = legBouncingSpeed;
+            //            }
         }
     }
     else if (positionLoopType == HIP_LOOP_RUN)

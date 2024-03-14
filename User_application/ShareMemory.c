@@ -118,9 +118,14 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
     (*Axis4DAC).dac_watch[41] = (*CTRL).I->idq[1]*0.1;
 
     (*Axis4DAC).dac_watch[42] = CTRL_1.S->pos->Ref *1.52587890625e-05; /// 131072.0 *2;
-    (*Axis4DAC).dac_watch[43] = CTRL_2.S->pos->Ref *1.52587890625e-05; /// 131072.0 *2;
-    (*Axis4DAC).dac_watch[44] = CTRL_1.S->pos->Fbk *1.52587890625e-05; /// 131072.0 *2;
+    (*Axis4DAC).dac_watch[43] = CTRL_1.S->pos->Fbk *1.52587890625e-05; /// 131072.0 *2;
+    (*Axis4DAC).dac_watch[44] = CTRL_2.S->pos->Ref *1.52587890625e-05; /// 131072.0 *2;
     (*Axis4DAC).dac_watch[45] = CTRL_2.S->pos->Fbk *1.52587890625e-05; /// 131072.0 *2;
+
+    (*Axis4DAC).dac_watch[49] = CTRL_1.I->omg_elec  * ELEC_RAD_PER_SEC_2_RPM *0.002;
+    (*Axis4DAC).dac_watch[50] = nsoaf.xOmg * ELEC_RAD_PER_SEC_2_RPM *0.002;
+    (*Axis4DAC).dac_watch[51] = AFE_USED.theta_d *0.1;
+    (*Axis4DAC).dac_watch[52] = (*Axis4DAC).used_theta_d_elec *0.1;
 
     if((*Axis4DAC).channels_preset==1){(*Axis4DAC).channels_preset=0;
         (*Axis4DAC).channels[0] = 23;
@@ -132,20 +137,19 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
         (*Axis4DAC).channels[6] = 21;
         (*Axis4DAC).channels[7] = 22;
     }else if((*Axis4DAC).channels_preset==2){(*Axis4DAC).channels_preset=0;
-        (*Axis4DAC).channels[0] = 42; //12;
-        (*Axis4DAC).channels[1] = 43;//4; //13;
-        (*Axis4DAC).channels[2] = 44;//28;
-        (*Axis4DAC).channels[3] = 45;
+        (*Axis4DAC).channels[0] = 49; // 42; //12;
+        (*Axis4DAC).channels[1] = 50; // 43; //4; //13;
+        (*Axis4DAC).channels[2] = 51; // 44; //28;
+        (*Axis4DAC).channels[3] = 52; // 45;
         (*Axis4DAC).channels[4] = 21;
         (*Axis4DAC).channels[5] = 22;
         (*Axis4DAC).channels[6] = 21;
         (*Axis4DAC).channels[7] = 22;
     }else if((*Axis4DAC).channels_preset==3){(*Axis4DAC).channels_preset=0;
-        /* Marino 2005 Sensorless Control */
-        (*Axis4DAC).channels[0] = 2; //12;
-        (*Axis4DAC).channels[1] = 3;//4; //13;
-        (*Axis4DAC).channels[2] = 12;//28;
-        (*Axis4DAC).channels[3] = 13;
+        (*Axis4DAC).channels[0] = 42; //12;
+        (*Axis4DAC).channels[1] = 43; //4; //13;
+        (*Axis4DAC).channels[2] = 44; //28;
+        (*Axis4DAC).channels[3] = 45;
         (*Axis4DAC).channels[4] = 21;
         (*Axis4DAC).channels[5] = 22;
         (*Axis4DAC).channels[6] = 41;
