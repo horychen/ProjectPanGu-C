@@ -278,7 +278,7 @@ int USE_3_CURRENT_SENSORS = TRUE;
 #define SHANK_LOOP_RUN 3
 #define HIP_LOOP_RUN 4
 #define BOTH_LOOP_RUN 5
-int16 positionLoopType = TWOMOTOR_POSITION_CONTROL; //BOTH_LOOP_RUN;
+int positionLoopType = TWOMOTOR_POSITION_CONTROL; //BOTH_LOOP_RUN;
 REAL legBouncingSpeed = 50;
 REAL hipBouncingFreq = 10;
 REAL legBouncingIq = 2;
@@ -336,7 +336,7 @@ void init_experiment_AD_gain_and_offset(){
 #define SHANK_POS_CMD_FLAG 0
 #define HIP_POS_CMD_FLAG 1
 
-
+Uint64 mainWhileLoopCounter = 0;
 
 int  use_first_set_three_phase=-1;
 //int  FLAG_ENABLE_PWM_OUTPUT = FALSE;
@@ -639,7 +639,7 @@ void main(void){
 
     // 7. Main loop
     while(1){
-
+        mainWhileLoopCounter++;
         if (Motor_mode_START==1){
             Axis_1.FLAG_ENABLE_PWM_OUTPUT = 1;
             DSP_START_LED1
@@ -1078,8 +1078,191 @@ void measurement(){
     //        }
     //    }
 }
+
+REAL call_position_loop_controller(int positionLoopType){
+    if (positionLoopType == TWOMOTOR_POSITION_CONTROL)
+    {
+        Axis->flag_overwrite_theta_d = FALSE;
+        Axis->Set_current_loop = FALSE;
+        if (axisCnt == 0)
+        {
+        #if NUMBER_OF_AXES == 2
+                    PID_pos->Fbk = position_count_CAN_ID0x03_fromCPU2;
+                    PID_pos->Ref = hip_shank_angle_to_can(
+                        look_up_hip_shank_angle(
+                            // 11,
+                            // 0.0001怎么慢不下来 0.01会不动？
+                            // 明哥 ：0.1
+                            target_tick, // 0.1* (double)((*CTRL).timebase_counter),
+                            SHANK_TYPE),
+                        SHANK_TYPE);
+        #endif
+        }
+        if (axisCnt == 1)
+        {
+        #if NUMBER_OF_AXES == 2
+                    PID_pos->Fbk = position_count_CAN_ID0x01_fromCPU2;
+                    PID_pos->Ref = hip_shank_angle_to_can(
+                        look_up_hip_shank_angle(
+                            // 24,
+                            // 明哥 ：0.1
+                            // 0.0001怎么慢不下来 0.01会不动？
+                            target_tick, // 0.1* (double)((*CTRL).timebase_counter),
+                            HIP_TYPE),
+                        HIP_TYPE);
+        #endif
+        }
+        // 位置环
+        // 长弧和短弧，要选短的。
+        PID_pos->Err = PID_pos->Ref - PID_pos->Fbk;
+        if (PID_pos->Err > (CAN_QMAX * 0.5))
+        {
+            PID_pos->Err -= CAN_QMAX;
+        }
+        if (PID_pos->Err < -(CAN_QMAX * 0.5))
+        {
+            PID_pos->Err += CAN_QMAX;
+        }
+        PID_pos->Out = PID_pos->Err * PID_pos->Kp;
+        if (PID_pos->Out > PID_pos->OutLimit)
+        {
+            PID_pos->Out = PID_pos->OutLimit;
+        }
+        if (PID_pos->Out < -PID_pos->OutLimit)
+        {
+            PID_pos->Out = -PID_pos->OutLimit;
+        }
+        Axis->Set_manual_rpm = PID_pos->Out;
+    }
+    else if (positionLoopType == SINGLE_POSITION_CONTROL)
+    {
+        Axis->flag_overwrite_theta_d = FALSE;
+        Axis->Set_current_loop = FALSE;
+        // 位置环
+        // 长弧和短弧，要选短的。
+        if (axisCnt == 0)
+        {
+        #if NUMBER_OF_AXES == 2
+                    PID_pos->Fbk = position_count_CAN_ID0x03_fromCPU2;
+                    PID_pos->Ref = target_position_cnt_hip;
+        #endif
+        }
+        if (axisCnt == 1)
+        {
+        #if NUMBER_OF_AXES == 2
+                    PID_pos->Fbk = position_count_CAN_ID0x01_fromCPU2;
+                    PID_pos->Ref = target_position_cnt_shank;
+        #endif
+        }
+        PID_pos->Err = PID_pos->Ref - PID_pos->Fbk;
+        if (PID_pos->Err > (CAN_QMAX * 0.5))
+        {
+            PID_pos->Err -= CAN_QMAX;
+        }
+        if (PID_pos->Err < -(CAN_QMAX * 0.5))
+        {
+            PID_pos->Err += CAN_QMAX;
+        }
+        PID_pos->Out = PID_pos->Err * PID_pos->Kp;
+        if (PID_pos->Out > PID_pos->OutLimit)
+        {
+            PID_pos->Out = PID_pos->OutLimit;
+        }
+        if (PID_pos->Out < -PID_pos->OutLimit)
+        {
+            PID_pos->Out = -PID_pos->OutLimit;
+        }
+        Axis->Set_manual_rpm = PID_pos->Out;
+    }
+    else if (positionLoopType == SHANK_LOOP_RUN)
+    { // shank motor only
+        if (axisCnt == 0)
+        {
+            Axis->flag_overwrite_theta_d = FALSE;
+            Axis->Set_current_loop = FALSE;
+            if (position_count_CAN_ID0x03_fromCPU2 > 62000)
+            {
+                Axis->Set_manual_rpm = -legBouncingSpeed;
+            }
+            else if (position_count_CAN_ID0x03_fromCPU2 < 33000)
+            {
+                Axis->Set_manual_rpm = legBouncingSpeed;
+            }
+        }
+    }
+    else if (positionLoopType == HIP_LOOP_RUN)
+    { // hip motor only
+    #if NUMBER_OF_AXES == 2
+            if (axisCnt == 1)
+            {
+                Axis_2.flag_overwrite_theta_d = TRUE;
+                Axis_2.Set_current_loop = TRUE;
+                Axis_2.Set_manual_current_iq = 5;
+                if (position_count_CAN_ID0x01_fromCPU2 > 58000)
+                {
+                    Axis_2.Overwrite_Current_Frequency = 10;
+                }
+                else if (position_count_CAN_ID0x01_fromCPU2 < 48000)
+                {
+                    Axis_2.Overwrite_Current_Frequency = -10;
+                }
+            }
+    #else
+            Axis->flag_overwrite_theta_d = TRUE;
+            Axis->Set_current_loop = TRUE;
+            Axis->Set_manual_current_iq = 5;
+            if (position_count_CAN_ID0x01_fromCPU2 > 58000)
+            {
+                Axis->Overwrite_Current_Frequency = hipBouncingFreq;
+            }
+            else if (position_count_CAN_ID0x01_fromCPU2 < 48000)
+            {
+                Axis->Overwrite_Current_Frequency = -hipBouncingFreq;
+            }
+    #endif
+    }
+    else if (positionLoopType == BOTH_LOOP_RUN)
+    {
+    #if NUMBER_OF_AXES == 2
+        if (axisCnt == 0)
+        {
+            // CAN03越大，小腿越伸出，legBouncingIq, rpm为正数，小腿伸出
+            // CAN03越小，小腿越收起，legBouncingIq, rpm为负数，小腿收起
+            Axis_1.flag_overwrite_theta_d = FALSE;
+            Axis_1.Set_current_loop = TRUE;
+            if (position_count_CAN_ID0x03_fromCPU2 > 56000)
+            {
+                Axis_1.Set_manual_current_iq = -legBouncingIq; // CAN03太大，小腿伸出过头，需要iq为负数，收起小腿
+            }
+            else if (position_count_CAN_ID0x03_fromCPU2 < 35000)
+            {
+                Axis_1.Set_manual_current_iq = legBouncingIq;
+            }
+        }
+        // 大腿电机
+        if (axisCnt == 1)
+        {
+            // CAN01越小,大腿越抬起,hipBouncingIq为正数，大腿抬起
+            // CAN01越大,大腿越放下,hipBouncingIq为负数，大腿放下
+            Axis_2.flag_overwrite_theta_d = FALSE;
+            Axis_2.Set_current_loop = TRUE;
+            if (position_count_CAN_ID0x01_fromCPU2 > 58000)
+            {
+                Axis_2.Set_manual_current_iq = hipBouncingIq; // CAN01太大,大腿放下过多,需要iq为正数,抬起大腿
+            }
+            else if (position_count_CAN_ID0x01_fromCPU2 < 51000)
+            {
+                Axis_2.Set_manual_current_iq = -hipBouncingIq;
+            }
+        }
+    #endif
+    }
+
+    return Axis->Set_manual_rpm;
+}
+
 // int down_freq_ecap_counter = 1;
-//Uint64 timebase_counter = 0;
+// Uint64 timebase_counter = 0;
 extern REAL imife_realtime_gain_off;
 
 void PanGuMainISR(void){
@@ -1147,182 +1330,22 @@ void PanGuMainISR(void){
             //(*CTRL).S->Motor_or_Gnerator = sign((*CTRL).I->idq_cmd[1]) == sign(CTRL->enc->rpm); // sign((*CTRL).I->idq_cmd[1]) != sign((*CTRL).I->cmd_speed_rpm))
             runtime_command_and_tuning(Axis->Select_exp_operation);
             // 0x03 is shank
-//            position_count_CAN_fromCPU2 = position_count_CAN_ID0x03_fromCPU2;
+            //    position_count_CAN_fromCPU2 = position_count_CAN_ID0x03_fromCPU2;
             // 0x01 is hip
             position_count_CAN_fromCPU2 = position_count_CAN_ID0x01_fromCPU2;
 
+            Axis->Set_manual_rpm = call_position_loop_controller(positionLoopType);
 
-            {
-                if(positionLoopType == TWOMOTOR_POSITION_CONTROL)
-                {
-                    Axis->flag_overwrite_theta_d = FALSE;
-                    Axis->Set_current_loop = FALSE;
-                    if(axisCnt == 0)
-                    {
-                        #if NUMBER_OF_AXES == 2
-                            PID_pos->Fbk = position_count_CAN_ID0x03_fromCPU2;
-                            PID_pos->Ref = hip_shank_angle_to_can(
-                                            look_up_hip_shank_angle(
-                                                    //11,
-                                                    //0.0001怎么慢不下来 0.01会不动？
-                                                    //明哥 ：0.1
-                                                    target_tick,//0.1* (double)((*CTRL).timebase_counter),
-                                                                    SHANK_TYPE),
-                                            SHANK_TYPE);
-                        #endif
-                    }
-                    if(axisCnt == 1)
-                    {
-                        #if NUMBER_OF_AXES == 2
-                            PID_pos->Fbk = position_count_CAN_ID0x01_fromCPU2;
-                            PID_pos->Ref = hip_shank_angle_to_can(
-                                            look_up_hip_shank_angle(
-                                                    //24,
-                                                    //明哥 ：0.1
-                                                    //0.0001怎么慢不下来 0.01会不动？
-                                                    target_tick,// 0.1* (double)((*CTRL).timebase_counter),
-                                                                    HIP_TYPE),
-                                            HIP_TYPE);
-                        #endif
-                    }
-                    // 位置环
-                    // 长弧和短弧，要选短的。
-                    PID_pos->Err = PID_pos->Ref - PID_pos->Fbk;
-                    if (PID_pos->Err > (CAN_QMAX*0.5))
-                    {
-                        PID_pos->Err -= CAN_QMAX;
-                    }
-                    if (PID_pos->Err < -(CAN_QMAX*0.5))
-                    {
-                        PID_pos->Err += CAN_QMAX;
-                    }
-                    PID_pos->Out = PID_pos->Err * PID_pos->Kp;
-                    if(PID_pos->Out > PID_pos->OutLimit)
-                    {
-                        PID_pos->Out = PID_pos->OutLimit;
-                    }
-                    if(PID_pos->Out < -PID_pos->OutLimit)
-                    {
-                        PID_pos->Out = -PID_pos->OutLimit;
-                    }
-                    Axis->Set_manual_rpm = PID_pos->Out;
-                }
-                else if(positionLoopType == SINGLE_POSITION_CONTROL)
-                {
-                    Axis->flag_overwrite_theta_d = FALSE;
-                    Axis->Set_current_loop = FALSE;
-                    // 位置环
-                    // 长弧和短弧，要选短的。
-                    if(axisCnt == 0)
-                    {
-                        #if NUMBER_OF_AXES == 2
-                            PID_pos->Fbk = position_count_CAN_ID0x03_fromCPU2;
-                            PID_pos->Ref = target_position_cnt_hip;
-                        #endif
-                    }
-                    if(axisCnt == 1)
-                    {
-                        #if NUMBER_OF_AXES == 2
-                            PID_pos->Fbk = position_count_CAN_ID0x01_fromCPU2;
-                            PID_pos->Ref = target_position_cnt_shank;
-                        #endif
-                    }
-                    PID_pos->Err = PID_pos->Ref - PID_pos->Fbk;
-                    if (PID_pos->Err > (CAN_QMAX*0.5))
-                    {
-                        PID_pos->Err -= CAN_QMAX;
-                    }
-                    if (PID_pos->Err < -(CAN_QMAX*0.5))
-                    {
-                        PID_pos->Err += CAN_QMAX;
-                    }
-                    PID_pos->Out = PID_pos->Err * PID_pos->Kp;
-                    if(PID_pos->Out > PID_pos->OutLimit)
-                    {
-                        PID_pos->Out = PID_pos->OutLimit;
-                    }
-                    if(PID_pos->Out < -PID_pos->OutLimit)
-                    {
-                        PID_pos->Out = -PID_pos->OutLimit;
-                    }
-                    Axis->Set_manual_rpm = PID_pos->Out;
-                }
-                else if(positionLoopType == SHANK_LOOP_RUN){ // shank motor only
-                    if(axisCnt==0){
-                        Axis->flag_overwrite_theta_d = FALSE;
-                        Axis->Set_current_loop = FALSE;
-                        if(position_count_CAN_ID0x03_fromCPU2 > 62000){
-                            Axis->Set_manual_rpm = - legBouncingSpeed;
-                        }else if(position_count_CAN_ID0x03_fromCPU2 < 33000){
-                            Axis->Set_manual_rpm = legBouncingSpeed;
-                        }
-                    }
-                }else if(positionLoopType == HIP_LOOP_RUN){ // hip motor only
-
-                    #if NUMBER_OF_AXES == 2
-                        if(axisCnt==1){
-                            Axis_2.flag_overwrite_theta_d = TRUE;
-                            Axis_2.Set_current_loop = TRUE;
-                            Axis_2.Set_manual_current_iq = 5;
-                            if(position_count_CAN_ID0x01_fromCPU2 > 58000){
-                                Axis_2.Overwrite_Current_Frequency = 10;
-                            }
-                            else if(position_count_CAN_ID0x01_fromCPU2 < 48000){
-                                Axis_2.Overwrite_Current_Frequency = -10;
-                            }
-                        }
-                    #else
-                        Axis->flag_overwrite_theta_d = TRUE;
-                        Axis->Set_current_loop = TRUE;
-                        Axis->Set_manual_current_iq = 5;
-                        if(position_count_CAN_ID0x01_fromCPU2 > 58000){
-                            Axis->Overwrite_Current_Frequency = hipBouncingFreq;
-                        }
-                        else if(position_count_CAN_ID0x01_fromCPU2 < 48000){
-                            Axis->Overwrite_Current_Frequency = -hipBouncingFreq;
-                        }
-                    #endif
-                }else if(positionLoopType == BOTH_LOOP_RUN){
-                    #if NUMBER_OF_AXES == 2
-                        if(axisCnt==0){
-                            //CAN03越大，小腿越伸出，legBouncingIq, rpm为正数，小腿伸出
-                            //CAN03越小，小腿越收起，legBouncingIq, rpm为负数，小腿收起
-                            Axis_1.flag_overwrite_theta_d = FALSE;
-                            Axis_1.Set_current_loop = TRUE;
-                            if(position_count_CAN_ID0x03_fromCPU2 > 56000){
-                                Axis_1.Set_manual_current_iq = -legBouncingIq; // CAN03太大，小腿伸出过头，需要iq为负数，收起小腿
-                            }
-                            else if(position_count_CAN_ID0x03_fromCPU2 < 35000){
-                                Axis_1.Set_manual_current_iq = legBouncingIq;
-                            }
-                        }
-                        // 大腿电机
-                        if(axisCnt==1){
-                            //CAN01越小,大腿越抬起,hipBouncingIq为正数，大腿抬起
-                            //CAN01越大,大腿越放下,hipBouncingIq为负数，大腿放下
-                            Axis_2.flag_overwrite_theta_d = FALSE;
-                            Axis_2.Set_current_loop = TRUE;
-                            if(position_count_CAN_ID0x01_fromCPU2 > 58000){
-                                Axis_2.Set_manual_current_iq = hipBouncingIq;// CAN01太大,大腿放下过多,需要iq为正数,抬起大腿
-                            }
-                            else if(position_count_CAN_ID0x01_fromCPU2 < 51000){
-                                Axis_2.Set_manual_current_iq = -hipBouncingIq;
-                            }
-                        }
-                    #endif
-                }
-
-                Axis->used_theta_d_elec = controller(
-                    Axis->Set_manual_rpm,
-                    Axis->Set_current_loop,
-                    Axis->Set_manual_current_iq,
-                    Axis->Set_manual_current_id,
-                    Axis->flag_overwrite_theta_d,
-                    Axis->Overwrite_Current_Frequency,
-                    Axis->used_theta_d_elec,
-                    Axis->angle_shift_for_first_inverter,
-                    Axis->angle_shift_for_second_inverter);
-            }
+            Axis->used_theta_d_elec = controller(
+                Axis->Set_manual_rpm,
+                Axis->Set_current_loop,
+                Axis->Set_manual_current_iq,
+                Axis->Set_manual_current_id,
+                Axis->flag_overwrite_theta_d,
+                Axis->Overwrite_Current_Frequency,
+                Axis->used_theta_d_elec,
+                Axis->angle_shift_for_first_inverter,
+                Axis->angle_shift_for_second_inverter);
         #else
             commissioning();
         #endif
