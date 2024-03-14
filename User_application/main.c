@@ -93,7 +93,6 @@ double target_tick = 0.0;
 
     st_axis Axis_2;
 
-
     #define get_Axis_CTRL_pointers \
         if (axisCnt == 0)          \
         {                          \
@@ -275,14 +274,16 @@ int32 cnt_four_bar_map_motor_encoder_angle = 0;
 int USE_3_CURRENT_SENSORS = TRUE;
 
 
-int  use_first_set_three_phase=-1; //-1 for both motors
 #define NO_POSITION_CONTROL 0
 #define TWOMOTOR_POSITION_CONTROL 1
 #define SINGLE_POSITION_CONTROL 2
 #define SHANK_LOOP_RUN 3
 #define HIP_LOOP_RUN 4
 #define BOTH_LOOP_RUN 5
-int positionLoopType = TWOMOTOR_POSITION_CONTROL; // SHANK_LOOP_RUN; //BOTH_LOOP_RUN;
+int bool_TEMP = TRUE;
+int positionLoopType = HIP_LOOP_RUN; // SHANK_LOOP_RUN; //BOTH_LOOP_RUN;
+int  use_first_set_three_phase=2; //-1 for both motors
+
 REAL legBouncingSpeed = 50;
 REAL hipBouncingFreq = 10;
 REAL legBouncingIq = 2;
@@ -529,7 +530,7 @@ void main(void){
 
         Axis->FLAG_ENABLE_PWM_OUTPUT = FALSE;
 
-        Axis->channels_preset = 2; // 9; // 101;    }
+        Axis->channels_preset = 1; // 9; // 101;    }
 
         Axis->pCTRL->enc->sum_qepPosCnt = 0;
         Axis->pCTRL->enc->cursor = 0;
@@ -1191,25 +1192,25 @@ REAL call_position_loop_controller(int positionLoopType){
         {
             Axis->flag_overwrite_theta_d = FALSE;
 
-            Axis->Set_current_loop = TRUE;
-            if (position_count_CAN_ID0x03_fromCPU2 > 62000)
-            {
-                Axis->Set_manual_current_iq = -1;
-            }
-            else if (position_count_CAN_ID0x03_fromCPU2 < 33000)
-            {
-                Axis->Set_manual_current_iq = 1;
-            }
-
-            //            Axis->Set_current_loop = FALSE;
+            //            Axis->Set_current_loop = TRUE;
             //            if (position_count_CAN_ID0x03_fromCPU2 > 62000)
             //            {
-            //                Axis->Set_manual_rpm = -legBouncingSpeed;
+            //                Axis->Set_manual_current_iq = -1;
             //            }
             //            else if (position_count_CAN_ID0x03_fromCPU2 < 33000)
             //            {
-            //                Axis->Set_manual_rpm = legBouncingSpeed;
+            //                Axis->Set_manual_current_iq = 1;
             //            }
+
+            Axis->Set_current_loop = FALSE;
+            if (position_count_CAN_ID0x03_fromCPU2 > 62000)
+            {
+                Axis->Set_manual_rpm = -legBouncingSpeed;
+            }
+            else if (position_count_CAN_ID0x03_fromCPU2 < 33000)
+            {
+                Axis->Set_manual_rpm = legBouncingSpeed;
+            }
         }
     }
     else if (positionLoopType == HIP_LOOP_RUN)
@@ -1217,17 +1218,45 @@ REAL call_position_loop_controller(int positionLoopType){
     #if NUMBER_OF_AXES == 2
             if (axisCnt == 1)
             {
-                Axis_2.flag_overwrite_theta_d = TRUE;
-                Axis_2.Set_current_loop = TRUE;
-                Axis_2.Set_manual_current_iq = 5;
-                if (position_count_CAN_ID0x01_fromCPU2 > 58000)
-                {
-                    Axis_2.Overwrite_Current_Frequency = 10;
+
+                Axis->flag_overwrite_theta_d = FALSE;
+
+                if(bool_TEMP==TRUE){
+                    Axis->flag_overwrite_theta_d = FALSE;
+                    Axis->Set_current_loop = TRUE;
+                    if (position_count_CAN_ID0x01_fromCPU2 > 58000)
+                    {
+                        Axis->Set_manual_current_iq = hipBouncingIq;
+                    }
+                    else if (position_count_CAN_ID0x01_fromCPU2 < 53000)
+                    {
+                        Axis->Set_manual_current_iq = -hipBouncingIq;
+                    }
+                }else{
+                    Axis->flag_overwrite_theta_d = FALSE;
+                    Axis->Set_current_loop = FALSE;
+                    if (position_count_CAN_ID0x01_fromCPU2 > 58000)
+                    {
+                        Axis->Set_manual_rpm = legBouncingSpeed;
+                    }
+                    else if (position_count_CAN_ID0x01_fromCPU2 < 53000)
+                    {
+                        Axis->Set_manual_rpm = -legBouncingSpeed;
+                    }
                 }
-                else if (position_count_CAN_ID0x01_fromCPU2 < 48000)
-                {
-                    Axis_2.Overwrite_Current_Frequency = -10;
-                }
+
+                //
+                //                Axis_2.flag_overwrite_theta_d = TRUE;
+                //                Axis_2.Set_current_loop = TRUE;
+                //                Axis_2.Set_manual_current_iq = 5;
+                //                if (position_count_CAN_ID0x01_fromCPU2 > 58000)
+                //                {
+                //                    Axis_2.Overwrite_Current_Frequency = 10;
+                //                }
+                //                else if (position_count_CAN_ID0x01_fromCPU2 < 48000)
+                //                {
+                //                    Axis_2.Overwrite_Current_Frequency = -10;
+                //                }
             }
     #else
             Axis->flag_overwrite_theta_d = TRUE;
