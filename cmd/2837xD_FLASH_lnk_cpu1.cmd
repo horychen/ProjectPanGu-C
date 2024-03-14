@@ -71,7 +71,8 @@ SECTIONS
 
    /* Allocate uninitalized data sections: */
    .stack              : > RAMM1        PAGE = 1
-   .ebss               : >> RAMLS5 | RAMGS0 | RAMGS1       PAGE = 1
+   /* .ebss               : >> RAMLS5 | RAMGS0 | RAMGS1       PAGE = 1 */
+   .ebss               : >> RAMLS5 | RAMGS10 | RAMGS11       PAGE = 1
    .esysmem            : > RAMLS5       PAGE = 1
 
    /* Initalized sections go in Flash */
@@ -86,8 +87,8 @@ SECTIONS
     ramgs1           : > RAMGS1,     PAGE = 1
 
     MYGLOBALS_1: >RAMGS9,PAGE = 1
-    MYGLOBALS_2: >RAMGS10,PAGE = 1
-    MYTABLE_3: >RAMGS11,PAGE = 1
+    MYGLOBALS_2: >RAMGS9,PAGE = 1
+    MYTABLE_3: >RAMGS9,PAGE = 1
 
 #ifdef __TI_COMPILER_VERSION__
    ramfuncs            : LOAD = FLASHD,
