@@ -1512,14 +1512,23 @@ __interrupt void EPWM1ISR(void){
         * The register to check is IPCSTS.
         * */
         counter_missing_position_measurement +=1;
+
+        // read CAN data
+        if(IPCRtoLFlagBusy(IPC_FLAG11) == 1) // if flag
+        {
+            position_count_CAN_ID0x01_fromCPU2 = Read.CAN_position_count_ID0x01;
+            position_count_CAN_ID0x03_fromCPU2 = Read.CAN_position_count_ID0x03;
+            IPCRtoLFlagAcknowledge (IPC_FLAG11);
+        }
+
+        // read SCI data
         if(IPCRtoLFlagBusy(IPC_FLAG10) == 1) // if flag
         {
             max_counter_missing_position_measurement = counter_missing_position_measurement;
             counter_missing_position_measurement = 0;
+
             position_count_SCI_shank_fromCPU2 = Read.SCI_shank_position_count;
             position_count_SCI_hip_fromCPU2 = Read.SCI_hip_position_count;
-            position_count_CAN_ID0x01_fromCPU2 = Read.CAN_position_count_ID0x01;
-            position_count_CAN_ID0x03_fromCPU2 = Read.CAN_position_count_ID0x03;
             IPCRtoLFlagAcknowledge (IPC_FLAG10);
 
             // CAN encoder convert to motor built-in encoder
