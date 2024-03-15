@@ -12,6 +12,7 @@ extern REAL vvvf_frequency;
 extern Uint32 position_count_CAN_ID0x01_fromCPU2;
 extern Uint32 position_count_CAN_ID0x03_fromCPU2;
 
+st_axis *Axis4DAC;
 #if NUMBER_OF_DSP_CORES == 2
 
 struct IPC_MEMORY_WRITE Write;
@@ -48,7 +49,6 @@ long int counter=0;
 //extern REAL KP = 0.05;
 //extern REAL direction
 
-st_axis *Axis4DAC;
 
 extern int use_first_set_three_phase;
 
