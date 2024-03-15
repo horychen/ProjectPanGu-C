@@ -345,8 +345,8 @@ void init_experiment_AD_gain_and_offset(){
 #define SHANK_POS_CMD_FLAG 0
 #define HIP_POS_CMD_FLAG 1
 
-Uint64 mainWhileLoopCounter1 = 0;
-int64 mainWhileLoopCounter2 = 0;
+//Uint64 mainWhileLoopCounter1 = 0;
+//int64 mainWhileLoopCounter2 = 0;
 
 //int  FLAG_ENABLE_PWM_OUTPUT = FALSE;
 void main(void){
@@ -610,60 +610,69 @@ void main(void){
         IPCLtoRFlagSet(IPC_FLAG7);
     #endif
 
-    if(FALSE){
-        SendChar = 24;
-        for(;;)
+
+    #if(FALSE)
         {
-            //SendChar = 0;
-            ScicRegs.SCITXBUF.all = (SendChar);
-
-            //
-            // wait for RRDY/RXFFST =1 for 1 data available in FIFO
-            //
-            while(ScicRegs.SCIFFRX.bit.RXFFST == 0) {
-            }
-            (*CTRL).S->go_sensorless = 100;
-
-            //
-            // Check received character
-            //
-            ReceivedChar = ScicRegs.SCIRXBUF.all;
-            if(ReceivedChar != SendChar)
+            SendChar = 24;
+            for(;;)
             {
-               //error();
+                //SendChar = 0;
+                ScicRegs.SCITXBUF.all = (SendChar);
+
+                //
+                // wait for RRDY/RXFFST =1 for 1 data available in FIFO
+                //
+                while(ScicRegs.SCIFFRX.bit.RXFFST == 0) {
+                }
+                (*CTRL).S->go_sensorless = 100;
+
+                //
+                // Check received character
+                //
+                ReceivedChar = ScicRegs.SCIRXBUF.all;
+                if(ReceivedChar != SendChar)
+                {
+                   //error();
+                }
+
+                //
+                // Move to the next character and repeat the test
+                //
+                SendChar++;
+
+                //
+                // Limit the character to 8-bits
+                //
+                SendChar &= 0x00F;
+                LoopCount++;
             }
-
-            //
-            // Move to the next character and repeat the test
-            //
-            SendChar++;
-
-            //
-            // Limit the character to 8-bits
-            //
-            SendChar &= 0x00F;
-            LoopCount++;
         }
-    }
+    #endif
 
     // 7. Main loop
     while(1){
-        mainWhileLoopCounter1++;
-        if (Motor_mode_START==1){
-            Axis_1.FLAG_ENABLE_PWM_OUTPUT = 1;
-            DSP_START_LED1
-            DSP_START_LED2
-        }else if (Motor_mode_START==0){
-            Axis_1.FLAG_ENABLE_PWM_OUTPUT = 0;
-            DSP_STOP_LED1
-            DSP_STOP_LED2
-        }
+        //        mainWhileLoopCounter1++;
+        //        mainWhileLoopCounter2=2992;
+        //        if (Motor_mode_START==1){
+        //            Axis_1.FLAG_ENABLE_PWM_OUTPUT = 1;
+        //            DSP_START_LED1
+        //            DSP_START_LED2
+        //            mainWhileLoopCounter1 = Axis_1.FLAG_ENABLE_PWM_OUTPUT +5;
+        //        }else if (Motor_mode_START==0){
+        //            Axis_1.FLAG_ENABLE_PWM_OUTPUT = 0;
+        //            DSP_STOP_LED1
+        //            DSP_STOP_LED2
+        //            mainWhileLoopCounter1 = Axis_1.FLAG_ENABLE_PWM_OUTPUT +5;
+        //        }
+        //        mainWhileLoopCounter1 = mainWhileLoopCounter2;
+
+        //        mainWhileLoopCounter3 += 1;
+        //        Axis_1.ID += 1;
+        //        mainWhileLoopCounter2 += 1;
 
         #if NUMBER_OF_DSP_CORES == 1
             single_core_dac();
         #endif
-
-
     }
 }
 
@@ -1454,6 +1463,12 @@ __interrupt void EPWM1ISR(void){
     EINT;                                 // Enable global interrupts by clearing INTM
 #endif
 
+    if (GpioDataRegs.GPCDAT.bit.GPIO75==1){
+        Axis_1.FLAG_ENABLE_PWM_OUTPUT = 1;
+    }else if (GpioDataRegs.GPCDAT.bit.GPIO75==0){
+        Axis_1.FLAG_ENABLE_PWM_OUTPUT = 0;
+    }
+
     /* Step 4. [ePWM] Execute EPWM ISR */
     // 只需要做一次的
     #if NUMBER_OF_DSP_CORES == 2
@@ -1537,8 +1552,6 @@ __interrupt void EPWM1ISR(void){
             CPU2_commu_error_counter++;
         }
     #endif
-
-
 
 
     // 对每一个CTRL都需要做一次的代码

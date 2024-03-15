@@ -80,7 +80,7 @@
         BOOL CurrentOVER_FLAG;
     };
     extern struct Trip_Variables trip;//trip flag
-    #define Motor_mode_START    GpioDataRegs.GPCDAT.bit.GPIO75    //DI Start Button
+    //#define Motor_mode_START    GpioDataRegs.GPCDAT.bit.GPIO75    //DI Start Button
     //#define Motor_mode_START    digital_virtual_button          //virtual DI Start Button
     int Motor_MODE_START(void);
     int Motor_MODE_STOP(void);
