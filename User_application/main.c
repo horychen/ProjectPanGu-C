@@ -282,17 +282,21 @@ int USE_3_CURRENT_SENSORS = TRUE;
 #define BOTH_LOOP_RUN 5
 int bool_TEMP = TRUE;
 int positionLoopType = HIP_LOOP_RUN; // SHANK_LOOP_RUN; //BOTH_LOOP_RUN;
-int  use_first_set_three_phase=2; //-1 for both motors
+int use_first_set_three_phase=2; //-1 for both motors
 
 REAL legBouncingSpeed = 50;
 REAL hipBouncingFreq = 10;
 REAL legBouncingIq = 2;
-REAL hipBouncingIq = 2;
+REAL hipBouncingIq = 1.5;
 int bool_use_SCI_encoder = TRUE;
 
 REAL target_position_cnt;
 REAL target_position_cnt_shank = 55000;
 REAL target_position_cnt_hip = 55000;
+
+#define VL_CL_DOWNSAMPLE 40
+Uint16 downSampleCounter = 0;
+
 
 void init_experiment_AD_gain_and_offset(){
     /* ADC OFFSET */
@@ -516,7 +520,7 @@ void main(void){
         Axis->Set_x_suspension_current_loop = FALSE;
         Axis->Set_y_suspension_current_loop = FALSE;
         Axis->Set_manual_rpm = 50.0;
-        Axis->Set_manual_current_iq = 1.0;
+        Axis->Set_manual_current_iq = 1.5;
         Axis->Set_manual_current_id = 0.0; // id = -1 A is the magic number to get more torque! cjh 2024-02-29
         Axis->Select_exp_operation = 0;    // 200; //202; //200; //101;
         //Axis->pFLAG_INVERTER_NONLINEARITY_COMPENSATION = &Axis->pCTRL->g->FLAG_INVERTER_NONLINEARITY_COMPENSATION;
@@ -1224,22 +1228,22 @@ REAL call_position_loop_controller(int positionLoopType){
                 if(bool_TEMP==TRUE){
                     Axis->flag_overwrite_theta_d = FALSE;
                     Axis->Set_current_loop = TRUE;
-                    if (position_count_CAN_ID0x01_fromCPU2 > 58000)
+                    if (position_count_CAN_ID0x01_fromCPU2 > 55000)
                     {
                         Axis->Set_manual_current_iq = hipBouncingIq;
                     }
-                    else if (position_count_CAN_ID0x01_fromCPU2 < 53000)
+                    else if (position_count_CAN_ID0x01_fromCPU2 < 49000)
                     {
                         Axis->Set_manual_current_iq = -hipBouncingIq;
                     }
                 }else{
                     Axis->flag_overwrite_theta_d = FALSE;
                     Axis->Set_current_loop = FALSE;
-                    if (position_count_CAN_ID0x01_fromCPU2 > 58000)
+                    if (position_count_CAN_ID0x01_fromCPU2 > 55000)
                     {
                         Axis->Set_manual_rpm = legBouncingSpeed;
                     }
-                    else if (position_count_CAN_ID0x01_fromCPU2 < 53000)
+                    else if (position_count_CAN_ID0x01_fromCPU2 < 49000)
                     {
                         Axis->Set_manual_rpm = -legBouncingSpeed;
                     }

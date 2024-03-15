@@ -96,6 +96,8 @@ typedef struct{
         int Set_x_suspension_current_loop;
         int Set_y_suspension_current_loop;
         REAL Set_manual_rpm;
+        REAL Prev_manual_rpm;
+        REAL rampRate_rpm;
         REAL Set_manual_current_id;
         REAL Set_manual_current_iq;
         REAL Set_manual_current_ix;
