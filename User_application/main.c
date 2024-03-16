@@ -5,7 +5,7 @@
 
 // 假设数据点数量已知
 #define HIP_SHANK_N 106
-REAL HIP_SHANK_FREQUENCY = 0.01;  // kHz = 1 ms
+REAL HIP_SHANK_FREQUENCY = 0.004;  // kHz = 1 ms
 
 REAL TEST_HIP_KP = 0.3;
 REAL TEST_SHANK_KP = 0.3;
@@ -280,9 +280,9 @@ int USE_3_CURRENT_SENSORS = TRUE;
 #define SHANK_LOOP_RUN 3
 #define HIP_LOOP_RUN 4
 #define BOTH_LOOP_RUN 5
-int bool_TEMP = TRUE;
-int positionLoopType = HIP_LOOP_RUN; // SHANK_LOOP_RUN; //BOTH_LOOP_RUN;
-int use_first_set_three_phase=2; //-1 for both motors
+int bool_TEMP = FALSE;
+int positionLoopType = TWOMOTOR_POSITION_CONTROL; // SHANK_LOOP_RUN; //BOTH_LOOP_RUN;
+int use_first_set_three_phase = -1; //-1 for both motors
 
 REAL legBouncingSpeed = 50;
 REAL hipBouncingFreq = 10;
@@ -535,7 +535,7 @@ void main(void){
 
         Axis->FLAG_ENABLE_PWM_OUTPUT = FALSE;
 
-        Axis->channels_preset = 1; // 9; // 101;    }
+        Axis->channels_preset = 2; // 9; // 101;    }
 
         Axis->pCTRL->enc->sum_qepPosCnt = 0;
         Axis->pCTRL->enc->cursor = 0;

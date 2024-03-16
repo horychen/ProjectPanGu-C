@@ -273,7 +273,7 @@
     #define SPEED_KI_CODE (SPEED_KI*SPEED_KP*VL_TS)
     #define SPEED_LOOP_LIMIT_NEWTON_METER (1.0*MOTOR_RATED_TORQUE)
     #define SPEED_LOOP_LIMIT_AMPERE       (1.0*1.414*MOTOR_RATED_CURRENT_RMS)
-    #define POS_LOOP_LIMIT_SPEED          (0.1*MOTOR_RATED_SPEED_RPM * MOTOR_NUMBER_OF_POLE_PAIRS/60.0*2*M_PI)
+    #define POS_LOOP_LIMIT_SPEED          (0.15*MOTOR_RATED_SPEED_RPM * MOTOR_NUMBER_OF_POLE_PAIRS/60.0*2*M_PI)
     // increase to 3 times because of the bug in dynamics clamping
 
 /* Encoder QEP TODO: should read from excel */
