@@ -281,8 +281,8 @@ int USE_3_CURRENT_SENSORS = TRUE;
 #define HIP_LOOP_RUN 4
 #define BOTH_LOOP_RUN 5
 int bool_TEMP = FALSE;
-int positionLoopType = TWOMOTOR_POSITION_CONTROL; // SHANK_LOOP_RUN; //BOTH_LOOP_RUN;
-int use_first_set_three_phase = -1; //-1 for both motors
+int positionLoopType = SHANK_LOOP_RUN; // SHANK_LOOP_RUN; //BOTH_LOOP_RUN;
+int use_first_set_three_phase = 1; //-1 for both motors
 
 REAL legBouncingSpeed = 50;
 REAL hipBouncingFreq = 10;
@@ -535,7 +535,7 @@ void main(void){
 
         Axis->FLAG_ENABLE_PWM_OUTPUT = FALSE;
 
-        Axis->channels_preset = 2; // 9; // 101;    }
+        Axis->channels_preset = 1; // 9; // 101;    }
 
         Axis->pCTRL->enc->sum_qepPosCnt = 0;
         Axis->pCTRL->enc->cursor = 0;
@@ -1518,8 +1518,8 @@ __interrupt void EPWM1ISR(void){
             counter_missing_position_measurement = 0;
             position_count_SCI_shank_fromCPU2 = Read.SCI_shank_position_count;
             position_count_SCI_hip_fromCPU2 = Read.SCI_hip_position_count;
-            position_count_CAN_ID0x01_fromCPU2 = Read.CAN_position_count_ID0x01;
-            position_count_CAN_ID0x03_fromCPU2 = Read.CAN_position_count_ID0x03;
+//            position_count_CAN_ID0x01_fromCPU2 = Read.CAN_position_count_ID0x01;
+//            position_count_CAN_ID0x03_fromCPU2 = Read.CAN_position_count_ID0x03;
             IPCRtoLFlagAcknowledge (IPC_FLAG10);
 
             // CAN encoder convert to motor built-in encoder
@@ -1550,6 +1550,15 @@ __interrupt void EPWM1ISR(void){
         else
         {
             CPU2_commu_error_counter++;
+        }
+
+        if(IPCRtoLFlagBusy(IPC_FLAG11) == 1) // if flag
+        {
+            max_counter_missing_position_measurement = counter_missing_position_measurement;
+            counter_missing_position_measurement = 0;
+            position_count_CAN_ID0x01_fromCPU2 = Read.CAN_position_count_ID0x01;
+            position_count_CAN_ID0x03_fromCPU2 = Read.CAN_position_count_ID0x03;
+            IPCRtoLFlagAcknowledge (IPC_FLAG11);
         }
     #endif
 
