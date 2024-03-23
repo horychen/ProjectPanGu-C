@@ -351,6 +351,34 @@ void init_experiment_AD_gain_and_offset(){
 //int64 mainWhileLoopCounter2 = 0;
 
 //int  FLAG_ENABLE_PWM_OUTPUT = FALSE;
+
+// CLA
+// header files
+#include "DCLCLA.h"
+#include "CLA_shared.h"
+#include "F2837xD_Cla.h"                // Control Law Accelerator Registers
+#include "F2837xD_Cla_defines.h"              // Macros used for CLA examples.
+
+// function prototypes
+//interrupt void control_Isr(void);
+
+// global  variables
+long IdleLoopCount = 0;
+long IsrCount = 0;
+float Duty;
+
+// shared variables
+#pragma DATA_SECTION(rk, "CpuToCla1MsgRAM")
+#pragma DATA_SECTION(yk, "CpuToCla1MsgRAM")
+#pragma DATA_SECTION(uk, "Cla1ToCpuMsgRAM")
+float rk = 0.25f;
+float yk;
+float uk;
+
+#pragma DATA_SECTION(pi1, "Cla1DataRam1")
+DCL_PI_CLA pi1 = PI_CLA_DEFAULTS;
+
+// CLA end
 void main(void){
 
     // CYM Codes
@@ -538,7 +566,7 @@ void main(void){
 
         Axis->FLAG_ENABLE_PWM_OUTPUT = FALSE;
 
-        Axis->channels_preset = 1; // 9; // 101;    }
+        Axis->channels_preset = 3; // 9; // 101;    }
 
         Axis->pCTRL->enc->sum_qepPosCnt = 0;
         Axis->pCTRL->enc->cursor = 0;
@@ -614,6 +642,41 @@ void main(void){
         IPCLtoRFlagSet(IPC_FLAG7);
     #endif
 
+    // 7. CLA
+    /* initialise PI controller */
+    pi1.Kp = 5.5f;
+    pi1.Ki = 0.015f;
+    pi1.i10 = 0.0f;
+    pi1.i6 = 1.0f;
+    pi1.Umax = 10.2f;
+    pi1.Umin = -10.2f;
+
+    /* compute CLA task vectors */
+    EALLOW;
+    Cla1Regs.MVECT1 = (Uint16)((Uint32)&Cla1Task1 -(Uint32)&Cla1Prog_Start);
+    Cla1Regs.MVECT2 = (Uint16)((Uint32)&Cla1Task2 -(Uint32)&Cla1Prog_Start);
+    Cla1Regs.MVECT3 = (Uint16)((Uint32)&Cla1Task3 -(Uint32)&Cla1Prog_Start);
+    Cla1Regs.MVECT4 = (Uint16)((Uint32)&Cla1Task4 -(Uint32)&Cla1Prog_Start);
+    Cla1Regs.MVECT5 = (Uint16)((Uint32)&Cla1Task5 -(Uint32)&Cla1Prog_Start);
+    Cla1Regs.MVECT6 = (Uint16)((Uint32)&Cla1Task6 -(Uint32)&Cla1Prog_Start);
+    Cla1Regs.MVECT7 = (Uint16)((Uint32)&Cla1Task7 -(Uint32)&Cla1Prog_Start);
+    Cla1Regs.MVECT8 = (Uint16)((Uint32)&Cla1Task8 -(Uint32)&Cla1Prog_Start);
+
+    /* CLA task triggers */
+    Cla1Regs.MIER.all = 0x00FF;
+
+     /* Switch the CLA program space to the CLA and enable software forcing
+      * Also switch over CLA data ram 0,1 and 2
+     * CAUTION: The RAMxCPUE bits can only be enabled by writing to the register
+     * and not the individual bit field. Furthermore, the status of these bitfields
+     * is not reflected in either the watch or register views - they always read as
+     * zeros. This is a known bug and the user is advised to test CPU accessibilty
+     * first before proceeding
+         */
+    Cla1Regs.MCTL.bit.IACKE = 1;
+    EDIS;
+
+
 
     #if(FALSE)
         {
@@ -653,7 +716,7 @@ void main(void){
         }
     #endif
 
-    // 7. Main loop
+    // 8. Main loop
     while(1){
         //        mainWhileLoopCounter1++;
         //        mainWhileLoopCounter2=2992;
