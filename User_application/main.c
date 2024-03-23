@@ -7,21 +7,23 @@
 #define HIP_SHANK_N 106
 REAL HIP_SHANK_FREQUENCY = 0.004;  // kHz = 1 ms
 
-REAL TEST_HIP_KP = 0.3;
+REAL TEST_HIP_KP = 0.18;
 REAL TEST_SHANK_KP = 0.3;
+REAL TEST_HIP_SPD_KP = 0.005;
+REAL TEST_HIP_SPD_KI = 5e-6;
 
 #define HIP_TYPE 0
 #define SHANK_TYPE 1
 
 #define HIP_MIN 0.04
-#define HIP_MAX -0.8 // 为什么这个是负的？而且MAX比MIN小？
-#define CAN01_MIN 48500		//51943
-#define CAN01_MAX 61000		//61584
+#define HIP_MAX -0.42 // 为什么这个是负的？而且MAX比MIN小？
+#define CAN01_MIN 34000//96000//89000		//51943 25000&40000 12000 34000
+#define CAN01_MAX 40000//10300//101000		//61584
 
 #define SHANK_MIN -0.8855
 #define SHANK_MAX 0.25
-#define CAN03_MIN 31000
-#define CAN03_MAX 58000
+#define CAN03_MIN 12000//25000
+#define CAN03_MAX 25000//40000
 
 #define CAN_QMAX 131072
 
@@ -281,8 +283,8 @@ int USE_3_CURRENT_SENSORS = TRUE;
 #define HIP_LOOP_RUN 4
 #define BOTH_LOOP_RUN 5
 int bool_TEMP = FALSE;
-int positionLoopType = SHANK_LOOP_RUN; // SHANK_LOOP_RUN; //BOTH_LOOP_RUN;
-int use_first_set_three_phase = 1; //-1 for both motors
+int positionLoopType = 1;//TWOMOTOR_POSITION_CONTROL; //SHANK_LOOP_RUN; // SHANK_LOOP_RUN; //BOTH_LOOP_RUN;
+int use_first_set_three_phase = -1; //-1 for both motors
 
 REAL legBouncingSpeed = 50;
 REAL hipBouncingFreq = 10;
@@ -426,7 +428,7 @@ void main(void){
         //Allows CPU01 bootrom to take control of clock
         //configuration registers
         ClkCfgRegs.CLKSEM.all = 0xA5A50000;
-        ClkCfgRegs.LOSPCP.all = 0x0001; //LSPCLK=100MHz
+        ClkCfgRegs.LOSPCP.all = 0x0001; //LSPCLK=100MHz table 3-173
         EDIS;
 
         // 同步！！！！！
@@ -436,7 +438,8 @@ void main(void){
         //InitSpi(); // this is moved to CPU02
 
         // =========FOR EUREKA===========
-        // https://www.ti.com/cn/lit/ds/symlink/tms320f28377d.pdf Chapter 7.2.1
+        // https://www.ti.com/lit/ug/spruhm8j/spruhm8j.pdf?ts=1710763002632&ref_url=https%253A%252F%252Fwww.ti.com%252Fproduct%252FTMS320F28377D%253Futm_source%253Dgoogle%2526utm_medium%253Dcpc%2526utm_campaign%253Depd-c2x-null-44700045336317350_prodfolderdynamic-cpc-pf-google-wwe_int%2526utm_content%253Dprodfolddynamic%2526ds_k%253DDYNAMIC+SEARCH+ADS%2526DCM%253Dyes%2526gad_source%253D1%2526gclid%253DCjwKCAjwzN-vBhAkEiwAYiO7oBh2RIh8aEZiiEHzGLlyxsdf34XwLyRi-Ci53QGwm9calxyVXTdsEBoC7IwQAvD_BwE%2526gclsrc%253Daw.ds
+        // Chapter 8.7.1
         //GPIO62 - CANRXA
         GPIO_SetupPinMux(62, GPIO_MUX_CPU2, 6);
         GPIO_SetupPinOptions(62, GPIO_INPUT, GPIO_ASYNC);
@@ -590,6 +593,7 @@ void main(void){
         #endif
     EINT;   // Enable Global __interrupt INTM
     ERTM;   // Enable Global realtime __interrupt DBGM
+
 
     // 6. Pre main loop
     DSP_STOP_LED1
@@ -1098,10 +1102,15 @@ void measurement(){
 }
 
 REAL call_position_loop_controller(int positionLoopType){
+    CTRL_2.S->spd->Kp = TEST_HIP_SPD_KP;
+    CTRL_2.S->spd->Ki = TEST_HIP_SPD_KI;
+
+    CTRL_1.S->pos->Kp = TEST_SHANK_KP;
+    CTRL_2.S->pos->Kp = TEST_HIP_KP;
+
     if (positionLoopType == TWOMOTOR_POSITION_CONTROL)
     {
-        CTRL_1.S->pos->Kp = TEST_SHANK_KP;
-        CTRL_2.S->pos->Kp = TEST_HIP_KP;
+
         Axis->flag_overwrite_theta_d = FALSE;
         Axis->Set_current_loop = FALSE;
         if (axisCnt == 0)
@@ -1217,11 +1226,11 @@ REAL call_position_loop_controller(int positionLoopType){
             //            }
 
             Axis->Set_current_loop = FALSE;
-            if (position_count_CAN_ID0x03_fromCPU2 > 62000)
+            if (position_count_CAN_ID0x03_fromCPU2 > CAN03_MAX)
             {
                 Axis->Set_manual_rpm = -legBouncingSpeed;
             }
-            else if (position_count_CAN_ID0x03_fromCPU2 < 33000)
+            else if (position_count_CAN_ID0x03_fromCPU2 < CAN03_MIN)
             {
                 Axis->Set_manual_rpm = legBouncingSpeed;
             }
@@ -1238,22 +1247,22 @@ REAL call_position_loop_controller(int positionLoopType){
                 if(bool_TEMP==TRUE){
                     Axis->flag_overwrite_theta_d = FALSE;
                     Axis->Set_current_loop = TRUE;
-                    if (position_count_CAN_ID0x01_fromCPU2 > 55000)
+                    if (position_count_CAN_ID0x01_fromCPU2 > CAN01_MAX)
                     {
                         Axis->Set_manual_current_iq = hipBouncingIq;
                     }
-                    else if (position_count_CAN_ID0x01_fromCPU2 < 49000)
+                    else if (position_count_CAN_ID0x01_fromCPU2 < CAN01_MIN)
                     {
                         Axis->Set_manual_current_iq = -hipBouncingIq;
                     }
                 }else{
                     Axis->flag_overwrite_theta_d = FALSE;
                     Axis->Set_current_loop = FALSE;
-                    if (position_count_CAN_ID0x01_fromCPU2 > 55000)
+                    if (position_count_CAN_ID0x01_fromCPU2 > CAN01_MAX)
                     {
                         Axis->Set_manual_rpm = legBouncingSpeed;
                     }
-                    else if (position_count_CAN_ID0x01_fromCPU2 < 49000)
+                    else if (position_count_CAN_ID0x01_fromCPU2 < CAN01_MIN)
                     {
                         Axis->Set_manual_rpm = -legBouncingSpeed;
                     }
@@ -1295,11 +1304,11 @@ REAL call_position_loop_controller(int positionLoopType){
             // CAN03越小，小腿越收起，legBouncingIq, rpm为负数，小腿收起
             Axis_1.flag_overwrite_theta_d = FALSE;
             Axis_1.Set_current_loop = TRUE;
-            if (position_count_CAN_ID0x03_fromCPU2 > 56000)
+            if (position_count_CAN_ID0x03_fromCPU2 > CAN03_MAX)
             {
                 Axis_1.Set_manual_current_iq = -legBouncingIq; // CAN03太大，小腿伸出过头，需要iq为负数，收起小腿
             }
-            else if (position_count_CAN_ID0x03_fromCPU2 < 35000)
+            else if (position_count_CAN_ID0x03_fromCPU2 < CAN03_MIN)
             {
                 Axis_1.Set_manual_current_iq = legBouncingIq;
             }
@@ -1311,11 +1320,11 @@ REAL call_position_loop_controller(int positionLoopType){
             // CAN01越大,大腿越放下,hipBouncingIq为负数，大腿放下
             Axis_2.flag_overwrite_theta_d = FALSE;
             Axis_2.Set_current_loop = TRUE;
-            if (position_count_CAN_ID0x01_fromCPU2 > 58000)
+            if (position_count_CAN_ID0x01_fromCPU2 > CAN01_MAX)
             {
                 Axis_2.Set_manual_current_iq = hipBouncingIq; // CAN01太大,大腿放下过多,需要iq为正数,抬起大腿
             }
-            else if (position_count_CAN_ID0x01_fromCPU2 < 51000)
+            else if (position_count_CAN_ID0x01_fromCPU2 < CAN01_MIN)
             {
                 Axis_2.Set_manual_current_iq = -hipBouncingIq;
             }

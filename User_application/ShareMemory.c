@@ -88,8 +88,8 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
 //    (*Axis4DAC).dac_watch[21] = marino.xOmg * ELEC_RAD_PER_SEC_2_RPM *0.002;
     (*Axis4DAC).dac_watch[21] = CTRL_1.S->pos->Ref *1.52587890625e-05; /// 131072.0 *2;
     (*Axis4DAC).dac_watch[22] = CTRL_2.S->pos->Ref *1.52587890625e-05; /// 131072.0 *2;
-    (*Axis4DAC).dac_watch[23] = CTRL_1.I->omg_elec  * ELEC_RAD_PER_SEC_2_RPM *0.002;
-    (*Axis4DAC).dac_watch[24] = CTRL_2.I->omg_elec  * ELEC_RAD_PER_SEC_2_RPM *0.002;
+    (*Axis4DAC).dac_watch[23] = CTRL_2.S->spd->Ref *0.0001; // * ELEC_RAD_PER_SEC_2_RPM *0.002;
+    (*Axis4DAC).dac_watch[24] = CTRL_2.S->spd->Fbk *0.0001; //I->omg_elec  * ELEC_RAD_PER_SEC_2_RPM *0.002;
     (*Axis4DAC).dac_watch[25] = CTRL_1.I->idq_cmd[1] * 0.1;
     (*Axis4DAC).dac_watch[26] = CTRL_2.I->idq_cmd[1] * 0.1;
 
@@ -117,10 +117,10 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
     (*Axis4DAC).dac_watch[40] = (*CTRL).I->idq[0]*0.1;
     (*Axis4DAC).dac_watch[41] = (*CTRL).I->idq[1]*0.1;
 
-    (*Axis4DAC).dac_watch[42] = CTRL_1.S->pos->Ref *1.52587890625e-05; /// 131072.0 *2;
-    (*Axis4DAC).dac_watch[43] = CTRL_1.S->pos->Fbk *1.52587890625e-05; /// 131072.0 *2;
-    (*Axis4DAC).dac_watch[44] = CTRL_2.S->pos->Ref *1.52587890625e-05; /// 131072.0 *2;
-    (*Axis4DAC).dac_watch[45] = CTRL_2.S->pos->Fbk *1.52587890625e-05; /// 131072.0 *2;
+    (*Axis4DAC).dac_watch[42] = CTRL_1.S->pos->Ref *7.62939453125e-06; /// 131072.0 ;
+    (*Axis4DAC).dac_watch[43] = CTRL_1.S->pos->Fbk *7.62939453125e-06; /// 131072.0 ;
+    (*Axis4DAC).dac_watch[44] = CTRL_2.S->pos->Ref *7.62939453125e-06; /// 131072.0 ;
+    (*Axis4DAC).dac_watch[45] = CTRL_2.S->pos->Fbk *7.62939453125e-06; /// 131072.0 ;
 
     (*Axis4DAC).dac_watch[49] = CTRL_1.I->omg_elec  * ELEC_RAD_PER_SEC_2_RPM *0.002;
     (*Axis4DAC).dac_watch[50] = nsoaf.xOmg * ELEC_RAD_PER_SEC_2_RPM *0.002;
@@ -137,26 +137,26 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
         (*Axis4DAC).channels[6] = 21;
         (*Axis4DAC).channels[7] = 22;
     }else if((*Axis4DAC).channels_preset==2){(*Axis4DAC).channels_preset=0;
-        (*Axis4DAC).channels[0] = 42;//49; // 42; //12;
-        (*Axis4DAC).channels[1] = 43;//50; // 43; //4; //13;
-        (*Axis4DAC).channels[2] = 44; // 44; //28;
-        (*Axis4DAC).channels[3] = 45;//52; // 45;
-        (*Axis4DAC).channels[4] = 21;
-        (*Axis4DAC).channels[5] = 22;
+        (*Axis4DAC).channels[0] = 26;//49; // 42; //12;
+        (*Axis4DAC).channels[1] = 41;//50; // 43; //4; //13;
+        (*Axis4DAC).channels[2] = 23 ; // 44; //28;
+        (*Axis4DAC).channels[3] = 24;//52; // 45;
+        (*Axis4DAC).channels[4] = 42;
+        (*Axis4DAC).channels[5] = 43;
         (*Axis4DAC).channels[6] = 21;
         (*Axis4DAC).channels[7] = 22;
     }else if((*Axis4DAC).channels_preset==3){(*Axis4DAC).channels_preset=0;
-        (*Axis4DAC).channels[0] = 42; //12;
-        (*Axis4DAC).channels[1] = 43; //4; //13;
-        (*Axis4DAC).channels[2] = 44; //28;
-        (*Axis4DAC).channels[3] = 45;
+        (*Axis4DAC).channels[0] = 44;//42; //12;
+        (*Axis4DAC).channels[1] = 45;//43; //4; //13;
+        (*Axis4DAC).channels[2] = 42; //28;
+        (*Axis4DAC).channels[3] = 43;
         (*Axis4DAC).channels[4] = 21;
         (*Axis4DAC).channels[5] = 22;
         (*Axis4DAC).channels[6] = 41;
         (*Axis4DAC).channels[7] = 41;
     }else if((*Axis4DAC).channels_preset==4){(*Axis4DAC).channels_preset=0;
-        (*Axis4DAC).channels[0] = 0;
-        (*Axis4DAC).channels[1] = 1;
+        (*Axis4DAC).channels[0] = 42;
+        (*Axis4DAC).channels[1] = 43;
         (*Axis4DAC).channels[2] = 2;
         (*Axis4DAC).channels[3] = 4;
         (*Axis4DAC).channels[4] = 4;
