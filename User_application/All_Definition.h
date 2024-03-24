@@ -1,8 +1,43 @@
 #ifndef ALL_DEFINITATION_H
 #define ALL_DEFINITATION_H
 
+//#include <stdio.h>
+//#include <stdlib.h>
+//#include <math.h>
 #include "math.h"
 //#include "IQmathLib.h"
+
+/**/
+// CLA
+// header files
+#include "DCLCLA.h"
+#include "CLA_shared.h"
+#include "F2837xD_Cla.h"                // Control Law Accelerator Registers
+#include "F2837xD_Cla_defines.h"              // Macros used for CLA examples.
+
+// function prototypes
+//interrupt void control_Isr(void);
+
+// global  variables
+long IdleLoopCount = 0;
+long IsrCount = 0;
+float Duty;
+
+// shared variables
+#pragma DATA_SECTION(rk, "CpuToCla1MsgRAM")
+#pragma DATA_SECTION(yk, "CpuToCla1MsgRAM")
+#pragma DATA_SECTION(uk, "Cla1ToCpuMsgRAM")
+float rk = 0.25f;
+float yk;
+float uk;
+
+#pragma DATA_SECTION(pi1, "Cla1DataRam1")
+DCL_PI_CLA pi1 = PI_CLA_DEFAULTS;
+
+// CLA end
+
+
+
 /* DSP system Configuration------------------------------------------------------------------*/
     #include "F2837xD_Cla_typedefs.h"  // F2837xD CLA Type definitions
     #include "F2837xD_device.h"        // F2837xD Headerfile Include File
