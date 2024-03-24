@@ -8,10 +8,10 @@
 /* Initial Position Detection needs position update rate is at 1/CL_TS. */
 void doIPD(){
     // 帕克变换（使用反馈位置）
-    (*CTRL).S->cosT = cos(ENC.excitation_angle_deg/180.0*M_PI); // (*CTRL).I->theta_d_elec
-    (*CTRL).S->sinT = sin(ENC.excitation_angle_deg/180.0*M_PI); // (*CTRL).I->theta_d_elec
-    (*CTRL).I->idq[0] = AB2M((*CTRL).I->iab[0], (*CTRL).I->iab[1], (*CTRL).S->cosT, (*CTRL).S->sinT);
-    (*CTRL).I->idq[1] = AB2T((*CTRL).I->iab[0], (*CTRL).I->iab[1], (*CTRL).S->cosT, (*CTRL).S->sinT);
+    (*CTRL).S->cosT = cos(ENC.excitation_angle_deg/180.0*M_PI); // (*CTRL).i->theta_d_elec
+    (*CTRL).S->sinT = sin(ENC.excitation_angle_deg/180.0*M_PI); // (*CTRL).i->theta_d_elec
+    (*CTRL).i->idq[0] = AB2M((*CTRL).i->iab[0], (*CTRL).i->iab[1], (*CTRL).S->cosT, (*CTRL).S->sinT);
+    (*CTRL).i->idq[1] = AB2T((*CTRL).i->iab[0], (*CTRL).i->iab[1], (*CTRL).S->cosT, (*CTRL).S->sinT);
 
     #define CURRENT_COMMAND_VALUE (0.5*MOTOR_RATED_CURRENT_RMS)
 
@@ -26,9 +26,9 @@ void doIPD(){
             number_of_excitation_times = 1;
         }
         // identify the offset angle (fast)
-        if((*CTRL).I->theta_d_elec > (*CTRL).I->theta_d_elec_previous){
+        if((*CTRL).i->theta_d_elec > (*CTRL).i->theta_d_elec_previous){
             ENC.excitation_angle_deg -= CL_TS*3600;
-        }else if((*CTRL).I->theta_d_elec < (*CTRL).I->theta_d_elec_previous){
+        }else if((*CTRL).i->theta_d_elec < (*CTRL).i->theta_d_elec_previous){
             ENC.excitation_angle_deg += CL_TS*3600;
         }
     /* Stage 2 */
@@ -39,18 +39,18 @@ void doIPD(){
             number_of_excitation_times = 2;
         }
         // identify the offset angle (medium fast)
-        if((*CTRL).I->theta_d_elec > (*CTRL).I->theta_d_elec_previous){
+        if((*CTRL).i->theta_d_elec > (*CTRL).i->theta_d_elec_previous){
             ENC.excitation_angle_deg -= CL_TS*300;
-        }else if((*CTRL).I->theta_d_elec < (*CTRL).I->theta_d_elec_previous){
+        }else if((*CTRL).i->theta_d_elec < (*CTRL).i->theta_d_elec_previous){
             ENC.excitation_angle_deg += CL_TS*300;
         }
     /* Stage 3 */
     }else if(number_of_excitation_times==2){
         pid1_id.Ref = CURRENT_COMMAND_VALUE;
         // identify the offset angle (slow)
-        if((*CTRL).I->theta_d_elec > (*CTRL).I->theta_d_elec_previous){
+        if((*CTRL).i->theta_d_elec > (*CTRL).i->theta_d_elec_previous){
             ENC.excitation_angle_deg -= CL_TS*100;
-        }else if((*CTRL).I->theta_d_elec < (*CTRL).I->theta_d_elec_previous){
+        }else if((*CTRL).i->theta_d_elec < (*CTRL).i->theta_d_elec_previous){
             ENC.excitation_angle_deg += CL_TS*100;
         }
         static Uint32 count=0;
@@ -62,39 +62,39 @@ void doIPD(){
         pid1_id.Ref = CURRENT_COMMAND_VALUE;
         static Uint32 count=0;
         if(count++>2000){
-            ENC.theta_d_offset = -((*CTRL).I->theta_d_elec - ENC.excitation_angle_deg/180.0*M_PI);
+            ENC.theta_d_offset = -((*CTRL).i->theta_d_elec - ENC.excitation_angle_deg/180.0*M_PI);
             (*CTRL).S->IPD_Done = TRUE;
             pid1_id.I_Term = 0.0; //
             pid1_iq.I_Term = 0.0; //
-            (*CTRL).O->uab_cmd[0] = 0.0;
-            (*CTRL).O->uab_cmd[1] = 0.0;
+            (*CTRL).o->uab_cmd[0] = 0.0;
+            (*CTRL).o->uab_cmd[1] = 0.0;
             return;
         }
     }
 
-    pid1_id.Fbk = (*CTRL).I->idq[0];
+    pid1_id.Fbk = (*CTRL).i->idq[0];
     pid1_id.calc(&pid1_id);
-    (*CTRL).O->uab_cmd[0] = MT2A(pid1_id.Out, 0.0, (*CTRL).S->cosT, (*CTRL).S->sinT);
-    (*CTRL).O->uab_cmd[1] = MT2B(pid1_id.Out, 0.0, (*CTRL).S->cosT, (*CTRL).S->sinT);
+    (*CTRL).o->uab_cmd[0] = MT2A(pid1_id.Out, 0.0, (*CTRL).S->cosT, (*CTRL).S->sinT);
+    (*CTRL).o->uab_cmd[1] = MT2B(pid1_id.Out, 0.0, (*CTRL).S->cosT, (*CTRL).S->sinT);
 }
 
 /* Phase Sequence Detection */
 void doPSD(){
     // 帕克变换（使用反馈位置）
-    (*CTRL).S->cosT = cos(PSD.theta_excitation); // (*CTRL).I->theta_d_elec
-    (*CTRL).S->sinT = sin(PSD.theta_excitation); // (*CTRL).I->theta_d_elec
-    (*CTRL).I->idq[0] = AB2M((*CTRL).I->iab[0], (*CTRL).I->iab[1], (*CTRL).S->cosT, (*CTRL).S->sinT);
-    (*CTRL).I->idq[1] = AB2T((*CTRL).I->iab[0], (*CTRL).I->iab[1], (*CTRL).S->cosT, (*CTRL).S->sinT);
+    (*CTRL).S->cosT = cos(PSD.theta_excitation); // (*CTRL).i->theta_d_elec
+    (*CTRL).S->sinT = sin(PSD.theta_excitation); // (*CTRL).i->theta_d_elec
+    (*CTRL).i->idq[0] = AB2M((*CTRL).i->iab[0], (*CTRL).i->iab[1], (*CTRL).S->cosT, (*CTRL).S->sinT);
+    (*CTRL).i->idq[1] = AB2T((*CTRL).i->iab[0], (*CTRL).i->iab[1], (*CTRL).S->cosT, (*CTRL).S->sinT);
 
     #define CURRENT_COMMAND_VALUE (0.5*MOTOR_RATED_CURRENT_RMS)
 
     pid1_id.Ref = CURRENT_COMMAND_VALUE;
-    pid1_id.Fbk = (*CTRL).I->idq[0];
+    pid1_id.Fbk = (*CTRL).i->idq[0];
     pid1_id.calc(&pid1_id);
-    (*CTRL).O->uab_cmd[0] = MT2A(pid1_id.Out, 0.0, (*CTRL).S->cosT, (*CTRL).S->sinT);
-    (*CTRL).O->uab_cmd[1] = MT2B(pid1_id.Out, 0.0, (*CTRL).S->cosT, (*CTRL).S->sinT);
-    (*CTRL).O->uab_cmd_to_inverter[0] = (*CTRL).O->uab_cmd[0];
-    (*CTRL).O->uab_cmd_to_inverter[1] = (*CTRL).O->uab_cmd[1];
+    (*CTRL).o->uab_cmd[0] = MT2A(pid1_id.Out, 0.0, (*CTRL).S->cosT, (*CTRL).S->sinT);
+    (*CTRL).o->uab_cmd[1] = MT2B(pid1_id.Out, 0.0, (*CTRL).S->cosT, (*CTRL).S->sinT);
+    (*CTRL).o->uab_cmd_to_inverter[0] = (*CTRL).o->uab_cmd[0];
+    (*CTRL).o->uab_cmd_to_inverter[1] = (*CTRL).o->uab_cmd[1];
 
     if((*CTRL).timebase>2.0){
         (*CTRL).S->PSD_Done = TRUE;
@@ -117,7 +117,7 @@ void doPSD(){
 
         // 转到中途的时候，在开始反转之前，赶快判断一下旋转的方向
         if(fabs((*CTRL).timebase-1.49)<CL_TS){
-            if( (*CTRL).I->theta_d_elec > PSD.theta_d_elec_entered)
+            if( (*CTRL).i->theta_d_elec > PSD.theta_d_elec_entered)
                 PSD.direction = 1;
             else{
                 PSD.direction = -1;
@@ -136,8 +136,8 @@ void commissioning(){
         doPSD();
         return;
     // }else{
-    //     (*CTRL).O->uab_cmd_to_inverter[0] = 0;
-    //     (*CTRL).O->uab_cmd_to_inverter[1] = 0;
+    //     (*CTRL).o->uab_cmd_to_inverter[0] = 0;
+    //     (*CTRL).o->uab_cmd_to_inverter[1] = 0;
     }
 
     /* IPD */
@@ -149,10 +149,10 @@ void commissioning(){
 
     /* SC */
     // 帕克变换（使用反馈位置）
-    (*CTRL).S->cosT = cos((*CTRL).I->theta_d_elec); // (*CTRL).I->theta_d_elec
-    (*CTRL).S->sinT = sin((*CTRL).I->theta_d_elec); // (*CTRL).I->theta_d_elec
-    (*CTRL).I->idq[0] = AB2M((*CTRL).I->iab[0], (*CTRL).I->iab[1], (*CTRL).S->cosT, (*CTRL).S->sinT);
-    (*CTRL).I->idq[1] = AB2T((*CTRL).I->iab[0], (*CTRL).I->iab[1], (*CTRL).S->cosT, (*CTRL).S->sinT);
+    (*CTRL).S->cosT = cos((*CTRL).i->theta_d_elec); // (*CTRL).i->theta_d_elec
+    (*CTRL).S->sinT = sin((*CTRL).i->theta_d_elec); // (*CTRL).i->theta_d_elec
+    (*CTRL).i->idq[0] = AB2M((*CTRL).i->iab[0], (*CTRL).i->iab[1], (*CTRL).S->cosT, (*CTRL).S->sinT);
+    (*CTRL).i->idq[1] = AB2T((*CTRL).i->iab[0], (*CTRL).i->iab[1], (*CTRL).S->cosT, (*CTRL).S->sinT);
     // 参数自整定
     StepByStepCommissioning();
     inverter_voltage_command(0);
@@ -171,8 +171,8 @@ int16 bool_VL_tuned = FALSE;
 int16 bool_PL_tuned = FALSE;
 
 
-#define UD_OUTPUT (*CTRL).O->uab_cmd[0]
-#define UQ_OUTPUT (*CTRL).O->uab_cmd[1]
+#define UD_OUTPUT (*CTRL).o->uab_cmd[0]
+#define UQ_OUTPUT (*CTRL).o->uab_cmd[1]
 
 
 // 自整定初始化
@@ -498,15 +498,15 @@ void COMM_resistanceId_v2(REAL id_fb, REAL iq_fb){
         UQ_OUTPUT = REGULATOR.Out;
 
         // for ParkSul2012
-        (*CTRL).I->idq_cmd[0] = 0.0;
-        (*CTRL).I->idq_cmd[1] = REGULATOR.Ref;
+        (*CTRL).i->idq_cmd[0] = 0.0;
+        (*CTRL).i->idq_cmd[1] = REGULATOR.Ref;
     #else
         UD_OUTPUT = REGULATOR.Out;
         UQ_OUTPUT = 0.0;
 
         // for ParkSul2012
-        (*CTRL).I->idq_cmd[0] = REGULATOR.Ref;
-        (*CTRL).I->idq_cmd[1] = 0.0;
+        (*CTRL).i->idq_cmd[0] = REGULATOR.Ref;
+        (*CTRL).i->idq_cmd[1] = 0.0;
     #endif
 
     // collect steady state data
@@ -524,7 +524,7 @@ void COMM_resistanceId_v2(REAL id_fb, REAL iq_fb){
             COMM.i_phase_data_R1[COMM.i] = COMM.current_sum/(REAL)COMM.counterSS * -SIN_DASH_2PI_SLASH_3;
             COMM.v_phase_data_R1[COMM.i] = COMM.voltage_sum/(REAL)COMM.counterSS * -SIN_DASH_2PI_SLASH_3;
             #if PC_SIMULATION
-                printf("I=%f, U=%f\n", COMM.i_phase_data_R1[COMM.i], COMM.v_phase_data_R1[COMM.i]);
+                printf("i=%f, U=%f\n", COMM.i_phase_data_R1[COMM.i], COMM.v_phase_data_R1[COMM.i]);
             #endif
             COMM.bool_collecting = FALSE;
             ++COMM.i;
@@ -922,7 +922,7 @@ void COMM_PMFluxId(REAL id_fb, REAL iq_fb, REAL omg_elec_fb){
     //     rpm_speed_command = 5;
     // }
 
-    (*CTRL).I->cmd_speed_rpm = rpm_speed_command;
+    (*CTRL).i->cmd_speed_rpm = rpm_speed_command;
     REAL error = rpm_speed_command*RPM_2_ELEC_RAD_PER_SEC - omg_elec_fb;
     // (*CTRL).speed_ctrl_err = error;
     // printf("%g: %g\n", (*CTRL).timebase, error);
@@ -1114,8 +1114,8 @@ void COMM_inertiaId(REAL id_fb, REAL iq_fb, REAL cosPark, REAL sinPark, REAL omg
         if(comm_vc_count++ == SPEED_LOOP_CEILING){
             comm_vc_count = 0;
 
-            (*CTRL).I->cmd_speed_rpm = SPEED_COMMAND_BIAS+SPEED_COMMAND_RANGE*sin(2*M_PI*TEST_SIGNAL_FREQUENCY*(*CTRL).timebase);
-            pid1_spd.Ref = (*CTRL).I->cmd_speed_rpm*RPM_2_ELEC_RAD_PER_SEC;
+            (*CTRL).i->cmd_speed_rpm = SPEED_COMMAND_BIAS+SPEED_COMMAND_RANGE*sin(2*M_PI*TEST_SIGNAL_FREQUENCY*(*CTRL).timebase);
+            pid1_spd.Ref = (*CTRL).i->cmd_speed_rpm*RPM_2_ELEC_RAD_PER_SEC;
             pid1_spd.Fbk = SPEED_SIGNAL;
             pid1_spd.calc(&pid1_spd);
             pid1_iq.Ref = pid1_spd.Out;
@@ -1239,30 +1239,30 @@ void StepByStepCommissioning(){
     }else if(COMM.bool_comm_status == 4){
 
         // 永磁体磁链辨识
-        (*CTRL).S->cosT = cos((*CTRL).I->theta_d_elec);
-        (*CTRL).S->sinT = sin((*CTRL).I->theta_d_elec);
+        (*CTRL).S->cosT = cos((*CTRL).i->theta_d_elec);
+        (*CTRL).S->sinT = sin((*CTRL).i->theta_d_elec);
         COMM_PMFluxId(  AB2M(IS_C(0), IS_C(1), (*CTRL).S->cosT, (*CTRL).S->sinT), 
                         AB2T(IS_C(0), IS_C(1), (*CTRL).S->cosT, (*CTRL).S->sinT), 
-                        (*CTRL).I->omg_elec);
+                        (*CTRL).i->omg_elec);
 
         // 更新转速PI
 
     }else if(COMM.bool_comm_status == 5){
 
         // 惯量辨识
-        // (*CTRL).I->omg_elec     = EXP.omg_elec;
-        // (*CTRL).I->theta_d_elec = EXP.theta_d;
-        // (*CTRL).I->omg_elec     = local_omg_elec;
-        // (*CTRL).I->theta_d_elec = local_theta_d;
-        (*CTRL).S->cosT = cos((*CTRL).I->theta_d_elec);
-        (*CTRL).S->sinT = sin((*CTRL).I->theta_d_elec);
-        (*CTRL).I->idq[0] = AB2M(IS_C(0), IS_C(1), (*CTRL).S->cosT, (*CTRL).S->sinT), 
-        (*CTRL).I->idq[1] = AB2T(IS_C(0), IS_C(1), (*CTRL).S->cosT, (*CTRL).S->sinT), 
-        COMM_inertiaId( (*CTRL).I->idq[0], 
-                        (*CTRL).I->idq[1], 
+        // (*CTRL).i->omg_elec     = EXP.omg_elec;
+        // (*CTRL).i->theta_d_elec = EXP.theta_d;
+        // (*CTRL).i->omg_elec     = local_omg_elec;
+        // (*CTRL).i->theta_d_elec = local_theta_d;
+        (*CTRL).S->cosT = cos((*CTRL).i->theta_d_elec);
+        (*CTRL).S->sinT = sin((*CTRL).i->theta_d_elec);
+        (*CTRL).i->idq[0] = AB2M(IS_C(0), IS_C(1), (*CTRL).S->cosT, (*CTRL).S->sinT), 
+        (*CTRL).i->idq[1] = AB2T(IS_C(0), IS_C(1), (*CTRL).S->cosT, (*CTRL).S->sinT), 
+        COMM_inertiaId( (*CTRL).i->idq[0], 
+                        (*CTRL).i->idq[1], 
                         (*CTRL).S->cosT, 
                         (*CTRL).S->sinT, 
-                        (*CTRL).I->omg_elec);
+                        (*CTRL).i->omg_elec);
 
     }else{
         COMM_end(IS_C(0), IS_C(1));

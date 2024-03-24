@@ -24,7 +24,7 @@ void rhf_dynamics_ESO(REAL t, REAL *x, REAL *fx){
     /* 未测试，如果用iq给定会不会好一点？？ 计算量还少*/
     /* 未测试，如果用iq给定会不会好一点？？ 计算量还少*/
     /* 未测试，如果用iq给定会不会好一点？？ 计算量还少*/
-    // esoaf.xTem = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * MOTOR.KActive * CTRL->I.idq_cmd[1];
+    // esoaf.xTem = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * MOTOR.KActive * CTRL->i.idq_cmd[1];
 
     /* Output Error = sine of angle error */
     esoaf.output_error_sine = sin(AFE_USED.theta_d - xPos);
@@ -66,7 +66,7 @@ void eso_one_parameter_tuning(REAL omega_ob){
 
     // Natural Observer Framework
     // if(esoaf.bool_ramp_load_torque == FALSE){
-    //     // D, P, I, II?
+    //     // D, P, i, II?
     //     esoaf.ell[0] = (MOTOR.Js*MOTOR.npp_inv) * 3*omega_ob;
     //     esoaf.ell[1] = (MOTOR.Js*MOTOR.npp_inv) * 3*omega_ob*omega_ob;
     //     esoaf.ell[2] = (MOTOR.Js*MOTOR.npp_inv) * 1*omega_ob*omega_ob*omega_ob;
@@ -179,9 +179,9 @@ void nso_one_parameter_tuning(REAL omega_ob){
     REAL one_over__npp_divided_by_Js__times__Lq_id_plus_KActive = 1.0 \
         / ( MOTOR.npp 
             * MOTOR.Js_inv * LQ_INV
-            * (MOTOR.Lq*(*CTRL).I->idq_cmd[0] + MOTOR.KActive)
+            * (MOTOR.Lq*(*CTRL).i->idq_cmd[0] + MOTOR.KActive)
           );
-    REAL uq_inv = 1.0 / (*CTRL).O->udq_cmd[1];
+    REAL uq_inv = 1.0 / (*CTRL).o->udq_cmd[1];
     #if TUNING_IGNORE_UQ
         uq_inv = 1.0; // this is 1.#INF when init
     #endif
@@ -294,7 +294,7 @@ void init_nsoaf(){
     nsoaf.KD = NSOAF_TL_D;
     nsoaf.set_omega_ob = NSOAF_OMEGA_OBSERVER;
 
-    MOTOR.KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * (*CTRL).I->idq[0];
+    MOTOR.KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * (*CTRL).i->idq[0];
     nsoaf.omega_ob = nsoaf.set_omega_ob;
      nso_one_parameter_tuning(nsoaf.omega_ob);
 }
@@ -318,7 +318,7 @@ void rhf_func_hgoeemf(REAL *increment_n, REAL *xPsi, REAL *xEemf,
     REAL f[NS];
 
     // DEBUG
-    // xOmg = (*CTRL).I->omg_elec;
+    // xOmg = (*CTRL).i->omg_elec;
 
     // dependent parameters
     // MOTOR.Ld
@@ -491,7 +491,7 @@ void rhf_func_eemfaod(REAL *increment_n, REAL *xPsi, REAL *xChi, REAL xOmg,
     // hs: step size of numerical integral
 
     // DEBUG
-    // xOmg = (*CTRL).I->omg_elec;
+    // xOmg = (*CTRL).i->omg_elec;
 
     // dependent parameters
     #define MOTOR (*(*CTRL).motor)
@@ -781,8 +781,8 @@ void Main_harnefors_scvm(){
     // harnefors.deriv_iq = ((*CTRL).iq_cmd - last_iq) * CL_TS_INVERSE;
     // last_id = (*CTRL).id_cmd;
     // last_iq = (*CTRL).iq_cmd;
-    #define D_AXIS_CURRENT (*CTRL).I->idq[0]
-    #define Q_AXIS_CURRENT (*CTRL).I->idq[1]
+    #define D_AXIS_CURRENT (*CTRL).i->idq[0]
+    #define Q_AXIS_CURRENT (*CTRL).i->idq[1]
     harnefors.deriv_id = (D_AXIS_CURRENT - last_id) * CL_TS_INVERSE;
     harnefors.deriv_iq = (Q_AXIS_CURRENT - last_iq) * CL_TS_INVERSE;
     last_id = D_AXIS_CURRENT;
@@ -799,8 +799,8 @@ void Main_harnefors_scvm(){
     #define DERIV_ID PIDQ(0)
     #define DERIV_IQ PIDQ(1)
 
-    #define UD_CMD (*CTRL).O->udq_cmd[0]
-    #define UQ_CMD (*CTRL).O->udq_cmd[1]
+    #define UD_CMD (*CTRL).o->udq_cmd[0]
+    #define UQ_CMD (*CTRL).o->udq_cmd[1]
     #define MOTOR  (*(*CTRL).motor)
 
     // // 计算反电势（考虑dq电流导数）
@@ -866,7 +866,7 @@ void rhf_QiaoXia2013_Dynamics(REAL t, REAL *x, REAL *fx){
     fx[0] = MOTOR.Lq_inv * (US(0) - MOTOR.R * xIa + qiaoxia.xEmf_raw[0]);
     fx[1] = MOTOR.Lq_inv * (US(1) - MOTOR.R * xIb + qiaoxia.xEmf_raw[1]);
     // xEmf
-    #define OMG_USED xOmg //(*CTRL).I->omg_elec // 
+    #define OMG_USED xOmg //(*CTRL).i->omg_elec // 
     fx[2] = -OMG_USED*xEmfb + qiaoxia.mras_gain * (qiaoxia.xEmf_raw[0] - xEmfa);
     fx[3] =  OMG_USED*xEmfa + qiaoxia.mras_gain * (qiaoxia.xEmf_raw[1] - xEmfb);
     // xOmg
@@ -875,7 +875,7 @@ void rhf_QiaoXia2013_Dynamics(REAL t, REAL *x, REAL *fx){
 void Main_QiaoXia2013_emfSMO(){
 
     /* Time-varying gains */
-    qiaoxia.smo_gain = QIAO_XIA_SMO_GAIN * fabs((*CTRL).I->cmd_omg_elec) * MOTOR.KE;
+    qiaoxia.smo_gain = QIAO_XIA_SMO_GAIN * fabs((*CTRL).i->cmd_omg_elec) * MOTOR.KE;
     // qiaoxia.smo_gain = QIAO_XIA_SMO_GAIN * 70 * MOTOR.KE;
 
     general_5states_rk4_solver(&rhf_QiaoXia2013_Dynamics, (*CTRL).timebase, qiaoxia.x, CL_TS);
@@ -886,8 +886,8 @@ void Main_QiaoXia2013_emfSMO(){
     qiaoxia.xEmf[0] = qiaoxia.x[2];
     qiaoxia.xEmf[1] = qiaoxia.x[3];
     qiaoxia.xOmg    = qiaoxia.x[4];
-    // REAL temp = -atan2( qiaoxia.xEmf[0]*-sign((*CTRL).I->cmd_speed_rpm),   // qiaoxia.xOmg
-    //                     qiaoxia.xEmf[1]*-sign((*CTRL).I->cmd_speed_rpm) ); // qiaoxia.xOmg
+    // REAL temp = -atan2( qiaoxia.xEmf[0]*-sign((*CTRL).i->cmd_speed_rpm),   // qiaoxia.xOmg
+    //                     qiaoxia.xEmf[1]*-sign((*CTRL).i->cmd_speed_rpm) ); // qiaoxia.xOmg
     REAL temp = -atan2( qiaoxia.xEmf[0]*sign(-qiaoxia.xOmg),   // qiaoxia.xOmg
                         qiaoxia.xEmf[1]*sign(-qiaoxia.xOmg) ); // qiaoxia.xOmg
     // REAL temp = -atan2( qiaoxia.xEmf[0],   // qiaoxia.xOmg
@@ -994,8 +994,8 @@ void rhf_ChiXu2009_Dynamics(REAL t, REAL *x, REAL *fx){
 }
 void Main_ChiXu2009_emfSMO(){
 
-    // #define OMEGA_SYNC_USED (*CTRL).I->cmd_omg_elec
-    // #define OMEGA_SYNC_USED (*CTRL).I->omg_elec
+    // #define OMEGA_SYNC_USED (*CTRL).i->cmd_omg_elec
+    // #define OMEGA_SYNC_USED (*CTRL).i->omg_elec
     #define OMEGA_SYNC_USED chixu.xOmg
 
     #if CHI_XU_USE_CONSTANT_SMO_GAIN == FALSE
@@ -1008,7 +1008,7 @@ void Main_ChiXu2009_emfSMO(){
     #endif
 
     /* ell for xZeq */
-    if(fabs((*CTRL).I->cmd_speed_rpm)>180){
+    if(fabs((*CTRL).i->cmd_speed_rpm)>180){
         chixu.ell4xZeq = 1.0;
     }else{
         chixu.ell4xZeq = -0.5;
@@ -1082,7 +1082,7 @@ void rhf_parksul2014_Dynamics(REAL t, REAL *x, REAL *fx){
 
     /* Know Signals */
     parksul.omega_f = x[8]; // In addition, it is evident in Fig. 3 that all the integrations in the proposed observer are stopped when ω f is zero, which coincides with the natural property of stator flux at standstill.
-    // parksul.omega_f = (*CTRL).I->omg_elec;
+    // parksul.omega_f = (*CTRL).i->omg_elec;
 
     /* Pre-calculation */
     parksul.internal_error[0] = xPsi1(0) - xHatPsi1(0);
@@ -1141,13 +1141,13 @@ void rhf_parksul2014_Dynamics(REAL t, REAL *x, REAL *fx){
     fx[0] = emf[0] \
         /*k_df*/- parksul.k_df*xD(0) \
         /*k_af*/- parksul.k_af*(parksul.xPsi2[0] - parksul.xPsi2_Limited[0]) \
-        /*CM-I*/+ x[10] \
+        /*CM-i*/+ x[10] \
         /*CM-P*/+ parksul.CM_KP * parksul.output_error[0];
     fx[10] =      parksul.CM_KI * parksul.output_error[0];
     fx[1] = emf[1] \
         /*k_df*/- parksul.k_df*xD(1) \
         /*k_af*/- parksul.k_af*(parksul.xPsi2[1] - parksul.xPsi2_Limited[1]) \
-        /*CM-I*/+ x[11] \
+        /*CM-i*/+ x[11] \
         /*CM-P*/+ parksul.CM_KP * parksul.output_error[1];
     fx[11] =      parksul.CM_KI * parksul.output_error[1];
 
@@ -1179,7 +1179,7 @@ void Main_parksul2014_FADO(){
 
     /* Time-varying gains */
     if(fabs(parksul.xOmg)        *MOTOR.npp_inv*ONE_OVER_2PI<1.5){ // [Hz]
-    // if(fabs((*CTRL).I->cmd_omg_elec)*MOTOR.npp_inv*ONE_OVER_2PI<1.5){ // [Hz]
+    // if(fabs((*CTRL).i->cmd_omg_elec)*MOTOR.npp_inv*ONE_OVER_2PI<1.5){ // [Hz]
         parksul.k_df = 0.0;
         parksul.k_af = 2*M_PI*100;
         parksul.limiter_Flag = TRUE;
@@ -1241,21 +1241,21 @@ void Main_parksul2014_FADO(){
 
 /* DOB Stationary Voltage that is valid for SPMSM only */
 // void stationary_voltage_DOB(){
-//     // (*CTRL).I->iab[0]
-//     // (*CTRL).I->iab[1]
+//     // (*CTRL).i->iab[0]
+//     // (*CTRL).i->iab[1]
 
-//     (*CTRL).inv->iab_lpf[0] = _lpf((*CTRL).I->iab[0], (*CTRL).inv->iab_lpf[0], (*CTRL).inv->filter_pole);
-//     (*CTRL).inv->iab_lpf[1] = _lpf((*CTRL).I->iab[1], (*CTRL).inv->iab_lpf[1], (*CTRL).inv->filter_pole);
+//     (*CTRL).inv->iab_lpf[0] = _lpf((*CTRL).i->iab[0], (*CTRL).inv->iab_lpf[0], (*CTRL).inv->filter_pole);
+//     (*CTRL).inv->iab_lpf[1] = _lpf((*CTRL).i->iab[1], (*CTRL).inv->iab_lpf[1], (*CTRL).inv->filter_pole);
 
-//     (*CTRL).inv->iab_hpf[0] = (*CTRL).I->iab[0] - (*CTRL).inv->iab_lpf[0];
-//     (*CTRL).inv->iab_hpf[1] = (*CTRL).I->iab[1] - (*CTRL).inv->iab_lpf[1];
+//     (*CTRL).inv->iab_hpf[0] = (*CTRL).i->iab[0] - (*CTRL).inv->iab_lpf[0];
+//     (*CTRL).inv->iab_hpf[1] = (*CTRL).i->iab[1] - (*CTRL).inv->iab_lpf[1];
 
 //     (*CTRL).inv->uab_DOB[0] = - (*CTRL).motor->R * (*CTRL).inv->iab_lpf[0] - (*CTRL).motor->Ld * (*CTRL).inv->iab_lpf[0];
 //     (*CTRL).inv->uab_DOB[1] = - (*CTRL).motor->R * (*CTRL).inv->iab_lpf[1] - (*CTRL).motor->Ld * (*CTRL).inv->iab_lpf[1];
 
 //     // add back emf
-//     // (*CTRL).inv->uab_DOB[0] += (*CTRL).I->omg_elec * (*CTRL).motor->KE * -sin((*CTRL).I->theta_d_elec);
-//     // (*CTRL).inv->uab_DOB[1] += (*CTRL).I->omg_elec * (*CTRL).motor->KE *  cos((*CTRL).I->theta_d_elec);
+//     // (*CTRL).inv->uab_DOB[0] += (*CTRL).i->omg_elec * (*CTRL).motor->KE * -sin((*CTRL).i->theta_d_elec);
+//     // (*CTRL).inv->uab_DOB[1] += (*CTRL).i->omg_elec * (*CTRL).motor->KE *  cos((*CTRL).i->theta_d_elec);
 // }
 
 
@@ -1286,7 +1286,7 @@ void init_rk4(){
 void pmsm_observers(){
     // stationary_voltage_DOB();
 
-    (*CTRL).motor->KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * (*CTRL).I->idq_cmd[0];
+    (*CTRL).motor->KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * (*CTRL).i->idq_cmd[0];
 
     #if PC_SIMULATION
         // /* Cascaded Flux Estimator */

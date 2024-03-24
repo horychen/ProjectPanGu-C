@@ -128,7 +128,7 @@ void init_experiment_overwrite(){
     FE.htz.psi_aster_max = (*CTRL).motor->KE - 0.003;
 
     // for debug
-    (*CTRL).S->PSD_Done = FALSE;
+    (*CTRL).s->PSD_Done = FALSE;
     #if ENABLE_COMMISSIONING
         COMM.bool_comm_status = 0;
     #endif
@@ -136,7 +136,7 @@ void init_experiment_overwrite(){
 
 void runtime_command_and_tuning(){
     if((*Axis).Select_exp_operation == AS_LOAD_MOTOR_CONST){
-        (*CTRL).S->go_sensorless = 0;
+        (*CTRL).s->go_sensorless = 0;
         G.FLAG_INVERTER_NONLINEARITY_COMPENSATION = 0;
         if((*CTRL).timebase < 2){
             PID_spd->OutLimit = 0.1;
@@ -157,7 +157,7 @@ void runtime_command_and_tuning(){
         }
     }
     if((*Axis).Select_exp_operation == AS_LOAD_MOTOR_RAMP){
-        (*CTRL).S->go_sensorless = 0;
+        (*CTRL).s->go_sensorless = 0;
         if((*CTRL).timebase < 0.4){
             PID_spd->OutLimit = 4.2;
         }else if((*CTRL).timebase < 0.4 + 0.1){
@@ -341,7 +341,7 @@ void slow_speed_reversal_tuning(){
         //            }
         //        }
 
-        if((*CTRL).S->Motor_or_Generator){
+        if((*CTRL).s->Motor_or_Generator){
             (*CTRL).motor->R = RSmall; //for positive speed
         }else{
             (*CTRL).motor->R = RLarge; //for negative speed

@@ -3,7 +3,6 @@
 //#include <stdio.h>
 //#include <stdlib.h>
 
-
 /* User Application: Motor Drives */
     #include "ACMSim.h"
     #include "ACMConfig.h"
@@ -60,8 +59,8 @@
     #define SYSTEM_QEP_UNITTIME_ISR          0.001    //1K ,1ms     time_out timer   isr_time
     #define SYSTEM_QEP_CAP_X128           0.00000064  //cap timer
     #define SYSTEM_QEP_CUTOFF_FILTER           5      // CUTOFF FREQUENCY 10HZ
-    #define SYSTEM_QEP_SWAP_ENABLE              1     //���������
-    #define SYSTEM_QEP_SWAP_DISABLE             0     //���������
+    #define SYSTEM_QEP_SWAP_ENABLE              1     //���������?
+    #define SYSTEM_QEP_SWAP_DISABLE             0     //���������?
     //ADC CONFIGURATION is moved to main.c
     //DAC Configuration
     #define NO_OF_DAC_CHANNELS 8
@@ -127,7 +126,7 @@ typedef struct{
         REAL angle_shift_for_first_inverter;
         REAL angle_shift_for_second_inverter;
         REAL OverwriteSpeedOutLimitDuringInit;
-        int FLAG_ENABLE_PWM_OUTPUT; // ���ģʽ��־λ
+        int FLAG_ENABLE_PWM_OUTPUT; // ���ģʽ��־�?
     // ADC Offset
         // Automatic Offset Removing
         int AD_offset_flag2;

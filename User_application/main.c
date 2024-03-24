@@ -152,31 +152,31 @@ void init_experiment_AD_gain_and_offset(){
 
 //int  FLAG_ENABLE_PWM_OUTPUT = FALSE;
 
-// CLA
-// header files
-#include "DCLCLA.h"
-#include "CLA_shared.h"
-#include "F2837xD_Cla.h"                // Control Law Accelerator Registers
-#include "F2837xD_Cla_defines.h"              // Macros used for CLA examples.
-
-// function prototypes
-//interrupt void control_Isr(void);
-
-// global  variables
-long IdleLoopCount = 0;
-long IsrCount = 0;
-float Duty;
-
-// shared variables
-#pragma DATA_SECTION(rk, "CpuToCla1MsgRAM")
-#pragma DATA_SECTION(yk, "CpuToCla1MsgRAM")
-#pragma DATA_SECTION(uk, "Cla1ToCpuMsgRAM")
-float rk = 0.25f;
-float yk;
-float uk;
-
-#pragma DATA_SECTION(pi1, "Cla1DataRam1")
-DCL_PI_CLA pi1 = PI_CLA_DEFAULTS;
+    //// CLA
+    //// header files
+    ////#include "DCLCLA.h"
+    ////#include "CLA_shared.h"
+    ////#include "F2837xD_Cla.h"                // Control Law Accelerator Registers
+    ////#include "F2837xD_Cla_defines.h"              // Macros used for CLA examples.
+    //
+    //// function prototypes
+    ////interrupt void control_Isr(void);
+    //
+    //// global  variables
+    //long IdleLoopCount = 0;
+    //long IsrCount = 0;
+    //float Duty;
+    //
+    //// shared variables
+    //#pragma DATA_SECTION(rk, "CpuToCla1MsgRAM")
+    //#pragma DATA_SECTION(yk, "CpuToCla1MsgRAM")
+    //#pragma DATA_SECTION(uk, "Cla1ToCpuMsgRAM")
+    //float rk = 0.25f;
+    //float yk;
+    //float uk;
+    //
+    //#pragma DATA_SECTION(pi1, "Cla1DataRam1")
+    //DCL_PI_CLA pi1 = PI_CLA_DEFAULTS;
 
 // CLA end
 void main(void){
@@ -186,8 +186,8 @@ void main(void){
     //    A.y = 0.0;
     //    D.x = 51.662e-3;
     //    D.y = 0.0;
-    //    O.x = 110.76e-3;
-    //    O.y = 192.03e-3;
+    //    o.x = 110.76e-3;
+    //    o.y = 192.03e-3;
     //    a_length = 80e-3;
     //    b_length = 139.98e-3;
     //    c_length = 153.069e-3;
@@ -491,7 +491,7 @@ void main(void){
                 //
                 while(ScicRegs.SCIFFRX.bit.RXFFST == 0) {
                 }
-                (*CTRL).S->go_sensorless = 100;
+                (*CTRL).s->go_sensorless = 100;
 
                 //
                 // Check received character
@@ -603,8 +603,8 @@ REAL enable_vvvf = FALSE;
 void voltage_commands_to_pwm(){
     if(axisCnt == 0){
         // SVPWM of the motor 3-phase
-        (*CTRL).svgen1.Ualpha= (*CTRL).O->uab_cmd_to_inverter[0];
-        (*CTRL).svgen1.Ubeta = (*CTRL).O->uab_cmd_to_inverter[1];
+        (*CTRL).svgen1.Ualpha= (*CTRL).o->uab_cmd_to_inverter[0];
+        (*CTRL).svgen1.Ubeta = (*CTRL).o->uab_cmd_to_inverter[1];
 
         if(enable_vvvf){
             (*CTRL).svgen1.Ualpha= vvvf_voltage * cos(vvvf_frequency*2*M_PI*(*CTRL).timebase);
@@ -629,8 +629,8 @@ void voltage_commands_to_pwm(){
     }
     if(axisCnt == 1){
         // SVPWM of the suspension 3-phase
-        (*CTRL).svgen2.Ualpha = (*CTRL).O->uab_cmd_to_inverter[0];
-        (*CTRL).svgen2.Ubeta  = (*CTRL).O->uab_cmd_to_inverter[1];
+        (*CTRL).svgen2.Ualpha = (*CTRL).o->uab_cmd_to_inverter[0];
+        (*CTRL).svgen2.Ubeta  = (*CTRL).o->uab_cmd_to_inverter[1];
 
         if(enable_vvvf){
             (*CTRL).svgen2.Ualpha= vvvf_voltage * cos(vvvf_frequency*2*M_PI*(*CTRL).timebase);
@@ -674,13 +674,13 @@ void voltage_measurement_based_on_eCAP(){
         CAP.uab0[0] = 0.33333 * (2*CAP.terminal_voltage[0] - CAP.terminal_voltage[1] - CAP.terminal_voltage[2]);
         CAP.uab0[1] = 0.57735 * (                            CAP.terminal_voltage[1] - CAP.terminal_voltage[2]);
         CAP.uab0[2] = 0.33333 * (  CAP.terminal_voltage[0] + CAP.terminal_voltage[1] + CAP.terminal_voltage[2]);
-        CAP.dq[0] =  (*CTRL).S->cosT*CAP.uab0[0] + (*CTRL).S->sinT*CAP.uab0[1];
-        CAP.dq[1] = -(*CTRL).S->sinT*CAP.uab0[0] + (*CTRL).S->cosT*CAP.uab0[1];
+        CAP.dq[0] =  (*CTRL).s->cosT*CAP.uab0[0] + (*CTRL).s->sinT*CAP.uab0[1];
+        CAP.dq[1] = -(*CTRL).s->sinT*CAP.uab0[0] + (*CTRL).s->cosT*CAP.uab0[1];
 
     }else{
         // Assume the voltage vector is rtoating at a constant speed when ecap measurement is disturbed.
-        CAP.uab0[0] = (*CTRL).S->cosT*CAP.dq[0] - (*CTRL).S->sinT*CAP.dq[1];
-        CAP.uab0[1] = (*CTRL).S->sinT*CAP.dq[0] + (*CTRL).S->cosT*CAP.dq[1];
+        CAP.uab0[0] = (*CTRL).s->cosT*CAP.dq[0] - (*CTRL).s->sinT*CAP.dq[1];
+        CAP.uab0[1] = (*CTRL).s->sinT*CAP.dq[0] + (*CTRL).s->cosT*CAP.dq[1];
     }
 
     // 电压测量
@@ -698,8 +698,8 @@ void voltage_measurement_based_on_eCAP(){
         /*Use lpf ecap measured voltage*/
         CAP.dq_lpf[0] = _lpf(CAP.dq[0], CAP.dq_lpf[0], 800);
         CAP.dq_lpf[1] = _lpf(CAP.dq[1], CAP.dq_lpf[1], 800);
-        CAP.uab0[0] = (*CTRL).S->cosT*CAP.dq_lpf[0] - (*CTRL).S->sinT*CAP.dq_lpf[1];
-        CAP.uab0[1] = (*CTRL).S->sinT*CAP.dq_lpf[0] + (*CTRL).S->cosT*CAP.dq_lpf[1];
+        CAP.uab0[0] = (*CTRL).s->cosT*CAP.dq_lpf[0] - (*CTRL).s->sinT*CAP.dq_lpf[1];
+        CAP.uab0[1] = (*CTRL).s->sinT*CAP.dq_lpf[0] + (*CTRL).s->cosT*CAP.dq_lpf[1];
         US_P(0) = US_C(0);
         US_P(1) = US_C(1);
         US_C(0) = CAP.uab0[0];
@@ -707,17 +707,17 @@ void voltage_measurement_based_on_eCAP(){
 
     }else if(G.flag_use_ecap_voltage==0){
         /*Use command voltage for feedback*/
-        US_P(0) = (*CTRL).O->uab_cmd[0]; // 后缀_P表示上一步的电压，P = Previous
-        US_P(1) = (*CTRL).O->uab_cmd[1]; // 后缀_C表示当前步的电压，C = Current
-        US_C(0) = (*CTRL).O->uab_cmd[0]; // 后缀_P表示上一步的电压，P = Previous
-        US_C(1) = (*CTRL).O->uab_cmd[1]; // 后缀_C表示当前步的电压，C = Current
+        US_P(0) = (*CTRL).o->uab_cmd[0]; // 后缀_P表示上一步的电压，P = Previous
+        US_P(1) = (*CTRL).o->uab_cmd[1]; // 后缀_C表示当前步的电压，C = Current
+        US_C(0) = (*CTRL).o->uab_cmd[0]; // 后缀_P表示上一步的电压，P = Previous
+        US_C(1) = (*CTRL).o->uab_cmd[1]; // 后缀_C表示当前步的电压，C = Current
     }
 
     // (for watch only) Mismatch between ecap measurement and command to inverter
-    (*CTRL).O->udq_cmd_to_inverter[0] = (*CTRL).S->cosT*(*CTRL).O->uab_cmd_to_inverter[0] + (*CTRL).S->sinT*(*CTRL).O->uab_cmd_to_inverter[1];
-    (*CTRL).O->udq_cmd_to_inverter[1] =-(*CTRL).S->sinT*(*CTRL).O->uab_cmd_to_inverter[0] + (*CTRL).S->cosT*(*CTRL).O->uab_cmd_to_inverter[1];
-    CAP.dq_mismatch[0] = (*CTRL).O->udq_cmd_to_inverter[0] - CAP.dq[0];
-    CAP.dq_mismatch[1] = (*CTRL).O->udq_cmd_to_inverter[1] - CAP.dq[1];
+    (*CTRL).o->udq_cmd_to_inverter[0] = (*CTRL).s->cosT*(*CTRL).o->uab_cmd_to_inverter[0] + (*CTRL).s->sinT*(*CTRL).o->uab_cmd_to_inverter[1];
+    (*CTRL).o->udq_cmd_to_inverter[1] =-(*CTRL).s->sinT*(*CTRL).o->uab_cmd_to_inverter[0] + (*CTRL).s->cosT*(*CTRL).o->uab_cmd_to_inverter[1];
+    CAP.dq_mismatch[0] = (*CTRL).o->udq_cmd_to_inverter[0] - CAP.dq[0];
+    CAP.dq_mismatch[1] = (*CTRL).o->udq_cmd_to_inverter[1] - CAP.dq[1];
 }
 
 //extern long long sci_pos;
@@ -838,9 +838,9 @@ void measurement(){
     // CTRL->enc->rpm = PostionSpeedMeasurement_MovingAvergage(QPOSCNT, CTRL->enc);
 
 
-    if((*CTRL).S->go_sensorless == FALSE){
-        CTRL->I->omg_elec     = CTRL->enc->omg_elec;
-        CTRL->I->theta_d_elec = CTRL->enc->theta_d_elec;
+    if((*CTRL).s->go_sensorless == FALSE){
+        CTRL->i->omg_elec     = CTRL->enc->omg_elec;
+        CTRL->i->theta_d_elec = CTRL->enc->theta_d_elec;
     }
 
     // Convert adc results
@@ -887,11 +887,11 @@ void measurement(){
     // 只用第一套三相
     IS_C(0)        = Axis->iabg[0];
     IS_C(1)        = Axis->iabg[1];
-    (*CTRL).I->iab[0] = Axis->iabg[0];
-    (*CTRL).I->iab[1] = Axis->iabg[1];
+    (*CTRL).i->iab[0] = Axis->iabg[0];
+    (*CTRL).i->iab[1] = Axis->iabg[1];
 
-    US_C(0) = (*CTRL).O->uab_cmd[0]; // 后缀_P表示上一步的电压，P = Previous
-    US_C(1) = (*CTRL).O->uab_cmd[1]; // 后缀_C表示当前步的电压，C = Current
+    US_C(0) = (*CTRL).o->uab_cmd[0]; // 后缀_P表示上一步的电压，P = Previous
+    US_C(1) = (*CTRL).o->uab_cmd[1]; // 后缀_C表示当前步的电压，C = Current
 
     US_P(0) = US_C(0);
     US_P(1) = US_C(1);
@@ -965,11 +965,11 @@ void measurement(){
 }
 
 REAL call_position_loop_controller(int positionLoopType){
-    CTRL_2.S->spd->Kp = TEST_HIP_SPD_KP;
-    CTRL_2.S->spd->Ki = TEST_HIP_SPD_KI;
+    CTRL_2.s->spd->Kp = TEST_HIP_SPD_KP;
+    CTRL_2.s->spd->Ki = TEST_HIP_SPD_KI;
 
-    CTRL_1.S->pos->Kp = TEST_SHANK_KP;
-    CTRL_2.S->pos->Kp = TEST_HIP_KP;
+    CTRL_1.s->pos->Kp = TEST_SHANK_KP;
+    CTRL_2.s->pos->Kp = TEST_HIP_KP;
 
     if (positionLoopType == TWOMOTOR_POSITION_CONTROL)
     {
@@ -1237,10 +1237,10 @@ void PanGuMainISR(void){
             EPwm5Regs.CMPA.bit.CMPA = 2500;
             EPwm6Regs.CMPA.bit.CMPA = 2500;
 
-                //            CTRL_2.S->iD  = &_pid_iD_2;
-                //            CTRL_2.S->iQ  = &_pid_iQ_2;
-                //            CTRL_2.S->spd = &_pid_spd_2;
-                //            CTRL_2.S->pos = &_pid_pos_2;
+                //            CTRL_2.s->iD  = &_pid_iD_2;
+                //            CTRL_2.s->iQ  = &_pid_iQ_2;
+                //            CTRL_2.s->spd = &_pid_spd_2;
+                //            CTRL_2.s->pos = &_pid_pos_2;
 
             if ((*CTRL).g->overwrite_vdc < 5){
                 (*CTRL).g->overwrite_vdc = 28;
@@ -1264,7 +1264,7 @@ void PanGuMainISR(void){
 
         // 根据指令，产生控制输出（电压）
         #if ENABLE_COMMISSIONING == FALSE
-            //(*CTRL).S->Motor_or_Gnerator = sign((*CTRL).I->idq_cmd[1]) == sign(CTRL->enc->rpm); // sign((*CTRL).I->idq_cmd[1]) != sign((*CTRL).I->cmd_speed_rpm))
+            //(*CTRL).s->Motor_or_Gnerator = sign((*CTRL).i->idq_cmd[1]) == sign(CTRL->enc->rpm); // sign((*CTRL).i->idq_cmd[1]) != sign((*CTRL).i->cmd_speed_rpm))
             runtime_command_and_tuning(Axis->Select_exp_operation);
             // 0x03 is shank
             //    position_count_CAN_fromCPU2 = position_count_CAN_ID0x03_fromCPU2;
@@ -1287,7 +1287,7 @@ void PanGuMainISR(void){
             commissioning();
         #endif
 
-            //(*CTRL).O->uab_cmd_to_inverter[0]
+            //(*CTRL).o->uab_cmd_to_inverter[0]
 
         if(Axis->Select_exp_operation == XCUBE_TaTbTc_DEBUG_MODE){
             if(axisCnt==0){

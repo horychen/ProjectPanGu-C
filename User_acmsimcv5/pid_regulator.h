@@ -101,12 +101,12 @@ extern st_pid_regulator _pid_pos_2;
 //extern st_pid_regulator _pid_ib_1;
 //extern st_pid_regulator _pid_ic_1;
 
-#define PID_iD  (CTRL->S->iD)
-#define PID_iQ  (CTRL->S->iQ)
-#define PID_iX  (CTRL->S->iX)
-#define PID_iY  (CTRL->S->iY)
-#define PID_spd  (CTRL->S->spd)
-#define PID_pos  (CTRL->S->pos)
+#define PID_iD  (CTRL->s->iD)
+#define PID_iQ  (CTRL->s->iQ)
+#define PID_iX  (CTRL->s->iX)
+#define PID_iY  (CTRL->s->iY)
+#define PID_spd  (CTRL->s->spd)
+#define PID_pos  (CTRL->s->pos)
 
 
 #endif

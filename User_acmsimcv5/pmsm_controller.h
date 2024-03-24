@@ -292,9 +292,9 @@ struct ControllerForExperiment{
     st_global_variables *g;
 
     /* Black Box Model | Controller quantities */
-    st_controller_inputs  *I;
-    st_controller_states  *S;
-    st_controller_outputs *O;
+    st_controller_inputs  *i;
+    st_controller_states  *s;
+    st_controller_outputs *o;
 };
 
 extern struct ControllerForExperiment CTRL_1;
@@ -303,9 +303,9 @@ extern struct ControllerForExperiment *CTRL;
 #define MOTOR   (*(*CTRL).motor)
 #define ENC     (*(*CTRL).enc)
 #define PSD     (*(*CTRL).psd)
-#define IN      (*(*CTRL).I)
-#define STATE   (*(*CTRL).S)
-#define OUT     (*(*CTRL).O)
+#define IN      (*(*CTRL).i)
+#define STATE   (*(*CTRL).s)
+#define OUT     (*(*CTRL).o)
 #define INV     (*(*CTRL).inv)
 #define CAP     (*(*CTRL).cap)
 #define G       (*(*CTRL).g)

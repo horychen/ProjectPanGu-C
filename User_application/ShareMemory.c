@@ -68,10 +68,10 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
     (*Axis4DAC).dac_watch[4] = Axis_2.iuvw[4]*0.2;
     (*Axis4DAC).dac_watch[5] = Axis_2.iuvw[5]*0.2;
 
-    (*Axis4DAC).dac_watch[6] = (*CTRL).I->iab[0]*0.25;      // +-6A ->0-3V
-    (*Axis4DAC).dac_watch[7] = (*CTRL).I->iab[1]*0.25;
-    (*Axis4DAC).dac_watch[8] = (*CTRL).O->uab_cmd[0]*0.125; // +-12V -> 0-3V
-    (*Axis4DAC).dac_watch[9] = (*CTRL).O->uab_cmd[1]*0.125;
+    (*Axis4DAC).dac_watch[6] = (*CTRL).i->iab[0]*0.25;      // +-6A ->0-3V
+    (*Axis4DAC).dac_watch[7] = (*CTRL).i->iab[1]*0.25;
+    (*Axis4DAC).dac_watch[8] = (*CTRL).o->uab_cmd[0]*0.125; // +-12V -> 0-3V
+    (*Axis4DAC).dac_watch[9] = (*CTRL).o->uab_cmd[1]*0.125;
     (*Axis4DAC).dac_watch[10] = FE.htz.psi_2_ampl*0.25;
     (*Axis4DAC).dac_watch[11] = FE.htz.psi_2_ampl_lpf*0.25;
     (*Axis4DAC).dac_watch[12] = FE.htz.psi_2[0]*0.25;
@@ -83,15 +83,15 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
     (*Axis4DAC).dac_watch[17] = (*CTRL).svgen2.Ta;
     (*Axis4DAC).dac_watch[18] = (*CTRL).svgen2.Tb;
     (*Axis4DAC).dac_watch[19] = (*CTRL).svgen2.Tc;
-    (*Axis4DAC).dac_watch[20] = (*CTRL).S->omega_syn * ELEC_RAD_PER_SEC_2_RPM *0.002;
+    (*Axis4DAC).dac_watch[20] = (*CTRL).s->omega_syn * ELEC_RAD_PER_SEC_2_RPM *0.002;
 
 //    (*Axis4DAC).dac_watch[21] = marino.xOmg * ELEC_RAD_PER_SEC_2_RPM *0.002;
-    (*Axis4DAC).dac_watch[21] = CTRL_1.S->pos->Ref *1.52587890625e-05; /// 131072.0 *2;
-    (*Axis4DAC).dac_watch[22] = CTRL_2.S->pos->Ref *1.52587890625e-05; /// 131072.0 *2;
-    (*Axis4DAC).dac_watch[23] = CTRL_2.S->spd->Ref *0.0001; // * ELEC_RAD_PER_SEC_2_RPM *0.002;
-    (*Axis4DAC).dac_watch[24] = CTRL_2.S->spd->Fbk *0.0001; //I->omg_elec  * ELEC_RAD_PER_SEC_2_RPM *0.002;
-    (*Axis4DAC).dac_watch[25] = CTRL_1.I->idq_cmd[1] * 0.1;
-    (*Axis4DAC).dac_watch[26] = CTRL_2.I->idq_cmd[1] * 0.1;
+    (*Axis4DAC).dac_watch[21] = CTRL_1.s->pos->Ref *1.52587890625e-05; /// 131072.0 *2;
+    (*Axis4DAC).dac_watch[22] = CTRL_2.s->pos->Ref *1.52587890625e-05; /// 131072.0 *2;
+    (*Axis4DAC).dac_watch[23] = CTRL_2.s->spd->Ref *0.0001; // * ELEC_RAD_PER_SEC_2_RPM *0.002;
+    (*Axis4DAC).dac_watch[24] = CTRL_2.s->spd->Fbk *0.0001; //i->omg_elec  * ELEC_RAD_PER_SEC_2_RPM *0.002;
+    (*Axis4DAC).dac_watch[25] = CTRL_1.i->idq_cmd[1] * 0.1;
+    (*Axis4DAC).dac_watch[26] = CTRL_2.i->idq_cmd[1] * 0.1;
 
 //    (*Axis4DAC).dac_watch[22] = target_position_cnt*0.0003-((*CTRL).enc->encoder_abs_cnt)*0.0003;
 //    (*Axis4DAC).dac_watch[23] = GpioDataRegs.GPEDAT.bit.GPIO135;
@@ -105,8 +105,8 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
     (*Axis4DAC).dac_watch[27] = position_count_CAN_ID0x03_fromCPU2 *1.52587890625e-05; // / 131072.0 *2;
     (*Axis4DAC).dac_watch[28] = position_count_CAN_ID0x01_fromCPU2 *1.52587890625e-05; // / 131072.0 *2;
 
-    (*Axis4DAC).dac_watch[30] = (*CTRL).O->iab_cmd[0]*0.2;
-    (*Axis4DAC).dac_watch[31] = (*CTRL).O->iab_cmd[1]*0.2;
+    (*Axis4DAC).dac_watch[30] = (*CTRL).o->iab_cmd[0]*0.2;
+    (*Axis4DAC).dac_watch[31] = (*CTRL).o->iab_cmd[1]*0.2;
     (*Axis4DAC).dac_watch[32] = FE.htz.sat_max_time[0]*100;
     (*Axis4DAC).dac_watch[33] = FE.htz.sat_max_time[1]*100;
     (*Axis4DAC).dac_watch[34] = FE.htz.sat_min_time[0]*100;
@@ -114,15 +114,15 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
     (*Axis4DAC).dac_watch[36] = vvvf_voltage * cos(vvvf_frequency*2*M_PI*(*CTRL).timebase);
     (*Axis4DAC).dac_watch[39] = FE.htz.theta_d*0.1;
 
-    (*Axis4DAC).dac_watch[40] = (*CTRL).I->idq[0]*0.1;
-    (*Axis4DAC).dac_watch[41] = (*CTRL).I->idq[1]*0.1;
+    (*Axis4DAC).dac_watch[40] = (*CTRL).i->idq[0]*0.1;
+    (*Axis4DAC).dac_watch[41] = (*CTRL).i->idq[1]*0.1;
 
-    (*Axis4DAC).dac_watch[42] = CTRL_1.S->pos->Ref *7.62939453125e-06; /// 131072.0 ;
-    (*Axis4DAC).dac_watch[43] = CTRL_1.S->pos->Fbk *7.62939453125e-06; /// 131072.0 ;
-    (*Axis4DAC).dac_watch[44] = CTRL_2.S->pos->Ref *7.62939453125e-06; /// 131072.0 ;
-    (*Axis4DAC).dac_watch[45] = CTRL_2.S->pos->Fbk *7.62939453125e-06; /// 131072.0 ;
+    (*Axis4DAC).dac_watch[42] = CTRL_1.s->pos->Ref *7.62939453125e-06; /// 131072.0 ;
+    (*Axis4DAC).dac_watch[43] = CTRL_1.s->pos->Fbk *7.62939453125e-06; /// 131072.0 ;
+    (*Axis4DAC).dac_watch[44] = CTRL_2.s->pos->Ref *7.62939453125e-06; /// 131072.0 ;
+    (*Axis4DAC).dac_watch[45] = CTRL_2.s->pos->Fbk *7.62939453125e-06; /// 131072.0 ;
 
-    (*Axis4DAC).dac_watch[49] = CTRL_1.I->omg_elec  * ELEC_RAD_PER_SEC_2_RPM *0.002;
+    (*Axis4DAC).dac_watch[49] = CTRL_1.i->omg_elec  * ELEC_RAD_PER_SEC_2_RPM *0.002;
     (*Axis4DAC).dac_watch[50] = nsoaf.xOmg * ELEC_RAD_PER_SEC_2_RPM *0.002;
     (*Axis4DAC).dac_watch[51] = AFE_USED.theta_d *0.1;
     (*Axis4DAC).dac_watch[52] = (*Axis4DAC).used_theta_d_elec *0.1;
