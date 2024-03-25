@@ -116,6 +116,8 @@ float PIDController_Update(st_PIDController *pid) {
     return pid->out;
 }
 
+REAL shit_speed_out_limlit = 20;
+REAL shit_pos_out_limlit = 100;
 
 // 鍒濆鍖栧嚱鏁�
 void ACMSIMC_PIDTuner(){
@@ -130,8 +132,8 @@ void ACMSIMC_PIDTuner(){
     PID_pos->Ki = POS_KI;
     PID_iD->OutLimit  = CURRENT_LOOP_LIMIT_VOLTS;
     PID_iQ->OutLimit  = CURRENT_LOOP_LIMIT_VOLTS;
-    PID_spd->OutLimit = 500;//SPEED_LOOP_LIMIT_AMPERE;
-    PID_pos->OutLimit = POS_LOOP_LIMIT_SPEED;
+    PID_spd->OutLimit = shit_speed_out_limlit;//SPEED_LOOP_LIMIT_AMPERE;
+    PID_pos->OutLimit = shit_pos_out_limlit;
 
     #if PC_SIMULATION
     printf("%f\n", pid1_iM.Kp);
