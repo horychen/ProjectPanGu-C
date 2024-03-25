@@ -1,21 +1,27 @@
 
+_Cla1Prog_Start = _Cla1funcsRunStart;
+
+CLA_SCRATCHPAD_SIZE = 0x100;
+--undef_sym=__cla_scratchpad_end
+--undef_sym=__cla_scratchpad_start
+
 MEMORY
 {
 PAGE 0 :  /* Program Memory */
           /* Memory (RAM/FLASH) blocks can be moved to PAGE1 for data allocation */
           /* BEGIN is used for the "boot to Flash" bootloader mode   */
 
-   BEGIN           	: origin = 0x080000, length = 0x000002
-   RAMM0           	: origin = 0x000122, length = 0x0002DE
-   RAMD0           	: origin = 0x00B000, length = 0x000800
-   RAMLS0          	: origin = 0x008000, length = 0x000800
-   RAMLS1          	: origin = 0x008800, length = 0x000800
-   RAMLS2      		: origin = 0x009000, length = 0x000800
-   RAMLS3      		: origin = 0x009800, length = 0x000800
-   RAMLS4      		: origin = 0x00A000, length = 0x000800
+   BEGIN            : origin = 0x080000, length = 0x000002
+   RAMM0            : origin = 0x000122, length = 0x0002DE
+   RAMD0            : origin = 0x00B000, length = 0x000800
+   RAMLS0           : origin = 0x008000, length = 0x000800
+   RAMLS1           : origin = 0x008800, length = 0x000400
+   RAMLS2           : origin = 0x008C00, length = 0x000400
+   RAML3            : origin = 0x009000, length = 0x001000     /* CLA program RAM */
+   RAML4L           : origin = 0x00A000, length = 0x000800     /* on-chip RAM block L4 */
    RAMGS14          : origin = 0x01A000, length = 0x001000     /* Only Available on F28379D, F28377D, F28375D devices. Remove line on other devices. */
    RAMGS15          : origin = 0x01B000, length = 0x001000     /* Only Available on F28379D, F28377D, F28375D devices. Remove line on other devices. */
-   RESET           	: origin = 0x3FFFC0, length = 0x000002
+   RESET            : origin = 0x3FFFC0, length = 0x000002
 
    /* Flash sectors */
    FLASHA           : origin = 0x080002, length = 0x001FFE	/* on-chip Flash */
@@ -40,7 +46,11 @@ PAGE 1 : /* Data Memory */
    RAMM1           : origin = 0x000400, length = 0x000400     /* on-chip RAM block M1 */
    RAMD1           : origin = 0x00B800, length = 0x000800
 
-   RAMLS5      : origin = 0x00A800, length = 0x000800
+   CLARAM0     : origin = 0x00A800, length = 0x000200
+   CLARAM1     : origin = 0x00AA00, length = 0x000100
+   CLARAM2     : origin = 0x00AB00, length = 0x000100
+
+   RAMLS5      : origin = 0x00AC00, length = 0x000400
 
    RAMGS0      : origin = 0x00C000, length = 0x001000
    RAMGS1      : origin = 0x00D000, length = 0x001000
@@ -59,6 +69,9 @@ PAGE 1 : /* Data Memory */
 
    CPU2TOCPU1RAM   : origin = 0x03F800, length = 0x000400
    CPU1TOCPU2RAM   : origin = 0x03FC00, length = 0x000400
+
+   CLA1_MSGRAMLOW       : origin = 0x001480, length = 0x000080
+   CLA1_MSGRAMHIGH      : origin = 0x001500, length = 0x000080
 }
 
 SECTIONS
@@ -80,6 +93,8 @@ SECTIONS
    .switch             : > FLASHB      PAGE = 0, ALIGN(4)
 
    .reset              : > RESET,     PAGE = 0, TYPE = DSECT /* not used, */
+    dclfuncs        : > RAML4L,     PAGE = 0
+    dcl32funcs      : > RAML4L,     PAGE = 0
 
     SHARERAMGS0		: > RAMGS0,		PAGE = 1
     SHARERAMGS1		: > RAMGS1,		PAGE = 1
@@ -92,14 +107,14 @@ SECTIONS
 
 #ifdef __TI_COMPILER_VERSION__
    ramfuncs            : LOAD = FLASHD,
-                         RUN = RAMLS0 | RAMLS1 | RAMLS2 |RAMLS3,
+                         RUN = RAMLS0 | RAMLS1 | RAMLS2,
                          LOAD_START(_RamfuncsLoadStart),
                          LOAD_SIZE(_RamfuncsLoadSize),
                          LOAD_END(_RamfuncsLoadEnd),
                          RUN_START(_RamfuncsRunStart),
                          RUN_SIZE(_RamfuncsRunSize),
                          RUN_END(_RamfuncsRunEnd),
-                         PAGE = 0, ALIGN(4)    
+                         PAGE = 0, ALIGN(4)
 #endif
 
    /* The following section definitions are required when using the IPC API Drivers */
@@ -116,7 +131,35 @@ SECTIONS
         GETWRITEIDX :  TYPE = DSECT
         PUTREADIDX :   TYPE = DSECT
     }
+    .scratchpad      : > CLARAM0,   PAGE = 1
+    .bss_cla         : > CLARAM0,   PAGE = 1
+    .const_cla       : > CLARAM0,   PAGE = 1
 
+    Cla1Prog         : > RAML3,
+                     LOAD_START(_Cla1funcsLoadStart),
+                     LOAD_END(_Cla1funcsLoadEnd),
+                     LOAD_SIZE(_Cla1funcsLoadSize),
+                     RUN_START(_Cla1funcsRunStart),
+                     PAGE = 0
+
+    Cla1ToCpuMsgRAM  : > CLA1_MSGRAMLOW,   PAGE = 1
+    CpuToCla1MsgRAM  : > CLA1_MSGRAMHIGH,  PAGE = 1
+    Cla1DataRam0     : > CLARAM0,      PAGE = 1
+    Cla1DataRam1     : > CLARAM1,      PAGE = 1
+    Cla1DataRam2     : > CLARAM2,      PAGE = 1
+
+    CLA1mathTables   : > CLARAM1,
+                      LOAD_START(_Cla1mathTablesLoadStart),
+                      LOAD_END(_Cla1mathTablesLoadEnd),
+                      LOAD_SIZE(_Cla1mathTablesLoadSize),
+                      RUN_START(_Cla1mathTablesRunStart),
+                      PAGE = 1
+
+    CLAscratch       :
+                     { *.obj(CLAscratch)
+                     . += CLA_SCRATCHPAD_SIZE;
+                     *.obj(CLAscratch_end) } > CLARAM0,
+                     PAGE = 1
    /* The following section definition are for SDFM examples */
    //Filter1_RegsFile : > RAMGS1,	PAGE = 1, fill=0x1111
    //Filter2_RegsFile : > RAMGS2,	PAGE = 1, fill=0x2222
