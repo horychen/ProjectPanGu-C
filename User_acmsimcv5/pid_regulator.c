@@ -130,7 +130,7 @@ void ACMSIMC_PIDTuner(){
     PID_pos->Ki = POS_KI;
     PID_iD->OutLimit  = CURRENT_LOOP_LIMIT_VOLTS;
     PID_iQ->OutLimit  = CURRENT_LOOP_LIMIT_VOLTS;
-    PID_spd->OutLimit = 500;//SPEED_LOOP_LIMIT_AMPERE;
+    PID_spd->OutLimit = 40;//SPEED_LOOP_LIMIT_AMPERE;
     PID_pos->OutLimit = POS_LOOP_LIMIT_SPEED;
 
     #if PC_SIMULATION
