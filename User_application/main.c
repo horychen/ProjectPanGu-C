@@ -82,7 +82,7 @@ int USE_3_CURRENT_SENSORS = TRUE;
 #define BOTH_LOOP_RUN 5
 int bool_TEMP = FALSE;
 int positionLoopType = 1;           // TWOMOTOR_POSITION_CONTROL; //SHANK_LOOP_RUN; // SHANK_LOOP_RUN; //BOTH_LOOP_RUN;
-int use_first_set_three_phase = -1; //-1 for both motors
+int use_first_set_three_phase = 1; //-1 for both motors
 
 REAL legBouncingSpeed = 50;
 REAL hipBouncingFreq = 10;
@@ -995,6 +995,8 @@ void measurement()
     //    }
 }
 
+
+
 REAL call_position_loop_controller(int positionLoopType)
 {
     CTRL_2.s->spd->Kp = TEST_HIP_SPD_KP;
@@ -1013,23 +1015,65 @@ REAL call_position_loop_controller(int positionLoopType)
         Axis->flag_overwrite_theta_d = FALSE;
         Axis->Set_current_loop = FALSE;
 
+
         if (axisCnt == 0)
         {
 #if NUMBER_OF_AXES == 2
-            PID_pos->Fbk = position_count_CAN_ID0x03_fromCPU2;
-            PID_pos->Ref = hip_shank_angle_to_can(
-                curycontroller.theta1 + curycontroller.theta2,
-                SHANK_TYPE);
+            Axis->flag_overwrite_theta_d = FALSE;
+            Axis->Set_current_loop = TRUE;
+            if(position_count_CAN_ID0x03_fromCPU2 > CAN03_MAX && position_count_CAN_ID0x03_fromCPU2 < CAN03_MIN)
+            {
+                // 线性增加小腿输出
+//                REAL iq_min = 0.5;
+//                REAL iq_max = 4.5;
+//                SHANK_POS_CONTROL_IQ = iq_min + (iq_max-iq_min)* (sin(2.0*PI * ((REAL)((*CTRL).timebase_counter) * 0.00001)) + 1.0) / 2.0;
+//                SHANK_POS_CONTROL_IQ = 0.5*(REAL)((*CTRL).timebase_counter/200000) + iq_min;
+//                SHANK_POS_CONTROL_IQ = -0.5*(REAL)((*CTRL).timebase_counter/200000) + iq_max;
+//                if (SHANK_POS_CONTROL_IQ > iq_max)
+//                {
+//                    SHANK_POS_CONTROL_IQ = iq_max;
+//                }
+//                else if (SHANK_POS_CONTROL_IQ < iq_min)
+//                {
+//                    SHANK_POS_CONTROL_IQ = iq_min;
+//                }
+//                Axis->Set_manual_current_iq = SHANK_POS_CONTROL_IQ;
+                REAL weight_min = 4.00;
+                REAL weight_max = 14.00;
+                REAL weight = weight_min + (weight_max-weight_min) * (sin(2.0*PI*((REAL)((*CTRL).timebase_counter) * 0.00002)) + 1.0)/2.0;
+                SHANK_POS_CONTROL_IQ = weight;
+                Axis->Set_manual_current_iq = get_current_from_weight(weight);
+            }
+            else
+            {
+                Axis->Set_manual_current_iq = 0;
+            }
 #endif
         }
         if (axisCnt == 1)
         {
 #if NUMBER_OF_AXES == 2
             PID_pos->Fbk = position_count_CAN_ID0x01_fromCPU2;
-            PID_pos->Ref = hip_shank_angle_to_can(
-                curycontroller.theta1,
-                HIP_TYPE);
+            PID_pos->Ref = HIP_POS_CONTROL_POS;
 #endif
+
+//        if (axisCnt == 0)
+//        {
+//#if NUMBER_OF_AXES == 2
+//            PID_pos->Fbk = position_count_CAN_ID0x03_fromCPU2;
+//            PID_pos->Ref = hip_shank_angle_to_can(
+//                curycontroller.theta1 + curycontroller.theta2,
+//                SHANK_TYPE);
+//#endif
+//        }
+//        if (axisCnt == 1)
+//        {
+//#if NUMBER_OF_AXES == 2
+//            PID_pos->Fbk = position_count_CAN_ID0x01_fromCPU2;
+//            PID_pos->Ref = hip_shank_angle_to_can(
+//                curycontroller.theta1,
+//                HIP_TYPE);
+//#endif
         }
         // 位置环
         // 长弧和短弧，要选短的。
@@ -1129,11 +1173,11 @@ REAL call_position_loop_controller(int positionLoopType)
             //            }
 
             Axis->Set_current_loop = FALSE;
-            if (position_count_CAN_ID0x03_fromCPU2 > CAN03_MAX)
+            if (position_count_CAN_ID0x03_fromCPU2 > CAN03_MIN)
             {
                 Axis->Set_manual_rpm = -legBouncingSpeed;
             }
-            else if (position_count_CAN_ID0x03_fromCPU2 < CAN03_MIN)
+            else if (position_count_CAN_ID0x03_fromCPU2 < CAN03_MAX)
             {
                 Axis->Set_manual_rpm = legBouncingSpeed;
             }
