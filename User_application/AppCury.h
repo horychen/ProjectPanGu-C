@@ -15,6 +15,9 @@ extern REAL SHANK_MAX;
 extern REAL CAN03_MIN; //29180//25000
 extern REAL CAN03_MAX; //12500//40000
 
+extern REAL SHANK_POS_CONTROL_IQ;
+extern REAL HIP_POS_CONTROL_POS;
+
 #define CAN_QMAX 131072
 
 
@@ -77,6 +80,14 @@ REAL bezier_linear_interpoolation(REAL t);
 void bezier_controller(REAL t);
 void analoge_controller(REAL height);
 void run_iecon_main(Uint64 t);
+
+typedef struct
+{
+    REAL current[6];
+    REAL weight[6]
+} CURRENT_WEIGHT_TABLE;
+
+REAL get_current_from_weight(REAL weight);
 
 #endif
 

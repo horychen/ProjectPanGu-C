@@ -23,11 +23,48 @@ REAL CAN03_MAX = 12450;
 extern REAL TEST_HIP_POS_OUTLIMIT = 500;
 extern REAL TEST_SHANK_POS_OUTLIMIT = 825;
 
+extern REAL SHANK_POS_CONTROL_IQ = 0.5;
+extern REAL HIP_POS_CONTROL_POS = 35000;
+
 int CONTROLLER_TYPE = 1;
 
     REAL deg_four_bar_map_motor_encoder_angle;
 REAL rad_four_bar_map_motor_encoder_angle = 0;
 int32 cnt_four_bar_map_motor_encoder_angle = 0;
+
+CURRENT_WEIGHT_TABLE current_weight_table = {
+    .current = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0},
+    .weight = {3.80, 4.60, 7.70, 11.10, 14.22, 15.48}
+};
+
+REAL get_current_from_weight(REAL weight)
+{
+    if (weight >= current_weight_table.weight[5])
+    {
+        return current_weight_table.current[5];
+    }
+    else if (weight < current_weight_table.weight[0])
+    {
+        return current_weight_table.current[0];
+    }
+    else
+    {
+        int i;
+        for (i = 0; i < 5; i++)
+        {
+            if (weight >= current_weight_table.weight[i] && weight < current_weight_table.weight[i+1])
+            {
+                return linearInterpolate(weight,
+                                         current_weight_table.weight[i],
+                                         current_weight_table.weight[i+1],
+                                         current_weight_table.current[i],
+                                         current_weight_table.current[i+1]);
+            }
+        }
+        return current_weight_table.current[0];
+    }
+}
+
 
 #pragma DATA_SECTION(hip_shank_angle_table,"MYTABLE_3");
 HIP_SHANK_ANGLE_TABLE hip_shank_angle_table = {
