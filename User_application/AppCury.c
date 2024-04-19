@@ -7,6 +7,8 @@ REAL TEST_HIP_KP = 0.6;
 REAL TEST_SHANK_KP = 1.5;
 REAL TEST_HIP_SPD_KP = 0.005;
 REAL TEST_HIP_SPD_KI = 5e-6;
+REAL TEST_SHANK_SPD_KP = 0.005;
+REAL TEST_SHANK_SPD_KI = 5e-6;
 
 REAL HIP_MIN = 0.2269; //0.0981;
 REAL HIP_MAX = 0.6109; //0.9075; // 涓轰粈涔堣繖涓槸璐熺殑锛熻�屼笖MAX姣擬IN灏忥紵
@@ -96,7 +98,7 @@ CURYCONTROLLER curycontroller = {
     .theta2 = INIT_THETA2,
     .dot_theta1 = 0.0,
     .dot_theta2 = 0.0,
-    .T = 1.5,
+    .T = 10,
     .height_limit = {0.6491, 0.7743},
     .C = {{0.0, 0.0}, {0.1, 1.0}, {0.21, 0.93}, {1.0, 1.0}},
     .order = BEZIER_ORDER};

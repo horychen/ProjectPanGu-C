@@ -86,10 +86,10 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
     (*Axis4DAC).dac_watch[20] = (*CTRL).s->omega_syn * ELEC_RAD_PER_SEC_2_RPM *0.002;
 
 //    (*Axis4DAC).dac_watch[21] = marino.xOmg * ELEC_RAD_PER_SEC_2_RPM *0.002;
-    (*Axis4DAC).dac_watch[21] = curycontroller.theta1*0.1; /// 131072.0 *2;
-    (*Axis4DAC).dac_watch[22] = curycontroller.dot_theta1*0.0001; /// 131072.0 *2;
-    (*Axis4DAC).dac_watch[23] = curycontroller.theta2*0.1; // * ELEC_RAD_PER_SEC_2_RPM *0.002;
-    (*Axis4DAC).dac_watch[24] = curycontroller.dot_theta2*0.0001; //i->omg_elec  * ELEC_RAD_PER_SEC_2_RPM *0.002;
+    (*Axis4DAC).dac_watch[21] = CTRL_1.s->spd->Ref*0.0001; /// 131072.0 *2;
+    (*Axis4DAC).dac_watch[22] = CTRL_1.s->spd->Fbk*0.0001; /// 131072.0 *2;
+    (*Axis4DAC).dac_watch[23] = CTRL_2.s->spd->Ref*0.0001;; // * ELEC_RAD_PER_SEC_2_RPM *0.002;
+    (*Axis4DAC).dac_watch[24] = CTRL_2.s->spd->Ref*0.0001;; //i->omg_elec  * ELEC_RAD_PER_SEC_2_RPM *0.002;
     (*Axis4DAC).dac_watch[25] = CTRL_1.i->idq_cmd[1] * 0.1;
     (*Axis4DAC).dac_watch[26] = CTRL_2.i->idq_cmd[1] * 0.1;
 

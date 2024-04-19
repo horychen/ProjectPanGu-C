@@ -82,7 +82,7 @@ int USE_3_CURRENT_SENSORS = TRUE;
 #define BOTH_LOOP_RUN 5
 int bool_TEMP = FALSE;
 int positionLoopType = 1;           // TWOMOTOR_POSITION_CONTROL; //SHANK_LOOP_RUN; // SHANK_LOOP_RUN; //BOTH_LOOP_RUN;
-int use_first_set_three_phase = -1; //-1 for both motors
+int use_first_set_three_phase = 1; //-1 for both motors
 
 REAL legBouncingSpeed = 50;
 REAL hipBouncingFreq = 10;
@@ -997,6 +997,8 @@ void measurement()
 
 REAL call_position_loop_controller(int positionLoopType)
 {
+    //CTRL_1.s->spd->Kp = TEST_SHANK_SPD_KP;
+    //CTRL_1.s->spd->Ki = TEST_SHANK_SPD_KI;
     CTRL_2.s->spd->Kp = TEST_HIP_SPD_KP;
     CTRL_2.s->spd->Ki = TEST_HIP_SPD_KI;
 
@@ -1042,18 +1044,32 @@ REAL call_position_loop_controller(int positionLoopType)
         {
             PID_pos->Err += CAN_QMAX;
         }
+
         if (axisCnt == 0)
         {
         #if NUMBER_OF_AXES == 2
-            PID_pos->Out = PID_pos->Err * PID_pos->Kp + 32 * (curycontroller.dot_theta1+curycontroller.dot_theta2) * 60 * 0.15915494309189535;
+            PID_pos->Out = PID_pos->Err * PID_pos->Kp;
         #endif
         }
         if (axisCnt == 1)
         {
         #if NUMBER_OF_AXES == 2
-            PID_pos->Out = PID_pos->Err * PID_pos->Kp + 32 * curycontroller.dot_theta1* 60 * 0.15915494309189535;
+            PID_pos->Out = PID_pos->Err * PID_pos->Kp;
         #endif
         }
+
+//        if (axisCnt == 0)
+//        {
+//        #if NUMBER_OF_AXES == 2
+//            PID_pos->Out = PID_pos->Err * PID_pos->Kp + 32 * (curycontroller.dot_theta1+curycontroller.dot_theta2) * 60 * 0.15915494309189535;
+//        #endif
+//        }
+//        if (axisCnt == 1)
+//        {
+//        #if NUMBER_OF_AXES == 2
+//            PID_pos->Out = PID_pos->Err * PID_pos->Kp + 32 * curycontroller.dot_theta1* 60 * 0.15915494309189535;
+//        #endif
+//        }
         if (PID_pos->Out > PID_pos->OutLimit)
         {
             PID_pos->Out = PID_pos->OutLimit;
@@ -1129,11 +1145,11 @@ REAL call_position_loop_controller(int positionLoopType)
             //            }
 
             Axis->Set_current_loop = FALSE;
-            if (position_count_CAN_ID0x03_fromCPU2 > CAN03_MAX)
+            if (position_count_CAN_ID0x03_fromCPU2 > CAN03_MIN)
             {
                 Axis->Set_manual_rpm = -legBouncingSpeed;
             }
-            else if (position_count_CAN_ID0x03_fromCPU2 < CAN03_MIN)
+            else if (position_count_CAN_ID0x03_fromCPU2 < CAN03_MAX)
             {
                 Axis->Set_manual_rpm = legBouncingSpeed;
             }
