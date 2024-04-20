@@ -269,33 +269,42 @@ void main(void)
     // GPIO62 - CANRXA
     GPIO_SetupPinMux(62, GPIO_MUX_CPU2, 6);
     GPIO_SetupPinOptions(62, GPIO_INPUT, GPIO_ASYNC);
+    
     // GPIO19 - CANTXA
     GPIO_SetupPinMux(19, GPIO_MUX_CPU2, 3);
     GPIO_SetupPinOptions(19, GPIO_OUTPUT, GPIO_PUSHPULL);
+   
     // GPIO21 - CANRXB
     GPIO_SetupPinMux(21, GPIO_MUX_CPU2, 3);
     GPIO_SetupPinOptions(21, GPIO_INPUT, GPIO_ASYNC);
+    
     // GPIO20 - CANTXB
     GPIO_SetupPinMux(20, GPIO_MUX_CPU2, 3);
     GPIO_SetupPinOptions(20, GPIO_OUTPUT, GPIO_PUSHPULL);
+    
     // GPIO136 - 485RX-SCIA
     GPIO_SetupPinMux(136, GPIO_MUX_CPU2, 6);
     GPIO_SetupPinOptions(136, GPIO_INPUT, GPIO_PUSHPULL);
+    
     // GPIO135 - 485TX-SCIA
     GPIO_SetupPinMux(135, GPIO_MUX_CPU2, 6);
     GPIO_SetupPinOptions(135, GPIO_OUTPUT, GPIO_PUSHPULL);
+   
     // GPIO138 - 485RX-SCIB
     GPIO_SetupPinMux(138, GPIO_MUX_CPU2, 6);
     GPIO_SetupPinOptions(138, GPIO_INPUT, GPIO_PUSHPULL);
+    
     // GPIO137 - 485TX-SCIB
     GPIO_SetupPinMux(137, GPIO_MUX_CPU2, 6);
     GPIO_SetupPinOptions(137, GPIO_OUTPUT, GPIO_PUSHPULL);
-    // GPIO140 - 485-SCIB-WE-(use SCICTX as GPIO, in UART3 pin7)
-    GPIO_SetupPinMux(140, GPIO_MUX_CPU2, 0);
-    GPIO_SetupPinOptions(140, GPIO_OUTPUT, GPIO_ASYNC);
-    // GPIO139 - 485-SCIA-WE-(use SCICRX as GPIO, in UART3 pin8)
-    GPIO_SetupPinMux(139, GPIO_MUX_CPU2, 0);
-    GPIO_SetupPinOptions(139, GPIO_OUTPUT, GPIO_ASYNC);
+
+    // GPIO31 - 485-SCIB-WE(MotherBoardSimple3 defines new WR for SCIB)
+    GPIO_SetupPinMux(31, GPIO_MUX_CPU2, 0);
+    GPIO_SetupPinOptions(31, GPIO_OUTPUT, GPIO_ASYNC);
+    
+    // GPIO37 - 485-SCIA-WE(MotherBoardSimple3 defines new WR for SCIA)
+    GPIO_SetupPinMux(37, GPIO_MUX_CPU2, 0);
+    GPIO_SetupPinOptions(37, GPIO_OUTPUT, GPIO_ASYNC);
     // =========FOR EUREKA===========
 
     //        // =========TEST BOARD PIN============
