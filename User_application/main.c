@@ -5,9 +5,9 @@ REAL target_position_cnt = 50000;
 REAL KP = 0.000005;
 REAL error_pos;
 
-Uint32 position_elec_SCI_knee_fromCPU2; // TODO: °Ñ elec È«²¿¸ÄÎª count
-Uint32 position_elec_SCI_hip_fromCPU2; // TODO: °Ñ elec È«²¿¸ÄÎª count
-Uint32 position_elec_SCI_fromCPU2; // TODO: °Ñ elec È«²¿¸ÄÎª count
+Uint32 position_elec_SCI_knee_fromCPU2; // TODO: ï¿½ï¿½ elec È«ï¿½ï¿½ï¿½ï¿½Îª count
+Uint32 position_elec_SCI_hip_fromCPU2; // TODO: ï¿½ï¿½ elec È«ï¿½ï¿½ï¿½ï¿½Îª count
+Uint32 position_elec_SCI_fromCPU2; // TODO: ï¿½ï¿½ elec È«ï¿½ï¿½ï¿½ï¿½Îª count
 Uint32 position_elec_CAN_ID0x01_fromCPU2;
 Uint32 position_elec_CAN_ID0x03_fromCPU2;
 Uint32 position_elec_CAN_fromCPU2;
@@ -31,10 +31,10 @@ REAL rad_four_bar_map_motor_encoder_angle=0;
 int32 cnt_four_bar_map_motor_encoder_angle=0;
 
 #if FALSE // LOOK Up TABLE: input is CAN encoder read, and output is 485 encoder read.
-    // ¼ÙÉèÊý¾ÝµãÊýÁ¿ÒÑÖª
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ýµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öª
     #define LUT_LENGTH 1949
 
-    // ÓÃÓÚ´æ´¢Êý¾ÝµÄ½á¹¹Ìå
+    // ï¿½ï¿½ï¿½Ú´æ´¢ï¿½ï¿½ï¿½ÝµÄ½á¹¹ï¿½ï¿½
     typedef struct {
         REAL input[LUT_LENGTH];
         REAL output[LUT_LENGTH];
@@ -144,16 +144,16 @@ int32 cnt_four_bar_map_motor_encoder_angle=0;
     #define OFFSET_VDC_BUS_IPM1 -1.01456189
     #define SCALE_VDC_BUS_IPM1 0.17604031
 
-//Lem 1µÄÈý¸öÀ¶É«¿é¿é·Ö±ðÊÇadc b7 b8 b9
+//Lem 1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«ï¿½ï¿½ï¿½Ö±ï¿½ï¿½ï¿½adc b7 b8 b9
     #define OFFSET_LEM_B7   2027 //2023.89473684 // ADCB7
     #define OFFSET_LEM_B8   2043 //2042.33333333 // ADCB8
     #define OFFSET_LEM_B9   2048 //2043.43859649 // ADCB9
-    // ÁîÄæ±äÆ÷Êä³ö¶ËÖ¸Ïòµç»úÎªÕý·½Ïò£¬ÈôLEMÉÏµÄ¼ýÍ·ÓëÕý·½ÏòÏàÍ¬£¬ÔòSCALEÎªÕýÊý£¬ÈôLEMÉÏµÄ¼ýÍ·ÓëÕý·½ÏòÏà·´£¬ÔòSCALEÎª¸ºÊý£¬
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½LEMï¿½ÏµÄ¼ï¿½Í·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¬ï¿½ï¿½ï¿½ï¿½SCALEÎªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½LEMï¿½ÏµÄ¼ï¿½Í·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½à·´ï¿½ï¿½ï¿½ï¿½SCALEÎªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     #define SCALE_LEM_B7   0.03076297 // ADCB7
     #define SCALE_LEM_B8   0.03038256 // ADCB8
     #define SCALE_LEM_B9   0.03039058 // ADCB9
 
-//Lem 2µÄÈý¸öÀ¶É«¿é¿é·Ö±ðÊÇadc a1 a2 a3
+//Lem 2ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«ï¿½ï¿½ï¿½Ö±ï¿½ï¿½ï¿½adc a1 a2 a3
     #define OFFSET_LEM_A1   2034 //2029.57894737 // ADCA1
     #define OFFSET_LEM_A2   2046 //2043.08771930 // ADCA2
     #define OFFSET_LEM_A3   2047 //2042.98245614 // ADCA3
@@ -265,12 +265,12 @@ void main(void){
     #endif
     #ifdef _STANDALONE
     #ifdef _FLASH
-        // µ±ÄãÐèÒªÀëÏß¶ÏµçÔÙÉÏµçÔËÐÐÊ±ÓÃÕâ¸ö£º
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ß¶Ïµï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         //  Send boot command to allow the CPU02 application to begin execution
         IPCBootCPU2(C1C2_BROM_BOOTMODE_BOOT_FROM_FLASH);
     #else
         //  Send boot command to allow the CPU02 application to begin execution
-        // Õâ¾ä»°ÎÒ²»ÖªµÀÊ²Ã´ÒâÒå£¬¿ÉÄÜ»¹ÊÇ²»Òª±È½ÏºÃ¡£
+        // ï¿½ï¿½ä»°ï¿½Ò²ï¿½Öªï¿½ï¿½Ê²Ã´ï¿½ï¿½ï¿½å£¬ï¿½ï¿½ï¿½Ü»ï¿½ï¿½Ç²ï¿½Òªï¿½È½ÏºÃ¡ï¿½
         //IPCBootCPU2(C1C2_BROM_BOOTMODE_BOOT_FROM_RAM);
     #endif
     #endif
@@ -284,7 +284,7 @@ void main(void){
     // 4.3 Assign peripherals to CPU02
     /* SPI and SCI */
     #if NUMBER_OF_DSP_CORES == 1
-        // Í¬²½£¡£¡£¡£¡£¡
+        // Í¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         InitHighSpeedSpiGpio();
         //InitSpiaGpio();
         //InitSpicGpio();
@@ -293,8 +293,8 @@ void main(void){
         InitSciGpio();
         InitSci();
     #elif NUMBER_OF_DSP_CORES == 2
-        /* Ë«ºËÅäÖÃ*/
-        // ³õÊ¼»¯SPI£¬ÓÃÓÚÓëDACÐ¾Æ¬MAX5307Í¨Ñ¶¡£
+        /* Ë«ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½*/
+        // ï¿½ï¿½Ê¼ï¿½ï¿½SPIï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½DACÐ¾Æ¬MAX5307Í¨Ñ¶ï¿½ï¿½
         EALLOW;
         DevCfgRegs.CPUSEL6.bit.SPI_A = 1; // assign spi-a to cpu2
         DevCfgRegs.CPUSEL6.bit.SPI_C = 1; // assign spi-c to cpu2
@@ -311,7 +311,7 @@ void main(void){
         ClkCfgRegs.LOSPCP.all = 0x0001; //LSPCLK=100MHz
         EDIS;
 
-        // Í¬²½£¡£¡£¡£¡£¡
+        // Í¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         InitHighSpeedSpiGpio();
         //InitSpicGpio();
         //InitSpiaGpio();
@@ -343,12 +343,14 @@ void main(void){
         //GPIO137 - 485TX-SCIB
         GPIO_SetupPinMux(137, GPIO_MUX_CPU2, 6);
         GPIO_SetupPinOptions(137, GPIO_OUTPUT, GPIO_PUSHPULL);
-        //GPIO140 - 485-SCIB-WE-(use SCICTX as GPIO, in UART3 pin7)
-        GPIO_SetupPinMux(140, GPIO_MUX_CPU2, 0);
-        GPIO_SetupPinOptions(140, GPIO_OUTPUT, GPIO_ASYNC);
-        //GPIO139 - 485-SCIA-WE-(use SCICRX as GPIO, in UART3 pin8)
-        GPIO_SetupPinMux(139, GPIO_MUX_CPU2, 0);
-        GPIO_SetupPinOptions(139, GPIO_OUTPUT, GPIO_ASYNC);
+        // GPIO31 - 485-SCIB-WE(MotherBoardSimple3 defines new WR for SCIB)
+        // This is the new pin defination for yan and wu motehrboadrd PlZ do not confuse with Cury
+        GPIO_SetupPinMux(31, GPIO_MUX_CPU2, 0);
+        GPIO_SetupPinOptions(31, GPIO_OUTPUT, GPIO_ASYNC);
+        // GPIO37 - 485-SCIA-WE(MotherBoardSimple3 defines new WR for SCIA)
+        // This is the new pin defination for yan and wu motehrboadrd PlZ do not confuse with Cury
+        GPIO_SetupPinMux(37, GPIO_MUX_CPU2, 0);
+        GPIO_SetupPinOptions(37, GPIO_OUTPUT, GPIO_ASYNC);
         // =========FOR EUREKA===========
 
 
@@ -373,11 +375,11 @@ void main(void){
 //        // =========TEST BOARD PIN============
 //        // =========NOT FOR EUREKA===========
 
-        // Òì²½£¡£¡£¡£¡£¡
+        // ï¿½ì²½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         //InitSci(); // this is moved to CPU02
 
-        // ÔÚ´ËÖ®Ç°£¬ÒÑ¾­°ÑGPIOºÍÍâÉèµÄÈ¨ÏÞ×ª¸øCPU2ÁË¡£
-        // ÕâÀïÔÙ°Ñ²¿·Ö¹²ÏíÄÚ´æÈ¨ÏÞ¸øCPU2£¬Í¬Ê±¸æËßCPU2£¬Äã¿ÉÒÔ¼ÌÐøÔËÐÐ´úÂëÁË¡£
+        // ï¿½Ú´ï¿½Ö®Ç°ï¿½ï¿½ï¿½Ñ¾ï¿½ï¿½ï¿½GPIOï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¨ï¿½ï¿½×ªï¿½ï¿½CPU2ï¿½Ë¡ï¿½
+        // ï¿½ï¿½ï¿½ï¿½ï¿½Ù°Ñ²ï¿½ï¿½Ö¹ï¿½ï¿½ï¿½ï¿½Ú´ï¿½È¨ï¿½Þ¸ï¿½CPU2ï¿½ï¿½Í¬Ê±ï¿½ï¿½ï¿½ï¿½CPU2ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð´ï¿½ï¿½ï¿½ï¿½Ë¡ï¿½
         while( !(MemCfgRegs.GSxMSEL.bit.MSEL_GS0))
         {
             EALLOW;
@@ -394,7 +396,7 @@ void main(void){
     // 5. Handle Interrupts
     /* Re-map PIE Vector Table to user defined ISR functions. */
         EALLOW; // This is needed to write to EALLOW protected registers
-        PieVectTable.EPWM1_INT = &SYSTEM_PROGRAM;     //&MainISR;      // PWMÖ÷ÖÐ¶Ï 10kKHz
+        PieVectTable.EPWM1_INT = &SYSTEM_PROGRAM;     //&MainISR;      // PWMï¿½ï¿½ï¿½Ð¶ï¿½ 10kKHz
         #if USE_ECAP_CEVT2_INTERRUPT == 1 && ENABLE_ECAP
         PieVectTable.ECAP1_INT = &ecap1_isr;
         PieVectTable.ECAP2_INT = &ecap2_isr;
@@ -623,7 +625,7 @@ void voltage_commands_to_pwm(){
 
         // SVPWM of the suspension 3-phase
         //CTRL.svgen2.Ualpha = CTRL.O->uab_cmd_to_inverter[0+2];
-        //CTRL.svgen2.Ubeta  = CTRL.O->uab_cmd_to_inverter[1+2]; // uab_cmdµÄµÚÁã¸öºÍµÚÒ»¸ö·ÖÁ¿´«¸øsvgen2µÚ¶þÌ×Äæ±äÆ÷£¡£¡£¡
+        //CTRL.svgen2.Ubeta  = CTRL.O->uab_cmd_to_inverter[1+2]; // uab_cmdï¿½Äµï¿½ï¿½ï¿½ï¿½ï¿½Íµï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½svgen2ï¿½Ú¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         CTRL.svgen2.Ualpha = CTRL.O->uab_cmd_to_inverter[0];
         CTRL.svgen2.Ubeta  = CTRL.O->uab_cmd_to_inverter[1];
 
@@ -634,8 +636,8 @@ void voltage_commands_to_pwm(){
 
     }else if(Axis.use_first_set_three_phase==-1){
 
-        // SVPWM of the motor 3-phase µÚ¶þÌ×Äæ±äÆ÷¿ØÖÆ×ª¾Ø
-        CTRL.svgen2.Ualpha = CTRL.O->uab_cmd_to_inverter[0]; // uab_cmdµÄµÚÁã¸öºÍµÚÒ»¸ö·ÖÁ¿´«¸øsvgen2µÚ¶þÌ×Äæ±äÆ÷£¡£¡£¡
+        // SVPWM of the motor 3-phase ï¿½Ú¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×ªï¿½ï¿½
+        CTRL.svgen2.Ualpha = CTRL.O->uab_cmd_to_inverter[0]; // uab_cmdï¿½Äµï¿½ï¿½ï¿½ï¿½ï¿½Íµï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½svgen2ï¿½Ú¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         CTRL.svgen2.Ubeta  = CTRL.O->uab_cmd_to_inverter[1];
 
         // SVPWM of the suspension 3-phase
@@ -694,7 +696,7 @@ void voltage_measurement_based_on_eCAP(){
         CAP.uab0[1] = CTRL.S->sinT*CAP.dq[0] + CTRL.S->cosT*CAP.dq[1];
     }
 
-    // µçÑ¹²âÁ¿
+    // ï¿½ï¿½Ñ¹ï¿½ï¿½ï¿½ï¿½
     if(G.flag_use_ecap_voltage==2 || G.flag_use_ecap_voltage==1){
         /*Use original ecap measured voltage*/
         US_P(0) = US_C(0);
@@ -718,10 +720,10 @@ void voltage_measurement_based_on_eCAP(){
 
     }else if(G.flag_use_ecap_voltage==0){
         /*Use command voltage for feedback*/
-        US_P(0) = CTRL.O->uab_cmd[0]; // ºó×º_P±íÊ¾ÉÏÒ»²½µÄµçÑ¹£¬P = Previous
-        US_P(1) = CTRL.O->uab_cmd[1]; // ºó×º_C±íÊ¾µ±Ç°²½µÄµçÑ¹£¬C = Current
-        US_C(0) = CTRL.O->uab_cmd[0]; // ºó×º_P±íÊ¾ÉÏÒ»²½µÄµçÑ¹£¬P = Previous
-        US_C(1) = CTRL.O->uab_cmd[1]; // ºó×º_C±íÊ¾µ±Ç°²½µÄµçÑ¹£¬C = Current
+        US_P(0) = CTRL.O->uab_cmd[0]; // ï¿½ï¿½×º_Pï¿½ï¿½Ê¾ï¿½ï¿½Ò»ï¿½ï¿½ï¿½Äµï¿½Ñ¹ï¿½ï¿½P = Previous
+        US_P(1) = CTRL.O->uab_cmd[1]; // ï¿½ï¿½×º_Cï¿½ï¿½Ê¾ï¿½ï¿½Ç°ï¿½ï¿½ï¿½Äµï¿½Ñ¹ï¿½ï¿½C = Current
+        US_C(0) = CTRL.O->uab_cmd[0]; // ï¿½ï¿½×º_Pï¿½ï¿½Ê¾ï¿½ï¿½Ò»ï¿½ï¿½ï¿½Äµï¿½Ñ¹ï¿½ï¿½P = Previous
+        US_C(1) = CTRL.O->uab_cmd[1]; // ï¿½ï¿½×º_Cï¿½ï¿½Ê¾ï¿½ï¿½Ç°ï¿½ï¿½ï¿½Äµï¿½Ñ¹ï¿½ï¿½C = Current
     }
 
     // (for watch only) Mismatch between ecap measurement and command to inverter
@@ -733,7 +735,7 @@ void voltage_measurement_based_on_eCAP(){
 
 //extern long long sci_pos;
 
-//ÉùÃ÷È«¾Ö±äÁ¿
+//ï¿½ï¿½ï¿½ï¿½È«ï¿½Ö±ï¿½ï¿½ï¿½
 #if PC_SIMULATION==FALSE
 REAL CpuTimer_Delta = 0;
 Uint32 CpuTimer_Before = 0;
@@ -768,7 +770,7 @@ void measurement(){
             cnt_four_bar_map_motor_encoder_angle = deg_four_bar_map_motor_encoder_angle * 23301.68888888889;
 
 
-            //Õâ¶Î·ÅÐèÒª²âÊ±¼äµÄ´úÂëºóÃæÇ°Ãæ£¬¹Û²ìCpuTimer_DeltaµÄÈ¡Öµ£¬´ú±í¾­¹ýÁË¶àÉÙ¸ö 1/200e6 Ãë¡£
+            //ï¿½ï¿½Î·ï¿½ï¿½ï¿½Òªï¿½ï¿½Ê±ï¿½ï¿½Ä´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç°ï¿½æ£¬ï¿½Û²ï¿½CpuTimer_Deltaï¿½ï¿½È¡Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë¶ï¿½ï¿½Ù¸ï¿½ 1/200e6 ï¿½ë¡£
             #if PC_SIMULATION==FALSE
             CpuTimer_After = CpuTimer1.RegsAddr->TIM.all; // get count
             CpuTimer_Delta = (REAL)CpuTimer_Before - (REAL)CpuTimer_After;
@@ -781,9 +783,9 @@ void measurement(){
 
 
             CTRL.enc->encoder_abs_cnt_previous = CTRL.enc->encoder_abs_cnt;
-            // ¾Ž´aÆ÷×x”µÊÇ·´µÄ£¬ËùÒÔß@ß…Æ«ÖÃÒ²Òª·´Ò»ÏÂ£¬¸Ä³ÉØ“Öµ£¡
-            // ¾Ž´aÆ÷×x”µÊÇ·´µÄ£¬ËùÒÔß@ß…Æ«ÖÃÒ²Òª·´Ò»ÏÂ£¬¸Ä³ÉØ“Öµ£¡
-            // ¾Ž´aÆ÷×x”µÊÇ·´µÄ£¬ËùÒÔß@ß…Æ«ÖÃÒ²Òª·´Ò»ÏÂ£¬¸Ä³ÉØ“Öµ£¡
+            // ï¿½ï¿½ï¿½aï¿½ï¿½ï¿½xï¿½ï¿½ï¿½Ç·ï¿½ï¿½Ä£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½@ß…Æ«ï¿½ï¿½Ò²Òªï¿½ï¿½Ò»ï¿½Â£ï¿½ï¿½Ä³ï¿½Ø“Öµï¿½ï¿½
+            // ï¿½ï¿½ï¿½aï¿½ï¿½ï¿½xï¿½ï¿½ï¿½Ç·ï¿½ï¿½Ä£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½@ß…Æ«ï¿½ï¿½Ò²Òªï¿½ï¿½Ò»ï¿½Â£ï¿½ï¿½Ä³ï¿½Ø“Öµï¿½ï¿½
+            // ï¿½ï¿½ï¿½aï¿½ï¿½ï¿½xï¿½ï¿½ï¿½Ç·ï¿½ï¿½Ä£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½@ß…Æ«ï¿½ï¿½Ò²Òªï¿½ï¿½Ò»ï¿½Â£ï¿½ï¿½Ä³ï¿½Ø“Öµï¿½ï¿½
             if(bool_use_SCI_encoder){
                 // MD1 is 17bit, use SCI485hip port
                 CTRL.enc->encoder_abs_cnt = - ( (int32)position_elec_SCI_fromCPU2 + CTRL.enc->OffsetCountBetweenIndexAndUPhaseAxis );
@@ -813,8 +815,8 @@ void measurement(){
                        ENC.encoder_incremental_cnt -= (int32) SYSTEM_QEP_QPOSMAX_PLUS_1;
 
             // ENC.rpm_raw =  ENC.encoder_incremental_cnt  * SYSTEM_QEP_REV_PER_PULSE / CpuTimer_Delta * 1200e7; // 200e6 * 60 ;
-//            ENC.rpm_raw =  ENC.encoder_incremental_cnt  * SYSTEM_QEP_REV_PER_PULSE * 1052.6 * 60; // 200e6 * 60 Ê±¼äÊÇ±ä»¯µÄ£¬¿ÉÄÜÊÇ1msÒ²¿ÉÄÜÊÇ0.9ms¡£
-            ENC.rpm_raw =  ENC.encoder_incremental_cnt  * SYSTEM_QEP_REV_PER_PULSE * 1e4 * 60; // 1e4Ö¸µÄÊÇEPWM1_ISRÖÐ¶ÏµÄÆµÂÊ£º10kHz
+//            ENC.rpm_raw =  ENC.encoder_incremental_cnt  * SYSTEM_QEP_REV_PER_PULSE * 1052.6 * 60; // 200e6 * 60 Ê±ï¿½ï¿½ï¿½Ç±ä»¯ï¿½Ä£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1msÒ²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½0.9msï¿½ï¿½
+            ENC.rpm_raw =  ENC.encoder_incremental_cnt  * SYSTEM_QEP_REV_PER_PULSE * 1e4 * 60; // 1e4Ö¸ï¿½ï¿½ï¿½ï¿½EPWM1_ISRï¿½Ð¶Ïµï¿½Æµï¿½Ê£ï¿½10kHz
 
             ENC.sum_qepPosCnt            -= ENC.MA_qepPosCnt[ENC.cursor];
             ENC.sum_qepPosCnt            += ENC.rpm_raw;//ENC.encoder_incremental_cnt;
@@ -830,7 +832,7 @@ void measurement(){
 
             CTRL.enc->omg_elec = ENC.rpm * RPM_2_ELEC_RAD_PER_SEC;
 
-            //Õâ¶Î·ÅÐèÒª²âÊ±¼äµÄ´úÂëÇ°Ãæ
+            //ï¿½ï¿½Î·ï¿½ï¿½ï¿½Òªï¿½ï¿½Ê±ï¿½ï¿½Ä´ï¿½ï¿½ï¿½Ç°ï¿½ï¿½
             #if PC_SIMULATION==FALSE
             EALLOW;
             CpuTimer1.RegsAddr->TCR.bit.TRB = 1; // reset cpu timer to period value
@@ -845,21 +847,21 @@ void measurement(){
         }
     #endif
 
-    // ×ª×ÓÎ»ÖÃºÍ×ªËÙ½Ó¿Ú ÒÔ¼° ×ª×ÓÎ»ÖÃºÍ×ªËÙ²âÁ¿
+    // ×ªï¿½ï¿½Î»ï¿½Ãºï¿½×ªï¿½Ù½Ó¿ï¿½ ï¿½Ô¼ï¿½ ×ªï¿½ï¿½Î»ï¿½Ãºï¿½×ªï¿½Ù²ï¿½ï¿½ï¿½
     //    int32 QPOSCNT;
     //    if(ENCODER_TYPE == INCREMENTAL_ENCODER_QEP){
     //        QPOSCNT = EQep1Regs.QPOSCNT;
     //    }
-    //    // 20240123 ÍÈ²¿µç»ú²âÊÔ
+    //    // 20240123 ï¿½È²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     //    if(ENCODER_TYPE == ABSOLUTE_ENCODER_SCI){
-    //        QPOSCNT =  - position_elec_SCI_fromCPU2; // TODO: ¿ª»·µçÁ÷Ê¸Á¿Õý×ªµÄÊ±ºò£¬µç»úµÄ±àÂëÆ÷¶ÁÊýÔÚ¼õÐ¡£¬ËùÒÔÈ¡¸ö¸ººÅ¡£
+    //        QPOSCNT =  - position_elec_SCI_fromCPU2; // TODO: ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¸ï¿½ï¿½ï¿½ï¿½×ªï¿½ï¿½Ê±ï¿½ò£¬µï¿½ï¿½ï¿½Ä±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú¼ï¿½Ð¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½Å¡ï¿½
     //        //QPOSCNT = position_elec_SCI_fromCPU2;
     //    }
-    //    // Ê¹ÓÃcan_ID0x01±àÂëÆ÷
+    //    // Ê¹ï¿½ï¿½can_ID0x01ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     //    if(ENCODER_TYPE == ABSOLUTE_ENCODER_CAN_ID0x01){
     //        QPOSCNT = position_elec_CAN_ID0x01_fromCPU2;
     //    }
-    //    // Ê¹ÓÃcan_ID0x03±àÂëÆ÷
+    //    // Ê¹ï¿½ï¿½can_ID0x03ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     //    if(ENCODER_TYPE == ABSOLUTE_ENCODER_CAN_ID0x03){
     //        QPOSCNT = position_elec_CAN_ID0x03_fromCPU2;
     //    }
@@ -886,7 +888,7 @@ void measurement(){
     Axis.iuvw[1]=((REAL)(AdcaResultRegs.ADCRESULT2 ) - Axis.adc_offset[2]) * Axis.adc_scale[2]; //
     Axis.iuvw[2]=((REAL)(AdcaResultRegs.ADCRESULT3 ) - Axis.adc_offset[3]) * Axis.adc_scale[3]; //
 
-    // LEM2 ·¨¹ú µÂ¹ú ÈÕ±¾
+    // LEM2 ï¿½ï¿½ï¿½ï¿½ ï¿½Â¹ï¿½ ï¿½Õ±ï¿½
     Axis.iuvw[3]=((REAL)(AdcbResultRegs.ADCRESULT7 ) - Axis.adc_offset[4]) * Axis.adc_scale[4]; //
     Axis.iuvw[4]=((REAL)(AdcbResultRegs.ADCRESULT8 ) - Axis.adc_offset[5]) * Axis.adc_scale[5]; //
     Axis.iuvw[5]=((REAL)(AdcbResultRegs.ADCRESULT9 ) - Axis.adc_offset[6]) * Axis.adc_scale[6]; //
@@ -906,16 +908,16 @@ void measurement(){
 
 
 
-    // ÏßµçÑ¹²âÁ¿£¨»ùÓÚÕ¼¿Õ±ÈºÍÄ¸ÏßµçÑ¹£©
+    // ï¿½ßµï¿½Ñ¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Õ¼ï¿½Õ±Èºï¿½Ä¸ï¿½ßµï¿½Ñ¹ï¿½ï¿½
     //voltage_measurement_based_on_eCAP();
 
-    // VdcÓÃÓÚÊµÊ±¸üÐÂµçÁ÷»·ÏÞ·ù
+    // Vdcï¿½ï¿½ï¿½ï¿½ÊµÊ±ï¿½ï¿½ï¿½Âµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Þ·ï¿½
     pid1_iM.OutLimit = Axis.vdc * 0.5773672;
     pid1_iT.OutLimit = Axis.vdc * 0.5773672;
     pid2_ix.OutLimit = Axis.vdc * 0.5773672;
     pid2_iy.OutLimit = Axis.vdc * 0.5773672;
 
-    // µçÁ÷½Ó¿Ú
+    // ï¿½ï¿½ï¿½ï¿½ï¿½Ó¿ï¿½
     if(USE_3_CURRENT_SENSORS){
         Axis.iabg[0] = UVW2A_AI(Axis.iuvw[0], Axis.iuvw[1], Axis.iuvw[2]);
         Axis.iabg[1] = UVW2B_AI(Axis.iuvw[0], Axis.iuvw[1], Axis.iuvw[2]);
@@ -933,27 +935,27 @@ void measurement(){
     }
 
     if(Axis.use_first_set_three_phase==1){
-        // Ö»ÓÃµÚÒ»Ì×ÈýÏà
+        // Ö»ï¿½Ãµï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         IS_C(0)        = Axis.iabg[0];
         IS_C(1)        = Axis.iabg[1];
         CTRL.I->iab[0] = Axis.iabg[0];
         CTRL.I->iab[1] = Axis.iabg[1];
 
-        US_C(0) = CTRL.O->uab_cmd[0]; // ºó×º_P±íÊ¾ÉÏÒ»²½µÄµçÑ¹£¬P = Previous
-        US_C(1) = CTRL.O->uab_cmd[1]; // ºó×º_C±íÊ¾µ±Ç°²½µÄµçÑ¹£¬C = Current
+        US_C(0) = CTRL.O->uab_cmd[0]; // ï¿½ï¿½×º_Pï¿½ï¿½Ê¾ï¿½ï¿½Ò»ï¿½ï¿½ï¿½Äµï¿½Ñ¹ï¿½ï¿½P = Previous
+        US_C(1) = CTRL.O->uab_cmd[1]; // ï¿½ï¿½×º_Cï¿½ï¿½Ê¾ï¿½ï¿½Ç°ï¿½ï¿½ï¿½Äµï¿½Ñ¹ï¿½ï¿½C = Current
 
         US_P(0) = US_C(0);
         US_P(1) = US_C(1);
 
     }else if(Axis.use_first_set_three_phase==2){
-        // Ö»ÓÃµÚ¶þÌ×ÈýÏà
+        // Ö»ï¿½ÃµÚ¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         IS_C(0)        = Axis.iabg[3];
         IS_C(1)        = Axis.iabg[4];
         CTRL.I->iab[0] = Axis.iabg[3];
         CTRL.I->iab[1] = Axis.iabg[4];
 
-        US_C(0) = CTRL.O->uab_cmd[0+2]; // ºó×º_P±íÊ¾ÉÏÒ»²½µÄµçÑ¹£¬P = Previous
-        US_C(1) = CTRL.O->uab_cmd[1+2]; // ºó×º_C±íÊ¾µ±Ç°²½µÄµçÑ¹£¬C = Current
+        US_C(0) = CTRL.O->uab_cmd[0+2]; // ï¿½ï¿½×º_Pï¿½ï¿½Ê¾ï¿½ï¿½Ò»ï¿½ï¿½ï¿½Äµï¿½Ñ¹ï¿½ï¿½P = Previous
+        US_C(1) = CTRL.O->uab_cmd[1+2]; // ï¿½ï¿½×º_Cï¿½ï¿½Ê¾ï¿½ï¿½Ç°ï¿½ï¿½ï¿½Äµï¿½Ñ¹ï¿½ï¿½C = Current
 
         US_P(0) = US_C(0);
         US_P(1) = US_C(1);
@@ -961,20 +963,20 @@ void measurement(){
     }else if(Axis.use_first_set_three_phase==-1){
         IS_C(0)        = Axis.iabg[3];
         IS_C(1)        = Axis.iabg[4];
-        CTRL.I->iab[0] = Axis.iabg[3]; // µÚ¶þÌ×Äæ±äÆ÷¿ØÖÆ×ª¾Ø
+        CTRL.I->iab[0] = Axis.iabg[3]; // ï¿½Ú¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×ªï¿½ï¿½
         CTRL.I->iab[1] = Axis.iabg[4];
         CTRL.I->iab[0+2] = Axis.iabg[0];
         CTRL.I->iab[1+2] = Axis.iabg[1];
     }
 
 
-    //    ÕâÑù²»ÄÜÐÎ³É±£»¤£¬±ØÐëÉèÖÃ¹ÊÕÏ×´Ì¬²ÅÐÐ¡£
+    //    ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î³É±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã¹ï¿½ï¿½ï¿½×´Ì¬ï¿½ï¿½ï¿½Ð¡ï¿½
     //    if(fabs(G.Current_W)>8 || fabs(G.Current_V)>8){
     //        DSP_PWM_DISABLE
     //        DSP_2PWM_DISABLE
     //    }
 
-    // µçÁ÷²ÉÑùADCÎÂÆ®Ð£×¼ // TODO ¸Ä³ÉÓÃADC Raw ResultsÐ£×¼¡£
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ADCï¿½ï¿½Æ®Ð£×¼ // TODO ï¿½Ä³ï¿½ï¿½ï¿½ADC Raw ResultsÐ£×¼ï¿½ï¿½
 //    if(Axis.AD_offset_flag2==FALSE)
 //    {
 //        Axis.offset_counter += 1;
@@ -995,8 +997,8 @@ void measurement(){
 //            Axis.offset_counter = 0;
 //        }
 //
-//        // À´²»¼°Íê³ÉÆ«ÖÃ¼ì²â£¨±ÈÈç¸ÕÉÏµçÊý×Ö¿ª¹Ø¾ÍÊÇ¿ªµÄ£©£¬²ÉÓÃÄ¬ÈÏÖµ
-//        /* 427-1401£ºÌí¼Ó¿ª¹ØÐÅºÅÂË²¨¡£½ñÌì·¢ÏÖÔÚ¸ÕÉÏµçµÄÊ±ºò£¬XCUBE-IIµÄÇ°Á½¸öÖÐ¶ÏÀï£¬Êý×Ö¿ª¹ØÊÇ´ò¿ªµÄ£¬È»ºó²Å±ä³É¹Ø±Õ¡£*/
+//        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ«ï¿½Ã¼ï¿½â£¨ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ï¿½Ö¿ï¿½ï¿½Ø¾ï¿½ï¿½Ç¿ï¿½ï¿½Ä£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¬ï¿½ï¿½Öµ
+//        /* 427-1401ï¿½ï¿½ï¿½ï¿½Ó¿ï¿½ï¿½ï¿½ï¿½Åºï¿½ï¿½Ë²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ì·¢ï¿½ï¿½ï¿½Ú¸ï¿½ï¿½Ïµï¿½ï¿½Ê±ï¿½ï¿½XCUBE-IIï¿½ï¿½Ç°ï¿½ï¿½ï¿½ï¿½ï¿½Ð¶ï¿½ï¿½ï£¬ï¿½ï¿½ï¿½Ö¿ï¿½ï¿½ï¿½ï¿½Ç´ò¿ªµÄ£ï¿½È»ï¿½ï¿½Å±ï¿½É¹Ø±Õ¡ï¿½*/
 //        if(Axis.FLAG_ENABLE_PWM_OUTPUT && Axis.offset_counter>100){
 //            Axis.iuvw_offset_online[0] = 0.0;
 //            Axis.iuvw_offset_online[1] = 0.0;
@@ -1007,7 +1009,7 @@ void measurement(){
 //            Axis.AD_offset_flag2 = TRUE;
 //        }
 //
-//        // ÉÏµçµÄÊ±ºò£¬µç»ú¿ÉÄÜÔÚ×ª£¬´ËÊ±¸ù¾ÝµçÁ÷ÅÐ¶ÏÊÇ·ñ»¹Òª¶îÍâ½øÐÐÆ«ÖÃ²¹³¥¡£
+//        // ï¿½Ïµï¿½ï¿½Ê±ï¿½ò£¬µï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×ªï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½Ýµï¿½ï¿½ï¿½ï¿½Ð¶ï¿½ï¿½Ç·ï¿½Òªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ«ï¿½Ã²ï¿½ï¿½ï¿½ï¿½ï¿½
 //        if( fabs(Axis.iuvw[0])>0.05 || fabs(Axis.iuvw[1])>0.05 || fabs(Axis.iuvw[2])>0.05 || \
 //            fabs(Axis.iuvw[3])>0.05 || fabs(Axis.iuvw[4])>0.05 || fabs(Axis.iuvw[5])>0.05){
 //            Axis.iuvw_offset_online[0] = 0.0;
@@ -1028,7 +1030,7 @@ void PanGuMainISR(void){
         write_DAC_buffer();
     #endif
 
-// ³ö³§µ×°å£¬µãµÆ´úÂë
+// ï¿½ï¿½ï¿½ï¿½ï¿½×°å£¬ï¿½ï¿½Æ´ï¿½ï¿½ï¿½
 //    static long int ii = 0;
 //    if(++ii%5000 == 0){
 //        //        EPwm1Regs.CMPA.bit.CMPA = CTRL.svgen1.Ta*50000000*CL_TS;
@@ -1059,7 +1061,7 @@ void PanGuMainISR(void){
         do_enhanced_capture();
     #endif
 
-    // ²ÉÑù£¬°üÀ¨DSPÖÐµÄADC²ÉÑùµÈ
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½DSPï¿½Ðµï¿½ADCï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     // DELAY_US(2); // wait for adc conversion TODO: check adc eoc flag?
     measurement();
 
@@ -1078,12 +1080,12 @@ void PanGuMainISR(void){
             //G.Select_exp_operation = 3; // fixed
             init_experiment_overwrite();
 
-            FE.htz.rs_est = 3.8; // Í¨¹ýµ÷½Úµç×èÖµµÈÐ§²¹³¥Vdc=80VÊ±µÄËÀÇøµçÑ¹Îó²î£¨°´Âý·´×ªÊµÑéÐ§¹ûµ÷½Ú»ñµÃ£©
+            FE.htz.rs_est = 3.8; // Í¨ï¿½ï¿½ï¿½ï¿½ï¿½Úµï¿½ï¿½ï¿½Öµï¿½ï¿½Ð§ï¿½ï¿½ï¿½ï¿½Vdc=80VÊ±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¹ï¿½ï¿½î£¨ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×ªÊµï¿½ï¿½Ð§ï¿½ï¿½ï¿½ï¿½ï¿½Ú»ï¿½Ã£ï¿½
 
-            // µç»úÃúÅÆ´¦Ãþ×ÅÌÌ£¬µç×è±ä´óÁË£¿£¿
-            //FE.htz.rs_est = 4.2; // Ohm Í¨¹ýµ÷½Úµç×èÖµµÈÐ§²¹³¥Vdc=120VÊ±µÄËÀÇøµçÑ¹Îó²î£¨°´Âý·´×ªÊµÑéÐ§¹ûµ÷½Ú»ñµÃ£©
+            // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ì£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë£ï¿½ï¿½ï¿½
+            //FE.htz.rs_est = 4.2; // Ohm Í¨ï¿½ï¿½ï¿½ï¿½ï¿½Úµï¿½ï¿½ï¿½Öµï¿½ï¿½Ð§ï¿½ï¿½ï¿½ï¿½Vdc=120VÊ±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¹ï¿½ï¿½î£¨ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×ªÊµï¿½ï¿½Ð§ï¿½ï¿½ï¿½ï¿½ï¿½Ú»ï¿½Ã£ï¿½
 
-            //CTRL.motor->Lmu_inv = 1.55; // H^-1 Ê¹µÃÊµ²âalpha-betaµçÁ÷ÀîÈøÈãÍ¼ÎªÔ²ÐÎÇÒ²»»á·¢ÉúÆ«ÐÄ×ª¶¯
+            //CTRL.motor->Lmu_inv = 1.55; // H^-1 Ê¹ï¿½ï¿½Êµï¿½ï¿½alpha-betaï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¼ÎªÔ²ï¿½ï¿½ï¿½Ò²ï¿½ï¿½á·¢ï¿½ï¿½Æ«ï¿½ï¿½×ªï¿½ï¿½
             //CTRL.I->m0 = 2.5; // Wb
             // load motor is iq=-10 A
 
@@ -1091,14 +1093,14 @@ void PanGuMainISR(void){
                 //CTRL.g->overwrite_vdc = 80;
 //                CTRL.g->overwrite_vdc = 120;
                 //CTRL.g->overwrite_vdc = 200;
-                //ÕýÏÒÊµÑé
+                //ï¿½ï¿½ï¿½ï¿½Êµï¿½ï¿½
                 CTRL.g->overwrite_vdc = 28;
 //                FE.htz.rs_est=4.45;
 //                marino.gamma_inv=150000;
 //                marino.lambda_inv=2000;
-//                marino.xAlpha=6.25; // Ê¹µÃÕýÏÒ×ªËÙµÄ²¨Í·¸ú×Ù±äºÃ
+//                marino.xAlpha=6.25; // Ê¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×ªï¿½ÙµÄ²ï¿½Í·ï¿½ï¿½ï¿½Ù±ï¿½ï¿½
 //                imife_realtime_gain_off=0.01;
-//                CTRL.motor->Js_inv=30; // Ê¹µÃ¸ºÔØ×ª¾Ø¹À¼ÆÖµ±ä³É³£Êý¶ø²»ÊÇÕýÏÒ²¨£¨ÕýÏÒ²¨ÊÇ¹ßÁ¿Îó²î*¼ÓËÙ¶ÈÐÎ³ÉµÄ¹ßÐÔ¸ºÔØ£©
+//                CTRL.motor->Js_inv=30; // Ê¹ï¿½Ã¸ï¿½ï¿½ï¿½×ªï¿½Ø¹ï¿½ï¿½ï¿½Öµï¿½ï¿½É³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò²ï¿½ï¿½Ç¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½*ï¿½ï¿½ï¿½Ù¶ï¿½ï¿½Î³ÉµÄ¹ï¿½ï¿½Ô¸ï¿½ï¿½Ø£ï¿½
             }
             CTRL.g->flag_overwite_vdc = 0;
 
@@ -1117,7 +1119,7 @@ void PanGuMainISR(void){
         if (FE.htz.u_offset[0] > 0.1){
             FE.htz.u_offset[0] = 0;
         }
-        // DSPÖÐ¿ØÖÆÆ÷µÄÊ±¼ä
+        // DSPï¿½Ð¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½
         timebase_counter += 1;
         CTRL.timebase = CL_TS * timebase_counter; //CTRL.timebase += CL_TS; // 2048 = float/REAL max
 
@@ -1125,7 +1127,7 @@ void PanGuMainISR(void){
             target_position_cnt = position_elec_CAN_ID0x01_fromCPU2 * 64;
         }
 
-        // ¸ù¾ÝÖ¸Áî£¬²úÉú¿ØÖÆÊä³ö£¨µçÑ¹£©
+        // ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½î£¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¹ï¿½ï¿½
         #if ENABLE_COMMISSIONING == FALSE
             //CTRL.S->Motor_or_Gnerator = sign(CTRL.I->idq_cmd[1]) == sign(ENC.rpm); // sign(CTRL.I->idq_cmd[1]) != sign(CTRL.I->cmd_speed_rpm))
             runtime_command_and_tuning(Axis.Select_exp_operation);
@@ -1136,8 +1138,8 @@ void PanGuMainISR(void){
 
             if(positionLoopENABLE == 1)
             {
-                // Î»ÖÃ»·
-                // ³¤»¡ºÍ¶Ì»¡£¬ÒªÑ¡¶ÌµÄ¡£
+                // Î»ï¿½Ã»ï¿½
+                // ï¿½ï¿½ï¿½ï¿½ï¿½Í¶Ì»ï¿½ï¿½ï¿½ÒªÑ¡ï¿½ÌµÄ¡ï¿½
                 error_pos = target_position_cnt - (REAL)CTRL.enc->encoder_abs_cnt;
                 if (error_pos > (SYSTEM_QEP_QPOSMAX_PLUS_1*0.5))
                 {
@@ -1191,7 +1193,7 @@ void PanGuMainISR(void){
             EPwm5Regs.CMPA.bit.CMPA = CTRL.svgen2.Tb*50000000*CL_TS;
             EPwm6Regs.CMPA.bit.CMPA = CTRL.svgen2.Tc*50000000*CL_TS;
 
-            // 20240119 test£¬¹Û²ì4¡¢5¡¢6Í¨µÀµÄIPMÊä³öµçÑ¹ÊÇ·ñÕý³£
+            // 20240119 testï¿½ï¿½ï¿½Û²ï¿½4ï¿½ï¿½5ï¿½ï¿½6Í¨ï¿½ï¿½ï¿½ï¿½IPMï¿½ï¿½ï¿½ï¿½ï¿½Ñ¹ï¿½Ç·ï¿½ï¿½ï¿½ï¿½ï¿½
 //            EPwm4Regs.CMPA.bit.CMPA = CTRL.svgen1.Ta*50000000*CL_TS;
 //            EPwm5Regs.CMPA.bit.CMPA = CTRL.svgen1.Tb*50000000*CL_TS;
 //            EPwm6Regs.CMPA.bit.CMPA = CTRL.svgen1.Tc*50000000*CL_TS;
@@ -1225,7 +1227,7 @@ __interrupt void EPWM1ISR(void){
     PieCtrlRegs.PIEIER4.all &= 0x7;        // Set group priority by adjusting PIEIER4 to allow INT4.1, 4.2, 4.3 to interrupt current ISR
 
     /* Step 3. [eCAP] Enable interrupts */
-    PieCtrlRegs.PIEACK.all = 0xFFFF;      // Enable PIE interrupts by writing all 1¡¯s to the PIEACK register
+    PieCtrlRegs.PIEACK.all = 0xFFFF;      // Enable PIE interrupts by writing all 1ï¿½ï¿½s to the PIEACK register
     asm("       NOP");                    // Wait at least one cycle
     EINT;                                 // Enable global interrupts by clearing INTM
 #endif
@@ -1250,7 +1252,7 @@ __interrupt void EPWM1ISR(void){
 #endif
 
 /*
-//ÉùÃ÷È«¾Ö±äÁ¿
+//ï¿½ï¿½ï¿½ï¿½È«ï¿½Ö±ï¿½ï¿½ï¿½
 #if PC_SIMULATION==FALSE
 REAL CpuTimer_Delta = 0;
 Uint32 CpuTimer_Before = 0;
@@ -1258,7 +1260,7 @@ Uint32 CpuTimer_After = 0;
 #endif
 
 
-//Õâ¶Î·ÅÐèÒª²âÊ±¼äµÄ´úÂëÇ°Ãæ
+//ï¿½ï¿½Î·ï¿½ï¿½ï¿½Òªï¿½ï¿½Ê±ï¿½ï¿½Ä´ï¿½ï¿½ï¿½Ç°ï¿½ï¿½
 #if PC_SIMULATION==FALSE
 EALLOW;
 CpuTimer1.RegsAddr->TCR.bit.TRB = 1; // reset cpu timer to period value
@@ -1267,7 +1269,7 @@ CpuTimer_Before = CpuTimer1.RegsAddr->TIM.all; // get count
 EDIS;
 #endif
 
-//Õâ¶Î·ÅÐèÒª²âÊ±¼äµÄ´úÂëºóÃæÇ°Ãæ£¬¹Û²ìCpuTimer_DeltaµÄÈ¡Öµ£¬´ú±í¾­¹ýÁË¶àÉÙ¸ö 1/200e6 Ãë¡£
+//ï¿½ï¿½Î·ï¿½ï¿½ï¿½Òªï¿½ï¿½Ê±ï¿½ï¿½Ä´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç°ï¿½æ£¬ï¿½Û²ï¿½CpuTimer_Deltaï¿½ï¿½È¡Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë¶ï¿½ï¿½Ù¸ï¿½ 1/200e6 ï¿½ë¡£
 #if PC_SIMULATION==FALSE
 CpuTimer_After = CpuTimer1.RegsAddr->TIM.all; // get count
 CpuTimer_Delta = (REAL)CpuTimer_Before - (REAL)CpuTimer_After;
