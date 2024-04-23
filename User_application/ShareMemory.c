@@ -1,7 +1,7 @@
 /*
  * ShareMemory.c
  *
- *  Created on: 2021Äê1ÔÂ15ÈÕ
+ *  Created on: 2021ï¿½ï¿½1ï¿½ï¿½15ï¿½ï¿½
  *      Author: JIAHAO
  *///cpu2 CONNECTION
 
@@ -47,7 +47,7 @@ long int counter=0;
 void write_DAC_buffer(){
 if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
 
-    // ËùÓÐÔø¾­¿´¹ýµÄ±äÁ¿¶¼ÔÚÁÐÔÚÕâÀï£¬¼ÇµÃÓÐÐ§·¶Î§ÊÇ [-1, 1]¡£
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï£¬ï¿½Çµï¿½ï¿½ï¿½Ð§ï¿½ï¿½Î§ï¿½ï¿½ [-1, 1]ï¿½ï¿½
     Axis.dac_watch[0] = Axis.iuvw[0]*0.2;
     Axis.dac_watch[1] = Axis.iuvw[1]*0.2;
     Axis.dac_watch[2] = Axis.iuvw[2]*0.2;
@@ -142,7 +142,7 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
         Axis.channels[7] = 4;
     }
 
-    // °ËÍ¨µÀDACÊä³ö£¬ÇëÐÞ¸ÄAxis.channelsÊý×éÀ´È·¶¨¾ßÌåÊä³öÄÄÐ©Axis.dac_watchÊý×éÖÐµÄ±äÁ¿¡£
+    // ï¿½ï¿½Í¨ï¿½ï¿½DACï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Þ¸ï¿½Axis.channelsï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð©Axis.dac_watchï¿½ï¿½ï¿½ï¿½ï¿½ÐµÄ±ï¿½ï¿½ï¿½ï¿½ï¿½
     Write.dac_buffer[0] = Axis.dac_watch[Axis.channels[0]] + Axis.dac_offset[0];
     Write.dac_buffer[1] = Axis.dac_watch[Axis.channels[1]] + Axis.dac_offset[1];
     Write.dac_buffer[2] = Axis.dac_watch[Axis.channels[2]] + Axis.dac_offset[2];
@@ -152,14 +152,14 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
     Write.dac_buffer[6] = Axis.dac_watch[Axis.channels[6]] + Axis.dac_offset[6];
     Write.dac_buffer[7] = Axis.dac_watch[Axis.channels[7]] + Axis.dac_offset[7];
 
-//    Write.dac_buffer[0] = sin(CL_TS*counter);
-//    Write.dac_buffer[1] = cos(CL_TS*counter);
-//    Write.dac_buffer[2] = sin(CL_TS*counter);
-//    Write.dac_buffer[3] = cos(CL_TS*counter);
-//    Write.dac_buffer[4] = sin(CL_TS*counter);
-//    Write.dac_buffer[5] = cos(CL_TS*counter);
-//    Write.dac_buffer[6] = sin(CL_TS*counter);
-//    Write.dac_buffer[7] = cos(CL_TS*counter);
+    Write.dac_buffer[0] = sin(CL_TS*counter);
+    Write.dac_buffer[1] = cos(CL_TS*counter);
+    Write.dac_buffer[2] = sin(CL_TS*counter);
+    Write.dac_buffer[3] = cos(CL_TS*counter);
+    Write.dac_buffer[4] = sin(CL_TS*counter);
+    Write.dac_buffer[5] = cos(CL_TS*counter);
+    Write.dac_buffer[6] = sin(CL_TS*counter);
+    Write.dac_buffer[7] = cos(CL_TS*counter);
 ////
 ////    Write.dac_buffer[0] = AdcaResultRegs.ADCRESULT3 * 0.000244140625;
 ////    Write.dac_buffer[1] = AdccResultRegs.ADCRESULT2 * 0.000244140625;

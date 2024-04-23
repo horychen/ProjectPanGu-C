@@ -13,7 +13,7 @@ Uint32 position_elec_CAN_ID0x03_fromCPU2;
 Uint32 position_elec_CAN_fromCPU2;
 Uint32 CPU2_commu_error_counter=0;
 
-int16 positionLoopENABLE = 2;
+int16 positionLoopENABLE = 0;
 int16 encoderCAN_as_targetPOS = FALSE;
 
 int16 jitterTEST = FALSE;
@@ -141,8 +141,8 @@ int32 cnt_four_bar_map_motor_encoder_angle=0;
 #ifdef _MMDv1 // mmlab drive version 1
 
 // DC BUS
-    #define OFFSET_VDC_BUS_IPM1 -1.01456189
-    #define SCALE_VDC_BUS_IPM1 0.17604031
+    #define OFFSET_VDC_BUS_IPM1   4.17834394   // -1.01456189
+    #define SCALE_VDC_BUS_IPM1   0.15848980    // 0.17604031
 
 //Lem 1��������ɫ���ֱ���adc b7 b8 b9
     #define OFFSET_LEM_B7   2027 //2023.89473684 // ADCB7
@@ -154,9 +154,9 @@ int32 cnt_four_bar_map_motor_encoder_angle=0;
     #define SCALE_LEM_B9   0.03039058 // ADCB9
 
 //Lem 2��������ɫ���ֱ���adc a1 a2 a3
-    #define OFFSET_LEM_A1   2034 //2029.57894737 // ADCA1
-    #define OFFSET_LEM_A2   2046 //2043.08771930 // ADCA2
-    #define OFFSET_LEM_A3   2047 //2042.98245614 // ADCA3
+    #define OFFSET_LEM_A1   2020 //2029.57894737 // ADCA1
+    #define OFFSET_LEM_A2   2043 //2043.08771930 // ADCA2
+    #define OFFSET_LEM_A3   2044 //2042.98245614 // ADCA3
     #define SCALE_LEM_A1   0.03080704 // ADCA1
     #define SCALE_LEM_A2   0.03060669 // ADCA2
     #define SCALE_LEM_A3   0.03045988 // ADCA3
@@ -778,8 +778,9 @@ void measurement(){
             // CpuTimer1.RegsAddr->TCR.bit.TSS = 1; // stop (not needed because of the line TRB=1)
             // EDIS;
             #endif
-            position_elec_SCI_fromCPU2 = position_elec_SCI_knee_fromCPU2;
-//            position_elec_SCI_fromCPU2 = position_elec_SCI_hip_fromCPU2;
+
+            // position_elec_SCI_fromCPU2 = position_elec_SCI_knee_fromCPU2;
+            position_elec_SCI_fromCPU2 = position_elec_SCI_hip_fromCPU2;
 
 
             CTRL.enc->encoder_abs_cnt_previous = CTRL.enc->encoder_abs_cnt;
@@ -788,7 +789,7 @@ void measurement(){
             // ���a���x���Ƿ��ģ������@߅ƫ��ҲҪ��һ�£��ĳ�ֵؓ��
             if(bool_use_SCI_encoder){
                 // MD1 is 17bit, use SCI485hip port
-                CTRL.enc->encoder_abs_cnt = - ( (int32)position_elec_SCI_fromCPU2 + CTRL.enc->OffsetCountBetweenIndexAndUPhaseAxis );
+                CTRL.enc->encoder_abs_cnt = + ( (int32)position_elec_SCI_fromCPU2 - CTRL.enc->OffsetCountBetweenIndexAndUPhaseAxis );
             }else{
                 CTRL.enc->encoder_abs_cnt = - ( (int32)cnt_four_bar_map_motor_encoder_angle + CTRL.enc->OffsetCountBetweenIndexAndUPhaseAxis );
             }
