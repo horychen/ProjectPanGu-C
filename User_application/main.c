@@ -225,7 +225,7 @@ void main(void){
     Axis.pAdcbResultRegs = &AdcbResultRegs;
     Axis.pAdccResultRegs = &AdccResultRegs;
     Axis.use_first_set_three_phase = 1; // -1;
-    Axis.Set_current_loop = FALSE;
+    Axis.Set_current_loop = TRUE;
     Axis.Set_x_suspension_current_loop = FALSE;
     Axis.Set_y_suspension_current_loop = FALSE;
     Axis.Set_manual_rpm = 50.0;
@@ -1135,44 +1135,44 @@ void PanGuMainISR(void){
             // 0x03 is knee
 //            position_elec_CAN_fromCPU2 = position_elec_CAN_ID0x03_fromCPU2;
             // 0x01 is hip
-            position_elec_CAN_fromCPU2 = position_elec_CAN_ID0x01_fromCPU2;
-
-            if(positionLoopENABLE == 1)
-            {
-                // λ�û�
-                // �����Ͷ̻���Ҫѡ�̵ġ�
-                error_pos = target_position_cnt - (REAL)CTRL.enc->encoder_abs_cnt;
-                if (error_pos > (SYSTEM_QEP_QPOSMAX_PLUS_1*0.5))
-                {
-                    error_pos -= SYSTEM_QEP_QPOSMAX_PLUS_1;
-                }
-                if (error_pos < -(SYSTEM_QEP_QPOSMAX_PLUS_1*0.5))
-                {
-                    error_pos += SYSTEM_QEP_QPOSMAX_PLUS_1;
-                }
-                Axis.Set_manual_rpm = error_pos*KP;
-            }
-            else if(positionLoopENABLE == 2){
-                if(position_elec_CAN_ID0x03_fromCPU2 > 62000){
-                    Axis.Set_manual_rpm = - LEG_BOUCING_SPEED;
-                }else if(position_elec_CAN_ID0x03_fromCPU2 < 33000){
-                    Axis.Set_manual_rpm = LEG_BOUCING_SPEED;
-                }
-            }else if(positionLoopENABLE == 3){
-                if(position_elec_CAN_ID0x03_fromCPU2 > 62000){
-                    Axis.Set_manual_current_iq = -1;
-                }else if(position_elec_CAN_ID0x03_fromCPU2 < 33000){
-                    Axis.Set_manual_current_iq = 1;
-                }
-            }else if(positionLoopENABLE == 4){
-                if(position_elec_CAN_ID0x01_fromCPU2 > 58000){
-                    Axis.Overwrite_Current_Frequency = 10;
-                    Axis.Set_manual_current_iq = 5;
-                }else if(position_elec_CAN_ID0x01_fromCPU2 < 48000){
-                    Axis.Overwrite_Current_Frequency = -10;
-                    Axis.Set_manual_current_iq = 5;
-                }
-            }
+//            position_elec_CAN_fromCPU2 = position_elec_CAN_ID0x01_fromCPU2;
+//
+//            if(positionLoopENABLE == 1)
+//            {
+//                // λ�û�
+//                // �����Ͷ̻���Ҫѡ�̵ġ�
+//                error_pos = target_position_cnt - (REAL)CTRL.enc->encoder_abs_cnt;
+//                if (error_pos > (SYSTEM_QEP_QPOSMAX_PLUS_1*0.5))
+//                {
+//                    error_pos -= SYSTEM_QEP_QPOSMAX_PLUS_1;
+//                }
+//                if (error_pos < -(SYSTEM_QEP_QPOSMAX_PLUS_1*0.5))
+//                {
+//                    error_pos += SYSTEM_QEP_QPOSMAX_PLUS_1;
+//                }
+//                Axis.Set_manual_rpm = error_pos*KP;
+//            }
+//            else if(positionLoopENABLE == 2){
+//                if(position_elec_CAN_ID0x03_fromCPU2 > 62000){
+//                    Axis.Set_manual_rpm = - LEG_BOUCING_SPEED;
+//                }else if(position_elec_CAN_ID0x03_fromCPU2 < 33000){
+//                    Axis.Set_manual_rpm = LEG_BOUCING_SPEED;
+//                }
+//            }else if(positionLoopENABLE == 3){
+//                if(position_elec_CAN_ID0x03_fromCPU2 > 62000){
+//                    Axis.Set_manual_current_iq = -1;
+//                }else if(position_elec_CAN_ID0x03_fromCPU2 < 33000){
+//                    Axis.Set_manual_current_iq = 1;
+//                }
+//            }else if(positionLoopENABLE == 4){
+//                if(position_elec_CAN_ID0x01_fromCPU2 > 58000){
+//                    Axis.Overwrite_Current_Frequency = 10;
+//                    Axis.Set_manual_current_iq = 5;
+//                }else if(position_elec_CAN_ID0x01_fromCPU2 < 48000){
+//                    Axis.Overwrite_Current_Frequency = -10;
+//                    Axis.Set_manual_current_iq = 5;
+//                }
+//            }
             Axis.used_theta_d_elec = controller(Axis.Set_manual_rpm, Axis.Set_current_loop, Axis.Set_manual_current_iq, Axis.Set_manual_current_id,
                 Axis.flag_overwrite_theta_d, Axis.Overwrite_Current_Frequency,
                 //Axis.used_theta_d_elec,
