@@ -225,7 +225,7 @@ void main(void){
     Axis.pAdcbResultRegs = &AdcbResultRegs;
     Axis.pAdccResultRegs = &AdccResultRegs;
     Axis.use_first_set_three_phase = 1; // -1;
-    Axis.Set_current_loop = TRUE;
+    Axis.Set_current_loop = FALSE;
     Axis.Set_x_suspension_current_loop = FALSE;
     Axis.Set_y_suspension_current_loop = FALSE;
     Axis.Set_manual_rpm = 50.0;
