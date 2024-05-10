@@ -9,16 +9,16 @@ REAL TEST_HIP_SPD_KP = 0.005;
 REAL TEST_HIP_SPD_KI = 5e-6;
 
 REAL HIP_MIN = 0.2269; //0.0981;
-REAL HIP_MAX = 0.6109; //0.9075; // 涓轰粈涔堣繖涓槸璐熺殑锛熻�屼笖MAX姣擬IN灏忥紵
+REAL HIP_MAX = 0.5585; //0.9075; // 娑撹桨绮堟稊鍫ｇ箹娑擃亝妲哥拹鐔烘畱閿涚喕锟藉奔绗朚AX濮ｆ摤IN鐏忓骏绱�
 
-REAL SHANK_MIN = 0.4567;
-REAL SHANK_MAX = 1.2307; //1.7990;
+REAL SHANK_MIN = 0.4538;
+REAL SHANK_MAX = 1.1170; //1.7990;
 
-REAL CAN01_MIN = 42000;
-REAL CAN01_MAX = 33200;
+REAL CAN01_MIN = 48000;
+REAL CAN01_MAX = 41000;
 
-REAL CAN03_MIN = 29180;
-REAL CAN03_MAX = 12450;
+REAL CAN03_MIN = 14000;
+REAL CAN03_MAX = 1000;
 
 extern REAL TEST_HIP_POS_OUTLIMIT = 500;
 extern REAL TEST_SHANK_POS_OUTLIMIT = 825;
@@ -97,11 +97,11 @@ CURYCONTROLLER curycontroller = {
     .dot_theta1 = 0.0,
     .dot_theta2 = 0.0,
     .T = 1.5,
-    .height_limit = {0.6491, 0.7743},
+    .height_limit = {0.66, 0.78},
     .C = {{0.0, 0.0}, {0.1, 1.0}, {0.21, 0.93}, {1.0, 1.0}},
     .order = BEZIER_ORDER};
 
-REAL IECON_HEIGHT = 0.77;
+REAL IECON_HEIGHT = 0.70;
 
 typedef struct
 {

@@ -91,8 +91,8 @@ REAL hipBouncingIq = 1.5;
 int bool_use_SCI_encoder = TRUE;
 
 REAL target_position_cnt;
-REAL target_position_cnt_shank = 55000;
-REAL target_position_cnt_hip = 55000;
+REAL target_position_cnt_shank = 1000;
+REAL target_position_cnt_hip = 41000;
 
 #define VL_CL_DOWNSAMPLE 40
 Uint16 downSampleCounter = 0;
