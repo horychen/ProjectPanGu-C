@@ -97,7 +97,7 @@ CURYCONTROLLER curycontroller = {
     .dot_theta1 = 0.0,
     .dot_theta2 = 0.0,
     .T = 1.5,
-    .height_limit = {0.66, 0.78},
+    .height_limit = {0.68, 0.78},
     .C = {{0.0, 0.0}, {0.1, 1.0}, {0.21, 0.93}, {1.0, 1.0}},
     .order = BEZIER_ORDER};
 

@@ -91,8 +91,8 @@ REAL hipBouncingIq = 1.5;
 int bool_use_SCI_encoder = TRUE;
 
 REAL target_position_cnt;
-REAL target_position_cnt_shank = 1000;
-REAL target_position_cnt_hip = 41000;
+REAL target_position_cnt_shank = 14000;
+REAL target_position_cnt_hip = 48000;
 
 #define VL_CL_DOWNSAMPLE 40
 Uint16 downSampleCounter = 0;
@@ -1129,11 +1129,11 @@ REAL call_position_loop_controller(int positionLoopType)
             //            }
 
             Axis->Set_current_loop = FALSE;
-            if (position_count_CAN_ID0x03_fromCPU2 > CAN03_MAX)
+            if (position_count_CAN_ID0x03_fromCPU2 > CAN03_MIN)
             {
                 Axis->Set_manual_rpm = -legBouncingSpeed;
             }
-            else if (position_count_CAN_ID0x03_fromCPU2 < CAN03_MIN)
+            else if (position_count_CAN_ID0x03_fromCPU2 < CAN03_MAX)
             {
                 Axis->Set_manual_rpm = legBouncingSpeed;
             }
@@ -1151,11 +1151,11 @@ REAL call_position_loop_controller(int positionLoopType)
             {
                 Axis->flag_overwrite_theta_d = FALSE;
                 Axis->Set_current_loop = TRUE;
-                if (position_count_CAN_ID0x01_fromCPU2 > CAN01_MAX)
+                if (position_count_CAN_ID0x01_fromCPU2 > CAN01_MIN)
                 {
                     Axis->Set_manual_current_iq = hipBouncingIq;
                 }
-                else if (position_count_CAN_ID0x01_fromCPU2 < CAN01_MIN)
+                else if (position_count_CAN_ID0x01_fromCPU2 < CAN01_MAX)
                 {
                     Axis->Set_manual_current_iq = -hipBouncingIq;
                 }
@@ -1164,13 +1164,13 @@ REAL call_position_loop_controller(int positionLoopType)
             {
                 Axis->flag_overwrite_theta_d = FALSE;
                 Axis->Set_current_loop = FALSE;
-                if (position_count_CAN_ID0x01_fromCPU2 > CAN01_MAX)
-                {
-                    Axis->Set_manual_rpm = legBouncingSpeed;
-                }
-                else if (position_count_CAN_ID0x01_fromCPU2 < CAN01_MIN)
+                if (position_count_CAN_ID0x01_fromCPU2 > CAN01_MIN)
                 {
                     Axis->Set_manual_rpm = -legBouncingSpeed;
+                }
+                else if (position_count_CAN_ID0x01_fromCPU2 < CAN01_MAX)
+                {
+                    Axis->Set_manual_rpm = legBouncingSpeed;
                 }
             }
 
@@ -1212,11 +1212,11 @@ REAL call_position_loop_controller(int positionLoopType)
             Axis_1.Set_current_loop = TRUE;
             if (position_count_CAN_ID0x03_fromCPU2 > CAN03_MAX)
             {
-                Axis_1.Set_manual_current_iq = -legBouncingIq; // CAN03太大，小腿伸出过头，需要iq为负数，收起小腿
+                Axis_1.Set_manual_current_iq = legBouncingIq; // CAN03太大，小腿伸出过头，需要iq为负数，收起小腿
             }
             else if (position_count_CAN_ID0x03_fromCPU2 < CAN03_MIN)
             {
-                Axis_1.Set_manual_current_iq = legBouncingIq;
+                Axis_1.Set_manual_current_iq = -legBouncingIq;
             }
         }
         // 大腿电机
