@@ -6,7 +6,7 @@
 #define SHANK_TYPE 1
 
 extern REAL HIP_MIN;
-extern REAL HIP_MAX; // 涓轰粈涔堣繖涓槸璐熺殑锛熻�屼笖MAX姣擬IN灏忥紵
+extern REAL HIP_MAX; // 娑撹桨绮堟稊鍫ｇ箹娑擃亝妲哥拹鐔烘畱閿涚喕锟藉奔绗朚AX濮ｆ摤IN鐏忓骏绱�
 extern REAL CAN01_MIN; //43000//96000//89000       //51943 25000&40000 12000 34000
 extern REAL CAN01_MAX; //33200//10300//101000      //61584
 
@@ -21,9 +21,9 @@ extern REAL HIP_POS_CONTROL_POS;
 #define CAN_QMAX 131072
 
 
-// 鍋囪鏁版嵁鐐规暟閲忓凡鐭�
+// 閸嬪洩顔曢弫鐗堝祦閻愯鏆熼柌蹇撳嚒閻拷
 #define HIP_SHANK_N 106
-// 鐢ㄤ簬瀛樺偍鏁版嵁鐨勭粨鏋勪綋
+// 閻€劋绨�涙ê鍋嶉弫鐗堝祦閻ㄥ嫮绮ㄩ弸鍕秼
 typedef struct {
     REAL hip[HIP_SHANK_N];
     REAL shank[HIP_SHANK_N];
@@ -36,6 +36,8 @@ extern REAL TEST_HIP_KP;
 extern REAL TEST_SHANK_KP;
 extern REAL TEST_HIP_SPD_KP;
 extern REAL TEST_HIP_SPD_KI;
+extern REAL TEST_SHANK_SPD_KP;
+extern REAL TEST_SHANK_SPD_KI;
 
 extern REAL TEST_HIP_POS_OUTLIMIT;
 extern REAL TEST_SHANK_POS_OUTLIMIT;
@@ -46,6 +48,7 @@ extern int32 cnt_four_bar_map_motor_encoder_angle;
 
 
 REAL linearInterpolate(REAL x, REAL x1, REAL x2, REAL y1, REAL y2);
+REAL linearInterpolate_Uint_to_real(Uint32 x, Uint32 x1, Uint32 x2, REAL y1, REAL y2);
 REAL look_up_hip_shank_angle(REAL t, int type);
 REAL hip_shank_angle_to_can(REAL angle, int type);
 
@@ -88,6 +91,26 @@ typedef struct
 } CURRENT_WEIGHT_TABLE;
 
 REAL get_current_from_weight(REAL weight);
+
+// impedance control
+extern REAL HIP_IMPEDANCE_DESIRE;
+extern REAL SHANK_IMPEDANCE_DESIRE;
+extern REAL HIP_PREV_ANGLE;
+extern REAL SHANK_PREV_ANGLE;
+extern REAL HIP_IMPENDENCE_B;
+extern REAL HIP_IMPENDENCE_D;
+extern REAL SHANK_IMPENDENCE_B;
+extern REAL SHANK_IMPENDENCE_D;
+
+extern REAL IMPENDENCE_HIP_D_ANGULAR;
+extern REAL IMPENDENCE_SHANK_D_ANGULAR;
+extern REAL IQOUT_SHANK;
+extern REAL IQOUT_HIP;
+
+
+REAL position_count_to_angle(int axisType, Uint32 hip_count_fbk, Uint32 shank_count_fbk);
+REAL calc_theta_angular_velocity(int axisType, REAL hip_theta_fbk, REAL shank_theta_fbk);
+REAL Impendence_Control_cal(int axisType, Uint32 hip_count_fbk, Uint32 shank_count_fbk);
 
 #endif
 

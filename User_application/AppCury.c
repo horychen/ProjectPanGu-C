@@ -7,6 +7,10 @@ REAL TEST_HIP_KP = 0.6;
 REAL TEST_SHANK_KP = 1.5;
 REAL TEST_HIP_SPD_KP = 0.005;
 REAL TEST_HIP_SPD_KI = 5e-6;
+REAL TEST_SHANK_SPD_KP = 0.005;
+REAL TEST_SHANK_SPD_KI = 5e-5;
+
+
 
 REAL HIP_MIN = 0.2269; //0.0981;
 REAL HIP_MAX = 0.5585; //0.9075; // 娑撹桨绮堟稊鍫ｇ箹娑擃亝妲哥拹鐔烘畱閿涚喕锟藉奔绗朚AX濮ｆ摤IN鐏忓骏绱�
@@ -15,10 +19,10 @@ REAL SHANK_MIN = 0.4538;
 REAL SHANK_MAX = 1.1170; //1.7990;
 
 REAL CAN01_MIN = 48000;
-REAL CAN01_MAX = 41000;
+REAL CAN01_MAX = 41500;
 
-REAL CAN03_MIN = 14000;
-REAL CAN03_MAX = 1000;
+REAL CAN03_MIN = 58000;//56500;
+REAL CAN03_MAX = 46000;//44000;
 
 extern REAL TEST_HIP_POS_OUTLIMIT = 500;
 extern REAL TEST_SHANK_POS_OUTLIMIT = 825;
@@ -28,7 +32,7 @@ extern REAL HIP_POS_CONTROL_POS = 35000;
 
 int CONTROLLER_TYPE = 1;
 
-    REAL deg_four_bar_map_motor_encoder_angle;
+REAL deg_four_bar_map_motor_encoder_angle;
 REAL rad_four_bar_map_motor_encoder_angle = 0;
 int32 cnt_four_bar_map_motor_encoder_angle = 0;
 
@@ -74,7 +78,7 @@ HIP_SHANK_ANGLE_TABLE hip_shank_angle_table = {
 
 REAL linearInterpolate(REAL x, REAL x1, REAL x2, REAL y1, REAL y2)
 {
-    return y1 + (x - x1) * (y2 - y1) / (x2 - x1);
+    return y1 + (x - x1) / (x2 - x1) * (y2 - y1);
 }
 
 REAL hip_shank_angle_to_can(REAL angle, int type)
@@ -101,7 +105,7 @@ CURYCONTROLLER curycontroller = {
     .C = {{0.0, 0.0}, {0.1, 1.0}, {0.21, 0.93}, {1.0, 1.0}},
     .order = BEZIER_ORDER};
 
-REAL IECON_HEIGHT = 0.70;
+REAL IECON_HEIGHT = 0.72;
 
 typedef struct
 {
@@ -323,7 +327,118 @@ void run_iecon_main(Uint64 t)
         break;
     case 3:
         height_controller(IECON_HEIGHT);
+        break;
     default:
         break;
     }
+}
+
+//大腿与小腿目标位置
+REAL HIP_IMPEDANCE_DESIRE = 0.349066; //0.20944;        // 直立状态下的大腿角度
+REAL SHANK_IMPEDANCE_DESIRE = 0.29;//0.349066; //0.41888;      // 直立状态下的小腿角度
+
+REAL HIP_PREV_ANGLE = 10.0;     //一个非法的数字，初始化大腿角度
+REAL SHANK_PREV_ANGLE = 10.0;   //一个非法的数字，初始化小腿角度
+
+
+/*
+ * 大腿MIN 腿高度最大 弯曲最小 最大弯曲角度为 12°  弧度 0.20944  CAN 48664
+ * 大腿MAX 腿高度最大 弯曲最小 最小弯曲角度为 30°  弧度 0.52360  CAN 41863
+ * 小腿MIN 腿高度最大 弯曲最小 最大弯曲角度为 24°  弧度 0.41888  CAN 59182
+ * 小腿MAX 腿高度最大 弯曲最小 最小弯曲角度为 60°  弧度 1.04720  CAN 41507
+ */
+REAL position_count_to_angle(int axisType, Uint32 hip_count_fbk, Uint32 shank_count_fbk)
+{
+    REAL hip_relative, shank_relative, angle;
+    Uint32  CAN_HIP_1   = 48664;        Uint32  CAN_HIP_2    = 41863;
+    REAL    RAD_HIP_1   = 0.20944;      REAL    RAD_HIP_2    = 0.52360;
+    Uint32  CAN_SHANK_1 = 59182;        Uint32  CAN_SHANKE_2 = 41507;
+    REAL    RAD_SHANK_1 = 0.41888;      REAL    RAD_SHANK_2  = 1.04720;
+
+    hip_relative = linearInterpolate_Uint_to_real(hip_count_fbk, CAN_HIP_1, CAN_HIP_2, RAD_HIP_1, RAD_HIP_2);
+    shank_relative = linearInterpolate_Uint_to_real(shank_count_fbk, CAN_SHANK_1, CAN_SHANKE_2, RAD_SHANK_1, RAD_SHANK_2);
+    if (axisType == 0)  angle = shank_relative - hip_relative;
+    else                angle = hip_relative;
+    return angle;
+}
+
+REAL calc_theta_angular_velocity(int axisType, REAL hip_theta_fbk, REAL shank_theta_fbk)
+{
+    REAL d_angular;
+    if (HIP_PREV_ANGLE > 9.9)
+    {
+        d_angular = 0.0;
+        return d_angular;
+    }
+    if (axisType == 0) d_angular = shank_theta_fbk*10000 - SHANK_PREV_ANGLE*10000 + hip_theta_fbk*10000 - HIP_PREV_ANGLE*10000;
+    else d_angular = hip_theta_fbk*10000 - HIP_PREV_ANGLE*10000;
+    return d_angular;
+}
+
+REAL IMPENDENCE_GAV = 0.0;
+REAL IMPENDENCE_HIP_D_ANGULAR = 0.0;
+REAL IMPENDENCE_SHANK_D_ANGULAR = 0.0;
+REAL IMPENDENCE_HIP_ERR = 0.0;
+REAL IMPENDENCE_SHANK_ERR = 0.0;
+REAL IQOUT_SHANK = 0.0;
+REAL IQOUT_HIP = 0.0;
+
+REAL HIP_IMPENDENCE_B = 0.1;
+REAL HIP_IMPENDENCE_D = 20.0;
+REAL SHANK_IMPENDENCE_B = 0.0;
+REAL SHANK_IMPENDENCE_D = -10.0;
+REAL IMPENDENCE_GAV_P = 0.09;
+
+REAL IMPENDENCE_MAX_HIP_ANGLE = 0.0;
+REAL IMPENDENCE_MAX_HIP_VELOCITY = 0.0;
+
+void update_theta_angular(REAL hip_theta_fbk, REAL shank_theta_fbk)
+{
+    HIP_PREV_ANGLE = hip_theta_fbk;
+    SHANK_PREV_ANGLE = shank_theta_fbk;
+}
+
+REAL linearInterpolate_Uint_to_real(Uint32 x, Uint32 x1, Uint32 x2, REAL y1, REAL y2)
+{
+    return y1 + ((REAL)x - (REAL)x1) / ((REAL)x2 - (REAL)x1) * (y2 - y1);
+}
+
+/*
+ * axisType为0的时候控制小腿，为1的时候控制大腿
+ * count_fbk1 是大腿的CAN编码读数
+ * count_fbk2 是小腿的CAN编码读数
+ */
+REAL Impendence_Control_cal(int axisType, Uint32 hip_count_fbk, Uint32 shank_count_fbk)
+{
+    REAL Iq_out = 0.0;
+    REAL shank_theta_fbk = position_count_to_angle(0, hip_count_fbk, shank_count_fbk);
+    REAL hip_theta_fbk = position_count_to_angle(1, hip_count_fbk, shank_count_fbk);
+    REAL d_angular = calc_theta_angular_velocity(axisType, hip_theta_fbk, shank_theta_fbk);
+    if (hip_theta_fbk > IMPENDENCE_MAX_HIP_ANGLE)
+    {
+        IMPENDENCE_MAX_HIP_ANGLE = hip_theta_fbk;
+    }
+    if (axisType == 0)
+    {
+        IMPENDENCE_SHANK_D_ANGULAR = d_angular;
+        IMPENDENCE_SHANK_ERR = shank_theta_fbk-SHANK_IMPEDANCE_DESIRE;
+        Iq_out = - SHANK_IMPENDENCE_B*d_angular - SHANK_IMPENDENCE_D*(shank_theta_fbk-SHANK_IMPEDANCE_DESIRE);
+        IQOUT_SHANK = Iq_out;
+    }
+    else
+    {
+        update_theta_angular(hip_theta_fbk, shank_theta_fbk);
+        IMPENDENCE_HIP_D_ANGULAR = d_angular;
+        IMPENDENCE_HIP_ERR = hip_theta_fbk-HIP_IMPEDANCE_DESIRE;
+        Iq_out = 0.5*13*9.8*0.4*sin(hip_theta_fbk)*IMPENDENCE_GAV_P - HIP_IMPENDENCE_B*d_angular - HIP_IMPENDENCE_D*(hip_theta_fbk-HIP_IMPEDANCE_DESIRE);
+        IQOUT_HIP = Iq_out;
+    }
+    if (IMPENDENCE_HIP_D_ANGULAR > IMPENDENCE_MAX_HIP_VELOCITY)
+    {
+        IMPENDENCE_MAX_HIP_VELOCITY = IMPENDENCE_HIP_D_ANGULAR;
+    } else if (-IMPENDENCE_HIP_D_ANGULAR > IMPENDENCE_MAX_HIP_VELOCITY)
+    {
+        IMPENDENCE_MAX_HIP_VELOCITY = -IMPENDENCE_HIP_D_ANGULAR;
+    }
+    return Iq_out;
 }

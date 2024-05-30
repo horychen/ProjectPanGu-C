@@ -80,8 +80,9 @@ int USE_3_CURRENT_SENSORS = TRUE;
 #define SHANK_LOOP_RUN 3
 #define HIP_LOOP_RUN 4
 #define BOTH_LOOP_RUN 5
+#define IMPEDANCE_CONTROL 6
 int bool_TEMP = FALSE;
-int positionLoopType = 1;           // TWOMOTOR_POSITION_CONTROL; //SHANK_LOOP_RUN; // SHANK_LOOP_RUN; //BOTH_LOOP_RUN;
+int positionLoopType = 6;           // TWOMOTOR_POSITION_CONTROL; //SHANK_LOOP_RUN; // SHANK_LOOP_RUN; //BOTH_LOOP_RUN;
 int use_first_set_three_phase = -1; //-1 for both motors
 
 REAL legBouncingSpeed = 50;
@@ -91,7 +92,7 @@ REAL hipBouncingIq = 1.5;
 int bool_use_SCI_encoder = TRUE;
 
 REAL target_position_cnt;
-REAL target_position_cnt_shank = 14000;
+REAL target_position_cnt_shank = 58000;
 REAL target_position_cnt_hip = 48000;
 
 #define VL_CL_DOWNSAMPLE 40
@@ -366,7 +367,7 @@ void main(void)
 
         Axis->FLAG_ENABLE_PWM_OUTPUT = FALSE;
 
-        Axis->channels_preset = 3; // 9; // 101;    }
+        Axis->channels_preset = 5; // 9; // 101;    }
 
         Axis->pCTRL->enc->sum_qepPosCnt = 0;
         Axis->pCTRL->enc->cursor = 0;
@@ -997,8 +998,12 @@ void measurement()
 
 REAL call_position_loop_controller(int positionLoopType)
 {
+    CTRL_1.s->spd->Kp = TEST_SHANK_SPD_KP;
+    CTRL_1.s->spd->Ki = TEST_SHANK_SPD_KI;
+
     CTRL_2.s->spd->Kp = TEST_HIP_SPD_KP;
     CTRL_2.s->spd->Ki = TEST_HIP_SPD_KI;
+
 
     CTRL_1.s->pos->Kp = TEST_SHANK_KP;
     CTRL_2.s->pos->Kp = TEST_HIP_KP;
@@ -1138,7 +1143,33 @@ REAL call_position_loop_controller(int positionLoopType)
                 Axis->Set_manual_rpm = legBouncingSpeed;
             }
         }
+        if (axisCnt == 1)
+        {
+            Axis->flag_overwrite_theta_d = FALSE;
+
+            //            Axis->Set_current_loop = TRUE;
+            //            if (position_count_CAN_ID0x03_fromCPU2 > 62000)
+            //            {
+            //                Axis->Set_manual_current_iq = -1;
+            //            }
+            //            else if (position_count_CAN_ID0x03_fromCPU2 < 33000)
+            //            {
+            //                Axis->Set_manual_current_iq = 1;
+            //            }
+
+            Axis->Set_current_loop = FALSE;
+            if (position_count_CAN_ID0x01_fromCPU2 > CAN01_MIN)
+            {
+                Axis->Set_manual_rpm = legBouncingSpeed;
+            }
+            else if (position_count_CAN_ID0x01_fromCPU2 < CAN01_MAX)
+            {
+                Axis->Set_manual_rpm = -legBouncingSpeed;
+            }
+        }
+
     }
+
     else if (positionLoopType == HIP_LOOP_RUN)
     { // hip motor only
 #if NUMBER_OF_AXES == 2
@@ -1234,6 +1265,31 @@ REAL call_position_loop_controller(int positionLoopType)
             {
                 Axis_2.Set_manual_current_iq = -hipBouncingIq;
             }
+        }
+#endif
+    }
+    else if (positionLoopType == IMPEDANCE_CONTROL) // 阻抗控制
+    {
+#if NUMBER_OF_AXES == 2
+        if (axisCnt == 0)
+        {
+            Axis_1.flag_overwrite_theta_d = FALSE;
+            Axis_1.Set_current_loop = TRUE;
+            Axis_1.Set_manual_current_iq = Impendence_Control_cal(
+                    axisCnt,
+                    position_count_CAN_ID0x01_fromCPU2,
+                    position_count_CAN_ID0x03_fromCPU2
+                    );
+        }
+        if (axisCnt == 1)
+        {
+            Axis_2.flag_overwrite_theta_d = FALSE;
+            Axis_2.Set_current_loop = TRUE;
+            Axis_2.Set_manual_current_iq = Impendence_Control_cal(
+                    axisCnt,
+                    position_count_CAN_ID0x01_fromCPU2,
+                    position_count_CAN_ID0x03_fromCPU2
+                    );
         }
 #endif
     }
