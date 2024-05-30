@@ -101,6 +101,11 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
     Axis.dac_watch[40] = CTRL.I->idq[0]*0.1;
     Axis.dac_watch[41] = CTRL.I->idq[1]*0.1;
 
+    Axis.dac_watch[42] = CTRL.I->omg_elec  * ELEC_RAD_PER_SEC_2_RPM *0.002;
+    Axis.dac_watch[43] = nsoaf.xOmg * ELEC_RAD_PER_SEC_2_RPM *0.002;
+    Axis.dac_watch[44] = AFE_USED.theta_d *0.1;
+    Axis.dac_watch[45] = Axis.used_theta_d_elec *0.1;
+
     if(Axis.channels_preset==1){Axis.channels_preset=0;
         /* Marino 2005 Sensorless Control */
         Axis.channels[0] = 0;
@@ -135,11 +140,20 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
         Axis.channels[0] = 0;
         Axis.channels[1] = 1;
         Axis.channels[2] = 2;
-        Axis.channels[3] = 4;
-        Axis.channels[4] = 4;
-        Axis.channels[5] = 5;
-        Axis.channels[6] = 3;
-        Axis.channels[7] = 4;
+        Axis.channels[3] = 41;
+        Axis.channels[4] = 42;
+        Axis.channels[5] = 43;
+        Axis.channels[6] = 44;
+        Axis.channels[7] = 45;
+    }else if(Axis.channels_preset==5){Axis.channels_preset=0;
+            Axis.channels[0] = 0;
+            Axis.channels[1] = 1;
+            Axis.channels[2] = 2;
+            Axis.channels[3] = 28; // iq
+            Axis.channels[4] = 21; // reference speed
+            Axis.channels[5] = 22; // feedback speed
+            Axis.channels[6] = 23; //
+            Axis.channels[7] = 24;
     }
 
     // ��ͨ��DAC��������޸�Axis.channels������ȷ�����������ЩAxis.dac_watch�����еı�����

@@ -1008,7 +1008,7 @@ REAL controller(REAL set_rpm_speed_command,
     }
 
     /// 3. 调用观测器：估计的电气转子位置和电气转子转速反馈
-    // pmsm_observers();
+    pmsm_observers();
     if(CTRL.S->go_sensorless == TRUE){
         //（无感）
         CTRL.I->omg_elec     = ELECTRICAL_SPEED_FEEDBACK;    //harnefors.omg_elec;

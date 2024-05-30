@@ -5,9 +5,9 @@ REAL target_position_cnt = 50000;
 REAL KP = 0.000005;
 REAL error_pos;
 
-Uint32 position_elec_SCI_knee_fromCPU2; // TODO: �� elec ȫ����Ϊ count
-Uint32 position_elec_SCI_hip_fromCPU2; // TODO: �� elec ȫ����Ϊ count
-Uint32 position_elec_SCI_fromCPU2; // TODO: �� elec ȫ����Ϊ count
+Uint32 position_elec_SCI_knee_fromCPU2; // TODO: 锟斤�? elec 全锟斤拷锟斤拷为 count
+Uint32 position_elec_SCI_hip_fromCPU2; // TODO: 锟斤�? elec 全锟斤拷锟斤拷为 count
+Uint32 position_elec_SCI_fromCPU2; // TODO: 锟斤�? elec 全锟斤拷锟斤拷为 count
 Uint32 position_elec_CAN_ID0x01_fromCPU2;
 Uint32 position_elec_CAN_ID0x03_fromCPU2;
 Uint32 position_elec_CAN_fromCPU2;
@@ -31,10 +31,10 @@ REAL rad_four_bar_map_motor_encoder_angle=0;
 int32 cnt_four_bar_map_motor_encoder_angle=0;
 
 #if FALSE // LOOK Up TABLE: input is CAN encoder read, and output is 485 encoder read.
-    // �������ݵ�������֪
+    // 锟斤拷锟斤拷锟斤拷锟捷�?�拷锟斤拷锟斤拷锟斤拷知
     #define LUT_LENGTH 1949
 
-    // ���ڴ洢���ݵĽṹ��
+    // 锟斤拷锟节存储锟斤拷锟捷的结构锟斤拷
     typedef struct {
         REAL input[LUT_LENGTH];
         REAL output[LUT_LENGTH];
@@ -144,16 +144,16 @@ int32 cnt_four_bar_map_motor_encoder_angle=0;
     #define OFFSET_VDC_BUS_IPM1   4.17834394   // -1.01456189
     #define SCALE_VDC_BUS_IPM1   0.15848980    // 0.17604031
 
-//Lem 1��������ɫ���ֱ���adc b7 b8 b9
+//Lem 1锟斤拷锟斤拷锟斤拷锟斤拷色锟斤拷锟�?�憋拷锟斤拷adc b7 b8 b9
     #define OFFSET_LEM_B7   2027 //2023.89473684 // ADCB7
     #define OFFSET_LEM_B8   2043 //2042.33333333 // ADCB8
     #define OFFSET_LEM_B9   2048 //2043.43859649 // ADCB9
-    // ������������ָ����Ϊ��������LEM�ϵļ�ͷ����������ͬ����SCALEΪ��������LEM�ϵļ�ͷ���������෴����SCALEΪ������
+    // 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷指锟斤拷锟斤拷为锟斤拷锟斤拷锟斤拷锟斤拷LEM锟较的硷拷头锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷同锟斤拷锟斤拷SCALE为锟斤拷锟斤拷锟斤拷锟斤拷LEM锟较的硷拷头锟斤拷锟斤拷锟斤拷锟斤拷锟洁反锟斤拷锟斤拷SCALE为锟斤拷锟斤拷锟斤拷
     #define SCALE_LEM_B7   0.03076297 // ADCB7
     #define SCALE_LEM_B8   0.03038256 // ADCB8
     #define SCALE_LEM_B9   0.03039058 // ADCB9
 
-//Lem 2��������ɫ���ֱ���adc a1 a2 a3
+//Lem 2锟斤拷锟斤拷锟斤拷锟斤拷色锟斤拷锟�?�憋拷锟斤拷adc a1 a2 a3
     #define OFFSET_LEM_A1   2020 //2029.57894737 // ADCA1
     #define OFFSET_LEM_A2   2043 //2043.08771930 // ADCA2
     #define OFFSET_LEM_A3   2044 //2042.98245614 // ADCA3
@@ -241,7 +241,7 @@ void main(void){
     Axis.angle_shift_for_second_inverter = ANGLE_SHIFT_FOR_SECOND_INVERTER;
     Axis.OverwriteSpeedOutLimitDuringInit = 6; // 10; // A
     Axis.FLAG_ENABLE_PWM_OUTPUT = FALSE;
-    Axis.channels_preset = 1; // 9; // 101;
+    Axis.channels_preset = 5; // 9; // 101;
 
     ENC.sum_qepPosCnt = 0;
     ENC.cursor = 0;
@@ -265,12 +265,12 @@ void main(void){
     #endif
     #ifdef _STANDALONE
     #ifdef _FLASH
-        // ������Ҫ���߶ϵ����ϵ�����ʱ�������
+        // 锟斤拷锟斤拷锟斤拷�?�锟斤拷锟�??�?碉拷锟斤拷锟较�?�拷锟斤拷锟斤拷时锟斤拷锟斤拷锟斤拷锟�
         //  Send boot command to allow the CPU02 application to begin execution
         IPCBootCPU2(C1C2_BROM_BOOTMODE_BOOT_FROM_FLASH);
     #else
         //  Send boot command to allow the CPU02 application to begin execution
-        // ��仰�Ҳ�֪��ʲô���壬���ܻ��ǲ�Ҫ�ȽϺá�
+        // 锟斤拷浠�?拷也锟�?�拷锟绞�?�达拷锟斤拷澹拷锟斤拷芑锟斤拷遣锟�?拷冉虾谩锟�?
         //IPCBootCPU2(C1C2_BROM_BOOTMODE_BOOT_FROM_RAM);
     #endif
     #endif
@@ -284,7 +284,7 @@ void main(void){
     // 4.3 Assign peripherals to CPU02
     /* SPI and SCI */
     #if NUMBER_OF_DSP_CORES == 1
-        // ͬ������������
+        // 同锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤�?
         InitHighSpeedSpiGpio();
         //InitSpiaGpio();
         //InitSpicGpio();
@@ -293,8 +293,8 @@ void main(void){
         InitSciGpio();
         InitSci();
     #elif NUMBER_OF_DSP_CORES == 2
-        /* ˫������*/
-        // ��ʼ��SPI��������DACоƬMAX5307ͨѶ��
+        /* 双锟斤拷锟斤拷锟斤拷*/
+        // 锟斤拷�?�锟斤拷SPI锟斤拷锟斤拷锟斤拷锟斤拷DAC�?片MAX5307通�??锟斤�?
         EALLOW;
         DevCfgRegs.CPUSEL6.bit.SPI_A = 1; // assign spi-a to cpu2
         DevCfgRegs.CPUSEL6.bit.SPI_C = 1; // assign spi-c to cpu2
@@ -311,7 +311,7 @@ void main(void){
         ClkCfgRegs.LOSPCP.all = 0x0001; //LSPCLK=100MHz
         EDIS;
 
-        // ͬ������������
+        // 同锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤�?
         InitHighSpeedSpiGpio();
         //InitSpicGpio();
         //InitSpiaGpio();
@@ -375,11 +375,11 @@ void main(void){
 //        // =========TEST BOARD PIN============
 //        // =========NOT FOR EUREKA===========
 
-        // �첽����������
+        // 锟届步锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷
         //InitSci(); // this is moved to CPU02
 
-        // �ڴ�֮ǰ���Ѿ���GPIO�������Ȩ��ת��CPU2�ˡ�
-        // �����ٰѲ��ֹ����ڴ�Ȩ�޸�CPU2��ͬʱ����CPU2������Լ������д����ˡ�
+        // 锟节达拷之前锟斤拷锟窖撅拷锟斤拷GPIO锟斤拷锟斤拷锟斤拷锟饺拷锟阶拷锟紺PU2锟剿★拷
+        // 锟斤拷锟斤拷锟劫把�?�拷锟�?�癸拷锟斤拷锟节达拷权锟�?革拷CPU2锟斤拷同时锟斤拷锟斤拷CPU2锟斤拷锟斤拷锟斤拷约锟斤拷锟斤拷锟斤拷写锟斤拷锟斤拷恕锟�?
         while( !(MemCfgRegs.GSxMSEL.bit.MSEL_GS0))
         {
             EALLOW;
@@ -396,7 +396,7 @@ void main(void){
     // 5. Handle Interrupts
     /* Re-map PIE Vector Table to user defined ISR functions. */
         EALLOW; // This is needed to write to EALLOW protected registers
-        PieVectTable.EPWM1_INT = &SYSTEM_PROGRAM;     //&MainISR;      // PWM���ж� 10kKHz
+        PieVectTable.EPWM1_INT = &SYSTEM_PROGRAM;     //&MainISR;      // PWM锟斤拷锟�?讹拷 10kKHz
         #if USE_ECAP_CEVT2_INTERRUPT == 1 && ENABLE_ECAP
         PieVectTable.ECAP1_INT = &ecap1_isr;
         PieVectTable.ECAP2_INT = &ecap2_isr;
@@ -625,7 +625,7 @@ void voltage_commands_to_pwm(){
 
         // SVPWM of the suspension 3-phase
         //CTRL.svgen2.Ualpha = CTRL.O->uab_cmd_to_inverter[0+2];
-        //CTRL.svgen2.Ubeta  = CTRL.O->uab_cmd_to_inverter[1+2]; // uab_cmd�ĵ�����͵�һ����������svgen2�ڶ��������������
+        //CTRL.svgen2.Ubeta  = CTRL.O->uab_cmd_to_inverter[1+2]; // uab_cmd锟侥碉拷锟斤拷锟斤拷偷锟�?伙拷锟斤拷锟斤拷锟斤拷锟斤拷锟絪vgen2锟节讹拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟�
         CTRL.svgen2.Ualpha = CTRL.O->uab_cmd_to_inverter[0];
         CTRL.svgen2.Ubeta  = CTRL.O->uab_cmd_to_inverter[1];
 
@@ -636,8 +636,8 @@ void voltage_commands_to_pwm(){
 
     }else if(Axis.use_first_set_three_phase==-1){
 
-        // SVPWM of the motor 3-phase �ڶ������������ת��
-        CTRL.svgen2.Ualpha = CTRL.O->uab_cmd_to_inverter[0]; // uab_cmd�ĵ�����͵�һ����������svgen2�ڶ��������������
+        // SVPWM of the motor 3-phase 锟节讹拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟阶拷锟�?
+        CTRL.svgen2.Ualpha = CTRL.O->uab_cmd_to_inverter[0]; // uab_cmd锟侥碉拷锟斤拷锟斤拷偷锟�?伙拷锟斤拷锟斤拷锟斤拷锟斤拷锟絪vgen2锟节讹拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟�
         CTRL.svgen2.Ubeta  = CTRL.O->uab_cmd_to_inverter[1];
 
         // SVPWM of the suspension 3-phase
@@ -696,7 +696,7 @@ void voltage_measurement_based_on_eCAP(){
         CAP.uab0[1] = CTRL.S->sinT*CAP.dq[0] + CTRL.S->cosT*CAP.dq[1];
     }
 
-    // ��ѹ����
+    // 锟斤拷压锟斤拷锟斤拷
     if(G.flag_use_ecap_voltage==2 || G.flag_use_ecap_voltage==1){
         /*Use original ecap measured voltage*/
         US_P(0) = US_C(0);
@@ -720,10 +720,10 @@ void voltage_measurement_based_on_eCAP(){
 
     }else if(G.flag_use_ecap_voltage==0){
         /*Use command voltage for feedback*/
-        US_P(0) = CTRL.O->uab_cmd[0]; // ��׺_P��ʾ��һ���ĵ�ѹ��P = Previous
-        US_P(1) = CTRL.O->uab_cmd[1]; // ��׺_C��ʾ��ǰ���ĵ�ѹ��C = Current
-        US_C(0) = CTRL.O->uab_cmd[0]; // ��׺_P��ʾ��һ���ĵ�ѹ��P = Previous
-        US_C(1) = CTRL.O->uab_cmd[1]; // ��׺_C��ʾ��ǰ���ĵ�ѹ��C = Current
+        US_P(0) = CTRL.O->uab_cmd[0]; // 锟斤拷缀_P锟斤拷示锟斤拷一锟斤拷锟侥�?�拷压锟斤拷P = Previous
+        US_P(1) = CTRL.O->uab_cmd[1]; // 锟斤拷缀_C锟斤拷示锟斤拷前锟斤拷锟侥�?�拷压锟斤拷C = Current
+        US_C(0) = CTRL.O->uab_cmd[0]; // 锟斤拷缀_P锟斤拷示锟斤拷一锟斤拷锟侥�?�拷压锟斤拷P = Previous
+        US_C(1) = CTRL.O->uab_cmd[1]; // 锟斤拷缀_C锟斤拷示锟斤拷前锟斤拷锟侥�?�拷压锟斤拷C = Current
     }
 
     // (for watch only) Mismatch between ecap measurement and command to inverter
@@ -735,7 +735,7 @@ void voltage_measurement_based_on_eCAP(){
 
 //extern long long sci_pos;
 
-//����ȫ�ֱ���
+//锟斤拷锟斤拷全锟街憋拷锟斤拷
 #if PC_SIMULATION==FALSE
 REAL CpuTimer_Delta = 0;
 Uint32 CpuTimer_Before = 0;
@@ -770,7 +770,7 @@ void measurement(){
             cnt_four_bar_map_motor_encoder_angle = deg_four_bar_map_motor_encoder_angle * 23301.68888888889;
 
 
-            //��η���Ҫ��ʱ��Ĵ������ǰ�棬�۲�CpuTimer_Delta��ȡֵ���������˶��ٸ� 1/200e6 �롣
+            //锟斤拷畏锟斤拷锟�?拷锟绞憋拷锟侥达拷锟斤拷锟斤拷锟�?�帮拷妫拷鄄锟紺puTimer_Delta锟斤拷取值锟斤拷锟斤拷锟斤拷锟斤拷锟剿�?�拷锟劫革拷 1/200e6 锟�??�?
             #if PC_SIMULATION==FALSE
             CpuTimer_After = CpuTimer1.RegsAddr->TIM.all; // get count
             CpuTimer_Delta = (REAL)CpuTimer_Before - (REAL)CpuTimer_After;
@@ -784,9 +784,9 @@ void measurement(){
 
 
             CTRL.enc->encoder_abs_cnt_previous = CTRL.enc->encoder_abs_cnt;
-            // ���a���x���Ƿ��ģ������@߅ƫ��ҲҪ��һ�£��ĳ�ֵؓ��
-            // ���a���x���Ƿ��ģ������@߅ƫ��ҲҪ��һ�£��ĳ�ֵؓ��
-            // ���a���x���Ƿ��ģ������@߅ƫ��ҲҪ��һ�£��ĳ�ֵؓ��
+            // 锟斤拷锟絘锟斤拷锟絰锟斤拷锟角凤拷锟侥ｏ拷锟斤拷锟斤拷锟紷邊偏锟斤拷也�?�锟斤拷一锟铰ｏ拷锟侥筹拷負值锟斤拷
+            // 锟斤拷锟絘锟斤拷锟絰锟斤拷锟角凤拷锟侥ｏ拷锟斤拷锟斤拷锟紷邊偏锟斤拷也�?�锟斤拷一锟铰ｏ拷锟侥筹拷負值锟斤拷
+            // 锟斤拷锟絘锟斤拷锟絰锟斤拷锟角凤拷锟侥ｏ拷锟斤拷锟斤拷锟紷邊偏锟斤拷也�?�锟斤拷一锟铰ｏ拷锟侥筹拷負值锟斤拷
             if(bool_use_SCI_encoder){
                 // MD1 is 17bit, use SCI485hip port
                 CTRL.enc->encoder_abs_cnt = + ( (int32)position_elec_SCI_fromCPU2 - CTRL.enc->OffsetCountBetweenIndexAndUPhaseAxis );
@@ -816,8 +816,8 @@ void measurement(){
                        ENC.encoder_incremental_cnt -= (int32) SYSTEM_QEP_QPOSMAX_PLUS_1;
 
             // ENC.rpm_raw =  ENC.encoder_incremental_cnt  * SYSTEM_QEP_REV_PER_PULSE / CpuTimer_Delta * 1200e7; // 200e6 * 60 ;
-//            ENC.rpm_raw =  ENC.encoder_incremental_cnt  * SYSTEM_QEP_REV_PER_PULSE * 1052.6 * 60; // 200e6 * 60 ʱ���Ǳ仯�ģ�������1msҲ������0.9ms��
-            ENC.rpm_raw =  ENC.encoder_incremental_cnt  * SYSTEM_QEP_REV_PER_PULSE * 1e4 * 60; // 1e4ָ����EPWM1_ISR�жϵ�Ƶ�ʣ�10kHz
+//            ENC.rpm_raw =  ENC.encoder_incremental_cnt  * SYSTEM_QEP_REV_PER_PULSE * 1052.6 * 60; // 200e6 * 60 时锟斤拷锟�?�变化锟侥ｏ拷锟斤拷锟斤拷锟斤拷1ms也锟斤拷锟斤拷锟斤拷0.9ms锟斤�?
+            ENC.rpm_raw =  ENC.encoder_incremental_cnt  * SYSTEM_QEP_REV_PER_PULSE * 1e4 * 60; // 1e4指锟斤拷锟斤拷EPWM1_ISR锟叫�?碉拷频锟绞ｏ�?10kHz
 
             ENC.sum_qepPosCnt            -= ENC.MA_qepPosCnt[ENC.cursor];
             ENC.sum_qepPosCnt            += ENC.rpm_raw;//ENC.encoder_incremental_cnt;
@@ -833,7 +833,7 @@ void measurement(){
 
             CTRL.enc->omg_elec = ENC.rpm * RPM_2_ELEC_RAD_PER_SEC;
 
-            //��η���Ҫ��ʱ��Ĵ���ǰ��
+            //锟斤拷畏锟斤拷锟�?拷锟绞憋拷锟侥达拷锟斤拷前锟斤�?
             #if PC_SIMULATION==FALSE
             EALLOW;
             CpuTimer1.RegsAddr->TCR.bit.TRB = 1; // reset cpu timer to period value
@@ -848,21 +848,21 @@ void measurement(){
         }
     #endif
 
-    // ת��λ�ú�ת�ٽӿ� �Լ� ת��λ�ú�ת�ٲ���
+    // �?锟斤拷位锟矫猴拷�?锟劫接匡�? 锟皆硷拷 �?锟斤拷位锟矫猴拷�?锟劫诧拷锟斤�?
     //    int32 QPOSCNT;
     //    if(ENCODER_TYPE == INCREMENTAL_ENCODER_QEP){
     //        QPOSCNT = EQep1Regs.QPOSCNT;
     //    }
-    //    // 20240123 �Ȳ��������
+    //    // 20240123 锟饺诧拷锟斤拷锟斤拷锟斤拷锟�?
     //    if(ENCODER_TYPE == ABSOLUTE_ENCODER_SCI){
-    //        QPOSCNT =  - position_elec_SCI_fromCPU2; // TODO: ��������ʸ����ת��ʱ�򣬵���ı����������ڼ�С������ȡ�����š�
+    //        QPOSCNT =  - position_elec_SCI_fromCPU2; // TODO: 锟斤拷锟斤拷锟斤拷锟斤拷矢锟斤拷锟斤拷转锟斤拷时锟津，�?�拷锟斤拷谋锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷�?�锟�?★拷锟斤拷锟斤拷锟饺★拷锟斤拷锟斤拷拧锟�?
     //        //QPOSCNT = position_elec_SCI_fromCPU2;
     //    }
-    //    // ʹ��can_ID0x01������
+    //    // 使锟斤拷can_ID0x01锟斤拷锟斤拷锟斤�?
     //    if(ENCODER_TYPE == ABSOLUTE_ENCODER_CAN_ID0x01){
     //        QPOSCNT = position_elec_CAN_ID0x01_fromCPU2;
     //    }
-    //    // ʹ��can_ID0x03������
+    //    // 使锟斤拷can_ID0x03锟斤拷锟斤拷锟斤�?
     //    if(ENCODER_TYPE == ABSOLUTE_ENCODER_CAN_ID0x03){
     //        QPOSCNT = position_elec_CAN_ID0x03_fromCPU2;
     //    }
@@ -889,7 +889,7 @@ void measurement(){
     Axis.iuvw[1]=((REAL)(AdcaResultRegs.ADCRESULT2 ) - Axis.adc_offset[2]) * Axis.adc_scale[2]; //
     Axis.iuvw[2]=((REAL)(AdcaResultRegs.ADCRESULT3 ) - Axis.adc_offset[3]) * Axis.adc_scale[3]; //
 
-    // LEM2 ���� �¹� �ձ�
+    // LEM2 锟斤拷锟斤拷 锟铰癸拷 锟秸憋拷
     Axis.iuvw[3]=((REAL)(AdcbResultRegs.ADCRESULT7 ) - Axis.adc_offset[4]) * Axis.adc_scale[4]; //
     Axis.iuvw[4]=((REAL)(AdcbResultRegs.ADCRESULT8 ) - Axis.adc_offset[5]) * Axis.adc_scale[5]; //
     Axis.iuvw[5]=((REAL)(AdcbResultRegs.ADCRESULT9 ) - Axis.adc_offset[6]) * Axis.adc_scale[6]; //
@@ -909,16 +909,16 @@ void measurement(){
 
 
 
-    // �ߵ�ѹ����������ռ�ձȺ�ĸ�ߵ�ѹ��
+    // 锟�??碉拷压锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷占锟秸比猴拷母锟�?碉拷压锟斤拷
     //voltage_measurement_based_on_eCAP();
 
-    // Vdc����ʵʱ���µ������޷�
+    // Vdc锟斤拷锟斤拷实时锟斤拷锟铰�?�拷锟斤拷锟斤拷锟睫凤拷
     pid1_iM.OutLimit = Axis.vdc * 0.5773672;
     pid1_iT.OutLimit = Axis.vdc * 0.5773672;
     pid2_ix.OutLimit = Axis.vdc * 0.5773672;
     pid2_iy.OutLimit = Axis.vdc * 0.5773672;
 
-    // �����ӿ�
+    // 锟斤拷锟斤拷锟接匡拷
     if(USE_3_CURRENT_SENSORS){
         Axis.iabg[0] = UVW2A_AI(Axis.iuvw[0], Axis.iuvw[1], Axis.iuvw[2]);
         Axis.iabg[1] = UVW2B_AI(Axis.iuvw[0], Axis.iuvw[1], Axis.iuvw[2]);
@@ -936,27 +936,27 @@ void measurement(){
     }
 
     if(Axis.use_first_set_three_phase==1){
-        // ֻ�õ�һ������
+        // �?锟矫碉拷一锟斤拷锟斤拷锟斤�?
         IS_C(0)        = Axis.iabg[0];
         IS_C(1)        = Axis.iabg[1];
         CTRL.I->iab[0] = Axis.iabg[0];
         CTRL.I->iab[1] = Axis.iabg[1];
 
-        US_C(0) = CTRL.O->uab_cmd[0]; // ��׺_P��ʾ��һ���ĵ�ѹ��P = Previous
-        US_C(1) = CTRL.O->uab_cmd[1]; // ��׺_C��ʾ��ǰ���ĵ�ѹ��C = Current
+        US_C(0) = CTRL.O->uab_cmd[0]; // 锟斤拷缀_P锟斤拷示锟斤拷一锟斤拷锟侥�?�拷压锟斤拷P = Previous
+        US_C(1) = CTRL.O->uab_cmd[1]; // 锟斤拷缀_C锟斤拷示锟斤拷前锟斤拷锟侥�?�拷压锟斤拷C = Current
 
         US_P(0) = US_C(0);
         US_P(1) = US_C(1);
 
     }else if(Axis.use_first_set_three_phase==2){
-        // ֻ�õڶ�������
+        // �?锟矫�?讹拷锟斤拷锟斤拷锟斤�?
         IS_C(0)        = Axis.iabg[3];
         IS_C(1)        = Axis.iabg[4];
         CTRL.I->iab[0] = Axis.iabg[3];
         CTRL.I->iab[1] = Axis.iabg[4];
 
-        US_C(0) = CTRL.O->uab_cmd[0+2]; // ��׺_P��ʾ��һ���ĵ�ѹ��P = Previous
-        US_C(1) = CTRL.O->uab_cmd[1+2]; // ��׺_C��ʾ��ǰ���ĵ�ѹ��C = Current
+        US_C(0) = CTRL.O->uab_cmd[0+2]; // 锟斤拷缀_P锟斤拷示锟斤拷一锟斤拷锟侥�?�拷压锟斤拷P = Previous
+        US_C(1) = CTRL.O->uab_cmd[1+2]; // 锟斤拷缀_C锟斤拷示锟斤拷前锟斤拷锟侥�?�拷压锟斤拷C = Current
 
         US_P(0) = US_C(0);
         US_P(1) = US_C(1);
@@ -964,20 +964,20 @@ void measurement(){
     }else if(Axis.use_first_set_three_phase==-1){
         IS_C(0)        = Axis.iabg[3];
         IS_C(1)        = Axis.iabg[4];
-        CTRL.I->iab[0] = Axis.iabg[3]; // �ڶ������������ת��
+        CTRL.I->iab[0] = Axis.iabg[3]; // 锟节讹拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟阶拷锟�?
         CTRL.I->iab[1] = Axis.iabg[4];
         CTRL.I->iab[0+2] = Axis.iabg[0];
         CTRL.I->iab[1+2] = Axis.iabg[1];
     }
 
 
-    //    ���������γɱ������������ù���״̬���С�
+    //    锟斤拷锟斤拷锟斤拷锟斤拷锟轿成憋拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟矫癸拷锟斤拷状态锟斤拷锟叫★拷
     //    if(fabs(G.Current_W)>8 || fabs(G.Current_V)>8){
     //        DSP_PWM_DISABLE
     //        DSP_2PWM_DISABLE
     //    }
 
-    // ��������ADC��ƮУ׼ // TODO �ĳ���ADC Raw ResultsУ׼��
+    // 锟斤拷锟斤拷锟斤拷锟斤拷ADC锟斤拷�?�校�? // TODO 锟侥筹拷锟斤拷ADC Raw Results校准锟斤�?
 //    if(Axis.AD_offset_flag2==FALSE)
 //    {
 //        Axis.offset_counter += 1;
@@ -998,8 +998,8 @@ void measurement(){
 //            Axis.offset_counter = 0;
 //        }
 //
-//        // ���������ƫ�ü�⣨������ϵ����ֿ��ؾ��ǿ��ģ�������Ĭ��ֵ
-//        /* 427-1401����ӿ����ź��˲������췢���ڸ��ϵ��ʱ��XCUBE-II��ǰ�����ж�����ֿ����Ǵ򿪵ģ�Ȼ��ű�ɹرա�*/
+//        // 锟斤拷锟斤拷锟斤拷锟斤拷锟狡�?拷眉锟解（锟斤拷锟斤拷锟斤拷系锟斤拷锟斤拷挚锟斤拷鼐锟斤拷强锟斤拷模锟斤拷锟斤拷锟斤拷锟侥拷锟街�
+//        /* 427-1401锟斤拷锟斤拷涌锟斤拷锟斤拷藕锟斤拷瞬锟斤拷锟斤拷锟斤拷旆�?拷锟斤拷诟锟斤拷系锟斤拷时锟斤拷XCUBE-II锟斤拷前锟斤拷锟斤拷锟叫讹拷锟斤，锟斤拷锟�?�匡拷锟斤拷锟�?�打开的ｏ拷然锟斤拷疟锟缴关闭★拷*/
 //        if(Axis.FLAG_ENABLE_PWM_OUTPUT && Axis.offset_counter>100){
 //            Axis.iuvw_offset_online[0] = 0.0;
 //            Axis.iuvw_offset_online[1] = 0.0;
@@ -1010,7 +1010,7 @@ void measurement(){
 //            Axis.AD_offset_flag2 = TRUE;
 //        }
 //
-//        // �ϵ��ʱ�򣬵��������ת����ʱ���ݵ����ж��Ƿ�Ҫ�������ƫ�ò�����
+//        // 锟较碉拷锟绞憋拷颍锟斤拷锟斤拷锟斤拷锟斤拷�?锟斤拷锟斤拷时锟斤拷锟捷碉拷锟斤拷锟�?讹拷锟�?�凤拷�?�锟斤拷锟斤拷锟斤拷锟狡�?拷貌锟斤拷锟斤拷锟�
 //        if( fabs(Axis.iuvw[0])>0.05 || fabs(Axis.iuvw[1])>0.05 || fabs(Axis.iuvw[2])>0.05 || \
 //            fabs(Axis.iuvw[3])>0.05 || fabs(Axis.iuvw[4])>0.05 || fabs(Axis.iuvw[5])>0.05){
 //            Axis.iuvw_offset_online[0] = 0.0;
@@ -1031,7 +1031,7 @@ void PanGuMainISR(void){
         write_DAC_buffer();
     #endif
 
-// �����װ壬��ƴ���
+// 锟斤拷锟斤拷锟阶板，锟斤拷拼锟斤拷锟�?
 //    static long int ii = 0;
 //    if(++ii%5000 == 0){
 //        //        EPwm1Regs.CMPA.bit.CMPA = CTRL.svgen1.Ta*50000000*CL_TS;
@@ -1062,7 +1062,7 @@ void PanGuMainISR(void){
         do_enhanced_capture();
     #endif
 
-    // ����������DSP�е�ADC������
+    // 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷DSP锟叫碉拷ADC锟斤拷锟斤拷锟斤�?
     // DELAY_US(2); // wait for adc conversion TODO: check adc eoc flag?
     measurement();
 
@@ -1081,12 +1081,12 @@ void PanGuMainISR(void){
             //G.Select_exp_operation = 3; // fixed
             init_experiment_overwrite();
 
-            FE.htz.rs_est = 3.8; // ͨ�����ڵ���ֵ��Ч����Vdc=80Vʱ��������ѹ��������תʵ��Ч�����ڻ�ã�
+            FE.htz.rs_est = 3.8; // 通锟斤拷锟斤拷锟节�?�拷锟斤拷值锟斤拷效锟斤拷锟斤拷Vdc=80V时锟斤拷锟斤拷锟斤拷锟斤拷压锟斤拷睿拷锟斤拷锟斤拷锟阶�?�拷锟叫э拷锟斤拷锟斤拷�?�锟�?ｏ拷
 
-            // ������ƴ������̣��������ˣ���
-            //FE.htz.rs_est = 4.2; // Ohm ͨ�����ڵ���ֵ��Ч����Vdc=120Vʱ��������ѹ��������תʵ��Ч�����ڻ�ã�
+            // 锟斤拷锟斤拷锟斤拷拼锟斤拷锟斤拷锟斤拷蹋锟斤拷锟斤拷锟斤拷锟斤拷耍锟斤拷锟�
+            //FE.htz.rs_est = 4.2; // Ohm 通锟斤拷锟斤拷锟节�?�拷锟斤拷值锟斤拷效锟斤拷锟斤拷Vdc=120V时锟斤拷锟斤拷锟斤拷锟斤拷压锟斤拷睿拷锟斤拷锟斤拷锟阶�?�拷锟叫э拷锟斤拷锟斤拷�?�锟�?ｏ拷
 
-            //CTRL.motor->Lmu_inv = 1.55; // H^-1 ʹ��ʵ��alpha-beta����������ͼΪԲ���Ҳ��ᷢ��ƫ��ת��
+            //CTRL.motor->Lmu_inv = 1.55; // H^-1 使锟斤拷实锟斤拷alpha-beta锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷图为圆锟斤拷锟�?诧拷锟结发锟斤拷偏锟斤拷�?锟斤�?
             //CTRL.I->m0 = 2.5; // Wb
             // load motor is iq=-10 A
 
@@ -1094,14 +1094,14 @@ void PanGuMainISR(void){
                 //CTRL.g->overwrite_vdc = 80;
 //                CTRL.g->overwrite_vdc = 120;
                 //CTRL.g->overwrite_vdc = 200;
-                //����ʵ��
+                //锟斤拷锟斤拷实锟斤拷
                 CTRL.g->overwrite_vdc = 28;
 //                FE.htz.rs_est=4.45;
 //                marino.gamma_inv=150000;
 //                marino.lambda_inv=2000;
-//                marino.xAlpha=6.25; // ʹ������ת�ٵĲ�ͷ���ٱ��
+//                marino.xAlpha=6.25; // 使锟斤拷锟斤拷锟斤拷�?锟劫的�?�拷头锟斤拷锟劫憋拷锟�
 //                imife_realtime_gain_off=0.01;
-//                CTRL.motor->Js_inv=30; // ʹ�ø���ת�ع���ֵ��ɳ������������Ҳ������Ҳ��ǹ������*���ٶ��γɵĹ��Ը��أ�
+//                CTRL.motor->Js_inv=30; // 使锟�?革拷锟斤拷转锟截癸拷锟斤拷值锟斤拷沙锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷也锟斤拷锟斤拷锟斤拷也锟斤拷枪锟斤拷锟斤拷锟斤�?*锟斤拷锟�?讹拷锟轿成的癸拷锟皆革拷锟截ｏ拷
             }
             CTRL.g->flag_overwite_vdc = 0;
 
@@ -1120,7 +1120,7 @@ void PanGuMainISR(void){
         if (FE.htz.u_offset[0] > 0.1){
             FE.htz.u_offset[0] = 0;
         }
-        // DSP�п�������ʱ��
+        // DSP锟叫匡拷锟斤拷锟斤拷锟斤拷时锟斤�?
         timebase_counter += 1;
         CTRL.timebase = CL_TS * timebase_counter; //CTRL.timebase += CL_TS; // 2048 = float/REAL max
 
@@ -1128,7 +1128,7 @@ void PanGuMainISR(void){
             target_position_cnt = position_elec_CAN_ID0x01_fromCPU2 * 64;
         }
 
-        // ����ָ����������������ѹ��
+        // 锟斤拷锟斤拷指锟筋，锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟窖癸拷锟�?
         #if ENABLE_COMMISSIONING == FALSE
             //CTRL.S->Motor_or_Gnerator = sign(CTRL.I->idq_cmd[1]) == sign(ENC.rpm); // sign(CTRL.I->idq_cmd[1]) != sign(CTRL.I->cmd_speed_rpm))
             runtime_command_and_tuning(Axis.Select_exp_operation);
@@ -1139,8 +1139,8 @@ void PanGuMainISR(void){
 //
 //            if(positionLoopENABLE == 1)
 //            {
-//                // λ�û�
-//                // �����Ͷ̻���Ҫѡ�̵ġ�
+//                // 位锟�?伙拷
+//                // 锟斤拷锟斤拷锟酵�?伙拷锟斤拷�?�选锟教的★拷
 //                error_pos = target_position_cnt - (REAL)CTRL.enc->encoder_abs_cnt;
 //                if (error_pos > (SYSTEM_QEP_QPOSMAX_PLUS_1*0.5))
 //                {
@@ -1194,7 +1194,7 @@ void PanGuMainISR(void){
             EPwm5Regs.CMPA.bit.CMPA = CTRL.svgen2.Tb*50000000*CL_TS;
             EPwm6Regs.CMPA.bit.CMPA = CTRL.svgen2.Tc*50000000*CL_TS;
 
-            // 20240119 test���۲�4��5��6ͨ����IPM�����ѹ�Ƿ�����
+            // 20240119 test锟斤拷锟桔�?�拷4锟斤�?5锟斤�?6通锟斤拷锟斤拷IPM锟斤拷锟斤拷锟窖癸拷欠锟斤拷锟斤拷锟�?
 //            EPwm4Regs.CMPA.bit.CMPA = CTRL.svgen1.Ta*50000000*CL_TS;
 //            EPwm5Regs.CMPA.bit.CMPA = CTRL.svgen1.Tb*50000000*CL_TS;
 //            EPwm6Regs.CMPA.bit.CMPA = CTRL.svgen1.Tc*50000000*CL_TS;
@@ -1228,7 +1228,7 @@ __interrupt void EPWM1ISR(void){
     PieCtrlRegs.PIEIER4.all &= 0x7;        // Set group priority by adjusting PIEIER4 to allow INT4.1, 4.2, 4.3 to interrupt current ISR
 
     /* Step 3. [eCAP] Enable interrupts */
-    PieCtrlRegs.PIEACK.all = 0xFFFF;      // Enable PIE interrupts by writing all 1��s to the PIEACK register
+    PieCtrlRegs.PIEACK.all = 0xFFFF;      // Enable PIE interrupts by writing all 1锟斤拷s to the PIEACK register
     asm("       NOP");                    // Wait at least one cycle
     EINT;                                 // Enable global interrupts by clearing INTM
 #endif
@@ -1253,7 +1253,7 @@ __interrupt void EPWM1ISR(void){
 #endif
 
 /*
-//����ȫ�ֱ���
+//锟斤拷锟斤拷全锟街憋拷锟斤拷
 #if PC_SIMULATION==FALSE
 REAL CpuTimer_Delta = 0;
 Uint32 CpuTimer_Before = 0;
@@ -1261,7 +1261,7 @@ Uint32 CpuTimer_After = 0;
 #endif
 
 
-//��η���Ҫ��ʱ��Ĵ���ǰ��
+//锟斤拷畏锟斤拷锟�?拷锟绞憋拷锟侥达拷锟斤拷前锟斤�?
 #if PC_SIMULATION==FALSE
 EALLOW;
 CpuTimer1.RegsAddr->TCR.bit.TRB = 1; // reset cpu timer to period value
@@ -1270,7 +1270,7 @@ CpuTimer_Before = CpuTimer1.RegsAddr->TIM.all; // get count
 EDIS;
 #endif
 
-//��η���Ҫ��ʱ��Ĵ������ǰ�棬�۲�CpuTimer_Delta��ȡֵ���������˶��ٸ� 1/200e6 �롣
+//锟斤拷畏锟斤拷锟�?拷锟绞憋拷锟侥达拷锟斤拷锟斤拷锟�?�帮拷妫拷鄄锟紺puTimer_Delta锟斤拷取值锟斤拷锟斤拷锟斤拷锟斤拷锟剿�?�拷锟劫革拷 1/200e6 锟�??�?
 #if PC_SIMULATION==FALSE
 CpuTimer_After = CpuTimer1.RegsAddr->TIM.all; // get count
 CpuTimer_Delta = (REAL)CpuTimer_Before - (REAL)CpuTimer_After;
