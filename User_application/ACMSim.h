@@ -165,7 +165,6 @@ double difference_between_two_angles(double first, double second);
 
 
 
-
 /* Encoder QEP TODO: should read from excel */
 #define ABSOLUTE_ENCODER_SCI_SHANK 1
 #define ABSOLUTE_ENCODER_SCI_HIP  2
@@ -173,10 +172,11 @@ double difference_between_two_angles(double first, double second);
 #define ABSOLUTE_ENCODER_CAN_ID0x03 4
 #define RESOLVER_1 5
 #define RESOLVER_2 6
-#define ABSOLUTE_ENCODER_MD1 7
+#define ABSOLUTE_ENCODER_MD1 7    /* 行动元配套电机看这里！ */
 #define INCREMENTAL_ENCODER_QEP 8
 
-#define ENCODER_TYPE ABSOLUTE_ENCODER_SCI_SHANK
+//#define ENCODER_TYPE ABSOLUTE_ENCODER_SCI_SHANK
+#define ENCODER_TYPE ABSOLUTE_ENCODER_MD1
 
 #if ENCODER_TYPE == INCREMENTAL_ENCODER_QEP
 #define SYSTEM_QEP_PULSES_PER_REV (10000)
@@ -191,7 +191,6 @@ double difference_between_two_angles(double first, double second);
 #define CNT_2_ELEC_RAD (SYSTEM_QEP_REV_PER_PULSE * 2 * M_PI * MOTOR_NUMBER_OF_POLE_PAIRS)
 #define SYSTEM_QEP_QPOSMAX (SYSTEM_QEP_PULSES_PER_REV - 1)
 #define SYSTEM_QEP_QPOSMAX_PLUS_1 (SYSTEM_QEP_PULSES_PER_REV)
-
 #define SHANK__OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS 7365433//1051014 // 3494662 // ym tuned with id_cmd = 3A 2024-03-12
 #define HIP__OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS 340755 // ym tuned with id_cmd = 3A 2024-03-12
 #elif (ENCODER_TYPE == ABSOLUTE_ENCODER_CAN_ID0x01)
@@ -232,6 +231,5 @@ double difference_between_two_angles(double first, double second);
 #define SYSTEM_QEP_QPOSMAX_PLUS_1 (SYSTEM_QEP_PULSES_PER_REV)
 #define OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS 117593 // ym tuned with id_cmd = 3A, 20240308
 #endif
-
 
 #endif
