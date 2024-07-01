@@ -150,8 +150,13 @@ void init_experiment_AD_gain_and_offset()
 
 /* two motor OFFSET */
 #if NUMBER_OF_AXES == 2
+#if (ENCODER_TYPE == ABSOLUTE_ENCODER_MD1)
+    Axis_1.pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
+    Axis_2.pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
+#else
     Axis_1.pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = SHANK__OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
     Axis_2.pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = HIP__OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
+#endif
 #else
 /* eQEP OFFSET */
 #if (ENCODER_TYPE == ABSOLUTE_ENCODER_SCI_SHANK)
