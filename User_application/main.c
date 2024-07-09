@@ -401,6 +401,18 @@ void main(void){
     eQEP_initialize(0);
     InitECaptureContinuousMode();
 
+
+
+    // use GPIO0, GPIO1 and reuse mode is 6 (I2C)
+    GPIO_SetupPinMux(0, GPIO_MUX_CPU1, 6);
+    GPIO_SetupPinMux(1, GPIO_MUX_CPU1, 6);
+    I2CA_Init();
+    Single_channel_config(0); // 0 for CHANNEL_0
+                                        // This part is corresponding to the Seeed's Github, of which address is attached below:
+                                        //  https://github.com/Seeed-Studio/Seeed_LDC1612/blob/master/Seeed_LDC1612.cpp
+                                        // This part is corresponding to sensor.single_channel_config from Seeed-LDC1612
+
+
     // 4.3 Assign peripherals to CPU02
     /* SPI and SCI */
     #if NUMBER_OF_DSP_CORES == 1
@@ -413,15 +425,6 @@ void main(void){
         InitSciGpio();
         InitSci();
     #elif NUMBER_OF_DSP_CORES == 2
-
-        // use GPIO0, GPIO1 and reuse mode is 6 (I2C)
-        GPIO_SetupPinMux(0, GPIO_MUX_CPU1, 6);
-        GPIO_SetupPinMux(1, GPIO_MUX_CPU1, 6);
-        I2CA_Init();
-        Single_channel_config(0); // 0 for CHANNEL_0
-                                            // This part is corresponding to the Seeed's Github, of which address is attached below:
-                                            //  https://github.com/Seeed-Studio/Seeed_LDC1612/blob/master/Seeed_LDC1612.cpp
-                                            // This part is corresponding to sensor.single_channel_config from Seeed-LDC1612
 
         /* 双核配置*/
         // 初始化SPI，用于与DAC芯片MAX5307通讯。
