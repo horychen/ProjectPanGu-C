@@ -44,8 +44,8 @@ Uint32 CPU2_commu_error_counter = 0;
 #ifdef _MMDv1 // mmlab drive version 1
 
 // DC BUS
-#define OFFSET_VDC_BUS_IPM1 -1.01456189
-#define SCALE_VDC_BUS_IPM1 0.17604031
+#define OFFSET_VDC_BUS_IPM1 7
+#define SCALE_VDC_BUS_IPM1 0.20833333333
 
 // Lem 1的三个蓝色块块分别是adc b7 b8 b9
 #define OFFSET_LEM_B7 2025 // 2023.89473684 // ADCB7
@@ -868,8 +868,8 @@ void measurement()
     }
 
     // Convert adc results
-    // Axis->vdc    =((REAL)(AdcaResultRegs.ADCRESULT0 ) - Axis->adc_offset[0]) * Axis->adc_scale[0];
-    Axis->vdc = ((REAL)(AdcbResultRegs.ADCRESULT6) - Axis->adc_offset[0]) * Axis->adc_scale[0];
+     Axis->vdc    =((REAL)(AdcaResultRegs.ADCRESULT0 ) - Axis->adc_offset[0]) * Axis->adc_scale[0];
+     // Axis->vdc = ((REAL)(AdcbResultRegs.ADCRESULT6) - Axis->adc_offset[0]) * Axis->adc_scale[0];
     if (G.flag_overwite_vdc)
         Axis->vdc = G.overwrite_vdc;
 

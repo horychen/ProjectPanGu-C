@@ -121,7 +121,7 @@ float PIDController_Update(st_PIDController *pid) {
 void ACMSIMC_PIDTuner(){
 
     PID_iD->Kp  = CURRENT_KP;
-    PID_iQ->Kp = 0.8;//CURRENT_KP;
+    PID_iQ->Kp = 0.7;//CURRENT_KP;
     PID_spd->Kp = 0.0008;//SPEED_KP;
     PID_pos->Kp = POS_KP;
     PID_iD->Ki  = CURRENT_KI_CODE;

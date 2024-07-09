@@ -119,8 +119,8 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
     (*Axis4DAC).dac_watch[40] = (*CTRL).i->idq[0]*0.1;
     (*Axis4DAC).dac_watch[41] = (*CTRL).i->idq[1]*0.1;
 
-    (*Axis4DAC).dac_watch[42] = CTRL_1.s->pos->Ref *7.62939453125e-06; /// 131072.0 ;
-    (*Axis4DAC).dac_watch[43] = CTRL_1.s->pos->Fbk *7.62939453125e-06; /// 131072.0 ;
+    (*Axis4DAC).dac_watch[42] = CTRL_2.s->iQ->Ref; /// 131072.0 ;
+    (*Axis4DAC).dac_watch[43] = CTRL_2.s->iQ->Fbk; /// 131072.0 ;
     (*Axis4DAC).dac_watch[44] = CTRL_2.s->pos->Ref *7.62939453125e-06; /// 131072.0 ;
     (*Axis4DAC).dac_watch[45] = CTRL_2.s->pos->Fbk *7.62939453125e-06; /// 131072.0 ;
 
