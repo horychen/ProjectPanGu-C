@@ -413,6 +413,16 @@ void main(void){
         InitSciGpio();
         InitSci();
     #elif NUMBER_OF_DSP_CORES == 2
+
+        // use GPIO0, GPIO1 and reuse mode is 6 (I2C)
+        GPIO_SetupPinMux(0, GPIO_MUX_CPU1, 6);
+        GPIO_SetupPinMux(1, GPIO_MUX_CPU1, 6);
+        I2CA_Init();
+        Single_channel_config(0); // 0 for CHANNEL_0
+                                            // This part is corresponding to the Seeed's Github, of which address is attached below:
+                                            //  https://github.com/Seeed-Studio/Seeed_LDC1612/blob/master/Seeed_LDC1612.cpp
+                                            // This part is corresponding to sensor.single_channel_config from Seeed-LDC1612
+
         /* 双核配置*/
         // 初始化SPI，用于与DAC芯片MAX5307通讯。
         EALLOW;
@@ -549,6 +559,7 @@ void main(void){
     /* Re-map PIE Vector Table to user defined ISR functions. */
         EALLOW; // This is needed to write to EALLOW protected registers
         PieVectTable.EPWM1_INT = &SYSTEM_PROGRAM;     //&MainISR;      // PWM主中断 10kKHz
+        //PieVectTable.I2CA_INT = &i2c_int1a_isr;
         #if USE_ECAP_CEVT2_INTERRUPT == 1 && ENABLE_ECAP
         PieVectTable.ECAP1_INT = &ecap1_isr;
         PieVectTable.ECAP2_INT = &ecap2_isr;
@@ -565,8 +576,10 @@ void main(void){
     /* PIE Control */
         /* ePWM */
         PieCtrlRegs.PIEIER3.bit.INTx1 = 1;      // PWM1 interrupt (Interrupt 3.1)
-        /* SCI */
         #if NUMBER_OF_DSP_CORES == 1
+        /* I2C */
+            //PieCtrlRegs.PIEIER8.bit.INTx1 = 1;
+        /* SCI */
             //PieCtrlRegs.PIEIER8.bit.INTx5 = 1;   // PIE Group 8, INT5, SCI-C Rx (Part 2/3)
             //PieCtrlRegs.PIEIER8.bit.INTx6 = 1;   // PIE Group 8, INT6, SCI-C Tx
         #endif
@@ -582,6 +595,7 @@ void main(void){
         #endif
     /* CPU Interrupt Enable Register (IER) */
         IER |= M_INT3;  // EPWM1_INT
+        //IER |= M_INT8; // I2C
         #if NUMBER_OF_DSP_CORES == 1
             //IER |= M_INT8; // SCI-C (Part 3/3)
         #endif
@@ -655,6 +669,8 @@ void main(void){
 
     // 7. Main loop
     while(1){
+        I2CA_ReadData_Channel(0);
+
         //        mainWhileLoopCounter1++;
         //        mainWhileLoopCounter2=2992;
         //        if (Motor_mode_START==1){
