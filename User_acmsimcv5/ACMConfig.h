@@ -13,17 +13,30 @@
     #define INDUCTION_MACHINE_FLUX_ONLY_MODEL 11
     #define PM_SYNCHRONOUS_MACHINE 2
 #define MACHINE_TYPE 2
-	// 电机参数
-	#define PMSM_RESISTANCE                    0.1195
-	#define PMSM_D_AXIS_INDUCTANCE             0.000455
-	#define PMSM_Q_AXIS_INDUCTANCE             0.0005600000000000001
-	#define PMSM_PERMANENT_MAGNET_FLUX_LINKAGE 0.01934
-	// 铭牌值
-	#define MOTOR_NUMBER_OF_POLE_PAIRS         26
-	#define MOTOR_RATED_CURRENT_RMS            17
-	#define MOTOR_RATED_POWER_WATT             830
-	#define MOTOR_RATED_SPEED_RPM              760
-	#define MOTOR_SHAFT_INERTIA                0.000364
+	// // 电机参数
+	// #define PMSM_RESISTANCE                    0.1195
+	// #define PMSM_D_AXIS_INDUCTANCE             0.000455
+	// #define PMSM_Q_AXIS_INDUCTANCE             0.0005600000000000001
+	// #define PMSM_PERMANENT_MAGNET_FLUX_LINKAGE 0.01934
+	// // 铭牌值
+	// #define MOTOR_NUMBER_OF_POLE_PAIRS         26
+	// #define MOTOR_RATED_CURRENT_RMS            17
+	// #define MOTOR_RATED_POWER_WATT             830
+	// #define MOTOR_RATED_SPEED_RPM              760
+	// #define MOTOR_SHAFT_INERTIA                0.000364
+    #define MOTOR_NUMBER_OF_POLE_PAIRS 5
+    #define MOTOR_RATED_CURRENT_RMS (16.8)
+    #define PMSM_RESISTANCE (0.037)
+    #define PMSM_D_AXIS_INDUCTANCE (0.00019)
+    #define PMSM_Q_AXIS_INDUCTANCE (0.00019)
+    #define PMSM_PERMANENT_MAGNET_FLUX_LINKAGE (0.01717)
+    #define MOTOR_RREQ (0.0)
+    #define MOTOR_SHAFT_INERTIA (0.00015900000000000002)
+    #define DC_BUS_VOLTAGE 20
+    #define MOTOR_RATED_POWER_WATT             750
+	#define MOTOR_RATED_SPEED_RPM              3000
+
+
 	// 参数误差
 		#define MISMATCH_R   100
 		#define MISMATCH_LD  100

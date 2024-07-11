@@ -1,27 +1,73 @@
 #include <All_Definition.h>
 
-#ifdef _MMDv1 // mmlab drive version 1
+// #ifdef _MMDv1 // mmlab drive version 1
 
-// DC BUS
-#define OFFSET_VDC_BUS_IPM1 7
-#define SCALE_VDC_BUS_IPM1 0.20833333333
+// // DC BUS
+// #define OFFSET_VDC_BUS_IPM1 7
+// #define SCALE_VDC_BUS_IPM1 0.20833333333
 
-// Lem 1的三个蓝色块块分别是adc b7 b8 b9
-#define OFFSET_LEM_B7 2025 // 2023.89473684 // ADCB7
-#define OFFSET_LEM_B8 2041 // 2042.33333333 // ADCB8
-#define OFFSET_LEM_B9 2045 // 2043.43859649 // ADCB9
-// 令逆变器输出端指向电机为正方向，若LEM上的箭头与正方向相同，则SCALE为正数，若LEM上的箭头与正方向相反，则SCALE为负数，
-#define SCALE_LEM_B7 0.03076297 // ADCB7
-#define SCALE_LEM_B8 0.03038256 // ADCB8
-#define SCALE_LEM_B9 0.03039058 // ADCB9
+// // Lem 1的三个蓝色块块分别是adc b7 b8 b9
+// #define OFFSET_LEM_B7 2025 // 2023.89473684 // ADCB7
+// #define OFFSET_LEM_B8 2041 // 2042.33333333 // ADCB8
+// #define OFFSET_LEM_B9 2045 // 2043.43859649 // ADCB9
+// // 令逆变器输出端指向电机为正方向，若LEM上的箭头与正方向相同，则SCALE为正数，若LEM上的箭头与正方向相反，则SCALE为负数，
+// #define SCALE_LEM_B7 0.03076297 // ADCB7
+// #define SCALE_LEM_B8 0.03038256 // ADCB8
+// #define SCALE_LEM_B9 0.03039058 // ADCB9
 
-// Lem 2的三个蓝色块块分别是adc a1 a2 a3
-#define OFFSET_LEM_A1 2030      // 2029.57894737 // ADCA1
-#define OFFSET_LEM_A2 2043      // 2043.08771930 // ADCA2
-#define OFFSET_LEM_A3 2042      // 2042.98245614 // ADCA3
-#define SCALE_LEM_A1 0.03080704 // ADCA1
-#define SCALE_LEM_A2 0.03060669 // ADCA2
-#define SCALE_LEM_A3 0.03045988 // ADCA3
+// // Lem 2的三个蓝色块块分别是adc a1 a2 a3
+// #define OFFSET_LEM_A1 2030      // 2029.57894737 // ADCA1
+// #define OFFSET_LEM_A2 2043      // 2043.08771930 // ADCA2
+// #define OFFSET_LEM_A3 2042      // 2042.98245614 // ADCA3
+// #define SCALE_LEM_A1 0.03080704 // ADCA1
+// #define SCALE_LEM_A2 0.03060669 // ADCA2
+// #define SCALE_LEM_A3 0.03045988 // ADCA3
+
+#ifdef _LEG_GROUP // mmlab drive version 1
+    // DC BUS
+    #define OFFSET_VDC_BUS_IPM1 -1.01456189
+    #define SCALE_VDC_BUS_IPM1 0.17604031
+
+    // Lem 1的三个蓝色块块分别是adc b7 b8 b9
+    #define OFFSET_LEM_B7 2025 // 2023.89473684 // ADCB7
+    #define OFFSET_LEM_B8 2041 // 2042.33333333 // ADCB8
+    #define OFFSET_LEM_B9 2045 // 2043.43859649 // ADCB9
+    // 令逆变器输出端指向电机为正方向，若LEM上的箭头与正方向相同，则SCALE为正数，若LEM上的箭头与正方向相反，则SCALE为负数，
+    #define SCALE_LEM_B7 0.03076297 // ADCB7
+    #define SCALE_LEM_B8 0.03038256 // ADCB8
+    #define SCALE_LEM_B9 0.03039058 // ADCB9
+
+    // Lem 2的三个蓝色块块分别是adc a1 a2 a3
+    #define OFFSET_LEM_A1 2030      // 2029.57894737 // ADCA1
+    #define OFFSET_LEM_A2 2043      // 2043.08771930 // ADCA2
+    #define OFFSET_LEM_A3 2042      // 2042.98245614 // ADCA3
+    #define SCALE_LEM_A1 0.03080704 // ADCA1
+    #define SCALE_LEM_A2 0.03060669 // ADCA2
+    #define SCALE_LEM_A3 0.03045988 // ADCA3
+#else
+    #ifdef _MOTOR_GROUP // mmlab drive version 2
+        // DC BUS
+        #define OFFSET_VDC_BUS_IPM1 10
+        #define SCALE_VDC_BUS_IPM1 0.1604031
+
+        // Lem 1的三个蓝色块块分别是adc b7 b8 b9
+        #define OFFSET_LEM_B7 2020 // 2023.89473684 // ADCB7
+        #define OFFSET_LEM_B8 2029 // 2042.33333333 // ADCB8
+        #define OFFSET_LEM_B9 2038 // 2043.43859649 // ADCB9
+        // 令逆变器输出端指向电机为正方向，若LEM上的箭头与正方向相同，则SCALE为正数，若LEM上的箭头与正方向相反，则SCALE为负数，
+        #define SCALE_LEM_B7 0.03076297 // ADCB7
+        #define SCALE_LEM_B8 0.03038256 // ADCB8
+        #define SCALE_LEM_B9 0.03039058 // ADCB9
+
+        // Lem 2的三个蓝色块块分别是adc a1 a2 a3
+        #define OFFSET_LEM_A1 2034      // 2029.57894737 // ADCA1
+        #define OFFSET_LEM_A2 2049      // 2043.08771930 // ADCA2
+        #define OFFSET_LEM_A3 2050      // 2042.98245614 // ADCA3
+        #define SCALE_LEM_A1 0.03080704 // ADCA1
+        #define SCALE_LEM_A2 0.03060669 // ADCA2
+        #define SCALE_LEM_A3 0.03045988 // ADCA3
+    #endif
+#endif
 
 #else
 scale and offset...
@@ -87,12 +133,29 @@ void EUREKA_GPIO_SETUP(){
     // GPIO137 - 485TX-SCIB
     GPIO_SetupPinMux(137, GPIO_MUX_CPU2, 6);
     GPIO_SetupPinOptions(137, GPIO_OUTPUT, GPIO_PUSHPULL);
-    // GPIO140 - 485-SCIB-WE-(use SCICTX as GPIO, in UART3 pin7)
-    GPIO_SetupPinMux(140, GPIO_MUX_CPU2, 0);
-    GPIO_SetupPinOptions(140, GPIO_OUTPUT, GPIO_ASYNC);
-    // GPIO139 - 485-SCIA-WE-(use SCICRX as GPIO, in UART3 pin8)
-    GPIO_SetupPinMux(139, GPIO_MUX_CPU2, 0);
-    GPIO_SetupPinOptions(139, GPIO_OUTPUT, GPIO_ASYNC);
+
+    // // GPIO31 - 485-SCIB-WE-(use SCICTX as GPIO, in UART3 pin7)
+    // GPIO_SetupPinMux(31, GPIO_MUX_CPU2, 0);
+    // GPIO_SetupPinOptions(31, GPIO_OUTPUT, GPIO_ASYNC);
+    // // GPIO139 - 485-SCIA-WE-(use SCICRX as GPIO, in UART3 pin8)
+    // GPIO_SetupPinMux(37, GPIO_MUX_CPU2, 0);
+    // GPIO_SetupPinOptions(37, GPIO_OUTPUT, GPIO_ASYNC);
+    #ifdef _LEG_GROUP
+        // GPIO140 - 485-SCIB-WE-(use SCICTX as GPIO, in UART3 pin7)
+        GPIO_SetupPinMux(140, GPIO_MUX_CPU2, 0);
+        GPIO_SetupPinOptions(140, GPIO_OUTPUT, GPIO_ASYNC);
+        // GPIO139 - 485-SCIA-WE-(use SCICRX as GPIO, in UART3 pin8)
+        GPIO_SetupPinMux(139, GPIO_MUX_CPU2, 0);
+        GPIO_SetupPinOptions(139, GPIO_OUTPUT, GPIO_ASYNC);
+    #else
+        #ifdef _MOTOR_GROUP
+            GPIO_SetupPinMux(31, GPIO_MUX_CPU2, 0);
+            GPIO_SetupPinOptions(31, GPIO_OUTPUT, GPIO_ASYNC);
+            // GPIO139 - 485-SCIA-WE-(use SCICRX as GPIO, in UART3 pin8)
+            GPIO_SetupPinMux(37, GPIO_MUX_CPU2, 0);
+            GPIO_SetupPinOptions(37, GPIO_OUTPUT, GPIO_ASYNC);
+        #endif
+    #endif
     // =========FOR EUREKA===========
 
     //        // =========TEST BOARD PIN============
@@ -569,7 +632,6 @@ void measurement_position_count_axisCnt0()
 #if NUMBER_OF_AXES == 2
         position_count_SCI_fromCPU2 = position_count_SCI_shank_fromCPU2;
 #endif
-
         // 編碼器讀數是反的，所以這邊偏置也要反一下，改成負值！
         // 編碼器讀數是反的，所以這邊偏置也要反一下，改成負值！
         // 編碼器讀數是反的，所以這邊偏置也要反一下，改成負值！
@@ -583,7 +645,6 @@ void measurement_position_count_axisCnt1()
 #if NUMBER_OF_AXES == 2
         position_count_SCI_fromCPU2 = position_count_SCI_hip_fromCPU2;
 #endif
-
         // 大腿电机，正转电流导致编码器读数增大
         CTRL->enc->encoder_abs_cnt = (int32)position_count_SCI_fromCPU2 - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis;
 }
@@ -1082,7 +1143,7 @@ void ENABLE_PWM_OUTPUT(int positionLoopType)
     // 0x01 is hip
     position_count_CAN_fromCPU2 = position_count_CAN_ID0x01_fromCPU2;
 
-    Axis->Set_manual_rpm = call_position_loop_controller(positionLoopType);
+    // Axis->Set_manual_rpm = call_position_loop_controller(positionLoopType);
 
     Axis->used_theta_d_elec = controller(
         Axis->Set_manual_rpm,
