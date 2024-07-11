@@ -263,18 +263,22 @@
 #define LOAD_TORQUE     0.0
 #define VISCOUS_COEFF   0.0007
 
-
+/* Useless Code but meaningful to understant the control process */
 #define CL_SERIES_KP (31.2903)
 #define CL_SERIES_KI (122.088)
 #define VL_SERIES_KP (1.79885)
 #define VL_SERIES_KI (29.7429)
+/* Useless Code but meaningful to understant the control process */
 
-#define CURRENT_KP (0.0103471)
-#define CURRENT_KI (213.393)
+
+#define CURRENT_KP (0.60)    
+#define CURRENT_KI (194.74)    
+#define SPEED_KP   (0.26)    
+#define SPEED_KI   (13.96)
+
 #define CURRENT_KI_CODE (CURRENT_KI*CURRENT_KP*CL_TS)
+#define SPEED_KI_CODE (SPEED_KI*SPEED_KP*VL_TS)
 #define CURRENT_LOOP_LIMIT_VOLTS (48)
-#define SPEED_KP (0.00256732)
-#define SPEED_KI (21.2794)
 #define POS_KP (0.01)
 #define POS_KI (0)
 
@@ -283,7 +287,7 @@
     #define MOTOR_BACK_EMF_CONSTANT ( MOTOR_TORQUE_CONSTANT / 1.5 / MOTOR_NUMBER_OF_POLE_PAIRS )
     #define MOTOR_BACK_EMF_CONSTANT_mV_PER_RPM ( MOTOR_BACK_EMF_CONSTANT * 1e3 / (1.0/MOTOR_NUMBER_OF_POLE_PAIRS/2/3.1415926*60) )
 
-    #define SPEED_KI_CODE (SPEED_KI*SPEED_KP*VL_TS)
+
     #define SPEED_LOOP_LIMIT_NEWTON_METER (1.0*MOTOR_RATED_TORQUE)
     #define SPEED_LOOP_LIMIT_AMPERE       (1.0*1.414*MOTOR_RATED_CURRENT_RMS)
     #define POS_LOOP_LIMIT_SPEED          (0.15*MOTOR_RATED_SPEED_RPM * MOTOR_NUMBER_OF_POLE_PAIRS/60.0*2*M_PI)

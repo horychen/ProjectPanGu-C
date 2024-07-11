@@ -837,7 +837,9 @@ void init_CTRL(){
 /* Black Box Model | Controller quantities */
 
     // PID调谐
+    /*  HERE IS IMPORTANT FOR WUBO */
     ACMSIMC_PIDTuner();
+    /*  HERE IS IMPORTANT FOR WUBO */
 
     // 有一个傻逼在这里重新分配了PID_iD，
 
@@ -957,7 +959,10 @@ void null_d_control(int set_current_loop, REAL set_iq_cmd, REAL set_id_cmd){
     // pid2_id.calc(pid2_id);
     // q-axis
     PID_iQ->Fbk = (*CTRL).i->idq[1];
-    PID_iQ->Ref = (*CTRL).i->idq_cmd[1]; if(set_current_loop==1){PID_iQ->Ref = set_iq_cmd; (*CTRL).i->idq_cmd[1] = set_iq_cmd;}
+    PID_iQ->Ref = (*CTRL).i->idq_cmd[1]; 
+    if(set_current_loop==1){
+        PID_iQ->Ref = set_iq_cmd; (*CTRL).i->idq_cmd[1] = set_iq_cmd;
+        }
     PID_iQ->calc(PID_iQ);
     // pid2_iq.Fbk = (*CTRL).i->idq[1+2];
     // pid2_iq.Ref = (*CTRL).i->idq_cmd[1+2]; if(set_current_loop==1){pid2_iq.Ref = set_iq_cmd;}

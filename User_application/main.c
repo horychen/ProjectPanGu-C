@@ -45,7 +45,7 @@ void get_Axis_CTRL_pointers(int axisCnt, st_axis *pAxis, struct ControllerForExp
 #define HIP_LOOP_RUN 4
 #define BOTH_LOOP_RUN 5
 #define IMPEDANCE_CONTROL 6
-int positionLoopType = 6;           // TWOMOTOR_POSITION_CONTROL; //SHANK_LOOP_RUN; // SHANK_LOOP_RUN; //BOTH_LOOP_RUN;
+int positionLoopType = 0;           // TWOMOTOR_POSITION_CONTROL; //SHANK_LOOP_RUN; // SHANK_LOOP_RUN; //BOTH_LOOP_RUN;
 int use_first_set_three_phase = -1; //-1 for both motors
 
 

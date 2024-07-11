@@ -25,8 +25,8 @@
 
 #ifdef _LEG_GROUP // mmlab drive version 1
     // DC BUS
-    #define OFFSET_VDC_BUS_IPM1 -1.01456189
-    #define SCALE_VDC_BUS_IPM1 0.17604031
+    #define OFFSET_VDC_BUS_IPM1 8 // -1.01456189
+    #define SCALE_VDC_BUS_IPM1 0.183916 // 0.17604031
 
     // Lem 1的三个蓝色块块分别是adc b7 b8 b9
     #define OFFSET_LEM_B7 2025 // 2023.89473684 // ADCB7
@@ -45,33 +45,10 @@
     #define SCALE_LEM_A2 0.03060669 // ADCA2
     #define SCALE_LEM_A3 0.03045988 // ADCA3
 #else
-    #ifdef _MOTOR_GROUP // mmlab drive version 2
-        // DC BUS
-        #define OFFSET_VDC_BUS_IPM1 10
-        #define SCALE_VDC_BUS_IPM1 0.1604031
 
-        // Lem 1的三个蓝色块块分别是adc b7 b8 b9
-        #define OFFSET_LEM_B7 2020 // 2023.89473684 // ADCB7
-        #define OFFSET_LEM_B8 2029 // 2042.33333333 // ADCB8
-        #define OFFSET_LEM_B9 2038 // 2043.43859649 // ADCB9
-        // 令逆变器输出端指向电机为正方向，若LEM上的箭头与正方向相同，则SCALE为正数，若LEM上的箭头与正方向相反，则SCALE为负数，
-        #define SCALE_LEM_B7 0.03076297 // ADCB7
-        #define SCALE_LEM_B8 0.03038256 // ADCB8
-        #define SCALE_LEM_B9 0.03039058 // ADCB9
-
-        // Lem 2的三个蓝色块块分别是adc a1 a2 a3
-        #define OFFSET_LEM_A1 2034      // 2029.57894737 // ADCA1
-        #define OFFSET_LEM_A2 2049      // 2043.08771930 // ADCA2
-        #define OFFSET_LEM_A3 2050      // 2042.98245614 // ADCA3
-        #define SCALE_LEM_A1 0.03080704 // ADCA1
-        #define SCALE_LEM_A2 0.03060669 // ADCA2
-        #define SCALE_LEM_A3 0.03045988 // ADCA3
     #endif
 #endif
 
-#else
-scale and offset...
-#endif
 
 Uint32 position_count_SCI_shank_fromCPU2;
 Uint32 position_count_SCI_hip_fromCPU2;
