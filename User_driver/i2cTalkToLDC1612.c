@@ -1,5 +1,5 @@
 //###########################################################################
-// Authors: Chen, HongKun and Chen, Yiming and Chen, Jiahao on July 2024 @ m&m lab
+// Authors: Chen, Hongkun and Chen, Yiming and Chen, Jiahao on July 2024 @ m&m lab
 //###########################################################################
 
 #include <All_Definition.h>
@@ -10,6 +10,8 @@
 // Prototype statements for functions found within this file.
 void   I2CA_Init(void);
 Uint32 I2CA_ReadData_Channel(Uint16 channel);
+Uint32 I2CA_ReadData_Channel0(void);
+Uint32 I2CA_ReadData_Channel1(void);
 int I2cRead16bitData(Uint16 SlaveRegAddr);
 int I2cWrite16bitData(Uint16 ConfigRegAddr, Uint16 value);
 int Single_channel_config(Uint16 channel);
@@ -61,6 +63,7 @@ void fail(void);
 
 #define CHANNEL_NUM 2 // we use two channel
 #define CHANNEL_0 0
+#define CHANNEL_1 1
 // Global variables
 // Two bytes will be used for the outgoing address,
 // thus only setup 14 bytes maximum
@@ -75,7 +78,8 @@ Uint32 result_one;
 Uint32 raw_result;
 Uint32 channel0DataResult;
 Uint32 channel1DataResult;
-Uint32 raw_value;
+Uint32 raw_value_zero;
+Uint32 raw_value_one;
 Uint32 result;
 int choose_channel;
 
@@ -133,7 +137,9 @@ void I2CA_Init(void)
    // This facilitates efficient I2C communication, as the CPU can be notified of interruptions when needed, rather than constantly polling the FIFO state.
    return;
 }
+
 Uint16 DataBuffer;
+
 Uint16 data[2];
 
 
@@ -141,6 +147,7 @@ int I2cRead16bitData(Uint16 SlaveRegAddr){
 
     if (I2caRegs.I2CMDR.bit.STP == 1)
     {
+
        return I2C_STP_NOT_READY_ERROR;
     }
 
@@ -151,6 +158,7 @@ int I2cRead16bitData(Uint16 SlaveRegAddr){
      // Check if bus busy
      if (I2caRegs.I2CSTR.bit.BB == 1)
      {
+
          return I2C_BUS_BUSY_ERROR;
      }
 
@@ -240,22 +248,23 @@ int I2cWrite16bitData(Uint16 ConfigRegAddr, Uint16 value){
 }
 
 
+
 Uint32 I2CA_ReadData_Channel(Uint16 channel){
 
     if(channel == 0){
         // CHANNEL 0
 //        I2cGet16bitData(0x00, DataMSB);
         I2cRead16bitData(0x00);
-        raw_value = (Uint32)DataBuffer << 16; //
+        raw_value_zero = (Uint32)DataBuffer << 16; //
         I2cRead16bitData(0x01);
-        raw_value |= (Uint32)DataBuffer;
+        raw_value_zero |= (Uint32)DataBuffer;
 //        Parse_result_data(channel, raw_value, result);
     }else{
         // CHANNEL 1
         I2cRead16bitData(0x02);
-        raw_value = (Uint32)DataBuffer << 16;
+        raw_value_one = (Uint32)DataBuffer << 16;
         I2cRead16bitData(0x03);
-        raw_value |= (Uint32)DataBuffer; //
+        raw_value_one |= (Uint32)DataBuffer; //
 //       Parse_result_data(channel, raw_value, result);
     }
 
@@ -271,24 +280,36 @@ int Single_channel_config(Uint16 channel){
     Set_L(CHANNEL_0, 18.147);
     Set_C(CHANNEL_0, 100);
     Set_Q_factor(CHANNEL_0, 35.97);
+
+    //
+    Set_Rp(CHANNEL_1, 15.727);
+    Set_L(CHANNEL_1, 18.147);
+    Set_C(CHANNEL_1, 100);
+    Set_Q_factor(CHANNEL_1, 35.97);
     //
     if (Set_FIN_FREF_DIV(CHANNEL_0)) {
             return -1;
         }
+    Set_FIN_FREF_DIV(CHANNEL_1);
 
     Set_LC_stabilize_time(CHANNEL_0);
+    Set_LC_stabilize_time(CHANNEL_1);
 
         /*Set conversion interval time*/
     Set_conversion_time(CHANNEL_0, 0x0546);
+    Set_conversion_time(CHANNEL_1, 0x0546);
 
         /*Set driver current!*/
     Set_driver_current(CHANNEL_0, 0xA000);
+    Set_driver_current(CHANNEL_1, 0xA000);
 
+    /*multiple conversion*/
+    Set_mux_config(0x820C);
         /*single conversion*/
-    Set_mux_config(0x20C);
+//    Set_mux_config(0x20C);
         /*start channel 0*/
     //Uint16 config = 0x1601; this line is on 98.
-    Select_channel_to_convert(CHANNEL_0, &config);
+//    Select_channel_to_convert(CHANNEL_0, &config);
     Set_sensor_config(config);
     return 0;
 }

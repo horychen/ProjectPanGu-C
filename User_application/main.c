@@ -673,6 +673,9 @@ void main(void){
     // 7. Main loop
     while(1){
         I2CA_ReadData_Channel(0);
+        DELAY_US(300);
+        I2CA_ReadData_Channel(1);
+
 
         //        mainWhileLoopCounter1++;
         //        mainWhileLoopCounter2=2992;
