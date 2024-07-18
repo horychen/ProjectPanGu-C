@@ -179,15 +179,13 @@ InitECaptureContinuousMode();
     // 4.4 Initialize algorithms
     get_bezier_points();
 
-    axis_basic_setup(axisCnt);
-
+    //axis_basic_setup(axisCnt);
     for (axisCnt = 0; axisCnt < NUMBER_OF_AXES; axisCnt++)
     {
-
         get_Axis_CTRL_pointers //(axisCnt, Axis, CTRL);
         axis_basic_setup(axisCnt);
     }
-    axisCnt = 1;
+    //axisCnt = 1;
 
     // 5. Handle Interrupts
     handle_interrupts();
@@ -248,17 +246,12 @@ void measurement()
     CTRL->enc->encoder_abs_cnt_previous = CTRL->enc->encoder_abs_cnt;
 
     if (axisCnt == 0) measurement_position_count_axisCnt0();
-
     if (axisCnt == 1) measurement_position_count_axisCnt1();
-
+    
     measurement_enc_and_i();
 
-
-
     if (axisCnt == 0) measurement_current_axisCnt0();
-
     if (axisCnt == 1) measurement_current_axisCnt1();
-
 
     // 只用第一套三相
     IS_C(0) = Axis->iabg[0];
@@ -385,6 +378,7 @@ void PanGuMainISR(void)
     measurement();
 
     if (!Axis_1.FLAG_ENABLE_PWM_OUTPUT) DISABLE_PWM_OUTPUT();
+    // TODO:需要增加让另外一项axis的Ta Tb Tc在不使用或者
 
     else ENABLE_PWM_OUTPUT(positionLoopType);
 

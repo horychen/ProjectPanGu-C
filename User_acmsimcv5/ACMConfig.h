@@ -31,7 +31,7 @@
     #define PMSM_Q_AXIS_INDUCTANCE (0.00019)
     #define PMSM_PERMANENT_MAGNET_FLUX_LINKAGE (0.01717)
     #define MOTOR_RREQ (0.0)
-    #define MOTOR_SHAFT_INERTIA (0.00015900000000000002)
+    #define MOTOR_SHAFT_INERTIA (0.00015900000000000002) * 3
     #define DC_BUS_VOLTAGE 20
     #define MOTOR_RATED_POWER_WATT             750
 	#define MOTOR_RATED_SPEED_RPM              3000
@@ -270,11 +270,10 @@
 #define VL_SERIES_KI (29.7429)
 /* Useless Code but meaningful to understant the control process */
 
-
-#define CURRENT_KP (0.60)    
-#define CURRENT_KI (194.74)    
-#define SPEED_KP   (0.26)    
-#define SPEED_KI   (13.96)
+#define CURRENT_KP (1.19)    // (0.6)  // (0.84)   // (0.84)   // (0.84)
+#define CURRENT_KI (194.74) // (194.74)  // (194.74) // (194.74) // (194.74)
+#define SPEED_KP   (0.19)   // (2.59)  // (0.81)   // (0.41)   // (0.36)
+#define SPEED_KI   (3.93)    // (13.96)  // (11.00)  // (2.75)   // (19.55)
 
 #define CURRENT_KI_CODE (CURRENT_KI*CURRENT_KP*CL_TS)
 #define SPEED_KI_CODE (SPEED_KI*SPEED_KP*VL_TS)

@@ -87,13 +87,35 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
     (*Axis4DAC).dac_watch[19] = (*CTRL).svgen2.Tc;
     (*Axis4DAC).dac_watch[20] = (*CTRL).s->omega_syn * ELEC_RAD_PER_SEC_2_RPM *0.002;
 
+
+    // (*Axis4DAC).dac_watch[21] = Axis_1.Set_manual_rpm *0.002;
+    (*Axis4DAC).dac_watch[21] = Axis_1.pCTRL->i->cmd_speed_rpm *0.002;; // 500RPM - 3V
+    (*Axis4DAC).dac_watch[22] = Axis_1.pCTRL->i->omg_elec * ELEC_RAD_PER_SEC_2_RPM *0.002;
+    (*Axis4DAC).dac_watch[23] = Axis_2.pCTRL->i->cmd_speed_rpm *0.002;; // 500RPM - 3V
+    (*Axis4DAC).dac_watch[24] = Axis_2.pCTRL->i->omg_elec * ELEC_RAD_PER_SEC_2_RPM *0.002;
+
+    (*Axis4DAC).dac_watch[25] = Axis_1.pCTRL->i->idq_cmd[1]*0.2;
+    (*Axis4DAC).dac_watch[26] = Axis_1.pCTRL->i->idq[1]*0.2;
+    // 0.6V->1A
+    (*Axis4DAC).dac_watch[27] = Axis_2.pCTRL->i->idq_cmd[1]*0.2; 
+    (*Axis4DAC).dac_watch[28] = Axis_2.pCTRL->i->idq[1]*0.2; // 0.6V->1A
+
+    (*Axis4DAC).dac_watch[29] = Axis_2.pCTRL->i->idq[0]*0.2; // 0.6V->1A
+
+
+
+    // (*Axis4DAC).dac_watch[25] = (*CTRL).i->idq_cmd[0]*0.2;
+    // (*Axis4DAC).dac_watch[26] = (*CTRL).i->idq[0]*0.2;
+    // (*Axis4DAC).dac_watch[27] = (*CTRL).i->idq_cmd[1]*0.2;
+    // (*Axis4DAC).dac_watch[28] = (*CTRL).i->idq[1]*0.2; // 0.6V->1A
+
 //    (*Axis4DAC).dac_watch[21] = marino.xOmg * ELEC_RAD_PER_SEC_2_RPM *0.002;
-    (*Axis4DAC).dac_watch[21] = curycontroller.theta1*0.1; // CTRL_2.s->spd->Ref*0.0001;//curycontroller.theta1*0.1; /// 131072.0 *2;
-    (*Axis4DAC).dac_watch[22] = curycontroller.dot_theta1*0.1; // CTRL_2.s->spd->Fbk*0.0001; /// 131072.0 *2;
-    (*Axis4DAC).dac_watch[23] = curycontroller.theta2*0.1; // CTRL_1.s->spd->Ref*0.0001; // * ELEC_RAD_PER_SEC_2_RPM *0.002;
-    (*Axis4DAC).dac_watch[24] = curycontroller.dot_theta2*0.1; // CTRL_1.s->spd->Fbk*0.0001; //i->omg_elec  * ELEC_RAD_PER_SEC_2_RPM *0.002;
-    (*Axis4DAC).dac_watch[25] = CTRL_1.i->idq_cmd[1] * 0.1;
-    (*Axis4DAC).dac_watch[26] = CTRL_2.i->idq_cmd[1] * 0.1;
+    // (*Axis4DAC).dac_watch[21] = curycontroller.theta1*0.1; // CTRL_2.s->spd->Ref*0.0001;//curycontroller.theta1*0.1; /// 131072.0 *2;
+    // (*Axis4DAC).dac_watch[22] = curycontroller.dot_theta1*0.1; // CTRL_2.s->spd->Fbk*0.0001; /// 131072.0 *2;
+    // (*Axis4DAC).dac_watch[23] = curycontroller.theta2*0.1; // CTRL_1.s->spd->Ref*0.0001; // * ELEC_RAD_PER_SEC_2_RPM *0.002;
+    // (*Axis4DAC).dac_watch[24] = curycontroller.dot_theta2*0.1; // CTRL_1.s->spd->Fbk*0.0001; //i->omg_elec  * ELEC_RAD_PER_SEC_2_RPM *0.002;
+//    (*Axis4DAC).dac_watch[25] = CTRL_1.i->idq_cmd[1] * 0.1;
+//    (*Axis4DAC).dac_watch[26] = CTRL_2.i->idq_cmd[1] * 0.1;
 
 //    (*Axis4DAC).dac_watch[22] = target_position_cnt*0.0003-((*CTRL).enc->encoder_abs_cnt)*0.0003;
 //    (*Axis4DAC).dac_watch[23] = GpioDataRegs.GPEDAT.bit.GPIO135;
@@ -104,8 +126,8 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
 //    (*Axis4DAC).dac_watch[24] = marino.xAlpha*0.1;
 //    (*Axis4DAC).dac_watch[25] = marino.e_psi_Dmu;
 //    (*Axis4DAC).dac_watch[26] = marino.e_psi_Qmu;
-    (*Axis4DAC).dac_watch[27] = position_count_CAN_ID0x03_fromCPU2 *1.52587890625e-05; // / 131072.0 *2;
-    (*Axis4DAC).dac_watch[28] = position_count_CAN_ID0x01_fromCPU2 *1.52587890625e-05; // / 131072.0 *2;
+    // (*Axis4DAC).dac_watch[27] = position_count_CAN_ID0x03_fromCPU2 *1.52587890625e-05; // / 131072.0 *2;
+    // (*Axis4DAC).dac_watch[28] = position_count_CAN_ID0x01_fromCPU2 *1.52587890625e-05; // / 131072.0 *2;
 
     (*Axis4DAC).dac_watch[30] = (*CTRL).o->iab_cmd[0]*0.2;
     (*Axis4DAC).dac_watch[31] = (*CTRL).o->iab_cmd[1]*0.2;

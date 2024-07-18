@@ -1,27 +1,5 @@
 #include <All_Definition.h>
 
-// #ifdef _MMDv1 // mmlab drive version 1
-
-// // DC BUS
-// #define OFFSET_VDC_BUS_IPM1 7
-// #define SCALE_VDC_BUS_IPM1 0.20833333333
-
-// // Lem 1的三个蓝色块块分别是adc b7 b8 b9
-// #define OFFSET_LEM_B7 2025 // 2023.89473684 // ADCB7
-// #define OFFSET_LEM_B8 2041 // 2042.33333333 // ADCB8
-// #define OFFSET_LEM_B9 2045 // 2043.43859649 // ADCB9
-// // 令逆变器输出端指向电机为正方向，若LEM上的箭头与正方向相同，则SCALE为正数，若LEM上的箭头与正方向相反，则SCALE为负数，
-// #define SCALE_LEM_B7 0.03076297 // ADCB7
-// #define SCALE_LEM_B8 0.03038256 // ADCB8
-// #define SCALE_LEM_B9 0.03039058 // ADCB9
-
-// // Lem 2的三个蓝色块块分别是adc a1 a2 a3
-// #define OFFSET_LEM_A1 2030      // 2029.57894737 // ADCA1
-// #define OFFSET_LEM_A2 2043      // 2043.08771930 // ADCA2
-// #define OFFSET_LEM_A3 2042      // 2042.98245614 // ADCA3
-// #define SCALE_LEM_A1 0.03080704 // ADCA1
-// #define SCALE_LEM_A2 0.03060669 // ADCA2
-// #define SCALE_LEM_A3 0.03045988 // ADCA3
 
 #ifdef _LEG_GROUP // mmlab drive version 1
     // DC BUS
@@ -45,7 +23,27 @@
     #define SCALE_LEM_A2 0.03060669 // ADCA2
     #define SCALE_LEM_A3 0.03045988 // ADCA3
 #else
+    #ifdef _MOTOR_GROUP // mmlab drive version 2
+        // DC BUS
+        #define OFFSET_VDC_BUS_IPM1 8
+        #define SCALE_VDC_BUS_IPM1 0.1846154
 
+        // Lem 1的三个蓝色块块分别是adc b7 b8 b9
+        #define OFFSET_LEM_B7 2020 // 2023.89473684 // ADCB7
+        #define OFFSET_LEM_B8 2029 // 2042.33333333 // ADCB8
+        #define OFFSET_LEM_B9 2038 // 2043.43859649 // ADCB9
+        // 令逆变器输出端指向电机为正方向，若LEM上的箭头与正方向相同，则SCALE为正数，若LEM上的箭头与正方向相反，则SCALE为负数，
+        #define SCALE_LEM_B7 0.03076297 // ADCB7
+        #define SCALE_LEM_B8 0.03038256 // ADCB8
+        #define SCALE_LEM_B9 0.03039058 // ADCB9
+
+        // Lem 2的三个蓝色块块分别是adc a1 a2 a3
+        #define OFFSET_LEM_A1 2025 // 2034      // 2029.57894737 // ADCA1
+        #define OFFSET_LEM_A2 2035 // 2049      // 2043.08771930 // ADCA2
+        #define OFFSET_LEM_A3 2032 // 2050      // 2042.98245614 // ADCA3
+        #define SCALE_LEM_A1 0.0305 // 0.03080704 // ADCA1
+        #define SCALE_LEM_A2 0.030334 // 0.03060669 // ADCA2
+        #define SCALE_LEM_A3 0.02983 // 0.03045988 // ADCA3
     #endif
 #endif
 
@@ -164,7 +162,7 @@ void axis_basic_setup(int axisCnt){
     init_experiment_AD_gain_and_offset();
 
     // Axis->use_first_set_three_phase = 1; // -1;
-    Axis->Set_current_loop = TRUE;
+    Axis->Set_current_loop = FALSE;
     Axis->Set_x_suspension_current_loop = FALSE;
     Axis->Set_y_suspension_current_loop = FALSE;
     Axis->Set_manual_rpm = 50.0;
@@ -182,7 +180,7 @@ void axis_basic_setup(int axisCnt){
 
     Axis->FLAG_ENABLE_PWM_OUTPUT = FALSE;
 
-    Axis->channels_preset = 5; // 9; // 101;    }
+    Axis->channels_preset = 6; // 9; // 101;    }
 
     Axis->pCTRL->enc->sum_qepPosCnt = 0;
     Axis->pCTRL->enc->cursor = 0;
@@ -219,18 +217,25 @@ void init_experiment_AD_gain_and_offset()
     Axis->adc_offset[5] = OFFSET_LEM_B8;
     Axis->adc_offset[6] = OFFSET_LEM_B9;
 
-/* two motor OFFSET */
-#if NUMBER_OF_AXES == 2
-    Axis_1.pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = SHANK__OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
-    Axis_2.pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = HIP__OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
-#else
-/* eQEP OFFSET */
-#if (ENCODER_TYPE == ABSOLUTE_ENCODER_SCI_SHANK)
-    Axis->pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = SHANK__OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
-#elif (ENCODER_TYPE == ABSOLUTE_ENCODER_SCI_HIP)
-    Axis->pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = HIP__OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
-#endif
-#endif
+    /* two motor OFFSET */
+    #if NUMBER_OF_AXES == 2
+        #ifdef _LEG_GROUP
+            Axis_1.pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = SHANK__OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
+            Axis_2.pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = HIP__OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
+        #else
+            #ifdef _MOTOR_GROUP
+            Axis_1.pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = MOTOR1_OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
+            Axis_2.pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = MOTOR2_OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
+            #endif
+        #endif
+    #else
+    /* eQEP OFFSET */
+        #if (ENCODER_TYPE == ABSOLUTE_ENCODER_SCI_SHANK)
+            Axis->pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = SHANK__OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
+        #elif (ENCODER_TYPE == ABSOLUTE_ENCODER_SCI_HIP)
+            Axis->pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = HIP__OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
+        #endif
+    #endif
 }
 
 
@@ -597,43 +602,49 @@ void test_ipc_tocpu02()
 
 
 
+REAL wubo_debug[4];
 
 void measurement_position_count_axisCnt0()
 {
-#if (ENCODER_TYPE == ABSOLUTE_ENCODER_SCI_SHANK)
-        position_count_SCI_fromCPU2 = position_count_SCI_shank_fromCPU2;
-#elif (ENCODER_TYPE == ABSOLUTE_ENCODER_SCI_HIP)
-        position_count_SCI_fromCPU2 = position_count_SCI_hip_fromCPU2;
-#endif
+    #if (ENCODER_TYPE == ABSOLUTE_ENCODER_SCI_SHANK)
+            position_count_SCI_fromCPU2 = position_count_SCI_shank_fromCPU2;
+    #elif (ENCODER_TYPE == ABSOLUTE_ENCODER_SCI_HIP)
+            position_count_SCI_fromCPU2 = position_count_SCI_hip_fromCPU2;
+    #endif
 
-#if NUMBER_OF_AXES == 2
+    #if NUMBER_OF_AXES == 2
         position_count_SCI_fromCPU2 = position_count_SCI_shank_fromCPU2;
-#endif
+    #endif
         // 編碼器讀數是反的，所以這邊偏置也要反一下，改成負值！
         // 編碼器讀數是反的，所以這邊偏置也要反一下，改成負值！
         // 編碼器讀數是反的，所以這邊偏置也要反一下，改成負值！
         // MD1 is 17bit, use SCI485hip port
         // 膝盖电机，正转电流导致编码器读数减小：
-        CTRL->enc->encoder_abs_cnt = -((int32)position_count_SCI_fromCPU2 - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis);
-}
-
-void measurement_position_count_axisCnt1()
-{
-#if NUMBER_OF_AXES == 2
-        position_count_SCI_fromCPU2 = position_count_SCI_hip_fromCPU2;
-#endif
-        // 大腿电机，正转电流导致编码器读数增大
+        wubo_debug[0] = 2;
         CTRL->enc->encoder_abs_cnt = (int32)position_count_SCI_fromCPU2 - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis;
 }
 
+
+void measurement_position_count_axisCnt1()
+{
+    #if NUMBER_OF_AXES == 2
+        position_count_SCI_fromCPU2 = position_count_SCI_hip_fromCPU2;
+    #endif
+        // 大腿电机，正转电流导致编码器读数增大
+        wubo_debug[0] = 1;
+        CTRL->enc->encoder_abs_cnt = -( (int32)position_count_SCI_fromCPU2 - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis );
+}
+
+
 void measurement_enc_and_i()
 {
-        if (!bool_use_SCI_encoder)
+    if (!bool_use_SCI_encoder)
     {
         // 正转电流导致编码器读数减小：
-        CTRL->enc->encoder_abs_cnt = -((int32)cnt_four_bar_map_motor_encoder_angle + CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis);
+        //CTRL->enc->encoder_abs_cnt = -((int32)cnt_four_bar_map_motor_encoder_angle + CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis);
         // 正转电流导致编码器读数增大：
-        // CTRL->enc->encoder_abs_cnt = (int32)cnt_four_bar_map_motor_encoder_angle - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis;
+
+        CTRL->enc->encoder_abs_cnt = (int32)cnt_four_bar_map_motor_encoder_angle - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis;
     }
 
     // ignore this please
@@ -1118,9 +1129,15 @@ void ENABLE_PWM_OUTPUT(int positionLoopType)
     // 0x03 is shank
     //    position_count_CAN_fromCPU2 = position_count_CAN_ID0x03_fromCPU2;
     // 0x01 is hip
-    position_count_CAN_fromCPU2 = position_count_CAN_ID0x01_fromCPU2;
+    // position_count_CAN_fromCPU2 = position_count_CAN_ID0x01_fromCPU2;
 
-    // Axis->Set_manual_rpm = call_position_loop_controller(positionLoopType);
+    if (positionLoopType == 0){
+        // do nothing
+    }
+    else{
+        // do position loop
+        Axis->Set_manual_rpm = call_position_loop_controller(positionLoopType);
+    }
 
     Axis->used_theta_d_elec = controller(
         Axis->Set_manual_rpm,
