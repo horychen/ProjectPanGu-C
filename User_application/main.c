@@ -224,7 +224,7 @@ void main(void){
     Axis.pAdcaResultRegs = &AdcaResultRegs;
     Axis.pAdcbResultRegs = &AdcbResultRegs;
     Axis.pAdccResultRegs = &AdccResultRegs;
-    Axis.use_first_set_three_phase = 1; // -1;
+    Axis.use_first_set_three_phase = 1; //1→使用第一套逆变器；2→使用第二套逆变器；-1→同时使用第一和第二套逆变器，且逆变器二控制转矩磁场、逆变器一控制悬浮磁场。
     Axis.Set_current_loop = FALSE;
     Axis.Set_x_suspension_current_loop = FALSE;
     Axis.Set_y_suspension_current_loop = FALSE;
@@ -232,16 +232,16 @@ void main(void){
     Axis.Set_manual_current_iq = 1.0;
     Axis.Set_manual_current_id = 0.0; // id = -1 A is the magic number to get more torque! cjh 2024-02-29
     Axis.Select_exp_operation = 0; //200; //202; //200; //101;
-    Axis.pFLAG_INVERTER_NONLINEARITY_COMPENSATION = &G.FLAG_INVERTER_NONLINEARITY_COMPENSATION;
+    Axis.pFLAG_INVERTER_NONLINEARITY_COMPENSATION = &G.FLAG_INVERTER_NONLINEARITY_COMPENSATION; //??
     Axis.flag_overwrite_theta_d = FALSE;
     Axis.Overwrite_Current_Frequency = 0;
     Axis.Overwrite_Suspension_Current_Frequency = 0.5;
     Axis.used_theta_d_elec = 0.0;
     Axis.angle_shift_for_first_inverter  = ANGLE_SHIFT_FOR_FIRST_INVERTER;
     Axis.angle_shift_for_second_inverter = ANGLE_SHIFT_FOR_SECOND_INVERTER;
-    Axis.OverwriteSpeedOutLimitDuringInit = 6; // 10; // A
+    Axis.OverwriteSpeedOutLimitDuringInit = 6; // 10; // A // What does number 6 mean?
     Axis.FLAG_ENABLE_PWM_OUTPUT = FALSE;
-    Axis.channels_preset = 1; // 9; // 101;
+    Axis.channels_preset = 1; // 9; // 101; // What does it mean?
 
     ENC.sum_qepPosCnt = 0;
     ENC.cursor = 0;
@@ -251,8 +251,8 @@ void main(void){
     Gpio_initialize();    // 2. Initialize GPIO and assign GPIO to peripherals.
     DINT;                 // 3.1 Clear all interrupts and initialize PIE vector table.
     InitPieCtrl();        // 3.2 Initialize the PIE control registers to their default state. The default state is all PIE interrupts disabled and flags are cleared.
-    IER = 0x0000;         // 3.3 Disable CPU __interrupts,
-    IFR = 0x0000;         // 3.4 and clear all CPU __interrupt flags.
+    IER = 0x0000;         // 3.3 Disable CPU __interrupts,(Interrupter Enable Register)
+    IFR = 0x0000;         // 3.4 and clear all CPU __interrupt flags.(Interrupter Flag Register)
     InitPieVectTable();   // 3.5 Initialize the PIE vector table with pointers to the shell Interrupt Service Routines (ISR). At end, ENPIE = 1.
 
     // for Slessinv TIE.R1 for measuring the execution time
@@ -611,7 +611,7 @@ void voltage_commands_to_pwm(){
         // SVPWM of the suspension 3-phase
         CTRL.svgen2.Ualpha = 0;
         CTRL.svgen2.Ubeta  = 0;
-        if(enable_vvvf){
+        if(enable_vvvf){ //怀疑是忘记注释掉了，按理说截至上一行结束，这三行代码就没必要了。
             CTRL.svgen2.Ualpha= vvvf_voltage * cos(vvvf_frequency*2*M_PI*CTRL.timebase);
             CTRL.svgen2.Ubeta = vvvf_voltage * sin(vvvf_frequency*2*M_PI*CTRL.timebase);
         }
@@ -636,7 +636,7 @@ void voltage_commands_to_pwm(){
 
     }else if(Axis.use_first_set_three_phase==-1){
 
-        // SVPWM of the motor 3-phase �ڶ������������ת��
+        // SVPWM of the motor 3-phase
         CTRL.svgen2.Ualpha = CTRL.O->uab_cmd_to_inverter[0]; // uab_cmd�ĵ�����͵�һ����������svgen2�ڶ��������������
         CTRL.svgen2.Ubeta  = CTRL.O->uab_cmd_to_inverter[1];
 
@@ -936,27 +936,27 @@ void measurement(){
     }
 
     if(Axis.use_first_set_three_phase==1){
-        // ֻ�õ�һ������
+        //只用第一套三相
         IS_C(0)        = Axis.iabg[0];
         IS_C(1)        = Axis.iabg[1];
         CTRL.I->iab[0] = Axis.iabg[0];
         CTRL.I->iab[1] = Axis.iabg[1];
 
-        US_C(0) = CTRL.O->uab_cmd[0]; // ��׺_P��ʾ��һ���ĵ�ѹ��P = Previous
-        US_C(1) = CTRL.O->uab_cmd[1]; // ��׺_C��ʾ��ǰ���ĵ�ѹ��C = Current
+        US_C(0) = CTRL.O->uab_cmd[0]; // 后缀__P表示上一步的电压， P = Previous
+        US_C(1) = CTRL.O->uab_cmd[1]; // 后缀__C表示当前步的电压， C = Current
 
         US_P(0) = US_C(0);
         US_P(1) = US_C(1);
 
     }else if(Axis.use_first_set_three_phase==2){
-        // ֻ�õڶ�������
+        // 只用第二套三相
         IS_C(0)        = Axis.iabg[3];
         IS_C(1)        = Axis.iabg[4];
         CTRL.I->iab[0] = Axis.iabg[3];
         CTRL.I->iab[1] = Axis.iabg[4];
 
-        US_C(0) = CTRL.O->uab_cmd[0+2]; // ��׺_P��ʾ��һ���ĵ�ѹ��P = Previous
-        US_C(1) = CTRL.O->uab_cmd[1+2]; // ��׺_C��ʾ��ǰ���ĵ�ѹ��C = Current
+        US_C(0) = CTRL.O->uab_cmd[0+2]; // 后缀__P表示上一步的电压，P = Previous
+        US_C(1) = CTRL.O->uab_cmd[1+2]; // 后缀__C表示当前步的电压，C = Current
 
         US_P(0) = US_C(0);
         US_P(1) = US_C(1);
@@ -964,7 +964,7 @@ void measurement(){
     }else if(Axis.use_first_set_three_phase==-1){
         IS_C(0)        = Axis.iabg[3];
         IS_C(1)        = Axis.iabg[4];
-        CTRL.I->iab[0] = Axis.iabg[3]; // �ڶ������������ת��
+        CTRL.I->iab[0] = Axis.iabg[3]; // 第二套逆变器控制转矩
         CTRL.I->iab[1] = Axis.iabg[4];
         CTRL.I->iab[0+2] = Axis.iabg[0];
         CTRL.I->iab[1+2] = Axis.iabg[1];

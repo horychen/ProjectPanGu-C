@@ -968,7 +968,7 @@ void null_d_control(int set_current_loop, REAL set_iq_cmd, REAL set_id_cmd){
     // pid2_iq.calc(&pid2_iq);
     // 电压电流解耦
     #if VOLTAGE_CURRENT_DECOUPLING_CIRCUIT == TRUE
-        REAL decoupled_d_axis_voltage = pid1_id.Out -             pid1_iq.Fbk*MOTOR.Lq *CTRL.I->omg_elec;
+        REAL decoupled_d_axis_voltage = pid1_id.Out -              pid1_iq.Fbk*MOTOR.Lq *CTRL.I->omg_elec;
         REAL decoupled_q_axis_voltage = pid1_iq.Out + ( MOTOR.KE + pid1_id.Fbk*MOTOR.Ld)*CTRL.I->omg_elec;
     #else
         REAL decoupled_d_axis_voltage = pid1_id.Out;
