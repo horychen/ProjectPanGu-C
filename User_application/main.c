@@ -377,6 +377,13 @@ REAL call_position_loop_controller(int positionLoopType)
 // Uint64 timebase_counter = 0;
 extern REAL imife_realtime_gain_off;
 
+void talk2PCfromCPU1(){
+    // only axis 1
+    Write.Read_id = CTRL_1.i->idq[0];
+    Write.Read_iq = CTRL_1.i->idq[1];
+    Write.Read_RPM = CTRL_1.s->spd->Fbk;
+}
+
 void PanGuMainISR(void)
 {
 
@@ -388,6 +395,8 @@ void PanGuMainISR(void)
 
     else ENABLE_PWM_OUTPUT(positionLoopType);
 
+
+    talk2PCfromCPU1();
 }
 
 Uint64 EPWM1IntCount = 0;

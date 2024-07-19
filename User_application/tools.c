@@ -93,6 +93,14 @@ void EUREKA_GPIO_SETUP(){
     // GPIO139 - 485-SCIA-WE-(use SCICRX as GPIO, in UART3 pin8)
     GPIO_SetupPinMux(139, GPIO_MUX_CPU2, 0);
     GPIO_SetupPinOptions(139, GPIO_OUTPUT, GPIO_ASYNC);
+
+    // talk 2 PC SCI-C TX
+    GPIO_SetupPinMux(106, GPIO_MUX_CPU2, 6);
+    GPIO_SetupPinOptions(106, GPIO_INPUT, GPIO_PUSHPULL);
+    // talk 2 PC SCI-C RX
+    GPIO_SetupPinMux(107, GPIO_MUX_CPU2, 6);
+    GPIO_SetupPinOptions(107, GPIO_OUTPUT, GPIO_PUSHPULL);
+    
     // =========FOR EUREKA===========
 
     //        // =========TEST BOARD PIN============
