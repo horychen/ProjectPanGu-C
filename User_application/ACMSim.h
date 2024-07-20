@@ -230,9 +230,11 @@ double difference_between_two_angles(double first, double second);
     #define CNT_2_ELEC_RAD (SYSTEM_QEP_REV_PER_PULSE * 2 * M_PI * MOTOR_NUMBER_OF_POLE_PAIRS)
     #define SYSTEM_QEP_QPOSMAX (SYSTEM_QEP_PULSES_PER_REV - 1)
     #define SYSTEM_QEP_QPOSMAX_PLUS_1 (SYSTEM_QEP_PULSES_PER_REV)
-    #define MOTOR1_OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS 110448 // ym tuned with id_cmd = 3A, 20240308
-    #define MOTOR2_OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS 57222 // cjh tuned with id_cmd = 3A, 20240715
+    #define MOTOR1_OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS 30190 // ym tuned with id_cmd = 3A, 20240308
+    #define MOTOR2_OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS 41668 // cjh tuned with id_cmd = 3A, 20240715
     // 30144 wb tuned with id_cmd = 2A, 20240715
+    // MOTOR1 30190 wb tuned with id_cmd = 3A, 20240719
+    // MOTOR2 41668 wb tuned with id_cmd = 3A, 20240719
 #endif
 
 

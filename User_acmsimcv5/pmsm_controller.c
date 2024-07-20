@@ -754,7 +754,6 @@ void init_experiment(){
     #if ENABLE_COMMISSIONING
         // init_COMM(); // 参数自整定初始化，不要在这里做！
     #endif
-
     init_CTRL(); // 控制器结构体初始化
 
     #if MACHINE_TYPE == 2
@@ -782,7 +781,7 @@ void init_CTRL(){
     (*CTRL).motor->Lq = PMSM_Q_AXIS_INDUCTANCE;
     (*CTRL).motor->Lq_inv = 1.0/(*CTRL).motor->Lq;
     (*CTRL).motor->DeltaL = (*CTRL).motor->Ld - (*CTRL).motor->Lq; // for IPMSM
-    (*CTRL).motor->KActive = (*CTRL).motor->KE; // TODO
+    (*CTRL).motor->KActive = (*CTRL).motor->KE; //TODO:
 
     #if MACHINE_TYPE % 10 == 1
         (*CTRL).motor->Rreq = U_MOTOR_RREQ;
@@ -800,6 +799,15 @@ void init_CTRL(){
     inverterNonlinearity_Initialization();
     G.FLAG_INVERTER_NONLINEARITY_COMPENSATION = INVERTER_NONLINEARITY_COMPENSATION_INIT;
     G.FLAG_TUNING_CURRENT_SCALE_FACTOR = TUNING_CURRENT_SCALE_FACTOR_INIT;
+    // 程序最开始确保Ta Tb Tc都是0.5
+    (*CTRL).svgen1.Ta = 0.5;
+    (*CTRL).svgen1.Tb = 0.5;
+    (*CTRL).svgen1.Tc = 0.5;
+    (*CTRL).svgen2.Ta = 0.5;
+    (*CTRL).svgen2.Tb = 0.5;
+    (*CTRL).svgen2.Tc = 0.5;
+
+
 
 /* Capture */
     (*CTRL).cap->flag_nonlinear_filtering = FALSE;

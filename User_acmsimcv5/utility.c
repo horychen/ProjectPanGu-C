@@ -75,7 +75,7 @@ REAL PostionSpeedMeasurement_MovingAvergage(int32 QPOSCNT, st_enc *p_enc){
     enc.omg_elec     = enc.rpm * RPM_2_ELEC_RAD_PER_SEC; // 机械转速（单位：RPM）-> 电气角速度（单位：elec.rad/s)
     enc.theta_d_elec = enc.theta_d__state;
 
-    // Output of the moving average is speed. (*CTRL).I->rpm = how many counts / time elapsed
+    // Output of the moving average is speed. (*CTRL).i->rpm = how many counts / time elapsed
     return enc.rpm;
     // return ENC.sum_qepPosCnt*SYSTEM_QEP_REV_PER_PULSE * 60 / (MA_SEQUENCE_LENGTH*CL_TS);
     // return ENC.sum_qepPosCnt*SYSTEM_QEP_REV_PER_PULSE * 6e4; // 6e4 = 60 / (MA_SEQUENCE_LENGTH*CL_TS) 

@@ -82,14 +82,14 @@
     /* Commissioning */
     #define EXCITE_BETA_AXIS_AND_MEASURE_PHASE_B TRUE
     #if PC_SIMULATION
-        #define ENABLE_COMMISSIONING FALSE /*Simulation*/
         #define SELF_COMM_INVERTER FALSE
+        #define ENABLE_COMMISSIONING FALSE /*Simulation*/
         #define TUNING_CURRENT_SCALE_FACTOR_INIT FALSE
     #else
         #define ENABLE_COMMISSIONING FALSE /*Experiment*/
         #define SELF_COMM_INVERTER FALSE
         #define TUNING_CURRENT_SCALE_FACTOR_INIT FALSE
-        /*As we use (*CTRL).O->iab_cmd for look up, now dead-time compensation during ENABLE_COMMISSIONING is not active*/
+        /*As we use (*CTRL).o->iab_cmd for look up, now dead-time compensation during ENABLE_COMMISSIONING is not active*/
     #endif
 
     /* Select Algorithm 2*/
@@ -125,8 +125,8 @@
             // #define ELECTRICAL_SPEED_FEEDBACK    qiaoxia.xOmg
             // #define ELECTRICAL_POSITION_FEEDBACK qiaoxia.theta_d
 
-            #define ELECTRICAL_SPEED_FEEDBACK    (*CTRL).I->omg_elec
-            #define ELECTRICAL_POSITION_FEEDBACK (*CTRL).I->theta_d_elec
+            #define ELECTRICAL_SPEED_FEEDBACK    (*CTRL).i->omg_elec
+            #define ELECTRICAL_POSITION_FEEDBACK (*CTRL).i->theta_d_elec
         #endif
 
     /* Tuning Algorithm 2 */
@@ -235,8 +235,8 @@
 
     #define SELECT_ALGORITHM -1111
 	// #if 1
-        #define ELECTRICAL_SPEED_FEEDBACK    marino.xOmg // (*CTRL).I->omg_elec
-        #define ELECTRICAL_POSITION_FEEDBACK marino.xRho // (*CTRL).I->theta_d_elec
+        #define ELECTRICAL_SPEED_FEEDBACK    marino.xOmg // (*CTRL).i->omg_elec
+        #define ELECTRICAL_POSITION_FEEDBACK marino.xRho // (*CTRL).i->theta_d_elec
 	// #endif
 #endif
 
@@ -270,10 +270,10 @@
 #define VL_SERIES_KI (29.7429)
 /* Useless Code but meaningful to understant the control process */
 
-#define CURRENT_KP (1.19)    // (0.6)  // (0.84)   // (0.84)   // (0.84)
-#define CURRENT_KI (194.74) // (194.74)  // (194.74) // (194.74) // (194.74)
-#define SPEED_KP   (0.19)   // (2.59)  // (0.81)   // (0.41)   // (0.36)
-#define SPEED_KI   (3.93)    // (13.96)  // (11.00)  // (2.75)   // (19.55)
+#define CURRENT_KP (0.60)   // (1.19)    // (0.6)  // (0.84)   // (0.84)   // (0.84)
+#define CURRENT_KI (231.58) // (194.74) // (194.74)  // (194.74) // (194.74) // (194.74)
+#define SPEED_KP   (0.46)   // (0.19)   // (2.59)  // (0.81)   // (0.41)   // (0.36)
+#define SPEED_KI   (1.96)   // (3.93)    // (13.96)  // (11.00)  // (2.75)   // (19.55)
 
 #define CURRENT_KI_CODE (CURRENT_KI*CURRENT_KP*CL_TS)
 #define SPEED_KI_CODE (SPEED_KI*SPEED_KP*VL_TS)

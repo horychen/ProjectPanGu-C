@@ -166,7 +166,7 @@ void axis_basic_setup(int axisCnt){
     Axis->Set_x_suspension_current_loop = FALSE;
     Axis->Set_y_suspension_current_loop = FALSE;
     Axis->Set_manual_rpm = 50.0;
-    Axis->Set_manual_current_iq = 1.5;
+    Axis->Set_manual_current_iq = 0.0;
     Axis->Set_manual_current_id = 0.0; // id = -1 A is the magic number to get more torque! cjh 2024-02-29
     Axis->Select_exp_operation = 0;    // 200; //202; //200; //101;
     // Axis->pFLAG_INVERTER_NONLINEARITY_COMPENSATION = &Axis->pCTRL->g->FLAG_INVERTER_NONLINEARITY_COMPENSATION;
@@ -1063,9 +1063,8 @@ void run_impedance_control()
 }
 
 
-void DISABLE_PWM_OUTPUT()
+void DISABLE_PWM_OUTPUT(int use_first_set_three_phase)
 {
-
     DSP_PWM_DISABLE
     DSP_2PWM_DISABLE
 
@@ -1109,11 +1108,27 @@ void DISABLE_PWM_OUTPUT()
     GpioDataRegs.GPDCLEAR.bit.GPIO106 = 1; // TODO: What is this doing?
 }
 
-void ENABLE_PWM_OUTPUT(int positionLoopType)
+
+void ENABLE_PWM_OUTPUT(int positionLoopType, int use_first_set_three_phase)
 {
     G.flag_experimental_initialized = FALSE;
-    DSP_PWM_ENABLE
-    DSP_2PWM_ENABLE
+
+    if (use_first_set_three_phase == 1)
+    {
+        DSP_PWM_ENABLE
+    } 
+    else if (use_first_set_three_phase == 2)
+    {
+        DSP_2PWM_ENABLE
+    } 
+    else if (use_first_set_three_phase == -1)
+    {
+        DSP_PWM_ENABLE
+        DSP_2PWM_ENABLE
+    }
+
+
+
     if (FE.htz.u_offset[0] > 0.1)
     {
         FE.htz.u_offset[0] = 0;

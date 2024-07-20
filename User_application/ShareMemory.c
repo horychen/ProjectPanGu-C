@@ -63,6 +63,7 @@ if(use_first_set_three_phase==2){
 if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
 
     // 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟侥憋拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤，锟角碉拷锟斤拷效锟斤拷围锟斤拷 [-1, 1]锟斤拷
+    // wubo:我用的这套设备dac：dac_watch在dsp中输出[-1,1]V,通过dac板子输出[-3,3V]
     (*Axis4DAC).dac_watch[0] = Axis_1.iuvw[0]*0.2;
     (*Axis4DAC).dac_watch[1] = Axis_1.iuvw[1]*0.2;
     (*Axis4DAC).dac_watch[2] = Axis_1.iuvw[2]*0.2;
@@ -160,6 +161,10 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
     (*Axis4DAC).dac_watch[58] = IQOUT_SHANK*0.1;
     (*Axis4DAC).dac_watch[59] = position_count_SCI_hip_fromCPU2*1e-08;
     (*Axis4DAC).dac_watch[60] = position_count_SCI_shank_fromCPU2*1e-08;
+
+    # if NABLE_COMMISSIONING == TRUE
+        (*Axis4DAC).dac_watch[60] = COMM.Js * 1e3;
+    # endif
 
 
     if((*Axis4DAC).channels_preset==1){(*Axis4DAC).channels_preset=0;

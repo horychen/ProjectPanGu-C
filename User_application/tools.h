@@ -30,8 +30,8 @@ void run_hip_loop();
 void run_both_loop();
 void run_impedance_control();
 
-void DISABLE_PWM_OUTPUT();
-void ENABLE_PWM_OUTPUT(int positionLoopType);
+void DISABLE_PWM_OUTPUT(int use_first_set_three_phase);
+void ENABLE_PWM_OUTPUT(int positionLoopType, int use_first_set_three_phase);
 
 void read_count_from_cpu02_dsp_cores_2();
 

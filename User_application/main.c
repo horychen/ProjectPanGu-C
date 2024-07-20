@@ -21,22 +21,10 @@ st_axis Axis_2;
         Axis = &Axis_2;        \
         CTRL = &CTRL_2;        \
     }
-#else
-// do nothing here (use same codes as simulation)
-void get_Axis_CTRL_pointers(int axisCnt, st_axis *pAxis, struct ControllerForExperiment *pCTRL)
-{
-    // if(axisCnt == 0)
-    {
-        pAxis = &Axis_1;
-        pCTRL = &CTRL_1;
-    }
-}
 #endif
-
 
 // this offset is moved to ACMconfig.h
 // #define OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS 2333 // cjh tuned with id_cmd = 3A 2024-01-19
-
 
 #define NO_POSITION_CONTROL 0
 #define TWOMOTOR_POSITION_CONTROL 1
@@ -48,64 +36,8 @@ void get_Axis_CTRL_pointers(int axisCnt, st_axis *pAxis, struct ControllerForExp
 int positionLoopType = 0;           // TWOMOTOR_POSITION_CONTROL; //SHANK_LOOP_RUN; // SHANK_LOOP_RUN; //BOTH_LOOP_RUN;
 int use_first_set_three_phase = -1; //-1 for both motors
 
-
-
-
-
-#define VL_CL_DOWNSAMPLE 40
-Uint16 downSampleCounter = 0;
-
-#define SHANK_POS_CMD_FLAG 0
-#define HIP_POS_CMD_FLAG 1
-
-// Uint64 mainWhileLoopCounter1 = 0;
-// int64 mainWhileLoopCounter2 = 0;
-
-// int  FLAG_ENABLE_PWM_OUTPUT = FALSE;
-
-//// CLA
-//// header files
-////#include "DCLCLA.h"
-////#include "CLA_shared.h"
-////#include "F2837xD_Cla.h"                // Control Law Accelerator Registers
-////#include "F2837xD_Cla_defines.h"              // Macros used for CLA examples.
-//
-//// function prototypes
-////interrupt void control_Isr(void);
-//
-//// global  variables
-// long IdleLoopCount = 0;
-// long IsrCount = 0;
-// float Duty;
-//
-//// shared variables
-// #pragma DATA_SECTION(rk, "CpuToCla1MsgRAM")
-// #pragma DATA_SECTION(yk, "CpuToCla1MsgRAM")
-// #pragma DATA_SECTION(uk, "Cla1ToCpuMsgRAM")
-// float rk = 0.25f;
-// float yk;
-// float uk;
-//
-// #pragma DATA_SECTION(pi1, "Cla1DataRam1")
-// DCL_PI_CLA pi1 = PI_CLA_DEFAULTS;
-
-// CLA end
 void main(void)
 {
-
-    // CYM Codes
-    //    A.x = 0.0;
-    //    A.y = 0.0;
-    //    D.x = 51.662e-3;
-    //    D.y = 0.0;
-    //    o.x = 110.76e-3;
-    //    o.y = 192.03e-3;
-    //    a_length = 80e-3;
-    //    b_length = 139.98e-3;
-    //    c_length = 153.069e-3;
-    //    offset_length = 97.96e-3;
-    //    lead = 16e-3;
-    //    joint_offset =(147.6585661123+175.45166) / 180.0 *M_PI;
 
     InitSysCtrl();      // 1. Initialize System Control: PLL, WatchDog, enable Peripheral Clocks.
     Gpio_initialize();  // 2. Initialize GPIO and assign GPIO to peripherals.
@@ -119,73 +51,70 @@ void main(void)
     InitCpuTimers();
     ConfigCpuTimer(&CpuTimer1, 200, 1000000); // 200MHz, INTERRUPT_period = 1e6 us
 
-// 4.1 IPC
-#if NUMBER_OF_DSP_CORES == 2
-    IPCBootCPU2(C1C2_BROM_BOOTMODE_BOOT_FROM_FLASH);
-#endif
-#ifdef _STANDALONE
-#ifdef _FLASH
-    // 当你需要离线断电再上电运行时用这个：
-    //  Send boot command to allow the CPU02 application to begin execution
-    IPCBootCPU2(C1C2_BROM_BOOTMODE_BOOT_FROM_FLASH);
-#else
-    //  Send boot command to allow the CPU02 application to begin execution
-    // 这句话我不知道什么意义，可能还是不要比较好。
-    // IPCBootCPU2(C1C2_BROM_BOOTMODE_BOOT_FROM_RAM);
-#endif
-#endif
+    // 4.1 IPC
+    #if NUMBER_OF_DSP_CORES == 2
+        IPCBootCPU2(C1C2_BROM_BOOTMODE_BOOT_FROM_FLASH);
+    #endif
+    #ifdef _STANDALONE
+        #ifdef _FLASH
+            // 当你需要离线断电再上电运行时用这个：
+            //  Send boot command to allow the CPU02 application to begin execution
+            IPCBootCPU2(C1C2_BROM_BOOTMODE_BOOT_FROM_FLASH);
+        #else
+            //  Send boot command to allow the CPU02 application to begin execution
+            // 这句话我不知道什么意义，可能还是不要比较好。
+            // IPCBootCPU2(C1C2_BROM_BOOTMODE_BOOT_FROM_RAM);
+        #endif
+    #endif
 
 
-// 4.2 Initialize peripherals
-ePWM_initialize();
-ADC_initialize();
-eQEP_initialize(0);
-InitECaptureContinuousMode();
+    // 4.2 Initialize peripherals
+    ePWM_initialize();
+    ADC_initialize();
+    eQEP_initialize(0);
+    InitECaptureContinuousMode();
 
 
-// 4.3 Assign peripherals to CPU02
-/* SPI and SCI */
-#if NUMBER_OF_DSP_CORES == 1
-    // 同步！！！！！
-    InitHighSpeedSpiGpio();
-    // InitSpiaGpio();
-    // InitSpicGpio();
-    InitSpi();
+    // 4.3 Assign peripherals to CPU02
+    /* SPI and SCI */
+    #if NUMBER_OF_DSP_CORES == 1
+        // 同步！！！！！
+        InitHighSpeedSpiGpio();
+        // InitSpiaGpio();
+        InitSpi();
+        InitSciGpio();
+        InitSci();
+    #elif NUMBER_OF_DSP_CORES == 2
+        /* 双核配置*/
+        init_spi();
 
-    InitSciGpio();
-    InitSci();
-#elif NUMBER_OF_DSP_CORES == 2
-    /* 双核配置*/
-    init_spi();
+        EUREKA_GPIO_SETUP();
+        //        // =========TEST BOARD PIN============
+        //        // =========NOT FOR EUREKA===========
 
-    EUREKA_GPIO_SETUP();
-    //        // =========TEST BOARD PIN============
-    //        // =========NOT FOR EUREKA===========
+        // 异步！！！！！
+        // InitSci(); // this is moved to CPU02
 
-    // 异步！！！！！
-    // InitSci(); // this is moved to CPU02
-
-    // 在此之前，已经把GPIO和外设的权限转给CPU2了。
-    // 这里再把部分共享内存权限给CPU2，同时告诉CPU2，你可以继续运行代码了。
-    while (!(MemCfgRegs.GSxMSEL.bit.MSEL_GS0))
-    {
-        EALLOW;
-        // Give Memory Access to GS0/ GS14 SARAM to CPU02
-        MemCfgRegs.GSxMSEL.bit.MSEL_GS0 = 1;
-        EDIS;
-    }
-#endif
+        // 在此之前，已经把GPIO和外设的权限转给CPU2了。
+        // 这里再把部分共享内存权限给CPU2，同时告诉CPU2，你可以继续运行代码了。
+        while (!(MemCfgRegs.GSxMSEL.bit.MSEL_GS0))
+        {
+            EALLOW;
+            // Give Memory Access to GS0/ GS14 SARAM to CPU02
+            MemCfgRegs.GSxMSEL.bit.MSEL_GS0 = 1;
+            EDIS;
+        }
+    #endif
 
     // 4.4 Initialize algorithms
     get_bezier_points();
-
     //axis_basic_setup(axisCnt);
     for (axisCnt = 0; axisCnt < NUMBER_OF_AXES; axisCnt++)
     {
-        get_Axis_CTRL_pointers //(axisCnt, Axis, CTRL);
-        axis_basic_setup(axisCnt);
+        get_Axis_CTRL_pointers // 这里用宏定义来替换一段代码，实际运行时候相当于，直接运行宏定义代码，而不是调用函数？
+        // 这样是不是会加快运行速度？
+        axis_basic_setup(axisCnt); // 根据axiscnt对Axis和CTRL进行初始化
     }
-    //axisCnt = 1;
 
     // 5. Handle Interrupts
     handle_interrupts();
@@ -195,10 +124,11 @@ InitECaptureContinuousMode();
     DSP_STOP_LED2
     DSP_PWM_DISABLE
     DSP_2PWM_DISABLE
-/* Test IPC to CPU02 */
-#if NUMBER_OF_DSP_CORES == 2
-    test_ipc_tocpu02();
-#endif
+    
+    /* Test IPC to CPU02 */
+    #if NUMBER_OF_DSP_CORES == 2
+        test_ipc_tocpu02();
+    #endif
 
     // 7. CLA
     /* initialise PI controller */
@@ -370,17 +300,20 @@ REAL call_position_loop_controller(int positionLoopType)
 // Uint64 timebase_counter = 0;
 extern REAL imife_realtime_gain_off;
 
-void PanGuMainISR(void)
-{
 
+// 这里需要传入use这个变量来决定两个逆变器的PWM信号要不要输入
+// 20240720前的有一个bug：我们只通过Axis_1.FLAG_ENABLE_PWM_OUTPUT来决定PWM信号是否输出，但是对应的PWM开通关断函数下，是无脑地对
+// 两个逆变器的PWM信号同时进行了开关，这样会导致两个逆变器的PWM信号都输出。
+void PanGuMainISR(int use_first_set_three_phase)
+{
     // 采样，包括DSP中的ADC采样等
     // DELAY_US(2); // wait for adc conversion TODO: check adc eoc flag?
     measurement();
 
-    if (!Axis_1.FLAG_ENABLE_PWM_OUTPUT) DISABLE_PWM_OUTPUT();
+    if (!Axis_1.FLAG_ENABLE_PWM_OUTPUT) DISABLE_PWM_OUTPUT(use_first_set_three_phase);
     // TODO:需要增加让另外一项axis的Ta Tb Tc在不使用或者
 
-    else ENABLE_PWM_OUTPUT(positionLoopType);
+    else ENABLE_PWM_OUTPUT(positionLoopType, use_first_set_three_phase);
 
 }
 
@@ -467,7 +400,7 @@ __interrupt void EPWM1ISR(void)
         for (axisCnt = 0; axisCnt < NUMBER_OF_AXES; axisCnt++)
         {
             get_Axis_CTRL_pointers //(axisCnt, Axis, CTRL);
-            PanGuMainISR();
+            PanGuMainISR(use_first_set_three_phase);
         }
         axisCnt = 1;
     }
@@ -475,13 +408,13 @@ __interrupt void EPWM1ISR(void)
     {
         axisCnt = 0;
         get_Axis_CTRL_pointers //(axisCnt, Axis, CTRL);
-        PanGuMainISR();
+        PanGuMainISR(use_first_set_three_phase);
     }
     else if (use_first_set_three_phase == 2)
     {
         axisCnt = 1;
         get_Axis_CTRL_pointers //(axisCnt, Axis, CTRL);
-        PanGuMainISR();
+        PanGuMainISR(use_first_set_three_phase);
     }
 
 #if USE_ECAP_CEVT2_INTERRUPT == 1
