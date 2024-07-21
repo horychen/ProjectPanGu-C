@@ -994,8 +994,8 @@ REAL controller(REAL set_rpm_speed_command,
     int flag_overwrite_theta_d, REAL Overwrite_Current_Frequency,
     REAL used_theta_d_elec,
     REAL angle_shift_for_first_inverter,
-    REAL angle_shift_for_second_inverter){
-
+    REAL angle_shift_for_second_inverter)
+{
     /// 0. 参数时变
     // if (fabs((*CTRL).timebase-2.0)<CL_TS){
     //     printf("[Runtime] Rotor resistance of the simulated IM has changed!\n");
@@ -1025,18 +1025,24 @@ REAL controller(REAL set_rpm_speed_command,
     // }
 
     /// 4. 帕克变换（使用反馈位置）
-    if(flag_overwrite_theta_d){
-        if(fabs(Overwrite_Current_Frequency)>0){
-            used_theta_d_elec += CL_TS * Overwrite_Current_Frequency * 2*M_PI ;
+    if(flag_overwrite_theta_d)
+    {
+        if(fabs(Overwrite_Current_Frequency)>0)
+        {
+            used_theta_d_elec += CL_TS * Overwrite_Current_Frequency * 2 * M_PI ;
             while(used_theta_d_elec> M_PI) used_theta_d_elec -= 2*M_PI;
             while(used_theta_d_elec<-M_PI) used_theta_d_elec += 2*M_PI;
-        }else{
+        }
+        else
+        {
             used_theta_d_elec = 0.0;
         }
-    }else{
+    }
+    else // 
+    {
         used_theta_d_elec = (*CTRL).i->theta_d_elec;
     }
-    (*CTRL).s->cosT = cos(used_theta_d_elec + angle_shift_for_first_inverter);
+    (*CTRL).s->cosT = cos(used_theta_d_elec + angle_shift_for_first_inverter); // 此处的angle_shift都是0
     (*CTRL).s->sinT = sin(used_theta_d_elec + angle_shift_for_first_inverter);
     (*CTRL).i->idq[0] = AB2M((*CTRL).i->iab[0], (*CTRL).i->iab[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
     (*CTRL).i->idq[1] = AB2T((*CTRL).i->iab[0], (*CTRL).i->iab[1], (*CTRL).s->cosT, (*CTRL).s->sinT);

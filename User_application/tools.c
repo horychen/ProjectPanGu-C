@@ -615,12 +615,8 @@ void measurement_position_count_axisCnt0()
     #if NUMBER_OF_AXES == 2
         position_count_SCI_fromCPU2 = position_count_SCI_shank_fromCPU2;
     #endif
-        // 編碼器讀數是反的，所以這邊偏置也要反一下，改成負值！
-        // 編碼器讀數是反的，所以這邊偏置也要反一下，改成負值！
-        // 編碼器讀數是反的，所以這邊偏置也要反一下，改成負值！
-        // MD1 is 17bit, use SCI485hip port
-        // 膝盖电机，正转电流导致编码器读数减小：
-        wubo_debug[0] = 2;
+        // 正电流导致编码器读数增大：
+        wubo_debug[0] = 1;
         CTRL->enc->encoder_abs_cnt = (int32)position_count_SCI_fromCPU2 - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis;
 }
 
@@ -630,9 +626,10 @@ void measurement_position_count_axisCnt1()
     #if NUMBER_OF_AXES == 2
         position_count_SCI_fromCPU2 = position_count_SCI_hip_fromCPU2;
     #endif
-        // 大腿电机，正转电流导致编码器读数增大
-        wubo_debug[0] = 1;
+        // 正电流导致编码器读数减小
+        wubo_debug[0] = 2;
         CTRL->enc->encoder_abs_cnt = -( (int32)position_count_SCI_fromCPU2 - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis );
+        // dq变化中，d轴理论上指向永磁体的北极，
 }
 
 
@@ -647,15 +644,17 @@ void measurement_enc_and_i()
         CTRL->enc->encoder_abs_cnt = (int32)cnt_four_bar_map_motor_encoder_angle - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis;
     }
 
+    // 给CTRL->enc->encoder_abs_cnt_previous赋值的操作在measurement()函数中进行
+    
     // ignore this please
-    if (CTRL->enc->flag_absolute_encoder_powered == FALSE)
-    {
-        CTRL->enc->flag_absolute_encoder_powered = TRUE;
-        // assume there motor is at still when it is powered on
-        CTRL->enc->encoder_abs_cnt_previous = CTRL->enc->encoder_abs_cnt;
-    }
+    // if (CTRL->enc->flag_absolute_encoder_powered == FALSE)
+    // {
+    //     CTRL->enc->flag_absolute_encoder_powered = TRUE;
+    //     // assume there motor is at still when it is powered on
+    //     CTRL->enc->encoder_abs_cnt_previous = CTRL->enc->encoder_abs_cnt;
+    // }
 
-    while (CTRL->enc->encoder_abs_cnt > SYSTEM_QEP_QPOSMAX_PLUS_1)
+    while (CTRL->enc->encoder_abs_cnt > SYSTEM_QEP_QPOSMAX_PLUS_1) // SYSTEM_QEP_QPOSMAX_PLUS_1为编码器的一圈的脉冲数+1
     {
         CTRL->enc->encoder_abs_cnt -= SYSTEM_QEP_QPOSMAX_PLUS_1;
     }
@@ -677,7 +676,10 @@ void measurement_enc_and_i()
     else if (CTRL->enc->encoder_incremental_cnt > 0.5 * SYSTEM_QEP_QPOSMAX_PLUS_1)
         CTRL->enc->encoder_incremental_cnt -= (int32)SYSTEM_QEP_QPOSMAX_PLUS_1;
 
+    // CTRL->enc->encoder_incremental_cnt * SYSTEM_QEP_REV_PER_PULSE表示在一次通讯周期内，转子转过的角度，既可以看成是转子的转速（离散系统的pointview2）
+    // * 1e4 * 60转换为1分钟内的转速，即将转速单位变为RPM
     CTRL->enc->rpm_raw = CTRL->enc->encoder_incremental_cnt * SYSTEM_QEP_REV_PER_PULSE * 1e4 * 60; // 1e4指的是EPWM1_ISR中断的频率：10kHz
+
 
     //                #define ENC(X) (*Axis[X].pCTRL->enc)
     //                ENC(0)
@@ -1127,8 +1129,6 @@ void ENABLE_PWM_OUTPUT(int positionLoopType, int use_first_set_three_phase)
         DSP_2PWM_ENABLE
     }
 
-
-
     if (FE.htz.u_offset[0] > 0.1)
     {
         FE.htz.u_offset[0] = 0;
@@ -1137,44 +1137,45 @@ void ENABLE_PWM_OUTPUT(int positionLoopType, int use_first_set_three_phase)
     (*CTRL).timebase_counter += 1;
     (*CTRL).timebase = CL_TS * (*CTRL).timebase_counter; //(*CTRL).timebase += CL_TS; // 2048 = float/REAL max
 
-// 根据指令，产生控制输出（电压）
-#if ENABLE_COMMISSIONING == FALSE
-                                                            //(*CTRL).s->Motor_or_Gnerator = sign((*CTRL).i->idq_cmd[1]) == sign(CTRL->enc->rpm); // sign((*CTRL).i->idq_cmd[1]) != sign((*CTRL).i->cmd_speed_rpm))
-    runtime_command_and_tuning(Axis->Select_exp_operation);
-    // 0x03 is shank
-    //    position_count_CAN_fromCPU2 = position_count_CAN_ID0x03_fromCPU2;
-    // 0x01 is hip
-    // position_count_CAN_fromCPU2 = position_count_CAN_ID0x01_fromCPU2;
+    // 根据指令，产生控制输出（电压）
+    #if ENABLE_COMMISSIONING == FALSE
+                                                                //(*CTRL).s->Motor_or_Gnerator = sign((*CTRL).i->idq_cmd[1]) == sign(CTRL->enc->rpm); // sign((*CTRL).i->idq_cmd[1]) != sign((*CTRL).i->cmd_speed_rpm))
+        runtime_command_and_tuning(Axis->Select_exp_operation);
+        // 0x03 is shank
+        //    position_count_CAN_fromCPU2 = position_count_CAN_ID0x03_fromCPU2;
+        // 0x01 is hip
+        // position_count_CAN_fromCPU2 = position_count_CAN_ID0x01_fromCPU2;
 
-    if (positionLoopType == 0){
-        // do nothing
-    }
-    else{
-        // do position loop
-        Axis->Set_manual_rpm = call_position_loop_controller(positionLoopType);
-    }
+        if (positionLoopType == 0){
+            // do nothing
+        }
+        else{
+            // do position loop
+            Axis->Set_manual_rpm = call_position_loop_controller(positionLoopType);
+        }
 
-    Axis->used_theta_d_elec = controller(
-        Axis->Set_manual_rpm,
-        Axis->Set_current_loop,
-        Axis->Set_manual_current_iq,
-        Axis->Set_manual_current_id,
-        Axis->flag_overwrite_theta_d,
-        Axis->Overwrite_Current_Frequency,
-        Axis->used_theta_d_elec,
-        Axis->angle_shift_for_first_inverter,
-        Axis->angle_shift_for_second_inverter);
-#else
-    commissioning();
-#endif
+        Axis->used_theta_d_elec = controller(
+            Axis->Set_manual_rpm,
+            Axis->Set_current_loop,
+            Axis->Set_manual_current_iq,
+            Axis->Set_manual_current_id,
+            Axis->flag_overwrite_theta_d,
+            Axis->Overwrite_Current_Frequency,
+            Axis->used_theta_d_elec,
+            Axis->angle_shift_for_first_inverter,
+            Axis->angle_shift_for_second_inverter);
+    #else
+        commissioning(); // 参数辨识用
+    #endif
 
     //(*CTRL).o->uab_cmd_to_inverter[0]
 
+    // operation mode为5的时候，执行下面测试逆变器输出电压的代码
     if (Axis->Select_exp_operation == XCUBE_TaTbTc_DEBUG_MODE)
     {
         if (axisCnt == 0)
         {
-            EPwm1Regs.CMPA.bit.CMPA = (*CTRL).svgen1.Ta * 50000000 * CL_TS;
+            EPwm1Regs.CMPA.bit.CMPA = (*CTRL).svgen1.Ta * 50000000 * CL_TS; // 0-5000，5000表示0%的占空比
             EPwm2Regs.CMPA.bit.CMPA = (*CTRL).svgen1.Tb * 50000000 * CL_TS;
             EPwm3Regs.CMPA.bit.CMPA = (*CTRL).svgen1.Tc * 50000000 * CL_TS;
         }
@@ -1184,16 +1185,9 @@ void ENABLE_PWM_OUTPUT(int positionLoopType, int use_first_set_three_phase)
             EPwm5Regs.CMPA.bit.CMPA = (*CTRL).svgen2.Tb * 50000000 * CL_TS;
             EPwm6Regs.CMPA.bit.CMPA = (*CTRL).svgen2.Tc * 50000000 * CL_TS;
         }
-        // 20240119 test，观察4、5、6通道的IPM输出电压是否正常
-        //            EPwm4Regs.CMPA.bit.CMPA = (*CTRL).svgen1.Ta*50000000*CL_TS;
-        //            EPwm5Regs.CMPA.bit.CMPA = (*CTRL).svgen1.Tb*50000000*CL_TS;
-        //            EPwm6Regs.CMPA.bit.CMPA = (*CTRL).svgen1.Tc*50000000*CL_TS;
     }
-    else
+    else // 否则根据上面的控制率controller()由voltage_commands_to_pwm()计算出的电压，输出到逆变器
         voltage_commands_to_pwm();
-    //        #if NUMBER_OF_DSP_CORES == 1
-    //            single_core_dac();
-    //        #endif
 }
 
 void read_count_from_cpu02_dsp_cores_2()

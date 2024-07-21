@@ -10,6 +10,7 @@ double target_tick = 0.0;
 // ====为了同时运行两台电机，增加的另一份控制结构体
 #if NUMBER_OF_AXES == 2
 st_axis Axis_2;
+
 #define get_Axis_CTRL_pointers \
     if (axisCnt == 0)          \
     {                          \
@@ -18,7 +19,7 @@ st_axis Axis_2;
     }                          \
     if (axisCnt == 1)          \
     {                          \
-        Axis = &Axis_2;        \
+        Axis = &Axis_2;        \.
         CTRL = &CTRL_2;        \
     }
 #endif
@@ -108,12 +109,10 @@ void main(void)
 
     // 4.4 Initialize algorithms
     get_bezier_points();
-    //axis_basic_setup(axisCnt);
     for (axisCnt = 0; axisCnt < NUMBER_OF_AXES; axisCnt++)
     {
-        get_Axis_CTRL_pointers // 这里用宏定义来替换一段代码，实际运行时候相当于，直接运行宏定义代码，而不是调用函数？
-        // 这样是不是会加快运行速度？
-        axis_basic_setup(axisCnt); // 根据axiscnt对Axis和CTRL进行初始化
+        get_Axis_CTRL_pointers 
+        axis_basic_setup(axisCnt); // 根据axiscnt对Axis，CTRL的1和2号结构体，进行初始化操作
     }
 
     // 5. Handle Interrupts
@@ -165,10 +164,7 @@ void main(void)
 /* Below is moved from PanGuMainISR.c */
 #if SYSTEM_PROGRAM_MODE == 223
 
-
 // extern long long sci_pos;
-
-
 
 void measurement()
 {
@@ -198,7 +194,6 @@ void measurement()
     // 线电压测量（基于占空比和母线电压）
     // voltage_measurement_based_on_eCAP();
     // int axisCnt = 0;
-
     {
         // pAxis = list_pointer_to_Axes[axisCnt];
 
@@ -304,11 +299,11 @@ extern REAL imife_realtime_gain_off;
 // 这里需要传入use这个变量来决定两个逆变器的PWM信号要不要输入
 // 20240720前的有一个bug：我们只通过Axis_1.FLAG_ENABLE_PWM_OUTPUT来决定PWM信号是否输出，但是对应的PWM开通关断函数下，是无脑地对
 // 两个逆变器的PWM信号同时进行了开关，这样会导致两个逆变器的PWM信号都输出。
-void PanGuMainISR(int use_first_set_three_phase)
+void PanGuMainISR(void)
 {
     // 采样，包括DSP中的ADC采样等
     // DELAY_US(2); // wait for adc conversion TODO: check adc eoc flag?
-    measurement();
+    measurement(); // 电流传感器和编码器测得三相电流iuvw和角度theta，iuvw通过clark变化得到iabg，后面iabg通过park变换得到idq，idq通过dq变换得到abc
 
     if (!Axis_1.FLAG_ENABLE_PWM_OUTPUT) DISABLE_PWM_OUTPUT(use_first_set_three_phase);
     // TODO:需要增加让另外一项axis的Ta Tb Tc在不使用或者
@@ -322,29 +317,23 @@ __interrupt void EPWM1ISR(void)
 {
     EPWM1IntCount += 1;
 
-    //    yk = Axis_1.iuvw[0];
-    //
-    //    // trigger PI controller on CLA
-    //    EALLOW;
-    //    Cla1ForceTask3andWait();
+    #if USE_ECAP_CEVT2_INTERRUPT == 1
+        CAP.password_isr_nesting = 178; // only if you can stop EPWM ISR, or else you won't know the value of password_isr_nesting.
+        /* Step 1. [eCAP] Set the global priority */
+        // Set global priority by adjusting IER, so as to allow PIE group 4 to send interrupt flag to CPU stage.
+        IER |= M_INT4; // Modify IER to allow CPU interrupts from PIE group 4 to be serviced. Part 1
+        IER &= M_INT4; // Modify IER to allow CPU interrupts from PIE group 4 to be serviced. Part 2
 
-#if USE_ECAP_CEVT2_INTERRUPT == 1
-    CAP.password_isr_nesting = 178; // only if you can stop EPWM ISR, or else you won't know the value of password_isr_nesting.
-    /* Step 1. [eCAP] Set the global priority */
-    // Set global priority by adjusting IER, so as to allow PIE group 4 to send interrupt flag to CPU stage.
-    IER |= M_INT4; // Modify IER to allow CPU interrupts from PIE group 4 to be serviced. Part 1
-    IER &= M_INT4; // Modify IER to allow CPU interrupts from PIE group 4 to be serviced. Part 2
+        /* Step 2. [eCAP] Set the group priority */
+        uint16_t TempPIEIER4;
+        TempPIEIER4 = PieCtrlRegs.PIEIER4.all; // Save PIEIER register for later
+        PieCtrlRegs.PIEIER4.all &= 0x7;        // Set group priority by adjusting PIEIER4 to allow INT4.1, 4.2, 4.3 to interrupt current ISR
 
-    /* Step 2. [eCAP] Set the group priority */
-    uint16_t TempPIEIER4;
-    TempPIEIER4 = PieCtrlRegs.PIEIER4.all; // Save PIEIER register for later
-    PieCtrlRegs.PIEIER4.all &= 0x7;        // Set group priority by adjusting PIEIER4 to allow INT4.1, 4.2, 4.3 to interrupt current ISR
-
-    /* Step 3. [eCAP] Enable interrupts */
-    PieCtrlRegs.PIEACK.all = 0xFFFF; // Enable PIE interrupts by writing all 1’s to the PIEACK register
-    asm("       NOP");               // Wait at least one cycle
-    EINT;                            // Enable global interrupts by clearing INTM
-#endif
+        /* Step 3. [eCAP] Enable interrupts */
+        PieCtrlRegs.PIEACK.all = 0xFFFF; // Enable PIE interrupts by writing all 1’s to the PIEACK register
+        asm("       NOP");               // Wait at least one cycle
+        EINT;                            // Enable global interrupts by clearing INTM
+    #endif
 
     if (GpioDataRegs.GPCDAT.bit.GPIO75 == 1)
     {
@@ -355,43 +344,17 @@ __interrupt void EPWM1ISR(void)
         Axis_1.FLAG_ENABLE_PWM_OUTPUT = 0;
     }
 
-/* Step 4. [ePWM] Execute EPWM ISR */
-// 只需要做一次的
-#if NUMBER_OF_DSP_CORES == 2
-    write_DAC_buffer();
-#endif
+    /* Step 4. [ePWM] Execute EPWM ISR */
+    // 只需要做一次的
+    #if NUMBER_OF_DSP_CORES == 2
+        write_DAC_buffer();
+    #endif
 
-    // 出厂底板，点灯代码
-    //    static long int ii = 0;
-    //    if(++ii%5000 == 0){
-    //        //        EPwm1Regs.CMPA.bit.CMPA = (*CTRL).svgen1.Ta*50000000*CL_TS;
-    //        //        EPwm2Regs.CMPA.bit.CMPA = (*CTRL).svgen1.Tb*50000000*CL_TS;
-    //        //        EPwm3Regs.CMPA.bit.CMPA = (*CTRL).svgen1.Tc*50000000*CL_TS;
-    //        //        EPwm4Regs.CMPA.bit.CMPA = (*CTRL).svgen2.Ta*50000000*CL_TS;
-    //        //        EPwm5Regs.CMPA.bit.CMPA = (*CTRL).svgen2.Tb*50000000*CL_TS;
-    //
-    //        if(EPwm1Regs.CMPA.bit.CMPA==5000){
-    //            EPwm1Regs.CMPA.bit.CMPA = 0;
-    //        }else{
-    //            EPwm1Regs.CMPA.bit.CMPA = 5000;
-    //        }
-    //    }
-    //
-    //    static long int jj = 0;
-    //    if(++jj%10000 == 0){
-    //        if(EPwm2Regs.CMPA.bit.CMPA==5000){
-    //            EPwm2Regs.CMPA.bit.CMPA = 0;
-    //        }else{
-    //            EPwm2Regs.CMPA.bit.CMPA = 5000;
-    //        }
-    //    }
-    //    return;
+    #if ENABLE_ECAP
+        do_enhanced_capture();
+    #endif
 
-#if ENABLE_ECAP
-    do_enhanced_capture();
-#endif
-
-// read from CPU02
+    // read from CPU02
     read_count_from_cpu02_dsp_cores_2();
 
     // 对每一个CTRL都需要做一次的代码
@@ -400,31 +363,31 @@ __interrupt void EPWM1ISR(void)
         for (axisCnt = 0; axisCnt < NUMBER_OF_AXES; axisCnt++)
         {
             get_Axis_CTRL_pointers //(axisCnt, Axis, CTRL);
-            PanGuMainISR(use_first_set_three_phase);
+            PanGuMainISR();
         }
-        axisCnt = 1;
+        axisCnt = 1; // 这里将axisCnt有什么用啊
     }
     else if (use_first_set_three_phase == 1)
     {
         axisCnt = 0;
         get_Axis_CTRL_pointers //(axisCnt, Axis, CTRL);
-        PanGuMainISR(use_first_set_three_phase);
+        PanGuMainISR();
     }
     else if (use_first_set_three_phase == 2)
     {
         axisCnt = 1;
         get_Axis_CTRL_pointers //(axisCnt, Axis, CTRL);
-        PanGuMainISR(use_first_set_three_phase);
+        PanGuMainISR();
     }
 
-#if USE_ECAP_CEVT2_INTERRUPT == 1
-    /* Step 5. [eCAP] Disable interrupts */
-    DINT;
+    #if USE_ECAP_CEVT2_INTERRUPT == 1
+        /* Step 5. [eCAP] Disable interrupts */
+        DINT;
 
-    /* Step 6. [eCAP] Restore the PIEIERx register */
-    PieCtrlRegs.PIEIER4.all = TempPIEIER4;
-    CAP.password_isr_nesting = 0;
-#endif
+        /* Step 6. [eCAP] Restore the PIEIERx register */
+        PieCtrlRegs.PIEIER4.all = TempPIEIER4;
+        CAP.password_isr_nesting = 0;
+    #endif
 
     /* Step 7. [ePWM] Exit EPWM1 ISR */
     EPwm1Regs.ETCLR.bit.INT = 1;
@@ -432,31 +395,3 @@ __interrupt void EPWM1ISR(void)
 }
 
 #endif
-
-/*
-//声明全局变量
-#if PC_SIMULATION==FALSE
-REAL CpuTimer_Delta = 0;
-Uint32 CpuTimer_Before = 0;
-Uint32 CpuTimer_After = 0;
-#endif
-
-
-//这段放需要测时间的代码前面
-#if PC_SIMULATION==FALSE
-EALLOW;
-CpuTimer1.RegsAddr->TCR.bit.TRB = 1; // reset cpu timer to period value
-CpuTimer1.RegsAddr->TCR.bit.TSS = 0; // start/restart
-CpuTimer_Before = CpuTimer1.RegsAddr->TIM.all; // get count
-EDIS;
-#endif
-
-//这段放需要测时间的代码后面前面，观察CpuTimer_Delta的取值，代表经过了多少个 1/200e6 秒。
-#if PC_SIMULATION==FALSE
-CpuTimer_After = CpuTimer1.RegsAddr->TIM.all; // get count
-CpuTimer_Delta = (REAL)CpuTimer_Before - (REAL)CpuTimer_After;
-// EALLOW;
-// CpuTimer1.RegsAddr->TCR.bit.TSS = 1; // stop (not needed because of the line TRB=1)
-// EDIS;
-#endif
-*/

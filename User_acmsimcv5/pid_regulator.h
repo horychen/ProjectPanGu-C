@@ -96,11 +96,6 @@ extern st_pid_regulator _pid_iQ_2;
 extern st_pid_regulator _pid_spd_2;
 extern st_pid_regulator _pid_pos_2;
 
-
-//extern st_pid_regulator _pid_ia_1;
-//extern st_pid_regulator _pid_ib_1;
-//extern st_pid_regulator _pid_ic_1;
-
 #define PID_iD  (CTRL->s->iD)
 #define PID_iQ  (CTRL->s->iQ)
 #define PID_iX  (CTRL->s->iX)
