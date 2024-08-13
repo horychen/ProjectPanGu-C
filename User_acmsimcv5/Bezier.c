@@ -145,28 +145,38 @@ void set_points(BezierController *BzierController){
         BzierController->points = realloc(BzierController->points, sizeof(Point) * BEZIER_NUMBER_OF_POINTS);
     #else
         BzierController->order = d_sim.user.bezier_order;
-        FILE *fw; fw = fopen(ARGS_PATH, "r");
-        if (fw == NULL)
-        {
-            #if PC_SIMULATION
-                printf("Error opening file!\n");
-            #endif
-            exit(1);
-        }
-        REAL x_tmp[BEZIER_NUMBER_OF_POINTS];
-        REAL y_tmp[BEZIER_NUMBER_OF_POINTS];
-        for (i = 0; i < BEZIER_NUMBER_OF_POINTS; ++i) {
-            if (fscanf(fw, "%f,%f\n", &x_tmp[i], &y_tmp[i]) != 2) {
+        #if PC_SIMULATION
+            REAL x_tmp[BEZIER_NUMBER_OF_POINTS];
+            REAL y_tmp[BEZIER_NUMBER_OF_POINTS];
+            FILE *fw; fw = fopen(ARGS_PATH, "r");
+            if (fw == NULL)
+            {
                 #if PC_SIMULATION
-                    printf("Error reading line %d\n", i + 1);
+                    printf("Error opening file!\n");
                 #endif
                 exit(1);
             }
-            #if PC_SIMULATION
-                printf("%d, %lf %lf\n", i, x_tmp[i], y_tmp[i]);
-            #endif
+            printf("Bezier control points:");
+            for (i = 0; i < BEZIER_NUMBER_OF_POINTS; ++i) {
+                if (fscanf(fw, "%f,%f\n", &x_tmp[i], &y_tmp[i]) != 2) {
+                    #if PC_SIMULATION
+                        printf("Error reading line %d\n", i + 1);
+                    #endif
+                    exit(1);
+                }
+                #if PC_SIMULATION
+                    printf("\t%d, %lf %lf\n", i, x_tmp[i], y_tmp[i]);
+                #endif
+            }
+            fclose(fw);  // 关闭文件
+        #else
+            SIM_2_EXP_DEFINE_BEZIER_POINTS_X
+            SIM_2_EXP_DEFINE_BEZIER_POINTS_Y
+        #endif
+        for (i = 0; i < BEZIER_NUMBER_OF_POINTS; ++i){
+            BzierController->points[i].x = x_tmp[i];
+            BzierController->points[i].y = y_tmp[i];
         }
-        fclose(fw);  // 关闭文件
     #endif
     if (BzierController->points == NULL)
     {
@@ -174,11 +184,6 @@ void set_points(BezierController *BzierController){
         return;
     }
 
-    for (i = 0; i < BEZIER_NUMBER_OF_POINTS; ++i)
-    {
-        BzierController->points[i].x = x_tmp[i];
-        BzierController->points[i].y = y_tmp[i];
-    }
 }
 
 /**

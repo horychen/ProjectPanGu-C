@@ -63,7 +63,7 @@ void _user_commands(){
         if ((*CTRL).timebase > d_sim.user.bezier_seconds_load_disturbance+0.1){
             // break;
         }
-    #elif
+    #else
         (*CTRL).i->cmd_varOmega = debug.set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
     #endif
 }
@@ -86,9 +86,9 @@ void _user_controller(){
         #if WHO_IS_USER == USER_BEZIER
             control_output(PID_Speed, &BzController);
         #elif WHO_IS_USER == USE_WUBVO
-            PID_Speed->calc(&PID_Speed);
+            PID_Speed->calc(PID_Speed);
         #else
-            PID_Speed->calc(&PID_Speed);
+            PID_Speed->calc(PID_Speed);
         #endif
         (*CTRL).i->cmd_iDQ[1] = PID_Speed->Out;
     }
@@ -97,11 +97,11 @@ void _user_controller(){
     // d-axis
     PID_iD->Fbk = (*CTRL).i->iDQ[0];
     PID_iD->Ref = (*CTRL).i->cmd_iDQ[0];
-    PID_iD->calc(&PID_iD);
+    PID_iD->calc(PID_iD);
     // q-axis
     PID_iQ->Fbk = (*CTRL).i->iDQ[1];
     PID_iQ->Ref = (*CTRL).i->cmd_iDQ[1];
-    PID_iQ->calc(&PID_iQ);
+    PID_iQ->calc(PID_iQ);
 
     // 电流环前馈DQ轴解耦
     #if VOLTAGE_CURRENT_DECOUPLING_CIRCUIT == TRUE

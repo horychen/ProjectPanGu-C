@@ -5,78 +5,78 @@
 
 
 typedef struct {
-    REAL LIMIT_DC_BUS_UTILIZATION;
-    REAL SERIES_KI_D_AXIS;
-    REAL SERIES_KI_Q_AXIS;
-    REAL SERIES_KP_D_AXIS;
-    REAL SERIES_KP_Q_AXIS;
-} ST_CL;
+    long npp;
+    REAL IN;
+    REAL R;
+    REAL Ld;
+    REAL Lq;
+    REAL KE;
+    REAL Rreq;
+    REAL Js;
+    REAL Vdc;
+} ST_init;
 
 typedef struct {
-    REAL CMD_CURRENT_SINE_AMPERE;
+    REAL CL_TS;
+    long NUMBER_OF_STEPS;
+    long MACHINE_SIMULATIONs_PER_SAMPLING_PERIOD;
+} ST_sim;
+
+typedef struct {
     long CMD_SPEED_SINE_RPM;
-    BOOL bool_apply_decoupling_voltages_to_current_regulation;
-    BOOL bool_apply_speed_closed_loop_control;
+    REAL CMD_CURRENT_SINE_AMPERE;
     BOOL bool_apply_sweeping_frequency_excitation;
+    BOOL bool_apply_speed_closed_loop_control;
+    BOOL bool_apply_decoupling_voltages_to_current_regulation;
     BOOL bool_overwrite_speed_commands;
     BOOL bool_zero_id_control;
 } ST_CTRL;
 
 typedef struct {
+    long delta;
     long CLBW_HZ;
     long CL_KI_factor_when__bool_apply_decoupling_voltages_to_current_regulation__is_False;
     long VL_EXE_PER_CL_EXE;
-    long delta;
 } ST_FOC;
 
 typedef struct {
-    long LIMIT_OVERLOAD_FACTOR;
-    REAL SERIES_KI;
+    REAL SERIES_KP_D_AXIS;
+    REAL SERIES_KI_D_AXIS;
+    REAL SERIES_KP_Q_AXIS;
+    REAL SERIES_KI_Q_AXIS;
+    REAL LIMIT_DC_BUS_UTILIZATION;
+} ST_CL;
+
+typedef struct {
     REAL SERIES_KP;
+    REAL SERIES_KI;
+    long LIMIT_OVERLOAD_FACTOR;
 } ST_VL;
 
 typedef struct {
-    REAL IN;
-    REAL Js;
-    REAL KE;
-    REAL Ld;
-    REAL Lq;
-    REAL R;
-    REAL Rreq;
-    REAL Vdc;
-    long npp;
-} ST_init;
-
-typedef struct {
-    REAL CL_TS;
-    long MACHINE_SIMULATIONs_PER_SAMPLING_PERIOD;
-    long NUMBER_OF_STEPS;
-} ST_sim;
-
-typedef struct {
-    REAL VL_FEEDBACK_KFB;
     long bezier_NUMBER_OF_STEPS;
-    REAL bezier_max_p_value;
     long bezier_order;
     long bezier_order_current;
+    REAL bezier_max_p_value;
     long bezier_rpm_maximum_effective_speed_error;
-    REAL bezier_seconds_load_disturbance;
     REAL bezier_seconds_step_command;
+    REAL bezier_seconds_load_disturbance;
+    REAL zeta;
+    long omega_n;
+    REAL max_CLBW_PER_min_CLBW;
+    REAL VL_FEEDBACK_KFB;
     BOOL bool_apply_WC_tunner_for_speed_loop;
     BOOL bool_sweeping_frequency_for_speed_loop;
-    REAL max_CLBW_PER_min_CLBW;
-    long omega_n;
-    REAL zeta;
 } ST_user;
 
 
 typedef struct {
-    ST_CL CL;
-    ST_CTRL CTRL;
-    ST_FOC FOC;
-    ST_VL VL;
     ST_init init;
     ST_sim sim;
+    ST_CTRL CTRL;
+    ST_FOC FOC;
+    ST_CL CL;
+    ST_VL VL;
     ST_user user;
 } ST_D_SIM;
 

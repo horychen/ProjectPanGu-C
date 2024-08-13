@@ -47,4 +47,9 @@ void set_points(BezierController *BziController);
 
 void control_output(st_pid_regulator *r, BezierController *BzController);
 
+#if PC_SIMULATION == FALSE
+    #define SIM_2_EXP_DEFINE_BEZIER_POINTS_X REAL x_tmp[5] = { 0, 199.60567246573584, 423.0965698441416, 264.3887865699018, 585.9472944997638};
+    #define SIM_2_EXP_DEFINE_BEZIER_POINTS_Y REAL y_tmp[5] = {0, 3.565958912210109, 8.017249903070724, 1.328682531561319, 13.66303157657558};
+#endif
+
 #endif

@@ -27,6 +27,7 @@ extern struct DebugExperiment debug;
 
 #define USER_BEZIER 10
 #define USER_WUBO   11
+// #define WHO_IS_USER 0
 #define WHO_IS_USER USER_BEZIER
 // #define WHO_IS_USER USER_WUBO
 

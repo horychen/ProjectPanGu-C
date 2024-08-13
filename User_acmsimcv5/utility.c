@@ -154,7 +154,7 @@ double difference_between_two_angles(double first, double second){
         }
         printf("\t[main.c] NUMBER_OF_STEPS: %d\n", d_sim.sim.NUMBER_OF_STEPS);
         printf("\t[main.c] Speed PI:   Kp=%.3f, Ki=%.6f, limit=%.1f A\n", PID_Speed->Kp, PID_Speed->Ki, PID_Speed->OutLimit);
-        printf("\t[main.c] Current PI: Kp=%.3f, Ki=%.6f, limit=%.1f V\n", pid1_iq.Kp, pid1_iq.Ki, pid1_iq.OutLimit);
+        printf("\t[main.c] Current PI: Kp=%.3f, Ki=%.6f, limit=%.1f V\n", PID_iQ->Kp, PID_iQ->Ki, PID_iQ->OutLimit);
     }
 #endif
 

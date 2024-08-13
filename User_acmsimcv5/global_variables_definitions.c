@@ -100,6 +100,7 @@ void allocate_CTRL(struct ControllerForExperiment *p){
         // p->S = calloc(1,sizeof(st_controller_states));
         // p->O = calloc(1,sizeof(st_controller_outputs));
 
+    axisCnt = 0;
     if(axisCnt==0){
         p->motor = &t_motor_1;
         p->enc   = &t_enc_1;
@@ -120,27 +121,30 @@ void allocate_CTRL(struct ControllerForExperiment *p){
         // p->S->iX = &_PID_iX_1;
         // p->S->iY = &_PID_iY_1;
     }
-    if(axisCnt==1){
-        #if NUMBER_OF_AXES == 2
-            p->motor = &t_motor_2;
-            p->enc   = &t_enc_2;
-            p->psd   = &t_psd_2;
-            p->i     = &t_I_2;
-            p->s     = &t_S_2;
-            p->o     = &t_O_2;
-            p->inv   = &t_inv_2;
-            p->cap   = &t_cap_2;
-            p->g     = &t_g_2;
 
-            p->s->iD  = &_PID_iD_2;
-            p->s->iQ  = &_PID_iQ_2;
-            p->s->Speed = &_PID_Speed_2;
-            p->s->Position = &_PID_Position_2;
+    #if PC_SIMULATION == FALSE
+        if(axisCnt==1){
+            #if NUMBER_OF_AXES == 2
+                p->motor = &t_motor_2;
+                p->enc   = &t_enc_2;
+                p->psd   = &t_psd_2;
+                p->i     = &t_I_2;
+                p->s     = &t_S_2;
+                p->o     = &t_O_2;
+                p->inv   = &t_inv_2;
+                p->cap   = &t_cap_2;
+                p->g     = &t_g_2;
 
-            // p->S->iX = &_PID_iX_2;
-            // p->S->iY = &_PID_iY_2;
-        #endif
-    }
+                p->s->iD  = &_PID_iD_2;
+                p->s->iQ  = &_PID_iQ_2;
+                p->s->Speed = &_PID_Speed_2;
+                p->s->Position = &_PID_Position_2;
+
+                // p->S->iX = &_PID_iX_2;
+                // p->S->iY = &_PID_iY_2;
+            #endif
+        }
+    #endif
 }
 
 // Global watch variables
@@ -151,16 +155,12 @@ struct GlobalWatch watch;
     struct ObserverForExperiment OBSV;
     struct SharedFluxEstimatorForExperiment FE;
 
-#if MACHINE_TYPE == PM_SYNCHRONOUS_MACHINE
-
     // 游离在顶级之外的算法结构体
     // struct RK4_DATA rk4;
     // struct Harnefors2006 harnefors={0};
     // struct CJH_EEMF_AO_Design cjheemf={0};
     // struct FARZA09_EEMF_HGO hgo4eemf={0};
     // struct Chen20_NSO_AF nsoaf={0};
-
-#else
 
     // 游离在顶级之外的算法结构体
     // struct RK4_DATA rk4;
@@ -178,7 +178,6 @@ struct GlobalWatch watch;
     // struct Variables_ExactCompensationMethod             exact      ={0};
     // struct Variables_ProposedxRhoFramePICorrectionMethod picorr     ={0};
     // struct Variables_ClosedLoopFluxEstimator             clest      ={0};
-#endif
 
 
 // struct eQEP_Variables qep={0};

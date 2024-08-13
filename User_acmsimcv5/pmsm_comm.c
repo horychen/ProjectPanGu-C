@@ -75,7 +75,7 @@ void doIPD(){
     }
 
     pid1_id.Fbk = (*CTRL).i->idq[0];
-    pid1_id.calc(&pid1_id);
+    pid1_id.calc(pid1_id);
     (*CTRL).o->cmd_uAB[0] = MT2A(pid1_id.Out, 0.0, (*CTRL).s->cosT, (*CTRL).s->sinT);
     (*CTRL).o->cmd_uAB[1] = MT2B(pid1_id.Out, 0.0, (*CTRL).s->cosT, (*CTRL).s->sinT);
 }
@@ -92,7 +92,7 @@ void doPSD(){
 
     pid1_id.Ref = CURRENT_COMMAND_VALUE;
     pid1_id.Fbk = (*CTRL).i->idq[0];
-    pid1_id.calc(&pid1_id);
+    pid1_id.calc(pid1_id);
     (*CTRL).o->cmd_uAB[0] = MT2A(pid1_id.Out, 0.0, (*CTRL).s->cosT, (*CTRL).s->sinT);
     (*CTRL).o->cmd_uAB[1] = MT2B(pid1_id.Out, 0.0, (*CTRL).s->cosT, (*CTRL).s->sinT);
     (*CTRL).o->cmd_uAB_to_inverter[0] = (*CTRL).o->cmd_uAB[0];
@@ -352,7 +352,7 @@ void COMM_resistanceId(REAL id_fb, REAL iq_fb){
 
     REGULATOR.Fbk = FEEDBACK;
     REGULATOR.Ref = COMM.current_command; // 改为从正到负
-    REGULATOR.calc(&REGULATOR);
+    REGULATOR.calc(REGULATOR);
 
     #if EXCITE_BETA_AXIS_AND_MEASURE_PHASE_B
         UD_OUTPUT = 0.0;
@@ -493,7 +493,7 @@ void COMM_resistanceId_v2(REAL id_fb, REAL iq_fb){
     REGULATOR.Ref = COMM.current_command;
     if(G.FLAG_TUNING_CURRENT_SCALE_FACTOR)
         REGULATOR.Ref = 3;
-    REGULATOR.calc(&REGULATOR);
+    REGULATOR.calc(REGULATOR);
 
     #if EXCITE_BETA_AXIS_AND_MEASURE_PHASE_B
         UD_OUTPUT = 0.0;
@@ -696,7 +696,7 @@ void COMM_inductanceId_ver2(REAL id_fb, REAL iq_fb){
 
         REGULATOR.Fbk = id_avg;
         REGULATOR.Ref = COMM.current_command;
-        REGULATOR.calc(&REGULATOR);
+        REGULATOR.calc(REGULATOR);
 
         #if EXCITE_BETA_AXIS_AND_MEASURE_PHASE_B
             Delta_current = fabs(iq_fb - COMM.iq_prev);
@@ -947,7 +947,7 @@ void COMM_PMFluxId(REAL id_fb, REAL iq_fb, REAL omg_elec_fb){
 
             PID_Speed->Ref = rpm_speed_command*RPM_2_ELEC_RAD_PER_SEC;
             PID_Speed->Fbk = omg_elec_fb;
-            PID_Speed->calc(&PID_Speed);
+            PID_Speed->calc(PID_Speed);
             pid1_iq.Ref = PID_Speed->Out;
             // REAL torque_cmd = PID_Speed->Out;
             // pid1_iq.Ref = torque_cmd / (CLARKE_TRANS_TORQUE_GAIN*MOTOR_NUMBER_OF_POLE_PAIRS*MOTOR_BACK_EMF_CONSTANT);
@@ -983,14 +983,14 @@ void COMM_PMFluxId(REAL id_fb, REAL iq_fb, REAL omg_elec_fb){
     pid1_id.Fbk = id_fb;
     pid1_iq.Fbk = iq_fb;
 
-    // put this before pid1_iq.calc(&pid1_iq);
+    // put this before pid1_iq.calc(pid1_iq);
     filtered_voltage     = _lpf(pid1_iq.Out, filtered_voltage, 5);
     filtered_current     = _lpf(pid1_iq.Fbk, filtered_current, 5);
     filtered_omg_elec_fb = _lpf(omg_elec_fb, filtered_omg_elec_fb, 5);
 
     // voltage output
-    pid1_id.calc(&pid1_id);
-    pid1_iq.calc(&pid1_iq);
+    pid1_id.calc(pid1_id);
+    pid1_iq.calc(pid1_iq);
     UD_OUTPUT = MT2A(pid1_id.Out, pid1_iq.Out, (*CTRL).s->cosT, (*CTRL).s->sinT);
     UQ_OUTPUT = MT2B(pid1_id.Out, pid1_iq.Out, (*CTRL).s->cosT, (*CTRL).s->sinT);
 
@@ -1119,7 +1119,7 @@ void COMM_inertiaId(REAL id_fb, REAL iq_fb, REAL cosPark, REAL sinPark, REAL omg
             (*CTRL).i->cmd_speed_rpm = SPEED_COMMAND_BIAS+SPEED_COMMAND_RANGE*sin(2*M_PI*TEST_SIGNAL_FREQUENCY*(*CTRL).timebase);
             PID_Speed->Ref = (*CTRL).i->cmd_speed_rpm*RPM_2_ELEC_RAD_PER_SEC;
             PID_Speed->Fbk = SPEED_SIGNAL;
-            PID_Speed->calc(&PID_Speed);
+            PID_Speed->calc(PID_Speed);
             pid1_iq.Ref = PID_Speed->Out;
             // REAL torque_cmd = PID_Speed->Out;
             // pid1_iq.Ref = torque_cmd / (CLARKE_TRANS_TORQUE_GAIN*MOTOR_NUMBER_OF_POLE_PAIRS*COMM.KE);
@@ -1182,10 +1182,10 @@ void COMM_inertiaId(REAL id_fb, REAL iq_fb, REAL cosPark, REAL sinPark, REAL omg
     }
 
     pid1_id.Fbk = id_fb;
-    pid1_id.calc(&pid1_id);
+    pid1_id.calc(pid1_id);
 
     pid1_iq.Fbk = iq_fb;
-    pid1_iq.calc(&pid1_iq);
+    pid1_iq.calc(pid1_iq);
 
     UD_OUTPUT = MT2A(pid1_id.Out, pid1_iq.Out, cosPark, sinPark);
     UQ_OUTPUT = MT2B(pid1_id.Out, pid1_iq.Out, cosPark, sinPark);

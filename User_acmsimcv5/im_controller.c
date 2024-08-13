@@ -408,7 +408,7 @@ void controller_marino2005(){
 
             PID_Speed->Ref = (*CTRL).i->cmd_varOmega; //rpm_speed_command*RPM_2_ELEC_RAD_PER_SEC;
             PID_Speed->Fbk = (*CTRL).i->varOmega;
-            PID_Speed->calc(&PID_Speed);
+            PID_Speed->calc(PID_Speed);
             PID_iQ->Ref = PID_Speed->Out;
             (*CTRL).i->cmd_iDQ[1] = PID_iQ->Ref;
         }
@@ -418,8 +418,8 @@ void controller_marino2005(){
 
         /// 6. 电流环
         REAL decoupled_M_axis_voltage=0.0, decoupled_T_axis_voltage=0.0;
-        PID_iD->calc(&PID_iD);
-        PID_iQ->calc(&PID_iQ);
+        PID_iD->calc(PID_iD);
+        PID_iQ->calc(PID_iQ);
 
         decoupled_M_axis_voltage = PID_iD->Out;
         decoupled_T_axis_voltage = PID_iQ->Out;
@@ -503,7 +503,7 @@ void controller_IFOC(){
 
         PID_Speed->Ref = (*CTRL).i->cmd_varOmega; //rpm_speed_command*RPM_2_ELEC_RAD_PER_SEC;
         PID_Speed->Fbk = (*CTRL).i->varOmega;
-        PID_Speed->calc(&PID_Speed);
+        PID_Speed->calc(PID_Speed);
         PID_iQ->Ref = PID_Speed->Out;
         (*CTRL).i->cmd_iDQ[1] = PID_iQ->Ref;
     }
@@ -540,8 +540,8 @@ void controller_IFOC(){
 
     /// 6. 电流环
     REAL decoupled_M_axis_voltage=0.0, decoupled_T_axis_voltage=0.0;
-    PID_iD->calc(&PID_iD);
-    PID_iQ->calc(&PID_iQ);
+    PID_iD->calc(PID_iD);
+    PID_iQ->calc(PID_iQ);
     {   // Steady state dynamics based decoupling circuits for current regulation
         #if VOLTAGE_CURRENT_DECOUPLING_CIRCUIT == TRUE
             // decoupled_M_axis_voltage = vM + ((*CTRL).motor->R+(*CTRL).motor->Rreq)*(*CTRL).iMs + (*CTRL).motor->Lsigma*(-(*CTRL).s->omega_syn*(*CTRL).iTs) - (*CTRL).motor->alpha*(*CTRL).psimod_fb; // Jadot09
