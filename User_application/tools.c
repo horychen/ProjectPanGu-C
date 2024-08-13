@@ -515,8 +515,8 @@ void voltage_commands_to_pwm()
     if (axisCnt == 0)
     {
         // SVPWM of the motor 3-phase
-        (*CTRL).svgen1.Ualpha = (*CTRL).o->uab_cmd_to_inverter[0];
-        (*CTRL).svgen1.Ubeta = (*CTRL).o->uab_cmd_to_inverter[1];
+        (*CTRL).svgen1.Ualpha = (*CTRL).o->cmd_uAB_to_inverter[0];
+        (*CTRL).svgen1.Ubeta = (*CTRL).o->cmd_uAB_to_inverter[1];
 
         if (enable_vvvf)
         {
@@ -549,8 +549,8 @@ void voltage_commands_to_pwm()
     if (axisCnt == 1)
     {
         // SVPWM of the suspension 3-phase
-        (*CTRL).svgen2.Ualpha = (*CTRL).o->uab_cmd_to_inverter[0];
-        (*CTRL).svgen2.Ubeta = (*CTRL).o->uab_cmd_to_inverter[1];
+        (*CTRL).svgen2.Ualpha = (*CTRL).o->cmd_uAB_to_inverter[0];
+        (*CTRL).svgen2.Ubeta = (*CTRL).o->cmd_uAB_to_inverter[1];
 
         if (enable_vvvf)
         {
@@ -633,17 +633,17 @@ void voltage_measurement_based_on_eCAP()
     else if (G.flag_use_ecap_voltage == 0)
     {
         /*Use command voltage for feedback*/
-        US_P(0) = (*CTRL).o->uab_cmd[0]; // 后缀_P表示上一步的电压，P = Previous
-        US_P(1) = (*CTRL).o->uab_cmd[1]; // 后缀_C表示当前步的电压，C = Current
-        US_C(0) = (*CTRL).o->uab_cmd[0]; // 后缀_P表示上一步的电压，P = Previous
-        US_C(1) = (*CTRL).o->uab_cmd[1]; // 后缀_C表示当前步的电压，C = Current
+        US_P(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
+        US_P(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
+        US_C(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
+        US_C(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
     }
 
     // (for watch only) Mismatch between ecap measurement and command to inverter
-    (*CTRL).o->udq_cmd_to_inverter[0] = (*CTRL).s->cosT * (*CTRL).o->uab_cmd_to_inverter[0] + (*CTRL).s->sinT * (*CTRL).o->uab_cmd_to_inverter[1];
-    (*CTRL).o->udq_cmd_to_inverter[1] = -(*CTRL).s->sinT * (*CTRL).o->uab_cmd_to_inverter[0] + (*CTRL).s->cosT * (*CTRL).o->uab_cmd_to_inverter[1];
-    CAP.dq_mismatch[0] = (*CTRL).o->udq_cmd_to_inverter[0] - CAP.dq[0];
-    CAP.dq_mismatch[1] = (*CTRL).o->udq_cmd_to_inverter[1] - CAP.dq[1];
+    (*CTRL).o->cmd_uDQ_to_inverter[0] = (*CTRL).s->cosT * (*CTRL).o->cmd_uAB_to_inverter[0] + (*CTRL).s->sinT * (*CTRL).o->cmd_uAB_to_inverter[1];
+    (*CTRL).o->cmd_uDQ_to_inverter[1] = -(*CTRL).s->sinT * (*CTRL).o->cmd_uAB_to_inverter[0] + (*CTRL).s->cosT * (*CTRL).o->cmd_uAB_to_inverter[1];
+    CAP.dq_mismatch[0] = (*CTRL).o->cmd_uDQ_to_inverter[0] - CAP.dq[0];
+    CAP.dq_mismatch[1] = (*CTRL).o->cmd_uDQ_to_inverter[1] - CAP.dq[1];
 }
 
 
@@ -761,7 +761,7 @@ void measurement_enc_and_i()
     CTRL->enc->rpm = CTRL->enc->sum_qepPosCnt * MA_SEQUENCE_LENGTH_INVERSE; // CL_TS_INVERSE;
     // CTRL->enc->rpm = CTRL->enc->rpm_raw;
 
-    CTRL->enc->omg_elec = CTRL->enc->rpm * RPM_2_ELEC_RAD_PER_SEC;
+    CTRL->enc->varOmega = CTRL->enc->rpm * RPM_2_ELEC_RAD_PER_SEC;
 
     // end of axiscnt
 
@@ -786,9 +786,9 @@ void measurement_enc_and_i()
 
     // CTRL->enc->rpm = PostionSpeedMeasurement_MovingAvergage(QPOSCNT, CTRL->enc);
 
-    if ((*CTRL).s->go_sensorless == FALSE)
+    // if ((*CTRL).s->go_sensorless == FALSE)
     {
-        CTRL->i->omg_elec = CTRL->enc->omg_elec;
+        CTRL->i->varOmega = CTRL->enc->varOmega;
         CTRL->i->theta_d_elec = CTRL->enc->theta_d_elec;
     }
 
@@ -852,8 +852,8 @@ void control_two_motor_position()
     if (axisCnt == 0)
     {
 #if NUMBER_OF_AXES == 2
-        PID_pos->Fbk = position_count_CAN_ID0x03_fromCPU2;
-        PID_pos->Ref = hip_shank_angle_to_can(
+        PID_Position->Fbk = position_count_CAN_ID0x03_fromCPU2;
+        PID_Position->Ref = hip_shank_angle_to_can(
             curycontroller.theta1 + curycontroller.theta2,
             SHANK_TYPE);
 #endif
@@ -861,47 +861,47 @@ void control_two_motor_position()
     if (axisCnt == 1)
     {
 #if NUMBER_OF_AXES == 2
-        PID_pos->Fbk = position_count_CAN_ID0x01_fromCPU2;
-        PID_pos->Ref = hip_shank_angle_to_can(
+        PID_Position->Fbk = position_count_CAN_ID0x01_fromCPU2;
+        PID_Position->Ref = hip_shank_angle_to_can(
             curycontroller.theta1,
             HIP_TYPE);
 #endif
     }
     // 位置环
     // 长弧和短弧，要选短的。
-    PID_pos->Err = PID_pos->Ref - PID_pos->Fbk;
-    if (PID_pos->Err > (CAN_QMAX * 0.5))
+    PID_Position->Err = PID_Position->Ref - PID_Position->Fbk;
+    if (PID_Position->Err > (CAN_QMAX * 0.5))
     {
-        PID_pos->Err -= CAN_QMAX;
+        PID_Position->Err -= CAN_QMAX;
     }
-    if (PID_pos->Err < -(CAN_QMAX * 0.5))
+    if (PID_Position->Err < -(CAN_QMAX * 0.5))
     {
-        PID_pos->Err += CAN_QMAX;
+        PID_Position->Err += CAN_QMAX;
     }
     if (axisCnt == 0)
     {
     #if NUMBER_OF_AXES == 2
-        PID_pos->Out = PID_pos->Err * PID_pos->Kp + 32 * (curycontroller.dot_theta1+curycontroller.dot_theta2) * 60 * 0.15915494309189535;
+        PID_Position->Out = PID_Position->Err * PID_Position->Kp + 32 * (curycontroller.dot_theta1+curycontroller.dot_theta2) * 60 * 0.15915494309189535;
     #endif
     }
     if (axisCnt == 1)
     {
     #if NUMBER_OF_AXES == 2
-        PID_pos->Out = PID_pos->Err * PID_pos->Kp + 32 * curycontroller.dot_theta1* 60 * 0.15915494309189535;
+        PID_Position->Out = PID_Position->Err * PID_Position->Kp + 32 * curycontroller.dot_theta1* 60 * 0.15915494309189535;
     #endif
     }
-    if (PID_pos->Out > PID_pos->OutLimit)
+    if (PID_Position->Out > PID_Position->OutLimit)
     {
-        PID_pos->Out = PID_pos->OutLimit;
+        PID_Position->Out = PID_Position->OutLimit;
     }
-    if (PID_pos->Out < -PID_pos->OutLimit)
+    if (PID_Position->Out < -PID_Position->OutLimit)
     {
-        PID_pos->Out = -PID_pos->OutLimit;
+        PID_Position->Out = -PID_Position->OutLimit;
     }
     if (axisCnt == 1)
-        Axis->Set_manual_rpm = -PID_pos->Out;
+        Axis->Set_manual_rpm = -PID_Position->Out;
     else
-        Axis->Set_manual_rpm = PID_pos->Out;
+        Axis->Set_manual_rpm = PID_Position->Out;
 }
 
 void control_single_motor_position()
@@ -913,39 +913,39 @@ void control_single_motor_position()
     if (axisCnt == 0)
     {
 #if NUMBER_OF_AXES == 2
-        PID_pos->Fbk = position_count_CAN_ID0x03_fromCPU2;
-        PID_pos->Ref = target_position_cnt_shank;
+        PID_Position->Fbk = position_count_CAN_ID0x03_fromCPU2;
+        PID_Position->Ref = target_position_cnt_shank;
 #endif
     }
     if (axisCnt == 1)
     {
 #if NUMBER_OF_AXES == 2
-        PID_pos->Fbk = position_count_CAN_ID0x01_fromCPU2;
-        PID_pos->Ref = target_position_cnt_hip;
+        PID_Position->Fbk = position_count_CAN_ID0x01_fromCPU2;
+        PID_Position->Ref = target_position_cnt_hip;
 #endif
     }
-    PID_pos->Err = PID_pos->Ref - PID_pos->Fbk;
-    if (PID_pos->Err > (CAN_QMAX * 0.5))
+    PID_Position->Err = PID_Position->Ref - PID_Position->Fbk;
+    if (PID_Position->Err > (CAN_QMAX * 0.5))
     {
-        PID_pos->Err -= CAN_QMAX;
+        PID_Position->Err -= CAN_QMAX;
     }
-    if (PID_pos->Err < -(CAN_QMAX * 0.5))
+    if (PID_Position->Err < -(CAN_QMAX * 0.5))
     {
-        PID_pos->Err += CAN_QMAX;
+        PID_Position->Err += CAN_QMAX;
     }
-    PID_pos->Out = PID_pos->Err * PID_pos->Kp;
-    if (PID_pos->Out > PID_pos->OutLimit)
+    PID_Position->Out = PID_Position->Err * PID_Position->Kp;
+    if (PID_Position->Out > PID_Position->OutLimit)
     {
-        PID_pos->Out = PID_pos->OutLimit;
+        PID_Position->Out = PID_Position->OutLimit;
     }
-    if (PID_pos->Out < -PID_pos->OutLimit)
+    if (PID_Position->Out < -PID_Position->OutLimit)
     {
-        PID_pos->Out = -PID_pos->OutLimit;
+        PID_Position->Out = -PID_Position->OutLimit;
     }
     if (axisCnt == 1)
-        Axis->Set_manual_rpm = -PID_pos->Out;
+        Axis->Set_manual_rpm = -PID_Position->Out;
     else
-        Axis->Set_manual_rpm = PID_pos->Out;
+        Axis->Set_manual_rpm = PID_Position->Out;
 }
 
 void run_shank_loop()
@@ -1144,7 +1144,7 @@ void DISABLE_PWM_OUTPUT(int use_first_set_three_phase)
 
         // TODO: use a function for this purpose!
         // 清空积分缓存
-        PID_spd->OutPrev = 0;
+        PID_Speed->OutPrev = 0;
         PID_iD->OutPrev = 0;
         PID_iQ->OutPrev = 0;
         // PID_iX->OutPrev = 0;
@@ -1206,7 +1206,7 @@ void ENABLE_PWM_OUTPUT(int positionLoopType, int use_first_set_three_phase)
 
     // 根据指令，产生控制输出（电压）
     #if ENABLE_COMMISSIONING == FALSE
-                                                                //(*CTRL).s->Motor_or_Gnerator = sign((*CTRL).i->idq_cmd[1]) == sign(CTRL->enc->rpm); // sign((*CTRL).i->idq_cmd[1]) != sign((*CTRL).i->cmd_speed_rpm))
+                                                                //(*CTRL).s->Motor_or_Gnerator = sign((*CTRL).i->cmd_iDQ[1]) == sign(CTRL->enc->rpm); // sign((*CTRL).i->cmd_iDQ[1]) != sign((*CTRL).i->cmd_speed_rpm))
         runtime_command_and_tuning(Axis->Select_exp_operation);
         // 0x03 is shank
         //    position_count_CAN_fromCPU2 = position_count_CAN_ID0x03_fromCPU2;
@@ -1244,7 +1244,7 @@ void ENABLE_PWM_OUTPUT(int positionLoopType, int use_first_set_three_phase)
         commissioning(); // 参数辨识用
     #endif
 
-    //(*CTRL).o->uab_cmd_to_inverter[0]
+    //(*CTRL).o->cmd_uAB_to_inverter[0]
 
     // operation mode为5的时候，执行下面测试逆变器输出电压的代码
     if (Axis->Select_exp_operation == XCUBE_TaTbTc_DEBUG_MODE)

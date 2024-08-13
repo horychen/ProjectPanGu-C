@@ -1,6 +1,8 @@
 #ifndef PMSM_CONTROLLER_H
+#define PMSM_CONTROLLER_H
+
 // #if MACHINE_TYPE == 2
-typedef struct { 
+typedef struct {
     REAL  Ualpha; // Input: reference alpha-axis phase voltage
     REAL  Ubeta;  // Input: reference beta-axis phase voltage
     REAL  Ta;     // Output: reference phase-a switching function
@@ -12,39 +14,39 @@ typedef struct {
 
 typedef struct {
     // commands
-    REAL cmd_position_rad;  // mechanical
-    REAL cmd_speed_rpm;     // mechanical
-    REAL cmd_omg_elec;      // electrical
-    REAL cmd_deriv_omg_elec;  // electrical
-    REAL cmd_dderiv_omg_elec; // electrical
+    REAL cmd_varTheta;        // mechanical
+    REAL cmd_varOmega;        // mechanical
+    REAL cmd_deriv_varOmega;  // mechanical
+    REAL cmd_dderiv_varOmega; // mechanical
     REAL cmd_rotor_flux_Wb;
-    REAL idq_cmd[4];
-    REAL Tem_cmd;
+    REAL cmd_Tem;
+    REAL cmd_iDQ[2];
+    REAL cmd_uDQ[2];
     // feedback
-    REAL rpm;
-    REAL omg_elec;
+    REAL Vdc;
     REAL theta_d_elec;
-    REAL theta_d_elec_previous;
-    REAL iab[4];
-    REAL idq[4];
-    REAL psi_mu[2];
+    REAL varTheta; // mechanical
+    REAL varOmega; // mechanical
+    REAL iAB[2];
+    REAL iDQ[2];
     REAL Tem;
     REAL TLoad;
+    REAL psi_active[2];
     // flux commands
     REAL cmd_psi_raw;
     REAL cmd_psi;
     REAL cmd_psi_inv;
     REAL cmd_deriv_psi;
     REAL cmd_dderiv_psi;
-    REAL cmd_psi_ABmu[2];
+    REAL cmd_psi_active[2];
     REAL m0;
     REAL m1;
     REAL omega1;
 } st_controller_inputs;
 typedef struct {
     // controller strategy
-    int ctrl_strategy;
-    int go_sensorless;
+    // int ctrl_strategy;
+    // int go_sensorless;
     // ???
     REAL e_M;
     REAL e_T;
@@ -58,12 +60,14 @@ typedef struct {
     REAL omega_syn;
     REAL omega_sl;
     // states
-    st_pid_regulator *iD; // no D term. only PI !!!!
+    st_pid_regulator *iD;
     st_pid_regulator *iQ;
-    st_pid_regulator *spd;
-    st_pid_regulator *pos;
-    st_PIDController *iX;  // has D term. PID !!!!
-    st_PIDController *iY;
+    st_pid_regulator *Speed;
+    st_pid_regulator *Position;
+    // st_pid_regulator *ix;
+    // st_pid_regulator *iy;
+    // st_PIDController *dispX;
+    // st_PIDController *dispY;
     int the_vc_count;
     // Status of Detection
     int PSD_Done;
@@ -73,12 +77,12 @@ typedef struct {
 } st_controller_states;
 typedef struct {
     // voltage commands
-    REAL uab_cmd[4];
-    REAL udq_cmd[4];
-    REAL uab_cmd_to_inverter[4]; // foc control output + inverter nonlinearity compensation
-    REAL udq_cmd_to_inverter[4];
+    REAL cmd_uAB[4];
+    REAL cmd_uDQ[4];
+    REAL cmd_uAB_to_inverter[4]; // foc control output + inverter nonlinearity compensation
+    REAL cmd_uDQ_to_inverter[4];
     // current commands
-    REAL iab_cmd[4];
+    REAL cmd_iAB[4];
 } st_controller_outputs;
 typedef struct {
     // electrical 
@@ -104,6 +108,8 @@ typedef struct {
     REAL Js_inv;
 } st_motor_parameters;
 
+
+// TODO: Need confirm parameters @Jiahao Chen
 #define MA_SEQUENCE_LENGTH         40 // 40 for Yaojie large Lq motor  // Note MA_SEQUENCE_LENGTH * CL_TS = window of moving average in seconds
 #define MA_SEQUENCE_LENGTH_INVERSE 0.025 // 0.025                        // 20 MA gives speed resolution of 3 rpm for 2500 ppr encoder
 // #define MA_SEQUENCE_LENGTH         20 // 20 * CL_TS = window of moving average in seconds
@@ -129,7 +135,7 @@ typedef struct {
     int32 OffsetCountBetweenIndexAndUPhaseAxis;
     // output
     REAL rpm;
-    REAL omg_elec;
+    REAL varOmega;
     REAL theta_d_elec;
 } st_enc; // encoder
 typedef struct {
@@ -233,8 +239,8 @@ typedef struct {
 } st_capture; // eCapture
 typedef struct {
     // To show that REAL type is not very accurate 64 missing by counting 1e-4 sec to 10 sec.
-//        Uint32  test_integer;
-//        REAL    test_float;
+        Uint32  test_integer;
+        REAL    test_float;
     // Mode Changing During Experiment
         // int FLAG_ENABLE_PWM_OUTPUT; // 电机模式标志位
         // int DAC_MAX5307_FLAG; // for single core case
@@ -246,7 +252,7 @@ typedef struct {
         REAL overwrite_vdc; // = 180;
         int flag_overwite_vdc; // = FALSE;
         int flag_use_ecap_voltage; // = 0;
-        int flag_experimental_initialized; 
+        int flag_experimental_initialized;
         int FLAG_TUNING_CURRENT_SCALE_FACTOR; // for comm (special mode for calibrate current sensor channel gain)
         int flag_do_inverter_characteristics; // for comm
         // int Seletc_exp_operation; // for exp
@@ -265,8 +271,6 @@ typedef struct {
 } st_global_variables; // globals
 
 struct ControllerForExperiment{
-
-    int ID;
 
     /* Basic quantities */
     REAL timebase;
@@ -295,39 +299,44 @@ struct ControllerForExperiment{
     st_controller_inputs  *i;
     st_controller_states  *s;
     st_controller_outputs *o;
+    // REAL inputs[8];
+    // REAL states[5];
+    // REAL outputs[4];
 };
 
+extern int axisCnt;
 extern struct ControllerForExperiment CTRL_1;
-extern struct ControllerForExperiment CTRL_2;
+#if PC_SIMULATION == FALSE
+#if NUMBER_OF_AXES == 2
+    extern struct ControllerForExperiment CTRL_2;
+#endif
+#endif
 extern struct ControllerForExperiment *CTRL;
 #define MOTOR   (*(*CTRL).motor)
 #define ENC     (*(*CTRL).enc)
 #define PSD     (*(*CTRL).psd)
-#define IN      (*(*CTRL).i)
-#define STATE   (*(*CTRL).s)
-#define OUT     (*(*CTRL).o)
+// #define IN      (*(*CTRL).i)
+// #define STATE   (*(*CTRL).s)
+// #define OUT     (*(*CTRL).o)
 #define INV     (*(*CTRL).inv)
 #define CAP     (*(*CTRL).cap)
 #define G       (*(*CTRL).g)
     // extern st_InverterNonlinearity t_inv;
     // #define INV     t_inv
 
+#define PID_iD  (CTRL->s->iD)
+#define PID_iQ  (CTRL->s->iQ)
+#define PID_Speed  (CTRL->s->Speed)
+#define PID_Position  (CTRL->s->Position)
+// #define PID_iX  (CTRL->s->iX)
+// #define PID_iY  (CTRL->s->iY)
 
 void init_experiment();
 void init_CTRL();
 void commissioning();
-REAL controller(REAL set_rpm_speed_command, 
-    int set_current_loop, REAL set_iq_cmd, REAL set_id_cmd,
-    int flag_overwrite_theta_d, REAL Overwrite_Current_Frequency,
-    REAL used_theta_d_elec,
-    REAL angle_shift_for_first_inverter,
-    REAL angle_shift_for_second_inverter);
 void allocate_CTRL(struct ControllerForExperiment *p);
 
 // void control(REAL speed_cmd, REAL speed_cmd_dot);
-
-void cmd_fast_speed_reversal(REAL timebase, REAL instant, REAL interval, REAL rpm_cmd);
-void cmd_slow_speed_reversal(REAL timebase, REAL instant, REAL interval, REAL rpm_cmd);
 
 
 /* 逆变器非线性 */

@@ -1,55 +1,56 @@
 #ifndef ACMCONFIG_H
 #define ACMCONFIG_H
+
+/* User */
+#include <user_defined_functions.h>
+#include <ACMParam.h>
+
+#define MODE_SELECT_PWM_DIRECT 1
+#define MODE_SELECT_VOLTAGE_OPEN_LOOP 11
+#define MODE_SELECT_WITHOUT_ENCODER_CURRENT_VECTOR_ROTATE 2
+#define MODE_SELECT_FOC 3
+#define MODE_SELECT_FOC_SENSORLESS 31
+#define MODE_SELECT_VELOCITY_LOOP 4
+#define MODE_SELECT_VELOCITY_LOOP_SENSORLESS 41
+#define MODE_SELECT_TESTING_SENSORLESS 42
+#define MODE_SELECT_VELOCITY_LOOP_WC_TUNER 43
+#define MODE_SELECT_POSITION_LOOP 5
+#define MODE_SELECT_COMMISSIONING 9
+
+
 /* 经常要修改的 */
-#define INVERTER_NONLINEARITY_COMPENSATION_INIT 4 // 5（9月1日及以前峣杰实验一直用的5） // 4 // 1:ParkSul12, 2:Sigmoid, 3:LUT(Obsolete), 4:LUT(by index), 5 Slessinv-a2a3Model
-#define INVERTER_NONLINEARITY                   0 // 4 // 1:ModelSul96, 2:ModelExpSigmoid, 3: ModelExpLUT, 4:LUT(by index)
-#define SENSORLESS_CONTROL FALSE
-#define SENSORLESS_CONTROL_HFSI FALSE
+// #define INVERTER_NONLINEARITY_COMPENSATION_INIT 0 // 5（9月1日及以前峣杰实验一直用的5） // 4 // 1:ParkSul12, 2:Sigmoid, 3:LUT(Obsolete), 4:LUT(by index), 5 Slessinv-a2a3Model
+// #define INVERTER_NONLINEARITY                   0 // 4 // 1:ModelSul96, 2:ModelExpSigmoid, 3: ModelExpLUT, 4:LUT(by index)
+// #define SENSORLESS_CONTROL FALSE
+// #define SENSORLESS_CONTROL_HFSI FALSE
+
 /* ParkSul2012 梯形波 */
 #define GAIN_THETA_TRAPEZOIDAL (40) //(500) // 20
-
-
-#define APPLY_WCTUNER TRUE // 是否使用新的调参器
 
 /* 电机类型 */ //（TODO：饱和模型里面用的还是 IM.rr 而不是 IM.rreq）
     #define INDUCTION_MACHINE_CLASSIC_MODEL 1
     #define INDUCTION_MACHINE_FLUX_ONLY_MODEL 11
     #define PM_SYNCHRONOUS_MACHINE 2
-#define MACHINE_TYPE 2
-	// // 电机参数
-	// #define PMSM_RESISTANCE                    0.1195
-	// #define PMSM_D_AXIS_INDUCTANCE             0.000455
-	// #define PMSM_Q_AXIS_INDUCTANCE             0.0005600000000000001
-	// #define PMSM_PERMANENT_MAGNET_FLUX_LINKAGE 0.01934
-	// // 铭牌值
-	// #define MOTOR_NUMBER_OF_POLE_PAIRS         26
-	// #define MOTOR_RATED_CURRENT_RMS            17
-	// #define MOTOR_RATED_POWER_WATT             830
-	// #define MOTOR_RATED_SPEED_RPM              760
-	// #define MOTOR_SHAFT_INERTIA                0.000364
-    #define MOTOR_NUMBER_OF_POLE_PAIRS 5
-    #define MOTOR_RATED_CURRENT_RMS (16.8)
-    #define PMSM_RESISTANCE (0.037)
-    #define PMSM_D_AXIS_INDUCTANCE (0.00019)
-    #define PMSM_Q_AXIS_INDUCTANCE (0.00019)
-    #define PMSM_PERMANENT_MAGNET_FLUX_LINKAGE (0.01717)
-    #define MOTOR_RREQ (0.0)
-    #define MOTOR_SHAFT_INERTIA (0.00015900000000000002) * 3
-    #define DC_BUS_VOLTAGE 20
-    #define MOTOR_RATED_POWER_WATT             750
-	#define MOTOR_RATED_SPEED_RPM              3000
-
+#define MACHINE_TYPE 1
 
 	// 参数误差
-		#define MISMATCH_R   100
-		#define MISMATCH_LD  100
-		#define MISMATCH_LQ  100
-		#define MISMATCH_KE  100
+		#define MISMATCH_R    100.0
+		#define MISMATCH_RREQ 100.0
+		#define MISMATCH_LD   100.0
+		#define MISMATCH_LQ   100.0
+		#define MISMATCH_KE   100.0
+        #define MISMATCH_LMU  100.0
 
+
+	// 磁链给定
+	#define IM_MAGNETIZING_INDUCTANCE   (d_sim.init.Ld - d_sim.init.Lq)
+	#define IM_FLUX_COMMAND_DC_PART     1.3593784874408608
+	#define IM_FLUX_COMMAND_SINE_PART   0.0
+	#define IM_FLUX_COMMAND_SINE_HERZ   10
 
 #if MACHINE_TYPE % 10 == 2
-	#define CORRECTION_4_SHARED_FLUX_EST PMSM_PERMANENT_MAGNET_FLUX_LINKAGE
-    #define U_MOTOR_KE                   PMSM_PERMANENT_MAGNET_FLUX_LINKAGE
+	#define CORRECTION_4_SHARED_FLUX_EST INIT_KE
+    #define U_MOTOR_KE                   INIT_KE
 #else
 	#define CORRECTION_4_SHARED_FLUX_EST    IM_FLUX_COMMAND_DC_PART
     #define U_MOTOR_R                       IM_STAOTR_RESISTANCE    // typo!
@@ -85,8 +86,8 @@
     /* Commissioning */
     #define EXCITE_BETA_AXIS_AND_MEASURE_PHASE_B TRUE
     #if PC_SIMULATION
-        #define SELF_COMM_INVERTER FALSE
         #define ENABLE_COMMISSIONING FALSE /*Simulation*/
+        #define SELF_COMM_INVERTER FALSE
         #define TUNING_CURRENT_SCALE_FACTOR_INIT FALSE
     #else
         #define ENABLE_COMMISSIONING FALSE /*Experiment*/
@@ -119,8 +120,8 @@
             #define ELECTRICAL_SPEED_FEEDBACK    (-esoaf.xOmg) // 薄片电机实验正iq产生负转速
             #define ELECTRICAL_POSITION_FEEDBACK AFE_USED.theta_d
         #else
-            // #define ELECTRICAL_POSITION_FEEDBACK G.theta_d
             // #define ELECTRICAL_SPEED_FEEDBACK    G.omg_elec
+            // #define ELECTRICAL_POSITION_FEEDBACK G.theta_d
 
             // #define ELECTRICAL_SPEED_FEEDBACK    parksul.xOmg
             // #define ELECTRICAL_POSITION_FEEDBACK parksul.theta_d
@@ -183,7 +184,7 @@
         // #define NSOAF_SPMSM // use AP Error
         #define NSOAF_IPMSM // use only OE
         #define TUNING_IGNORE_UQ TRUE
-        #define NSOAF_OMEGA_OBSERVER 300 // >150 [rad/s] // cannot be too small (e.g., 145, KP will be negative), 
+        #define NSOAF_OMEGA_OBSERVER 300 // >150 [rad/s] // cannot be too small (e.g., 145, KP will be negative),
             #define NSOAF_TL_P (1) // 1 for experimental starting // 4 for 1500 rpm // 2 for 800 rpm
             #define NSOAF_TL_I (20)
             #define NSOAF_TL_D (0)
@@ -246,77 +247,61 @@
 /* 控制策略 */
 	#define NULL_D_AXIS_CURRENT_CONTROL -1
 	#define MTPA -2 // not supported
-#define CONTROL_STRATEGY NULL_D_AXIS_CURRENT_CONTROL
-#define NUMBER_OF_STEPS 50000
+// #define CONTROL_STRATEGY NULL_D_AXIS_CURRENT_CONTROL
+    #define MARINO_2005_ADAPTIVE_SENSORLESS_CONTROL 11
+#define CONTROL_STRATEGY MARINO_2005_ADAPTIVE_SENSORLESS_CONTROL
+// #define NUMBER_OF_STEPS 25000
     #define DOWN_SAMPLE 1
     #define USE_QEP_RAW FALSE
     #define VOLTAGE_CURRENT_DECOUPLING_CIRCUIT FALSE
     #define SATURATED_MAGNETIC_CIRCUIT FALSE
-#define CL_TS          (0.0001)
-#define CL_TS_INVERSE  (10000)
-    #define TS_UPSAMPLING_FREQ_EXE 1.0 //0.5
-    #define TS_UPSAMPLING_FREQ_EXE_INVERSE 1 //2
-#define VL_TS          (0.0005)
-    #define PL_TS VL_TS
-    #define SPEED_LOOP_CEILING ((int)(VL_TS*CL_TS_INVERSE))
-    #define MACHINE_TS         (CL_TS*TS_UPSAMPLING_FREQ_EXE)
-    #define MACHINE_TS_INVERSE (CL_TS_INVERSE*TS_UPSAMPLING_FREQ_EXE_INVERSE)
+#define CL_TS          (d_sim.sim.CL_TS)
+#define CL_TS_INVERSE  (1.0 / CL_TS)
+#define VL_TS          (d_sim.FOC.VL_EXE_PER_CL_EXE*CL_TS)
+#define PL_TS          VL_TS
+#define SPEED_LOOP_CEILING (d_sim.FOC.VL_EXE_PER_CL_EXE)
+    // #define TS_UPSAMPLING_FREQ_EXE (CL_TS / MACHINE_TS)
+    // #define TS_UPSAMPLING_FREQ_EXE_INVERSE (1.0/TS_UPSAMPLING_FREQ_EXE)
+    #define MACHINE_TS         (CL_TS*d_sim.sim.MACHINE_SIMULATIONs_PER_SAMPLING_PERIOD)
+    #define MACHINE_TS_INVERSE (1.0/MACHINE_TS)
 
-#define LOAD_INERTIA    0.0
-#define LOAD_TORQUE     0.0
-#define VISCOUS_COEFF   0.0007
-
-/* Useless Code but meaningful to understant the control process */
-#define CL_SERIES_KP (31.2903)
-#define CL_SERIES_KI (122.088)
-#define VL_SERIES_KP (1.79885)
-#define VL_SERIES_KI (29.7429)
-/* Useless Code but meaningful to understant the control process */
-
-#if APPLY_WCTUNER
-    #define CURRENT_KP (0.3573)  // (1.19)    // (0.6)  // (0.84)   // (0.84)   // (0.84)
-    #define CURRENT_KI (231.6)   // (194.74) // (194.74)  // (194.74) // (194.74) // (194.74)
-    #define SPEED_KP   (1.528)   // (0.19)   // (2.59)  // (0.81)   // (0.41)   // (0.36)
-    #define SPEED_KI   (890.8)   // (3.93)    // (13.96)  // (11.00)  // (2.75)   // (19.55)
-    #define SPEED_KFB  (2.75)
-#else
-    #define CURRENT_KP (0.9550441666912972)   // (1.19)    // (0.6)  // (0.84)   // (0.84)   // (0.84)
-    #define CURRENT_KI (231.578947368421) // (194.74) // (194.74)  // (194.74) // (194.74) // (194.74)
-    #define SPEED_KP   (0.5896379954298365)   // (0.19)   // (2.59)  // (0.81)   // (0.41)   // (0.36)
-    #define SPEED_KI   (2.0106192982974678)   // (3.93)    // (13.96)  // (11.00)  // (2.75)   // (19.55)
-    #define SPEED_KFB  (0)
-#endif
-
-#define CURRENT_KI_CODE (CURRENT_KI*CURRENT_KP*CL_TS)
-#define SPEED_KI_CODE (SPEED_KI*SPEED_KP*VL_TS)
-#define CURRENT_LOOP_LIMIT_VOLTS (48)
-#define POS_KP (0.01)
-#define POS_KI (0)
-
-    #define MOTOR_RATED_TORQUE ( MOTOR_RATED_POWER_WATT / (MOTOR_RATED_SPEED_RPM/60.0*2*3.1415926) )
-    #define MOTOR_TORQUE_CONSTANT ( MOTOR_RATED_TORQUE / (MOTOR_RATED_CURRENT_RMS*1.414) )
-    #define MOTOR_BACK_EMF_CONSTANT ( MOTOR_TORQUE_CONSTANT / 1.5 / MOTOR_NUMBER_OF_POLE_PAIRS )
-    #define MOTOR_BACK_EMF_CONSTANT_mV_PER_RPM ( MOTOR_BACK_EMF_CONSTANT * 1e3 / (1.0/MOTOR_NUMBER_OF_POLE_PAIRS/2/3.1415926*60) )
+// #define LOAD_INERTIA    0.0
+#define LOAD_TORQUE     0.2 // 0.0
+#define VISCOUS_COEFF   0.0007 // 0.0007
 
 
-    #define SPEED_LOOP_LIMIT_NEWTON_METER (1.0*MOTOR_RATED_TORQUE)
-    #define SPEED_LOOP_LIMIT_AMPERE       (1.0*1.414*MOTOR_RATED_CURRENT_RMS*0.5)
-    #define POS_LOOP_LIMIT_SPEED          (0.15*MOTOR_RATED_SPEED_RPM * MOTOR_NUMBER_OF_POLE_PAIRS/60.0*2*M_PI)
-    // increase to 3 times because of the bug in dynamics clamping
+// #if APPLY_WCTUNER
+//     #define CURRENT_KP (0.3063)   // (1.19)    // (0.6)  // (0.84)   // (0.84)   // (0.84)
+//     #define CURRENT_KI (231.578947368421) // (194.74) // (194.74)  // (194.74) // (194.74) // (194.74)
+//     #define SPEED_KP   (1.3099)   // (0.19)   // (2.59)  // (0.81)   // (0.41)   // (0.36)
+//     #define SPEED_KI   (763.5600)   // (3.93)    // (13.96)  // (11.00)  // (2.75)   // (19.55)
+//     #define SPEED_KFB  (2.36)
+// #else
+//     #define CURRENT_KP (0.9550441666912972)   // (1.19)    // (0.6)  // (0.84)   // (0.84)   // (0.84)
+//     #define CURRENT_KI (231.578947368421) // (194.74) // (194.74)  // (194.74) // (194.74) // (194.74)
+//     #define SPEED_KP   (0.5896379954298365)   // (0.19)   // (2.59)  // (0.81)   // (0.41)   // (0.36)
+//     #define SPEED_KI   (2.0106192982974678)   // (3.93)    // (13.96)  // (11.00)  // (2.75)   // (19.55)
+//     #define SPEED_KFB  (0)
+// #endif
 
-/* Encoder QEP TODO: should read from excel */
-// #define INCREMENTAL_ENCODER_QEP 1
-// #define ABSOLUTE_ENCODER_SCI 2
-// #define ABSOLUTE_ENCODER_CAN_ID0x01 3
-// #define ABSOLUTE_ENCODER_CAN_ID0x03 4
-// #define RESOLVER_1 5
-// #define RESOLVER_2 6
+
+
+// 速度环 increase to 3 times because of the bug in dynamics clamping
+#define VL_SERIES_KI_CODE (VL_SERIES_KI*VL_SERIES_KP*VL_TS)
+#define SPEED_LOOP_LIMIT_AMPERE       (1 * d_sim.init.npp) // (1.0*1.414*INIT_IN)
+
+
+    // #define MOTOR_RATED_TORQUE ( MOTOR_RATED_POWER_WATT / (MOTOR_RATED_SPEED_RPM/60.0*2*3.1415926) )
+    // #define MOTOR_TORQUE_CONSTANT ( MOTOR_RATED_TORQUE / (INIT_IN*1.414) )
+    // #define MOTOR_BACK_EMF_CONSTANT ( MOTOR_TORQUE_CONSTANT / 1.5 / INIT_NPP )
+    // #define MOTOR_BACK_EMF_CONSTANT_mV_PER_RPM ( MOTOR_BACK_EMF_CONSTANT * 1e3 / (1.0/INIT_NPP/2/3.1415926*60) )
+    // #define SPEED_LOOP_LIMIT_NEWTON_METER (1.0*MOTOR_RATED_TORQUE)
 
 
 /* 指令类型 */
     #define EXCITATION_POSITION 0
-    #define EXCITATION_VELOCITY 1
     #define EXCITATION_SWEEP_FREQUENCY 2
+    #define EXCITATION_VELOCITY 1
 #define EXCITATION_TYPE (1)
 
 /* Sweep Frequency */
@@ -326,7 +311,5 @@
 #define SWEEP_FREQ_CURRENT_AMPL 1
 #define SWEEP_FREQ_C2V FALSE
 #define SWEEP_FREQ_C2C FALSE
-
-#define DATA_FILE_NAME "../dat/TEST_PHIL_LAB_PID_CODES-0-0-0-0.dat"
 
 #endif

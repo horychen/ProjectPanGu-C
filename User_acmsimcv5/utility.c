@@ -51,8 +51,8 @@ REAL PostionSpeedMeasurement_MovingAvergage(int32 QPOSCNT, st_enc *p_enc){
         if(enc.encoder_abs_cnt > SYSTEM_QEP_QPOSMAX_PLUS_1) {enc.encoder_abs_cnt -= SYSTEM_QEP_QPOSMAX_PLUS_1;}
         if(enc.encoder_abs_cnt < 0)                         {enc.encoder_abs_cnt += SYSTEM_QEP_QPOSMAX_PLUS_1;}
         enc.theta_d__state = enc.encoder_abs_cnt * CNT_2_ELEC_RAD;
-        while(enc.theta_d__state> M_PI) enc.theta_d__state -= 2*M_PI;
-        while(enc.theta_d__state<-M_PI) enc.theta_d__state += 2*M_PI;
+        if(enc.theta_d__state> M_PI) enc.theta_d__state -= 2*M_PI;
+        if(enc.theta_d__state<-M_PI) enc.theta_d__state += 2*M_PI;
 
     /* Part Two: Moving Average with a update period of CL_TS */
 
@@ -72,7 +72,7 @@ REAL PostionSpeedMeasurement_MovingAvergage(int32 QPOSCNT, st_enc *p_enc){
             enc.cursor=0; // Reset enc.cursor
         }
     enc.rpm = enc.sum_qepPosCnt*SYSTEM_QEP_REV_PER_PULSE * 60 * MA_SEQUENCE_LENGTH_INVERSE * CL_TS_INVERSE;
-    enc.omg_elec     = enc.rpm * RPM_2_ELEC_RAD_PER_SEC; // 机械转速（单位：RPM）-> 电气角速度（单位：elec.rad/s)
+    enc.varOmega     = enc.rpm * RPM_2_ELEC_RAD_PER_SEC; // 机械转速（单位：RPM）-> 电气角速度（单位：elec.rad/s)
     enc.theta_d_elec = enc.theta_d__state;
 
     // Output of the moving average is speed. (*CTRL).i->rpm = how many counts / time elapsed
@@ -122,18 +122,17 @@ double difference_between_two_angles(double first, double second){
 
         {
             // 将除了变量数据和变量名以外的信息写入文件“info.dat”，包括采样时间，降采样倍数，数据文件名。
-            FILE *fw2;
-            fw2 = fopen("../dat/info.dat", "w");
-            fprintf(fw2, "CL_TS,DOWN_SAMPLE,DATA_FILE_NAME\n");
-            fprintf(fw2, "%g, %d, %s\n", CL_TS, DOWN_SAMPLE, DATA_FILE_NAME);
-            fclose(fw2);
+            // FILE *fw2;
+            // fw2 = fopen("../dat/info.dat", "w");
+            // fprintf(fw2, "CL_TS,DOWN_SAMPLE,DATA_FILE_NAME\n");
+            // fprintf(fw2, "%g, %d, %s\n", CL_TS, DOWN_SAMPLE, DATA_FILE_NAME);
+            // fclose(fw2);
         }
     }
     // 写变量值到文件
     void write_data_to_file(FILE *fw){
         static int bool_animate_on = FALSE;
         static int j=0,jj=0; // j,jj for down sampling
-
         // if((*CTRL).timebase>20)
         {
             if(++j == DOWN_SAMPLE)
@@ -142,6 +141,20 @@ double difference_between_two_angles(double first, double second){
                 fprintf(fw, DATA_FORMAT, DATA_DETAILS);
             }
         }
+    }
+
+    void print_info(){
+        printf("Rreq = %f\n", (ACM.Rreq));
+        printf("NUMBER_OF_STEPS = %d\n", (int)d_sim.sim.NUMBER_OF_STEPS);
+        printf("MACHINE_SIMULATIONs_PER_SAMPLING_PERIOD = %d\n", d_sim.sim.MACHINE_SIMULATIONs_PER_SAMPLING_PERIOD);
+        if(debug.SENSORLESS_CONTROL==TRUE){
+            printf("\t[main.c] Sensorless using observer.\n");
+        }else{
+            printf("\t[main.c] Sensored control.\n");
+        }
+        printf("\t[main.c] NUMBER_OF_STEPS: %d\n", d_sim.sim.NUMBER_OF_STEPS);
+        printf("\t[main.c] Speed PI:   Kp=%.3f, Ki=%.6f, limit=%.1f A\n", PID_Speed->Kp, PID_Speed->Ki, PID_Speed->OutLimit);
+        printf("\t[main.c] Current PI: Kp=%.3f, Ki=%.6f, limit=%.1f V\n", pid1_iq.Kp, pid1_iq.Ki, pid1_iq.OutLimit);
     }
 #endif
 

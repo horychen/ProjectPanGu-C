@@ -87,7 +87,7 @@ void run_iecon_main(Uint64 t);
 typedef struct
 {
     REAL current[6];
-    REAL weight[6]
+    REAL weight[6];
 } CURRENT_WEIGHT_TABLE;
 
 REAL get_current_from_weight(REAL weight);

@@ -17,8 +17,8 @@
 <VarMeta IMemento.internal.id="pid1_spd"/>
 <VarMeta IMemento.internal.id="Axis.channels"/>
 <VarMeta IMemento.internal.id="Axis.channels_preset"/>
-<VarMeta IMemento.internal.id="CTRL.O-&gt;uab_cmd[0]"/>
-<VarMeta IMemento.internal.id="CTRL.I-&gt;iab[0]"/>
+<VarMeta IMemento.internal.id="CTRL.O-&gt;cmd_uAB[0]"/>
+<VarMeta IMemento.internal.id="CTRL.I-&gt;iAB[0]"/>
 <VarMeta IMemento.internal.id="Read"/>
 <VarMeta IMemento.internal.id="Write"/>
 <VarMeta IMemento.internal.id="CTRL.svgen1"/>

@@ -1,7 +1,6 @@
 #include "ACMSim.h"
 /*****************************/
 /* Shared Solver and typedef */
-REAL one_over_six = 1.0/6.0;
 #define CJH_STYLE_RK4_OBSERVER_RAW_CODE                                  \
     US(0) = US_P(0);                                                     \
     US(1) = US_P(1);                                                     \
@@ -350,7 +349,7 @@ void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REA
         }
 
         /* Time-varying gains */
-        if(fabs((*CTRL).i->cmd_omg_elec)*MOTOR.npp_inv*ONE_OVER_2PI<k_af_speed_Hz){ // [Hz]
+        if(fabs((*CTRL).i->cmd_varTheta)*MOTOR.npp_inv*ONE_OVER_2PI<k_af_speed_Hz){ // [Hz]
             FE.AFEOE.k_af = 2*M_PI*100;
             FE.AFEOE.limiter_Flag = TRUE;
         }else{

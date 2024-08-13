@@ -74,18 +74,18 @@ void sci_poll(int16 ch){
         if(set_current_flag){
             switch(ch){
                 case ' ': set_current_flag = FALSE; break;
-                case '+': G.sendCurrentCommandFlag = TRUE; PID_spd->OutLimit += 0.1; break;
-                case '-': G.sendCurrentCommandFlag = TRUE; PID_spd->OutLimit -= 0.1; break;
-                case '1': G.sendCurrentCommandFlag = TRUE; PID_spd->OutLimit  = 0.1; break;
-                case '2': G.sendCurrentCommandFlag = TRUE; PID_spd->OutLimit  =   2; break;
-                case '3': G.sendCurrentCommandFlag = TRUE; PID_spd->OutLimit  =   3; break;
-                case '4': G.sendCurrentCommandFlag = TRUE; PID_spd->OutLimit  =   4; break;
-                case '5': G.sendCurrentCommandFlag = TRUE; PID_spd->OutLimit  =   5; break;
-                case '6': G.sendCurrentCommandFlag = TRUE; PID_spd->OutLimit  =  -5; break;
-                case '7': G.sendCurrentCommandFlag = TRUE; PID_spd->OutLimit  =  -4; break;
-                case '8': G.sendCurrentCommandFlag = TRUE; PID_spd->OutLimit  =  -3; break;
-                case '9': G.sendCurrentCommandFlag = TRUE; PID_spd->OutLimit  =  -2; break;
-                case '0': G.sendCurrentCommandFlag = TRUE; PID_spd->OutLimit  =  -1; break;
+                case '+': G.sendCurrentCommandFlag = TRUE; PID_Speed->OutLimit += 0.1; break;
+                case '-': G.sendCurrentCommandFlag = TRUE; PID_Speed->OutLimit -= 0.1; break;
+                case '1': G.sendCurrentCommandFlag = TRUE; PID_Speed->OutLimit  = 0.1; break;
+                case '2': G.sendCurrentCommandFlag = TRUE; PID_Speed->OutLimit  =   2; break;
+                case '3': G.sendCurrentCommandFlag = TRUE; PID_Speed->OutLimit  =   3; break;
+                case '4': G.sendCurrentCommandFlag = TRUE; PID_Speed->OutLimit  =   4; break;
+                case '5': G.sendCurrentCommandFlag = TRUE; PID_Speed->OutLimit  =   5; break;
+                case '6': G.sendCurrentCommandFlag = TRUE; PID_Speed->OutLimit  =  -5; break;
+                case '7': G.sendCurrentCommandFlag = TRUE; PID_Speed->OutLimit  =  -4; break;
+                case '8': G.sendCurrentCommandFlag = TRUE; PID_Speed->OutLimit  =  -3; break;
+                case '9': G.sendCurrentCommandFlag = TRUE; PID_Speed->OutLimit  =  -2; break;
+                case '0': G.sendCurrentCommandFlag = TRUE; PID_Speed->OutLimit  =  -1; break;
               default : break;
             }
         }

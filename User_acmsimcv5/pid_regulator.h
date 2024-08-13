@@ -1,6 +1,7 @@
 #ifndef st_pid_regulatorULATOR_H
 #define st_pid_regulatorULATOR_H
 
+
 typedef struct {
    float32 Ref;
    float32 Fbk;
@@ -8,8 +9,8 @@ typedef struct {
    float32 ErrPrev;
    float32 P_Term; 
    float32 I_Term; 
-   float32 D_Term; 
-   float32 KFB_Term;
+   float32 D_Term;
+   float32 KFB_Term; 
    float32 OutNonSat;
    float32 OutLimit;
    float32 Out;
@@ -39,16 +40,26 @@ void PID_calc(st_pid_regulator_handle);
   /*Kp*/  1.0, \
   /*Ki*/  0.001, \
   /*Kd*/  0.0, \
-  /*KFB*/  0.0, \
+  /*KFB*/ 0.0, \
   /*Difference between Non-Saturated Output and Saturated Output*/  0.0, \
   (void (*)(Uint32)) PID_calc \
 }
+extern st_pid_regulator PID_iD;
+extern st_pid_regulator PID_iQ;
+extern st_pid_regulator PID_Speed;
+extern st_pid_regulator PID_Position;
+extern st_pid_regulator pid1_ia;
+extern st_pid_regulator pid1_ib;
+extern st_pid_regulator pid1_ic;
+
+extern st_pid_regulator pid2_ix;
+extern st_pid_regulator pid2_iy;
+
+#define pid1_id PID_iD
+#define pid1_iq PID_iQ
+
 
 void ACMSIMC_PIDTuner();
-
-void commands(REAL *p_set_rpm_speed_command, REAL *p_set_iq_cmd, REAL *p_set_id_cmd);
-
-
 
 typedef struct{
     /* Controller gains */
@@ -81,31 +92,10 @@ typedef struct{
     float setpoint;
     float measurement;
 } st_PIDController;
-
+extern st_PIDController pid1_dispX;
+extern st_PIDController pid1_dispY;
 void  PIDController_Init(st_PIDController *pid);
 float PIDController_Update(st_PIDController *pid);
-
-
-extern st_PIDController _pid_iX_1;
-extern st_PIDController _pid_iY_1;
-extern st_pid_regulator _pid_iD_1;
-extern st_pid_regulator _pid_iQ_1;
-extern st_pid_regulator _pid_spd_1;
-extern st_pid_regulator _pid_pos_1;
-
-extern st_PIDController _pid_iX_2;
-extern st_PIDController _pid_iY_2;
-extern st_pid_regulator _pid_iD_2;
-extern st_pid_regulator _pid_iQ_2;
-extern st_pid_regulator _pid_spd_2;
-extern st_pid_regulator _pid_pos_2;
-
-#define PID_iD  (CTRL->s->iD)
-#define PID_iQ  (CTRL->s->iQ)
-#define PID_iX  (CTRL->s->iX)
-#define PID_iY  (CTRL->s->iY)
-#define PID_spd  (CTRL->s->spd)
-#define PID_pos  (CTRL->s->pos)
 
 
 #endif

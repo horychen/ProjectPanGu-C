@@ -24,8 +24,8 @@
 /* The fourth-order dynamic system by Marino2005@Wiley */
 void rhs_func_marino2005(REAL *increment_n, REAL xRho, REAL xTL, REAL xAlpha, REAL xOmg, REAL hs){
     // pointer to increment_n: state increment at n-th stage of RK4, where n=1,2,3,4.
-    // *x???: pointer to state variables
-    // x????: state variable
+    // *x???: pointer to state variABles
+    // x????: state variABle
     // hs: step size of numerical integral
 
     /* 把磁链观测嫁到这里来？？*/
@@ -35,24 +35,24 @@ void rhs_func_marino2005(REAL *increment_n, REAL xRho, REAL xTL, REAL xAlpha, RE
     // time-varying quantities
     (*CTRL).s->cosT = cos(xRho); // 这里体现了该观测器的非线性——让 q 轴电流给定和观测转速之间通过 iQs 的值产生了联系
     (*CTRL).s->sinT = sin(xRho); // 这里体现了该观测器的非线性——让 q 轴电流给定和观测转速之间通过 iQs 的值产生了联系
-    (*CTRL).i->idq[0] = AB2M(IS(0), IS(1), (*CTRL).s->cosT, (*CTRL).s->sinT);
-    (*CTRL).i->idq[1] = AB2T(IS(0), IS(1), (*CTRL).s->cosT, (*CTRL).s->sinT);
+    (*CTRL).i->iDQ[0] = AB2M(IS(0), IS(1), (*CTRL).s->cosT, (*CTRL).s->sinT);
+    (*CTRL).i->iDQ[1] = AB2T(IS(0), IS(1), (*CTRL).s->cosT, (*CTRL).s->sinT);
 
     // f = \dot x = the time derivative
     REAL f[4];
     // xRho
-    f[0] = xOmg + xAlpha*(*CTRL).motor->Lmu*(*CTRL).i->idq_cmd[1]*(*CTRL).i->cmd_psi_inv;
+    f[0] = xOmg + xAlpha*(*CTRL).motor->Lmu*(*CTRL).i->cmd_iDQ[1]*(*CTRL).i->cmd_psi_inv;
     // xTL
     f[1] = - marino.gamma_inv * (*CTRL).motor->Js * (*CTRL).i->cmd_psi * marino.e_psi_Qmu;
     // xAlpha
-    f[2] = marino.delta_inv * (   xAlpha_LAW_TERM_D * marino.e_psi_Dmu*((*CTRL).motor->Lmu*(*CTRL).i->idq_cmd[0] - (*CTRL).i->cmd_psi) \
-                                + xAlpha_LAW_TERM_Q * marino.e_psi_Qmu* (*CTRL).motor->Lmu*(*CTRL).i->idq_cmd[1]);
+    f[2] = marino.delta_inv * (   xAlpha_LAW_TERM_D * marino.e_psi_Dmu*((*CTRL).motor->Lmu*(*CTRL).i->cmd_iDQ[0] - (*CTRL).i->cmd_psi) \
+                                + xAlpha_LAW_TERM_Q * marino.e_psi_Qmu* (*CTRL).motor->Lmu*(*CTRL).i->cmd_iDQ[1]);
     // xOmg
-    REAL xTem = CLARKE_TRANS_TORQUE_GAIN*(*CTRL).motor->npp*( marino.psi_Dmu*(*CTRL).i->idq[1] - marino.psi_Qmu*(*CTRL).i->idq[0] );
+    REAL xTem = CLARKE_TRANS_TORQUE_GAIN*(*CTRL).motor->npp*( marino.psi_Dmu*(*CTRL).i->iDQ[1] - marino.psi_Qmu*(*CTRL).i->iDQ[0] );
     f[3] = (*CTRL).motor->npp*(*CTRL).motor->Js_inv*(xTem - xTL) + 2*marino.lambda_inv*(*CTRL).i->cmd_psi*marino.e_psi_Qmu;
 
     // bad
-    // f[0] = xOmg + xAlpha*(*CTRL).motor->Lmu*(*CTRL).i->idq[1]*(*CTRL).i->cmd_psi_inv;
+    // f[0] = xOmg + xAlpha*(*CTRL).motor->Lmu*(*CTRL).i->iDQ[1]*(*CTRL).i->cmd_psi_inv;
 
     // REAL xTem = CLARKE_TRANS_TORQUE_GAIN*(*CTRL).motor->npp*( marino.psi_Dmu*ACM.iTs - marino.psi_Qmu*ACM.iMs );
     // f[3] = (*CTRL).motor->npp*(*CTRL).motor->Js_inv*(ACM.Tem - ACM.TLoad);
@@ -118,7 +118,7 @@ void marino05_dedicated_rk4_solver(REAL hs){
     marino.xOmg        += (increment_1[3] + 2*(increment_2[3] + increment_3[3]) + increment_4[3])*0.166666666666667; // 3
 
     // Also get derivatives:
-    (*CTRL).s->omega_sl    = marino.xAlpha*(*CTRL).motor->Lmu*(*CTRL).i->idq_cmd[1]*(*CTRL).i->cmd_psi_inv;
+    (*CTRL).s->omega_sl    = marino.xAlpha*(*CTRL).motor->Lmu*(*CTRL).i->cmd_iDQ[1]*(*CTRL).i->cmd_psi_inv;
     (*CTRL).s->omega_syn   = marino.xOmg + (*CTRL).s->omega_sl;
     marino.deriv_xTL    = (increment_1[1] + 2*(increment_2[1] + increment_3[1]) + increment_4[1])*0.166666666666667 * CL_TS_INVERSE;
     marino.deriv_xAlpha = (increment_1[2] + 2*(increment_2[2] + increment_3[2]) + increment_4[2])*0.166666666666667 * CL_TS_INVERSE;
@@ -149,23 +149,23 @@ void marino05_dedicated_rk4_solver(REAL hs){
     /* Flux estimator that is only valid in simulation */
     void simulation_only_flux_estimator(){
         // Flux Measurements
-        simvm.psi_D2 = ACM.psi_Dmu;
-        simvm.psi_Q2 = ACM.psi_Qmu;
+        // simvm.psi_D2 = ACM.psi_Dmu;
+        // simvm.psi_Q2 = ACM.psi_Qmu;
 
         // CM
-        FE.fme.psi_DQ2[0] += CL_TS * (-(*CTRL).motor->alpha*FE.fme.psi_DQ2[0] + (*CTRL).motor->Rreq*(*CTRL).i->idq[0]);
-        FE.fme.psi_DQ1[0] = FE.fme.psi_DQ2[0] + (*CTRL).motor->Lsigma*(*CTRL).i->idq[0];
+        FE.fme.psi_DQ2[0] += CL_TS * (-(*CTRL).motor->alpha*FE.fme.psi_DQ2[0] + (*CTRL).motor->Rreq*(*CTRL).i->iDQ[0]);
+        FE.fme.psi_DQ1[0] = FE.fme.psi_DQ2[0] + (*CTRL).motor->Lsigma*(*CTRL).i->iDQ[0];
 
 
         // Flux Estimator (Open Loop Voltage Model in αβ frame + ODE1)
         if(TRUE){
             // 
-            simvm.emf[0] = (*CTRL).o->uab_cmd[0] - (*CTRL).motor->R*(*CTRL).i->iab[0] + 1*OFFSET_VOLTAGE_ALPHA;
-            simvm.emf[1] = (*CTRL).o->uab_cmd[1] - (*CTRL).motor->R*(*CTRL).i->iab[1] + 1*OFFSET_VOLTAGE_BETA;
+            simvm.emf[0] = (*CTRL).o->cmd_uAB[0] - (*CTRL).motor->R*(*CTRL).i->iAB[0] + 1*OFFSET_VOLTAGE_ALPHA;
+            simvm.emf[1] = (*CTRL).o->cmd_uAB[1] - (*CTRL).motor->R*(*CTRL).i->iAB[1] + 1*OFFSET_VOLTAGE_BETA;
             simvm.psi_1[0] += CL_TS * ( simvm.emf[0] - 1*K_VM*(simvm.psi_1[0] - FE.fme.psi_DQ1[0]* (*CTRL).s->cosT) );
             simvm.psi_1[1] += CL_TS * ( simvm.emf[1] - 1*K_VM*(simvm.psi_1[1] - FE.fme.psi_DQ1[0]* (*CTRL).s->sinT) );
-            simvm.psi_2[0] = simvm.psi_1[0] - (*CTRL).motor->Lsigma*(*CTRL).i->iab[0];
-            simvm.psi_2[1] = simvm.psi_1[1] - (*CTRL).motor->Lsigma*(*CTRL).i->iab[1];
+            simvm.psi_2[0] = simvm.psi_1[0] - (*CTRL).motor->Lsigma*(*CTRL).i->iAB[0];
+            simvm.psi_2[1] = simvm.psi_1[1] - (*CTRL).motor->Lsigma*(*CTRL).i->iAB[1];
             simvm.psi_2_ampl = sqrt(simvm.psi_2[0]*simvm.psi_2[0]+simvm.psi_2[1]*simvm.psi_2[1]);
 
             REAL al = simvm.psi_2[0] - 0*(simvm.psi_1[0] - FE.fme.psi_DQ1[0]* (*CTRL).s->cosT);
@@ -186,10 +186,10 @@ void marino05_dedicated_rk4_solver(REAL hs){
             FE.exact.offset_voltage_compensation[0] = _lpf(FE.exact.u_offset[0], FE.exact.offset_voltage_compensation[0], TAU_OFFSET_INVERSE);
             FE.exact.offset_voltage_compensation[1] = _lpf(FE.exact.u_offset[1], FE.exact.offset_voltage_compensation[1], TAU_OFFSET_INVERSE);
 
-            temp_Alpha1 += CL_TS * ( (*CTRL).o->uab_cmd[0] - (*CTRL).motor->R*(*CTRL).i->iab[0] + 1*OFFSET_VOLTAGE_ALPHA - 0*FE.exact.u_offset[0] - 0.5*FE.exact.u_offset[0] - 1*FE.exact.offset_voltage_compensation[0])     + 0*GAIN_OHTANI * ( (*CTRL).i->cmd_psi_ABmu[0] - (temp_Alpha1-(*CTRL).motor->Lsigma*(*CTRL).i->iab[0]) );
-            temp_Beta1  += CL_TS * ( (*CTRL).o->uab_cmd[1] - (*CTRL).motor->R*(*CTRL).i->iab[1] + 1*OFFSET_VOLTAGE_BETA  - 0*FE.exact.u_offset[1] - 0.5*FE.exact.u_offset[1] - 1*FE.exact.offset_voltage_compensation[1])     + 0*GAIN_OHTANI * ( (*CTRL).i->cmd_psi_ABmu[1] - (temp_Beta1 -(*CTRL).motor->Lsigma*(*CTRL).i->iab[1]) );
-            temp_Alpha2 = temp_Alpha1 - (*CTRL).motor->Lsigma*(*CTRL).i->iab[0];
-            temp_Beta2  = temp_Beta1  - (*CTRL).motor->Lsigma*(*CTRL).i->iab[1];
+            temp_Alpha1 += CL_TS * ( (*CTRL).o->cmd_uAB[0] - (*CTRL).motor->R*(*CTRL).i->iAB[0] + 1*OFFSET_VOLTAGE_ALPHA - 0*FE.exact.u_offset[0] - 0.5*FE.exact.u_offset[0] - 1*FE.exact.offset_voltage_compensation[0])     + 0*GAIN_OHTANI * ( (*CTRL).i->cmd_psi_active[0] - (temp_Alpha1-(*CTRL).motor->Lsigma*(*CTRL).i->iAB[0]) );
+            temp_Beta1  += CL_TS * ( (*CTRL).o->cmd_uAB[1] - (*CTRL).motor->R*(*CTRL).i->iAB[1] + 1*OFFSET_VOLTAGE_BETA  - 0*FE.exact.u_offset[1] - 0.5*FE.exact.u_offset[1] - 1*FE.exact.offset_voltage_compensation[1])     + 0*GAIN_OHTANI * ( (*CTRL).i->cmd_psi_active[1] - (temp_Beta1 -(*CTRL).motor->Lsigma*(*CTRL).i->iAB[1]) );
+            temp_Alpha2 = temp_Alpha1 - (*CTRL).motor->Lsigma*(*CTRL).i->iAB[0];
+            temp_Beta2  = temp_Beta1  - (*CTRL).motor->Lsigma*(*CTRL).i->iAB[1];
 
             REAL al = temp_Alpha2 - 0*0.5*(FE.exact.psi_2_last_top[0]+FE.exact.psi_2_last_butt[0]);
             REAL be = temp_Beta2  - 0*0.5*(FE.exact.psi_2_last_top[1]+FE.exact.psi_2_last_butt[1]);
@@ -223,18 +223,18 @@ void marino05_dedicated_rk4_solver(REAL hs){
         REAL deriv_psi_Q1;
         if(FALSE){
             // With CM Correction
-            deriv_psi_D1 = (*CTRL).o->udq_cmd[0] - (*CTRL).motor->R*(*CTRL).i->idq[0] + (*CTRL).s->omega_syn*simvm.psi_Q1_ode1 - 1*K_VM*(simvm.psi_D1_ode1 - FE.fme.psi_DQ1[0]);
-            deriv_psi_Q1 = (*CTRL).o->udq_cmd[1] - (*CTRL).motor->R*(*CTRL).i->idq[1] - (*CTRL).s->omega_syn*simvm.psi_D1_ode1 - 0*K_VM*(simvm.psi_Q1_ode1 - 0);
+            deriv_psi_D1 = (*CTRL).o->cmd_uDQ[0] - (*CTRL).motor->R*(*CTRL).i->iDQ[0] + (*CTRL).s->omega_syn*simvm.psi_Q1_ode1 - 1*K_VM*(simvm.psi_D1_ode1 - FE.fme.psi_DQ1[0]);
+            deriv_psi_Q1 = (*CTRL).o->cmd_uDQ[1] - (*CTRL).motor->R*(*CTRL).i->iDQ[1] - (*CTRL).s->omega_syn*simvm.psi_D1_ode1 - 0*K_VM*(simvm.psi_Q1_ode1 - 0);
         }else{
             // Flux Estimator (Open Loop Voltage Model in indirect oriented DQ frame + ODE1)
-            deriv_psi_D1 = (*CTRL).o->udq_cmd[0] - (*CTRL).motor->R*(*CTRL).i->idq[0] + (*CTRL).s->omega_syn*simvm.psi_Q1_ode1;
-            deriv_psi_Q1 = (*CTRL).o->udq_cmd[1] - (*CTRL).motor->R*(*CTRL).i->idq[1] - (*CTRL).s->omega_syn*simvm.psi_D1_ode1;
+            deriv_psi_D1 = (*CTRL).o->cmd_uDQ[0] - (*CTRL).motor->R*(*CTRL).i->iDQ[0] + (*CTRL).s->omega_syn*simvm.psi_Q1_ode1;
+            deriv_psi_Q1 = (*CTRL).o->cmd_uDQ[1] - (*CTRL).motor->R*(*CTRL).i->iDQ[1] - (*CTRL).s->omega_syn*simvm.psi_D1_ode1;
         }
 
         simvm.psi_D1_ode1 += CL_TS * (deriv_psi_D1);
         simvm.psi_Q1_ode1 += CL_TS * (deriv_psi_Q1);
-        simvm.psi_D2_ode1 = simvm.psi_D1_ode1 - (*CTRL).motor->Lsigma*(*CTRL).i->idq[0];
-        simvm.psi_Q2_ode1 = simvm.psi_Q1_ode1 - (*CTRL).motor->Lsigma*(*CTRL).i->idq[1];
+        simvm.psi_D2_ode1 = simvm.psi_D1_ode1 - (*CTRL).motor->Lsigma*(*CTRL).i->iDQ[0];
+        simvm.psi_Q2_ode1 = simvm.psi_Q1_ode1 - (*CTRL).motor->Lsigma*(*CTRL).i->iDQ[1];
 
         // FE.fme.psi_DQ2_output[0] = simvm.psi_D2_ode1 - K_VM*(simvm.psi_Q1_ode1 - FE.fme.psi_DQ1[0]);
         // FE.fme.psi_DQ2_output[1] = simvm.psi_Q2_ode1 - K_VM*(simvm.psi_D1_ode1 - 0);
@@ -283,7 +283,7 @@ void rhf_dynamics_ESO(REAL t, REAL *x, REAL *fx){
     /* 未测试，如果用iq给定会不会好一点？？ 计算量还少*/
     /* 未测试，如果用iq给定会不会好一点？？ 计算量还少*/
     /* 未测试，如果用iq给定会不会好一点？？ 计算量还少*/
-    // esoaf.xTem = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * MOTOR.KActive * CTRL->i.idq_cmd[1];
+    // esoaf.xTem = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * MOTOR.KActive * CTRL->I.cmd_iDQ[1];
 
     /* Output Error = sine of angle error */
     // also try Boldea 2008's idea "Im x"
@@ -334,7 +334,7 @@ void eso_one_parameter_tuning(REAL omega_ob){
 
     // Natural Observer Framework
     // if(esoaf.bool_ramp_load_torque == FALSE){
-    //     // D, P, i, II?
+    //     // D, P, I, II?
     //     esoaf.ell[0] = (MOTOR.Js*MOTOR.npp_inv) * 3*omega_ob;
     //     esoaf.ell[1] = (MOTOR.Js*MOTOR.npp_inv) * 3*omega_ob*omega_ob;
     //     esoaf.ell[2] = (MOTOR.Js*MOTOR.npp_inv) * 1*omega_ob*omega_ob*omega_ob;
@@ -360,10 +360,10 @@ void Main_esoaf_chen2021(){
     }
 
     general_4states_rk4_solver(&rhf_dynamics_ESO, (*CTRL).timebase, esoaf.x, CL_TS);
-    while(esoaf.x[0]>M_PI){
+    if(esoaf.x[0]>M_PI){
         esoaf.x[0] -= 2*M_PI;
     }
-    while(esoaf.x[0]<-M_PI){
+    if(esoaf.x[0]<-M_PI){
         esoaf.x[0] += 2*M_PI;
     }
     esoaf.xPos = esoaf.x[0];
@@ -445,8 +445,8 @@ void flux_observer(){
     /* 1. Ohtani 1992 */
     void rhf_Ohtani1992_Dynamics(REAL t, REAL *x, REAL *fx){
         REAL emf[2];
-        emf[0] = US(0) - (*CTRL).motor->R*IS(0) + OFFSET_VOLTAGE_ALPHA + VM_OHTANI_CORRECTION_GAIN_P * ( (*CTRL).i->cmd_psi_ABmu[0] - (x[0]-(*CTRL).motor->Lsigma*IS(0)) );
-        emf[1] = US(1) - (*CTRL).motor->R*IS(1) + OFFSET_VOLTAGE_BETA  + VM_OHTANI_CORRECTION_GAIN_P * ( (*CTRL).i->cmd_psi_ABmu[1] - (x[1]-(*CTRL).motor->Lsigma*IS(1)) );
+        emf[0] = US(0) - (*CTRL).motor->R*IS(0) + OFFSET_VOLTAGE_ALPHA + VM_OHTANI_CORRECTION_GAIN_P * ( (*CTRL).i->cmd_psi_active[0] - (x[0]-(*CTRL).motor->Lsigma*IS(0)) );
+        emf[1] = US(1) - (*CTRL).motor->R*IS(1) + OFFSET_VOLTAGE_BETA  + VM_OHTANI_CORRECTION_GAIN_P * ( (*CTRL).i->cmd_psi_active[1] - (x[1]-(*CTRL).motor->Lsigma*IS(1)) );
         fx[0] = emf[0];
         fx[1] = emf[1];
     }
@@ -457,16 +457,16 @@ void flux_observer(){
             #define OMEGA_SYN (*CTRL).s->omega_syn
             /* Ohtani Voltage Model in indirect oriented DQ frame + ODE1 */
             // 
-            FE.ohtani.deriv_psi_DQ1[0] = (*CTRL).o->udq_cmd[0] - RS*(*CTRL).i->idq[0] + OMEGA_SYN*FE.ohtani.psi_DQ1[1] + 1*GAIN_OHTANI * ( (*CTRL).i->cmd_psi - FE.ohtani.psi_DQ2[0] );
-            FE.ohtani.deriv_psi_DQ1[1] = (*CTRL).o->udq_cmd[1] - RS*(*CTRL).i->idq[1] - OMEGA_SYN*FE.ohtani.psi_DQ1[0] + 0*GAIN_OHTANI * (             0.0 - FE.ohtani.psi_DQ2[1] );
+            FE.ohtani.deriv_psi_DQ1[0] = (*CTRL).o->cmd_uDQ[0] - RS*(*CTRL).i->iDQ[0] + OMEGA_SYN*FE.ohtani.psi_DQ1[1] + 1*GAIN_OHTANI * ( (*CTRL).i->cmd_psi - FE.ohtani.psi_DQ2[0] );
+            FE.ohtani.deriv_psi_DQ1[1] = (*CTRL).o->cmd_uDQ[1] - RS*(*CTRL).i->iDQ[1] - OMEGA_SYN*FE.ohtani.psi_DQ1[0] + 0*GAIN_OHTANI * (             0.0 - FE.ohtani.psi_DQ2[1] );
             // stator flux updates
             FE.ohtani.psi_DQ1[0] += CL_TS * (FE.ohtani.deriv_psi_DQ1[0]);
             FE.ohtani.psi_DQ1[1] += CL_TS * (FE.ohtani.deriv_psi_DQ1[1]);
             // rotor flux updates
             FE.ohtani.psi_DQ2_prev[0] = FE.ohtani.psi_DQ2[0];
             FE.ohtani.psi_DQ2_prev[1] = FE.ohtani.psi_DQ2[1];
-            FE.ohtani.psi_DQ2[0] = FE.ohtani.psi_DQ1[0] - LSIGMA*(*CTRL).i->idq[0];
-            FE.ohtani.psi_DQ2[1] = FE.ohtani.psi_DQ1[1] - LSIGMA*(*CTRL).i->idq[1];        
+            FE.ohtani.psi_DQ2[0] = FE.ohtani.psi_DQ1[0] - LSIGMA*(*CTRL).i->iDQ[0];
+            FE.ohtani.psi_DQ2[1] = FE.ohtani.psi_DQ1[1] - LSIGMA*(*CTRL).i->iDQ[1];        
         }else{
             /* Ohtani Voltage Model in AB frame + ODE4 */
             // stator flux updates
@@ -526,10 +526,10 @@ void flux_observer(){
         REAL emf[2];
         emf[0] = US(0) - (*CTRL).motor->R*IS(0) + 1*OFFSET_VOLTAGE_ALPHA \
             /*P*/+ 1*VM_PROPOSED_PI_CORRECTION_GAIN_P * rotor_flux_error[0] \
-            /*i*/+ 1*x[2];
+            /*I*/+ 1*x[2];
         emf[1] = US(1) - (*CTRL).motor->R*IS(1) + 1*OFFSET_VOLTAGE_BETA  \
             /*P*/+ 1*VM_PROPOSED_PI_CORRECTION_GAIN_P * rotor_flux_error[1] \
-            /*i*/+ 1*x[3];
+            /*I*/+ 1*x[3];
         fx[0] = emf[0];
         fx[1] = emf[1];
         fx[2] = VM_PROPOSED_PI_CORRECTION_GAIN_I * rotor_flux_error[0];
@@ -556,16 +556,16 @@ void flux_observer(){
     void rhf_CmdErrFdkCorInFrameRho_Dynamics(REAL t, REAL *x, REAL *fx){
 
         REAL rotor_flux_error[2];
-        rotor_flux_error[0] = ( (*CTRL).i->cmd_psi_ABmu[0] - (x[0]-(*CTRL).motor->Lsigma*IS(0)) );
-        rotor_flux_error[1] = ( (*CTRL).i->cmd_psi_ABmu[1] - (x[1]-(*CTRL).motor->Lsigma*IS(1)) );
+        rotor_flux_error[0] = ( (*CTRL).i->cmd_psi_active[0] - (x[0]-(*CTRL).motor->Lsigma*IS(0)) );
+        rotor_flux_error[1] = ( (*CTRL).i->cmd_psi_active[1] - (x[1]-(*CTRL).motor->Lsigma*IS(1)) );
 
         REAL emf[2];
         emf[0] = US(0) - (*CTRL).motor->R*IS(0) + OFFSET_VOLTAGE_ALPHA \
             /*P*/+ VM_PROPOSED_PI_CORRECTION_GAIN_P * rotor_flux_error[0] \
-            /*i*/+ x[2];
+            /*I*/+ x[2];
         emf[1] = US(1) - (*CTRL).motor->R*IS(1) + OFFSET_VOLTAGE_BETA  \
             /*P*/+ VM_PROPOSED_PI_CORRECTION_GAIN_P * rotor_flux_error[1] \
-            /*i*/+ x[3];
+            /*I*/+ x[3];
         fx[0] = emf[0];
         fx[1] = emf[1];
         fx[2] = VM_PROPOSED_PI_CORRECTION_GAIN_I * rotor_flux_error[0];
@@ -659,10 +659,10 @@ void flux_observer(){
         REAL emf[2];
         emf[0] = US(0) - (*CTRL).motor->R*IS(0) + OFFSET_VOLTAGE_ALPHA \
             /*P*/+ OUTPUT_ERROR_CLEST_GAIN_KP * current_error[0] \
-            /*i*/+ x[3];
+            /*I*/+ x[3];
         emf[1] = US(1) - (*CTRL).motor->R*IS(1) + OFFSET_VOLTAGE_BETA  \
             /*P*/+ OUTPUT_ERROR_CLEST_GAIN_KP * current_error[1] \
-            /*i*/+ x[4];
+            /*I*/+ x[4];
         fx[0] = emf[0];
         fx[1] = emf[1];
         /* Lascu CLE */
@@ -706,7 +706,7 @@ void flux_observer(){
         //     fx[1] = - LAMBDA * fabs(OMEGA_SYN) * x[1] + emf[1] + LAMBDA * sign(OMEGA_SYN) *-emf[0];
         // }
         // void stableFME(){
-            //FE.fme.psi_DQ2[0] += CL_TS * (-(*CTRL).motor->alpha*FE.fme.psi_DQ2[0] + (*CTRL).motor->Rreq*(*CTRL).i->idq[0]);
+            //FE.fme.psi_DQ2[0] += CL_TS * (-(*CTRL).motor->alpha*FE.fme.psi_DQ2[0] + (*CTRL).motor->Rreq*(*CTRL).i->iDQ[0]);
         // }
 
 /********************************************
@@ -731,8 +731,8 @@ void flux_observer(){
     // #define GAIN_OHTANI (0.5) // must be zero for estimating u_offset by top change
     void rhf_ExactCompensation_Dynamics(REAL t, REAL *x, REAL *fx){
         REAL emf[2];
-        emf[0] = US(0) - (*CTRL).motor->R*IS(0) + OFFSET_VOLTAGE_ALPHA - 0*K_VM*(x[0]-FE.fme.psi_DQ1[0]*(*CTRL).s->cosT) - 0*FE.exact.u_offset_estimated_by_integration_correction[0] - 0*FE.exact.u_offset_estimated_by_top_minus_butt[0] - 0*FE.exact.offset_voltage_compensation[0] - 0*FE.exact.u_offset_estimated_by_psi_2_top_change[0] - 0*FE.exact.u_offset[0] + 0*VM_OHTANI_CORRECTION_GAIN_P * ( (*CTRL).i->cmd_psi_ABmu[0] - (x[0]-(*CTRL).motor->Lsigma*IS(0)) ) + 0*FE.exact.correction_integral_term[0];
-        emf[1] = US(1) - (*CTRL).motor->R*IS(1) + OFFSET_VOLTAGE_BETA  - 0*K_VM*(x[1]-FE.fme.psi_DQ1[0]*(*CTRL).s->sinT) - 0*FE.exact.u_offset_estimated_by_integration_correction[1] - 0*FE.exact.u_offset_estimated_by_top_minus_butt[1] - 0*FE.exact.offset_voltage_compensation[1] - 0*FE.exact.u_offset_estimated_by_psi_2_top_change[1] - 0*FE.exact.u_offset[1] + 0*VM_OHTANI_CORRECTION_GAIN_P * ( (*CTRL).i->cmd_psi_ABmu[1] - (x[1]-(*CTRL).motor->Lsigma*IS(1)) ) + 0*FE.exact.correction_integral_term[1];
+        emf[0] = US(0) - (*CTRL).motor->R*IS(0) + OFFSET_VOLTAGE_ALPHA - 0*K_VM*(x[0]-FE.fme.psi_DQ1[0]*(*CTRL).s->cosT) - 0*FE.exact.u_offset_estimated_by_integration_correction[0] - 0*FE.exact.u_offset_estimated_by_top_minus_butt[0] - 0*FE.exact.offset_voltage_compensation[0] - 0*FE.exact.u_offset_estimated_by_psi_2_top_change[0] - 0*FE.exact.u_offset[0] + 0*VM_OHTANI_CORRECTION_GAIN_P * ( (*CTRL).i->cmd_psi_active[0] - (x[0]-(*CTRL).motor->Lsigma*IS(0)) ) + 0*FE.exact.correction_integral_term[0];
+        emf[1] = US(1) - (*CTRL).motor->R*IS(1) + OFFSET_VOLTAGE_BETA  - 0*K_VM*(x[1]-FE.fme.psi_DQ1[0]*(*CTRL).s->sinT) - 0*FE.exact.u_offset_estimated_by_integration_correction[1] - 0*FE.exact.u_offset_estimated_by_top_minus_butt[1] - 0*FE.exact.offset_voltage_compensation[1] - 0*FE.exact.u_offset_estimated_by_psi_2_top_change[1] - 0*FE.exact.u_offset[1] + 0*VM_OHTANI_CORRECTION_GAIN_P * ( (*CTRL).i->cmd_psi_active[1] - (x[1]-(*CTRL).motor->Lsigma*IS(1)) ) + 0*FE.exact.correction_integral_term[1];
         fx[0] = emf[0];
         fx[1] = emf[1];
     }
@@ -859,16 +859,16 @@ void flux_observer(){
             /* Ohtani Voltage Model in indirect oriented DQ frame + ODE1 */
             // 
             REAL deriv_psi_DQ1[2];
-            deriv_psi_DQ1[0] = (*CTRL).o->udq_cmd[0] - RS*(*CTRL).i->idq[0] + OMEGA_SYN*FE.exact.psi_DQ1[1] + GAIN_OHTANI * ( (*CTRL).i->cmd_psi - FE.exact.psi_DQ2[0] );
-            deriv_psi_DQ1[1] = (*CTRL).o->udq_cmd[1] - RS*(*CTRL).i->idq[1] - OMEGA_SYN*FE.exact.psi_DQ1[0] + GAIN_OHTANI * (             0.0 - FE.exact.psi_DQ2[1] );
+            deriv_psi_DQ1[0] = (*CTRL).o->cmd_uDQ[0] - RS*(*CTRL).i->iDQ[0] + OMEGA_SYN*FE.exact.psi_DQ1[1] + GAIN_OHTANI * ( (*CTRL).i->cmd_psi - FE.exact.psi_DQ2[0] );
+            deriv_psi_DQ1[1] = (*CTRL).o->cmd_uDQ[1] - RS*(*CTRL).i->iDQ[1] - OMEGA_SYN*FE.exact.psi_DQ1[0] + GAIN_OHTANI * (             0.0 - FE.exact.psi_DQ2[1] );
             // stator flux updates
             FE.exact.psi_DQ1[0] += CL_TS * (deriv_psi_DQ1[0]);
             FE.exact.psi_DQ1[1] += CL_TS * (deriv_psi_DQ1[1]);
             // rotor flux updates
             FE.exact.psi_DQ2_prev[0] = FE.exact.psi_DQ2[0];
             FE.exact.psi_DQ2_prev[1] = FE.exact.psi_DQ2[1];
-            FE.exact.psi_DQ2[0] = FE.exact.psi_DQ1[0] - LSIGMA*(*CTRL).i->idq[0];
-            FE.exact.psi_DQ2[1] = FE.exact.psi_DQ1[1] - LSIGMA*(*CTRL).i->idq[1];        
+            FE.exact.psi_DQ2[0] = FE.exact.psi_DQ1[0] - LSIGMA*(*CTRL).i->iDQ[0];
+            FE.exact.psi_DQ2[1] = FE.exact.psi_DQ1[1] - LSIGMA*(*CTRL).i->iDQ[1];        
         }else{
             /* Ohtani Voltage Model in AB frame + ODE4 */
 
@@ -898,8 +898,8 @@ void flux_observer(){
 
             // stator flux updates
             // #define VM_CORRECTION_KI (2.5)
-            // FE.exact.correction_integral_term[0] += CL_TS * VM_CORRECTION_KI * ( (*CTRL).i->cmd_psi_ABmu[0] - FE.exact.psi_2[0] );
-            // FE.exact.correction_integral_term[1] += CL_TS * VM_CORRECTION_KI * ( (*CTRL).i->cmd_psi_ABmu[1] - FE.exact.psi_2[1] );
+            // FE.exact.correction_integral_term[0] += CL_TS * VM_CORRECTION_KI * ( (*CTRL).i->cmd_psi_active[0] - FE.exact.psi_2[0] );
+            // FE.exact.correction_integral_term[1] += CL_TS * VM_CORRECTION_KI * ( (*CTRL).i->cmd_psi_active[1] - FE.exact.psi_2[1] );
             general_2states_rk4_solver(&rhf_ExactCompensation_Dynamics, (*CTRL).timebase, FE.exact.psi_1, CL_TS);
             // rotor flux updates
             FE.exact.psi_2_pprev[0]   = FE.exact.psi_2_prev[0];
@@ -919,8 +919,8 @@ void flux_observer(){
         }
 
         // #define INTEGRAL_GAIN_OHTANI 1
-        // FE.exact.u_offset_estimated_by_Lascu_integral_term[0] += CL_TS * INTEGRAL_GAIN_OHTANI * ( (*CTRL).i->cmd_psi_ABmu[0] - (FE.exact.psi_2[0]-(*CTRL).motor->Lsigma*IS_C(0)) );
-        // FE.exact.u_offset_estimated_by_Lascu_integral_term[1] += CL_TS * INTEGRAL_GAIN_OHTANI * ( (*CTRL).i->cmd_psi_ABmu[1] - (FE.exact.psi_2[1]-(*CTRL).motor->Lsigma*IS_C(1)) );
+        // FE.exact.u_offset_estimated_by_Lascu_integral_term[0] += CL_TS * INTEGRAL_GAIN_OHTANI * ( (*CTRL).i->cmd_psi_active[0] - (FE.exact.psi_2[0]-(*CTRL).motor->Lsigma*IS_C(0)) );
+        // FE.exact.u_offset_estimated_by_Lascu_integral_term[1] += CL_TS * INTEGRAL_GAIN_OHTANI * ( (*CTRL).i->cmd_psi_active[1] - (FE.exact.psi_2[1]-(*CTRL).motor->Lsigma*IS_C(1)) );
 
         int i;
         /* αβ */
@@ -1069,13 +1069,13 @@ void init_FE_htz(){
         FE.htz.psi_2_min[ind] = 0;
         FE.htz.psi_2_max[ind] = 0;
 
-        FE.htz.rs_est = IM_STAOTR_RESISTANCE;
-        FE.htz.rreq_est = IM_ROTOR_RESISTANCE;
+        FE.htz.rs_est = d_sim.init.R;
+        FE.htz.rreq_est = d_sim.init.Rreq;
 
         FE.htz.Delta_t = 1;
         FE.htz.u_offset[ind] = 0;
         // FE.htz.u_offset_intermediate[ind] = 0;
-        FE.htz.u_off_original_lpf_input[ind]=0.0; // holtz03 original (but i uses integrator instead of LPF)
+        FE.htz.u_off_original_lpf_input[ind]=0.0; // holtz03 original (but I uses integrator instead of LPF)
         FE.htz.u_off_saturation_time_correction[ind]=0.0; // exact offset calculation for compensation
         FE.htz.u_off_calculated_increment[ind]=0.0;    // saturation time based correction
         FE.htz.gain_off = HOLTZ_2002_GAIN_OFFSET; // 5; -> slow but stable // 50.1 // 20 -> too large then speed will oscillate during reversal near zero
@@ -1149,7 +1149,7 @@ void VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit(){
     // 限幅是针对转子磁链限幅的
     int ind;
     for(ind=0;ind<2;++ind){
-        if((*CTRL).i->cmd_omg_elec != 0.0){
+        if((*CTRL).i->cmd_varOmega != 0.0){
             if(FE.htz.psi_2[ind]    > PSI_MU_ASTER_MAX){ // TODO BUG呀！这里怎么可以是>应该是大于等于啊！
                 FE.htz.psi_2[ind]   = PSI_MU_ASTER_MAX;
                 FE.htz.sat_max_time[ind] += CL_TS;

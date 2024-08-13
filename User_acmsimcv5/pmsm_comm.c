@@ -1,7 +1,9 @@
 // https://stackoverflow.com/questions/1591361/understanding-typedefs-for-function-pointers-in-c
 #include "ACMSim.h"
-#if MACHINE_TYPE == PM_SYNCHRONOUS_MACHINE
-#if ENABLE_COMMISSIONING
+
+#if 0
+if(debug.mode_select == MODE_SELECT_COMMISSIONING){
+}
 
 /* The most accurate initial position detection method is actually proposed in my 2017 TDDA paper that make use of the fact that large d-axis current do not any create torque. */
 
@@ -17,12 +19,12 @@ void doIPD(){
 
     /* 根据CL_TS周期更新的位置反馈信息去辨识一个 */
     static int number_of_excitation_times = 0;
-    _pid_iD_1.Ref += CL_TS * 3;
+    pid1_id.Ref += CL_TS * 3;
     /* Stage 1 */
     if(number_of_excitation_times==0){
         // if reached then reset
-        if( _pid_iD_1.Ref > CURRENT_COMMAND_VALUE ){
-            _pid_iD_1.Ref = 0.0;
+        if( pid1_id.Ref > CURRENT_COMMAND_VALUE ){
+            pid1_id.Ref = 0.0;
             number_of_excitation_times = 1;
         }
         // identify the offset angle (fast)
@@ -34,8 +36,8 @@ void doIPD(){
     /* Stage 2 */
     }else if(number_of_excitation_times==1){
         // if reached then reset
-        if( _pid_iD_1.Ref > 2*CURRENT_COMMAND_VALUE ){
-            _pid_iD_1.Ref = 0.0;
+        if( pid1_id.Ref > 2*CURRENT_COMMAND_VALUE ){
+            pid1_id.Ref = 0.0;
             number_of_excitation_times = 2;
         }
         // identify the offset angle (medium fast)
@@ -46,7 +48,7 @@ void doIPD(){
         }
     /* Stage 3 */
     }else if(number_of_excitation_times==2){
-        _pid_iD_1.Ref = CURRENT_COMMAND_VALUE;
+        pid1_id.Ref = CURRENT_COMMAND_VALUE;
         // identify the offset angle (slow)
         if((*CTRL).i->theta_d_elec > (*CTRL).i->theta_d_elec_previous){
             ENC.excitation_angle_deg -= CL_TS*100;
@@ -59,23 +61,23 @@ void doIPD(){
         }
     /* Stage 4 */
     }else{
-        _pid_iD_1.Ref = CURRENT_COMMAND_VALUE;
+        pid1_id.Ref = CURRENT_COMMAND_VALUE;
         static Uint32 count=0;
         if(count++>2000){
             ENC.theta_d_offset = -((*CTRL).i->theta_d_elec - ENC.excitation_angle_deg/180.0*M_PI);
             (*CTRL).s->IPD_Done = TRUE;
-            _pid_iD_1.I_Term = 0.0; //
-            _pid_iQ_1.I_Term = 0.0; //
-            (*CTRL).o->uab_cmd[0] = 0.0;
-            (*CTRL).o->uab_cmd[1] = 0.0;
+            pid1_id.I_Term = 0.0; //
+            pid1_iq.I_Term = 0.0; //
+            (*CTRL).o->cmd_uAB[0] = 0.0;
+            (*CTRL).o->cmd_uAB[1] = 0.0;
             return;
         }
     }
 
-    _pid_iD_1.Fbk = (*CTRL).i->idq[0];
-    _pid_iD_1.calc(&_pid_iD_1);
-    (*CTRL).o->uab_cmd[0] = MT2A(_pid_iD_1.Out, 0.0, (*CTRL).s->cosT, (*CTRL).s->sinT);
-    (*CTRL).o->uab_cmd[1] = MT2B(_pid_iD_1.Out, 0.0, (*CTRL).s->cosT, (*CTRL).s->sinT);
+    pid1_id.Fbk = (*CTRL).i->idq[0];
+    pid1_id.calc(&pid1_id);
+    (*CTRL).o->cmd_uAB[0] = MT2A(pid1_id.Out, 0.0, (*CTRL).s->cosT, (*CTRL).s->sinT);
+    (*CTRL).o->cmd_uAB[1] = MT2B(pid1_id.Out, 0.0, (*CTRL).s->cosT, (*CTRL).s->sinT);
 }
 
 /* Phase Sequence Detection */
@@ -88,13 +90,13 @@ void doPSD(){
 
     #define CURRENT_COMMAND_VALUE (0.5*MOTOR_RATED_CURRENT_RMS)
 
-    _pid_iD_1.Ref = CURRENT_COMMAND_VALUE;
-    _pid_iD_1.Fbk = (*CTRL).i->idq[0];
-    _pid_iD_1.calc(&_pid_iD_1);
-    (*CTRL).o->uab_cmd[0] = MT2A(_pid_iD_1.Out, 0.0, (*CTRL).s->cosT, (*CTRL).s->sinT);
-    (*CTRL).o->uab_cmd[1] = MT2B(_pid_iD_1.Out, 0.0, (*CTRL).s->cosT, (*CTRL).s->sinT);
-    (*CTRL).o->uab_cmd_to_inverter[0] = (*CTRL).o->uab_cmd[0];
-    (*CTRL).o->uab_cmd_to_inverter[1] = (*CTRL).o->uab_cmd[1];
+    pid1_id.Ref = CURRENT_COMMAND_VALUE;
+    pid1_id.Fbk = (*CTRL).i->idq[0];
+    pid1_id.calc(&pid1_id);
+    (*CTRL).o->cmd_uAB[0] = MT2A(pid1_id.Out, 0.0, (*CTRL).s->cosT, (*CTRL).s->sinT);
+    (*CTRL).o->cmd_uAB[1] = MT2B(pid1_id.Out, 0.0, (*CTRL).s->cosT, (*CTRL).s->sinT);
+    (*CTRL).o->cmd_uAB_to_inverter[0] = (*CTRL).o->cmd_uAB[0];
+    (*CTRL).o->cmd_uAB_to_inverter[1] = (*CTRL).o->cmd_uAB[1];
 
     if((*CTRL).timebase>2.0){
         (*CTRL).s->PSD_Done = TRUE;
@@ -136,8 +138,8 @@ void commissioning(){
         doPSD();
         return;
     // }else{
-    //     (*CTRL).o->uab_cmd_to_inverter[0] = 0;
-    //     (*CTRL).o->uab_cmd_to_inverter[1] = 0;
+    //     (*CTRL).o->cmd_uAB_to_inverter[0] = 0;
+    //     (*CTRL).o->cmd_uAB_to_inverter[1] = 0;
     }
 
     /* IPD */
@@ -155,8 +157,11 @@ void commissioning(){
     (*CTRL).i->idq[1] = AB2T((*CTRL).i->iab[0], (*CTRL).i->iab[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
     // 参数自整定
     StepByStepCommissioning();
-    main_inverter_voltage_command(0);
+    inverter_voltage_command(0);
 }
+
+
+
 
 // 声明参数自整定结构体变量
 struct CommissioningDataStruct COMM;
@@ -168,8 +173,8 @@ int16 bool_VL_tuned = FALSE;
 int16 bool_PL_tuned = FALSE;
 
 
-#define UD_OUTPUT (*CTRL).o->uab_cmd[0]
-#define UQ_OUTPUT (*CTRL).o->uab_cmd[1]
+#define UD_OUTPUT (*CTRL).o->cmd_uAB[0]
+#define UQ_OUTPUT (*CTRL).o->cmd_uAB[1]
 
 
 // 自整定初始化
@@ -289,14 +294,14 @@ int linreg(int n, const REAL x[], const REAL y[], REAL* m, REAL* b, REAL* r){
 void COMM_PI_tuning(REAL LL, REAL RR, REAL BW_current, REAL delta, REAL JJ, REAL KE, REAL npp){
 
     // Current loop tuning
-    _pid_iD_1.Kp = LL * BW_current;
-    _pid_iQ_1.Kp = LL * BW_current;
+    pid1_id.Kp = LL * BW_current;
+    pid1_iq.Kp = LL * BW_current;
     // pid1_ia.Kp = LL * BW_current;
     // pid1_ib.Kp = LL * BW_current;
     // pid1_ic.Kp = LL * BW_current;
 
-    _pid_iD_1.Ki = _pid_iD_1.Kp * RR/LL * CL_TS; 
-    _pid_iQ_1.Ki = _pid_iQ_1.Kp * RR/LL * CL_TS; // R=Rs+Rr for q axis
+    pid1_id.Ki = pid1_id.Kp * RR/LL * CL_TS; 
+    pid1_iq.Ki = pid1_iq.Kp * RR/LL * CL_TS; // R=Rs+Rr for q axis
     // pid1_ia.Ki = pid1_ia.Kp * RR/LL * CL_TS;
     // pid1_ib.Ki = pid1_ib.Kp * RR/LL * CL_TS;
     // pid1_ic.Ki = pid1_ic.Kp * RR/LL * CL_TS;
@@ -308,16 +313,16 @@ void COMM_PI_tuning(REAL LL, REAL RR, REAL BW_current, REAL delta, REAL JJ, REAL
     // REAL lowest_pole_over_0dB = 2*3.1415926 * 150; // 5 Hz The feedback frequency of hall sensor at 10 rpm is near 5 Hz.
 
     // My tuning
-    // _pid_spd_1.Ki = lowest_pole_over_0dB / (delta*delta) * VL_TS; 
+    // PID_Speed->Ki = lowest_pole_over_0dB / (delta*delta) * VL_TS; 
 
-    _pid_spd_1.Kp = lowest_pole_over_0dB / (delta) / K;
+    PID_Speed->Kp = lowest_pole_over_0dB / (delta) / K;
 
     // TI's tuning
-    _pid_spd_1.Ki = _pid_spd_1.Kp * lowest_pole_over_0dB / (delta*delta) * VL_TS; 
+    PID_Speed->Ki = PID_Speed->Kp * lowest_pole_over_0dB / (delta*delta) * VL_TS; 
 
     #if PC_SIMULATION
-    printf("Current loop, BW_current=%.1f Hz, Kp=%g, KpKi=%g\n", BW_current/(2*3.1415926), _pid_iD_1.Kp,  _pid_iQ_1.Ki*CL_TS);
-    printf("Speed loop,   BW_speed=%.1f Hz,   Kp=%g, KpKi=%g, K=%g\n",      BW_speed/(2*3.1415926),   _pid_spd_1.Kp, _pid_spd_1.Ki*VL_TS, K);
+    printf("Current loop, BW_current=%.1f Hz, Kp=%g, KpKi=%g\n", BW_current/(2*3.1415926), pid1_id.Kp,  pid1_iq.Ki*CL_TS);
+    printf("Speed loop,   BW_speed=%.1f Hz,   Kp=%g, KpKi=%g, K=%g\n",      BW_speed/(2*3.1415926),   PID_Speed->Kp, PID_Speed->Ki*VL_TS, K);
     #endif
 }
 
@@ -338,10 +343,10 @@ void COMM_resistanceId(REAL id_fb, REAL iq_fb){
     COMM.current_command -= current_increase_per_step*COMM.i;
 
     #if EXCITE_BETA_AXIS_AND_MEASURE_PHASE_B
-        #define REGULATOR _pid_iQ_1
+        #define REGULATOR pid1_iq
         #define FEEDBACK  iq_fb
     #else
-        #define REGULATOR _pid_iD_1
+        #define REGULATOR pid1_id
         #define FEEDBACK  id_fb
     #endif
 
@@ -446,8 +451,7 @@ void COMM_resistanceId_v2(REAL id_fb, REAL iq_fb){
     // number of stairs (positive or negative current)
     #define NOS_II (29)
     #define NOS    (COMM_IV_SIZE_R1/2-1-NOS_II) // 200/2-30 = 70
-    // trash rigol has current limitation
-    #define RS_ID_MAXIMUM_CURRENT (0.5 * 1.414/0.8660254*MOTOR_RATED_CURRENT_RMS) /* [A] This specifies beta-axis current, so we need to make it larger so that the phase current is large enough This is motor related (to identify accurate resistance) */
+    #define RS_ID_MAXIMUM_CURRENT (1.414/0.8660254*MOTOR_RATED_CURRENT_RMS) /* [A] This specifies beta-axis current, so we need to make it larger so that the phase current is large enough This is motor related (to identify accurate resistance) */
     #ifdef _XCUBE1
         #define RS_ID_LOW_CURRENT (0.3)
     #else
@@ -478,10 +482,10 @@ void COMM_resistanceId_v2(REAL id_fb, REAL iq_fb){
     }
 
     #if EXCITE_BETA_AXIS_AND_MEASURE_PHASE_B
-        #define REGULATOR _pid_iQ_1
+        #define REGULATOR pid1_iq
         #define FEEDBACK  iq_fb
     #else
-        #define REGULATOR _pid_iD_1
+        #define REGULATOR pid1_id
         #define FEEDBACK  id_fb
     #endif
 
@@ -522,7 +526,7 @@ void COMM_resistanceId_v2(REAL id_fb, REAL iq_fb){
             COMM.i_phase_data_R1[COMM.i] = COMM.current_sum/(REAL)COMM.counterSS * -SIN_DASH_2PI_SLASH_3;
             COMM.v_phase_data_R1[COMM.i] = COMM.voltage_sum/(REAL)COMM.counterSS * -SIN_DASH_2PI_SLASH_3;
             #if PC_SIMULATION
-                printf("i=%f, U=%f\n", COMM.i_phase_data_R1[COMM.i], COMM.v_phase_data_R1[COMM.i]);
+                printf("I=%f, U=%f\n", COMM.i_phase_data_R1[COMM.i], COMM.v_phase_data_R1[COMM.i]);
             #endif
             COMM.bool_collecting = FALSE;
             ++COMM.i;
@@ -677,9 +681,9 @@ void COMM_inductanceId_ver2(REAL id_fb, REAL iq_fb){
     int16 number_of_repeats_L2 = 0;
 
     #if EXCITE_BETA_AXIS_AND_MEASURE_PHASE_B
-        #define REGULATOR _pid_iQ_1
+        #define REGULATOR pid1_iq
     #else
-        #define REGULATOR _pid_iD_1
+        #define REGULATOR pid1_id
     #endif
 
     COMM.counterEntered += 1;
@@ -910,11 +914,11 @@ void COMM_PMFluxId(REAL id_fb, REAL iq_fb, REAL omg_elec_fb){
     COMM.counterEntered += 1;
     // if(COMM.counterEntered==1){
     //     // delta =10
-    //     _pid_spd_1.Kp = 1e-6 * (CL_TS_INVERSE*0.1) / 10.0;
-    //     _pid_spd_1.Ki = _pid_spd_1.Kp * (CL_TS_INVERSE*0.1) / 100.0 * (CL_TS*SPEED_LOOP_CEILING);
+    //     PID_Speed->Kp = 1e-6 * (CL_TS_INVERSE*0.1) / 10.0;
+    //     PID_Speed->Ki = PID_Speed->Kp * (CL_TS_INVERSE*0.1) / 100.0 * (CL_TS*SPEED_LOOP_CEILING);
     // }
 
-    _pid_iD_1.Ref = 0.0;
+    pid1_id.Ref = 0.0;
 
     // if((*CTRL).timebase>20){
     //     rpm_speed_command = 5;
@@ -935,22 +939,22 @@ void COMM_PMFluxId(REAL id_fb, REAL iq_fb, REAL omg_elec_fb){
 
             // if(bool_tuning){
             //     if(error-0.5>0){
-            //         _pid_spd_1.Kp += CL_TS*SPEED_LOOP_CEILING * 0.0005;
+            //         PID_Speed->Kp += CL_TS*SPEED_LOOP_CEILING * 0.0005;
             //     }else if(error-0.5<0){
             //         bool_tuning = FALSE;
             //     }
             // }
 
-            _pid_spd_1.Ref = rpm_speed_command*RPM_2_ELEC_RAD_PER_SEC;
-            _pid_spd_1.Fbk = omg_elec_fb;
-            _pid_spd_1.calc(&_pid_spd_1);
-            _pid_iQ_1.Ref = _pid_spd_1.Out;
-            // REAL torque_cmd = _pid_spd_1.Out;
-            // _pid_iQ_1.Ref = torque_cmd / (CLARKE_TRANS_TORQUE_GAIN*MOTOR_NUMBER_OF_POLE_PAIRS*MOTOR_BACK_EMF_CONSTANT);
-            // if(_pid_iQ_1.Ref > MOTOR_RATED_CURRENT_RMS){
-            //     _pid_iQ_1.Ref = MOTOR_RATED_CURRENT_RMS;
-            // }else if(_pid_iQ_1.Ref < -MOTOR_RATED_CURRENT_RMS){
-            //     _pid_iQ_1.Ref = -MOTOR_RATED_CURRENT_RMS;
+            PID_Speed->Ref = rpm_speed_command*RPM_2_ELEC_RAD_PER_SEC;
+            PID_Speed->Fbk = omg_elec_fb;
+            PID_Speed->calc(&PID_Speed);
+            pid1_iq.Ref = PID_Speed->Out;
+            // REAL torque_cmd = PID_Speed->Out;
+            // pid1_iq.Ref = torque_cmd / (CLARKE_TRANS_TORQUE_GAIN*MOTOR_NUMBER_OF_POLE_PAIRS*MOTOR_BACK_EMF_CONSTANT);
+            // if(pid1_iq.Ref > MOTOR_RATED_CURRENT_RMS){
+            //     pid1_iq.Ref = MOTOR_RATED_CURRENT_RMS;
+            // }else if(pid1_iq.Ref < -MOTOR_RATED_CURRENT_RMS){
+            //     pid1_iq.Ref = -MOTOR_RATED_CURRENT_RMS;
             // }
             // printf("KT=%g\n", CLARKE_TRANS_TORQUE_GAIN*MOTOR_NUMBER_OF_POLE_PAIRS*MOTOR_BACK_EMF_CONSTANT);
             // getch();
@@ -971,24 +975,24 @@ void COMM_PMFluxId(REAL id_fb, REAL iq_fb, REAL omg_elec_fb){
             }else if(torque_cmd < -SPEED_LOOP_LIMIT_NEWTON_METER){
                 torque_cmd = -SPEED_LOOP_LIMIT_NEWTON_METER;
             }
-            _pid_iQ_1.Ref = torque_cmd / (CLARKE_TRANS_TORQUE_GAIN*MOTOR_NUMBER_OF_POLE_PAIRS*MOTOR_BACK_EMF_CONSTANT);
+            pid1_iq.Ref = torque_cmd / (CLARKE_TRANS_TORQUE_GAIN*MOTOR_NUMBER_OF_POLE_PAIRS*MOTOR_BACK_EMF_CONSTANT);
         }
     }
 
     // put this before _lpf(...)
-    _pid_iD_1.Fbk = id_fb;
-    _pid_iQ_1.Fbk = iq_fb;
+    pid1_id.Fbk = id_fb;
+    pid1_iq.Fbk = iq_fb;
 
-    // put this before _pid_iQ_1.calc(&_pid_iQ_1);
-    filtered_voltage     = _lpf(_pid_iQ_1.Out, filtered_voltage, 5);
-    filtered_current     = _lpf(_pid_iQ_1.Fbk, filtered_current, 5);
+    // put this before pid1_iq.calc(&pid1_iq);
+    filtered_voltage     = _lpf(pid1_iq.Out, filtered_voltage, 5);
+    filtered_current     = _lpf(pid1_iq.Fbk, filtered_current, 5);
     filtered_omg_elec_fb = _lpf(omg_elec_fb, filtered_omg_elec_fb, 5);
 
     // voltage output
-    _pid_iD_1.calc(&_pid_iD_1);
-    _pid_iQ_1.calc(&_pid_iQ_1);
-    UD_OUTPUT = MT2A(_pid_iD_1.Out, _pid_iQ_1.Out, (*CTRL).s->cosT, (*CTRL).s->sinT);
-    UQ_OUTPUT = MT2B(_pid_iD_1.Out, _pid_iQ_1.Out, (*CTRL).s->cosT, (*CTRL).s->sinT);
+    pid1_id.calc(&pid1_id);
+    pid1_iq.calc(&pid1_iq);
+    UD_OUTPUT = MT2A(pid1_id.Out, pid1_iq.Out, (*CTRL).s->cosT, (*CTRL).s->sinT);
+    UQ_OUTPUT = MT2B(pid1_id.Out, pid1_iq.Out, (*CTRL).s->cosT, (*CTRL).s->sinT);
 
     static REAL last_KE;
     last_KE = COMM.KE;
@@ -996,7 +1000,7 @@ void COMM_PMFluxId(REAL id_fb, REAL iq_fb, REAL omg_elec_fb){
         // 有除法的地方就要小心分母为零（1.#INF）：
             // x0(id)[A],x1(iq)[A],x2(speed)[rpm],x3(position)[rad],ud[V],uq[V],IS_C(0),(*CTRL).ual,ACM.ual,ACM.theta_d,DIST_AL,COMM.KE,COMM.Js
             // 0.712084,0.0339154,0.21666,1.51514e-006,-19.4698,0.47952,0.712084,-19.4698,-19.4698,1.51514e-006,0,1.#INF,0
-        COMM.KE = (filtered_voltage - COMM.R*filtered_current) / filtered_omg_elec_fb - COMM.L3 * _pid_iD_1.Ref;
+        COMM.KE = (filtered_voltage - COMM.R*filtered_current) / filtered_omg_elec_fb - COMM.L3 * pid1_id.Ref;
         // COMM.KE *= sqrt(CLARKE_TRANS_TORQUE_GAIN); // 想要在恒幅值变换下拿到和恒功率变换一样的永磁体磁链值，就要乘以这个系数。
     }
     if(COMM.KE>3*MOTOR_BACK_EMF_CONSTANT){
@@ -1055,7 +1059,7 @@ void COMM_inertiaId(REAL id_fb, REAL iq_fb, REAL cosPark, REAL sinPark, REAL omg
     #define STATOR_CURRENT_BETA  MT2B(id_fb, iq_fb, cosPark, sinPark)
     #define ROTOR_FLUX_ALPHA     MT2A(COMM.KE*1 + 0*PMSM_PERMANENT_MAGNET_FLUX_LINKAGE, 0.0, cosPark, sinPark) // 只要是接近空载，即便KE错了很多，也不影响惯量的辨识
     #define ROTOR_FLUX_BETA      MT2B(COMM.KE*1 + 0*PMSM_PERMANENT_MAGNET_FLUX_LINKAGE, 0.0, cosPark, sinPark)
-    #define NORMINAL_INERTIA 1.59 * (1e-4) // 随便给个数量级差不多的数，不同数值只对画图有影响
+    #define NORMINAL_INERTIA (1e-6) // 随便给个数量级差不多的数，不同数值只对画图有影响
     #define SPEED_SIGNAL (omg_elec_fb)
 
     #define AWAYA_LAMBDA (31.4)
@@ -1094,17 +1098,17 @@ void COMM_inertiaId(REAL id_fb, REAL iq_fb, REAL cosPark, REAL sinPark, REAL omg
 
     // 给定周期转矩指令，产生周期转速响应
     // if(t < TEST_SIGNAL_PERIOD*0.5){
-    //     _pid_iQ_1.Ref = 0.2*MOTOR_RATED_CURRENT_RMS;
+    //     pid1_iq.Ref = 0.2*MOTOR_RATED_CURRENT_RMS;
     // }else{
-    //     _pid_iQ_1.Ref = -0.2*MOTOR_RATED_CURRENT_RMS;
+    //     pid1_iq.Ref = -0.2*MOTOR_RATED_CURRENT_RMS;
     // }
-    _pid_iD_1.Ref = 0.0;
+    pid1_id.Ref = 0.0;
 
     REAL error = (SPEED_COMMAND_BIAS+SPEED_COMMAND_RANGE*sin(2*M_PI*TEST_SIGNAL_FREQUENCY*(*CTRL).timebase))*RPM_2_ELEC_RAD_PER_SEC - SPEED_SIGNAL;
     // (*CTRL).speed_ctrl_err = error;
 
     if(FALSE){ // Open loop
-        _pid_iQ_1.Ref = 0.2*cos(2*3.1415926*TEST_SIGNAL_FREQUENCY*t);
+        pid1_iq.Ref = 0.2*cos(2*3.1415926*TEST_SIGNAL_FREQUENCY*t);
 
     }else if(TRUE){// PI Speed Regulator
 
@@ -1113,19 +1117,19 @@ void COMM_inertiaId(REAL id_fb, REAL iq_fb, REAL cosPark, REAL sinPark, REAL omg
             comm_vc_count = 0;
 
             (*CTRL).i->cmd_speed_rpm = SPEED_COMMAND_BIAS+SPEED_COMMAND_RANGE*sin(2*M_PI*TEST_SIGNAL_FREQUENCY*(*CTRL).timebase);
-            _pid_spd_1.Ref = (*CTRL).i->cmd_speed_rpm*RPM_2_ELEC_RAD_PER_SEC;
-            _pid_spd_1.Fbk = SPEED_SIGNAL;
-            _pid_spd_1.calc(&_pid_spd_1);
-            _pid_iQ_1.Ref = _pid_spd_1.Out;
-            // REAL torque_cmd = _pid_spd_1.Out;
-            // _pid_iQ_1.Ref = torque_cmd / (CLARKE_TRANS_TORQUE_GAIN*MOTOR_NUMBER_OF_POLE_PAIRS*COMM.KE);
-            // if(_pid_iQ_1.Ref > MOTOR_RATED_CURRENT_RMS){
-            //     _pid_iQ_1.Ref = MOTOR_RATED_CURRENT_RMS;
-            // }else if(_pid_iQ_1.Ref < -MOTOR_RATED_CURRENT_RMS){
-            //     _pid_iQ_1.Ref = -MOTOR_RATED_CURRENT_RMS;
+            PID_Speed->Ref = (*CTRL).i->cmd_speed_rpm*RPM_2_ELEC_RAD_PER_SEC;
+            PID_Speed->Fbk = SPEED_SIGNAL;
+            PID_Speed->calc(&PID_Speed);
+            pid1_iq.Ref = PID_Speed->Out;
+            // REAL torque_cmd = PID_Speed->Out;
+            // pid1_iq.Ref = torque_cmd / (CLARKE_TRANS_TORQUE_GAIN*MOTOR_NUMBER_OF_POLE_PAIRS*COMM.KE);
+            // if(pid1_iq.Ref > MOTOR_RATED_CURRENT_RMS){
+            //     pid1_iq.Ref = MOTOR_RATED_CURRENT_RMS;
+            // }else if(pid1_iq.Ref < -MOTOR_RATED_CURRENT_RMS){
+            //     pid1_iq.Ref = -MOTOR_RATED_CURRENT_RMS;
             // }
 
-            // printf("_pid_iQ_1.Ref=%g\n", _pid_iQ_1.Ref);
+            // printf("pid1_iq.Ref=%g\n", pid1_iq.Ref);
         }
 
     }else{ // PI SMC
@@ -1144,7 +1148,7 @@ void COMM_inertiaId(REAL id_fb, REAL iq_fb, REAL cosPark, REAL sinPark, REAL omg
             }else if(torque_cmd < -SPEED_LOOP_LIMIT_NEWTON_METER){
                 torque_cmd = -SPEED_LOOP_LIMIT_NEWTON_METER;
             }
-            _pid_iQ_1.Ref = torque_cmd / (CLARKE_TRANS_TORQUE_GAIN*MOTOR_NUMBER_OF_POLE_PAIRS*COMM.KE);
+            pid1_iq.Ref = torque_cmd / (CLARKE_TRANS_TORQUE_GAIN*MOTOR_NUMBER_OF_POLE_PAIRS*COMM.KE);
         }
     }
 
@@ -1177,14 +1181,14 @@ void COMM_inertiaId(REAL id_fb, REAL iq_fb, REAL cosPark, REAL sinPark, REAL omg
         }
     }
 
-    _pid_iD_1.Fbk = id_fb;
-    _pid_iD_1.calc(&_pid_iD_1);
+    pid1_id.Fbk = id_fb;
+    pid1_id.calc(&pid1_id);
 
-    _pid_iQ_1.Fbk = iq_fb;
-    _pid_iQ_1.calc(&_pid_iQ_1);
+    pid1_iq.Fbk = iq_fb;
+    pid1_iq.calc(&pid1_iq);
 
-    UD_OUTPUT = MT2A(_pid_iD_1.Out, _pid_iQ_1.Out, cosPark, sinPark);
-    UQ_OUTPUT = MT2B(_pid_iD_1.Out, _pid_iQ_1.Out, cosPark, sinPark);
+    UD_OUTPUT = MT2A(pid1_id.Out, pid1_iq.Out, cosPark, sinPark);
+    UQ_OUTPUT = MT2B(pid1_id.Out, pid1_iq.Out, cosPark, sinPark);
 
 
     // 限幅，只影响画图
@@ -1215,7 +1219,7 @@ void StepByStepCommissioning(){
 
     }else if(COMM.bool_comm_status == 1){
         // 电阻辨识
-        if(!G.flag_do_inverter_characteristics){
+        if(G.flag_do_inverter_characteristics){
             COMM_resistanceId_v2(IS_C(0), IS_C(1)); // v2 is intended only for better inverter nonlinearity identification considering the rotor movement issue (starting from negative maximal current value to force align)
         }else{
             COMM_resistanceId(IS_C(0), IS_C(1));
@@ -1269,5 +1273,4 @@ void StepByStepCommissioning(){
 
     /* End *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/      
 }
-#endif
 #endif

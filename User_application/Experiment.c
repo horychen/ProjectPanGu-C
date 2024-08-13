@@ -7,7 +7,7 @@ void init_experiment_overwrite(){
         (*Axis).Select_exp_operation = AS_LOAD_MOTOR_CONST;
         G.dac_watch_stator_resistance = 1.703;
 
-        // 2021-07-17
+        // 2021-07-17 printf
         //(*Axis).Select_exp_operation = NSOAF_LOW_SPEED_OPERATION;
 
     #else
@@ -22,12 +22,12 @@ void init_experiment_overwrite(){
     #endif
 
     if((*Axis).Select_exp_operation == AS_LOAD_MOTOR_CONST){
-        PID_spd->OutLimit = 2.1; //2.0;
+        PID_Speed->OutLimit = 2.1; //2.0;
         (*Axis).Set_manual_rpm = -600;  // motoring + regeneration for low speed test
         //(*Axis).Set_manual_rpm = 0;    // motoring for high speed test
     }
     else if((*Axis).Select_exp_operation == AS_LOAD_MOTOR_RAMP){
-        PID_spd->OutLimit = 0.01;
+        PID_Speed->OutLimit = 0.01;
         (*Axis).Set_manual_rpm = -1200;
     }
     else if((*Axis).Select_exp_operation == NSOAF_LOW_SPEED_OPERATION){
@@ -45,7 +45,7 @@ void init_experiment_overwrite(){
     if((*Axis).Select_exp_operation == AS_LOAD_MOTOR_CONST){
         (*CTRL).g->FLAG_INVERTER_NONLINEARITY_COMPENSATION = 2; // use sigmoid as compensation
     }else{
-        (*CTRL).g->FLAG_INVERTER_NONLINEARITY_COMPENSATION = INVERTER_NONLINEARITY_COMPENSATION_INIT;
+        (*CTRL).g->FLAG_INVERTER_NONLINEARITY_COMPENSATION = debug.INVERTER_NONLINEARITY_COMPENSATION_INIT;
     }
 
     /* Overwrite */
@@ -55,10 +55,10 @@ void init_experiment_overwrite(){
         (*CTRL).g->flag_use_ecap_voltage = 0;
 
         //(*CTRL).g->OverwriteSpeedOutLimitDuringInit = 6.3;
-        PID_spd->OutLimit = (*Axis).OverwriteSpeedOutLimitDuringInit;
+        PID_Speed->OutLimit = (*Axis).OverwriteSpeedOutLimitDuringInit;
     #else
         //(*CTRL).g->OverwriteSpeedOutLimitDuringInit = 2; // 6.3; // 150% rated
-        PID_spd->OutLimit = (*Axis).OverwriteSpeedOutLimitDuringInit;
+        PID_Speed->OutLimit = (*Axis).OverwriteSpeedOutLimitDuringInit;
     #endif
 
 
@@ -67,7 +67,7 @@ void init_experiment_overwrite(){
     /* 750W MOTOR1 (wo/ hall) */
     //(*CTRL).motor->R = 1.6;
     //(*CTRL).motor->KE = 0.095;
-    //PID_spd->OutLimit = 10;
+    //PID_Speed->OutLimit = 10;
 
     #ifdef _XCUBE1
                                      // no DT comp, comp, comp, comp
@@ -136,41 +136,46 @@ void init_experiment_overwrite(){
 
 void runtime_command_and_tuning(){
     if((*Axis).Select_exp_operation == AS_LOAD_MOTOR_CONST){
-        (*CTRL).s->go_sensorless = 0;
+
+        //(*CTRL).s->go_sensorless = 0;
+        debug.mode_select = MODE_SELECT_VELOCITY_LOOP;
+
         G.FLAG_INVERTER_NONLINEARITY_COMPENSATION = 0;
         if((*CTRL).timebase < 2){
-            PID_spd->OutLimit = 0.1;
+            PID_Speed->OutLimit = 0.1;
         }else{
-            //PID_spd->OutLimit = 4.2;
-            PID_spd->OutLimit = 3.0;
-            //PID_spd->OutLimit = 1.5;
+            //PID_Speed->OutLimit = 4.2;
+            PID_Speed->OutLimit = 3.0;
+            //PID_Speed->OutLimit = 1.5;
 
             if((*CTRL).timebase>60){
                 // Slessinv: Variable Load Experiment
                 if( ((long int)((*CTRL).timebase*0.125)) % 2 == 0){ // 0.125 means 8 sec period
-                    PID_spd->OutLimit = 1.5; // original
-                    //PID_spd->OutLimit = 4.2; // compare with Park & Sul
+                    PID_Speed->OutLimit = 1.5; // original
+                    //PID_Speed->OutLimit = 4.2; // compare with Park & Sul
                 }else{
-                    PID_spd->OutLimit = 3.0;
+                    PID_Speed->OutLimit = 3.0;
                 }
             }
         }
     }
     if((*Axis).Select_exp_operation == AS_LOAD_MOTOR_RAMP){
-        (*CTRL).s->go_sensorless = 0;
+        //(*CTRL).s->go_sensorless = 0;
+        debug.mode_select = MODE_SELECT_VELOCITY_LOOP;
+
         if((*CTRL).timebase < 0.4){
-            PID_spd->OutLimit = 4.2;
+            PID_Speed->OutLimit = 4.2;
         }else if((*CTRL).timebase < 0.4 + 0.1){
-            PID_spd->OutLimit -= CL_TS * 4.2 / 0.1;
+            PID_Speed->OutLimit -= CL_TS * 4.2 / 0.1;
         }else{
-            PID_spd->OutLimit = 0.01;
+            PID_Speed->OutLimit = 0.01;
         }
         //        if((*CTRL).timebase < 0.4){
-        //            PID_spd->OutLimit += CL_TS * 4.2 / 0.4;
+        //            PID_Speed->OutLimit += CL_TS * 4.2 / 0.4;
         //        }else if((*CTRL).timebase < 1.0){
-        //            PID_spd->OutLimit = 4.2;
+        //            PID_Speed->OutLimit = 4.2;
         //        }else{
-        //            PID_spd->OutLimit = 0.01;
+        //            PID_Speed->OutLimit = 0.01;
         //        }
     }
 
@@ -290,7 +295,7 @@ void slow_speed_reversal(){
 }
 
 void low_speed_operation_init(){
-    //    PID_spd->OutLimit = 10;
+    //    PID_Speed->OutLimit = 10;
 
         //    (*CTRL).motor->KE = 0.104; // ZFY: 0.1A
         //    (*CTRL).motor->KE = 0.112;  // ZFY: 2.0A
@@ -405,7 +410,7 @@ void zero_speed_stopping(){
 }
 
 void high_speed_operation_init(){
-    //    PID_spd->OutLimit = 10; // sensorless needs higher bounds (does not work well with nonlinear controller gain)
+    //    PID_Speed->OutLimit = 10; // sensorless needs higher bounds (does not work well with nonlinear controller gain)
     //    (*CTRL).motor->KE = 0.095;
     //    AFEOE.ActiveFlux_KP = 0.2; // nsoaf.ActiveFlux_KPȡ0.5�����ϵ�ʱ��300rpm�����active flux������������
     //    AFEOE.ActiveFlux_KI = 2.0;

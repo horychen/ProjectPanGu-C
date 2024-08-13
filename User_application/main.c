@@ -4,7 +4,6 @@
 // st_axis *list_pointer_to_Axes[NUMBER_OF_AXES];
 st_axis Axis_1;
 st_axis *Axis;
-int axisCnt = 0;
 double target_tick = 0.0;
 
 // ====为了同时运行两台电机，增加的另一份控制结构体
@@ -182,11 +181,11 @@ void measurement()
     // 只用第一套三相
     IS_C(0) = Axis->iabg[0];
     IS_C(1) = Axis->iabg[1];
-    (*CTRL).i->iab[0] = Axis->iabg[0];
-    (*CTRL).i->iab[1] = Axis->iabg[1];
+    (*CTRL).i->iAB[0] = Axis->iabg[0];
+    (*CTRL).i->iAB[1] = Axis->iabg[1];
 
-    US_C(0) = (*CTRL).o->uab_cmd[0]; // 后缀_P表示上一步的电压，P = Previous
-    US_C(1) = (*CTRL).o->uab_cmd[1]; // 后缀_C表示当前步的电压，C = Current
+    US_C(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
+    US_C(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
 
     US_P(0) = US_C(0);
     US_P(1) = US_C(1);
@@ -204,9 +203,8 @@ void measurement()
         // PID_iD->OutLimit = 2;
         // PID_iQ->OutLimit = 2; 
 
-
-        PID_iX->outLimit = Axis->vdc * 0.5773672;
-        PID_iY->outLimit = Axis->vdc * 0.5773672;
+        // PID_iX->outLimit = Axis->vdc * 0.5773672;
+        // PID_iY->outLimit = Axis->vdc * 0.5773672;
     }
 
     //    这样不能形成保护，必须设置故障状态才行。
@@ -264,18 +262,18 @@ void measurement()
 
 REAL call_position_loop_controller(int positionLoopType)
 {
-    CTRL_1.s->spd->Kp = TEST_SHANK_SPD_KP;
-    CTRL_1.s->spd->Ki = TEST_SHANK_SPD_KI;
+    CTRL_1.s->Speed->Kp = TEST_SHANK_SPD_KP;
+    CTRL_1.s->Speed->Ki = TEST_SHANK_SPD_KI;
 
-    CTRL_2.s->spd->Kp = TEST_HIP_SPD_KP;
-    CTRL_2.s->spd->Ki = TEST_HIP_SPD_KI;
+    CTRL_2.s->Speed->Kp = TEST_HIP_SPD_KP;
+    CTRL_2.s->Speed->Ki = TEST_HIP_SPD_KI;
 
 
-    CTRL_1.s->pos->Kp = TEST_SHANK_KP;
-    CTRL_2.s->pos->Kp = TEST_HIP_KP;
+    CTRL_1.s->Position->Kp = TEST_SHANK_KP;
+    CTRL_2.s->Position->Kp = TEST_HIP_KP;
 
-    CTRL_1.s->pos->OutLimit = TEST_SHANK_POS_OUTLIMIT;
-    CTRL_2.s->pos->OutLimit = TEST_HIP_POS_OUTLIMIT;
+    CTRL_1.s->Position->OutLimit = TEST_SHANK_POS_OUTLIMIT;
+    CTRL_2.s->Position->OutLimit = TEST_HIP_POS_OUTLIMIT;
 
     run_iecon_main((*CTRL).timebase_counter);
 

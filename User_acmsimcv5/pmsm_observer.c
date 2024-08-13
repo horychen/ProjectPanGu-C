@@ -24,7 +24,7 @@ void rhf_dynamics_ESO(REAL t, REAL *x, REAL *fx){
     /* 未测试，如果用iq给定会不会好一点？？ 计算量还少*/
     /* 未测试，如果用iq给定会不会好一点？？ 计算量还少*/
     /* 未测试，如果用iq给定会不会好一点？？ 计算量还少*/
-    // esoaf.xTem = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * MOTOR.KActive * CTRL->i.idq_cmd[1];
+    // esoaf.xTem = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * MOTOR.KActive * CTRL->I.idq_cmd[1];
 
     /* Output Error = sine of angle error */
     esoaf.output_error_sine = sin(AFE_USED.theta_d - xPos);
@@ -66,7 +66,7 @@ void eso_one_parameter_tuning(REAL omega_ob){
 
     // Natural Observer Framework
     // if(esoaf.bool_ramp_load_torque == FALSE){
-    //     // D, P, i, II?
+    //     // D, P, I, II?
     //     esoaf.ell[0] = (MOTOR.Js*MOTOR.npp_inv) * 3*omega_ob;
     //     esoaf.ell[1] = (MOTOR.Js*MOTOR.npp_inv) * 3*omega_ob*omega_ob;
     //     esoaf.ell[2] = (MOTOR.Js*MOTOR.npp_inv) * 1*omega_ob*omega_ob*omega_ob;
@@ -92,10 +92,10 @@ void Main_esoaf_chen2021(){
     }
 
     general_4states_rk4_solver(&rhf_dynamics_ESO, (*CTRL).timebase, esoaf.x, CL_TS);
-    while(esoaf.x[0]>M_PI){
+    if(esoaf.x[0]>M_PI){
         esoaf.x[0] -= 2*M_PI;
     }
-    while(esoaf.x[0]<-M_PI){
+    if(esoaf.x[0]<-M_PI){
         esoaf.x[0] += 2*M_PI;
     }
     esoaf.xPos = esoaf.x[0];
@@ -181,7 +181,7 @@ void nso_one_parameter_tuning(REAL omega_ob){
             * MOTOR.Js_inv * LQ_INV
             * (MOTOR.Lq*(*CTRL).i->idq_cmd[0] + MOTOR.KActive)
           );
-    REAL uq_inv = 1.0 / (*CTRL).o->udq_cmd[1];
+    REAL uq_inv = 1.0 / (*CTRL).o->cmd_uDQ[1];
     #if TUNING_IGNORE_UQ
         uq_inv = 1.0; // this is 1.#INF when init
     #endif
@@ -296,7 +296,7 @@ void init_nsoaf(){
 
     MOTOR.KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * (*CTRL).i->idq[0];
     nsoaf.omega_ob = nsoaf.set_omega_ob;
-     nso_one_parameter_tuning(nsoaf.omega_ob);
+    nso_one_parameter_tuning(nsoaf.omega_ob);
 }
 #endif
 
@@ -799,8 +799,8 @@ void Main_harnefors_scvm(){
     #define DERIV_ID PIDQ(0)
     #define DERIV_IQ PIDQ(1)
 
-    #define UD_CMD (*CTRL).o->udq_cmd[0]
-    #define UQ_CMD (*CTRL).o->udq_cmd[1]
+    #define UD_CMD (*CTRL).o->cmd_uDQ[0]
+    #define UQ_CMD (*CTRL).o->cmd_uDQ[1]
     #define MOTOR  (*(*CTRL).motor)
 
     // // 计算反电势（考虑dq电流导数）
@@ -820,8 +820,8 @@ void Main_harnefors_scvm(){
     harnefors.omg_elec += CL_TS * alpha_bw_lpf * ( (q_axis_emf - lambda_s*d_axis_emf)/(MOTOR.KE*KE_MISMATCH+(MOTOR.Ld-MOTOR.Lq)*D_AXIS_CURRENT) - harnefors.omg_elec );
 
     // 转子位置周期限幅
-    while(harnefors.theta_d>M_PI) harnefors.theta_d-=2*M_PI;
-    while(harnefors.theta_d<-M_PI) harnefors.theta_d+=2*M_PI;
+    if(harnefors.theta_d>M_PI) harnefors.theta_d-=2*M_PI;
+    if(harnefors.theta_d<-M_PI) harnefors.theta_d+=2*M_PI;
 }
 #endif
 
@@ -1141,13 +1141,13 @@ void rhf_parksul2014_Dynamics(REAL t, REAL *x, REAL *fx){
     fx[0] = emf[0] \
         /*k_df*/- parksul.k_df*xD(0) \
         /*k_af*/- parksul.k_af*(parksul.xPsi2[0] - parksul.xPsi2_Limited[0]) \
-        /*CM-i*/+ x[10] \
+        /*CM-I*/+ x[10] \
         /*CM-P*/+ parksul.CM_KP * parksul.output_error[0];
     fx[10] =      parksul.CM_KI * parksul.output_error[0];
     fx[1] = emf[1] \
         /*k_df*/- parksul.k_df*xD(1) \
         /*k_af*/- parksul.k_af*(parksul.xPsi2[1] - parksul.xPsi2_Limited[1]) \
-        /*CM-i*/+ x[11] \
+        /*CM-I*/+ x[11] \
         /*CM-P*/+ parksul.CM_KP * parksul.output_error[1];
     fx[11] =      parksul.CM_KI * parksul.output_error[1];
 
@@ -1307,7 +1307,7 @@ void pmsm_observers(){
         #if SELECT_ALGORITHM == ALG_NSOAF
             // MainFE_HuWu_1998(); // use algorithm 2
             Main_the_active_flux_estimator();
-            // Main_VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
+            //Main_VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
             Main_nsoaf_chen2020();
         #elif SELECT_ALGORITHM == ALG_ESOAF
             Main_the_active_flux_estimator();
