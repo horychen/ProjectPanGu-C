@@ -1,16 +1,30 @@
 #ifndef ALL_DEFINITATION_H
 #define ALL_DEFINITATION_H
+//#include <stdio.h>
+//#include <stdlib.h>
 
-#include "math.h"
-//#include "IQmathLib.h"
-/* DSP system Configuration------------------------------------------------------------------*/
+/* User Application: Motor Drives */
+    #include "ACMSim.h"
+    #include "ACMConfig.h"
+    #include "Experiment.h"
+
+    //#include "math.h"
+    //#include "IQmathLib.h"
+
+/* User Application: Cury the leg */
+    #include "AppCury.h"
+
+/* CLA header files */
+    #include "DCLCLA.h"
+    #include "CLA_shared.h"
+    #include "F2837xD_Cla.h"           // Control Law Accelerator Registers
+    #include "F2837xD_Cla_defines.h"   // Macros used for CLA examples.
     #include "F2837xD_Cla_typedefs.h"  // F2837xD CLA Type definitions
+
+/* DSP system Configuration------------------------------------------------------------------*/
     #include "F2837xD_device.h"        // F2837xD Headerfile Include File
     #include "F2837xD_Examples.h"      // F2837xD Examples Include File
-/* ¾­³£ÐèÒªÐÞ¸ÄµÄºê¶¨ÒåÉùÃ÷ÎÄ¼þ */
-    #include "ACMConfig.h"
-    #include "ACMSim.h"
-    #include "Experiment.h"
+
 /* Motor Library file------------------------------------------------------------------------*/
     #define USE_DEATIME_PRECOMP FALSE
     __interrupt void EPWM1ISR(void);
@@ -27,7 +41,7 @@
     #include "CONSOLE.h"
     #include "DAC_MAX5307.h"
     #include "ECaptureVoltage.h"
-    #include "F2837xD_Ipc_drivers.h" // Ë«ºËÍ¨Ñ¶
+    #include "F2837xD_Ipc_drivers.h" // Ë«ï¿½ï¿½Í¨Ñ¶
     #include "F2837xD_struct.h"
     #include "F2837xD_sdfm_drivers.h"
     #include "ShareMemory.h"
@@ -45,8 +59,8 @@
     #define SYSTEM_QEP_UNITTIME_ISR          0.001    //1K ,1ms     time_out timer   isr_time
     #define SYSTEM_QEP_CAP_X128           0.00000064  //cap timer
     #define SYSTEM_QEP_CUTOFF_FILTER           5      // CUTOFF FREQUENCY 10HZ
-    #define SYSTEM_QEP_SWAP_ENABLE              1     //Õý·½Ïò¼ÆÊý
-    #define SYSTEM_QEP_SWAP_DISABLE             0     //·´·½Ïò¼ÆÊý
+    #define SYSTEM_QEP_SWAP_ENABLE              1     //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½?
+    #define SYSTEM_QEP_SWAP_DISABLE             0     //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½?
     //ADC CONFIGURATION is moved to main.c
     //DAC Configuration
     #define NO_OF_DAC_CHANNELS 8
@@ -55,14 +69,14 @@
     //#define MAX_CURRENT_P                       11.8       //12A   // Set your positive current trip threshold here in [0, 4095]
     //#define MAX_OVERVOLTAGE                    400      //400V  // Set your unipolar trip Over-voltage threshold in [0, 4095]
     //GPIO
-//    #define DSP_PWM_DISABLE        GpioDataRegs.GPDSET.bit.GPIO105=1;    // µÍÓÐÐ§£¬ÖÃÎ»·â²¨
-//    #define DSP_PWM_ENABLE         GpioDataRegs.GPDCLEAR.bit.GPIO105=1;  // µÍÓÐÐ§£¬ÇåÁãÓÐÐ§
-//    #define DSP_2PWM_DISABLE       GpioDataRegs.GPASET.bit.GPIO27=1;
-//    #define DSP_2PWM_ENABLE        GpioDataRegs.GPACLEAR.bit.GPIO27=1;
-#define DSP_PWM_DISABLE        GpioDataRegs.GPDSET.bit.GPIO108=1;    // µÍÓÐÐ§£¬ÖÃÎ»·â²¨
-#define DSP_PWM_ENABLE         GpioDataRegs.GPDCLEAR.bit.GPIO108=1;  // µÍÓÐÐ§£¬ÇåÁãÓÐÐ§
-#define DSP_2PWM_DISABLE       GpioDataRegs.GPCSET.bit.GPIO93=1;
-#define DSP_2PWM_ENABLE        GpioDataRegs.GPCCLEAR.bit.GPIO93=1;
+    //    #define DSP_PWM_DISABLE        GpioDataRegs.GPDSET.bit.GPIO105=1;    // ï¿½ï¿½ï¿½ï¿½Ð§ï¿½ï¿½ï¿½ï¿½Î»ï¿½â²¨
+    //    #define DSP_PWM_ENABLE         GpioDataRegs.GPDCLEAR.bit.GPIO105=1;  // ï¿½ï¿½ï¿½ï¿½Ð§ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð§
+    //    #define DSP_2PWM_DISABLE       GpioDataRegs.GPASET.bit.GPIO27=1;
+    //    #define DSP_2PWM_ENABLE        GpioDataRegs.GPACLEAR.bit.GPIO27=1;
+    #define DSP_PWM_DISABLE        GpioDataRegs.GPDSET.bit.GPIO108=1;    // ï¿½ï¿½ï¿½ï¿½Ð§ï¿½ï¿½ï¿½ï¿½Î»ï¿½â²¨
+    #define DSP_PWM_ENABLE         GpioDataRegs.GPDCLEAR.bit.GPIO108=1;  // ï¿½ï¿½ï¿½ï¿½Ð§ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð§
+    #define DSP_2PWM_DISABLE       GpioDataRegs.GPCSET.bit.GPIO93=1;
+    #define DSP_2PWM_ENABLE        GpioDataRegs.GPCCLEAR.bit.GPIO93=1;
 
     #define INVERTER_FLT_FAULT     GpioDataRegs.GPDDAT.bit.GPIO104  //Inverter_error signal
 
@@ -72,7 +86,7 @@
     #define DSP_START_LED2 GpioDataRegs.GPBSET.bit.GPIO33=1;
 
 /* Logic  -----------------------------------------------------------------------------------*/
-    //#include "Logic.h"                //Âß¼­¿â °üÀ¨¹ÊÕÏ´úÂë£¬DI,×´Ì¬»ú
+    //#include "Logic.h"                //ï¿½ß¼ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ï¿½ë£¬DI,×´Ì¬ï¿½ï¿½
     extern int VoltageOVER_FLAG;
     struct Trip_Variables
     {
@@ -81,11 +95,12 @@
     };
     extern struct Trip_Variables trip;//trip flag
     //#define Motor_mode_START    GpioDataRegs.GPCDAT.bit.GPIO75    //DI Start Button
-    //#define Motor_mode_START    digital_virtual_button          //virtual DI Start Button
     int Motor_MODE_START(void);
+    //#define Motor_mode_START    digital_virtual_button          //virtual DI Start Button
     int Motor_MODE_STOP(void);
     int Motor_MODE_REVERSE(void);
     void System_Checking(void);
+
 /* Global Variable */
 typedef struct{
     int ID;
@@ -111,7 +126,7 @@ typedef struct{
         REAL angle_shift_for_first_inverter;
         REAL angle_shift_for_second_inverter;
         REAL OverwriteSpeedOutLimitDuringInit;
-        int FLAG_ENABLE_PWM_OUTPUT; // µç»úÄ£Ê½±êÖ¾Î»
+        int FLAG_ENABLE_PWM_OUTPUT; // ï¿½ï¿½ï¿½Ä£Ê½ï¿½ï¿½Ö¾ï¿½?
     // ADC Offset
         // Automatic Offset Removing
         int AD_offset_flag2;
@@ -141,6 +156,8 @@ extern st_axis Axis_1;
 extern st_axis Axis_2;
 extern st_axis *Axis;
 
+/* Tools that main use */
+    #include "tools.h"
 
 
 #endif

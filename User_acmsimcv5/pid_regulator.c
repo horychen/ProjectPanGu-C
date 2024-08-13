@@ -4,17 +4,22 @@
 #if INCREMENTAL_PID
 void PID_calc(st_pid_regulator *r){
 
-    r->Err = r->Ref - r->Fbk;
-    r->Out = r->OutPrev \
-             + r->Kp * ( r->Err - r->ErrPrev ) + r->Ki * r->Err;
+        r->Err = r->Ref - r->Fbk;
 
-    if(r->Out > r->OutLimit)
-        r->Out = r->OutLimit;
-    else if(r->Out < -r->OutLimit)
-        r->Out = -r->OutLimit;
+        r->Out = r->OutPrev + \
+                r->Kp * ( r->Err - r->ErrPrev ) + \
+                r->Ki * r->Err;
 
-    r->ErrPrev = r->Err; 
-    r->OutPrev = r->Out;
+        r->ErrPrev = r->Err; 
+        r->OutPrev = r->Out;
+
+        r->KFB_Term = r->KFB * r->Fbk;
+        r->Out -= r->KFB_Term;
+
+        if(r->Out > r->OutLimit)
+            r->Out = r->OutLimit;
+        else if(r->Out < -r->OutLimit)
+            r->Out = -r->OutLimit;
 }
 #else
 void PID_calc(st_pid_regulator *r){
@@ -121,16 +126,20 @@ float PIDController_Update(st_PIDController *pid) {
 void ACMSIMC_PIDTuner(){
 
     PID_iD->Kp  = CURRENT_KP;
-    PID_iQ->Kp = 0.8;//CURRENT_KP;
-    PID_spd->Kp = 0.0008;//SPEED_KP;
-    PID_pos->Kp = POS_KP;
+    PID_iQ->Kp = CURRENT_KP;     // 0.7;//CURRENT_KP;
     PID_iD->Ki  = CURRENT_KI_CODE;
-    PID_iQ->Ki  = 0.09;//CURRENT_KI_CODE;
-    PID_spd->Ki = 4e-6;//SPEED_KI_CODE;
+    PID_iQ->Ki  = CURRENT_KI_CODE; // 0.09;//CURRENT_KI_CODE;
+
+    PID_spd->Kp = SPEED_KP; // 0.0008;//SPEED_KP;
+    PID_spd->Ki = SPEED_KI_CODE; // 4e-6;//SPEED_KI_CODE;
+    PID_spd->KFB = SPEED_KFB;
+        
+    PID_pos->Kp = POS_KP;
     PID_pos->Ki = POS_KI;
+
     PID_iD->OutLimit  = CURRENT_LOOP_LIMIT_VOLTS;
     PID_iQ->OutLimit  = CURRENT_LOOP_LIMIT_VOLTS;
-    PID_spd->OutLimit = 500;//SPEED_LOOP_LIMIT_AMPERE;
+    PID_spd->OutLimit = SPEED_LOOP_LIMIT_AMPERE; // 40;//SPEED_LOOP_LIMIT_AMPERE;
     PID_pos->OutLimit = POS_LOOP_LIMIT_SPEED;
 
     #if PC_SIMULATION

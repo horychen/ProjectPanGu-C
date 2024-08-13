@@ -53,7 +53,7 @@
         st_controller_inputs    t_I_2={0};
         st_controller_states    t_S_2={0};
         st_controller_outputs   t_O_2={0};
-        st_InverterNonlinearity t_inv_2={0}; // Because of the sv_count bug, I cannot declare t_inv in this .c file. // extern st_InverterNonlinearity t_inv;
+        st_InverterNonlinearity t_inv_2={0}; // Because of the sv_count bug, o cannot declare t_inv in this .c file. // extern st_InverterNonlinearity t_inv;
         st_capture              t_cap_2={0};
         st_global_variables     t_g_2={0};
 
@@ -86,7 +86,7 @@ st_psd                  t_psd_1={0};
 st_controller_inputs    t_I_1={0};
 st_controller_states    t_S_1={0};
 st_controller_outputs   t_O_1={0};
-st_InverterNonlinearity t_inv_1={0}; // Because of the sv_count bug, I cannot declare t_inv in this .c file. // extern st_InverterNonlinearity t_inv; 
+st_InverterNonlinearity t_inv_1={0}; // Because of the sv_count bug, o cannot declare t_inv in this .c file. // extern st_InverterNonlinearity t_inv; 
 st_capture              t_cap_1={0};
 st_global_variables     t_g_1={0};
 
@@ -111,53 +111,53 @@ st_PIDController _pid_iY_1 = {
 void allocate_CTRL(struct ControllerForExperiment *p){
     /* My attemp to use calloc with TI's compiler in CCS has failed. */
         // p->motor = calloc(1,sizeof(st_pmsm_parameters)); // 意思是，一个，st_pmsm_parameters那么大的空间
-        // p->I = calloc(1,sizeof(st_controller_inputs));
-        // p->S = calloc(1,sizeof(st_controller_states));
-        // p->O = calloc(1,sizeof(st_controller_outputs));
+        // p->o = calloc(1,sizeof(st_controller_inputs));
+        // p->s = calloc(1,sizeof(st_controller_states));
+        // p->o = calloc(1,sizeof(st_controller_outputs));
 
     if(axisCnt==0){
         p->motor = &t_motor_1;
         p->enc   = &t_enc_1;
         p->psd   = &t_psd_1;
-        p->I     = &t_I_1;
-        p->S     = &t_S_1;
-        p->O     = &t_O_1;
+        p->i = &t_I_1;
+        p->s = &t_S_1;
+        p->o = &t_O_1;
         p->inv   = &t_inv_1;
         p->cap   = &t_cap_1;
         p->g     = &t_g_1;
 
-        p->S->iD  = &_pid_iD_1;
-        p->S->iQ  = &_pid_iQ_1;
-        p->S->spd = &_pid_spd_1;
-        p->S->pos = &_pid_pos_1;
+        p->s->iD  = &_pid_iD_1;
+        p->s->iQ  = &_pid_iQ_1;
+        p->s->spd = &_pid_spd_1;
+        p->s->pos = &_pid_pos_1;
 
 
-        p->S->iX = &_pid_iX_1;
-        p->S->iY = &_pid_iY_1;
+        p->s->iX = &_pid_iX_1;
+        p->s->iY = &_pid_iY_1;
     }
     if(axisCnt==1){
         #if NUMBER_OF_AXES == 2
             p->motor = &t_motor_2;
             p->enc   = &t_enc_2;
             p->psd   = &t_psd_2;
-            p->I     = &t_I_2;
-            p->S     = &t_S_2;
-            p->O     = &t_O_2;
+            p->o     = &t_I_2;
+            p->s     = &t_S_2;
+            p->o     = &t_O_2;
             p->inv   = &t_inv_2;
             p->cap   = &t_cap_2;
             p->g     = &t_g_2;
 
-            p->S->iD  = &_pid_iD_2;
-            p->S->iQ  = &_pid_iQ_2;
-            p->S->spd = &_pid_spd_2;
-            p->S->pos = &_pid_pos_2;
-//            CTRL_2.S->iD  = &_pid_iD_2;
-//            CTRL_2.S->iQ  = &_pid_iQ_2;
-//            CTRL_2.S->spd = &_pid_spd_2;
-//            CTRL_2.S->pos = &_pid_pos_2;
+            p->s->iD  = &_pid_iD_2;
+            p->s->iQ  = &_pid_iQ_2;
+            p->s->spd = &_pid_spd_2;
+            p->s->pos = &_pid_pos_2;
+//            CTRL_2.s->iD  = &_pid_iD_2;
+//            CTRL_2.s->iQ  = &_pid_iQ_2;
+//            CTRL_2.s->spd = &_pid_spd_2;
+//            CTRL_2.s->pos = &_pid_pos_2;
 
-            p->S->iX = &_pid_iX_2;
-            p->S->iY = &_pid_iY_2;
+            p->s->iX = &_pid_iX_2;
+            p->s->iY = &_pid_iY_2;
         #endif
     }
 }

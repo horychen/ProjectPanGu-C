@@ -284,8 +284,8 @@ void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REA
 
         // #define DEBUG_USING_ACTUAL_CM
         #ifdef DEBUG_USING_ACTUAL_CM
-            cosT = (*CTRL).S->cosT;
-            sinT = (*CTRL).S->sinT;
+            cosT = (*CTRL).s->cosT;
+            sinT = (*CTRL).s->sinT;
         #endif
 
         /* Input: Current at dq frame and KActive */
@@ -350,7 +350,7 @@ void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REA
         }
 
         /* Time-varying gains */
-        if(fabs((*CTRL).I->cmd_omg_elec)*MOTOR.npp_inv*ONE_OVER_2PI<k_af_speed_Hz){ // [Hz]
+        if(fabs((*CTRL).i->cmd_omg_elec)*MOTOR.npp_inv*ONE_OVER_2PI<k_af_speed_Hz){ // [Hz]
             FE.AFEOE.k_af = 2*M_PI*100;
             FE.AFEOE.limiter_Flag = TRUE;
         }else{
@@ -391,14 +391,14 @@ void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REA
         FE.AFEOE.theta_d = atan2(FE.AFEOE.psi_2[1], FE.AFEOE.psi_2[0]);
 
         // Convert output error to dq frame
-        // REAL KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * (*CTRL).I->idq[0];
+        // REAL KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * (*CTRL).i->idq[0];
         /* TODO: 思考这个dq角度怎么选最好，要不要换成电压向量的角度而不是转子角度？ */
         FE.AFEOE.active_flux_ampl_lpf = _lpf(FE.AFEOE.active_flux_ampl, FE.AFEOE.active_flux_ampl_lpf, 5);
         FE.AFEOE.output_error_dq[0] = MOTOR.KActive - FE.AFEOE.active_flux_ampl_lpf;
         FE.AFEOE.output_error[0] = MOTOR.KActive*FE.AFEOE.cosT - FE.AFEOE.psi_2[0];
         FE.AFEOE.output_error[1] = MOTOR.KActive*FE.AFEOE.sinT - FE.AFEOE.psi_2[1];
         FE.AFEOE.output_error_dq[1] = sqrt(FE.AFEOE.output_error[0]*FE.AFEOE.output_error[0] + FE.AFEOE.output_error[1]*FE.AFEOE.output_error[1]);
-        // if((*CTRL).I->cmd_speed_rpm>0){
+        // if((*CTRL).i->cmd_speed_rpm>0){
         //     FE.AFEOE.output_error_dq[0] = AB2M(FE.AFEOE.output_error[0], FE.AFEOE.output_error[1], FE.AFEOE.cosT, FE.AFEOE.sinT);
         //     FE.AFEOE.output_error_dq[1] = AB2T(FE.AFEOE.output_error[0], FE.AFEOE.output_error[1], FE.AFEOE.cosT, FE.AFEOE.sinT);
         // }else{
@@ -517,7 +517,7 @@ void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REA
 
     //     if(BOOL_TURN_ON_ADAPTIVE_EXTRA_LIMIT){
     //         // FE.htz.psi_aster_max = (*CTRL).taao_flux_cmd + 0.05;
-    //         FE.htz.psi_aster_max = (*CTRL).I->cmd_psi + FE.htz.extra_limit;
+    //         FE.htz.psi_aster_max = (*CTRL).i->cmd_psi + FE.htz.extra_limit;
     //         // FE.htz.psi_aster_max = (*CTRL).taao_flux_cmd;            
     //     }
 
