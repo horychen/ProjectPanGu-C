@@ -34,9 +34,12 @@ extern struct DebugExperiment debug;
 
 /* User Specified Functions */
 void _user_init(); // 非常重要的初始化
+void main_switch(); 
 void _user_time_varying_parameters();// 时变参数
 void _user_observer(REAL iAB[2]);
 void _user_controller(); // REAL Vdc, REAL theta_d_elec, REAL varOmega, REAL varTheta, REAL iDQ[2], REAL cmd_uDQ[ 
+
+
 
 // 指令和负载
 extern struct SweepFreq{

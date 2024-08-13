@@ -3,7 +3,7 @@
 
 /* User */
 #include <user_defined_functions.h>
-#include <ACMParam.h>
+#include <super_config.h>
 
 #define MODE_SELECT_PWM_DIRECT 1
 #define MODE_SELECT_VOLTAGE_OPEN_LOOP 11

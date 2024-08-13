@@ -100,7 +100,6 @@ void allocate_CTRL(struct ControllerForExperiment *p){
         // p->S = calloc(1,sizeof(st_controller_states));
         // p->O = calloc(1,sizeof(st_controller_outputs));
 
-    axisCnt = 0;
     if(axisCnt==0){
         p->motor = &t_motor_1;
         p->enc   = &t_enc_1;

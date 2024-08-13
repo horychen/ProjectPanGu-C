@@ -220,12 +220,20 @@ void init_experiment_AD_gain_and_offset()
     /* two motor OFFSET */
     #if NUMBER_OF_AXES == 2
         #ifdef _LEG_GROUP
-            Axis_1.pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = SHANK__OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
-            Axis_2.pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = HIP__OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
+            if(axisCnt==0){
+                Axis_1.pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = SHANK__OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
+            }
+            if(axisCnt==1){
+                Axis_2.pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = HIP__OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
+            }
         #else
             #ifdef _MOTOR_GROUP
-            Axis_1.pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = MOTOR1_OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
-            Axis_2.pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = MOTOR2_OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
+            if(axisCnt==0){
+                Axis->pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = MOTOR1_OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
+            }
+            if(axisCnt==1){
+                Axis->pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = MOTOR2_OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
+            }
             #endif
         #endif
     #else
@@ -1230,16 +1238,17 @@ void ENABLE_PWM_OUTPUT(int positionLoopType, int use_first_set_three_phase)
             }
         }
 
-        Axis->used_theta_d_elec = controller(
-            Axis->Set_manual_rpm,
-            Axis->Set_current_loop,
-            Axis->Set_manual_current_iq,
-            Axis->Set_manual_current_id,
-            Axis->flag_overwrite_theta_d,
-            Axis->Overwrite_Current_Frequency,
-            Axis->used_theta_d_elec,
-            Axis->angle_shift_for_first_inverter,
-            Axis->angle_shift_for_second_inverter);
+        main_switch();
+//        Axis->used_theta_d_elec = controller(
+//            Axis->Set_manual_rpm,
+//            Axis->Set_current_loop,
+//            Axis->Set_manual_current_iq,
+//            Axis->Set_manual_current_id,
+//            Axis->flag_overwrite_theta_d,
+//            Axis->Overwrite_Current_Frequency,
+//            Axis->used_theta_d_elec,
+//            Axis->angle_shift_for_first_inverter,
+//            Axis->angle_shift_for_second_inverter);
     #else
         commissioning(); // 参数辨识用
     #endif

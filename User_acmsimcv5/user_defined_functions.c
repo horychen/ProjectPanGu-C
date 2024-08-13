@@ -24,6 +24,8 @@ void _user_init(){
     // #define MODE_SELECT_POSITION_LOOP 5
     // #define MODE_SELECT_COMMISSIONING 9
 
+    init_d_sim();
+
     debug.error = 0.0;
     debug.mode_select = MODE_SELECT_VELOCITY_LOOP;
     // debug.mode_select = MODE_SELECT_FOC;
@@ -43,6 +45,87 @@ void _user_init(){
         set_points(&BzController);
     #endif
 }
+
+void main_switch(){
+    switch (debug.mode_select){
+    case MODE_SELECT_PWM_DIRECT: // 1
+        // TODO: svgen.ua
+        break;
+    case MODE_SELECT_VOLTAGE_OPEN_LOOP: // 11
+        (*CTRL).o->cmd_uAB_to_inverter[0] = 10*cos(5*2*M_PI* CTRL->timebase); // test
+        (*CTRL).o->cmd_uAB_to_inverter[1] = 10*sin(5*2*M_PI* CTRL->timebase); // test
+        break;
+    case MODE_SELECT_WITHOUT_ENCODER_CURRENT_VECTOR_ROTATE: // 2
+        if (fabs(debug.Overwrite_Current_Frequency) > 0){
+            debug.Overwrite_theta_d += CL_TS * debug.Overwrite_Current_Frequency * 2 * M_PI;
+            if (debug.Overwrite_theta_d > M_PI)
+                debug.Overwrite_theta_d -= 2 * M_PI;
+            if (debug.Overwrite_theta_d < -M_PI)
+                debug.Overwrite_theta_d += 2 * M_PI;
+        }else{
+            debug.Overwrite_theta_d = 0.0;
+        }
+        (*CTRL).s->cosT = cosf(debug.Overwrite_theta_d);
+        (*CTRL).s->sinT = sinf(debug.Overwrite_theta_d);
+        (*CTRL).i->iDQ[0] = AB2M((*CTRL).i->iAB[0], (*CTRL).i->iAB[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
+        (*CTRL).i->iDQ[1] = AB2T((*CTRL).i->iAB[0], (*CTRL).i->iAB[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
+        break;
+    case MODE_SELECT_FOC: // 3
+            /// 5.Sweep 扫频将覆盖上面产生的励磁、转矩电流指令
+            #if EXCITATION_TYPE == EXCITATION_SWEEP_FREQUENCY
+            #if SWEEP_FREQ_C2V == TRUE
+                PID_iQ->Ref = set_iq_cmd;
+            #endif
+            #if SWEEP_FREQ_C2C == TRUE
+                PID_iQ->Ref = 0.0;
+                PID_iD->Ref = set_iq_cmd; // 故意反的
+            #endif
+            #endif
+            /// 6. 电流环
+            (*CTRL).i->cmd_iDQ[0] = debug.set_id_command; 
+            (*CTRL).i->cmd_iDQ[1] = debug.set_iq_command;
+            PID_iD->Fbk = (*CTRL).i->iDQ[0];
+            PID_iD->Ref = (*CTRL).i->cmd_iDQ[0];
+            PID_iD->calc(PID_iD);
+
+            PID_iQ->Fbk = (*CTRL).i->iDQ[1];
+            PID_iQ->Ref = (*CTRL).i->cmd_iDQ[1];
+            PID_iQ->calc(PID_iQ);
+
+            REAL decoupled_d_axis_voltage = PID_iD->Out;
+            REAL decoupled_q_axis_voltage = PID_iQ->Out;
+
+            (*CTRL).o->cmd_uDQ[0] = decoupled_d_axis_voltage;
+            (*CTRL).o->cmd_uDQ[1] = decoupled_q_axis_voltage;
+
+            (*CTRL).o->cmd_uAB[0] = MT2A((*CTRL).o->cmd_uDQ[0], (*CTRL).o->cmd_uDQ[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
+            (*CTRL).o->cmd_uAB[1] = MT2B((*CTRL).o->cmd_uDQ[0], (*CTRL).o->cmd_uDQ[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
+
+            (*CTRL).o->cmd_uAB_to_inverter[0] = (*CTRL).o->cmd_uAB[0];
+            (*CTRL).o->cmd_uAB_to_inverter[1] = (*CTRL).o->cmd_uAB[1];
+        break;
+            PID_iQ->calc(PID_iQ);
+    case MODE_SELECT_FOC_SENSORLESS : //31
+        break;
+    case MODE_SELECT_VELOCITY_LOOP: // 4
+        // _user_observer();
+        // 根据指令，产生控制输出（电压）
+        _user_controller();
+        break;
+    case MODE_SELECT_VELOCITY_LOOP_SENSORLESS : //41
+        break;
+    case MODE_SELECT_TESTING_SENSORLESS : //42
+        break;
+    case MODE_SELECT_POSITION_LOOP: // 5
+        break;
+    case MODE_SELECT_COMMISSIONING: // 9
+        break;
+    default:
+        debug.error = 999;
+        break;
+    }
+}
+
 
 void _user_commands(){
 
