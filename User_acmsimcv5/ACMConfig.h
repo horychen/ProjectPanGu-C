@@ -1,12 +1,15 @@
 #ifndef ACMCONFIG_H
 #define ACMCONFIG_H
 /* 经常要修改的 */
-#define INVERTER_NONLINEARITY_COMPENSATION_INIT 0 // 5（9月1日及以前峣杰实验一直用的5） // 4 // 1:ParkSul12, 2:Sigmoid, 3:LUT(Obsolete), 4:LUT(by index), 5 Slessinv-a2a3Model
+#define INVERTER_NONLINEARITY_COMPENSATION_INIT 4 // 5（9月1日及以前峣杰实验一直用的5） // 4 // 1:ParkSul12, 2:Sigmoid, 3:LUT(Obsolete), 4:LUT(by index), 5 Slessinv-a2a3Model
 #define INVERTER_NONLINEARITY                   0 // 4 // 1:ModelSul96, 2:ModelExpSigmoid, 3: ModelExpLUT, 4:LUT(by index)
 #define SENSORLESS_CONTROL FALSE
 #define SENSORLESS_CONTROL_HFSI FALSE
 /* ParkSul2012 梯形波 */
 #define GAIN_THETA_TRAPEZOIDAL (40) //(500) // 20
+
+
+#define APPLY_WCTUNER TRUE // 是否使用新的调参器
 
 /* 电机类型 */ //（TODO：饱和模型里面用的还是 IM.rr 而不是 IM.rreq）
     #define INDUCTION_MACHINE_CLASSIC_MODEL 1
@@ -116,8 +119,8 @@
             #define ELECTRICAL_SPEED_FEEDBACK    (-esoaf.xOmg) // 薄片电机实验正iq产生负转速
             #define ELECTRICAL_POSITION_FEEDBACK AFE_USED.theta_d
         #else
-            // #define ELECTRICAL_SPEED_FEEDBACK    G.omg_elec
             // #define ELECTRICAL_POSITION_FEEDBACK G.theta_d
+            // #define ELECTRICAL_SPEED_FEEDBACK    G.omg_elec
 
             // #define ELECTRICAL_SPEED_FEEDBACK    parksul.xOmg
             // #define ELECTRICAL_POSITION_FEEDBACK parksul.theta_d
@@ -270,10 +273,19 @@
 #define VL_SERIES_KI (29.7429)
 /* Useless Code but meaningful to understant the control process */
 
-#define CURRENT_KP (0.60)   // (1.19)    // (0.6)  // (0.84)   // (0.84)   // (0.84)
-#define CURRENT_KI (231.58) // (194.74) // (194.74)  // (194.74) // (194.74) // (194.74)
-#define SPEED_KP   (0.46)   // (0.19)   // (2.59)  // (0.81)   // (0.41)   // (0.36)
-#define SPEED_KI   (1.96)   // (3.93)    // (13.96)  // (11.00)  // (2.75)   // (19.55)
+#if APPLY_WCTUNER
+    #define CURRENT_KP (0.3573)  // (1.19)    // (0.6)  // (0.84)   // (0.84)   // (0.84)
+    #define CURRENT_KI (231.6)   // (194.74) // (194.74)  // (194.74) // (194.74) // (194.74)
+    #define SPEED_KP   (1.528)   // (0.19)   // (2.59)  // (0.81)   // (0.41)   // (0.36)
+    #define SPEED_KI   (890.8)   // (3.93)    // (13.96)  // (11.00)  // (2.75)   // (19.55)
+    #define SPEED_KFB  (2.75)
+#else
+    #define CURRENT_KP (0.9550441666912972)   // (1.19)    // (0.6)  // (0.84)   // (0.84)   // (0.84)
+    #define CURRENT_KI (231.578947368421) // (194.74) // (194.74)  // (194.74) // (194.74) // (194.74)
+    #define SPEED_KP   (0.5896379954298365)   // (0.19)   // (2.59)  // (0.81)   // (0.41)   // (0.36)
+    #define SPEED_KI   (2.0106192982974678)   // (3.93)    // (13.96)  // (11.00)  // (2.75)   // (19.55)
+    #define SPEED_KFB  (0)
+#endif
 
 #define CURRENT_KI_CODE (CURRENT_KI*CURRENT_KP*CL_TS)
 #define SPEED_KI_CODE (SPEED_KI*SPEED_KP*VL_TS)
@@ -288,7 +300,7 @@
 
 
     #define SPEED_LOOP_LIMIT_NEWTON_METER (1.0*MOTOR_RATED_TORQUE)
-    #define SPEED_LOOP_LIMIT_AMPERE       (1.0*1.414*MOTOR_RATED_CURRENT_RMS)
+    #define SPEED_LOOP_LIMIT_AMPERE       (1.0*1.414*MOTOR_RATED_CURRENT_RMS*0.5)
     #define POS_LOOP_LIMIT_SPEED          (0.15*MOTOR_RATED_SPEED_RPM * MOTOR_NUMBER_OF_POLE_PAIRS/60.0*2*M_PI)
     // increase to 3 times because of the bug in dynamics clamping
 
@@ -300,54 +312,6 @@
 // #define RESOLVER_1 5
 // #define RESOLVER_2 6
 
-// #define ENCODER_TYPE ABSOLUTE_ENCODER_SCI
-
-// #if ENCODER_TYPE == INCREMENTAL_ENCODER_QEP
-// #define SYSTEM_QEP_PULSES_PER_REV (10000)
-// #define SYSTEM_QEP_REV_PER_PULSE (1e-4)
-// #define CNT_2_ELEC_RAD (SYSTEM_QEP_REV_PER_PULSE * 2 * M_PI * MOTOR_NUMBER_OF_POLE_PAIRS)
-// #define SYSTEM_QEP_QPOSMAX (9999)
-// #define SYSTEM_QEP_QPOSMAX_PLUS_1 (10000)
-// #define OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS 2333 // cjh tuned with id_cmd = 3A 2024-01-19
-// #elif ENCODER_TYPE == ABSOLUTE_ENCODER_SCI
-// #define SYSTEM_QEP_PULSES_PER_REV (8388608)
-// #define SYSTEM_QEP_REV_PER_PULSE (1.1920929e-7)
-// #define CNT_2_ELEC_RAD (SYSTEM_QEP_REV_PER_PULSE * 2 * M_PI * MOTOR_NUMBER_OF_POLE_PAIRS)
-// #define SYSTEM_QEP_QPOSMAX (SYSTEM_QEP_PULSES_PER_REV - 1)
-// #define SYSTEM_QEP_QPOSMAX_PLUS_1 (SYSTEM_QEP_PULSES_PER_REV)
-// #define OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS 5874795 // cym can-encoder function output
-// // #define OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS 380150 // cjh tuned // 731723 // ym tuned with id_cmd = 2A 2024-01-31
-// #elif (ENCODER_TYPE == ABSOLUTE_ENCODER_CAN_ID0x01)
-// #define SYSTEM_QEP_PULSES_PER_REV (131072)
-// #define SYSTEM_QEP_REV_PER_PULSE (7.6293945e-6)
-// #define CNT_2_ELEC_RAD (SYSTEM_QEP_REV_PER_PULSE * 2 * M_PI * MOTOR_NUMBER_OF_POLE_PAIRS)
-// #define SYSTEM_QEP_QPOSMAX (SYSTEM_QEP_PULSES_PER_REV - 1)
-// #define SYSTEM_QEP_QPOSMAX_PLUS_1 (SYSTEM_QEP_PULSES_PER_REV)
-// #define OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS 49476 // ym tuned with
-// #elif (ENCODER_TYPE == ABSOLUTE_ENCODER_CAN_ID0x03)
-// #define SYSTEM_QEP_PULSES_PER_REV (131072)
-// #define SYSTEM_QEP_REV_PER_PULSE (7.6293945e-6)
-// #define CNT_2_ELEC_RAD (SYSTEM_QEP_REV_PER_PULSE * 2 * M_PI * MOTOR_NUMBER_OF_POLE_PAIRS)
-// #define SYSTEM_QEP_QPOSMAX (SYSTEM_QEP_PULSES_PER_REV - 1)
-// #define SYSTEM_QEP_QPOSMAX_PLUS_1 (SYSTEM_QEP_PULSES_PER_REV)
-// #define OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS 51203 // ym tuned with id_cmd = 4A 2024-02-27
-// #elif ENCODER_TYPE == RESOLVER_1
-// #define RESOLVER_NUMBER_OF_POLE_PAIRS 4             // Receive 4 Z-pulses per mechnical revolution from the resolver
-// #define ONE_OVER_RESOLVER_NUMBER_OF_POLE_PAIRS 0.25 // 1/RESOLVER_NUMBER_OF_POLE_PAIRS
-// #define SYSTEM_QEP_QPOSMAX (65535)                  // (9999)
-// #define SYSTEM_QEP_QPOSMAX_PLUS_1 (65536)
-// #define SYSTEM_QEP_PULSES_PER_REV (65536 * RESOLVER_NUMBER_OF_POLE_PAIRS)                     // (10000)
-// #define SYSTEM_QEP_REV_PER_PULSE (1.52587890625e-05 * ONE_OVER_RESOLVER_NUMBER_OF_POLE_PAIRS) // (1e-4)
-// #define CNT_2_ELEC_RAD (SYSTEM_QEP_REV_PER_PULSE * 2 * M_PI * MOTOR_NUMBER_OF_POLE_PAIRS)
-// #elif ENCODER_TYPE == RESOLVER_2
-// #define RESOLVER_NUMBER_OF_POLE_PAIRS 4             // Receive 4 Z-pulses per mechnical revolution from the resolver
-// #define ONE_OVER_RESOLVER_NUMBER_OF_POLE_PAIRS 0.25 // 1/RESOLVER_NUMBER_OF_POLE_PAIRS
-// #define SYSTEM_QEP_QPOSMAX (4095)                   // (9999)
-// #define SYSTEM_QEP_QPOSMAX_PLUS_1 (4096)
-// #define SYSTEM_QEP_PULSES_PER_REV (4096 * RESOLVER_NUMBER_OF_POLE_PAIRS)                   // (10000)
-// #define SYSTEM_QEP_REV_PER_PULSE (0.000244140625 * ONE_OVER_RESOLVER_NUMBER_OF_POLE_PAIRS) // (1e-4)
-// #define CNT_2_ELEC_RAD (SYSTEM_QEP_REV_PER_PULSE * 2 * M_PI * MOTOR_NUMBER_OF_POLE_PAIRS)
-// #endif
 
 /* 指令类型 */
     #define EXCITATION_POSITION 0

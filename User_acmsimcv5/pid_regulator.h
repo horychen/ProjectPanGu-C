@@ -9,6 +9,7 @@ typedef struct {
    float32 P_Term; 
    float32 I_Term; 
    float32 D_Term; 
+   float32 KFB_Term;
    float32 OutNonSat;
    float32 OutLimit;
    float32 Out;
@@ -16,6 +17,7 @@ typedef struct {
    float32 Kp;
    float32 Ki;
    float32 Kd;
+   float32 KFB;
    float32 SatDiff;
    void (*calc)();
 } st_pid_regulator;
@@ -29,6 +31,7 @@ void PID_calc(st_pid_regulator_handle);
   /*Proportional Term*/  0.0, \
   /*Integral Term*/  0.0, \
   /*Derivative Term*/  0.0, \
+  /*Inner Feedback Term*/  0.0, \
   /*Non-Saturated Output*/  0.0, \
   /*Output Limit*/  0.95, \
   /*Output*/  0.0, \
@@ -36,6 +39,7 @@ void PID_calc(st_pid_regulator_handle);
   /*Kp*/  1.0, \
   /*Ki*/  0.001, \
   /*Kd*/  0.0, \
+  /*KFB*/  0.0, \
   /*Difference between Non-Saturated Output and Saturated Output*/  0.0, \
   (void (*)(Uint32)) PID_calc \
 }

@@ -4,17 +4,22 @@
 #if INCREMENTAL_PID
 void PID_calc(st_pid_regulator *r){
 
-    r->Err = r->Ref - r->Fbk;
-    r->Out = r->OutPrev \
-             + r->Kp * ( r->Err - r->ErrPrev ) + r->Ki * r->Err;
+        r->Err = r->Ref - r->Fbk;
 
-    if(r->Out > r->OutLimit)
-        r->Out = r->OutLimit;
-    else if(r->Out < -r->OutLimit)
-        r->Out = -r->OutLimit;
+        r->Out = r->OutPrev + \
+                r->Kp * ( r->Err - r->ErrPrev ) + \
+                r->Ki * r->Err;
 
-    r->ErrPrev = r->Err; 
-    r->OutPrev = r->Out;
+        r->ErrPrev = r->Err; 
+        r->OutPrev = r->Out;
+
+        r->KFB_Term = r->KFB * r->Fbk;
+        r->Out -= r->KFB_Term;
+
+        if(r->Out > r->OutLimit)
+            r->Out = r->OutLimit;
+        else if(r->Out < -r->OutLimit)
+            r->Out = -r->OutLimit;
 }
 #else
 void PID_calc(st_pid_regulator *r){
@@ -127,7 +132,8 @@ void ACMSIMC_PIDTuner(){
 
     PID_spd->Kp = SPEED_KP; // 0.0008;//SPEED_KP;
     PID_spd->Ki = SPEED_KI_CODE; // 4e-6;//SPEED_KI_CODE;
-    
+    PID_spd->KFB = SPEED_KFB;
+        
     PID_pos->Kp = POS_KP;
     PID_pos->Ki = POS_KI;
 

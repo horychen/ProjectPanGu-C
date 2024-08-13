@@ -38,9 +38,9 @@
         #define SCALE_LEM_B9 0.03039058 // ADCB9
 
         // Lem 2的三个蓝色块块分别是adc a1 a2 a3
-        #define OFFSET_LEM_A1 2025 // 2034      // 2029.57894737 // ADCA1
-        #define OFFSET_LEM_A2 2035 // 2049      // 2043.08771930 // ADCA2
-        #define OFFSET_LEM_A3 2032 // 2050      // 2042.98245614 // ADCA3
+        #define OFFSET_LEM_A1 2010 // 2034      // 2029.57894737 // ADCA1
+        #define OFFSET_LEM_A2 2038 // 2049      // 2043.08771930 // ADCA2
+        #define OFFSET_LEM_A3 2029 // 2050      // 2042.98245614 // ADCA3
         #define SCALE_LEM_A1 0.0305 // 0.03080704 // ADCA1
         #define SCALE_LEM_A2 0.030334 // 0.03060669 // ADCA2
         #define SCALE_LEM_A3 0.02983 // 0.03045988 // ADCA3
@@ -394,6 +394,7 @@ void main_loop() {
     }
 }
 
+REAL wubo_debug_SYSTEM_PWM_DEADTIME_COMPENSATION = 500;
 
 void DeadtimeCompensation(REAL Current_U, REAL Current_V, REAL Current_W, REAL CMPA[], REAL CMPA_DBC[])
 {
@@ -404,13 +405,13 @@ void DeadtimeCompensation(REAL Current_U, REAL Current_V, REAL Current_W, REAL C
     // ------------U--------------
     if (Current_U >= 0)
     {
-        temp = (int)(CMPA[0] + SYSTEM_PWM_DEADTIME_COMPENSATION);
+        temp = (int)(CMPA[0] + wubo_debug_SYSTEM_PWM_DEADTIME_COMPENSATION);
         if (temp >= SYSTEM_TBPRD)
             temp = (int)((SYSTEM_PWM_UDC_UTILIZATION * 0.5 + 0.5) * SYSTEM_TBPRD);
     }
     else
     {
-        temp = (int)(CMPA[0] - SYSTEM_PWM_DEADTIME_COMPENSATION);
+        temp = (int)(CMPA[0] - wubo_debug_SYSTEM_PWM_DEADTIME_COMPENSATION);
         if (temp <= 0)
             temp = (int)((-SYSTEM_PWM_UDC_UTILIZATION * 0.5 + 0.5) * SYSTEM_TBPRD);
     }
@@ -420,13 +421,13 @@ void DeadtimeCompensation(REAL Current_U, REAL Current_V, REAL Current_W, REAL C
     // --------------V--------------
     if (Current_V >= 0)
     {
-        temp = (int)(CMPA[1] + SYSTEM_PWM_DEADTIME_COMPENSATION);
+        temp = (int)(CMPA[1] + wubo_debug_SYSTEM_PWM_DEADTIME_COMPENSATION);
         if (temp >= SYSTEM_TBPRD)
             temp = (int)((SYSTEM_PWM_UDC_UTILIZATION * 0.5 + 0.5) * SYSTEM_TBPRD);
     }
     else
     {
-        temp = (int)(CMPA[1] - SYSTEM_PWM_DEADTIME_COMPENSATION);
+        temp = (int)(CMPA[1] - wubo_debug_SYSTEM_PWM_DEADTIME_COMPENSATION);
         if (temp <= 0)
             temp = (int)((-SYSTEM_PWM_UDC_UTILIZATION * 0.5 + 0.5) * SYSTEM_TBPRD);
     }
@@ -436,22 +437,78 @@ void DeadtimeCompensation(REAL Current_U, REAL Current_V, REAL Current_W, REAL C
     // --------------W--------------
     if (Current_W >= 0)
     {
-        temp = (int)(CMPA[2] + SYSTEM_PWM_DEADTIME_COMPENSATION);
+        temp = (int)(CMPA[2] + wubo_debug_SYSTEM_PWM_DEADTIME_COMPENSATION);
         if (temp >= SYSTEM_TBPRD)
             temp = (int)((SYSTEM_PWM_UDC_UTILIZATION * 0.5 + 0.5) * SYSTEM_TBPRD);
     }
     else
     {
-        temp = (int)(CMPA[2] - SYSTEM_PWM_DEADTIME_COMPENSATION);
+        temp = (int)(CMPA[2] - wubo_debug_SYSTEM_PWM_DEADTIME_COMPENSATION);
         if (temp <= 0)
             temp = (int)((-SYSTEM_PWM_UDC_UTILIZATION * 0.5 + 0.5) * SYSTEM_TBPRD);
     }
     CMPA_DBC[2] = (Uint16)temp;
 }
 
+//void DeadtimeCompensation(REAL Current_U, REAL Current_V, REAL Current_W, REAL CMPA[], REAL CMPA_DBC[])
+//{
+//
+//    // TODO: Add transitional linear range to dead time compensation
+//
+//    int temp = 0;
+//    // ------------U--------------
+//    if (Current_U >= 0)
+//    {
+//        temp = (int)(CMPA[0] + SYSTEM_PWM_DEADTIME_COMPENSATION);
+//        if (temp >= SYSTEM_TBPRD)
+//            temp = (int)((SYSTEM_PWM_UDC_UTILIZATION * 0.5 + 0.5) * SYSTEM_TBPRD);
+//    }
+//    else
+//    {
+//        temp = (int)(CMPA[0] - SYSTEM_PWM_DEADTIME_COMPENSATION);
+//        if (temp <= 0)
+//            temp = (int)((-SYSTEM_PWM_UDC_UTILIZATION * 0.5 + 0.5) * SYSTEM_TBPRD);
+//    }
+//    CMPA_DBC[0] = (Uint16)temp;
+//    temp = 0;
+//
+//    // --------------V--------------
+//    if (Current_V >= 0)
+//    {
+//        temp = (int)(CMPA[1] + SYSTEM_PWM_DEADTIME_COMPENSATION);
+//        if (temp >= SYSTEM_TBPRD)
+//            temp = (int)((SYSTEM_PWM_UDC_UTILIZATION * 0.5 + 0.5) * SYSTEM_TBPRD);
+//    }
+//    else
+//    {
+//        temp = (int)(CMPA[1] - SYSTEM_PWM_DEADTIME_COMPENSATION);
+//        if (temp <= 0)
+//            temp = (int)((-SYSTEM_PWM_UDC_UTILIZATION * 0.5 + 0.5) * SYSTEM_TBPRD);
+//    }
+//    CMPA_DBC[1] = (Uint16)temp;
+//    temp = 0;
+//
+//    // --------------W--------------
+//    if (Current_W >= 0)
+//    {
+//        temp = (int)(CMPA[2] + SYSTEM_PWM_DEADTIME_COMPENSATION);
+//        if (temp >= SYSTEM_TBPRD)
+//            temp = (int)((SYSTEM_PWM_UDC_UTILIZATION * 0.5 + 0.5) * SYSTEM_TBPRD);
+//    }
+//    else
+//    {
+//        temp = (int)(CMPA[2] - SYSTEM_PWM_DEADTIME_COMPENSATION);
+//        if (temp <= 0)
+//            temp = (int)((-SYSTEM_PWM_UDC_UTILIZATION * 0.5 + 0.5) * SYSTEM_TBPRD);
+//    }
+//    CMPA_DBC[2] = (Uint16)temp;
+//}
+
 REAL vvvf_voltage = 4;
 REAL vvvf_frequency = 5;
 REAL enable_vvvf = FALSE;
+
+REAL wubo_debug_USE_DEATIME_PRECOMP = 0;
 
 void voltage_commands_to_pwm()
 {
@@ -464,7 +521,7 @@ void voltage_commands_to_pwm()
         if (enable_vvvf)
         {
             (*CTRL).svgen1.Ualpha = vvvf_voltage * cos(vvvf_frequency * 2 * M_PI * (*CTRL).timebase);
-            (*CTRL).svgen1.Ubeta = vvvf_voltage * sin(vvvf_frequency * 2 * M_PI * (*CTRL).timebase);
+            (*CTRL).svgen1.Ubeta  = vvvf_voltage * sin(vvvf_frequency * 2 * M_PI * (*CTRL).timebase);
         }
 
         SVGEN_Drive(&(*CTRL).svgen1);
@@ -472,16 +529,22 @@ void voltage_commands_to_pwm()
         (*CTRL).svgen1.CMPA[1] = (*CTRL).svgen1.Tb * SYSTEM_TBPRD;
         (*CTRL).svgen1.CMPA[2] = (*CTRL).svgen1.Tc * SYSTEM_TBPRD;
 
-#if USE_DEATIME_PRECOMP
-        DeadtimeCompensation(Axis->iuvw[0], Axis->iuvw[1], Axis->iuvw[2], (*CTRL).svgen1.CMPA, (*CTRL).svgen1.CMPA_DBC);
-        EPwm1Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen1.CMPA_DBC[0];
-        EPwm2Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen1.CMPA_DBC[1];
-        EPwm3Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen1.CMPA_DBC[2];
-#else
-        EPwm1Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen1.CMPA[0];
-        EPwm2Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen1.CMPA[1];
-        EPwm3Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen1.CMPA[2];
-#endif
+//#if USE_DEATIME_PRECOMP
+
+        if(wubo_debug_USE_DEATIME_PRECOMP)
+        {
+            DeadtimeCompensation(Axis->iuvw[0], Axis->iuvw[1], Axis->iuvw[2], (*CTRL).svgen1.CMPA, (*CTRL).svgen1.CMPA_DBC);
+            EPwm1Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen1.CMPA_DBC[0];
+            EPwm2Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen1.CMPA_DBC[1];
+            EPwm3Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen1.CMPA_DBC[2];
+        }
+        else
+        {
+            EPwm1Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen1.CMPA[0];
+            EPwm2Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen1.CMPA[1];
+            EPwm3Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen1.CMPA[2];
+        }
+
     }
     if (axisCnt == 1)
     {
@@ -1111,6 +1174,10 @@ void DISABLE_PWM_OUTPUT(int use_first_set_three_phase)
 }
 
 
+REAL RPM_wave_conunter = 0;
+REAL RPM_wave = 0;
+REAL flag_RPM_wave = 0;
+
 void ENABLE_PWM_OUTPUT(int positionLoopType, int use_first_set_three_phase)
 {
     G.flag_experimental_initialized = FALSE;
@@ -1152,6 +1219,15 @@ void ENABLE_PWM_OUTPUT(int positionLoopType, int use_first_set_three_phase)
         else{
             // do position loop
             Axis->Set_manual_rpm = call_position_loop_controller(positionLoopType);
+        }
+
+        if (flag_RPM_wave == 1)
+        {
+            Axis->Set_manual_rpm = (*CTRL).timebase * 20;
+            if ( (*CTRL).timebase * 20 > 400)
+            {
+                Axis->Set_manual_rpm = 400;
+            }
         }
 
         Axis->used_theta_d_elec = controller(

@@ -446,7 +446,8 @@ void COMM_resistanceId_v2(REAL id_fb, REAL iq_fb){
     // number of stairs (positive or negative current)
     #define NOS_II (29)
     #define NOS    (COMM_IV_SIZE_R1/2-1-NOS_II) // 200/2-30 = 70
-    #define RS_ID_MAXIMUM_CURRENT (1.414/0.8660254*MOTOR_RATED_CURRENT_RMS) /* [A] This specifies beta-axis current, so we need to make it larger so that the phase current is large enough This is motor related (to identify accurate resistance) */
+    // trash rigol has current limitation
+    #define RS_ID_MAXIMUM_CURRENT (0.5 * 1.414/0.8660254*MOTOR_RATED_CURRENT_RMS) /* [A] This specifies beta-axis current, so we need to make it larger so that the phase current is large enough This is motor related (to identify accurate resistance) */
     #ifdef _XCUBE1
         #define RS_ID_LOW_CURRENT (0.3)
     #else
@@ -1214,7 +1215,7 @@ void StepByStepCommissioning(){
 
     }else if(COMM.bool_comm_status == 1){
         // 电阻辨识
-        if(G.flag_do_inverter_characteristics){
+        if(!G.flag_do_inverter_characteristics){
             COMM_resistanceId_v2(IS_C(0), IS_C(1)); // v2 is intended only for better inverter nonlinearity identification considering the rotor movement issue (starting from negative maximal current value to force align)
         }else{
             COMM_resistanceId(IS_C(0), IS_C(1));

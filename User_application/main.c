@@ -19,7 +19,7 @@ st_axis Axis_2;
     }                          \
     if (axisCnt == 1)          \
     {                          \
-        Axis = &Axis_2;        \.
+        Axis = &Axis_2;        \
         CTRL = &CTRL_2;        \
     }
 #endif
@@ -35,7 +35,7 @@ st_axis Axis_2;
 #define BOTH_LOOP_RUN 5
 #define IMPEDANCE_CONTROL 6
 int positionLoopType = 0;           // TWOMOTOR_POSITION_CONTROL; //SHANK_LOOP_RUN; // SHANK_LOOP_RUN; //BOTH_LOOP_RUN;
-int use_first_set_three_phase = -1; //-1 for both motors
+int use_first_set_three_phase = 1; //-1 for both motors
 
 void main(void)
 {
@@ -200,6 +200,10 @@ void measurement()
         // Vdc用于实时更新电流环限幅
         PID_iD->OutLimit = Axis->vdc * 0.5773672;
         PID_iQ->OutLimit = Axis->vdc * 0.5773672;
+        // 电流环输出限幅2V
+        // PID_iD->OutLimit = 2;
+        // PID_iQ->OutLimit = 2; 
+
 
         PID_iX->outLimit = Axis->vdc * 0.5773672;
         PID_iY->outLimit = Axis->vdc * 0.5773672;
