@@ -6,8 +6,8 @@
 #include "pid_regulator.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include "super_config.h"
 
-#define ARGS_PATH "../args.txt"
 
 typedef struct
 {

@@ -114,6 +114,10 @@ void main(void)
         axis_basic_setup(axisCnt); // 根据axiscnt对Axis，CTRL的1和2号结构体，进行初始化操作
     }
 
+
+
+    
+
     // 5. Handle Interrupts
     handle_interrupts();
 
@@ -263,10 +267,10 @@ void measurement()
 REAL call_position_loop_controller(int positionLoopType)
 {
     CTRL_1.s->Speed->Kp = TEST_SHANK_SPD_KP;
-    CTRL_1.s->Speed->Ki = TEST_SHANK_SPD_KI;
+    CTRL_1.s->Speed->Ki_CODE = TEST_SHANK_SPD_KI;
 
     CTRL_2.s->Speed->Kp = TEST_HIP_SPD_KP;
-    CTRL_2.s->Speed->Ki = TEST_HIP_SPD_KI;
+    CTRL_2.s->Speed->Ki_CODE = TEST_HIP_SPD_KI;
 
 
     CTRL_1.s->Position->Kp = TEST_SHANK_KP;
@@ -315,9 +319,6 @@ void PanGuMainISR(void)
         DISABLE_PWM_OUTPUT(use_first_set_three_phase);
     // TODO:需要增加让另外一项axis的Ta Tb Tc在不使用或者
     }
-    
-
-
     else{
         wubo_debug_flag_PWM = 2;
         ENABLE_PWM_OUTPUT(positionLoopType, use_first_set_three_phase);

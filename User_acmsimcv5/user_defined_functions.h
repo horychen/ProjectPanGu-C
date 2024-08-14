@@ -4,11 +4,8 @@
 
 struct DebugExperiment{
     int  error;
+    int  who_is_user;
     int  mode_select;
-    // int  mode_PWM_test;
-    // int  mode_position_loop;
-    // int  mode_current_loop;
-    // int  flag_overwrite_theta_d; 
     REAL Overwrite_Current_Frequency;
     REAL Overwrite_theta_d;
     REAL set_deg_position_command;
@@ -22,23 +19,25 @@ struct DebugExperiment{
 };
 extern struct DebugExperiment debug;
 
-
 /* USER: Macros */
 
+#define USER_DEFAULT 0
 #define USER_BEZIER 10
 #define USER_WUBO   11
 // #define WHO_IS_USER 0
-#define WHO_IS_USER USER_BEZIER
+// #define WHO_IS_USER USER_BEZIER
 // #define WHO_IS_USER USER_WUBO
+
+
+/* WUBO */
+void _user_wubo_WC_Tuner();
 
 
 /* User Specified Functions */
 void _user_init(); // 非常重要的初始化
-void main_switch(); 
 void _user_time_varying_parameters();// 时变参数
 void _user_observer(REAL iAB[2]);
 void _user_controller(); // REAL Vdc, REAL theta_d_elec, REAL varOmega, REAL varTheta, REAL iDQ[2], REAL cmd_uDQ[ 
-
 
 
 // 指令和负载
@@ -51,8 +50,8 @@ extern struct SweepFreq{
 } sf;
 void _user_commands();
     // REAL *p_set_rpm_speed_command, REAL *p_set_iq_cmd, REAL *p_set_id_cmd, int *p_set_current_loop, int *p_flag_overwrite_theta_d, REAL *p_Overwrite_Current_Frequency
-REAL _user_load_model(void);
 void cmd_fast_speed_reversal(REAL timebase, REAL instant, REAL interval, REAL rpm_cmd);
 void cmd_slow_speed_reversal(REAL timebase, REAL instant, REAL interval, REAL rpm_cmd);
 
+void main_switch();
 #endif

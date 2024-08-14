@@ -313,16 +313,16 @@ void COMM_PI_tuning(REAL LL, REAL RR, REAL BW_current, REAL delta, REAL JJ, REAL
     // REAL lowest_pole_over_0dB = 2*3.1415926 * 150; // 5 Hz The feedback frequency of hall sensor at 10 rpm is near 5 Hz.
 
     // My tuning
-    // PID_Speed->Ki = lowest_pole_over_0dB / (delta*delta) * VL_TS; 
+    // PID_Speed->Ki_CODE = lowest_pole_over_0dB / (delta*delta) * VL_TS; 
 
     PID_Speed->Kp = lowest_pole_over_0dB / (delta) / K;
 
     // TI's tuning
-    PID_Speed->Ki = PID_Speed->Kp * lowest_pole_over_0dB / (delta*delta) * VL_TS; 
+    PID_Speed->Ki_CODE = PID_Speed->Kp * lowest_pole_over_0dB / (delta*delta) * VL_TS; 
 
     #if PC_SIMULATION
     printf("Current loop, BW_current=%.1f Hz, Kp=%g, KpKi=%g\n", BW_current/(2*3.1415926), pid1_id.Kp,  pid1_iq.Ki*CL_TS);
-    printf("Speed loop,   BW_speed=%.1f Hz,   Kp=%g, KpKi=%g, K=%g\n",      BW_speed/(2*3.1415926),   PID_Speed->Kp, PID_Speed->Ki*VL_TS, K);
+    printf("Speed loop,   BW_speed=%.1f Hz,   Kp=%g, KpKi=%g, K=%g\n",      BW_speed/(2*3.1415926),   PID_Speed->Kp, PID_Speed->Ki_CODE*VL_TS, K);
     #endif
 }
 
@@ -915,7 +915,7 @@ void COMM_PMFluxId(REAL id_fb, REAL iq_fb, REAL omg_elec_fb){
     // if(COMM.counterEntered==1){
     //     // delta =10
     //     PID_Speed->Kp = 1e-6 * (CL_TS_INVERSE*0.1) / 10.0;
-    //     PID_Speed->Ki = PID_Speed->Kp * (CL_TS_INVERSE*0.1) / 100.0 * (CL_TS*SPEED_LOOP_CEILING);
+    //     PID_Speed->Ki_CODE = PID_Speed->Kp * (CL_TS_INVERSE*0.1) / 100.0 * (CL_TS*SPEED_LOOP_CEILING);
     // }
 
     pid1_id.Ref = 0.0;

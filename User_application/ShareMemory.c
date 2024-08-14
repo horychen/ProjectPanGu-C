@@ -91,8 +91,8 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
     // (*Axis4DAC).dac_watch[21] = Axis_1.Set_manual_rpm *0.002;
     (*Axis4DAC).dac_watch[21] = Axis_1.pCTRL->i->cmd_varOmega * MECH_RAD_PER_SEC_2_RPM * 0.002;; // 500RPM - 3V
     (*Axis4DAC).dac_watch[22] = Axis_1.pCTRL->i->varOmega     * MECH_RAD_PER_SEC_2_RPM * 0.002;
-    (*Axis4DAC).dac_watch[21] = Axis_2.pCTRL->i->cmd_varOmega * MECH_RAD_PER_SEC_2_RPM * 0.002;; // 500RPM - 3V
-    (*Axis4DAC).dac_watch[22] = Axis_2.pCTRL->i->varOmega     * MECH_RAD_PER_SEC_2_RPM * 0.002;
+    (*Axis4DAC).dac_watch[23] = Axis_2.pCTRL->i->cmd_varOmega * MECH_RAD_PER_SEC_2_RPM * 0.002;; // 500RPM - 3V
+    (*Axis4DAC).dac_watch[24] = Axis_2.pCTRL->i->varOmega     * MECH_RAD_PER_SEC_2_RPM * 0.002;
 
     (*Axis4DAC).dac_watch[25] = Axis_1.pCTRL->i->cmd_iDQ[1]*0.02;
     (*Axis4DAC).dac_watch[26] = Axis_1.pCTRL->i->iDQ[1]*0.02;

@@ -27,14 +27,14 @@
 
         r->Out = r->OutPrev + \
                 r->Kp * ( r->Err - r->ErrPrev ) + \
-                r->Ki * r->Err;
+                r->Ki_CODE * r->Err;
 
         r->ErrPrev = r->Err; 
         r->OutPrev = r->Out;
 
         r->KFB_Term = r->KFB * r->Fbk;
         r->Out -= r->KFB_Term;
-        
+
         // 控制器的限幅需要写在OutPrev幅值之后，否则电流环idq暂态跟踪误差会达到50%左右
         // 20240812：理论分析，限幅放在之前之后貌似没有区别，但仿真结果确实不同
         if(r->Out > r->OutLimit)
@@ -163,25 +163,15 @@ void ACMSIMC_PIDTuner(){
     PID_iQ->Kp  = d_sim.CL.SERIES_KP_Q_AXIS;
     PID_Speed->Kp = d_sim.VL.SERIES_KP;
 
-    PID_iD->Ki  = d_sim.CL.SERIES_KI_D_AXIS * d_sim.CL.SERIES_KP_D_AXIS * CL_TS;
-    PID_iQ->Ki  = d_sim.CL.SERIES_KI_Q_AXIS * d_sim.CL.SERIES_KP_Q_AXIS * CL_TS;
-    PID_Speed->Ki = d_sim.VL.SERIES_KI        * d_sim.VL.SERIES_KP        * VL_TS;
+    PID_iD->Ki_CODE  = d_sim.CL.SERIES_KI_D_AXIS * d_sim.CL.SERIES_KP_D_AXIS * CL_TS;
+    PID_iQ->Ki_CODE  = d_sim.CL.SERIES_KI_Q_AXIS * d_sim.CL.SERIES_KP_Q_AXIS * CL_TS;
+    PID_Speed->Ki_CODE = d_sim.VL.SERIES_KI        * d_sim.VL.SERIES_KP        * VL_TS;
 
     PID_Speed->KFB = 0.0;
 
     PID_iD->OutLimit  = d_sim.CL.LIMIT_DC_BUS_UTILIZATION * d_sim.init.Vdc;
     PID_iQ->OutLimit  = d_sim.CL.LIMIT_DC_BUS_UTILIZATION * d_sim.init.Vdc;
     PID_Speed->OutLimit = d_sim.VL.LIMIT_OVERLOAD_FACTOR * d_sim.init.IN;
-
-    #if PC_SIMULATION
-        printf("ACMSIMC_PIDTuner:\n");
-        printf("\tpid1_iM.Kp = %f\n", PID_iD->Kp);
-        printf("\tpid1_iT.Kp = %f\n", PID_iQ->Kp);
-        printf("\tpid1_spd.Kp = %f\n", PID_Speed->Kp);
-        printf("\tpid1_iM.Ki = %f\n", PID_iD->Ki);
-        printf("\tpid1_iT.Ki = %f\n", PID_iQ->Ki);
-        printf("\tpid1_spd.Ki = %f\n", PID_Speed->Ki);
-    #endif
 
     // pid2_ix.Kp = CURRENT_KP;
     // pid2_iy.Kp = CURRENT_KP;

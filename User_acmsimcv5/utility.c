@@ -116,7 +116,7 @@ double difference_between_two_angles(double first, double second){
 #if PC_SIMULATION == TRUE
     // 写变量meta-data到文件
     void write_header_to_file(FILE *fw){
-        printf("%s\n", DATA_FILE_NAME);
+        printf("\tData @ %s\n", DATA_FILE_NAME);
 
         fprintf(fw, DATA_LABELS);
 
@@ -144,17 +144,15 @@ double difference_between_two_angles(double first, double second){
     }
 
     void print_info(){
-        printf("Rreq = %f\n", (ACM.Rreq));
-        printf("NUMBER_OF_STEPS = %d\n", (int)d_sim.sim.NUMBER_OF_STEPS);
-        printf("MACHINE_SIMULATIONs_PER_SAMPLING_PERIOD = %d\n", d_sim.sim.MACHINE_SIMULATIONs_PER_SAMPLING_PERIOD);
+        printf("\t[utility.c] Rreq = %f Ohm\n", (ACM.Rreq));
+        printf("\t[utility.c] NUMBER_OF_STEPS = %d\t", (int)d_sim.sim.NUMBER_OF_STEPS); printf("MACHINE_SIMULATIONs_PER_SAMPLING_PERIOD = %d\n", d_sim.sim.MACHINE_SIMULATIONs_PER_SAMPLING_PERIOD);
         if(debug.SENSORLESS_CONTROL==TRUE){
-            printf("\t[main.c] Sensorless using observer.\n");
+            printf("\t[utility.c] Sensorless using observer.\n");
         }else{
-            printf("\t[main.c] Sensored control.\n");
+            printf("\t[utility.c] Sensored control.\n");
         }
-        printf("\t[main.c] NUMBER_OF_STEPS: %d\n", d_sim.sim.NUMBER_OF_STEPS);
-        printf("\t[main.c] Speed PI:   Kp=%.3f, Ki=%.6f, limit=%.1f A\n", PID_Speed->Kp, PID_Speed->Ki, PID_Speed->OutLimit);
-        printf("\t[main.c] Current PI: Kp=%.3f, Ki=%.6f, limit=%.1f V\n", PID_iQ->Kp, PID_iQ->Ki, PID_iQ->OutLimit);
+        printf("\t[utility.c] Speed PI:   Kp=%.3f, Ki=%.6f, limit=%.1f A\n", PID_Speed->Kp, PID_Speed->Ki_CODE, PID_Speed->OutLimit);
+        printf("\t[utility.c] Current PI: Kp=%.3f, Ki=%.6f, limit=%.1f V\n", PID_iQ->Kp, PID_iQ->Ki_CODE, PID_iQ->OutLimit);
     }
 #endif
 

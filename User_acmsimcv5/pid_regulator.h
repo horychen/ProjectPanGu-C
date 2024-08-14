@@ -16,7 +16,7 @@ typedef struct {
    float32 Out;
    float32 OutPrev; // for incremental pid
    float32 Kp;
-   float32 Ki;
+   float32 Ki_CODE;
    float32 Kd;
    float32 KFB;
    float32 SatDiff;
