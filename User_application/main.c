@@ -300,8 +300,6 @@ REAL call_position_loop_controller(int positionLoopType)
 extern REAL imife_realtime_gain_off;
 
 
-REAL wubo_debug_flag_PWM = 0;
-
 
 // 这里需要传入use这个变量来决定两个逆变器的PWM信号要不要输入
 // 20240720前的有一个bug：我们只通过Axis_1.FLAG_ENABLE_PWM_OUTPUT来决定PWM信号是否输出，但是对应的PWM开通关断函数下，是无脑地对
@@ -313,12 +311,10 @@ void PanGuMainISR(void)
     measurement(); // 电流传感器和编码器测得三相电流iuvw和角度theta，iuvw通过clark变化得到iabg，后面iabg通过park变换得到idq，idq通过dq变换得到abc
 
     if (!Axis_1.FLAG_ENABLE_PWM_OUTPUT){
-        wubo_debug_flag_PWM = 1;
         DISABLE_PWM_OUTPUT(use_first_set_three_phase);
     // TODO:需要增加让另外一项axis的Ta Tb Tc在不使用或者
     }
     else{
-        wubo_debug_flag_PWM = 2;
         ENABLE_PWM_OUTPUT(positionLoopType, use_first_set_three_phase);
     }
 

@@ -765,7 +765,7 @@ void measurement_enc_and_i()
     CTRL->enc->rpm = CTRL->enc->sum_qepPosCnt * MA_SEQUENCE_LENGTH_INVERSE; // CL_TS_INVERSE;
     // CTRL->enc->rpm = CTRL->enc->rpm_raw;
 
-    CTRL->enc->varOmega = CTRL->enc->rpm * RPM_2_ELEC_RAD_PER_SEC;
+    CTRL->enc->varOmega = CTRL->enc->rpm * RPM_2_MECH_RAD_PER_SEC;
 
     // end of axiscnt
 

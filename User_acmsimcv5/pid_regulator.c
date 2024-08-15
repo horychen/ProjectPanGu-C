@@ -55,20 +55,17 @@
 #else
     void PID_calc(st_pid_regulator *r){
         #define DYNAMIC_CLAPMING TRUE
-        #define DYNAMIC_CLAPMING_WUBO FALSE
+        #define DYNAMIC_CLAPMING_WUBO TRUE
 
         // 误差
         r->Err = r->Ref - r->Fbk;
-
         // 比例
         r->P_Term = r->Err * r->Kp;
-
         // 积分
-        r->I_Term += r->Err * r->Ki;
+        r->I_Term += r->Err * r->Ki_CODE;
         r->OutNonSat = r->I_Term;
-
         // Inner Loop
-        r->KFB_Term = r->KFB * r->Fbk;
+        r->KFB_Term = r->Fbk * r->KFB;
 
         // 添加积分饱和特性
         #if DYNAMIC_CLAPMING
@@ -99,6 +96,7 @@
         // 输出
         r->Out = r->I_Term + r->P_Term - r->KFB_Term; // + r->D_Term
         r->OutNonSat += r->P_Term; // + r->D_Term
+
         // 输出限幅
         if(r->Out > r->OutLimit)
             r->Out = r->OutLimit;
@@ -178,8 +176,8 @@ void ACMSIMC_PIDTuner(){
 
     PID_Speed->KFB = d_sim.user.VL_FEEDBACK_KFB;
     
-    PID_iD->OutLimit  = d_sim.CL.LIMIT_DC_BUS_UTILIZATION * d_sim.init.Vdc;
-    PID_iQ->OutLimit  = d_sim.CL.LIMIT_DC_BUS_UTILIZATION * d_sim.init.Vdc;
+    PID_iD->OutLimit  = 0.57735 * d_sim.CL.LIMIT_DC_BUS_UTILIZATION * d_sim.init.Vdc;
+    PID_iQ->OutLimit  = 0.57735 * d_sim.CL.LIMIT_DC_BUS_UTILIZATION * d_sim.init.Vdc;
     PID_Speed->OutLimit = d_sim.VL.LIMIT_OVERLOAD_FACTOR * d_sim.init.IN;
 
     // pid2_ix.Kp = CURRENT_KP;

@@ -17,20 +17,20 @@ void init_d_sim() {
     d_sim.sim.NUMBER_OF_STEPS = 5000;
     d_sim.sim.MACHINE_SIMULATIONs_PER_SAMPLING_PERIOD = 1;
 
-    d_sim.FOC.delta = 40.0;
-    d_sim.FOC.CLBW_HZ = 600.0;
-    d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation = TRUE;
+    d_sim.FOC.delta = 20.0;
+    d_sim.FOC.CLBW_HZ = 800.0;
+    d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation = FALSE;
     d_sim.FOC.VL_EXE_PER_CL_EXE = 5;
 
-    d_sim.CL.SERIES_KP_D_AXIS = 0.7162831250184729;
+    d_sim.CL.SERIES_KP_D_AXIS = 0.9550441666912972;
     d_sim.CL.SERIES_KI_D_AXIS = 231.578947368421;
-    d_sim.CL.SERIES_KP_Q_AXIS = 0.7162831250184729;
+    d_sim.CL.SERIES_KP_Q_AXIS = 0.9550441666912972;
     d_sim.CL.SERIES_KI_Q_AXIS = 231.578947368421;
     d_sim.CL.LIMIT_DC_BUS_UTILIZATION = 0.96;
 
-    d_sim.VL.SERIES_KP = 0.5527856207154717;
-    d_sim.VL.SERIES_KI = 2.356194490192345;
-    d_sim.VL.LIMIT_OVERLOAD_FACTOR = 1;
+    d_sim.VL.SERIES_KP = 1.4740949885745913;
+    d_sim.VL.SERIES_KI = 12.566370614359172;
+    d_sim.VL.LIMIT_OVERLOAD_FACTOR = 0.5;
 
     d_sim.user.bezier_NUMBER_OF_STEPS = 5000;
     d_sim.user.bezier_order = 4;
@@ -41,8 +41,8 @@ void init_d_sim() {
     d_sim.user.bezier_seconds_step_command = 0.2;
     d_sim.user.bezier_seconds_load_disturbance = 0.4;
     d_sim.user.beizer_optimize_use_arg_txt_file = FALSE;
-    d_sim.user.zeta = 0.707;
-    d_sim.user.omega_n = 600;
+    d_sim.user.zeta = 1;
+    d_sim.user.omega_n = 1000;
     d_sim.user.max_CLBW_PER_min_CLBW = 0.9;
     d_sim.user.VL_FEEDBACK_KFB = 0;
     d_sim.user.bool_apply_WC_tunner_for_speed_loop = TRUE;
