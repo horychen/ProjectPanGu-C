@@ -89,18 +89,18 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
     (*Axis4DAC).dac_watch[20] = (*CTRL).s->omega_syn * ELEC_RAD_PER_SEC_2_RPM *0.002;
 
     // (*Axis4DAC).dac_watch[21] = Axis_1.Set_manual_rpm *0.002;
-    (*Axis4DAC).dac_watch[21] = Axis_1.pCTRL->i->cmd_varOmega * MECH_RAD_PER_SEC_2_RPM * 0.002;; // 500RPM - 3V
+    (*Axis4DAC).dac_watch[21] = Axis_1.pCTRL->i->cmd_varOmega * MECH_RAD_PER_SEC_2_RPM * 0.002; // 500RPM - 3V
     (*Axis4DAC).dac_watch[22] = Axis_1.pCTRL->i->varOmega     * MECH_RAD_PER_SEC_2_RPM * 0.002;
-    (*Axis4DAC).dac_watch[23] = Axis_2.pCTRL->i->cmd_varOmega * MECH_RAD_PER_SEC_2_RPM * 0.002;; // 500RPM - 3V
+    (*Axis4DAC).dac_watch[23] = Axis_2.pCTRL->i->cmd_varOmega * MECH_RAD_PER_SEC_2_RPM * 0.002; // 500RPM - 3V
     (*Axis4DAC).dac_watch[24] = Axis_2.pCTRL->i->varOmega     * MECH_RAD_PER_SEC_2_RPM * 0.002;
 
-    (*Axis4DAC).dac_watch[25] = Axis_1.pCTRL->i->cmd_iDQ[1]*0.2;
-    (*Axis4DAC).dac_watch[26] = Axis_1.pCTRL->i->iDQ[1]*0.2;
-    // 0.6V->1A
-    (*Axis4DAC).dac_watch[27] = Axis_2.pCTRL->i->cmd_iDQ[1]*0.2; 
-    (*Axis4DAC).dac_watch[28] = Axis_2.pCTRL->i->iDQ[1]*0.2; // 0.6V->1A
-    (*Axis4DAC).dac_watch[29] = Axis_2.pCTRL->i->iDQ[0]*0.2; // 0.6V->1A
+    (*Axis4DAC).dac_watch[25] = Axis_1.pCTRL->i->cmd_iDQ[0]*0.2;
+    (*Axis4DAC).dac_watch[26] = Axis_1.pCTRL->i->iDQ[0]*0.2;
+    (*Axis4DAC).dac_watch[27] = Axis_1.pCTRL->i->cmd_iDQ[1]*0.2;
+    (*Axis4DAC).dac_watch[28] = Axis_1.pCTRL->i->iDQ[1]*0.2;
 
+    (*Axis4DAC).dac_watch[63] = (*CTRL).o->cmd_uAB_to_inverter[0] * 0.125;
+    (*Axis4DAC).dac_watch[64] = (*CTRL).o->cmd_uAB_to_inverter[1] * 0.125;
 
 
     // (*Axis4DAC).dac_watch[25] = (*CTRL).i->cmd_iDQ[0]*0.2;
@@ -162,8 +162,7 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
 
     (*Axis4DAC).dac_watch[61] = INV.ual_comp *0.125;
     (*Axis4DAC).dac_watch[62] = INV.ube_comp *0.125;
-    (*Axis4DAC).dac_watch[63] = (*CTRL).o->cmd_uAB_to_inverter[0] * 0.125;
-    (*Axis4DAC).dac_watch[64] = (*CTRL).o->cmd_uAB_to_inverter[1] * 0.125;
+
 
 
     # if ENABLE_COMMISSIONING == TRUE

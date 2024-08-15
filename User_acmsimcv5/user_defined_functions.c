@@ -25,27 +25,27 @@ void _user_init(){
 
     /* Choose One User*/
     // debug.who_is_user = USER_BEZIER;
-    // debug.who_is_user = USER_WUBO;
-    debug.who_is_user = USER_DEFAULT;
+    debug.who_is_user = USER_WUBO;
+    // debug.who_is_user = USER_DEFAULT;
 
     /* Open Loop Test */
     // debug.mode_select = MODE_SELECT_PWM_DIRECT;                            //  1
     // debug.mode_select = MODE_SELECT_VOLTAGE_OPEN_LOOP;                     // 11
 
     /* Test Without the Encoder */
-    // debug.mode_select = MODE_SELECT_WITHOUT_ENCODER_CURRENT_VECTOR_ROTATE; //  2
-        debug.Overwrite_Current_Frequency = 0.0;
+    debug.mode_select = MODE_SELECT_WITHOUT_ENCODER_CURRENT_VECTOR_ROTATE; //  2
+        debug.Overwrite_Current_Frequency = 2;
         debug.Overwrite_theta_d = 0.0;
 
     /* FOC Test */
     // debug.mode_select = MODE_SELECT_FOC;                                   //  3
     // debug.mode_select = MODE_SELECT_FOC_SENSORLESS;                        // 31
-        debug.set_iq_command = 2;
-        debug.set_id_command = -1;
+        debug.set_iq_command = 0;
+        debug.set_id_command = 1;
     // debug.mode_select = MODE_SELECT_INDIRECT_FOC;                          //  32
 
     /* Speed Loop Test */
-    debug.mode_select = MODE_SELECT_VELOCITY_LOOP;                            //  4
+    // debug.mode_select = MODE_SELECT_VELOCITY_LOOP;                            //  4
     // debug.mode_select = MODE_SELECT_VELOCITY_LOOP_SENSORLESS;              // 41
     // debug.mode_select = MODE_SELECT_TESTING_SENSORLESS;                    // 42
     // debug.mode_select = MODE_SELECT_VELOCITY_LOOP_WC_TUNER;                // 43
@@ -78,19 +78,57 @@ void main_switch(){
         (*CTRL).o->cmd_uAB_to_inverter[1] = 3 * sin(5*2*M_PI* CTRL->timebase); // test
         break;
     case MODE_SELECT_WITHOUT_ENCODER_CURRENT_VECTOR_ROTATE: // 2
-        if (fabs(debug.Overwrite_Current_Frequency) > 0){
+        if (fabs(debug.Overwrite_Current_Frequency) > 0)
+        {
             debug.Overwrite_theta_d += CL_TS * debug.Overwrite_Current_Frequency * 2 * M_PI;
-            if (debug.Overwrite_theta_d > M_PI)
-                debug.Overwrite_theta_d -= 2 * M_PI;
-            if (debug.Overwrite_theta_d < -M_PI)
-                debug.Overwrite_theta_d += 2 * M_PI;
-        }else{
+            if (debug.Overwrite_theta_d > M_PI)  debug.Overwrite_theta_d -= 2 * M_PI;
+            if (debug.Overwrite_theta_d < -M_PI) debug.Overwrite_theta_d += 2 * M_PI;
+        }
+        else
+        {
             debug.Overwrite_theta_d = 0.0;
         }
-        (*CTRL).s->cosT = cosf(debug.Overwrite_theta_d);
-        (*CTRL).s->sinT = sinf(debug.Overwrite_theta_d);
+        (*CTRL).s->cosT = cos(debug.Overwrite_theta_d);
+        (*CTRL).s->sinT = sin(debug.Overwrite_theta_d);
         (*CTRL).i->iDQ[0] = AB2M((*CTRL).i->iAB[0], (*CTRL).i->iAB[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
         (*CTRL).i->iDQ[1] = AB2T((*CTRL).i->iAB[0], (*CTRL).i->iAB[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
+
+        /* 直接给定电流环command，速度环的command由程序给出 */
+        (*CTRL).i->cmd_iDQ[0] = debug.set_id_command; 
+        (*CTRL).i->cmd_iDQ[1] = debug.set_iq_command;
+        PID_iD->Fbk = (*CTRL).i->iDQ[0];
+        PID_iD->Ref = (*CTRL).i->cmd_iDQ[0];
+        PID_iD->calc(PID_iD);
+
+        PID_iQ->Fbk = (*CTRL).i->iDQ[1];
+        PID_iQ->Ref = (*CTRL).i->cmd_iDQ[1];
+        PID_iQ->calc(PID_iQ);
+
+        // 电流环前馈DQ轴解耦
+        REAL decoupled_d_axis_voltage;
+        REAL decoupled_q_axis_voltage;
+        if(d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation == TRUE){
+            decoupled_d_axis_voltage = PID_iD->Out - PID_iQ->Fbk * MOTOR.Lq * (*CTRL).i->varOmega * MOTOR.npp;
+            decoupled_q_axis_voltage = PID_iQ->Out + (MOTOR.KActive + PID_iD->Fbk * MOTOR.Ld) * (*CTRL).i->varOmega * MOTOR.npp;
+        }else{
+            decoupled_d_axis_voltage = PID_iD->Out;
+            decoupled_q_axis_voltage = PID_iQ->Out;
+        }
+
+        (*CTRL).o->cmd_uDQ[0] = decoupled_d_axis_voltage;
+        (*CTRL).o->cmd_uDQ[1] = decoupled_q_axis_voltage;
+
+        (*CTRL).o->cmd_uAB[0] = MT2A((*CTRL).o->cmd_uDQ[0], (*CTRL).o->cmd_uDQ[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
+        (*CTRL).o->cmd_uAB[1] = MT2B((*CTRL).o->cmd_uDQ[0], (*CTRL).o->cmd_uDQ[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
+
+        (*CTRL).o->cmd_uAB_to_inverter[0] = (*CTRL).o->cmd_uAB[0];
+        (*CTRL).o->cmd_uAB_to_inverter[1] = (*CTRL).o->cmd_uAB[1];
+
+        /* 更新依赖于dq轴电流的物理量 */
+        (*CTRL).i->Tem     = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * (MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * (*CTRL).i->iDQ[0]) * (*CTRL).i->iDQ[1];     // 转矩 For luenberger position observer for HFSI
+        (*CTRL).i->cmd_Tem = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * (MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * (*CTRL).i->cmd_iDQ[0]) * (*CTRL).i->cmd_iDQ[1];
+        MOTOR.KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * (*CTRL).i->iDQ[0];
+
         break;
     case MODE_SELECT_FOC: // 3
         _user_onlyFOC();
@@ -159,9 +197,6 @@ void _user_onlyFOC(){
         decoupled_d_axis_voltage = PID_iD->Out;
         decoupled_q_axis_voltage = PID_iQ->Out;
     }
-
-    (*CTRL).o->cmd_uDQ[0] = decoupled_d_axis_voltage;
-    (*CTRL).o->cmd_uDQ[1] = decoupled_q_axis_voltage;
 
     (*CTRL).o->cmd_uDQ[0] = decoupled_d_axis_voltage;
     (*CTRL).o->cmd_uDQ[1] = decoupled_q_axis_voltage;
@@ -272,6 +307,13 @@ void _user_controller(){
     (*CTRL).i->Tem     = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * (MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * (*CTRL).i->iDQ[0]) * (*CTRL).i->iDQ[1];     // 转矩 For luenberger position observer for HFSI
     (*CTRL).i->cmd_Tem = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * (MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * (*CTRL).i->cmd_iDQ[0]) * (*CTRL).i->cmd_iDQ[1];
     MOTOR.KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * (*CTRL).i->iDQ[0];
+
+
+    /* 启动D_Cuurent = 0A */
+    if(d_sim.user.Null_D_Control == TRUE)
+    {
+        (*CTRL).i->cmd_iDQ[0] = 0;
+    }
 
     /// 6. 电流环
     // d-axis
