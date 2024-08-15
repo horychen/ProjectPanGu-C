@@ -36,8 +36,9 @@ void _user_wubo_WC_Tuner();
 /* User Specified Functions */
 void _user_init(); // 非常重要的初始化
 void _user_time_varying_parameters();// 时变参数
-void _user_observer(REAL iAB[2]);
+void _user_observer();
 void _user_controller(); // REAL Vdc, REAL theta_d_elec, REAL varOmega, REAL varTheta, REAL iDQ[2], REAL cmd_uDQ[ 
+void _user_onlyFOC(); // only current loop worksw
 
 
 // 指令和负载

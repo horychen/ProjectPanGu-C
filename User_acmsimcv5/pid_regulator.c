@@ -1,6 +1,8 @@
 #include "ACMSim.h"
 
 #define INCREMENTAL_PID TRUE
+#define DYNAMIC_CLAMPING_FOR_KFB FALSE
+
 #if INCREMENTAL_PID
     // void PID_calc(st_pid_regulator *r){
 
@@ -24,6 +26,7 @@
         // printf("Value of r->Ref: %f\n", r->Ref);
 
         r->Err = r->Ref - r->Fbk;
+        r->P_Term = r->Err * r->Kp;
 
         r->Out = r->OutPrev + \
                 r->Kp * ( r->Err - r->ErrPrev ) + \
@@ -33,15 +36,21 @@
         r->OutPrev = r->Out;
 
         r->KFB_Term = r->KFB * r->Fbk;
-        r->Out -= r->KFB_Term;
+        
+        #if DYNAMIC_CLAMPING_FOR_KFB
+            if(r->KFB_Term > r->OutLimit - r->P_Term)
+                r->KFB_Term = r->OutLimit - r->P_Term;
+            else if(r->KFB_Term < -r->OutLimit + r->P_Term)
+                r->KFB_Term = -r->OutLimit + r->P_Term;
+        #endif
 
+        r->Out -= r->KFB_Term;
         // 控制器的限幅需要写在OutPrev幅值之后，否则电流环idq暂态跟踪误差会达到50%左右
         // 20240812：理论分析，限幅放在之前之后貌似没有区别，但仿真结果确实不同
         if(r->Out > r->OutLimit)
             r->Out = r->OutLimit;
         else if(r->Out < -r->OutLimit)
             r->Out = -r->OutLimit;
-        // printf("KFB is %f\n", r->KFB);
     }
 #else
     void PID_calc(st_pid_regulator *r){
@@ -167,8 +176,8 @@ void ACMSIMC_PIDTuner(){
     PID_iQ->Ki_CODE  = d_sim.CL.SERIES_KI_Q_AXIS * d_sim.CL.SERIES_KP_Q_AXIS * CL_TS;
     PID_Speed->Ki_CODE = d_sim.VL.SERIES_KI        * d_sim.VL.SERIES_KP        * VL_TS;
 
-    PID_Speed->KFB = 0.0;
-
+    PID_Speed->KFB = d_sim.user.VL_FEEDBACK_KFB;
+    
     PID_iD->OutLimit  = d_sim.CL.LIMIT_DC_BUS_UTILIZATION * d_sim.init.Vdc;
     PID_iQ->OutLimit  = d_sim.CL.LIMIT_DC_BUS_UTILIZATION * d_sim.init.Vdc;
     PID_Speed->OutLimit = d_sim.VL.LIMIT_OVERLOAD_FACTOR * d_sim.init.IN;

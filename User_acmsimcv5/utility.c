@@ -144,6 +144,11 @@ double difference_between_two_angles(double first, double second){
     }
 
     void print_info(){
+        if(d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation == TRUE){
+            #if PC_SIMULATION == TRUE 
+                printf(">>> Voltages to Cuurent Regulation is Applied <<<\n");
+            #endif
+        }
         printf("\t[utility.c] Rreq = %f Ohm\n", (ACM.Rreq));
         printf("\t[utility.c] NUMBER_OF_STEPS = %d\t", (int)d_sim.sim.NUMBER_OF_STEPS); printf("MACHINE_SIMULATIONs_PER_SAMPLING_PERIOD = %d\n", d_sim.sim.MACHINE_SIMULATIONs_PER_SAMPLING_PERIOD);
         if(debug.SENSORLESS_CONTROL==TRUE){

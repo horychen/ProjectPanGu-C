@@ -67,7 +67,6 @@ void main(void)
         #endif
     #endif
 
-
     // 4.2 Initialize peripherals
     ePWM_initialize();
     ADC_initialize();
@@ -107,16 +106,15 @@ void main(void)
     #endif
 
     // 4.4 Initialize algorithms
+    init_d_sim();      // d_sim is used to initalize the machine
+    init_experiment(); // 控制器结构体初始化（同实验）
+    _user_init();      // 用户初始化 只需要执行一次
     get_bezier_points();
     for (axisCnt = 0; axisCnt < NUMBER_OF_AXES; axisCnt++)
     {
         get_Axis_CTRL_pointers 
         axis_basic_setup(axisCnt); // 根据axiscnt对Axis，CTRL的1和2号结构体，进行初始化操作
     }
-
-
-
-    
 
     // 5. Handle Interrupts
     handle_interrupts();
@@ -201,8 +199,8 @@ void measurement()
         // pAxis = list_pointer_to_Axes[axisCnt];
 
         // Vdc用于实时更新电流环限幅
-        PID_iD->OutLimit = Axis->vdc * 0.5773672;
-        PID_iQ->OutLimit = Axis->vdc * 0.5773672;
+        PID_iD->OutLimit = Axis->vdc * 0.5773672 * d_sim.CL.LIMIT_DC_BUS_UTILIZATION;
+        PID_iQ->OutLimit = Axis->vdc * 0.5773672 * d_sim.CL.LIMIT_DC_BUS_UTILIZATION;
         // 电流环输出限幅2V
         // PID_iD->OutLimit = 2;
         // PID_iQ->OutLimit = 2; 

@@ -150,14 +150,6 @@ void allocate_CTRL(struct ControllerForExperiment *p){
 
 
 
-
-
-
-
-
-
-
-
 // Global watch variables
 struct GlobalWatch watch;
 
@@ -193,26 +185,9 @@ struct GlobalWatch watch;
 
 // struct eQEP_Variables qep={0};
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 void init_experiment(){
 
-    init_d_sim(); // 这个init_d_sim()是为了给dsp做实验时用的，否则实物刚开始的时候没有d_sim
     init_CTRL(); // 控制器结构体初始化
-    _user_init();     // 初始化全局调试结构体
-
     init_FE();  // flux estimator
     rk4_init(); // 龙格库塔法结构体初始化
     // observer_init();
@@ -288,8 +263,17 @@ void init_CTRL(){
     /* Black Box Model | Controller quantities */
 
 
-    // PID调谐
-    ACMSIMC_PIDTuner();
+    // 控制器tuning
+    if(debug.who_is_user == USER_WUBO){
+        _user_wubo_WC_Tuner();
+        #if PC_SIMULATION == TRUE
+            printf(">>> Wc_Tuner is Applied to the Speed Loop Control <<<\n");
+        #endif
+    }
+    else{
+        ACMSIMC_PIDTuner();
+    }
+    
 
     // PID regulators
     // (*CTRL).s->iD = &PID_iD;
@@ -315,6 +299,7 @@ void init_CTRL(){
     // (*CTRL).psi_mu_be__fb = 0.0;
     // (*CTRL).Tem = 0.0;
     // // indirect field oriented control
+    (*CTRL).s->xRho = 0.0;
     (*CTRL).s->cosT = 1.0;
     (*CTRL).s->sinT = 0.0;
     (*CTRL).s->cosT_compensated_1p5omegaTs = 1.0;
@@ -322,14 +307,6 @@ void init_CTRL(){
     (*CTRL).s->cosT2 = 1.0;
     (*CTRL).s->sinT2 = 0.0;
     // (*CTRL).s->omega_syn = 0.0;
-    (*CTRL).s->the_vc_count = 1; // starts from 1
-
-
-
-
-
-
-
     //     init_CTRL_IM();
     // }
     // void init_CTRL_IM(){

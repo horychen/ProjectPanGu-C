@@ -448,6 +448,9 @@ void controller_marino2005(){
     (*CTRL).o->cmd_iAB[0] = MT2A((*CTRL).i->cmd_iDQ[0], (*CTRL).i->cmd_iDQ[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
     (*CTRL).o->cmd_iAB[1] = MT2B((*CTRL).i->cmd_iDQ[0], (*CTRL).i->cmd_iDQ[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
 }
+
+
+
 void controller_IFOC(){
 
     /// 3. 电气转子位置和电气转子转速反馈
@@ -455,46 +458,41 @@ void controller_IFOC(){
     flux_observer(); // FLUX_FEEDBACK_ALPHA, FLUX_FEEDBACK_BETA
     (*CTRL).i->varOmega = FE.htz.omg_est;
     Main_esoaf_chen2021();
-    // (*CTRL).i->varOmega = esoaf.xOmg - (esoaf.bool_ramp_load_torque<0) * (*CTRL).s->omega_sl;
-    // (*CTRL).i->varOmega = esoaf.xOmg;
 
-        //（编码器反馈）
-        // (*CTRL).i->varOmega     = qep.varOmega;
-        // (*CTRL).i->theta_d_elec__fb = qep.theta_d;
+                    // (*CTRL).i->varOmega = esoaf.xOmg - (esoaf.bool_ramp_load_torque<0) * (*CTRL).s->omega_sl;
+                    // (*CTRL).i->varOmega = esoaf.xOmg;
 
-        //（实际反馈，实验中不可能）
-        // (*CTRL).i->varOmega     = ENC.varOmega ;
-        // (*CTRL).i->varOmega     = ACM.varOmega ;
-        // (*CTRL).i->varOmega     = ACM.x[4] ;
+                        //（编码器反馈）
+                        // (*CTRL).i->varOmega     = qep.varOmega;
+                        // (*CTRL).i->theta_d_elec__fb = qep.theta_d;
 
-        //（无感）
-        // harnefors_scvm();
-        // (*CTRL).i->varOmega     = omg_harnefors;
-        // (*CTRL).i->theta_d_elec__fb = theta_d_harnefors;
+                        //（实际反馈，实验中不可能）
+                        // (*CTRL).i->varOmega     = ENC.varOmega ;
+                        // (*CTRL).i->varOmega     = ACM.varOmega ;
+                        // (*CTRL).i->varOmega     = ACM.x[4] ;
 
+                        //（无感）
+                        // harnefors_scvm();
+                        // (*CTRL).i->varOmega     = omg_harnefors;
+                        // (*CTRL).i->theta_d_elec__fb = theta_d_harnefors;
+
+    // 间接磁场定向第一部分
+    (*CTRL).s->xRho += CL_TS * (*CTRL).s->omega_syn;
+    (*CTRL).i->theta_d_elec = (*CTRL).s->xRho;
+
+    (*CTRL).s->cosT = cos((*CTRL).i->theta_d_elec); 
+    (*CTRL).s->sinT = sin((*CTRL).i->theta_d_elec);
+    if((*CTRL).s->xRho > M_PI){
+        (*CTRL).s->xRho -= 2*M_PI;
+    }else if((*CTRL).s->xRho < -M_PI){
+        (*CTRL).s->xRho += 2*M_PI; // 反转！
+    }
 
     /// 4. 帕克变换
-    #define THE_FIELD_IS_KNOWN FALSE
-    #if THE_FIELD_IS_KNOWN
-        (*CTRL).i->theta_d_elec = atan2(IM.x[3], IM.x[2]); 
-        (*CTRL).s->cosT = cos((*CTRL).i->theta_d_elec); 
-        (*CTRL).s->sinT = sin((*CTRL).i->theta_d_elec);
-    #else
-        // 间接磁场定向第一部分
-        (*CTRL).i->theta_d_elec += CL_TS * (*CTRL).s->omega_syn;
-        (*CTRL).s->cosT = cos((*CTRL).i->theta_d_elec); 
-        (*CTRL).s->sinT = sin((*CTRL).i->theta_d_elec);
-        if((*CTRL).i->theta_d_elec > M_PI){
-            (*CTRL).i->theta_d_elec -= 2*M_PI;
-        }else if((*CTRL).i->theta_d_elec < -M_PI){
-            (*CTRL).i->theta_d_elec += 2*M_PI; // 反转！
-        }
-    #endif
-    (*CTRL).i->iDQ[0] = AB2M(IS_C(0), IS_C(1), (*CTRL).s->cosT, (*CTRL).s->sinT);
-    (*CTRL).i->iDQ[1] = AB2T(IS_C(0), IS_C(1), (*CTRL).s->cosT, (*CTRL).s->sinT);
+    (*CTRL).i->iDQ[0] = AB2M((*CTRL).i->iAB[0], (*CTRL).i->iAB[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
+    (*CTRL).i->iDQ[1] = AB2T((*CTRL).i->iAB[0], (*CTRL).i->iAB[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
     PID_iD->Fbk = (*CTRL).i->iDQ[0];
     PID_iQ->Fbk = (*CTRL).i->iDQ[1];
-
 
     /// 5. 转速环
     static int im_vc_count = 1;
@@ -543,7 +541,7 @@ void controller_IFOC(){
     PID_iD->calc(PID_iD);
     PID_iQ->calc(PID_iQ);
     {   // Steady state dynamics based decoupling circuits for current regulation
-        #if VOLTAGE_CURRENT_DECOUPLING_CIRCUIT == TRUE
+        if (d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation == TRUE){
             // decoupled_M_axis_voltage = vM + ((*CTRL).motor->R+(*CTRL).motor->Rreq)*(*CTRL).iMs + (*CTRL).motor->Lsigma*(-(*CTRL).s->omega_syn*(*CTRL).iTs) - (*CTRL).motor->alpha*(*CTRL).psimod_fb; // Jadot09
             // decoupled_T_axis_voltage = vT + ((*CTRL).motor->R+(*CTRL).motor->Rreq)*(*CTRL).iTs + (*CTRL).motor->Lsigma*( (*CTRL).s->omega_syn*(*CTRL).iMs) + (*CTRL).omg_fb*(*CTRL).psimod_fb;
             // decoupled_T_axis_voltage = vT + (*CTRL).s->omega_syn*((*CTRL).motor->Lsigma+(*CTRL).motor->Lmu)*(*CTRL).iMs; // 这个就不行，说明：(*CTRL).motor->Lmu*iMs != ob.taao_flux_cmd，而是会因iMs的波动在T轴控制上引入波动和不稳定
@@ -551,14 +549,19 @@ void controller_IFOC(){
             decoupled_M_axis_voltage = PID_iD->Out + ((*CTRL).motor->Lsigma) * (-(*CTRL).s->omega_syn*(*CTRL).i->iDQ[1]); // Telford03/04
             decoupled_T_axis_voltage = PID_iQ->Out + (*CTRL).s->omega_syn*((*CTRL).i->cmd_psi + (*CTRL).motor->Lsigma*(*CTRL).i->iDQ[0]); // 这个行，但是无速度运行时，会导致M轴电流在转速暂态高频震荡。
             // decoupled_T_axis_voltage = PID_iQ->Out; // 无感用这个
-        #else
+        }else{
             decoupled_M_axis_voltage = PID_iD->Out;
             decoupled_T_axis_voltage = PID_iQ->Out;
-        #endif
+        }
     }
 
     /// 7. 反帕克变换
     (*CTRL).o->cmd_uAB[0] = MT2A(decoupled_M_axis_voltage, decoupled_T_axis_voltage, (*CTRL).s->cosT, (*CTRL).s->sinT);
     (*CTRL).o->cmd_uAB[1] = MT2B(decoupled_M_axis_voltage, decoupled_T_axis_voltage, (*CTRL).s->cosT, (*CTRL).s->sinT);
+
+
+    /// 8. 补偿逆变器非线性
+    main_inverter_voltage_command(TRUE);
+
 }
 

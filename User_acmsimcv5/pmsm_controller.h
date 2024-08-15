@@ -24,7 +24,7 @@ typedef struct {
     REAL cmd_uDQ[2];
     // feedback
     REAL Vdc;
-    REAL theta_d_elec;
+    REAL theta_d_elec; // this is from encoder by default
     REAL varTheta; // mechanical
     REAL varOmega; // mechanical
     REAL iAB[2];
@@ -44,13 +44,8 @@ typedef struct {
     REAL omega1;
 } st_controller_inputs;
 typedef struct {
-    // controller strategy
-    // int ctrl_strategy;
-    // int go_sensorless;
-    // ???
-    REAL e_M;
-    REAL e_T;
     // field oriented control
+    REAL xRho; // state for indirect field orientation (IFO)
     REAL cosT;
     REAL sinT;
     REAL cosT_compensated_1p5omegaTs;

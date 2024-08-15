@@ -94,12 +94,11 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
     (*Axis4DAC).dac_watch[23] = Axis_2.pCTRL->i->cmd_varOmega * MECH_RAD_PER_SEC_2_RPM * 0.002;; // 500RPM - 3V
     (*Axis4DAC).dac_watch[24] = Axis_2.pCTRL->i->varOmega     * MECH_RAD_PER_SEC_2_RPM * 0.002;
 
-    (*Axis4DAC).dac_watch[25] = Axis_1.pCTRL->i->cmd_iDQ[1]*0.02;
-    (*Axis4DAC).dac_watch[26] = Axis_1.pCTRL->i->iDQ[1]*0.02;
+    (*Axis4DAC).dac_watch[25] = Axis_1.pCTRL->i->cmd_iDQ[1]*0.2;
+    (*Axis4DAC).dac_watch[26] = Axis_1.pCTRL->i->iDQ[1]*0.2;
     // 0.6V->1A
     (*Axis4DAC).dac_watch[27] = Axis_2.pCTRL->i->cmd_iDQ[1]*0.2; 
     (*Axis4DAC).dac_watch[28] = Axis_2.pCTRL->i->iDQ[1]*0.2; // 0.6V->1A
-
     (*Axis4DAC).dac_watch[29] = Axis_2.pCTRL->i->iDQ[0]*0.2; // 0.6V->1A
 
 
@@ -163,6 +162,8 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
 
     (*Axis4DAC).dac_watch[61] = INV.ual_comp *0.125;
     (*Axis4DAC).dac_watch[62] = INV.ube_comp *0.125;
+    (*Axis4DAC).dac_watch[63] = (*CTRL).o->cmd_uAB_to_inverter[0] * 0.125;
+    (*Axis4DAC).dac_watch[64] = (*CTRL).o->cmd_uAB_to_inverter[1] * 0.125;
 
 
     # if ENABLE_COMMISSIONING == TRUE
@@ -223,8 +224,8 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
         (*Axis4DAC).channels[3] = 24;
         (*Axis4DAC).channels[4] = 25;
         (*Axis4DAC).channels[5] = 26;
-        (*Axis4DAC).channels[6] = 61;
-        (*Axis4DAC).channels[7] = 62;
+        (*Axis4DAC).channels[6] = 63;
+        (*Axis4DAC).channels[7] = 64;
     }
 
     // 锟斤拷通锟斤拷DAC锟斤拷锟斤拷锟斤拷锟斤拷薷锟�(*Axis4DAC).channels锟斤拷锟斤拷锟斤拷确锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟叫�(*Axis4DAC).dac_watch锟斤拷锟斤拷锟叫的憋拷锟斤拷锟斤拷
