@@ -590,10 +590,6 @@ void init_im_controller(){
     marino.xAlpha = d_sim.init.Rreq / IM_MAGNETIZING_INDUCTANCE;
     marino.xOmg = 0.0;
 
-    #if PC_SIMULATION
-    printf("\t[im_controller.c] Marino's alpha: %g in [%g, %g]?\n", marino.xAlpha, marino.xAlpha_min, marino.xAlpha_Max);
-    #endif
-
     marino.deriv_xTL = 0.0;
     marino.deriv_xAlpha = 0.0;
     marino.deriv_xOmg = 0.0;

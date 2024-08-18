@@ -8,6 +8,7 @@
 #define USER_GZT    2021531030
 #define USER_WB     2023231051
 #define USER_YZZ    2023231060
+#define USER_WB2    970308
 
 #define MODE_SELECT_PWM_DIRECT         1
 #define MODE_SELECT_VOLTAGE_OPEN_LOOP  11
@@ -41,6 +42,11 @@ struct DebugExperiment{
     REAL vvvf_voltage;
     REAL vvvf_frequency;
     int positionLoopType;
+    REAL zeta;
+    REAL omega_n;
+    REAL max_CLBW_PER_min_CLBW;
+    REAL delta;
+    REAL CLBW_HZ;
 };
 extern struct DebugExperiment debug;
 

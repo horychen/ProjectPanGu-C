@@ -247,47 +247,22 @@ void _user_wubo_WC_Tuner(){
             printf(">>> Zero-pole cancellation can be done <<<\n");
         }
     #endif
-
-        // // current loop
-    // d_sim.CL.SERIES_KP_D_AXIS = FOC_CLBW * Ld;
-    // d_sim.CL.SERIES_KI_D_AXIS = R / Ld;
-
-    // d_sim.CL.SERIES_KP_Q_AXIS = FOC_CLBW * Lq;
-    // d_sim.CL.SERIES_KI_Q_AXIS = R / Lq;
-
-    // // printf("inner = %f\n",FOC_CLBW - (REAL)(sqrt(FOC_CLBW * FOC_CLBW - 4*FOC_CLBW*K0*d_sim.VL.SERIES_KP)));
-
-    // // speed loop
-    // d_sim.VL.SERIES_KP = omega_n*omega_n / (FOC_CLBW * K0);
-    // d_sim.user.VL_FEEDBACK_KFB = (2*zeta*omega_n*FOC_CLBW - 4*zeta*zeta*omega_n*omega_n) / (FOC_CLBW*K0);
-    // d_sim.VL.SERIES_KI = ( FOC_CLBW - (sqrt(FOC_CLBW * FOC_CLBW - 4*FOC_CLBW*K0*d_sim.user.VL_FEEDBACK_KFB)) ) * 0.5; // sqrt的double转float
-    
-
-
 }
 
 
 void _user_controller_wubo(){
 
-    /// 5. 转速环（使用反馈转速）
     if ((*CTRL).s->the_vc_count++ >= SPEED_LOOP_CEILING){
         (*CTRL).s->the_vc_count = 1;
         PID_Speed->Ref = (*CTRL).i->cmd_varOmega;
         PID_Speed->Fbk = (*CTRL).i->varOmega;
-        if(debug.who_is_user == USER_BEZIER)
-        {
+        if(debug.who_is_user == USER_BEZIER){
             control_output(PID_Speed, &BzController);
-        }
-        else if(debug.who_is_user == USER_WB)
-        {
+        }else if(debug.who_is_user == USER_WB){
             PID_Speed->calc(PID_Speed);
-        }
-        else if(debug.who_is_user == USER_CJH)
-        {
+        }else if(debug.who_is_user == USER_CJH){
             PID_Speed->calc(PID_Speed);
-        }
-        else
-        {
+        }else{
             debug.error = 998;
         }
         (*CTRL).i->cmd_iDQ[1] = PID_Speed->Out;
@@ -359,4 +334,112 @@ void _user_controller_wubo(){
     main_inverter_voltage_command(TRUE);
 }
 
+void _user_wubo_WC_Tuner_Online(){
+    // 吴波用：
+    if(debug.who_is_user == USER_WB){
+        PID_Speed->calc = (void (*)(Uint32)) InnerLoopFeedback_calc;
+    }
 
+    /* Tuned by debug */
+    REAL zeta = debug.zeta;
+    REAL omega_n = debug.omega_n;
+    REAL max_CLBW_PER_min_CLBW = debug.max_CLBW_PER_min_CLBW;
+
+    REAL Ld = d_sim.init.Ld;
+    REAL Lq = d_sim.init.Lq;
+    REAL R = d_sim.init.R;
+    REAL Js = d_sim.init.Js;
+    REAL npp = d_sim.init.npp;
+    REAL KE = d_sim.init.KE;
+    
+    // motor parameters
+    REAL KT = 1.5 * npp * KE;  // torque constant
+    REAL K0 = KT / Js;  // motor constant
+
+    REAL max_CLBW = zeta * omega_n * 4;
+    REAL min_CLBW = zeta * omega_n * 2;
+
+    // 通过一个小于1的比例系数来选取电流环带宽
+    REAL FOC_CLBW = max_CLBW_PER_min_CLBW * max_CLBW +  (1-max_CLBW_PER_min_CLBW) * min_CLBW;
+    // printf("FOC_CLBW = %f\n", FOC_CLBW);
+
+    REAL Series_D_KP = FOC_CLBW * Ld;
+    REAL Series_D_KI = R / Ld;
+    REAL Series_Q_KP = FOC_CLBW * Lq;
+    REAL Series_Q_KI = R / Lq;
+    REAL Series_Speed_KP = omega_n * omega_n / (FOC_CLBW * K0);
+    REAL Series_Speed_KFB = (2*zeta*omega_n*FOC_CLBW - 4*zeta*zeta*omega_n*omega_n) / (FOC_CLBW*K0);
+    REAL Series_Speed_KI = ( FOC_CLBW - (sqrt(FOC_CLBW * FOC_CLBW - 4*FOC_CLBW*K0*Series_Speed_KFB)) ) * 0.5;
+
+
+    PID_iD->Kp = Series_D_KP;
+    PID_iQ->Kp = Series_Q_KP;
+    PID_Speed->Kp = Series_Speed_KP;
+
+    PID_iD->Ki_CODE = Series_D_KI * Series_D_KP * CL_TS;
+    PID_iQ->Ki_CODE = Series_Q_KI * Series_Q_KP * CL_TS;
+    PID_Speed->Ki_CODE = Series_Speed_KI * Series_Speed_KP * VL_TS;
+    PID_Speed->KFB = Series_Speed_KFB;
+
+    PID_iD->OutLimit  = 0.5773 * d_sim.CL.LIMIT_DC_BUS_UTILIZATION * d_sim.init.Vdc;
+    PID_iQ->OutLimit  = 0.5773 * d_sim.CL.LIMIT_DC_BUS_UTILIZATION * d_sim.init.Vdc;
+    PID_Speed->OutLimit = d_sim.VL.LIMIT_OVERLOAD_FACTOR * d_sim.init.IN;
+
+    #if PC_SIMULATION == TRUE
+        printf("Series_D_KP = %f\n", Series_D_KP);
+        printf("Series_D_KI = %f\n", Series_D_KI);
+        printf("Series_Q_KP = %f\n", Series_Q_KP);
+        printf("Series_Q_KI = %f\n", Series_Q_KI);
+        printf("Series_Speed_KP = %f\n", Series_Speed_KP);
+        printf("Series_Speed_KFB = %f\n", Series_Speed_KFB);
+        printf("Series_Speed_KI = %f\n", Series_Speed_KI);
+        if (FOC_CLBW - 4 * K0 * PID_Speed->KFB < 0){
+            printf("can not do zero-pole cancellation\n");
+        }else{
+            printf(">>> Zero-pole cancellation can be done <<<\n");
+        }
+    #endif
+}
+
+void _user_wubo_TI_Tuner_Online(){
+    if(debug.who_is_user == USER_WB2){
+        PID_Speed->calc = (void (*)(Uint32)) wubo_PID_calc;
+    }
+    /* Tuned by debug */
+    REAL CLBW_HZ = debug.CLBW_HZ;
+    REAL delta = debug.delta;
+
+    // TODO: 下面的psi_A在IM上应该不能用，因为我拿的是电机参数中原始的KE
+    REAL Ld = d_sim.init.Ld;
+    REAL Lq = d_sim.init.Lq;
+    REAL R = d_sim.init.R;
+    REAL Js = d_sim.init.Js;
+    REAL npp = d_sim.init.npp;
+    REAL KE = d_sim.init.KE;
+
+    // motor parameters
+    REAL KT = 1.5 * npp * KE;  // torque constant
+    REAL K0 = KT / Js;  // motor constant
+    
+    REAL Series_D_KP = CLBW_HZ * 2 * M_PI * Ld;
+    REAL Series_D_KI = R / Ld;
+    REAL Series_Q_KP = CLBW_HZ * 2 * M_PI * Lq;
+    REAL Series_Q_KI = R / Lq;
+    REAL Series_Speed_KI = 2* M_PI * CLBW_HZ / (delta * delta); //THIS IS INTEGRAL GAIN
+    REAL Series_Speed_KP = delta * Series_Speed_KI / KT * Js;
+
+    PID_iD->Kp = Series_D_KP;
+    PID_iQ->Kp = Series_Q_KP;
+    PID_Speed->Kp = Series_Speed_KP;
+
+    PID_iD->Ki_CODE = Series_D_KI * Series_D_KP * CL_TS;
+    PID_iQ->Ki_CODE = Series_Q_KI * Series_Q_KP * CL_TS;
+    PID_Speed->Ki_CODE = Series_Speed_KI * Series_Speed_KP * VL_TS;
+
+    PID_iD->OutLimit  = 0.5773 * d_sim.CL.LIMIT_DC_BUS_UTILIZATION * d_sim.init.Vdc;
+    PID_iQ->OutLimit  = 0.5773 * d_sim.CL.LIMIT_DC_BUS_UTILIZATION * d_sim.init.Vdc;
+    PID_Speed->OutLimit = d_sim.VL.LIMIT_OVERLOAD_FACTOR * d_sim.init.IN;
+
+    // 应该可以删去，但我不放心有trick bug
+    PID_Speed->KFB = 0.0;
+}

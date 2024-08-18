@@ -699,6 +699,7 @@ void cla_test_codes(){
 
 REAL wubo_debug[4];
 
+/* 读取编码器的位置 */
 void measurement_position_count_axisCnt0(){
     #if (ENCODER_TYPE == ABSOLUTE_ENCODER_SCI_SHANK)
             position_count_SCI_fromCPU2 = position_count_SCI_shank_fromCPU2;
@@ -723,7 +724,7 @@ void measurement_position_count_axisCnt1(){
         // dq变化中，d轴理论上指向永磁体的北极，
 }
 
-
+/* 编码器位置信息转换为速度信息 */
 void measurement_enc(){
     if (!bool_use_SCI_encoder){
         // 正转电流导致编码器读数减小：
@@ -1179,6 +1180,14 @@ void DISABLE_PWM_OUTPUT(int use_first_set_three_phase)
             (*CTRL).g->overwrite_vdc = 28;
         }
         (*CTRL).g->flag_overwite_vdc = 0;
+    }
+
+    /* 在不输出PWM波形的时候，也就是“开关”为OFF的时候，更新SpeedInnerLoop的参数*/
+    if (debug.who_is_user == USER_WB){
+        _user_wubo_WC_Tuner_Online(); // 和_user_wubo_WC_Tuner函数区别
+    }
+    if(debug.who_is_user == USER_WB2){
+        _user_wubo_TI_Tuner_Online();
     }
 
     DELAY_US(5);

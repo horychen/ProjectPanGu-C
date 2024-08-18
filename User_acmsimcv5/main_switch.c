@@ -41,7 +41,7 @@ void _user_init(){
     debug.Overwrite_theta_d = 0.0;
     debug.set_id_command = 0;
     debug.set_iq_command = 1;
-    debug.set_rpm_speed_command = 200;
+    debug.set_rpm_speed_command = 50;
     debug.set_deg_position_command = 0.0;
 
     debug.INVERTER_NONLINEARITY_COMPENSATION_INIT = 0;
@@ -54,6 +54,13 @@ void _user_init(){
     if (debug.who_is_user == USER_BEZIER){
         set_points(&BzController);
     }
+
+    /* debug测试用变量 */
+    debug.zeta = d_sim.user.zeta;
+    debug.omega_n = d_sim.user.omega_n;
+    debug.max_CLBW_PER_min_CLBW = d_sim.user.max_CLBW_PER_min_CLBW;
+    debug.delta = d_sim.FOC.delta;
+    debug.CLBW_HZ = d_sim.FOC.CLBW_HZ;
 }
 
 void _user_commands(){
@@ -204,7 +211,7 @@ void main_switch(long mode_select){
 }
 
 REAL Veclocity_Controller(REAL cmd_varOmega, REAL varOmega){
-    /// 5. 转速环（使用反馈转速）
+
     if ((*CTRL).s->the_vc_count++ >= SPEED_LOOP_CEILING){
         (*CTRL).s->the_vc_count = 1;
 
