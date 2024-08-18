@@ -710,7 +710,6 @@ void measurement_position_count_axisCnt0(){
         position_count_SCI_fromCPU2 = position_count_SCI_shank_fromCPU2;
     #endif
         // 正电流导致编码器读数增大：
-        wubo_debug[0] = 1;
         CTRL->enc->encoder_abs_cnt = (int32)position_count_SCI_fromCPU2 - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis;
 }
 
@@ -720,7 +719,6 @@ void measurement_position_count_axisCnt1(){
         position_count_SCI_fromCPU2 = position_count_SCI_hip_fromCPU2;
     #endif
         // 正电流导致编码器读数减小
-        wubo_debug[0] = 2;
         CTRL->enc->encoder_abs_cnt = -( (int32)position_count_SCI_fromCPU2 - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis );
         // dq变化中，d轴理论上指向永磁体的北极，
 }
@@ -814,8 +812,8 @@ void measurement_enc(){
 }
 
 
-void measurement_current_axisCnt0()
-{
+
+void measurement_current_axisCnt0(){
     // LEM1
     Axis->iuvw[0] = ((REAL)(AdcaResultRegs.ADCRESULT1) - Axis->adc_offset[1]) * Axis->adc_scale[1]; //
     Axis->iuvw[1] = ((REAL)(AdcaResultRegs.ADCRESULT2) - Axis->adc_offset[2]) * Axis->adc_scale[2]; //

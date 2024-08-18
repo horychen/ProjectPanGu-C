@@ -1,6 +1,8 @@
 #include "ACMSim.h"
 
 #define INCREMENTAL_PID TRUE
+#define DYNAMIC_CLAMPING_FOR_KFB FALSE
+
 #if INCREMENTAL_PID
     void PID_calc(st_pid_regulator *r){
 

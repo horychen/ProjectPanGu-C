@@ -54,10 +54,176 @@ long int counter=0;
 
 
 void write_DAC_buffer(){
-    if(debug.use_first_set_three_phase==2){
-        Axis4DAC = &Axis_2;
-    }else{
-        Axis4DAC = &Axis_1;
+if(use_first_set_three_phase==2){
+    Axis4DAC = &Axis_2;
+}else{
+    Axis4DAC = &Axis_1;
+}
+if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
+
+    // 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟侥憋拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤，锟角碉拷锟斤拷效锟斤拷围锟斤拷 [-1, 1]锟斤拷
+    // wubo:我用的这套设备dac：dac_watch在dsp中输出[-1,1]V,通过dac板子输出[-3,3V]
+    (*Axis4DAC).dac_watch[0] = Axis_1.iuvw[0]*0.2;
+    (*Axis4DAC).dac_watch[1] = Axis_1.iuvw[1]*0.2;
+    (*Axis4DAC).dac_watch[2] = Axis_1.iuvw[2]*0.2;
+    (*Axis4DAC).dac_watch[3] = Axis_2.iuvw[3]*0.2;
+    (*Axis4DAC).dac_watch[4] = Axis_2.iuvw[4]*0.2;
+    (*Axis4DAC).dac_watch[5] = Axis_2.iuvw[5]*0.2;
+
+    (*Axis4DAC).dac_watch[6] = (*CTRL).i->iAB[0]*0.25;      // +-6A ->0-3V
+    (*Axis4DAC).dac_watch[7] = (*CTRL).i->iAB[1]*0.25;
+    (*Axis4DAC).dac_watch[8] = (*CTRL).o->cmd_uAB[0]*0.125; // +-12V -> 0-3V
+    (*Axis4DAC).dac_watch[9] = (*CTRL).o->cmd_uAB[1]*0.125;
+    (*Axis4DAC).dac_watch[10] = FE.htz.psi_2_ampl*0.25;
+    (*Axis4DAC).dac_watch[11] = FE.htz.psi_2_ampl_lpf*0.25;
+    (*Axis4DAC).dac_watch[12] = FE.htz.psi_2[0]*0.25;
+    (*Axis4DAC).dac_watch[13] = FE.htz.psi_2[1]*0.25;
+    (*Axis4DAC).dac_watch[14] = FE.htz.theta_d*0.1;
+    (*Axis4DAC).dac_watch[15] = FE.htz.u_offset[0]*2;
+    (*Axis4DAC).dac_watch[16] = FE.htz.u_offset[1]*2;
+
+    (*Axis4DAC).dac_watch[17] = (*CTRL).svgen2.Ta;
+    (*Axis4DAC).dac_watch[18] = (*CTRL).svgen2.Tb;
+    (*Axis4DAC).dac_watch[19] = (*CTRL).svgen2.Tc;
+    (*Axis4DAC).dac_watch[20] = (*CTRL).s->omega_syn * ELEC_RAD_PER_SEC_2_RPM *0.002;
+
+    // (*Axis4DAC).dac_watch[21] = Axis_1.Set_manual_rpm *0.002;
+    (*Axis4DAC).dac_watch[21] = Axis_1.pCTRL->i->cmd_varOmega * MECH_RAD_PER_SEC_2_RPM * 0.002; // 500RPM - 3V
+    (*Axis4DAC).dac_watch[22] = Axis_1.pCTRL->i->varOmega     * MECH_RAD_PER_SEC_2_RPM * 0.002;
+    (*Axis4DAC).dac_watch[23] = Axis_2.pCTRL->i->cmd_varOmega * MECH_RAD_PER_SEC_2_RPM * 0.002; // 500RPM - 3V
+    (*Axis4DAC).dac_watch[24] = Axis_2.pCTRL->i->varOmega     * MECH_RAD_PER_SEC_2_RPM * 0.002;
+
+    (*Axis4DAC).dac_watch[25] = Axis_1.pCTRL->i->cmd_iDQ[0]*0.2; // 0.6V -> 1A
+    (*Axis4DAC).dac_watch[26] = Axis_1.pCTRL->i->iDQ[0]*0.2;
+    (*Axis4DAC).dac_watch[27] = Axis_1.pCTRL->i->cmd_iDQ[1]*0.2;
+    (*Axis4DAC).dac_watch[28] = Axis_1.pCTRL->i->iDQ[1]*0.2;
+
+    (*Axis4DAC).dac_watch[63] = (*CTRL).o->cmd_uAB_to_inverter[0] * 0.125;
+    (*Axis4DAC).dac_watch[64] = (*CTRL).o->cmd_uAB_to_inverter[1] * 0.125;
+
+
+    // (*Axis4DAC).dac_watch[25] = (*CTRL).i->cmd_iDQ[0]*0.2;
+    // (*Axis4DAC).dac_watch[26] = (*CTRL).i->iDQ[0]*0.2;
+    // (*Axis4DAC).dac_watch[27] = (*CTRL).i->cmd_iDQ[1]*0.2;
+    // (*Axis4DAC).dac_watch[28] = (*CTRL).i->iDQ[1]*0.2; // 0.6V->1A
+
+//    (*Axis4DAC).dac_watch[21] = marino.xOmg * ELEC_RAD_PER_SEC_2_RPM *0.002;
+    // (*Axis4DAC).dac_watch[21] = curycontroller.theta1*0.1; // CTRL_2.s->spd->Ref*0.0001;//curycontroller.theta1*0.1; /// 131072.0 *2;
+    // (*Axis4DAC).dac_watch[22] = curycontroller.dot_theta1*0.1; // CTRL_2.s->spd->Fbk*0.0001; /// 131072.0 *2;
+    // (*Axis4DAC).dac_watch[23] = curycontroller.theta2*0.1; // CTRL_1.s->spd->Ref*0.0001; // * ELEC_RAD_PER_SEC_2_RPM *0.002;
+    // (*Axis4DAC).dac_watch[24] = curycontroller.dot_theta2*0.1; // CTRL_1.s->spd->Fbk*0.0001; //i->varOmega  * ELEC_RAD_PER_SEC_2_RPM *0.002;
+//    (*Axis4DAC).dac_watch[25] = CTRL_1.i->cmd_iDQ[1] * 0.1;
+//    (*Axis4DAC).dac_watch[26] = CTRL_2.i->cmd_iDQ[1] * 0.1;
+
+//    (*Axis4DAC).dac_watch[22] = target_position_cnt*0.0003-((*CTRL).enc->encoder_abs_cnt)*0.0003;
+//    (*Axis4DAC).dac_watch[23] = GpioDataRegs.GPEDAT.bit.GPIO135;
+//    (*Axis4DAC).dac_watch[24] = GpioDataRegs.GPEDAT.bit.GPIO136;
+//    (*Axis4DAC).dac_watch[25] = GpioDataRegs.GPEDAT.bit.GPIO137;
+//    (*Axis4DAC).dac_watch[22] = marino.xTL*0.025;
+//    (*Axis4DAC).dac_watch[23] = marino.xRho*0.1;
+//    (*Axis4DAC).dac_watch[24] = marino.xAlpha*0.1;
+//    (*Axis4DAC).dac_watch[25] = marino.e_psi_Dmu;
+//    (*Axis4DAC).dac_watch[26] = marino.e_psi_Qmu;
+    // (*Axis4DAC).dac_watch[27] = position_count_CAN_ID0x03_fromCPU2 *1.52587890625e-05; // / 131072.0 *2;
+    // (*Axis4DAC).dac_watch[28] = position_count_CAN_ID0x01_fromCPU2 *1.52587890625e-05; // / 131072.0 *2;
+
+    (*Axis4DAC).dac_watch[30] = (*CTRL).o->cmd_iAB[0]*0.2;
+    (*Axis4DAC).dac_watch[31] = (*CTRL).o->cmd_iAB[1]*0.2;
+    (*Axis4DAC).dac_watch[32] = yk;
+    (*Axis4DAC).dac_watch[33] = uk;
+    (*Axis4DAC).dac_watch[34] = FE.htz.sat_min_time[0]*100;
+    (*Axis4DAC).dac_watch[35] = FE.htz.sat_min_time[1]*100;
+    (*Axis4DAC).dac_watch[36] = vvvf_voltage * cos(vvvf_frequency*2*M_PI*(*CTRL).timebase);
+    (*Axis4DAC).dac_watch[39] = FE.htz.theta_d*0.1;
+
+    (*Axis4DAC).dac_watch[40] = (*CTRL).i->iDQ[0]*0.1;
+    (*Axis4DAC).dac_watch[41] = (*CTRL).i->iDQ[1]*0.1;
+
+    (*Axis4DAC).dac_watch[42] = CTRL_2.s->iQ->Ref; /// 131072.0 ;
+    (*Axis4DAC).dac_watch[43] = CTRL_2.s->iQ->Fbk; /// 131072.0 ;
+    (*Axis4DAC).dac_watch[44] = CTRL_2.s->Position->Ref *7.62939453125e-06; /// 131072.0 ;
+    (*Axis4DAC).dac_watch[45] = CTRL_2.s->Position->Fbk *7.62939453125e-06; /// 131072.0 ;
+
+    (*Axis4DAC).dac_watch[49] = CTRL_1.i->varOmega  * ELEC_RAD_PER_SEC_2_RPM *0.002;
+    //(*Axis4DAC).dac_watch[50] = nsoaf.xOmg * ELEC_RAD_PER_SEC_2_RPM *0.002;
+    (*Axis4DAC).dac_watch[51] = AFE_USED.theta_d *0.1;
+    (*Axis4DAC).dac_watch[52] = (*Axis4DAC).used_theta_d_elec *0.1;
+
+    // ZJL IMPEDENCE CONTROL
+    (*Axis4DAC).dac_watch[53] = HIP_PREV_ANGLE;
+    (*Axis4DAC).dac_watch[54] = SHANK_PREV_ANGLE;
+    (*Axis4DAC).dac_watch[55] = IMPENDENCE_HIP_D_ANGULAR*0.1;
+    (*Axis4DAC).dac_watch[56] = IMPENDENCE_SHANK_D_ANGULAR*0.1;
+    (*Axis4DAC).dac_watch[57] = IQOUT_HIP*0.1;
+    (*Axis4DAC).dac_watch[58] = IQOUT_SHANK*0.1;
+    (*Axis4DAC).dac_watch[59] = position_count_SCI_hip_fromCPU2*1e-08;
+    (*Axis4DAC).dac_watch[60] = position_count_SCI_shank_fromCPU2*1e-08;
+
+    (*Axis4DAC).dac_watch[61] = INV.ual_comp *0.125;
+    (*Axis4DAC).dac_watch[62] = INV.ube_comp *0.125;
+
+
+
+    # if ENABLE_COMMISSIONING == TRUE
+        (*Axis4DAC).dac_watch[61] = COMM.Js * 1e3;
+        (*Axis4DAC).dac_watch[62] = COMM.current_command*0.2;
+    # endif
+
+
+    if((*Axis4DAC).channels_preset==1){(*Axis4DAC).channels_preset=0;
+        (*Axis4DAC).channels[0] = 23;
+        (*Axis4DAC).channels[1] = 24;
+        (*Axis4DAC).channels[2] = 25;
+        (*Axis4DAC).channels[3] = 26;
+        (*Axis4DAC).channels[4] = 32;
+        (*Axis4DAC).channels[5] = 33;
+        (*Axis4DAC).channels[6] = 21;
+        (*Axis4DAC).channels[7] = 22;
+    }else if((*Axis4DAC).channels_preset==2){(*Axis4DAC).channels_preset=0;
+        (*Axis4DAC).channels[0] = 26;//49; // 42; //12;
+        (*Axis4DAC).channels[1] = 41;//50; // 43; //4; //13;
+        (*Axis4DAC).channels[2] = 23 ; // 44; //28;
+        (*Axis4DAC).channels[3] = 24;//52; // 45;
+        (*Axis4DAC).channels[4] = 42;
+        (*Axis4DAC).channels[5] = 43;
+        (*Axis4DAC).channels[6] = 21;
+        (*Axis4DAC).channels[7] = 22;
+    }else if((*Axis4DAC).channels_preset==3){(*Axis4DAC).channels_preset=0;
+        (*Axis4DAC).channels[0] = 44;//42; //12;
+        (*Axis4DAC).channels[1] = 45;//43; //4; //13;
+        (*Axis4DAC).channels[2] = 42; //28;
+        (*Axis4DAC).channels[3] = 43;
+        (*Axis4DAC).channels[4] = 21;
+        (*Axis4DAC).channels[5] = 22;
+        (*Axis4DAC).channels[6] = 23;
+        (*Axis4DAC).channels[7] = 24;
+    }else if((*Axis4DAC).channels_preset==4){(*Axis4DAC).channels_preset=0;
+        (*Axis4DAC).channels[0] = 21;
+        (*Axis4DAC).channels[1] = 22;
+        (*Axis4DAC).channels[2] = 23;
+        (*Axis4DAC).channels[3] = 24;
+        (*Axis4DAC).channels[4] = 4;
+        (*Axis4DAC).channels[5] = 5;
+        (*Axis4DAC).channels[6] = 3;
+        (*Axis4DAC).channels[7] = 4;
+    }else if((*Axis4DAC).channels_preset==5){(*Axis4DAC).channels_preset=0;
+        (*Axis4DAC).channels[0] = 53;
+        (*Axis4DAC).channels[1] = 54;
+        (*Axis4DAC).channels[2] = 55;
+        (*Axis4DAC).channels[3] = 56;
+        (*Axis4DAC).channels[4] = 57;
+        (*Axis4DAC).channels[5] = 58;
+        (*Axis4DAC).channels[6] = 59;
+        (*Axis4DAC).channels[7] = 60;
+    }else if((*Axis4DAC).channels_preset==6){(*Axis4DAC).channels_preset=0;
+        (*Axis4DAC).channels[0] = 21;
+        (*Axis4DAC).channels[1] = 22;
+        (*Axis4DAC).channels[2] = 23;
+        (*Axis4DAC).channels[3] = 24;
+        (*Axis4DAC).channels[4] = 27;
+        (*Axis4DAC).channels[5] = 28;
+        (*Axis4DAC).channels[6] = 63;
+        (*Axis4DAC).channels[7] = 64;
     }
     if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
 
