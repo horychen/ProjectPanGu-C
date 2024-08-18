@@ -372,7 +372,6 @@ void init_CTRL_Part2(){
 
     // PID调谐
     // ACMSIMC_PIDTuner();
-}
 
     /* Peripheral configurations */
     //(*CTRL).enc->OffsetCountBetweenIndexAndUPhaseAxis = 0;
