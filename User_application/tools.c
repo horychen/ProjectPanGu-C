@@ -156,7 +156,7 @@ void axis_basic_setup(int axisCnt){
     Axis->ID = 100 + axisCnt;
     Axis->pCTRL = CTRL;
 
-    allocate_CTRL(CTRL);
+//    allocate_CTRL(CTRL);
     init_experiment();
     init_experiment_AD_gain_and_offset();
 

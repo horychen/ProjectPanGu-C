@@ -74,9 +74,14 @@ void main(void){
     #endif
 
     // 4.4 Initialize algorithms
+
+
     get_bezier_points(); // for testing Cury the leg trajectgory tracking
     for (axisCnt = 0; axisCnt < NUMBER_OF_AXES; axisCnt++){
         get_Axis_CTRL_pointers 
+        init_d_sim();      // d_sim is used to initalize the machine
+        _user_init();      // debug initilization
+        //init_experiment(); // 控制器结构体初始化（同实验）
         axis_basic_setup(axisCnt); // 根据axiscnt对Axis，CTRL的1和2号结构体，进行初始化操作
     }
 
