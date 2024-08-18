@@ -111,13 +111,13 @@ typedef struct
 {
     REAL x,y;
     /* data */
-}Point;
+}CuryPoint;
 
-Point A,B,C,D,O;
+CuryPoint A,B,C,D,O;
 REAL a_length, b_length, c_length, offset_length, lead;
 REAL joint_offset;
 
-Point get_intersections(Point p0, REAL r0, Point p1, REAL r1){
+CuryPoint get_intersections(CuryPoint p0, REAL r0, CuryPoint p1, REAL r1){
     REAL d, a, h, x2, y2, x3, y3, x4, y4;
     d = sqrt((p1.x-p0.x)*(p1.x-p0.x) + (p1.y-p0.y)*(p1.y-p0.y));
 
@@ -130,7 +130,7 @@ Point get_intersections(Point p0, REAL r0, Point p1, REAL r1){
 
     x4 = x2-h*(p1.y-p0.y)/d;
     y4 = y2+h*(p1.x-p0.x)/d;
-    Point ans;
+    CuryPoint ans;
     // printf("%lf,%lf\n", x4, y4);
     if(y4 >= 0.0){
         ans.x = x4;

@@ -264,128 +264,7 @@ void observer_marino2005(){
 /********************************************/
 /* 4rd-order ESO (Copied from PMSM_observer.c)
  ********************************************/
-struct Chen21_ESO_AF esoaf;
-#define ESOAF_OMEGA_OBSERVER (2*M_PI*200)
-/* The 4rd-order dynamic system */
-void rhf_dynamics_ESO(REAL t, REAL *x, REAL *fx){
-
-    /* Unpack States */
-    REAL xPos = x[0];
-    REAL xOmg = x[1];
-    REAL xTL  = x[2];
-    REAL xPL  = x[3];
-
-    /* Know Signals */
-    REAL iq = AB2T(IS(0), IS(1), AFE_USED.cosT, AFE_USED.sinT); // Option 1
-    // REAL iq = AB2T(IS(0), IS(1), cos(xPos), sin(xPos)); // Option 2
-    esoaf.xTem = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * MOTOR.KActive * iq;
-
-    /* 未测试，如果用iq给定会不会好一点？？ 计算量还少*/
-    /* 未测试，如果用iq给定会不会好一点？？ 计算量还少*/
-    /* 未测试，如果用iq给定会不会好一点？？ 计算量还少*/
-    // esoaf.xTem = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * MOTOR.KActive * CTRL->I.cmd_iDQ[1];
-
-    /* Output Error = sine of angle error */
-    // also try Boldea 2008's idea "Im x"
-    esoaf.output_error_sine = sin(AFE_USED.theta_d - xPos);
-    esoaf.output_error = AFE_USED.theta_d - xPos;
-    // you should check for sudden change in angle error.
-    if(fabs(esoaf.output_error)>M_PI){
-        esoaf.output_error -= sign(esoaf.output_error) * 2*M_PI;
-    }
-
-    /* Extended State Observer */
-    // xPos
-    fx[0] = + esoaf.ell[0]*esoaf.output_error + xOmg; // + (esoaf.bool_ramp_load_torque<0) * (*CTRL).s->omega_sl;
-    // xOmg
-    fx[1] = + esoaf.ell[1]*esoaf.output_error + (esoaf.bool_ramp_load_torque>=0) * (esoaf.xTem - xTL) * (MOTOR.Js_inv*MOTOR.npp);
-    // xTL
-    fx[2] = - esoaf.ell[2]*esoaf.output_error + xPL;
-    // xPL
-    fx[3] = - esoaf.ell[3]*esoaf.output_error;
-    // // xPos
-    // fx[0] = + esoaf.ell[0]*esoaf.output_error_sine + xOmg;
-    // // xOmg
-    // fx[1] = + esoaf.ell[1]*esoaf.output_error_sine + (esoaf.bool_ramp_load_torque>=0) * (esoaf.xTem - xTL) * (MOTOR.Js_inv*MOTOR.npp);
-    // // xTL
-    // fx[2] = - esoaf.ell[2]*esoaf.output_error_sine + xPL;
-    // // xPL
-    // fx[3] = - esoaf.ell[3]*esoaf.output_error_sine;
-}
-void eso_one_parameter_tuning(REAL omega_ob){
-    // Luenberger Observer Framework
-    if(esoaf.bool_ramp_load_torque == -1){
-        esoaf.ell[0] = 2*omega_ob;
-        esoaf.ell[1] = omega_ob*omega_ob;
-        esoaf.ell[2] = 0.0;
-        esoaf.ell[3] = 0.0;        
-    }else if(esoaf.bool_ramp_load_torque == FALSE){
-        esoaf.ell[0] =                            3*omega_ob;
-        esoaf.ell[1] =                            3*omega_ob*omega_ob;
-        esoaf.ell[2] = (MOTOR.Js*MOTOR.npp_inv) * 1*omega_ob*omega_ob*omega_ob;
-        esoaf.ell[3] = 0.0;
-    }else{
-        // TODO: double check?
-        esoaf.ell[0] =                            4*omega_ob;
-        esoaf.ell[1] =                            6*omega_ob*omega_ob;
-        esoaf.ell[2] = (MOTOR.Js*MOTOR.npp_inv) * 4*omega_ob*omega_ob*omega_ob;
-        esoaf.ell[3] = (MOTOR.Js*MOTOR.npp_inv) * 1*omega_ob*omega_ob*omega_ob*omega_ob;
-    }
-
-    // Natural Observer Framework
-    // if(esoaf.bool_ramp_load_torque == FALSE){
-    //     // D, P, I, II?
-    //     esoaf.ell[0] = (MOTOR.Js*MOTOR.npp_inv) * 3*omega_ob;
-    //     esoaf.ell[1] = (MOTOR.Js*MOTOR.npp_inv) * 3*omega_ob*omega_ob;
-    //     esoaf.ell[2] = (MOTOR.Js*MOTOR.npp_inv) * 1*omega_ob*omega_ob*omega_ob;
-    //     esoaf.ell[3] = 0.0;
-    // }else{
-    //     esoaf.ell[0] = (MOTOR.Js*MOTOR.npp_inv) * 4*omega_ob;
-    //     esoaf.ell[1] = (MOTOR.Js*MOTOR.npp_inv) * 6*omega_ob*omega_ob;
-    //     esoaf.ell[2] = (MOTOR.Js*MOTOR.npp_inv) * 4*omega_ob*omega_ob*omega_ob;
-    //     esoaf.ell[3] = (MOTOR.Js*MOTOR.npp_inv) * 1*omega_ob*omega_ob*omega_ob*omega_ob;
-    // }
-
-    #if PC_SIMULATION
-    printf("ESO OPT: %g, %g, %g, %g", esoaf.ell[0], esoaf.ell[1], esoaf.ell[2], esoaf.ell[3]);
-    #endif
-}
-void Main_esoaf_chen2021(){
-
-    /* OBSERVATION */
-
-    if(esoaf.set_omega_ob != esoaf.omega_ob){
-        esoaf.omega_ob = esoaf.set_omega_ob;
-        eso_one_parameter_tuning(esoaf.omega_ob);
-    }
-
-    general_4states_rk4_solver(&rhf_dynamics_ESO, (*CTRL).timebase, esoaf.x, CL_TS);
-    if(esoaf.x[0]>M_PI){
-        esoaf.x[0] -= 2*M_PI;
-    }
-    if(esoaf.x[0]<-M_PI){
-        esoaf.x[0] += 2*M_PI;
-    }
-    esoaf.xPos = esoaf.x[0];
-    esoaf.xOmg = esoaf.x[1];
-    esoaf.xTL  = esoaf.x[2];
-    esoaf.xPL  = esoaf.x[3]; // rotatum
-
-    /* Post-observer calculations */
-}
-void init_esoaf(){
-
-    esoaf.ell[0] = 0.0;
-    esoaf.ell[1] = 0.0;
-    esoaf.ell[2] = 0.0;
-    esoaf.ell[3] = 0.0;
-    esoaf.set_omega_ob = ESOAF_OMEGA_OBSERVER;
-    esoaf.bool_ramp_load_torque = -1;
-
-    esoaf.omega_ob = esoaf.set_omega_ob;
-    eso_one_parameter_tuning(esoaf.omega_ob);
-}
-
+// deleted
 
 
 /********************************************
@@ -1450,7 +1329,7 @@ void rk4_init(){
 }
 void observer_init(){
 
-    init_esoaf();
+    // init_esoaf();
 
     init_FE_htz();
 

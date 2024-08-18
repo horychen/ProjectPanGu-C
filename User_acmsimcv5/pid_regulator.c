@@ -2,80 +2,44 @@
 
 #define INCREMENTAL_PID TRUE
 #if INCREMENTAL_PID
-    // void PID_calc(st_pid_regulator *r){
-
-    //     r->Err = r->Ref - r->Fbk;
-    //     r->Out = r->OutPrev \
-    //             + r->Kp * ( r->Err - r->ErrPrev ) + r->Ki * r->Err;
-
-    //     if(r->Out > r->OutLimit)
-    //         r->Out = r->OutLimit;
-    //     else if(r->Out < -r->OutLimit)
-    //         r->Out = -r->OutLimit;
-
-    //     r->ErrPrev = r->Err; 
-    //     r->OutPrev = r->Out;
-    // }
     void PID_calc(st_pid_regulator *r){
 
-        // 打印 r->Kp 的值
-        // printf("Value of r->Kp: %f\n", r->Kp);
-        // printf("Value of r->Ki: %f\n", r->Ki);
-        // printf("Value of r->Ref: %f\n", r->Ref);
-
         r->Err = r->Ref - r->Fbk;
-
-        r->Out = r->OutPrev + \
-                r->Kp * ( r->Err - r->ErrPrev ) + \
-                r->Ki * r->Err;
+        r->Out = r->OutPrev \
+                + r->Kp * ( r->Err - r->ErrPrev ) + r->Ki_CODE * r->Err;
 
         r->ErrPrev = r->Err; 
         r->OutPrev = r->Out;
 
-        r->KFB_Term = r->KFB * r->Fbk;
-        r->Out -= r->KFB_Term;
-        
         // 控制器的限幅需要写在OutPrev幅值之后，否则电流环idq暂态跟踪误差会达到50%左右
         // 20240812：理论分析，限幅放在之前之后貌似没有区别，但仿真结果确实不同
         if(r->Out > r->OutLimit)
             r->Out = r->OutLimit;
         else if(r->Out < -r->OutLimit)
             r->Out = -r->OutLimit;
-        // printf("KFB is %f\n", r->KFB);
     }
 #else
     void PID_calc(st_pid_regulator *r){
         #define DYNAMIC_CLAPMING TRUE
-        #define DYNAMIC_CLAPMING_WUBO FALSE
+        #define DYNAMIC_CLAPMING_WUBO TRUE
 
         // 误差
         r->Err = r->Ref - r->Fbk;
-
         // 比例
         r->P_Term = r->Err * r->Kp;
-
         // 积分
-        r->I_Term += r->Err * r->Ki;
+        r->I_Term += r->Err * r->Ki_CODE;
         r->OutNonSat = r->I_Term;
-
         // Inner Loop
-        r->KFB_Term = r->KFB * r->Fbk;
+        r->KFB_Term = r->Fbk * r->KFB;
 
         // 添加积分饱和特性
         #if DYNAMIC_CLAPMING
-            #if DYNAMIC_CLAPMING_WUBO
-                // dynamic clamping wubo
-                if( r->I_Term > r->OutLimit - r->P_Term)
-                    r->I_Term = r->OutLimit - r->P_Term;
-                else if( r->I_Term < -r->OutLimit + r->P_Term)
-                    r->I_Term =      -r->OutLimit + r->P_Term; // OutLimit is a positive constant
-           #else
-                // dynamic clamping
-                if( r->I_Term > r->OutLimit - r->Out)
-                    r->I_Term = r->OutLimit - r->Out;
-                else if( r->I_Term < -r->OutLimit + r->Out)
-                    r->I_Term =      -r->OutLimit + r->Out; // OutLimit is a positive constant
-            #endif
+            // dynamic clamping
+            if( r->I_Term > r->OutLimit - r->Out)
+                r->I_Term = r->OutLimit - r->Out;
+            else if( r->I_Term < -r->OutLimit + r->Out)
+                r->I_Term =      -r->OutLimit + r->Out; // OutLimit is a positive constant
         #else
             // static clamping
             if( r->I_Term > r->OutLimit)
@@ -90,6 +54,7 @@
         // 输出
         r->Out = r->I_Term + r->P_Term - r->KFB_Term; // + r->D_Term
         r->OutNonSat += r->P_Term; // + r->D_Term
+
         // 输出限幅
         if(r->Out > r->OutLimit)
             r->Out = r->OutLimit;
@@ -103,6 +68,54 @@
     }
 #endif
 
+// 初始化函数
+void ACMSIMC_PIDTuner(){
+
+    PID_iD->Kp  = d_sim.CL.SERIES_KP_D_AXIS;
+    PID_iQ->Kp  = d_sim.CL.SERIES_KP_Q_AXIS;
+    PID_Speed->Kp = d_sim.VL.SERIES_KP;
+
+    PID_iD->Ki_CODE  = d_sim.CL.SERIES_KI_D_AXIS * d_sim.CL.SERIES_KP_D_AXIS * CL_TS;
+    PID_iQ->Ki_CODE  = d_sim.CL.SERIES_KI_Q_AXIS * d_sim.CL.SERIES_KP_Q_AXIS * CL_TS;
+    PID_Speed->Ki_CODE = d_sim.VL.SERIES_KI        * d_sim.VL.SERIES_KP        * VL_TS;
+
+    PID_iD->OutLimit  = 0.57735 * d_sim.CL.LIMIT_DC_BUS_UTILIZATION * d_sim.init.Vdc;
+    PID_iQ->OutLimit  = 0.57735 * d_sim.CL.LIMIT_DC_BUS_UTILIZATION * d_sim.init.Vdc;
+    PID_Speed->OutLimit = d_sim.VL.LIMIT_OVERLOAD_FACTOR * d_sim.init.IN;
+
+    // pid2_ix.Kp = CURRENT_KP;
+    // pid2_iy.Kp = CURRENT_KP;
+    // pid2_ix.Ki = CURRENT_KI_CODE;
+    // pid2_iy.Ki = CURRENT_KI_CODE;
+    // pid2_ix.OutLimit = CURRENT_LOOP_LIMIT_VOLTS;
+    // pid2_iy.OutLimit = CURRENT_LOOP_LIMIT_VOLTS;
+
+    // PIDController_Init(&pid1_dispX);
+    // PIDController_Init(&pid1_dispY);
+
+        // #define DISPLACEMENT_KP 0
+        // #define DISPLACEMENT_KI_CODE 0
+        // #define DISPLACEMENT_LOOP_LIMIT_AMPERE 0
+
+        // pid1_disX.Kp       = DISPLACEMENT_KP;
+        // pid1_disY.Kp       = DISPLACEMENT_KP;
+        // pid1_disX.Ki       = DISPLACEMENT_KI_CODE;
+        // pid1_disY.Ki       = DISPLACEMENT_KI_CODE;
+        // pid1_disX.OutLimit = DISPLACEMENT_LOOP_LIMIT_AMPERE;
+        // pid1_disY.OutLimit = DISPLACEMENT_LOOP_LIMIT_AMPERE;
+
+        // pid1_ia.Kp = CURRENT_KP;
+        // pid1_ib.Kp = CURRENT_KP;
+        // pid1_ic.Kp = CURRENT_KP;
+        // pid1_ia.Ki = CURRENT_KI_CODE;
+        // pid1_ib.Ki = CURRENT_KI_CODE;
+        // pid1_ic.Ki = CURRENT_KI_CODE;
+        // pid1_ia.OutLimit = CURRENT_LOOP_LIMIT_VOLTS;
+        // pid1_ib.OutLimit = CURRENT_LOOP_LIMIT_VOLTS;
+        // pid1_ic.OutLimit = CURRENT_LOOP_LIMIT_VOLTS;
+}
+
+/* 另外一种写法（支持PID，目前永不到，磁悬浮有用）： */
 
 void PIDController_Init(st_PIDController *pid) {
 
@@ -155,62 +168,3 @@ float PIDController_Update(st_PIDController *pid) {
     return pid->out;
 }
 
-
-// 初始化函数
-void ACMSIMC_PIDTuner(){
-
-    PID_iD->Kp  = d_sim.CL.SERIES_KP_D_AXIS;
-    PID_iQ->Kp  = d_sim.CL.SERIES_KP_Q_AXIS;
-    PID_Speed->Kp = d_sim.VL.SERIES_KP;
-
-    PID_iD->Ki  = d_sim.CL.SERIES_KI_D_AXIS * d_sim.CL.SERIES_KP_D_AXIS * CL_TS;
-    PID_iQ->Ki  = d_sim.CL.SERIES_KI_Q_AXIS * d_sim.CL.SERIES_KP_Q_AXIS * CL_TS;
-    PID_Speed->Ki = d_sim.VL.SERIES_KI        * d_sim.VL.SERIES_KP        * VL_TS;
-
-    PID_Speed->KFB = 0.0;
-
-    PID_iD->OutLimit  = d_sim.CL.LIMIT_DC_BUS_UTILIZATION * d_sim.init.Vdc;
-    PID_iQ->OutLimit  = d_sim.CL.LIMIT_DC_BUS_UTILIZATION * d_sim.init.Vdc;
-    PID_Speed->OutLimit = d_sim.VL.LIMIT_OVERLOAD_FACTOR * d_sim.init.IN;
-
-    #if PC_SIMULATION
-        printf("ACMSIMC_PIDTuner:\n");
-        printf("\tpid1_iM.Kp = %f\n", PID_iD->Kp);
-        printf("\tpid1_iT.Kp = %f\n", PID_iQ->Kp);
-        printf("\tpid1_spd.Kp = %f\n", PID_Speed->Kp);
-        printf("\tpid1_iM.Ki = %f\n", PID_iD->Ki);
-        printf("\tpid1_iT.Ki = %f\n", PID_iQ->Ki);
-        printf("\tpid1_spd.Ki = %f\n", PID_Speed->Ki);
-    #endif
-
-    // pid2_ix.Kp = CURRENT_KP;
-    // pid2_iy.Kp = CURRENT_KP;
-    // pid2_ix.Ki = CURRENT_KI_CODE;
-    // pid2_iy.Ki = CURRENT_KI_CODE;
-    // pid2_ix.OutLimit = CURRENT_LOOP_LIMIT_VOLTS;
-    // pid2_iy.OutLimit = CURRENT_LOOP_LIMIT_VOLTS;
-
-    // PIDController_Init(&pid1_dispX);
-    // PIDController_Init(&pid1_dispY);
-
-        // #define DISPLACEMENT_KP 0
-        // #define DISPLACEMENT_KI_CODE 0
-        // #define DISPLACEMENT_LOOP_LIMIT_AMPERE 0
-
-        // pid1_disX.Kp       = DISPLACEMENT_KP;
-        // pid1_disY.Kp       = DISPLACEMENT_KP;
-        // pid1_disX.Ki       = DISPLACEMENT_KI_CODE;
-        // pid1_disY.Ki       = DISPLACEMENT_KI_CODE;
-        // pid1_disX.OutLimit = DISPLACEMENT_LOOP_LIMIT_AMPERE;
-        // pid1_disY.OutLimit = DISPLACEMENT_LOOP_LIMIT_AMPERE;
-
-        // pid1_ia.Kp = CURRENT_KP;
-        // pid1_ib.Kp = CURRENT_KP;
-        // pid1_ic.Kp = CURRENT_KP;
-        // pid1_ia.Ki = CURRENT_KI_CODE;
-        // pid1_ib.Ki = CURRENT_KI_CODE;
-        // pid1_ic.Ki = CURRENT_KI_CODE;
-        // pid1_ia.OutLimit = CURRENT_LOOP_LIMIT_VOLTS;
-        // pid1_ib.OutLimit = CURRENT_LOOP_LIMIT_VOLTS;
-        // pid1_ic.OutLimit = CURRENT_LOOP_LIMIT_VOLTS;
-}

@@ -1,6 +1,11 @@
 #include "ACMSim.h"
 #include "Bezier.h"
 
+
+/* 管仲焘在用的东西 */
+BezierController BzController;
+
+
 #define BEZIER_NUMBER_OF_POINTS (d_sim.user.bezier_order+1)
 
 /**
@@ -124,6 +129,9 @@ REAL find_y_for_given_x(const REAL x, const BezierController *BzierController)
  * @param BezierController The Bezier controller
  */
 #include <errno.h>
+#ifndef ARGS_PATH
+#define ARGS_PATH "../args.txt"
+#endif
 void set_points(BezierController *BzierController){
 
     int i;
@@ -156,7 +164,7 @@ void set_points(BezierController *BzierController){
                 #endif
                 exit(1);
             }
-            printf("Bezier control points:");
+            printf("Bezier control points:\n");
             for (i = 0; i < BEZIER_NUMBER_OF_POINTS; ++i) {
                 if (fscanf(fw, "%f,%f\n", &x_tmp[i], &y_tmp[i]) != 2) {
                     #if PC_SIMULATION

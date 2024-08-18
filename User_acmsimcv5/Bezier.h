@@ -6,8 +6,8 @@
 #include "pid_regulator.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include "super_config.h"
 
-#define ARGS_PATH "../args.txt"
 
 typedef struct
 {
@@ -27,6 +27,7 @@ typedef struct
         Point points[BEZIER_MEMORY_MAX]; // 暂时先假设最大只有十个点
         int order;
     } BezierController;
+    extern BezierController BzController;
 #endif
 
 int Comb(const int n, const int m);

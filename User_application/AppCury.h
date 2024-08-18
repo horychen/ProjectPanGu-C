@@ -112,5 +112,7 @@ REAL position_count_to_angle(int axisType, Uint32 hip_count_fbk, Uint32 shank_co
 REAL calc_theta_angular_velocity(int axisType, REAL hip_theta_fbk, REAL shank_theta_fbk);
 REAL Impendence_Control_cal(int axisType, Uint32 hip_count_fbk, Uint32 shank_count_fbk);
 
+REAL get_motorpos(REAL angle);
+
 #endif
 

@@ -1,5 +1,5 @@
-#ifndef st_pid_regulatorULATOR_H
-#define st_pid_regulatorULATOR_H
+#ifndef PID_REGULATOR_H
+#define PID_REGULATOR_H
 
 
 typedef struct {
@@ -16,10 +16,13 @@ typedef struct {
    float32 Out;
    float32 OutPrev; // for incremental pid
    float32 Kp;
-   float32 Ki;
+   float32 Ki_CODE;
    float32 Kd;
    float32 KFB;
    float32 SatDiff;
+   float32 FbkPrev;
+   float32 KFB_Term_Prev;
+   float32 OutWithInnerLoopFeedback;
    void (*calc)();
 } st_pid_regulator;
 typedef st_pid_regulator *st_pid_regulator_handle;
@@ -42,22 +45,20 @@ void PID_calc(st_pid_regulator_handle);
   /*Kd*/  0.0, \
   /*KFB*/ 0.0, \
   /*Difference between Non-Saturated Output and Saturated Output*/  0.0, \
+  /*Previous Feedback*/  0.0, \
+  /*Previous Inner Feedback Term*/  0.0, \
+  /* OutWithInnerLoopFeedback */ 0.0, \
   (void (*)(Uint32)) PID_calc \
 }
 extern st_pid_regulator PID_iD;
 extern st_pid_regulator PID_iQ;
 extern st_pid_regulator PID_Speed;
 extern st_pid_regulator PID_Position;
-extern st_pid_regulator pid1_ia;
-extern st_pid_regulator pid1_ib;
-extern st_pid_regulator pid1_ic;
-
-extern st_pid_regulator pid2_ix;
-extern st_pid_regulator pid2_iy;
-
-#define pid1_id PID_iD
-#define pid1_iq PID_iQ
-
+// extern st_pid_regulator pid1_ia;
+// extern st_pid_regulator pid1_ib;
+// extern st_pid_regulator pid1_ic;
+// extern st_pid_regulator pid2_ix;
+// extern st_pid_regulator pid2_iy;
 
 void ACMSIMC_PIDTuner();
 

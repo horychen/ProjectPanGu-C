@@ -3,40 +3,40 @@
 #if MACHINE_TYPE == 1 || MACHINE_TYPE == 11
 
 /* One Big Struct for all PMSM observers */
-struct ObserverForExperiment{
-    /* Common */
-    struct RK4_DATA{
-        REAL us[2];
-        REAL is[2];
-        REAL us_curr[2];
-        REAL is_curr[2];
-        REAL us_prev[2];
-        REAL is_prev[2];
+// struct ObserverForExperiment{
+//     /* Common */
+//     struct RK4_DATA{
+//         REAL us[2];
+//         REAL is[2];
+//         REAL us_curr[2];
+//         REAL is_curr[2];
+//         REAL us_prev[2];
+//         REAL is_prev[2];
 
-        REAL is_lpf[2];
-        REAL is_hpf[2];
-        REAL is_bpf[2];
+//         REAL is_lpf[2];
+//         REAL is_hpf[2];
+//         REAL is_bpf[2];
 
-        REAL current_lpf_register[2];
-        REAL current_hpf_register[2];
-        REAL current_bpf_register1[2];
-        REAL current_bpf_register2[2];
+//         REAL current_lpf_register[2];
+//         REAL current_hpf_register[2];
+//         REAL current_bpf_register1[2];
+//         REAL current_bpf_register2[2];
 
-        // REAL omg_elec; // omg_elec = npp * omg_mech
-        // REAL theta_d;
-    } rk4;
+//         // REAL omg_elec; // omg_elec = npp * omg_mech
+//         // REAL theta_d;
+//     } rk4;
 
-/* EXAMPLE */
-#if PC_SIMULATION || SELECT_ALGORITHM == ALG_EXAMPLE
+// /* EXAMPLE */
+// #if PC_SIMULATION || SELECT_ALGORITHM == ALG_EXAMPLE
 
-    struct Declare_EXAMPLE{
-        #define NS_EXAMPLE 5
-        REAL x[NS_EXAMPLE];
-    } obsv_example;
-#endif
+//     struct Declare_EXAMPLE{
+//         #define NS_EXAMPLE 5
+//         REAL x[NS_EXAMPLE];
+//     } obsv_example;
+// #endif
 
-};
-extern struct ObserverForExperiment OBSV;
+// };
+// extern struct ObserverForExperiment OBSV;
 
 
 
@@ -107,25 +107,25 @@ void observer_init();
 void simulation_only_flux_estimator();
 void observer_marino2005();
 
-struct Chen21_ESO_AF{
-    #define NS_CHEN_2021 4
-    REAL xPos;
-    REAL xOmg;
-    REAL xTL;
-    REAL xPL; // rotatum
-    REAL x[NS_CHEN_2021];
-    REAL ell[NS_CHEN_2021];
+// struct Chen21_ESO_AF{
+//     #define NS_CHEN_2021 4
+//     REAL xPos;
+//     REAL xOmg;
+//     REAL xTL;
+//     REAL xPL; // rotatum
+//     REAL x[NS_CHEN_2021];
+//     REAL ell[NS_CHEN_2021];
 
-    int bool_ramp_load_torque; // TRUE for 4th order ESO
-    REAL omega_ob; // one parameter tuning
-    REAL set_omega_ob;
+//     int bool_ramp_load_torque; // TRUE for 4th order ESO
+//     REAL omega_ob; // one parameter tuning
+//     REAL set_omega_ob;
 
-    REAL output_error_sine; // sin(\tilde\vartheta_d)
-    REAL output_error; // \tilde\vartheta_d, need to detect bound jumping 
+//     REAL output_error_sine; // sin(\tilde\vartheta_d)
+//     REAL output_error; // \tilde\vartheta_d, need to detect bound jumping 
 
-    REAL xTem;
-};
-extern struct Chen21_ESO_AF esoaf;
+//     REAL xTem;
+// };
+// extern struct Chen21_ESO_AF OBSV.esoaf;
 void Main_esoaf_chen2021();
 
 /********************************************

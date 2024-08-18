@@ -19,7 +19,7 @@ void voltage_commands_to_pwm();
 void voltage_measurement_based_on_eCAP();
 void measurement_position_count_axisCnt0();
 void measurement_position_count_axisCnt1();
-void measurement_enc_and_i();
+void measurement_enc();
 void measurement_current_axisCnt0();
 void measurement_current_axisCnt1();
 
@@ -34,5 +34,8 @@ void DISABLE_PWM_OUTPUT(int use_first_set_three_phase);
 void ENABLE_PWM_OUTPUT(int positionLoopType, int use_first_set_three_phase);
 
 void read_count_from_cpu02_dsp_cores_2();
+
+void cla_test_codes();
+void test_ipc_tocpu02();
 
 #endif

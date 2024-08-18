@@ -390,7 +390,7 @@ void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REA
         FE.AFEOE.theta_d = atan2(FE.AFEOE.psi_2[1], FE.AFEOE.psi_2[0]);
 
         // Convert output error to dq frame
-        // REAL KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * (*CTRL).i->idq[0];
+        // REAL KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * (*CTRL).i->iDQ[0];
         /* TODO: 思考这个dq角度怎么选最好，要不要换成电压向量的角度而不是转子角度？ */
         FE.AFEOE.active_flux_ampl_lpf = _lpf(FE.AFEOE.active_flux_ampl, FE.AFEOE.active_flux_ampl_lpf, 5);
         FE.AFEOE.output_error_dq[0] = MOTOR.KActive - FE.AFEOE.active_flux_ampl_lpf;
@@ -725,7 +725,7 @@ void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REA
 
 
 void simulation_test_flux_estimators(){
-    MainFE_HUWU_1998();
+    // MainFE_HUWU_1998();
     Main_the_active_flux_estimator();
     // VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
 }

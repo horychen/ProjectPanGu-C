@@ -49,6 +49,8 @@ extern struct Marino2005 marino;
 // 控制器
 void controller_IFOC();
 void controller_marino2005();
+void controller_marino2005_with_commands();
+void init_im_controller();
 
 // 初始化
 // void experiment_init();

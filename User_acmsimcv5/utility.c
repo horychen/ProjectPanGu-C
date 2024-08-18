@@ -116,7 +116,7 @@ double difference_between_two_angles(double first, double second){
 #if PC_SIMULATION == TRUE
     // 写变量meta-data到文件
     void write_header_to_file(FILE *fw){
-        printf("%s\n", DATA_FILE_NAME);
+        printf("\tData @ %s\n", DATA_FILE_NAME);
 
         fprintf(fw, DATA_LABELS);
 
@@ -144,17 +144,30 @@ double difference_between_two_angles(double first, double second){
     }
 
     void print_info(){
-        printf("Rreq = %f\n", (ACM.Rreq));
-        printf("NUMBER_OF_STEPS = %d\n", (int)d_sim.sim.NUMBER_OF_STEPS);
-        printf("MACHINE_SIMULATIONs_PER_SAMPLING_PERIOD = %d\n", d_sim.sim.MACHINE_SIMULATIONs_PER_SAMPLING_PERIOD);
-        if(debug.SENSORLESS_CONTROL==TRUE){
-            printf("\t[main.c] Sensorless using observer.\n");
-        }else{
-            printf("\t[main.c] Sensored control.\n");
+        if(d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation == TRUE){
+            #if PC_SIMULATION == TRUE 
+                printf(">>> Voltages to Cuurent Regulation is Applied <<<\n");
+            #endif
         }
-        printf("\t[main.c] NUMBER_OF_STEPS: %d\n", d_sim.sim.NUMBER_OF_STEPS);
-        printf("\t[main.c] Speed PI:   Kp=%.3f, Ki=%.6f, limit=%.1f A\n", PID_Speed->Kp, PID_Speed->Ki, PID_Speed->OutLimit);
-        printf("\t[main.c] Current PI: Kp=%.3f, Ki=%.6f, limit=%.1f V\n", PID_iQ->Kp, PID_iQ->Ki, PID_iQ->OutLimit);
+        printf("\t[utility.c] Rreq = %f Ohm\n", (ACM.Rreq));
+        printf("\t[utility.c] NUMBER_OF_STEPS = %d\t", (int)d_sim.sim.NUMBER_OF_STEPS); printf("MACHINE_SIMULATIONs_PER_SAMPLING_PERIOD = %d\n", d_sim.sim.MACHINE_SIMULATIONs_PER_SAMPLING_PERIOD);
+        // if(debug.SENSORLESS_CONTROL==TRUE){
+        //     printf("\t[utility.c] Sensorless using observer.\n");
+        // }else{
+        //     printf("\t[utility.c] Sensored control.\n");
+        // }
+        printf("\t[utility.c] Speed series PI:   Kp=%.3f, Ki=%.6f, limit=%.1f A\n", PID_Speed->Kp, d_sim.VL.SERIES_KI, PID_Speed->OutLimit);
+        printf("\t[utility.c] Current series PI: Kp=%.3f, Ki=%.6f, limit=%.1f V\n", PID_iQ->Kp, d_sim.CL.SERIES_KI_Q_AXIS, PID_iQ->OutLimit);
+        printf("\tPID_Speed.Kp = %f\n", PID_Speed->Kp);
+        printf("\tPID_Speed.Ki_CODE = %f\n", PID_Speed->Ki_CODE);
+        printf("\tPID_Speed.KFB = %f\n",PID_Speed->KFB);
+        printf("\tPID_iQ.Kp = %f\n", PID_iQ->Kp);
+        printf("\tPID_iQ.Ki_CODE = %f\n", PID_iQ->Ki_CODE);
+        printf("\tPID_iD.Kp = %f\n", PID_iD->Kp);
+        printf("\tPID_iD.Ki_CODE = %f\n", PID_iD->Ki_CODE);
+        printf("\td_sim.FOC.CLBW_HZ = %g\n", (REAL)d_sim.FOC.CLBW_HZ);
+        printf("\td_sim.FOC.delta = %g\n", (REAL)d_sim.FOC.delta);
+        printf("\tdebug.error=%d\n\tdebug.mode_select=%d\n\tdebug.who_is_user=%d\n", (int)debug.error, (int)debug.mode_select, (int)debug.who_is_user);
     }
 #endif
 

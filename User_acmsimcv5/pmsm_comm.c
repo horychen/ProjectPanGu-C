@@ -12,8 +12,8 @@ void doIPD(){
     // 帕克变换（使用反馈位置）
     (*CTRL).s->cosT = cos(ENC.excitation_angle_deg/180.0*M_PI); // (*CTRL).i->theta_d_elec
     (*CTRL).s->sinT = sin(ENC.excitation_angle_deg/180.0*M_PI); // (*CTRL).i->theta_d_elec
-    (*CTRL).i->idq[0] = AB2M((*CTRL).i->iab[0], (*CTRL).i->iab[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
-    (*CTRL).i->idq[1] = AB2T((*CTRL).i->iab[0], (*CTRL).i->iab[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
+    (*CTRL).i->iDQ[0] = AB2M((*CTRL).i->iab[0], (*CTRL).i->iab[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
+    (*CTRL).i->iDQ[1] = AB2T((*CTRL).i->iab[0], (*CTRL).i->iab[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
 
     #define CURRENT_COMMAND_VALUE (0.5*MOTOR_RATED_CURRENT_RMS)
 
@@ -74,7 +74,7 @@ void doIPD(){
         }
     }
 
-    pid1_id.Fbk = (*CTRL).i->idq[0];
+    pid1_id.Fbk = (*CTRL).i->iDQ[0];
     pid1_id.calc(pid1_id);
     (*CTRL).o->cmd_uAB[0] = MT2A(pid1_id.Out, 0.0, (*CTRL).s->cosT, (*CTRL).s->sinT);
     (*CTRL).o->cmd_uAB[1] = MT2B(pid1_id.Out, 0.0, (*CTRL).s->cosT, (*CTRL).s->sinT);
@@ -85,13 +85,13 @@ void doPSD(){
     // 帕克变换（使用反馈位置）
     (*CTRL).s->cosT = cos(PSD.theta_excitation); // (*CTRL).i->theta_d_elec
     (*CTRL).s->sinT = sin(PSD.theta_excitation); // (*CTRL).i->theta_d_elec
-    (*CTRL).i->idq[0] = AB2M((*CTRL).i->iab[0], (*CTRL).i->iab[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
-    (*CTRL).i->idq[1] = AB2T((*CTRL).i->iab[0], (*CTRL).i->iab[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
+    (*CTRL).i->iDQ[0] = AB2M((*CTRL).i->iab[0], (*CTRL).i->iab[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
+    (*CTRL).i->iDQ[1] = AB2T((*CTRL).i->iab[0], (*CTRL).i->iab[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
 
     #define CURRENT_COMMAND_VALUE (0.5*MOTOR_RATED_CURRENT_RMS)
 
     pid1_id.Ref = CURRENT_COMMAND_VALUE;
-    pid1_id.Fbk = (*CTRL).i->idq[0];
+    pid1_id.Fbk = (*CTRL).i->iDQ[0];
     pid1_id.calc(pid1_id);
     (*CTRL).o->cmd_uAB[0] = MT2A(pid1_id.Out, 0.0, (*CTRL).s->cosT, (*CTRL).s->sinT);
     (*CTRL).o->cmd_uAB[1] = MT2B(pid1_id.Out, 0.0, (*CTRL).s->cosT, (*CTRL).s->sinT);
@@ -153,8 +153,8 @@ void commissioning(){
     // 帕克变换（使用反馈位置）
     (*CTRL).s->cosT = cos((*CTRL).i->theta_d_elec); // (*CTRL).i->theta_d_elec
     (*CTRL).s->sinT = sin((*CTRL).i->theta_d_elec); // (*CTRL).i->theta_d_elec
-    (*CTRL).i->idq[0] = AB2M((*CTRL).i->iab[0], (*CTRL).i->iab[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
-    (*CTRL).i->idq[1] = AB2T((*CTRL).i->iab[0], (*CTRL).i->iab[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
+    (*CTRL).i->iDQ[0] = AB2M((*CTRL).i->iab[0], (*CTRL).i->iab[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
+    (*CTRL).i->iDQ[1] = AB2T((*CTRL).i->iab[0], (*CTRL).i->iab[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
     // 参数自整定
     StepByStepCommissioning();
     inverter_voltage_command(0);
@@ -313,16 +313,16 @@ void COMM_PI_tuning(REAL LL, REAL RR, REAL BW_current, REAL delta, REAL JJ, REAL
     // REAL lowest_pole_over_0dB = 2*3.1415926 * 150; // 5 Hz The feedback frequency of hall sensor at 10 rpm is near 5 Hz.
 
     // My tuning
-    // PID_Speed->Ki = lowest_pole_over_0dB / (delta*delta) * VL_TS; 
+    // PID_Speed->Ki_CODE = lowest_pole_over_0dB / (delta*delta) * VL_TS; 
 
     PID_Speed->Kp = lowest_pole_over_0dB / (delta) / K;
 
     // TI's tuning
-    PID_Speed->Ki = PID_Speed->Kp * lowest_pole_over_0dB / (delta*delta) * VL_TS; 
+    PID_Speed->Ki_CODE = PID_Speed->Kp * lowest_pole_over_0dB / (delta*delta) * VL_TS; 
 
     #if PC_SIMULATION
     printf("Current loop, BW_current=%.1f Hz, Kp=%g, KpKi=%g\n", BW_current/(2*3.1415926), pid1_id.Kp,  pid1_iq.Ki*CL_TS);
-    printf("Speed loop,   BW_speed=%.1f Hz,   Kp=%g, KpKi=%g, K=%g\n",      BW_speed/(2*3.1415926),   PID_Speed->Kp, PID_Speed->Ki*VL_TS, K);
+    printf("Speed loop,   BW_speed=%.1f Hz,   Kp=%g, KpKi=%g, K=%g\n",      BW_speed/(2*3.1415926),   PID_Speed->Kp, PID_Speed->Ki_CODE*VL_TS, K);
     #endif
 }
 
@@ -500,15 +500,15 @@ void COMM_resistanceId_v2(REAL id_fb, REAL iq_fb){
         UQ_OUTPUT = REGULATOR.Out;
 
         // for ParkSul2012
-        (*CTRL).i->idq_cmd[0] = 0.0;
-        (*CTRL).i->idq_cmd[1] = REGULATOR.Ref;
+        (*CTRL).i->cmd_iDQ[0] = 0.0;
+        (*CTRL).i->cmd_iDQ[1] = REGULATOR.Ref;
     #else
         UD_OUTPUT = REGULATOR.Out;
         UQ_OUTPUT = 0.0;
 
         // for ParkSul2012
-        (*CTRL).i->idq_cmd[0] = REGULATOR.Ref;
-        (*CTRL).i->idq_cmd[1] = 0.0;
+        (*CTRL).i->cmd_iDQ[0] = REGULATOR.Ref;
+        (*CTRL).i->cmd_iDQ[1] = 0.0;
     #endif
 
     // collect steady state data
@@ -915,7 +915,7 @@ void COMM_PMFluxId(REAL id_fb, REAL iq_fb, REAL omg_elec_fb){
     // if(COMM.counterEntered==1){
     //     // delta =10
     //     PID_Speed->Kp = 1e-6 * (CL_TS_INVERSE*0.1) / 10.0;
-    //     PID_Speed->Ki = PID_Speed->Kp * (CL_TS_INVERSE*0.1) / 100.0 * (CL_TS*SPEED_LOOP_CEILING);
+    //     PID_Speed->Ki_CODE = PID_Speed->Kp * (CL_TS_INVERSE*0.1) / 100.0 * (CL_TS*SPEED_LOOP_CEILING);
     // }
 
     pid1_id.Ref = 0.0;
@@ -1258,10 +1258,10 @@ void StepByStepCommissioning(){
         // (*CTRL).i->theta_d_elec = local_theta_d;
         (*CTRL).s->cosT = cos((*CTRL).i->theta_d_elec);
         (*CTRL).s->sinT = sin((*CTRL).i->theta_d_elec);
-        (*CTRL).i->idq[0] = AB2M(IS_C(0), IS_C(1), (*CTRL).s->cosT, (*CTRL).s->sinT), 
-        (*CTRL).i->idq[1] = AB2T(IS_C(0), IS_C(1), (*CTRL).s->cosT, (*CTRL).s->sinT), 
-        COMM_inertiaId( (*CTRL).i->idq[0], 
-                        (*CTRL).i->idq[1], 
+        (*CTRL).i->iDQ[0] = AB2M(IS_C(0), IS_C(1), (*CTRL).s->cosT, (*CTRL).s->sinT), 
+        (*CTRL).i->iDQ[1] = AB2T(IS_C(0), IS_C(1), (*CTRL).s->cosT, (*CTRL).s->sinT), 
+        COMM_inertiaId( (*CTRL).i->iDQ[0], 
+                        (*CTRL).i->iDQ[1], 
                         (*CTRL).s->cosT, 
                         (*CTRL).s->sinT, 
                         (*CTRL).i->omg_elec);

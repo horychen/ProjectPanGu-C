@@ -47,7 +47,6 @@
     #endif
 #endif
 
-
 Uint32 position_count_SCI_shank_fromCPU2;
 Uint32 position_count_SCI_hip_fromCPU2;
 Uint32 position_count_SCI_fromCPU2;
@@ -375,8 +374,7 @@ void handle_interrupts() {
 #endif
 
 void main_loop() {
-        while (1)
-    {
+    while (1){
         //        mainWhileLoopCounter1++;
         //        mainWhileLoopCounter2=2992;
         //        if (Motor_mode_START==1){
@@ -396,9 +394,9 @@ void main_loop() {
         //        Axis_1.ID += 1;
         //        mainWhileLoopCounter2 += 1;
 
-#if NUMBER_OF_DSP_CORES == 1
-        single_core_dac();
-#endif
+        #if NUMBER_OF_DSP_CORES == 1
+            single_core_dac();
+        #endif
     }
 }
 
@@ -669,14 +667,39 @@ void test_ipc_tocpu02()
     IPCLtoRFlagSet(IPC_FLAG7);
 }
 
+void cla_test_codes(){
+    /* initialize PI controller */
+    pi1.Kp = 5.5f;
+    pi1.Ki = 0.015f;
+    pi1.i10 = 0.0f;
+    pi1.i6 = 1.0f;
+    pi1.Umax = 10.2f;
+    pi1.Umin = -10.2f;
 
+    /* compute CLA task vectors */
+    EALLOW;
+    compute_CLA_task_vectors();
+
+    /* CLA task triggers */
+    Cla1Regs.MIER.all = 0x00FF;
+
+    /* Switch the CLA program space to the CLA and enable software forcing
+     * Also switch over CLA data ram 0,1 and 2
+     * CAUTION: The RAMxCPUE bits can only be enabled by writing to the register
+     * and not the individual bit field. Furthermore, the status of these bitfields
+     * is not reflected in either the watch or register views - they always read as
+     * zeros. This is a known bug and the user is advised to test CPU accessibilty
+     * first before proceeding
+     */
+    Cla1Regs.MCTL.bit.IACKE = 1;
+    EDIS;
+}
 
 
 
 REAL wubo_debug[4];
 
-void measurement_position_count_axisCnt0()
-{
+void measurement_position_count_axisCnt0(){
     #if (ENCODER_TYPE == ABSOLUTE_ENCODER_SCI_SHANK)
             position_count_SCI_fromCPU2 = position_count_SCI_shank_fromCPU2;
     #elif (ENCODER_TYPE == ABSOLUTE_ENCODER_SCI_HIP)
@@ -692,8 +715,7 @@ void measurement_position_count_axisCnt0()
 }
 
 
-void measurement_position_count_axisCnt1()
-{
+void measurement_position_count_axisCnt1(){
     #if NUMBER_OF_AXES == 2
         position_count_SCI_fromCPU2 = position_count_SCI_hip_fromCPU2;
     #endif
@@ -704,10 +726,8 @@ void measurement_position_count_axisCnt1()
 }
 
 
-void measurement_enc_and_i()
-{
-    if (!bool_use_SCI_encoder)
-    {
+void measurement_enc(){
+    if (!bool_use_SCI_encoder){
         // 正转电流导致编码器读数减小：
         //CTRL->enc->encoder_abs_cnt = -((int32)cnt_four_bar_map_motor_encoder_angle + CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis);
         // 正转电流导致编码器读数增大：
@@ -725,12 +745,10 @@ void measurement_enc_and_i()
     //     CTRL->enc->encoder_abs_cnt_previous = CTRL->enc->encoder_abs_cnt;
     // }
 
-    while (CTRL->enc->encoder_abs_cnt > SYSTEM_QEP_QPOSMAX_PLUS_1) // SYSTEM_QEP_QPOSMAX_PLUS_1为编码器的一圈的脉冲数+1
-    {
+    while (CTRL->enc->encoder_abs_cnt > SYSTEM_QEP_QPOSMAX_PLUS_1){ // SYSTEM_QEP_QPOSMAX_PLUS_1为编码器的一圈的脉冲数+1
         CTRL->enc->encoder_abs_cnt -= SYSTEM_QEP_QPOSMAX_PLUS_1;
     }
-    while (CTRL->enc->encoder_abs_cnt < 0)
-    {
+    while (CTRL->enc->encoder_abs_cnt < 0){
         CTRL->enc->encoder_abs_cnt += SYSTEM_QEP_QPOSMAX_PLUS_1;
     }
 
@@ -756,20 +774,20 @@ void measurement_enc_and_i()
     //                ENC(0)
     //                ENC(1)
 
+    // moving average filtering
     CTRL->enc->sum_qepPosCnt -= CTRL->enc->MA_qepPosCnt[CTRL->enc->cursor];
     CTRL->enc->sum_qepPosCnt += CTRL->enc->rpm_raw;                  // CTRL->enc->encoder_incremental_cnt;
     CTRL->enc->MA_qepPosCnt[CTRL->enc->cursor] = CTRL->enc->rpm_raw; // CTRL->enc->encoder_incremental_cnt;
 
     CTRL->enc->cursor += 1;
-    if (CTRL->enc->cursor >= MA_SEQUENCE_LENGTH)
-    {
+    if (CTRL->enc->cursor >= MA_SEQUENCE_LENGTH){
         CTRL->enc->cursor = 0; // Reset CTRL->enc->cursor
     }
 
     CTRL->enc->rpm = CTRL->enc->sum_qepPosCnt * MA_SEQUENCE_LENGTH_INVERSE; // CL_TS_INVERSE;
     // CTRL->enc->rpm = CTRL->enc->rpm_raw;
 
-    CTRL->enc->varOmega = CTRL->enc->rpm * RPM_2_ELEC_RAD_PER_SEC;
+    CTRL->enc->varOmega = CTRL->enc->rpm * RPM_2_MECH_RAD_PER_SEC;
 
     // end of axiscnt
 
@@ -793,18 +811,6 @@ void measurement_enc_and_i()
     //    }
 
     // CTRL->enc->rpm = PostionSpeedMeasurement_MovingAvergage(QPOSCNT, CTRL->enc);
-
-    // if ((*CTRL).s->go_sensorless == FALSE)
-    {
-        CTRL->i->varOmega = CTRL->enc->varOmega;
-        CTRL->i->theta_d_elec = CTRL->enc->theta_d_elec;
-    }
-
-    // Convert adc results
-     Axis->vdc    =((REAL)(AdcaResultRegs.ADCRESULT0 ) - Axis->adc_offset[0]) * Axis->adc_scale[0];
-     // Axis->vdc = ((REAL)(AdcbResultRegs.ADCRESULT6) - Axis->adc_offset[0]) * Axis->adc_scale[0];
-    if (G.flag_overwite_vdc)
-        Axis->vdc = G.overwrite_vdc;
 }
 
 
@@ -1182,6 +1188,55 @@ void DISABLE_PWM_OUTPUT(int use_first_set_three_phase)
 }
 
 
+// this offset is moved to ACMconfig.h
+// #define OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS 2333 // cjh tuned with id_cmd = 3A 2024-01-19
+
+#define NO_POSITION_CONTROL 0
+#define TWOMOTOR_POSITION_CONTROL 1
+#define SINGLE_POSITION_CONTROL 2
+#define SHANK_LOOP_RUN 3
+#define HIP_LOOP_RUN 4
+#define BOTH_LOOP_RUN 5
+#define IMPEDANCE_CONTROL 6
+
+// moved to global variable [debug]
+//int positionLoopType = 0;           // TWOMOTOR_POSITION_CONTROL; //SHANK_LOOP_RUN; // SHANK_LOOP_RUN; //BOTH_LOOP_RUN;
+//int use_first_set_three_phase = 1; //-1 for both motors
+
+REAL call_position_loop_controller(int positionLoopType)
+{
+    CTRL_1.s->Speed->Kp = TEST_SHANK_SPD_KP;
+    CTRL_1.s->Speed->Ki_CODE = TEST_SHANK_SPD_KI;
+
+    CTRL_2.s->Speed->Kp = TEST_HIP_SPD_KP;
+    CTRL_2.s->Speed->Ki_CODE = TEST_HIP_SPD_KI;
+
+
+    CTRL_1.s->Position->Kp = TEST_SHANK_KP;
+    CTRL_2.s->Position->Kp = TEST_HIP_KP;
+
+    CTRL_1.s->Position->OutLimit = TEST_SHANK_POS_OUTLIMIT;
+    CTRL_2.s->Position->OutLimit = TEST_HIP_POS_OUTLIMIT;
+
+    run_iecon_main((*CTRL).timebase_counter);
+
+    if (positionLoopType == TWOMOTOR_POSITION_CONTROL) control_two_motor_position();
+
+    else if (positionLoopType == SINGLE_POSITION_CONTROL) control_single_motor_position();
+
+    else if (positionLoopType == SHANK_LOOP_RUN) run_shank_loop();
+
+    else if (positionLoopType == HIP_LOOP_RUN) run_hip_loop();
+
+    else if (positionLoopType == BOTH_LOOP_RUN) run_both_loop();
+
+    else if (positionLoopType == IMPEDANCE_CONTROL) run_impedance_control();
+
+
+    return Axis->Set_manual_rpm;
+}
+
+
 REAL RPM_wave_conunter = 0;
 REAL RPM_wave = 0;
 REAL flag_RPM_wave = 0;
@@ -1238,17 +1293,8 @@ void ENABLE_PWM_OUTPUT(int positionLoopType, int use_first_set_three_phase)
             }
         }
 
-        main_switch();
-//        Axis->used_theta_d_elec = controller(
-//            Axis->Set_manual_rpm,
-//            Axis->Set_current_loop,
-//            Axis->Set_manual_current_iq,
-//            Axis->Set_manual_current_id,
-//            Axis->flag_overwrite_theta_d,
-//            Axis->Overwrite_Current_Frequency,
-//            Axis->used_theta_d_elec,
-//            Axis->angle_shift_for_first_inverter,
-//            Axis->angle_shift_for_second_inverter);
+        main_switch(debug.mode_select);
+
     #else
         commissioning(); // 参数辨识用
     #endif

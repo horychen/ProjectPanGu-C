@@ -21,35 +21,33 @@
 #define printf                 DoNotCallPrintFunctionInDSP
 
 #if PC_SIMULATION == FALSE
+
+    /* SYSTEM Configuration */
     #define NUMBER_OF_AXES 2
-
-/*  SYSTEM Configuration -----------------------------------------------------------------------------------*/
     #define NUMBER_OF_DSP_CORES 2  // 1 or 2
-    #define SYSTEM_PROGRAM_MODE 223  //223 for CJHMainISR
-    #if SYSTEM_PROGRAM_MODE==223
-        /* ePWM CONFIGURATION */
-        #define SYSTEM_PROGRAM                     EPWM1ISR
-        //        #define SYSTEM_PWM_KILO_FREQUENCY               10 // 10kHz
-        //        #define SYSTEM_CARRIER_PERIOD              (100000/SYSTEM_PWM_KILO_FREQUENCY) // = TBCLK (100 MHz) / 10 (kHz) = 100e6/1e4 = 100e2 = 1e4 cnt 锟斤拷应一锟斤拷锟截诧拷锟斤拷锟斤拷
-        //        #define SYSTEM_TBPRD                       (SYSTEM_CARRIER_PERIOD/2)
-        #define SYSTEM_CARRIER_PERIOD              10000 // =100000/10, max is 100kHz
-        #define SYSTEM_TBPRD                       5000  // =SYSTEM_CARRIER_PERIOD/2
-        //#define SYSTEM_PWM_DEADTIME_CNT            500 // 500 锟斤拷 TBCLK = EPWMCLK/1 = 100 MHz
-        #define SYSTEM_PWM_DEADTIME_CNT            500
-        #define SYSTEM_PWM_DEADTIME_COMPENSATION   500
-            // #define SYSTEM_PWM_DEADTIME_COMPENSATION   483
-            // Td = 5.0us; Ton = 0.15us; Toff = 0.32us;
-            // TM = Td + Ton -Toff;
-            // CJH: (5.0 + 0.15 - 0.32 )*1e-6 * TBCLK (100 MHz) = 483
-        #define SYSTEM_MAX_PWM_DUTY_LIMATATION     0.96
-        #define SYSTEM_MIN_PWM_DUTY_LIMATATION     0.04
-        #define SYSTEM_PWM_UDC_UTILIZATION         SYSTEM_MAX_PWM_DUTY_LIMATATION
 
-        /* eCAP CONFIGURATION */ /* eCAP锟斤拷锟侥诧拷锟饺ｏ拷锟津波峰？锟叫讹拷锟斤拷锟节硷拷锟斤拷值锟斤拷20000锟斤拷锟斤拷锟揭伙拷锟斤拷锟街わ拷锟絋BCLK锟斤拷锟斤拷频锟剿ｏ拷锟斤拷锟斤拷200MHz锟斤拷锟斤拷锟斤拷100MHz锟斤拷 */
-        #define SYSTEM_PWM_INT_MAX_COUNT               20000
-        #define SYSTEM_PWM_INT_MAX_COUNT_INVERSE       5e-5 // = 1 / 20000
-        #define SYSTEM_HALF_PWM_MAX_COUNT          10000
-    #endif
+    /* ePWM CONFIGURATION */
+    #define SYSTEM_PROGRAM                     EPWM1ISR
+    //        #define SYSTEM_PWM_KILO_FREQUENCY               10 // 10kHz
+    //        #define SYSTEM_CARRIER_PERIOD              (100000/SYSTEM_PWM_KILO_FREQUENCY) // = TBCLK (100 MHz) / 10 (kHz) = 100e6/1e4 = 100e2 = 1e4 cnt 锟斤拷应一锟斤拷锟截诧拷锟斤拷锟斤拷
+    //        #define SYSTEM_TBPRD                       (SYSTEM_CARRIER_PERIOD/2)
+    #define SYSTEM_CARRIER_PERIOD              10000 // =100000/10, max is 100kHz
+    #define SYSTEM_TBPRD                       5000  // =SYSTEM_CARRIER_PERIOD/2
+    //#define SYSTEM_PWM_DEADTIME_CNT            500 // 500 锟斤拷 TBCLK = EPWMCLK/1 = 100 MHz
+    #define SYSTEM_PWM_DEADTIME_CNT            500
+    #define SYSTEM_PWM_DEADTIME_COMPENSATION   500
+        // #define SYSTEM_PWM_DEADTIME_COMPENSATION   483
+        // Td = 5.0us; Ton = 0.15us; Toff = 0.32us;
+        // TM = Td + Ton -Toff;
+        // CJH: (5.0 + 0.15 - 0.32 )*1e-6 * TBCLK (100 MHz) = 483
+    #define SYSTEM_MAX_PWM_DUTY_LIMATATION     0.96
+    #define SYSTEM_MIN_PWM_DUTY_LIMATATION     0.04
+    #define SYSTEM_PWM_UDC_UTILIZATION         SYSTEM_MAX_PWM_DUTY_LIMATATION
+
+    /* eCAP CONFIGURATION */ /* eCAP锟斤拷锟侥诧拷锟饺ｏ拷锟津波峰？锟叫讹拷锟斤拷锟节硷拷锟斤拷值锟斤拷20000锟斤拷锟斤拷锟揭伙拷锟斤拷锟街わ拷锟絋BCLK锟斤拷锟斤拷频锟剿ｏ拷锟斤拷锟斤拷200MHz锟斤拷锟斤拷锟斤拷100MHz锟斤拷 */
+    #define SYSTEM_PWM_INT_MAX_COUNT               20000
+    #define SYSTEM_PWM_INT_MAX_COUNT_INVERSE       5e-5 // = 1 / 20000
+    #define SYSTEM_HALF_PWM_MAX_COUNT          10000
 #endif
 
 
@@ -63,7 +61,8 @@
 #include "pmsm_controller.h"
 #include "pmsm_observer.h"
 #include "pmsm_comm.h"
-
+#include "Bezier.h"
+#include "regulator_speedInnerLoop.h"
 
 // Header for global_variabels_definition.c
 struct GlobalWatch

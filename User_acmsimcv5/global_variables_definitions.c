@@ -146,6 +146,10 @@ void allocate_CTRL(struct ControllerForExperiment *p){
     #endif
 }
 
+
+
+
+
 // Global watch variables
 struct GlobalWatch watch;
 
@@ -157,9 +161,9 @@ struct GlobalWatch watch;
     // 游离在顶级之外的算法结构体
     // struct RK4_DATA rk4;
     // struct Harnefors2006 harnefors={0};
-    // struct CJH_EEMF_AO_Design cjheemf={0};
-    // struct FARZA09_EEMF_HGO hgo4eemf={0};
-    // struct Chen20_NSO_AF nsoaf={0};
+    // struct CJH_EEMF_AO_Design OBSV.cjheemf={0};
+    // struct FARZA09_EEMF_HGO OBSV.hgo4eemf={0};
+    // struct Chen20_NSO_AF OBSV.nsoaf={0};
 
     // 游离在顶级之外的算法结构体
     // struct RK4_DATA rk4;
@@ -181,5 +185,112 @@ struct GlobalWatch watch;
 
 // struct eQEP_Variables qep={0};
 
+void init_experiment(){
 
+    // init_CTRL_Part1();
+    init_CTRL_Part2(); // 控制器结构体初始化
+    init_FE();  // flux estimator
+    rk4_init(); // 龙格库塔法结构体初始化
+    // observer_init();
+    // init_pmsm_observers(); // 永磁电机观测器初始化
+}
+void init_CTRL_Part1(){
+    // 我们在初始化 debug 全局结构体的时候，需要用到一部分 CTRL 中的电机参数，所以要先把这一部分提前初始化。
+    allocate_CTRL(CTRL);
+
+    /* Basic quantities */
+    (*CTRL).timebase = 0.0;
+
+    /* Machine parameters */
+    // elec
+    (*CTRL).motor->R  = d_sim.init.R;
+    (*CTRL).motor->KE = d_sim.init.KE; // * (0.1/0.1342); // 【实验编号：】
+    (*CTRL).motor->Ld = d_sim.init.Ld;
+    (*CTRL).motor->Lq = d_sim.init.Lq;
+    (*CTRL).motor->Lq_inv = 1.0 / (*CTRL).motor->Lq;
+    (*CTRL).motor->DeltaL = (*CTRL).motor->Ld - (*CTRL).motor->Lq; // for IPMSM
+    (*CTRL).motor->KActive = (*CTRL).motor->KE;                    // TODO:
+
+    (*CTRL).motor->Rreq = d_sim.init.Rreq;
+
+    // mech
+    (*CTRL).motor->npp = d_sim.init.npp;
+    (*CTRL).motor->npp_inv = 1.0 / (*CTRL).motor->npp;
+    (*CTRL).motor->Js = d_sim.init.Js;
+    (*CTRL).motor->Js_inv = 1.0 / (*CTRL).motor->Js;
+}
+void init_CTRL_Part2(){
+
+    // /* Peripheral configurations */
+
+    /* Inverter */
+    (*CTRL).inv->filter_pole = 3000 * 2 * M_PI;
+    inverterNonlinearity_Initialization();
+    G.FLAG_INVERTER_NONLINEARITY_COMPENSATION = debug.INVERTER_NONLINEARITY_COMPENSATION_INIT;
+    // G.FLAG_TUNING_CURRENT_SCALE_FACTOR = TUNING_CURRENT_SCALE_FACTOR_INIT;
+
+
+    /* Peripheral configurations */
+    //(*CTRL).enc->OffsetCountBetweenIndexAndUPhaseAxis = 0;
+    //(*CTRL).enc->theta_d_offset = (*CTRL).enc->OffsetCountBetweenIndexAndUPhaseAxis * CNT_2_ELEC_RAD;
+
+    /* Console */
+    // See init_experiment_overwrite() in CJHMainISR.c
+    G.flag_do_inverter_characteristics = 0;
+    G.overwrite_vdc = 20;
+
+    /* Black Box Model | Controller quantities */
+
+    // 控制器tuning
+    if(debug.who_is_user == USER_WB){
+        _user_wubo_WC_Tuner();
+        #if PC_SIMULATION == TRUE
+            printf(">>> Wc_Tuner is Applied to the Speed Loop Control <<<\n");
+        #endif
+    }
+    else{
+        ACMSIMC_PIDTuner();
+    }
+
+    // commands
+    (*CTRL).i->cmd_psi = d_sim.init.KE;
+
+    (*CTRL).s->xRho = 0.0;
+    (*CTRL).s->cosT = 1.0;
+    (*CTRL).s->sinT = 0.0;
+    (*CTRL).s->cosT_compensated_1p5omegaTs = 1.0;
+    (*CTRL).s->sinT_compensated_1p5omegaTs = 0.0;
+    (*CTRL).s->cosT2 = 1.0;
+    (*CTRL).s->sinT2 = 0.0;
+    (*CTRL).s->omega_syn = 0.0;
+    (*CTRL).s->the_vc_count = 1;
+
+
+
+    /* Capture */
+    (*CTRL).cap->flag_nonlinear_filtering = FALSE;
+    (*CTRL).cap->flag_bad_U_capture = FALSE;
+    (*CTRL).cap->flag_bad_V_capture = FALSE;
+    (*CTRL).cap->flag_bad_W_capture = FALSE;
+    (*CTRL).cap->good_capture_U[0] = SYSTEM_HALF_PWM_MAX_COUNT;
+    (*CTRL).cap->good_capture_U[1] = SYSTEM_HALF_PWM_MAX_COUNT;
+    (*CTRL).cap->good_capture_U[2] = SYSTEM_HALF_PWM_MAX_COUNT;
+    (*CTRL).cap->good_capture_U[3] = SYSTEM_HALF_PWM_MAX_COUNT;
+    (*CTRL).cap->good_capture_V[0] = SYSTEM_HALF_PWM_MAX_COUNT;
+    (*CTRL).cap->good_capture_V[1] = SYSTEM_HALF_PWM_MAX_COUNT;
+    (*CTRL).cap->good_capture_V[2] = SYSTEM_HALF_PWM_MAX_COUNT;
+    (*CTRL).cap->good_capture_V[3] = SYSTEM_HALF_PWM_MAX_COUNT;
+    (*CTRL).cap->good_capture_W[0] = SYSTEM_HALF_PWM_MAX_COUNT;
+    (*CTRL).cap->good_capture_W[1] = SYSTEM_HALF_PWM_MAX_COUNT;
+    (*CTRL).cap->good_capture_W[2] = SYSTEM_HALF_PWM_MAX_COUNT;
+    (*CTRL).cap->good_capture_W[3] = SYSTEM_HALF_PWM_MAX_COUNT;
+    (*CTRL).cap->ECapIntCount[0] = 0;
+    (*CTRL).cap->ECapIntCount[1] = 0;
+    (*CTRL).cap->ECapIntCount[2] = 0;
+    (*CTRL).cap->ECapPassCount[0] = 0;
+    (*CTRL).cap->ECapPassCount[1] = 0;
+    (*CTRL).cap->ECapPassCount[2] = 0;
+
+    init_im_controller();
+}
 
