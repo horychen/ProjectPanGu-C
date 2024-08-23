@@ -1,7 +1,7 @@
 /* Written by Charles Harris charles.harris@sdl.usu.edu */
 
 #include "brentq.h"
-
+#include "Bezier.h"
 /*
   At the top of the loop the situation is the following:
 
@@ -42,8 +42,8 @@ REAL brentq(callback_type f, const REAL xa, const REAL xb, scipy_zeros_info *sol
     REAL stry, dpre, dblk;
     int i;
 
-    fpre = (*f)(xpre, func_data_param);
-    fcur = (*f)(xcur, func_data_param);
+    fpre = bezier_x_diff(xpre, func_data_param);
+    fcur = bezier_x_diff(xcur, func_data_param);
 
     solver_stats->error_num = INPROGRESS;
 
@@ -141,7 +141,7 @@ REAL brentq(callback_type f, const REAL xa, const REAL xb, scipy_zeros_info *sol
             xcur += (sbis > 0 ? delta : -delta);
         }
 
-        fcur = (*f)(xcur, func_data_param);
+        fcur = bezier_x_diff(xcur, func_data_param);
         solver_stats->funcalls++;
     }
     solver_stats->error_num = CONVERR;
