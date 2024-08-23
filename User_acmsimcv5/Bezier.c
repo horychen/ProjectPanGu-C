@@ -16,11 +16,11 @@ BezierController BzController;
  * It is used to pass the necessary parameters for finding the value of t that corresponds to a given x-coordinate
  * on a Bezier curve.
  */
-// typedef struct
-// {
-//     const BezierController *BzierController; ///< Pointer to a BezierController object.
-//     REAL target_x;                           ///< Target x-coordinate value.
-// } FindTParams;
+typedef struct
+{
+    const BezierController *BzierController; ///< Pointer to a BezierController object.
+    REAL target_x;                           ///< Target x-coordinate value.
+} FindTParams;
 
 /**
  * @brief Calculates the binomial coefficient
@@ -28,11 +28,26 @@ BezierController BzController;
  * @param m The number of elements to choose
  * @return The binomial coefficient
  */
+int CombTable[10][10] = {
+    {1},
+    {1, 1},
+    {1, 2, 1},
+    {1, 3, 3, 1},
+    {1, 4, 6, 4, 1},
+    {1, 5, 10, 10, 5, 1},
+    {1, 6, 15, 20, 15, 6, 1},
+    {1, 7, 21, 35, 35, 21, 7, 1},
+    {1, 8, 28, 56, 70, 56, 28, 8, 1},
+    {1, 9, 36, 84, 126, 126, 84, 36, 9, 1}};
+// int Comb(const int n, const int m)
+// {
+//     if (m == 0 || m == n)
+//         return 1;
+//     return Comb(n - 1, m) + Comb(n - 1, m - 1);
+// }
 int Comb(const int n, const int m)
 {
-    if (m == 0 || m == n)
-        return 1;
-    return Comb(n - 1, m) + Comb(n - 1, m - 1);
+    return CombTable[n][m];
 }
 
 /**
@@ -45,11 +60,22 @@ Point bezier(const REAL *t, const BezierController *BzierController)
 {
     Point re = {0.0, 0.0};
     int i;
-    for (i = 0; i < BEZIER_NUMBER_OF_POINTS; i++)
-    {
-        re.x += BzierController->points[i].x * (REAL)Comb(BEZIER_NUMBER_OF_POINTS - 1, i) * powf(1 - *t, BEZIER_NUMBER_OF_POINTS - 1 - i) * powf(*t, i);
-        re.y += BzierController->points[i].y * (REAL)Comb(BEZIER_NUMBER_OF_POINTS - 1, i) * powf(1 - *t, BEZIER_NUMBER_OF_POINTS - 1 - i) * powf(*t, i);
+    REAL POW1 = 1.0;
+    REAL POW2[10] ;
+    POW2[0] = 1.0;
+    for (i = 1; i < BEZIER_NUMBER_OF_POINTS; i++){
+        POW2[i] = POW2[i - 1] * (1 - *t);
     }
+    for (i = 0; i < BEZIER_NUMBER_OF_POINTS; i++){
+        re.x += BzierController->points[i].x * Comb(BEZIER_NUMBER_OF_POINTS - 1, i) * POW1 * POW2[BEZIER_NUMBER_OF_POINTS - 1 - i];
+        re.y += BzierController->points[i].y * Comb(BEZIER_NUMBER_OF_POINTS - 1, i) * POW1 * POW2[BEZIER_NUMBER_OF_POINTS - 1 - i];
+        POW1 *= (*t);
+    }
+    // for (i = 0; i < BEZIER_NUMBER_OF_POINTS; i++)
+    // {
+    //     re.x += BzierController->points[i].x * (REAL)Comb(BEZIER_NUMBER_OF_POINTS - 1, i) * powf(1 - *t, BEZIER_NUMBER_OF_POINTS - 1 - i) * powf(*t, i);
+    //     re.y += BzierController->points[i].y * (REAL)Comb(BEZIER_NUMBER_OF_POINTS - 1, i) * powf(1 - *t, BEZIER_NUMBER_OF_POINTS - 1 - i) * powf(*t, i);
+    // }
     return re;
 }
 
@@ -83,12 +109,12 @@ REAL bezier_y(const REAL *t, const BezierController *BzierController)
  * @param params A pointer to the FindTParams struct containing the BezierController and target_x.
  * @return The difference between the x-coordinate of the Bezier curve point and the target x-coordinate.
  */
-// inline REAL bezier_x_diff(REAL t, void *params)
-// {
-//     FindTParams *p = (FindTParams *)params;
-//     REAL bezier_x_val = bezier_x(&t, p->BzierController);
-//     return bezier_x_val - p->target_x;
-// }
+REAL bezier_x_diff(REAL t, void *params)
+{
+    FindTParams *p = (FindTParams *)params;
+    REAL bezier_x_val = bezier_x(&t, p->BzierController);
+    return bezier_x_val - p->target_x;
+}
 
 /**
  * @brief Finds the parameter t for the given x-coordinate on the Bezier curve
