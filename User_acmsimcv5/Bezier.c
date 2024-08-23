@@ -69,7 +69,7 @@ Point bezier(const REAL *t, const BezierController *BzierController)
     for (i = 0; i < BEZIER_NUMBER_OF_POINTS; i++){
         re.x += BzierController->points[i].x * Comb(BEZIER_NUMBER_OF_POINTS - 1, i) * POW1 * POW2[BEZIER_NUMBER_OF_POINTS - 1 - i];
         re.y += BzierController->points[i].y * Comb(BEZIER_NUMBER_OF_POINTS - 1, i) * POW1 * POW2[BEZIER_NUMBER_OF_POINTS - 1 - i];
-        POW1 *= (*t);
+        POW1 = POW1*(*t);
     }
     // for (i = 0; i < BEZIER_NUMBER_OF_POINTS; i++)
     // {
