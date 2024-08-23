@@ -83,12 +83,12 @@ REAL bezier_y(const REAL *t, const BezierController *BzierController)
  * @param params A pointer to the FindTParams struct containing the BezierController and target_x.
  * @return The difference between the x-coordinate of the Bezier curve point and the target x-coordinate.
  */
-inline REAL bezier_x_diff(REAL t, void *params)
-{
-    FindTParams *p = (FindTParams *)params;
-    REAL bezier_x_val = bezier_x(&t, p->BzierController);
-    return bezier_x_val - p->target_x;
-}
+// inline REAL bezier_x_diff(REAL t, void *params)
+// {
+//     FindTParams *p = (FindTParams *)params;
+//     REAL bezier_x_val = bezier_x(&t, p->BzierController);
+//     return bezier_x_val - p->target_x;
+// }
 
 /**
  * @brief Finds the parameter t for the given x-coordinate on the Bezier curve

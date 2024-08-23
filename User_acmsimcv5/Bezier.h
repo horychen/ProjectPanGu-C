@@ -38,7 +38,14 @@ REAL bezier_x(const REAL *t, const BezierController *BziController);
 
 REAL bezier_y(const REAL *t, const BezierController *BziController);
 
-extern inline REAL bezier_x_diff(REAL t, void *params);
+// extern inline REAL bezier_x_diff(REAL t, void *params);
+inline REAL bezier_x_diff(REAL t, void *params)
+{
+    FindTParams *p = (FindTParams *)params;
+    REAL bezier_x_val = bezier_x(&t, p->BzierController);
+    return bezier_x_val - p->target_x;
+}
+
 
 REAL find_t_for_given_x(const REAL x, const BezierController *BziController);
 
