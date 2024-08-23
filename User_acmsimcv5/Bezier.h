@@ -14,6 +14,11 @@ typedef struct
     REAL x;
     REAL y;
 } Point;
+typedef struct
+{
+    const BezierController *BzierController; ///< Pointer to a BezierController object.
+    REAL target_x;                           ///< Target x-coordinate value.
+} FindTParams;
 
 #if FALSE // 动态分配 points 的内存
     typedef struct{

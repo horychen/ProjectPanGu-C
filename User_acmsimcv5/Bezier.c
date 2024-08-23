@@ -16,11 +16,11 @@ BezierController BzController;
  * It is used to pass the necessary parameters for finding the value of t that corresponds to a given x-coordinate
  * on a Bezier curve.
  */
-typedef struct
-{
-    const BezierController *BzierController; ///< Pointer to a BezierController object.
-    REAL target_x;                           ///< Target x-coordinate value.
-} FindTParams;
+// typedef struct
+// {
+//     const BezierController *BzierController; ///< Pointer to a BezierController object.
+//     REAL target_x;                           ///< Target x-coordinate value.
+// } FindTParams;
 
 /**
  * @brief Calculates the binomial coefficient
