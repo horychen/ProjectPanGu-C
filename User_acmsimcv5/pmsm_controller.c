@@ -117,7 +117,7 @@ REAL lut_hc_voltage[29] = {6.69023, 6.80461, 6.89879, 6.96976, 7.02613, 7.08644,
 
 REAL lookup_compensation_voltage_indexed(REAL current_value)
 {
-    REAL abs_current_value = fabs(current_value);
+    REAL abs_current_value = fabsf(current_value);
 
     if (abs_current_value < LUT_I_TURNING_LC)
     {
@@ -128,7 +128,7 @@ REAL lookup_compensation_voltage_indexed(REAL current_value)
             slope = (lut_hc_voltage[0] - lut_lc_voltage[index]) * LUT_STEPSIZE_SMALL_INVERSE;
         else
             slope = (lut_lc_voltage[index + 1] - lut_lc_voltage[index]) * LUT_STEPSIZE_SMALL_INVERSE;
-        return sign(current_value) * (lut_lc_voltage[index] + slope * (abs_current_value - index * LUT_STEPSIZE_SMALL));
+        return signf(current_value) * (lut_lc_voltage[index] + slope * (abs_current_value - index * LUT_STEPSIZE_SMALL));
     }
     else
     {
@@ -136,10 +136,10 @@ REAL lookup_compensation_voltage_indexed(REAL current_value)
         int index = (int)float_index; // THIS IS A RELATIVE INDEX!
         REAL slope;
         if (index + 1 >= LUT_N_HC)
-            return sign(current_value) * V_PLATEAU;
+            return signf(current_value) * V_PLATEAU;
         else
             slope = (lut_hc_voltage[index + 1] - lut_hc_voltage[index]) * LUT_STEPSIZE_BIG_INVERSE;
-        return sign(current_value) * (lut_hc_voltage[index] + slope * (abs_current_value - LUT_I_TURNING_LC - index * LUT_STEPSIZE_BIG));
+        return signf(current_value) * (lut_hc_voltage[index] + slope * (abs_current_value - LUT_I_TURNING_LC - index * LUT_STEPSIZE_BIG));
     }
 }
 void get_distorted_voltage_via_LUT_indexed(REAL ial, REAL ibe, REAL *ualbe_dist)
@@ -286,14 +286,14 @@ void get_distorted_voltage_via_LUT(REAL ual, REAL ube, REAL ial, REAL ibe, REAL 
 /* Chen 2021 Linear Approximation of U-I Curve */
 REAL trapezoidal_voltage_by_phase_current(REAL current, REAL V_plateau, REAL I_plateau, REAL oneOnver_I_plateau)
 {
-    REAL abs_current = fabs(current);
+    REAL abs_current = fabsf(current);
     if (abs_current < I_plateau)
     {
         return current * V_plateau * oneOnver_I_plateau;
     }
     else
     {
-        return sign(current) * V_plateau;
+        return signf(current) * V_plateau;
     }
 }
 
@@ -446,7 +446,7 @@ void Modified_ParkSul_Compensation(void)
     INV.I17_plus_I19_LPF = lpf1_inverter(INV.I17_plus_I19, INV.I17_plus_I19_LPF);
 
     // The adjusting of theta_t via 6th harmonic magnitude
-    INV.theta_trapezoidal += CL_TS * INV.gamma_theta_trapezoidal // *fabs((*CTRL).i->cmd_speed_rpm)
+    INV.theta_trapezoidal += CL_TS * INV.gamma_theta_trapezoidal // *fabsf((*CTRL).i->cmd_speed_rpm)
                              * (INV.I5_plus_I7_LPF + 0 * INV.I11_plus_I13_LPF + 0 * INV.I17_plus_I19_LPF);
     // 两种方法选其一：第一种可用于sensorless系统。
     if (FALSE)
@@ -481,7 +481,7 @@ void Modified_ParkSul_Compensation(void)
     // }
 
     // /* Adaptive Vsat based on position error */
-    // INV.Vsat += CL_TS * INV.gain_Vsat * sinf(ENC.theta_d_elec - ELECTRICAL_POSITION_FEEDBACK) * sign(ENC.omg_elec);
+    // INV.Vsat += CL_TS * INV.gain_Vsat * sinf(ENC.theta_d_elec - ELECTRICAL_POSITION_FEEDBACK) * signf(ENC.omg_elec);
     // if (INV.Vsat>15){
     //     INV.Vsat = 15;
     // }else if(INV.Vsat<0){
@@ -492,7 +492,7 @@ void Modified_ParkSul_Compensation(void)
     /* TO use this, you muast have a large enough stator current */
     /* TO use this, you muast have a large enough stator current */
     /* TO use this, you muast have a large enough stator current */
-    INV.Vsat += CL_TS * INV.gain_Vsat * sinf(ENC.theta_d_elec - PMSM_ELECTRICAL_POSITION_FEEDBACK) * sign(ENC.varOmega);
+    INV.Vsat += CL_TS * INV.gain_Vsat * sinf(ENC.theta_d_elec - PMSM_ELECTRICAL_POSITION_FEEDBACK) * signf(ENC.varOmega);
     if (INV.Vsat > 15)
     {
         INV.Vsat = 15;
@@ -512,9 +512,9 @@ void Modified_ParkSul_Compensation(void)
 #elif INVERTER_NONLINEARITY == 1 // [ModelSul96]
     REAL TM = _Toff - _Ton - _Tdead + _Tcomp; // Sul1996
     REAL Udist = (_Udc * TM * CL_TS_INVERSE - _Vce0 - _Vd0) / 6.0;
-    INV.Vsat = 3 * fabs(Udist); // 4 = 2*sign(ia) - sign(ib) - sign(ic) when ia is positive and ib/ic is negative
-                                // but Vsat is phase voltage distortion maximum, so we need to add a zero sequence voltage of Udist*(sign(ia) + sign(ib) + sign(ic)),
-                                // so, it is 3 * |Udist| as Vsat.
+    INV.Vsat = 3 * fabsf(Udist); // 4 = 2*signf(ia) - signf(ib) - signf(ic) when ia is positive and ib/ic is negative
+                                 // but Vsat is phase voltage distortion maximum, so we need to add a zero sequence voltage of Udist*(signf(ia) + signf(ib) + signf(ic)),
+                                 // so, it is 3 * |Udist| as Vsat.
     static int bool_printed = FALSE;
     if (bool_printed == FALSE)
     {
@@ -615,11 +615,11 @@ void Online_PAA_Based_Compensation(void)
     // if((*CTRL).timebase>35){
     //     INV.gamma_I_plateau = 0.0;
     // }
-    INV.sig_a3 -= CL_TS * INV.gamma_a3 // *fabs((*CTRL).i->cmd_speed_rpm)
+    INV.sig_a3 -= CL_TS * INV.gamma_a3 // *fabsf((*CTRL).i->cmd_speed_rpm)
                   * (INV.w6 * INV.I5_plus_I7_LPF + INV.w12 * INV.I11_plus_I13_LPF + INV.w18 * INV.I17_plus_I19_LPF);
 
-    // (*CTRL).s->Motor_or_Generator = sign((*CTRL).i->omg_elec * (*CTRL).i->cmd_iDQ[1]);
-    // (*CTRL).s->Motor_or_Generator = sign((*CTRL).i->cmd_omg_elec);
+    // (*CTRL).s->Motor_or_Generator = signf((*CTRL).i->omg_elec * (*CTRL).i->cmd_iDQ[1]);
+    // (*CTRL).s->Motor_or_Generator = signf((*CTRL).i->cmd_omg_elec);
 
     /* Online Update Sigmoid a2 */
     if ((*CTRL).timebase > 2)
@@ -650,7 +650,7 @@ void Online_PAA_Based_Compensation(void)
     //     INV.gamma_I_plateau = 0.0;
     // }
     // INV.I_plateau += CL_TS * 0 * INV.gamma_I_plateau \
-    //                         // *fabs((*CTRL).i->cmd_speed_rpm)
+    //                         // *fabsf((*CTRL).i->cmd_speed_rpm)
     //                         *(    1*INV.I5_plus_I7_LPF
     //                             + 0*INV.I11_plus_I13_LPF
     //                             + 0*INV.I17_plus_I19_LPF
@@ -690,7 +690,6 @@ void Online_PAA_Based_Compensation(void)
     // (*CTRL).ual + INV.ual_comp, (*CTRL).ube + INV.ube_comp 是补偿后的电压！
 }
 
-
 // /* --------------------------下面的是从 pmsm_controller.c 挪过来的公用逆变器死区电压辨识&补偿代码 */
 //     #define LUT_N_LC  70
 //     #define LUT_N_HC  29
@@ -704,7 +703,7 @@ void Online_PAA_Based_Compensation(void)
 //     #define LUT_I_TURNING_HC 4.241972621463768
 //     #define V_PLATEAU 7.43925517763064
 // REAL lookup_compensation_voltage_indexed(REAL current_value){
-//     REAL abs_current_value = fabs(current_value);
+//     REAL abs_current_value = fabsf(current_value);
 
 //     if(abs_current_value < LUT_I_TURNING_LC){
 //         REAL float_index = abs_current_value * LUT_STEPSIZE_SMALL_INVERSE;
@@ -714,7 +713,7 @@ void Online_PAA_Based_Compensation(void)
 //             slope = (lut_hc_voltage[0] - lut_lc_voltage[index]) * LUT_STEPSIZE_SMALL_INVERSE;
 //         else
 //             slope = (lut_lc_voltage[index+1] - lut_lc_voltage[index]) * LUT_STEPSIZE_SMALL_INVERSE;
-//         return sign(current_value) * (lut_lc_voltage[index] + slope * (abs_current_value - index*LUT_STEPSIZE_SMALL));
+//         return signf(current_value) * (lut_lc_voltage[index] + slope * (abs_current_value - index*LUT_STEPSIZE_SMALL));
 //     }else{
 //         REAL float_index = (abs_current_value - LUT_I_TURNING_LC) * LUT_STEPSIZE_BIG_INVERSE;
 //         int index = (int)float_index; // THIS IS A RELATIVE INDEX!
@@ -723,7 +722,7 @@ void Online_PAA_Based_Compensation(void)
 //             return V_PLATEAU;
 //         else
 //             slope = (lut_hc_voltage[index+1] - lut_hc_voltage[index]) * LUT_STEPSIZE_BIG_INVERSE;
-//         return sign(current_value) * (lut_hc_voltage[index] + slope * (abs_current_value - LUT_I_TURNING_LC - index*LUT_STEPSIZE_BIG));
+//         return signf(current_value) * (lut_hc_voltage[index] + slope * (abs_current_value - LUT_I_TURNING_LC - index*LUT_STEPSIZE_BIG));
 //     }
 // }
 // int test_lookup_compensation_voltage_indexed(){
