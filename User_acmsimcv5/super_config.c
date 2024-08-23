@@ -20,7 +20,7 @@ void init_d_sim() {
     d_sim.FOC.delta = 20.0;
     d_sim.FOC.CLBW_HZ = 400.0;
     d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation = FALSE;
-    d_sim.FOC.VL_EXE_PER_CL_EXE = 5;
+    d_sim.FOC.VL_EXE_PER_CL_EXE = 1;
 
     d_sim.CL.SERIES_KP_D_AXIS = 0.4775220833456486;
     d_sim.CL.SERIES_KI_D_AXIS = 231.578947368421;
@@ -31,12 +31,13 @@ void init_d_sim() {
     d_sim.VL.SERIES_KP = 0.7370474942872957;
     d_sim.VL.SERIES_KI = 6.283185307179586;
     d_sim.VL.LIMIT_OVERLOAD_FACTOR = 1.0;
+    d_sim.VL.EXE_PER_CL_EXE = 1;
 
-    d_sim.user.who_is_user = 2023231060;
-    d_sim.user.mode_select_synchronous_motor = 41;
+    d_sim.user.who_is_user = 224;
+    d_sim.user.mode_select_synchronous_motor = 4;
     d_sim.user.mode_select_induction_motor = 32;
     d_sim.user.bezier_NUMBER_OF_STEPS = 5000;
-    d_sim.user.bezier_order = 4;
+    d_sim.user.bezier_order = 5;
     d_sim.user.bezier_order_current = 0;
     d_sim.user.bezier_max_p_value = 0.0;
     d_sim.user.bezier_rpm_maximum_effective_speed_error = 500.0;
@@ -50,5 +51,6 @@ void init_d_sim() {
     d_sim.user.bool_apply_WC_tunner_for_speed_loop = TRUE;
     d_sim.user.bool_sweeping_frequency_for_speed_loop = TRUE;
     d_sim.user.Null_D_Control = TRUE;
+    d_sim.user.verbose = FALSE;
 
 }

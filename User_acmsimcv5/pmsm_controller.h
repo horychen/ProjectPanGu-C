@@ -253,6 +253,7 @@ typedef struct {
         // int Seletc_exp_operation; // for exp
         int flag_auto_id_cmd; // for slow reversal
         int FLAG_INVERTER_NONLINEARITY_COMPENSATION;
+        int yzk_debug;
     // Select Algorithm
         // int Select_algorithm;
         REAL omg_elec; // updated in observers

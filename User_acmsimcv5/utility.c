@@ -116,7 +116,7 @@ double difference_between_two_angles(double first, double second){
 #if PC_SIMULATION == TRUE
     // 写变量meta-data到文件
     void write_header_to_file(FILE *fw){
-        printf("\tData @ %s\n", DATA_FILE_NAME);
+        if(d_sim.user.verbose)printf("\tData @ %s\n", DATA_FILE_NAME);
 
         fprintf(fw, DATA_LABELS);
 
@@ -156,6 +156,7 @@ double difference_between_two_angles(double first, double second){
         // }else{
         //     printf("\t[utility.c] Sensored control.\n");
         // }
+        if(d_sim.init.Rreq>0.0)printf("\t[im_controller.c] Marino's alpha: %g in [%g, %g]?\n", marino.xAlpha, marino.xAlpha_min, marino.xAlpha_Max);
         printf("\t[utility.c] Speed series PI:   Kp=%.3f, Ki=%.6f, limit=%.1f A\n", PID_Speed->Kp, d_sim.VL.SERIES_KI, PID_Speed->OutLimit);
         printf("\t[utility.c] Current series PI: Kp=%.3f, Ki=%.6f, limit=%.1f V\n", PID_iQ->Kp, d_sim.CL.SERIES_KI_Q_AXIS, PID_iQ->OutLimit);
         printf("\tPID_Speed.Kp = %f\n", PID_Speed->Kp);
