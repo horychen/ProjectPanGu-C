@@ -253,6 +253,8 @@ void FOC_with_vecocity_control(REAL theta_d_elec,
     (*CTRL).s->sinT = sin(theta_d_elec);
     iDQ[0] = AB2M(iAB[0], iAB[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
     iDQ[1] = AB2T(iAB[0], iAB[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
+    (*CTRL).i->iDQ[0] = iDQ[0];
+    (*CTRL).i->iDQ[1] = iDQ[1];
 
     /* 更新依赖于dq轴电流的物理量 */
     REAL Tem     = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * (MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * iDQ[0]) * iDQ[1];     // 转矩 For luenberger position observer for HFSI

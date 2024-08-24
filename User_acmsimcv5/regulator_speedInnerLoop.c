@@ -3,6 +3,7 @@
 // int wubo_debug[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
 
 #define WUBO_INCREMENTAL_PID TRUE
+#define WUBO_INCREMENTAL_SPEED_PID TRUE
 #define DYNAMIC_CLAMPING_FOR_KFB FALSE
 
 #if WUBO_INCREMENTAL_PID
@@ -17,115 +18,17 @@
 
         // 控制器的限幅需要写在OutPrev幅值之后，否则电流环idq暂态跟踪误差会达到50%左右
         // 20240812：理论分析，限幅放在之前之后貌似没有区别，但仿真结果确实不同
-        // if(r->OutPrev> r->OutLimit)
-        //     r->OutPrev= r->OutLimit;
-        // else if(r->OutPrev< -r->OutLimit)
-        //     r->OutPrev= -r->OutLimit;
+        #if 1
+            if(r->OutPrev> r->OutLimit)
+                r->OutPrev= r->OutLimit;
+            else if(r->OutPrev< -r->OutLimit)
+                r->OutPrev= -r->OutLimit;
+        #endif  
         if(r->Out > r->OutLimit)
             r->Out = r->OutLimit;
         else if(r->Out < -r->OutLimit)
             r->Out = -r->OutLimit;
     }
-
-    #if 0
-        void InnerLoopFeedback_calc(st_pid_regulator *r){
-            #define DYNAMIC_CLAPMING FALSE
-            #define DYNAMIC_CLAPMING_WUBO TRUE
-
-            // 误差
-            r->Err = r->Ref - r->Fbk;
-            // 比例
-            r->P_Term = r->Err * r->Kp;
-            // 积分
-            r->I_Term += r->Err * r->Ki_CODE;
-            r->OutNonSat = r->I_Term;
-            // Inner Loop
-            r->KFB_Term = r->Fbk * r->KFB;
-
-            // 添加积分饱和特性
-            #if DYNAMIC_CLAPMING
-                #if DYNAMIC_CLAPMING_WUBO
-                    // dynamic clamping wubo
-                    if( r->I_Term > r->OutLimit - r->P_Term)
-                        r->I_Term = r->OutLimit - r->P_Term;
-                    else if( r->I_Term < -r->OutLimit + r->P_Term)
-                        r->I_Term =      -r->OutLimit + r->P_Term; // OutLimit is a positive constant
-                #else
-                    // dynamic clamping
-                    if( r->I_Term > r->OutLimit - r->Out)
-                        r->I_Term = r->OutLimit - r->Out;
-                    else if( r->I_Term < -r->OutLimit + r->Out)
-                        r->I_Term =      -r->OutLimit + r->Out; // OutLimit is a positive constant
-                #endif
-            #else
-                // static clamping
-                if( r->I_Term > r->OutLimit)
-                    r->I_Term = r->OutLimit; 
-                else if( r->I_Term < -r->OutLimit)
-                    r->I_Term = -r->OutLimit;
-            #endif
-
-            // 微分
-            // r->D_Term = r->Kd * (r->Err - r->ErrPrev);
-
-            // 输出
-            r->Out = r->I_Term + r->P_Term - 0.15 * r->KFB_Term; // + r->D_Term
-            r->OutNonSat += r->P_Term; // + r->D_Term
-
-            // 输出限幅
-            if(r->Out > r->OutLimit)
-                r->Out = r->OutLimit;
-            else if(r->Out < -r->OutLimit)
-                r->Out = -r->OutLimit;
-
-            // 当前步误差赋值为上一步误差
-            r->ErrPrev = r->Err;
-            // 记录饱和输出和未饱和输出的差
-            r->SatDiff = r->Out - r->OutNonSat;
-        }
-    #else
-        void InnerLoopFeedback_calc(st_pid_regulator *r){
-
-            r->Err = r->Ref - r->Fbk;
-            r->Out = r->OutPrev + \
-                    r->Kp * ( r->Err - r->ErrPrev ) \
-                    + r->Ki_CODE * r->Err; // \
-                    // - r->KFB_Term;
-
-            r->ErrPrev = r->Err; 
-            r->OutPrev = r->Out;
-
-            #if 1
-                r->KFB_Term = 1.0 * r->KFB * r->Fbk;
-            #else
-                r->KFB_Term = r->KFB_Term_Prev + r->KFB * ( r->Fbk - r->FbkPrev );
-                r->FbkPrev       = r->Fbk;
-                r->KFB_Term_Prev = r->KFB_Term;
-            #endif
-
-            #if DYNAMIC_CLAMPING_FOR_KFB
-                r->P_Term = r->Err * r->Kp;
-                if(r->KFB_Term > r->OutLimit - r->P_Term)
-                    r->KFB_Term = r->OutLimit - r->P_Term;
-                else if(r->KFB_Term < -r->OutLimit + r->P_Term)
-                    r->KFB_Term = -r->OutLimit + r->P_Term;
-            #endif
-
-            r->Out = r->Out - r->KFB_Term;
-
-            // 控制器的限幅需要写在OutPrev幅值之后，否则电流环idq暂态跟踪误差会达到50%左右
-            // 20240812：理论分析，限幅放在之前之后貌似没有区别，但仿真结果确实不同
-            if(r->OutPrev> r->OutLimit+r->KFB_Term)
-                r->OutPrev= r->OutLimit+r->KFB_Term;
-            else if(r->OutPrev< -r->OutLimit+r->KFB_Term)
-                r->OutPrev= -r->OutLimit+r->KFB_Term;
-            // # VERY BUGGY if you use incremental to implement inner loop 因为要对 OutPrev 限幅才对！
-            if(r->Out > r->OutLimit)
-                r->Out = r->OutLimit;
-            else if(r->Out < -r->OutLimit)
-                r->Out = -r->OutLimit;
-        }
-    #endif
 #else
     void wubo_PID_calc(st_pid_regulator *r){
         #define DYNAMIC_CLAPMING TRUE
@@ -184,71 +87,108 @@
     }
 #endif
 
-void _user_wubo_WC_Tuner(){
-    // 吴波用：
-    if(debug.who_is_user == USER_WB){
-        PID_Speed->calc = (void (*)(Uint32)) InnerLoopFeedback_calc;
+/* Speed Loop Discretized Controller*/
+#if WUBO_INCREMENTAL_SPEED_PID
+    void InnerLoopFeedback_calc(st_pid_regulator *r){
+
+        r->Err = r->Ref - r->Fbk;
+        r->Out = r->OutPrev + \
+                r->Kp * ( r->Err - r->ErrPrev ) \
+                + r->Ki_CODE * r->Err; // \
+                // - r->KFB_Term;
+
+        r->ErrPrev = r->Err; 
+        r->OutPrev = r->Out;
+
+        #if 1
+            r->KFB_Term = 1.0 * r->KFB * r->Fbk;
+        #else
+            r->KFB_Term = r->KFB_Term_Prev + r->KFB * ( r->Fbk - r->FbkPrev );
+            r->FbkPrev       = r->Fbk;
+            r->KFB_Term_Prev = r->KFB_Term;
+        #endif
+
+        #if DYNAMIC_CLAMPING_FOR_KFB
+            r->P_Term = r->Err * r->Kp;
+            if(r->KFB_Term > r->OutLimit - r->P_Term)
+                r->KFB_Term = r->OutLimit - r->P_Term;
+            else if(r->KFB_Term < -r->OutLimit + r->P_Term)
+                r->KFB_Term = -r->OutLimit + r->P_Term;
+        #endif
+
+        r->Out = r->Out - r->KFB_Term;
+
+        // 控制器的限幅需要写在OutPrev幅值之后，否则电流环idq暂态跟踪误差会达到50%左右
+        // 20240812：理论分析，限幅放在之前之后貌似没有区别，但仿真结果确实不同
+        // 20240819: 在OutPrev的输出上限中加入KFB_Term，可以确保积分作用cover掉KFB_Term在电机机械方程中对速度带来的稳态误差
+        if(r->OutPrev> r->OutLimit+r->KFB_Term)
+            r->OutPrev= r->OutLimit+r->KFB_Term;
+        else if(r->OutPrev< -r->OutLimit+r->KFB_Term)
+            r->OutPrev= -r->OutLimit+r->KFB_Term;
+        // # VERY BUGGY if you use incremental to implement inner loop 因为要对 OutPrev 限幅才对！
+        if(r->Out > r->OutLimit)
+            r->Out = r->OutLimit;
+        else if(r->Out < -r->OutLimit)
+            r->Out = -r->OutLimit;
     }
+#else
+    void InnerLoopFeedback_calc(st_pid_regulator *r){
+        #define DYNAMIC_CLAPMING FALSE
+        #define DYNAMIC_CLAPMING_WUBO TRUE
 
-    REAL zeta = d_sim.user.zeta;
-    REAL omega_n = d_sim.user.omega_n;
-    REAL max_CLBW_PER_min_CLBW = d_sim.user.max_CLBW_PER_min_CLBW;
-    REAL Ld = d_sim.init.Ld;
-    REAL Lq = d_sim.init.Lq;
-    REAL R = d_sim.init.R;
-    REAL Js = d_sim.init.Js;
-    REAL npp = d_sim.init.npp;
-    REAL KE = d_sim.init.KE;
-    
-    // motor parameters
-    REAL KT = 1.5 * npp * KE;  // torque constant
-    REAL K0 = KT / Js;  // motor constant
+        // 误差
+        r->Err = r->Ref - r->Fbk;
+        // 比例
+        r->P_Term = r->Err * r->Kp;
+        // 积分
+        r->I_Term += r->Err * r->Ki_CODE;
+        r->OutNonSat = r->I_Term;
+        // Inner Loop
+        r->KFB_Term = r->Fbk * r->KFB;
 
-    REAL max_CLBW = zeta * omega_n * 4;
-    REAL min_CLBW = zeta * omega_n * 2;
+        // 添加积分饱和特性
+        #if DYNAMIC_CLAPMING
+            #if DYNAMIC_CLAPMING_WUBO
+                // dynamic clamping wubo
+                if( r->I_Term > r->OutLimit - r->P_Term)
+                    r->I_Term = r->OutLimit - r->P_Term;
+                else if( r->I_Term < -r->OutLimit + r->P_Term)
+                    r->I_Term =      -r->OutLimit + r->P_Term; // OutLimit is a positive constant
+            #else
+                // dynamic clamping
+                if( r->I_Term > r->OutLimit - r->Out)
+                    r->I_Term = r->OutLimit - r->Out;
+                else if( r->I_Term < -r->OutLimit + r->Out)
+                    r->I_Term =      -r->OutLimit + r->Out; // OutLimit is a positive constant
+            #endif
+        #else
+            // static clamping
+            if( r->I_Term > r->OutLimit)
+                r->I_Term = r->OutLimit; 
+            else if( r->I_Term < -r->OutLimit)
+                r->I_Term = -r->OutLimit;
+        #endif
 
-    // 通过一个小于1的比例系数来选取电流环带宽
-    REAL FOC_CLBW = max_CLBW_PER_min_CLBW * max_CLBW +  (1-max_CLBW_PER_min_CLBW) * min_CLBW;
-    // printf("FOC_CLBW = %f\n", FOC_CLBW);
+        // 微分
+        // r->D_Term = r->Kd * (r->Err - r->ErrPrev);
 
-    REAL Series_D_KP = FOC_CLBW * Ld;
-    REAL Series_D_KI = R / Ld;
-    REAL Series_Q_KP = FOC_CLBW * Lq;
-    REAL Series_Q_KI = R / Lq;
-    REAL Series_Speed_KP = omega_n * omega_n / (FOC_CLBW * K0);
-    REAL Series_Speed_KFB = (2*zeta*omega_n*FOC_CLBW - 4*zeta*zeta*omega_n*omega_n) / (FOC_CLBW*K0);
-    REAL Series_Speed_KI = ( FOC_CLBW - (sqrt(FOC_CLBW * FOC_CLBW - 4*FOC_CLBW*K0*Series_Speed_KFB)) ) * 0.5;
+        // 输出
+        r->Out = r->I_Term + r->P_Term - 0.15 * r->KFB_Term; // + r->D_Term
+        r->OutNonSat += r->P_Term; // + r->D_Term
 
+        // 输出限幅
+        if(r->Out > r->OutLimit)
+            r->Out = r->OutLimit;
+        else if(r->Out < -r->OutLimit)
+            r->Out = -r->OutLimit;
 
-    PID_iD->Kp = Series_D_KP;
-    PID_iQ->Kp = Series_Q_KP;
-    PID_Speed->Kp = Series_Speed_KP;
-
-    PID_iD->Ki_CODE = Series_D_KI * Series_D_KP * CL_TS;
-    PID_iQ->Ki_CODE = Series_Q_KI * Series_Q_KP * CL_TS;
-    PID_Speed->Ki_CODE = Series_Speed_KI * Series_Speed_KP * VL_TS;
-    PID_Speed->KFB = Series_Speed_KFB;
-
-    PID_iD->OutLimit  = 0.5773 * d_sim.CL.LIMIT_DC_BUS_UTILIZATION * d_sim.init.Vdc;
-    PID_iQ->OutLimit  = 0.5773 * d_sim.CL.LIMIT_DC_BUS_UTILIZATION * d_sim.init.Vdc;
-    PID_Speed->OutLimit = d_sim.VL.LIMIT_OVERLOAD_FACTOR * d_sim.init.IN;
-
-    #if PC_SIMULATION == TRUE
-        printf("Series_D_KP = %f\n", Series_D_KP);
-        printf("Series_D_KI = %f\n", Series_D_KI);
-        printf("Series_Q_KP = %f\n", Series_Q_KP);
-        printf("Series_Q_KI = %f\n", Series_Q_KI);
-        printf("Series_Speed_KP = %f\n", Series_Speed_KP);
-        printf("Series_Speed_KFB = %f\n", Series_Speed_KFB);
-        printf("Series_Speed_KI = %f\n", Series_Speed_KI);
-        if (FOC_CLBW - 4 * K0 * PID_Speed->KFB < 0){
-            printf("can not do zero-pole cancellation\n");
-        }else{
-            printf(">>> Zero-pole cancellation can be done <<<\n");
-        }
-    #endif
-}
-
+        // 当前步误差赋值为上一步误差
+        r->ErrPrev = r->Err;
+        // 记录饱和输出和未饱和输出的差
+        r->SatDiff = r->Out - r->OutNonSat;
+    }
+    }
+#endif
 
 void _user_controller_wubo(){
 
@@ -334,10 +274,80 @@ void _user_controller_wubo(){
     main_inverter_voltage_command(TRUE);
 }
 
+
+void _user_wubo_WC_Tuner(){
+    // 吴波用：
+    if(debug.who_is_user == USER_WB){
+        PID_Speed->calc = (void (*)(Uint32)) InnerLoopFeedback_calc;
+        PID_iD->calc = (void (*)(Uint32)) wubo_PID_calc;
+        PID_iQ->calc = (void (*)(Uint32)) wubo_PID_calc;
+    }
+
+    REAL zeta = d_sim.user.zeta;
+    REAL omega_n = d_sim.user.omega_n;
+    REAL max_CLBW_PER_min_CLBW = d_sim.user.max_CLBW_PER_min_CLBW;
+    REAL Ld = d_sim.init.Ld;
+    REAL Lq = d_sim.init.Lq;
+    REAL R = d_sim.init.R;
+    REAL Js = d_sim.init.Js;
+    REAL npp = d_sim.init.npp;
+    REAL KE = d_sim.init.KE;
+    
+    // motor parameters
+    REAL KT = 1.5 * npp * KE;  // torque constant
+    REAL K0 = KT / Js;  // motor constant
+
+    REAL max_CLBW = zeta * omega_n * 4;
+    REAL min_CLBW = zeta * omega_n * 2;
+
+    // 通过一个小于1的比例系数来选取电流环带宽
+    REAL FOC_CLBW = max_CLBW_PER_min_CLBW * max_CLBW +  (1-max_CLBW_PER_min_CLBW) * min_CLBW;
+    // printf("FOC_CLBW = %f\n", FOC_CLBW);
+
+    REAL Series_D_KP = FOC_CLBW * Ld;
+    REAL Series_D_KI = R / Ld;
+    REAL Series_Q_KP = FOC_CLBW * Lq;
+    REAL Series_Q_KI = R / Lq;
+    REAL Series_Speed_KP = omega_n * omega_n / (FOC_CLBW * K0);
+    REAL Series_Speed_KFB = (2*zeta*omega_n*FOC_CLBW - 4*zeta*zeta*omega_n*omega_n) / (FOC_CLBW*K0);
+    REAL Series_Speed_KI = ( FOC_CLBW - (sqrt(FOC_CLBW * FOC_CLBW - 4*FOC_CLBW*K0*Series_Speed_KFB)) ) * 0.5;
+
+
+    PID_iD->Kp = Series_D_KP;
+    PID_iQ->Kp = Series_Q_KP;
+    PID_Speed->Kp = Series_Speed_KP;
+
+    PID_iD->Ki_CODE = Series_D_KI * Series_D_KP * CL_TS;
+    PID_iQ->Ki_CODE = Series_Q_KI * Series_Q_KP * CL_TS;
+    PID_Speed->Ki_CODE = Series_Speed_KI * Series_Speed_KP * VL_TS;
+    PID_Speed->KFB = Series_Speed_KFB;
+
+    PID_iD->OutLimit  = 0.5773 * d_sim.CL.LIMIT_DC_BUS_UTILIZATION * d_sim.init.Vdc;
+    PID_iQ->OutLimit  = 0.5773 * d_sim.CL.LIMIT_DC_BUS_UTILIZATION * d_sim.init.Vdc;
+    PID_Speed->OutLimit = d_sim.VL.LIMIT_OVERLOAD_FACTOR * d_sim.init.IN;
+
+    #if PC_SIMULATION == TRUE
+        printf("Series_D_KP = %f\n", Series_D_KP);
+        printf("Series_D_KI = %f\n", Series_D_KI);
+        printf("Series_Q_KP = %f\n", Series_Q_KP);
+        printf("Series_Q_KI = %f\n", Series_Q_KI);
+        printf("Series_Speed_KP = %f\n", Series_Speed_KP);
+        printf("Series_Speed_KFB = %f\n", Series_Speed_KFB);
+        printf("Series_Speed_KI = %f\n", Series_Speed_KI);
+        if (FOC_CLBW - 4 * K0 * PID_Speed->KFB < 0){
+            printf("can not do zero-pole cancellation\n");
+        }else{
+            printf(">>> Zero-pole cancellation can be done <<<\n");
+        }
+    #endif
+}
+
 void _user_wubo_WC_Tuner_Online(){
     // 吴波用：
     if(debug.who_is_user == USER_WB){
         PID_Speed->calc = (void (*)(Uint32)) InnerLoopFeedback_calc;
+        PID_iD->calc = (void (*)(Uint32)) wubo_PID_calc;
+        PID_iQ->calc = (void (*)(Uint32)) wubo_PID_calc;
     }
 
     /* Tuned by debug */
@@ -402,9 +412,12 @@ void _user_wubo_WC_Tuner_Online(){
 }
 
 void _user_wubo_TI_Tuner_Online(){
-    if(debug.who_is_user == USER_WB2){
-        PID_Speed->calc = (void (*)(Uint32)) wubo_PID_calc;
+    if(debug.who_is_user == USER_WB){
+        PID_Speed->calc = (void (*)(Uint32)) InnerLoopFeedback_calc;
+        PID_iD->calc = (void (*)(Uint32)) wubo_PID_calc;
+        PID_iQ->calc = (void (*)(Uint32)) wubo_PID_calc;
     }
+
     /* Tuned by debug */
     REAL CLBW_HZ = debug.CLBW_HZ;
     REAL delta = debug.delta;
