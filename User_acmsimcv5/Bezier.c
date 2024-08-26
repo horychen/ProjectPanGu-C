@@ -266,7 +266,12 @@ void control_output(st_pid_regulator *r, BezierController *BziController)
         error = copysignf(BziController->points[BziController->order].x, error);
     }
     // #if PC_SIMULATION printf("error after Bezier: %lf\n", error); #endif
-    REAL out = find_y_for_given_x(fabsf(error), BziController);
+    REAL out;
+    #ifdef Bezier_table
+    out = map_out_for_given_t(map_t_for_given_x(fabsf(error)));
+    #else
+    out = find_y_for_given_x(fabsf(error), BziController);
+    #endif
     r->OutPrev = r->Out;
     // r->Out = out*( error / (error + 1e-7) );
     r->Out = copysignf(out, error);
