@@ -9,7 +9,8 @@ import scipy
 import itertools
 import sympy
 import time
-SHOW_BEZIER = False
+SHOW_BEZIER = True
+# SHOW_BEZIER = False
 class BezierController:
     def __init__(self, points, terminal):
         self.points = points
@@ -87,8 +88,8 @@ class BezierController:
         x_values = [self.bezier_x(t) for t in t_values]
         y_values = [self.bezier_y(t) for t in t_values]
         plt.plot(x_values, y_values, label='output')
-        plt.legend()
-        plt.plot(xx, yx)
+        # plt.legend()
+        # plt.plot(xx, yx)
         plt.show()
         epsilon = 1e-7
         plt.plot(x_values, np.array(y_values)/(np.array(x_values) + epsilon), '--.', color='k', label='gain')
@@ -116,7 +117,7 @@ class BezierController:
 
 def generate_map():
     MAP_SIZE = 200
-    upper_x = 379.7836670190831
+    upper_x = BEZIER_POINTS[-1][0]
     upper_i = 1.0
     map_x = []
     for x in range(MAP_SIZE):
@@ -160,8 +161,13 @@ def generate_map():
         f.write(f'{upper_i} ')
         f.write('\n};\n')
 
-BEZIER_POINTS = [(0, 0),(167.19914134825365, 44.6915324901932),(284.6302061302766, 79.7836670190831),(379.7836670190831, 143.94129962856175)]
+BEZIER_POINTS = []
+x_tmp = [0, 13.56675106497797, 17.756252135875275, 0.656028337190837, 71.84660306428572, 391.3541988019523]
+y_tmp = [0, 0.3927496750420234, 7.4062535504606775, 11.734194267544186, 2.3169646206845327, 16.786731372207594]
 if __name__ == '__main__':
+    for x, y in zip(x_tmp, y_tmp):
+        BEZIER_POINTS.append((x, y))
+    print(BEZIER_POINTS)
     bezier_controller = BezierController(BEZIER_POINTS, BEZIER_POINTS[-1][1])
     generate_map()
     

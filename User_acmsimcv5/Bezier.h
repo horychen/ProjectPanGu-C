@@ -32,7 +32,7 @@ extern BezierController BzController;
 #endif
 #define Bezier_table
 #ifdef Bezier_table
-const int MAP_N = 200;
+#define MAP_N 200
 typedef struct {
     REAL y[MAP_N];
     REAL x[MAP_N];
