@@ -12,16 +12,6 @@
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
-const REAL xtol = 1e-4;
-const REAL rtol = 1e-4;
-const int32 iter = 70;
-
-REAL xblk = 0., fpre, fcur, fblk = 0., spre = 0., scur = 0., sbis;
-/* the tolerance is 2*delta */
-REAL delta;
-REAL stry, dpre, dblk;
-int i;
-
 typedef struct
 {
     int funcalls;

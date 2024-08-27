@@ -29,6 +29,15 @@
   xa and xb and resort to bisection.
 
 */
+const REAL xtol = 1e-4;
+const REAL rtol = 1e-4;
+const int32 iter = 70;
+
+REAL xblk = 0., fpre, fcur, fblk = 0., spre = 0., scur = 0., sbis;
+/* the tolerance is 2*delta */
+REAL delta;
+REAL stry, dpre, dblk;
+int i;
 
 REAL brentq(callback_type f, const REAL xa, const REAL xb, scipy_zeros_info *solver_stats, void *func_data_param)
 {
