@@ -108,6 +108,13 @@ void EUREKA_GPIO_SETUP(){
     GPIO_SetupPinMux(137, GPIO_MUX_CPU2, 6);
     GPIO_SetupPinOptions(137, GPIO_OUTPUT, GPIO_PUSHPULL);
 
+    //GPIO39 - SCIRX-C
+    GPIO_SetupPinMux(39, GPIO_MUX_CPU2, 5);
+    GPIO_SetupPinOptions(39, GPIO_INPUT, GPIO_PUSHPULL);
+    //GPIO38 - SCITX-C
+    GPIO_SetupPinMux(38, GPIO_MUX_CPU2, 5);
+    GPIO_SetupPinOptions(38, GPIO_OUTPUT, GPIO_PUSHPULL);
+    
     // // GPIO31 - 485-SCIB-WE-(use SCICTX as GPIO, in UART3 pin7)
     // GPIO_SetupPinMux(31, GPIO_MUX_CPU2, 0);
     // GPIO_SetupPinOptions(31, GPIO_OUTPUT, GPIO_ASYNC);

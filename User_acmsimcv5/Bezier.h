@@ -30,6 +30,19 @@ typedef struct
 } BezierController;
 extern BezierController BzController;
 #endif
+#define Bezier_table
+#ifdef Bezier_table
+const int MAP_N = 200;
+typedef struct {
+    REAL y[MAP_N];
+    REAL x[MAP_N];
+    REAL upper;
+} Bezier_MAP_TABLE;
+
+extern Bezier_MAP_TABLE err_index_map_table;
+extern Bezier_MAP_TABLE index_out_map_table;
+
+#endif
 
 
 Point bezier(const REAL *t, const BezierController *BziController);

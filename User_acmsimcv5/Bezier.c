@@ -51,7 +51,47 @@ typedef struct
 //         return 1;
 //     return Comb(n - 1, m) + Comb(n - 1, m - 1);
 // }
+Bezier_MAP_TABLE err_index_map_table = {
+    .x = {},
+    .y = {}
+};
+Bezier_MAP_TABLE index_out_map_table= {
+    .x = {},
+    .y = {}
+};
 
+
+REAL map_t_for_given_x(REAL x){
+    if (x >= err_index_map_table.upper) {
+        return err_index_map_table.y[MAP_N - 1];
+    }
+    int index = (x / err_index_map_table.upper) * (MAP_N - 1);
+    while (err_index_map_table.x[index] > x) {
+        index--;
+    }
+    while (err_index_map_table.x[index + 1] < x) {
+        index++;
+    }
+    REAL t =  (x - err_index_map_table.x[index]) / (err_index_map_table.x[index + 1] - err_index_map_table.x[index]);
+    t = err_index_map_table.y[index] + t * (err_index_map_table.y[index + 1] - err_index_map_table.y[index]);
+    return t;
+}
+
+REAL map_out_for_given_t(REAL t){
+    if (t >= index_out_map_table.upper) {
+        return index_out_map_table.y[MAP_N - 1];
+    }
+    int index = (t / index_out_map_table.upper) * (MAP_N - 1);
+    while (index_out_map_table.x[index] > t) {
+        index--;
+    }
+    while (index_out_map_table.x[index + 1] < t) {
+        index++;
+    }
+    REAL y =  (t - index_out_map_table.x[index]) / (index_out_map_table.x[index + 1] - index_out_map_table.x[index]);
+    y = index_out_map_table.y[index] + y * (index_out_map_table.y[index + 1] - index_out_map_table.y[index]);
+    return y;
+}
 /**
  * @brief Calculates the point on the Bezier curve at the given parameter t
  * @param t The parameter value
@@ -244,7 +284,12 @@ void control_output(st_pid_regulator *r, BezierController *BziController)
         error = copysignf(BziController->points[BziController->order].x, error);
     }
     // #if PC_SIMULATION printf("error after Bezier: %lf\n", error); #endif
-    REAL out = find_y_for_given_x(fabsf(error), BziController);
+    REAL out;
+    #ifdef Bezier_table
+    out = map_out_for_given_t(map_t_for_given_x(fabsf(error)));
+    #else
+    out = find_y_for_given_x(fabsf(error), BziController);
+    #endif
     r->OutPrev = r->Out;
     // r->Out = out*( error / (error + 1e-7) );
     r->Out = copysignf(out, error);
