@@ -148,7 +148,7 @@ void write_DAC_buffer(){
         (*Axis4DAC).dac_watch[49] = CTRL_1.i->varOmega  * MECH_RAD_PER_SEC_2_RPM *0.002;
         (*Axis4DAC).dac_watch[50] = CTRL_1.i->cmd_varOmega * MECH_RAD_PER_SEC_2_RPM *0.002;
         (*Axis4DAC).dac_watch[51] = AFE_USED.theta_d *0.1;
-        (*Axis4DAC).dac_watch[52] = (*Axis4DAC).used_theta_d_elec *0.1;
+        (*Axis4DAC).dac_watch[52] = (*Axis4DAC).used_theta_d_elec *0.1; // encoder angle
 
         // ZJL IMPEDENCE CONTROL
         (*Axis4DAC).dac_watch[53] = HIP_PREV_ANGLE;
@@ -162,7 +162,8 @@ void write_DAC_buffer(){
 
         (*Axis4DAC).dac_watch[61] = INV.ual_comp *0.125;
         (*Axis4DAC).dac_watch[62] = INV.ube_comp *0.125;
-
+        (*Axis4DAC).dac_watch[63] = FE.no_sat.psi_2[0];
+        (*Axis4DAC).dac_watch[64] = FE.no_sat.psi_2[1];
 
 
         # if ENABLE_COMMISSIONING == TRUE

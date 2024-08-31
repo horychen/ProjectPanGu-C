@@ -50,7 +50,7 @@
 /* Algorithms */
 
     /* Select [Shared Flux Estimator] */
-    #define AFE_USED FE.AFEOE
+    #define AFE_USED FE.no_sat
     // #define AFE_USED FE.huwu
     // #define AFE_USED FE.htz // this is for ESO speed estimation
     // #define AFE_USED FE.picorr // this is for ESO speed estimation
@@ -77,7 +77,7 @@
 #elif /* Induction Motor Observer */ MACHINE_TYPE % 10 == 1
     // Marino05 调参 /// default: (17143), (2700.0), (1000), (1), (0)
     #define GAMMA_INV_xTL 17142.85714285714
-    #define LAMBDA_INV_xOmg 1000 // 2700.0 is too large, leading to unstable flux amplitude contorl
+    #define LAMBDA_INV_xOmg 10000 // 2700.0 is too large, leading to unstable flux amplitude contorl
     #define DELTA_INV_alpha (0*500) // 1000
     #define xAlpha_LAW_TERM_D 1 // regressor is commanded d-axis rotor current, and error is d-axis flux control error.
     #define xAlpha_LAW_TERM_Q 0 // regressor is commanded q-axis stator current, and error is q-axis flux control error.
@@ -94,8 +94,8 @@
     #define GAIN_OHTANI (5)
     #define VM_OHTANI_CORRECTION_GAIN_P (5)
     /* B *//// default: P=5, I=2.5
-    #define VM_PROPOSED_PI_CORRECTION_GAIN_P 50 // 20暂态能跟上但是又滞后，200后面暂态就跟不上了  //10 // (5)
-    #define VM_PROPOSED_PI_CORRECTION_GAIN_I 0.0 //2.5 //2  // (2.5)
+    #define VM_PROPOSED_PI_CORRECTION_GAIN_P 30// 20暂态能跟上但是又滞后，200后面暂态就跟不上了  //10 // (5)
+    #define VM_PROPOSED_PI_CORRECTION_GAIN_I 80000//2.5 //2  // (2.5)
     /* C *//// default: P=0.125*5, I=0.125*2.5, KCM=0
     #define OUTPUT_ERROR_CLEST_GAIN_KP (0.125*5)
     #define OUTPUT_ERROR_CLEST_GAIN_KI (0.125*2.5)
@@ -160,12 +160,14 @@
 #define VL_SERIES_KI_CODE (VL_SERIES_KI*VL_SERIES_KP*VL_TS)
 #define SPEED_LOOP_LIMIT_AMPERE       (1 * d_sim.init.npp) // (1.0*1.414*INIT_IN)
 
-
-    // #define MOTOR_RATED_TORQUE ( MOTOR_RATED_POWER_WATT / (MOTOR_RATED_SPEED_RPM/60.0*2*3.1415926) )
-    // #define MOTOR_TORQUE_CONSTANT ( MOTOR_RATED_TORQUE / (INIT_IN*1.414) )
-    // #define MOTOR_BACK_EMF_CONSTANT ( MOTOR_TORQUE_CONSTANT / 1.5 / INIT_NPP )
-    // #define MOTOR_BACK_EMF_CONSTANT_mV_PER_RPM ( MOTOR_BACK_EMF_CONSTANT * 1e3 / (1.0/INIT_NPP/2/3.1415926*60) )
-    // #define SPEED_LOOP_LIMIT_NEWTON_METER (1.0*MOTOR_RATED_TORQUE)
+#define MOTOR_RATED_POWER_WATT 750
+#define MOTOR_RATED_SPEED_RPM 3000
+#define PMSM_PERMANENT_MAGNET_FLUX_LINKAGE d_sim.init.KE
+    #define MOTOR_RATED_TORQUE ( MOTOR_RATED_POWER_WATT / (MOTOR_RATED_SPEED_RPM/60.0*2*3.1415926) )
+    #define MOTOR_TORQUE_CONSTANT ( MOTOR_RATED_TORQUE / (d_sim.init.IN*1.414) )
+    #define MOTOR_BACK_EMF_CONSTANT ( MOTOR_TORQUE_CONSTANT / 1.5 / d_sim.init.npp )
+    #define MOTOR_BACK_EMF_CONSTANT_mV_PER_RPM ( MOTOR_BACK_EMF_CONSTANT * 1e3 / (1.0/d_sim.init.npp/2/3.1415926*60) )
+    #define SPEED_LOOP_LIMIT_NEWTON_METER (1.0*MOTOR_RATED_TORQUE)
 
 
 /* 指令类型 */

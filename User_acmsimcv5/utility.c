@@ -4,15 +4,16 @@ extern REAL sig_a3;
 
 /* 功能函数 */
 // 符号函数
-int64 sign_integer(int64 x)
+// double sign(double x)
+// {
+    // return (x > 0) - (x < 0);
+// }
+
+int32 sign_integer(int32 x)
 {
     return (x > 0) - (x < 0);
 }
-// 浮点数的绝对值函数
-double fabs(double x)
-{
-    return (x >= 0) ? x : -x;
-}
+
 // 判断是否为有效浮点数
 int isNumber(double x)
 {
@@ -95,17 +96,39 @@ REAL PostionSpeedMeasurement_MovingAvergage(int32 QPOSCNT, st_enc *p_enc)
 
 REAL difference_between_two_angles(REAL first, REAL second)
 {
-    REAL diff = first - second;
-    diff = fmodf(diff, 2 * M_PI);
-    if (diff > M_PI)
+    while (first > 2 * M_PI)
     {
-        diff -= 2 * M_PI;
+        first -= 2 * M_PI;
     }
-    else if (diff < -M_PI)
+    while (second > 2 * M_PI)
     {
-        diff += 2 * M_PI;
+        second -= 2 * M_PI;
     }
-    return diff;
+
+    while (first < 0.0)
+    {
+        first += 2 * M_PI;
+    }
+    while (second < 0.0)
+    {
+        second += 2 * M_PI;
+    }
+
+    if (fabs(first - second) < M_PI)
+    {
+        return first - second;
+    }
+    else
+    {
+        if (first > second)
+        {
+            return first - 2 * M_PI - second;
+        }
+        else
+        {
+            return first + 2 * M_PI - second;
+        }
+    }
 }
 
 #if PC_SIMULATION == TRUE

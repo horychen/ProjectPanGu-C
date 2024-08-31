@@ -94,8 +94,8 @@ void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REA
     #undef NS
 }
 #if PC_SIMULATION == TRUE
-    #define OFFSET_VOLTAGE_ALPHA (0.5*-0.1 *((*CTRL).timebase>3)) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
-    #define OFFSET_VOLTAGE_BETA  (0.5*+0.1 *((*CTRL).timebase>3)) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
+    #define OFFSET_VOLTAGE_ALPHA 0.01//(0.3*-0.1 *((*CTRL).timebase>3)) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
+    #define OFFSET_VOLTAGE_BETA  0.01//(0.3*+0.1 *((*CTRL).timebase>3)) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
 #else
     #define OFFSET_VOLTAGE_ALPHA 0
     #define OFFSET_VOLTAGE_BETA  0
@@ -717,7 +717,161 @@ void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REA
 #endif
 #if AFE_36_TOP_BUTT_EXACT_COMPENSATION 
 #endif
+#if AFE_37_NO_SATURATION_BASED
+void init_No_Saturation_Based(){
+    int ind;
+    for(ind=0;ind<2;++ind){
+        FE.no_sat.emf_stator[ind] = 0;
 
+        FE.no_sat.psi_1[0] = d_sim.init.KE;
+        FE.no_sat.psi_1[1] = 0;
+        FE.no_sat.psi_2[0] = d_sim.init.KE;
+        FE.no_sat.psi_2[1] = 0;
+        FE.no_sat.psi_2_prev[ind] = 0;
+
+        FE.no_sat.psi_1_min[ind] = 0;
+        FE.no_sat.psi_1_max[ind] = 0;
+        FE.no_sat.psi_2_min[ind] = 0;
+        FE.no_sat.psi_2_max[ind] = 0;
+
+        FE.no_sat.rs_est = d_sim.init.R;
+        FE.no_sat.u_offset[ind] = 0;
+        // FE.no_sat.u_offset_intermediate[ind] = 0;
+        FE.no_sat.u_off_original_lpf_input[ind]=0.0; // holtz03 original (but I uses integrator instead of LPF)
+        FE.no_sat.u_off_saturation_time_correction[ind]=0.0; // exact offset calculation for compensation
+        FE.no_sat.u_off_calculated_increment[ind]=0.0;    // saturation time based correction
+        FE.no_sat.gain_off = HOLTZ_2002_GAIN_OFFSET; // 5; -> slow but stable // 50.1 // 20 -> too large then speed will oscillate during reversal near zero
+
+        FE.no_sat.flag_pos2negLevelA[ind] = 0;
+        FE.no_sat.flag_pos2negLevelB[ind] = 0;
+        FE.no_sat.time_pos2neg[ind] = 0;
+        FE.no_sat.time_pos2neg_prev[ind] = 0;
+
+        FE.no_sat.flag_neg2posLevelA[ind] = 0;
+        FE.no_sat.flag_neg2posLevelB[ind] = 0;
+        FE.no_sat.time_neg2pos[ind] = 0;
+        FE.no_sat.time_neg2pos_prev[ind] = 0;
+        FE.no_sat.u_offset[ind] = 0;
+
+        FE.no_sat.extra_limit = 0.0;
+        FE.no_sat.flag_limit_too_low = FALSE;
+
+    }
+    FE.no_sat.ell_1 = d_sim.init.KE;
+    FE.no_sat.ell_2 = d_sim.init.KE;
+
+}
+
+void rhf_No_Saturation_Based_Dynamics(REAL t, REAL *x, REAL *fx){
+        REAL emf[2];
+        emf[0] = US(0) - FE.no_sat.rs_est*IS(0) + OFFSET_VOLTAGE_ALPHA \
+            /*P*/- VM_PROPOSED_PI_CORRECTION_GAIN_P * FE.no_sat.psi_com[0] \
+            /*I*/- x[2];
+        emf[1] = US(1) - FE.no_sat.rs_est*IS(1) + OFFSET_VOLTAGE_BETA  \
+            /*P*/- VM_PROPOSED_PI_CORRECTION_GAIN_P * FE.no_sat.psi_com[1] \
+            /*I*/- x[3];
+        FE.no_sat.u_offset[0] = x[2];
+        FE.no_sat.u_offset[1] = x[3];
+        fx[0] = emf[0];
+        fx[1] = emf[1];
+        fx[2] = VM_PROPOSED_PI_CORRECTION_GAIN_I * FE.no_sat.psi_com[0];
+        fx[3] = VM_PROPOSED_PI_CORRECTION_GAIN_I * FE.no_sat.psi_com[1];
+}
+
+void Main_No_Saturation_Based(){
+    // rk4 
+    general_4states_rk4_solver(&rhf_No_Saturation_Based_Dynamics, (*CTRL).timebase, FE.no_sat.psi_1, CL_TS);
+    FE.no_sat.psi_2[0] = FE.no_sat.psi_1[0] - (*CTRL).motor->Lq*IS_C(0);
+    FE.no_sat.psi_2[1] = FE.no_sat.psi_1[1] - (*CTRL).motor->Lq*IS_C(1);
+    int ind;
+    //psi1 
+    for(ind=0;ind<2;++ind){ // Loop for alpha & beta components // destroy integer outside this loop to avoid accidentally usage 
+        /* 必须先检查是否进入levelA */
+        if(FE.no_sat.flag_pos2negLevelA[ind] == TRUE){ 
+            if(FE.no_sat.psi_2_prev[ind]<0 && FE.no_sat.psi_2[ind]<0){ // 二次检查，磁链已经是负的了  <- 可以改为施密特触发器
+                if(FE.no_sat.flag_pos2negLevelB[ind] == FALSE){
+                    FE.no_sat.count_negative_cycle+=1; // FE.no_sat.count_positive_cycle = 0;
+                    // printf("POS2NEG: %g, %d\n", (*CTRL).timebase, ind);
+                    // printf("%g, %g\n", FE.no_sat.psi_2_prev[ind], FE.no_sat.psi_2[ind]);
+                    // getch();
+                    // 第一次进入寻找最小值的levelB，说明最大值已经检测到。
+                    FE.no_sat.psi_1_max[ind] = FE.no_sat.psi_2_max[ind]; // 不区别定转子磁链，区别：psi_2是连续更新的，而psi_1是离散更新的。
+                    // 初始化
+                    FE.no_sat.flag_neg2posLevelA[ind] = FALSE;
+                    FE.no_sat.flag_neg2posLevelB[ind] = FALSE;
+
+                    // 注意这里是正半周到负半周切换的时候才执行一次的哦！
+                    // FE.no_sat.accumulated__u_off_saturation_time_correction[ind] += FE.no_sat.u_off_saturation_time_correction[ind];
+                    // 饱和时间的正弦包络线的正负半周的频率比磁链频率低多啦！需要再额外加一个低频u_offset校正
+                    FE.no_sat.psi_com[ind]= 0.5 * (FE.no_sat.psi_2_max[ind] + FE.no_sat.psi_2_min[ind]);
+                    FE.no_sat.ell_1 = (FE.no_sat.psi_2_max[ind] - FE.no_sat.psi_2_min[ind]) * 0.5;
+                    FE.no_sat.psi_1_min[ind] = 0.0;
+                    FE.no_sat.psi_2_min[ind] = 0.0;
+
+                }
+                FE.no_sat.flag_pos2negLevelB[ind] = TRUE;
+                if(FE.no_sat.flag_pos2negLevelB[ind] == TRUE){ // 寻找磁链最小值
+                    if(FE.no_sat.psi_2[ind] < FE.no_sat.psi_2_min[ind]){
+                        FE.no_sat.psi_2_min[ind] = FE.no_sat.psi_2[ind];
+                    }
+                }
+            }else{ // 磁链还没有变负，说明是虚假过零，比如在震荡，FE.no_sat.psi_2[0]>0
+                FE.no_sat.flag_pos2negLevelA[ind] = FALSE; /* 震荡的话，另一方的检测就有可能被触动？ */
+            }
+        }
+        if(FE.no_sat.psi_2_prev[ind]>0 && FE.no_sat.psi_2[ind]<0){ // 发现磁链由正变负的时刻
+            FE.no_sat.flag_pos2negLevelA[ind] = TRUE;
+        }
+
+
+        if(FE.no_sat.flag_neg2posLevelA[ind] == TRUE){ 
+            if(FE.no_sat.psi_2_prev[ind]>0 && FE.no_sat.psi_2[ind]>0){ // 二次检查，磁链已经是正的了
+                if(FE.no_sat.flag_neg2posLevelB[ind] == FALSE){
+                    FE.no_sat.count_positive_cycle+=1; // FE.no_sat.count_negative_cycle = 0;
+                    // 第一次进入寻找最大值的levelB，说明最小值已经检测到。
+                    FE.no_sat.psi_1_min[ind] = FE.no_sat.psi_2_min[ind]; // 不区别定转子磁链，区别：psi_2是连续更新的，而psi_1是离散更新的。
+                    // 初始化
+                    FE.no_sat.flag_pos2negLevelA[ind] = FALSE;
+                    FE.no_sat.flag_pos2negLevelB[ind] = FALSE;
+
+                    // FE.no_sat.accumulated__u_off_saturation_time_correction[ind] += FE.no_sat.u_off_saturation_time_correction[ind];
+                    FE.no_sat.psi_com[ind]= 0.5 * (FE.no_sat.psi_2_max[ind] + FE.no_sat.psi_2_min[ind]);
+                    FE.no_sat.ell_1 = (FE.no_sat.psi_2_max[ind] - FE.no_sat.psi_2_min[ind]) * 0.5;
+
+                    FE.no_sat.psi_1_max[ind] = 0.0;
+                    FE.no_sat.psi_2_max[ind] = 0.0;
+
+                }
+                FE.no_sat.flag_neg2posLevelB[ind] = TRUE; 
+                if(FE.no_sat.flag_neg2posLevelB[ind] == TRUE){ // 寻找磁链最大值
+                    if(FE.no_sat.psi_2[ind] > FE.no_sat.psi_2_max[ind]){
+                        FE.no_sat.psi_2_max[ind] = FE.no_sat.psi_2[ind];
+                    }
+                }
+            }else{ // 磁链还没有变正，说明是虚假过零，比如在震荡，FE.no_sat.psi_2[0]<0
+                FE.no_sat.flag_neg2posLevelA[ind] = FALSE;
+            }
+        }
+        if(FE.no_sat.psi_2_prev[ind]<0 && FE.no_sat.psi_2[ind]>0){ // 发现磁链由负变正的时刻
+            FE.no_sat.flag_neg2posLevelA[ind] = TRUE;
+        }
+    }   
+    //psi2
+    
+
+    // 积分方法：（从上面的程序来看，u_off的LPF的输入是每半周更新一次的。
+        // FE.no_sat.u_offset[0] += VM_PROPOSED_PI_CORRECTION_GAIN_I * CL_TS * FE.no_sat.psi_com[0];
+        // FE.no_sat.u_offset[1] += VM_PROPOSED_PI_CORRECTION_GAIN_I * CL_TS * FE.no_sat.psi_com[0];
+    FE.no_sat.psi_2_prev[0] = FE.no_sat.psi_2[0];
+    FE.no_sat.psi_2_prev[1] = FE.no_sat.psi_2[1];
+    FE.no_sat.psi_2_ampl = sqrtf(FE.no_sat.psi_2[0]*FE.no_sat.psi_2[0]+FE.no_sat.psi_2[1]*FE.no_sat.psi_2[1]);
+    REAL psi_2_ampl_inv = 1 / FE.no_sat.psi_2_ampl;
+    FE.no_sat.cosT = FE.no_sat.psi_2[0] * psi_2_ampl_inv;
+    FE.no_sat.sinT = FE.no_sat.psi_2[1] * psi_2_ampl_inv; 
+    FE.no_sat.theta_d = atan2(FE.no_sat.psi_2[1], FE.no_sat.psi_2[0]);
+}
+
+#endif
 #if AFE_40_JO_CHOI_METHOD
     void init_joChoi(){
     }
@@ -726,12 +880,13 @@ void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REA
 
 void simulation_test_flux_estimators(){
     // MainFE_HUWU_1998();
-    Main_the_active_flux_estimator();
+    Main_No_Saturation_Based();
     // VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
 }
 
 void init_FE(){
     init_FE_huwu();
     init_afe();
+    init_No_Saturation_Based();
     // init_FE_htz();
 }

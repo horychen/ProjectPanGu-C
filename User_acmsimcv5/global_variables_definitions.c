@@ -192,7 +192,7 @@ void init_experiment(){
     init_FE();  // flux estimator
     rk4_init(); // 龙格库塔法结构体初始化
     // observer_init();
-    // init_pmsm_observers(); // 永磁电机观测器初始化
+    init_pmsm_observers(); // 永磁电机观测器初始化
 }
 void init_CTRL_Part1(){
     // 我们在初始化 debug 全局结构体的时候，需要用到一部分 CTRL 中的电机参数，所以要先把这一部分提前初始化。
@@ -238,7 +238,7 @@ void init_CTRL_Part2(){
     // See init_experiment_overwrite() in CJHMainISR.c
     G.flag_do_inverter_characteristics = 0;
     G.overwrite_vdc = 20;
-    G.yzk_debug = 0;
+
     /* Black Box Model | Controller quantities */
 
     // 控制器tuning

@@ -1,11 +1,11 @@
 #ifndef BEZIER_C
 #define BEZIER_C
 
-//#include "typedef.h"
+#include "typedef.h"
 #include "brentq.h"
 #include "pid_regulator.h"
-//#include <stdio.h>
-//#include <stdlib.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include "super_config.h"
 
 typedef struct
@@ -30,22 +30,10 @@ typedef struct
 } BezierController;
 extern BezierController BzController;
 #endif
-#define Bezier_table
-#ifdef Bezier_table
-#define MAP_N 200
-typedef struct {
-    REAL y[MAP_N];
-    REAL x[MAP_N];
-    REAL upper;
-} Bezier_MAP_TABLE;
 
-extern Bezier_MAP_TABLE err_index_map_table;
-extern Bezier_MAP_TABLE index_out_map_table;
+int Comb(const int n, const int m);
 
-#endif
-
-
-Point bezier(const REAL *t, const BezierController *BziController);
+// Point bezier(const REAL *t, const BezierController *BziController);
 
 REAL bezier_x(const REAL *t, const BezierController *BziController);
 

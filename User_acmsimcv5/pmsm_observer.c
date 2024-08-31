@@ -228,10 +228,14 @@ void Main_nsoaf_chen2020(){
     OBSV.nsoaf.q_axis_voltage = uQ_now;
 
     /* Output Error = \tilde i_q (scalar) */
-    OBSV.nsoaf.output_error = iDQ_now[1] - OBSV.nsoaf.xIq;
-    OBSV.nsoaf.active_power_real  = + fabs(uQ_now) * iDQ_now[1];
-    OBSV.nsoaf.active_power_est   = + fabs(uQ_now) * OBSV.nsoaf.xIq;
-    OBSV.nsoaf.active_power_error = + fabs(uQ_now) * OBSV.nsoaf.output_error;
+    // OBSV.nsoaf.output_error = iDQ_now[1] - OBSV.nsoaf.xIq;
+    // OBSV.nsoaf.active_power_real  = + fabs(uQ_now) * iDQ_now[1];
+    // OBSV.nsoaf.active_power_est   = + fabs(uQ_now) * OBSV.nsoaf.xIq;
+    // OBSV.nsoaf.active_power_error = + fabs(uQ_now) * OBSV.nsoaf.output_error;
+
+    OBSV.nsoaf.active_power_real  = + 1 * iDQ_now[1];
+    OBSV.nsoaf.active_power_est   = + 1 * OBSV.nsoaf.xIq;
+    OBSV.nsoaf.active_power_error = + 1 * OBSV.nsoaf.output_error;
 
     REAL KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * iDQ_now[0];
     OBSV.nsoaf.xTem = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * KActive * OBSV.nsoaf.xIq;
@@ -1304,7 +1308,8 @@ void pmsm_observers(){
         /* 资源有限 */
         #if SELECT_ALGORITHM == ALG_NSOAF
             // MainFE_HuWu_1998(); // use algorithm 2
-            Main_the_active_flux_estimator();
+            // Main_the_active_flux_estimator();
+            Main_No_Saturation_Based();
             //Main_VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
             Main_nsoaf_chen2020();
         #elif SELECT_ALGORITHM == ALG_ESOAF

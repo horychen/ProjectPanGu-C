@@ -27,7 +27,7 @@ void init_rk4();
 #define AFE_34_ADAPTIVE_LIMIT 0
 #define AFE_35_SATURATION_TIME_DIFFERENCE  1
 #define AFE_36_TOP_BUTT_EXACT_COMPENSATION 0
-
+#define AFE_37_NO_SATURATION_BASED 1
 #define AFE_40_JO_CHOI_METHOD 0
 
 typedef void (*pointer_flux_estimator_dynamics)(REAL t, REAL *x, REAL *fx);
@@ -193,7 +193,81 @@ struct SharedFluxEstimatorForExperiment{
     #endif
     #if AFE_36_TOP_BUTT_EXACT_COMPENSATION 
     #endif
+    #if AFE_37_NO_SATURATION_BASED
+        struct No_Saturation_2024{
+            REAL emf_stator[2];
 
+            REAL psi_1[2];
+            REAL psi_2[2];
+            REAL psi_2_ampl;
+            REAL psi_2_ampl_lpf;
+            REAL u_offset[2];
+            // REAL u_offset_intermediate[2];
+            // REAL u_offset_ultra_low_frequency_component[2];
+            REAL sat_time_offset[2];
+            REAL psi_1_prev[2];
+            REAL psi_2_prev[2];
+
+            REAL psi_1_min[2];
+            REAL psi_1_max[2];
+            REAL psi_2_min[2];
+            REAL psi_2_max[2];
+
+            REAL psi_com[2];
+
+            REAL theta_d;
+            REAL cosT;
+            REAL sinT;
+
+            REAL rs_est;
+
+            REAL u_off_direct_calculated[2];          //
+            REAL u_off_original_lpf_input[2];         // holtz03 original (but I uses integrator instead of LPF)
+            REAL u_off_saturation_time_correction[2]; // saturation time based correction
+            REAL u_off_calculated_increment[2];       // exact offset calculation for compensation
+            REAL gain_off;
+
+            REAL accumulated__u_off_saturation_time_correction[2];
+            REAL sign__u_off_saturation_time_correction[2];
+
+            long int count_negative_cycle;
+            long int count_positive_cycle;
+
+            long int count_negative_in_one_cycle[2];
+            long int count_positive_in_one_cycle[2];
+            long int negative_cycle_in_count[2];
+            long int positive_cycle_in_count[2];
+
+            int    flag_pos2negLevelA[2];
+            int    flag_pos2negLevelB[2];
+            REAL time_pos2neg[2];
+            REAL time_pos2neg_prev[2];
+
+            int    flag_neg2posLevelA[2];
+            int    flag_neg2posLevelB[2];
+            REAL time_neg2pos[2];
+            REAL time_neg2pos_prev[2];
+
+            REAL psi_aster_max;
+
+            REAL maximum_of_sat_min_time[2];
+            REAL maximum_of_sat_max_time[2];
+            REAL sat_min_time[2];
+            REAL sat_max_time[2];
+            REAL sat_min_time_reg[2];
+            REAL sat_max_time_reg[2];
+            REAL extra_limit;
+            int flag_limit_too_low;
+
+            // REAL ireq[2];
+            REAL field_speed_est;
+            REAL omg_est;
+            REAL slip_est;
+            
+            REAL ell_1;
+            REAL ell_2;
+        } no_sat;
+    #endif
 
 
     struct Variables_Ohtani1992{
@@ -372,9 +446,10 @@ void simulation_test_flux_estimators();
     void Main_the_active_flux_estimator();
     void MainFE_HuWu_1998();
     void VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
-
+    void Main_No_Saturation_Based();
 void init_afe();
 void init_FE();
 void init_FE_htz(); // Holtz 2003
+void init_No_Saturation_Based(); // No Saturation Based
 
 #endif

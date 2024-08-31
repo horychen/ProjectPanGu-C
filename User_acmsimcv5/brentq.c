@@ -1,7 +1,7 @@
 /* Written by Charles Harris charles.harris@sdl.usu.edu */
 
 #include "brentq.h"
-#include "Bezier.h"
+
 /*
   At the top of the loop the situation is the following:
 
@@ -29,27 +29,25 @@
   xa and xb and resort to bisection.
 
 */
-const REAL xtol = 1e-4;
-const REAL rtol = 1e-4;
-const int32 iter = 70;
-
-REAL xblk = 0., fpre, fcur, fblk = 0., spre = 0., scur = 0., sbis;
-/* the tolerance is 2*delta */
-REAL delta;
-REAL stry, dpre, dblk;
-int i;
 
 REAL brentq(callback_type f, const REAL xa, const REAL xb, scipy_zeros_info *solver_stats, void *func_data_param)
 {
+    const REAL xtol = 1e-7;
+    const REAL rtol = 1e-7;
+    const int32 iter = 100;
     REAL xpre = xa, xcur = xb;
+    REAL xblk = 0., fpre, fcur, fblk = 0., spre = 0., scur = 0., sbis;
+    /* the tolerance is 2*delta */
+    REAL delta;
+    REAL stry, dpre, dblk;
+    int16 i;
 
-    fpre = bezier_x_diff(xpre, func_data_param);
-    fcur = bezier_x_diff(xcur, func_data_param);
+    fpre = (*f)(xpre, func_data_param);
+    fcur = (*f)(xcur, func_data_param);
 
     solver_stats->error_num = INPROGRESS;
 
     solver_stats->funcalls = 2;
-#if PC_SIMULATION == TRUE
     if (fpre == 0)
     {
         solver_stats->error_num = CONVERGED;
@@ -68,7 +66,6 @@ REAL brentq(callback_type f, const REAL xa, const REAL xb, scipy_zeros_info *sol
         solver_stats->error_num = SIGNERR;
         return 0.;
     }
-#endif
     solver_stats->iterations = 0;
     for (i = 0; i < iter; i++)
     {
@@ -144,7 +141,7 @@ REAL brentq(callback_type f, const REAL xa, const REAL xb, scipy_zeros_info *sol
             xcur += (sbis > 0 ? delta : -delta);
         }
 
-        fcur = bezier_x_diff(xcur, func_data_param);
+        fcur = (*f)(xcur, func_data_param);
         solver_stats->funcalls++;
     }
     solver_stats->error_num = CONVERR;

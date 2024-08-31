@@ -1273,7 +1273,6 @@ void ENABLE_PWM_OUTPUT(int positionLoopType, int use_first_set_three_phase)
     (*CTRL).timebase = CL_TS * (*CTRL).timebase_counter; //(*CTRL).timebase += CL_TS; // 2048 = float/REAL max
 
     // 根据指令，产生控制输出（电压）
-    #if ENABLE_COMMISSIONING == FALSE
                                                                 //(*CTRL).s->Motor_or_Gnerator = sign((*CTRL).i->cmd_iDQ[1]) == sign(CTRL->enc->rpm); // sign((*CTRL).i->cmd_iDQ[1]) != sign((*CTRL).i->cmd_speed_rpm))
         runtime_command_and_tuning(Axis->Select_exp_operation);
         // 0x03 is shank
@@ -1299,10 +1298,6 @@ void ENABLE_PWM_OUTPUT(int positionLoopType, int use_first_set_three_phase)
         }
 
         main_switch(debug.mode_select);
-
-    #else
-        commissioning(); // 参数辨识用
-    #endif
 
     //(*CTRL).o->cmd_uAB_to_inverter[0]
 

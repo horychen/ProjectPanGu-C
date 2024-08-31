@@ -1,6 +1,6 @@
 #ifndef PMSM_COMMISSIONING_H
 #define PMSM_COMMISSIONING_H
-#if MACHINE_TYPE == PM_SYNCHRONOUS_MACHINE
+
 #if ENABLE_COMMISSIONING
 
 #define COMM_IV_SIZE_R1 200 // 300
@@ -60,6 +60,5 @@ void COMM_end(REAL id_fb, REAL iq_fb);
 // Main Procedure
 void StepByStepCommissioning();
 
-#endif
 #endif
 #endif

@@ -41,7 +41,7 @@ void _user_init(){
     debug.Overwrite_theta_d = 0.0;
     debug.set_id_command = 0;
     debug.set_iq_command = 1;
-    debug.set_rpm_speed_command = 200;
+    debug.set_rpm_speed_command = 400;
     debug.set_deg_position_command = 0.0;
 
     debug.INVERTER_NONLINEARITY_COMPENSATION_INIT = 0;
@@ -118,6 +118,19 @@ void _user_commands(){
                     ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);
                 #endif
             }
+        }else if(debug.who_is_user == USER_YZZ){
+            (*CTRL).i->cmd_varOmega = 0.0;
+            if ((*CTRL).timebase > CL_TS){
+                (*CTRL).i->cmd_varOmega = debug.set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
+            }
+            if ((*CTRL).timebase > 0.5){
+                (*CTRL).i->cmd_varOmega = - debug.set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
+            }
+            if ((*CTRL).timebase > 0.8){
+                #if PC_SIMULATION
+                    ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);
+                #endif
+            }
         }
     #endif
 }
@@ -177,13 +190,18 @@ void main_switch(long mode_select){
         _user_commands();
         pmsm_observers();
         // observer();
-        FOC_with_vecocity_control(FE.AFEOE.theta_d,
-            OBSV.nsoaf.xOmg * MOTOR.npp_inv,
-            (*CTRL).i->cmd_varOmega,
-            (*CTRL).i->cmd_iDQ,
+        // FOC_with_vecocity_control(FE.AFEOE.theta_d,
+        //     OBSV.nsoaf.xOmg * MOTOR.npp_inv,
+        //     (*CTRL).i->cmd_varOmega,
+        //     (*CTRL).i->cmd_iDQ,
+        //     (*CTRL).i->iAB);
+        FOC_with_vecocity_control((*CTRL).i->theta_d_elec, 
+            (*CTRL).i->varOmega, 
+            (*CTRL).i->cmd_varOmega, 
+            (*CTRL).i->cmd_iDQ, 
             (*CTRL).i->iAB);
         break;
-    case MODE_SELECT_TESTING_SENSORLESS : //42
+    case MODE_SELECT_TESTING_SENSORLESS : //42`
         break;
     case MODE_SELECT_VELOCITY_LOOP_WC_TUNER: // 43
         break;
@@ -193,6 +211,13 @@ void main_switch(long mode_select){
     case MODE_SELECT_POSITION_LOOP: // 5
         break;
     case MODE_SELECT_COMMISSIONING: // 9
+        commissioning();
+        break;
+    case MODE_SELECT_GENERATOR://8
+        // Generator();
+        // ACM.R = 0.4; 
+        // ACM.Ld = 0.017;
+        // ACM.Lq = 0.015;
         break;
     default:
         // 电压指令(*CTRL).o->cmd_uAB[0/1]通过逆变器，产生实际电压ACM.ual, ACM.ube（变换到dq系下得到ACM.ud，ACM.uq）
@@ -227,7 +252,10 @@ void FOC_with_vecocity_control(REAL theta_d_elec,
         REAL iAB[2]){
 
     cmd_iDQ[0] = 0.0;     // id=0 control
+    // cmd_iDQ[0] = 1;     // id=0 control
     cmd_iDQ[1] = Veclocity_Controller(cmd_varOmega, varOmega);
+    // cmd_iDQ[1] = 0.0;     // iq=0 control
+
 
     /// 5.Sweep 扫频将覆盖上面产生的励磁、转矩电流指令
     #if EXCITATION_TYPE == EXCITATION_SWEEP_FREQUENCY
@@ -300,6 +328,50 @@ void FOC_with_vecocity_control(REAL theta_d_elec,
 
     /// 8. 补偿逆变器非线性
     main_inverter_voltage_command(TRUE);
+}
+#if PC_SIMULATION == TRUE
+void Generator(){
+    REAL speed_cmd = 12000 * RPM_2_MECH_RAD_PER_SEC;
+    ACM.TLoad = - 1.5 * (speed_cmd - ACM.varOmega);
+
+    ACM.uDQ[0] =  150 * cos( 0.2*M_PI*0.5);
+    ACM.uDQ[1] =  150 * sin( 0.2*M_PI*0.5);
+    printf("ACM.omega_syn * ACM.KA * 1.732: %g\n", ACM.omega_syn * ACM.KA * 1.732);
+    printf("P: %g\n", ACM.Tem * ACM.varOmega * MECH_RAD_PER_SEC_2_RPM);
+    ACM.uAB[0] = MT2A(ACM.uDQ[0], ACM.uDQ[1], ACM.cosT, ACM.sinT);
+    ACM.uAB[1] = MT2B(ACM.uDQ[0], ACM.uDQ[1], ACM.cosT, ACM.sinT);
+    ACM.current_theta = atan2(ACM.iAB[1], ACM.iAB[0]) - M_PI;
+    ACM.voltage_theta = atan2(ACM.uAB[1], ACM.uAB[0]);
+    ACM.powerfactor = (angle_diff(ACM.voltage_theta, ACM.current_theta) ) * ONE_OVER_2PI * 360;
+    CTRL->s->cosT = cos(angle_diff(ACM.voltage_theta, ACM.current_theta) );
+    // if(sqrtf(ACM.iAB[1] * ACM.uAB[1] + ACM.iAB[0] * ACM.uAB[0])>0)
+        // CTRL->s->cosT = ACM.TLoad * ACM.varOmega / sqrtf(ACM.iAB[1] * ACM.uAB[1] + ACM.iAB[0] * ACM.uAB[0]);
+        //CTRL->s->cosT = sqrtf(ACM.iAB[1] * ACM.iAB[1] + ACM.iAB[0] * ACM.iAB[0]) * ACM.KA * ACM.omega_syn
+        // CTRL->s->cosT = ACM.Tem * ACM.varOmega / (
+        //         sqrtf((ACM.iAB[1] * ACM.iAB[1]) +  (ACM.iAB[0] *ACM.iAB[0])) * sqrtf((ACM.uAB[1] * ACM.uAB[1]) +  (ACM.uAB[0] *ACM.uAB[0]))
+        //     );
+    printf("power factor: %g\n", CTRL->s->cosT);
+}
+#endif
+#include <math.h>
+#include <stdio.h>
+
+double angle_diff(double a, double b) {
+    // a 和 b 必须在 [0, 2 * M_PI] 范围内
+    a = fmod(a, 2 * M_PI);
+    b = fmod(b, 2 * M_PI);
+    double d1 = a - b;
+    double d2;
+    if (d1 > 0) {
+        d2 = a - (b + 2 * M_PI); // d2 是负的
+    } else {
+        d2 = (2 * M_PI + a) - b; // d2 是正的
+    }
+    if (fabs(d1) < fabs(d2)) {
+        return d1;
+    } else {
+        return d2;
+    }
 }
 
 void _user_virtual_ENC(){
