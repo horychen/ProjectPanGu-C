@@ -190,7 +190,7 @@
     }
 #endif
 
-void _user_controller_wubo(){
+void _user_wubo_controller(){
 
     if ((*CTRL).s->the_vc_count++ >= SPEED_LOOP_CEILING){
         (*CTRL).s->the_vc_count = 1;
@@ -273,7 +273,6 @@ void _user_controller_wubo(){
     /// 8. 补偿逆变器非线性
     main_inverter_voltage_command(TRUE);
 }
-
 
 void _user_wubo_WC_Tuner(){
     // 吴波用：
@@ -455,4 +454,27 @@ void _user_wubo_TI_Tuner_Online(){
 
     // 应该可以删去，但我不放心有trick bug
     PID_Speed->KFB = 0.0;
+}
+
+void _user_wubo_SpeedSweeping_command(){
+    #if PC_SIMULATION == FALSE
+    /* 实验RPM给定，确保实物实验不会出现扫频，暂时我还不想在实物里启动扫频 */
+        (*CTRL).i->cmd_varOmega = debug.set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
+
+    if (CTRL->motor->Rreq > 0){
+        // 感应电机需要励磁
+        (*CTRL).i->cmd_iDQ[0] = 2.0;
+
+    }else{
+        // 表贴永磁采用 iD=0 控制
+        (*CTRL).i->cmd_iDQ[0] = 0.0;
+
+        // 凸极永磁采用 iD<0 获得更大的 有功磁链（aka 转矩系数）
+        // (*CTRL).i->cmd_iDQ[0] = -1.0;
+    }
+
+    #else
+    
+    #endif
+
 }

@@ -55,7 +55,7 @@ typedef struct {
     REAL bezier_A_current_limit;
     REAL bezier_seconds_step_command;
     REAL bezier_seconds_load_disturbance;
-    long zeta;
+    REAL zeta;
     long omega_n;
     REAL max_CLBW_PER_min_CLBW;
     long VL_FEEDBACK_KFB;
@@ -63,6 +63,13 @@ typedef struct {
     BOOL bool_sweeping_frequency_for_speed_loop;
     BOOL Null_D_Control;
     BOOL verbose;
+    long CMD_CURRENT_SINE_AMPERE;
+    long CMD_SPEED_SINE_RPM;
+    long CMD_SPEED_SINE_HZ;
+    long CMD_SPEED_SINE_STEP_SIZE;
+    REAL CMD_SPEED_SINE_LAST_END_TIME;
+    REAL CMD_SPEED_SINE_END_TIME;
+    long CMD_SPEED_SINE_HZ_CEILING;
 } ST_user;
 
 

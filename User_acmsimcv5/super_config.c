@@ -19,7 +19,7 @@ void init_d_sim() {
 
     d_sim.FOC.delta = 40.0;
     d_sim.FOC.CLBW_HZ = 400.0;
-    d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation = TRUE;
+    d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation = FALSE;
     d_sim.FOC.VL_EXE_PER_CL_EXE = 5;
 
     d_sim.CL.SERIES_KP_D_AXIS = 0.4775220833456486;
@@ -30,7 +30,7 @@ void init_d_sim() {
 
     d_sim.VL.SERIES_KP = 0.36852374714364783;
     d_sim.VL.SERIES_KI = 1.5707963267948966;
-    d_sim.VL.LIMIT_OVERLOAD_FACTOR = 0.96;
+    d_sim.VL.LIMIT_OVERLOAD_FACTOR = 0.95;
 
     d_sim.user.who_is_user = 2023231051;
     d_sim.user.mode_select_synchronous_motor = 4;
@@ -43,7 +43,7 @@ void init_d_sim() {
     d_sim.user.bezier_A_current_limit = 16.9;
     d_sim.user.bezier_seconds_step_command = 0.2;
     d_sim.user.bezier_seconds_load_disturbance = 0.4;
-    d_sim.user.zeta = 1;
+    d_sim.user.zeta = 0.707;
     d_sim.user.omega_n = 600;
     d_sim.user.max_CLBW_PER_min_CLBW = 0.9;
     d_sim.user.VL_FEEDBACK_KFB = 0;
@@ -51,5 +51,12 @@ void init_d_sim() {
     d_sim.user.bool_sweeping_frequency_for_speed_loop = TRUE;
     d_sim.user.Null_D_Control = TRUE;
     d_sim.user.verbose = TRUE;
+    d_sim.user.CMD_CURRENT_SINE_AMPERE = 1;
+    d_sim.user.CMD_SPEED_SINE_RPM = 30;
+    d_sim.user.CMD_SPEED_SINE_HZ = 0;
+    d_sim.user.CMD_SPEED_SINE_STEP_SIZE = 1;
+    d_sim.user.CMD_SPEED_SINE_LAST_END_TIME = 0.0;
+    d_sim.user.CMD_SPEED_SINE_END_TIME = 0.0;
+    d_sim.user.CMD_SPEED_SINE_HZ_CEILING = 1000;
 
 }

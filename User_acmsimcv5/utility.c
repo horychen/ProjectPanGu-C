@@ -144,11 +144,14 @@ double difference_between_two_angles(double first, double second){
     }
 
     void print_info(){
+
         if(d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation == TRUE){
-            #if PC_SIMULATION == TRUE 
-                printf(">>> Voltages to Cuurent Regulation is Applied <<<\n");
-            #endif
+            printf(">>> Voltages to Cuurent Regulation is Applied <<<\n");
         }
+        else{
+            printf("!!! Voltages to Cuurent Regulation is NOT Applied !!!\n");
+        }
+
         printf("\t[utility.c] Rreq = %f Ohm\n", (ACM.Rreq));
         printf("\t[utility.c] NUMBER_OF_STEPS = %d\t", (int)d_sim.sim.NUMBER_OF_STEPS); printf("MACHINE_SIMULATIONs_PER_SAMPLING_PERIOD = %d\n", d_sim.sim.MACHINE_SIMULATIONs_PER_SAMPLING_PERIOD);
         // if(debug.SENSORLESS_CONTROL==TRUE){
@@ -168,6 +171,8 @@ double difference_between_two_angles(double first, double second){
         printf("\tPID_iD.Ki_CODE = %f\n", PID_iD->Ki_CODE);
         printf("\td_sim.FOC.CLBW_HZ = %g\n", (REAL)d_sim.FOC.CLBW_HZ);
         printf("\td_sim.FOC.delta = %g\n", (REAL)d_sim.FOC.delta);
+        printf("\td_sim.user.zeta = %d\n", (int)d_sim.user.zeta);
+        printf("\td_sim.user.omega_n = %d\n", (int)d_sim.user.omega_n);
         printf("\tdebug.error=%d\n\tdebug.mode_select=%d\n\tdebug.who_is_user=%d\n", (int)debug.error, (int)debug.mode_select, (int)debug.who_is_user);
     }
 #endif

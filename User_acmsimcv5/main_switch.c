@@ -37,10 +37,10 @@ void _user_init(){
         /* Commission  */
         // debug.mode_select = MODE_SELECT_COMMISSIONING;                         //  9
 
-    debug.Overwrite_Current_Frequency = 0;
+    debug.Overwrite_Current_Frequency = 1;
     debug.Overwrite_theta_d = 0.0;
-    debug.set_id_command = 0;
-    debug.set_iq_command = 1;
+    debug.set_id_command = 2;
+    debug.set_iq_command = 0;
     debug.set_rpm_speed_command = 50;
     debug.set_deg_position_command = 0.0;
 
@@ -61,6 +61,19 @@ void _user_init(){
     debug.max_CLBW_PER_min_CLBW = d_sim.user.max_CLBW_PER_min_CLBW;
     debug.delta = d_sim.FOC.delta;
     debug.CLBW_HZ = d_sim.FOC.CLBW_HZ;
+    debug.VL_EXE_PER_CL_EXE = d_sim.FOC.VL_EXE_PER_CL_EXE;
+
+    // debug.bool_apply_WC_tunner_for_speed_loop= True
+    // debug.bool_sweeping_frequency_for_speed_loop= True
+    // debug.Null_D_Control = True
+    // debug.bool_apply_sweeping_frequency_excitation= True
+    // debug.CMD_CURRENT_SINE_AMPERE = 1 # [A]
+    // debug.CMD_SPEED_SINE_RPM = 30 # [r/min]
+    // debug.CMD_SPEED_SINE_HZ = 0 # [Hz] 这些写1代表从2Hz开始扫频
+    // debug.CMD_SPEED_SINE_STEP_SIZE = 1 # [Hz]
+    // debug.CMD_SPEED_SINE_LAST_END_TIME = 0.0
+    // debug.CMD_SPEED_SINE_END_TIME = 0.0
+    // debug.CMD_SPEED_SINE_HZ_CEILING = 1000 # [Hz]
 }
 
 void _user_commands(){
@@ -171,7 +184,7 @@ void main_switch(long mode_select){
     case MODE_SELECT_VELOCITY_LOOP: // 4
         _user_commands();         // 用户指令
         if(debug.who_is_user==USER_WB){
-            _user_controller_wubo();
+            _user_wubo_controller();
         }else{
             FOC_with_vecocity_control((*CTRL).i->theta_d_elec, 
             (*CTRL).i->varOmega, 
@@ -201,6 +214,10 @@ void main_switch(long mode_select){
         break;
     case MODE_SELECT_COMMISSIONING: // 9
         break;
+    case MODE_SWEEPING_FREQUENCY: // 20
+        _user_wubo_SpeedSweeping_command();
+        // speed_sweeping_frequency();
+        break;  
     default:
         // 电压指令(*CTRL).o->cmd_uAB[0/1]通过逆变器，产生实际电压ACM.ual, ACM.ube（变换到dq系下得到ACM.ud，ACM.uq）
         // voltage_commands_to_pwm(); // this function only exists in DSP codes

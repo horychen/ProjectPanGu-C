@@ -19,10 +19,11 @@
 #define MODE_SELECT_VELOCITY_LOOP            4
 #define MODE_SELECT_VELOCITY_LOOP_SENSORLESS 41
 #define MODE_SELECT_TESTING_SENSORLESS       42
-#define MODE_SELECT_VELOCITY_LOOP_WC_TUNER   43
+#define MODE_SELECT_VELOCITY_LOOP_WC_TUNER   43 // 这个模式被弃用了，现在于USER_WB中实现WC Tuner
 #define MODE_SELECT_Marino2005               44
 #define MODE_SELECT_POSITION_LOOP            5
 #define MODE_SELECT_COMMISSIONING            9
+#define MODE_SWEEPING_FREQUENCY              20
 
 struct DebugExperiment{
     int use_first_set_three_phase;
@@ -47,6 +48,7 @@ struct DebugExperiment{
     REAL max_CLBW_PER_min_CLBW;
     REAL delta;
     REAL CLBW_HZ;
+    REAL VL_EXE_PER_CL_EXE;
 };
 extern struct DebugExperiment debug;
 
@@ -57,7 +59,7 @@ extern struct DebugExperiment debug;
 void _user_init(); // 非常重要的初始化
 void _user_time_varying_parameters();// 时变参数
 void _user_observer();
-void _user_controller_wubo(); // REAL Vdc, REAL theta_d_elec, REAL varOmega, REAL varTheta, REAL iDQ[2], REAL cmd_uDQ[ 
+void _user_wubo_controller(); // REAL Vdc, REAL theta_d_elec, REAL varOmega, REAL varTheta, REAL iDQ[2], REAL cmd_uDQ[ 
 void _user_onlyFOC(); // only current loop works
 void _user_virtual_ENC(); // 使用内部给定角度代替码盘位置反馈
 

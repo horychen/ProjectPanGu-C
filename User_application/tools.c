@@ -179,7 +179,7 @@ void axis_basic_setup(int axisCnt){
 
     Axis->FLAG_ENABLE_PWM_OUTPUT = FALSE;
 
-    Axis->channels_preset = 6; // 9; // 101;    }
+    Axis->channels_preset = 8; // 9; // 101;    }
 
     Axis->pCTRL->enc->sum_qepPosCnt = 0;
     Axis->pCTRL->enc->cursor = 0;
@@ -720,7 +720,7 @@ void measurement_position_count_axisCnt1(){
         position_count_SCI_fromCPU2 = position_count_SCI_hip_fromCPU2;
     #endif
         // 正电流导致编码器读数减小
-        CTRL->enc->encoder_abs_cnt = -( (int32)position_count_SCI_fromCPU2 - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis );
+        CTRL->enc->encoder_abs_cnt = - ( (int32)position_count_SCI_fromCPU2 - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis );
         // dq变化中，d轴理论上指向永磁体的北极，
 }
 
@@ -1140,6 +1140,53 @@ void run_impedance_control()
 #endif
 }
 
+// this offset is moved to ACMconfig.h
+// #define OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS 2333 // cjh tuned with id_cmd = 3A 2024-01-19
+
+#define NO_POSITION_CONTROL 0
+#define TWOMOTOR_POSITION_CONTROL 1
+#define SINGLE_POSITION_CONTROL 2
+#define SHANK_LOOP_RUN 3
+#define HIP_LOOP_RUN 4
+#define BOTH_LOOP_RUN 5
+#define IMPEDANCE_CONTROL 6
+
+// moved to global variable [debug]
+//int positionLoopType = 0;           // TWOMOTOR_POSITION_CONTROL; //SHANK_LOOP_RUN; // SHANK_LOOP_RUN; //BOTH_LOOP_RUN;
+//int use_first_set_three_phase = 1; //-1 for both motors
+
+REAL call_position_loop_controller(int positionLoopType)
+{
+    CTRL_1.s->Speed->Kp = TEST_SHANK_SPD_KP;
+    CTRL_1.s->Speed->Ki_CODE = TEST_SHANK_SPD_KI;
+
+    CTRL_2.s->Speed->Kp = TEST_HIP_SPD_KP;
+    CTRL_2.s->Speed->Ki_CODE = TEST_HIP_SPD_KI;
+
+
+    CTRL_1.s->Position->Kp = TEST_SHANK_KP;
+    CTRL_2.s->Position->Kp = TEST_HIP_KP;
+
+    CTRL_1.s->Position->OutLimit = TEST_SHANK_POS_OUTLIMIT;
+    CTRL_2.s->Position->OutLimit = TEST_HIP_POS_OUTLIMIT;
+
+    run_iecon_main((*CTRL).timebase_counter);
+
+    if (positionLoopType == TWOMOTOR_POSITION_CONTROL) control_two_motor_position();
+
+    else if (positionLoopType == SINGLE_POSITION_CONTROL) control_single_motor_position();
+
+    else if (positionLoopType == SHANK_LOOP_RUN) run_shank_loop();
+
+    else if (positionLoopType == HIP_LOOP_RUN) run_hip_loop();
+
+    else if (positionLoopType == BOTH_LOOP_RUN) run_both_loop();
+
+    else if (positionLoopType == IMPEDANCE_CONTROL) run_impedance_control();
+
+
+    return Axis->Set_manual_rpm;
+}
 
 void DISABLE_PWM_OUTPUT(int use_first_set_three_phase)
 {
@@ -1194,56 +1241,6 @@ void DISABLE_PWM_OUTPUT(int use_first_set_three_phase)
     GpioDataRegs.GPDCLEAR.bit.GPIO106 = 1; // TODO: What is this doing?
 }
 
-
-// this offset is moved to ACMconfig.h
-// #define OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS 2333 // cjh tuned with id_cmd = 3A 2024-01-19
-
-#define NO_POSITION_CONTROL 0
-#define TWOMOTOR_POSITION_CONTROL 1
-#define SINGLE_POSITION_CONTROL 2
-#define SHANK_LOOP_RUN 3
-#define HIP_LOOP_RUN 4
-#define BOTH_LOOP_RUN 5
-#define IMPEDANCE_CONTROL 6
-
-// moved to global variable [debug]
-//int positionLoopType = 0;           // TWOMOTOR_POSITION_CONTROL; //SHANK_LOOP_RUN; // SHANK_LOOP_RUN; //BOTH_LOOP_RUN;
-//int use_first_set_three_phase = 1; //-1 for both motors
-
-REAL call_position_loop_controller(int positionLoopType)
-{
-    CTRL_1.s->Speed->Kp = TEST_SHANK_SPD_KP;
-    CTRL_1.s->Speed->Ki_CODE = TEST_SHANK_SPD_KI;
-
-    CTRL_2.s->Speed->Kp = TEST_HIP_SPD_KP;
-    CTRL_2.s->Speed->Ki_CODE = TEST_HIP_SPD_KI;
-
-
-    CTRL_1.s->Position->Kp = TEST_SHANK_KP;
-    CTRL_2.s->Position->Kp = TEST_HIP_KP;
-
-    CTRL_1.s->Position->OutLimit = TEST_SHANK_POS_OUTLIMIT;
-    CTRL_2.s->Position->OutLimit = TEST_HIP_POS_OUTLIMIT;
-
-    run_iecon_main((*CTRL).timebase_counter);
-
-    if (positionLoopType == TWOMOTOR_POSITION_CONTROL) control_two_motor_position();
-
-    else if (positionLoopType == SINGLE_POSITION_CONTROL) control_single_motor_position();
-
-    else if (positionLoopType == SHANK_LOOP_RUN) run_shank_loop();
-
-    else if (positionLoopType == HIP_LOOP_RUN) run_hip_loop();
-
-    else if (positionLoopType == BOTH_LOOP_RUN) run_both_loop();
-
-    else if (positionLoopType == IMPEDANCE_CONTROL) run_impedance_control();
-
-
-    return Axis->Set_manual_rpm;
-}
-
-
 REAL RPM_wave_conunter = 0;
 REAL RPM_wave = 0;
 REAL flag_RPM_wave = 0;
@@ -1252,22 +1249,17 @@ void ENABLE_PWM_OUTPUT(int positionLoopType, int use_first_set_three_phase)
 {
     G.flag_experimental_initialized = FALSE;
 
-    if (use_first_set_three_phase == 1)
-    {
+    if (use_first_set_three_phase == 1){
         DSP_PWM_ENABLE
-    } 
-    else if (use_first_set_three_phase == 2)
-    {
+    } else if (use_first_set_three_phase == 2){
         DSP_2PWM_ENABLE
     } 
-    else if (use_first_set_three_phase == -1)
-    {
+    else if (use_first_set_three_phase == -1){
         DSP_PWM_ENABLE
         DSP_2PWM_ENABLE
     }
 
-    if (FE.htz.u_offset[0] > 0.1)
-    {
+    if (FE.htz.u_offset[0] > 0.1){
         FE.htz.u_offset[0] = 0;
     }
     // DSP中控制器的时间
@@ -1291,11 +1283,9 @@ void ENABLE_PWM_OUTPUT(int positionLoopType, int use_first_set_three_phase)
             Axis->Set_manual_rpm = call_position_loop_controller(positionLoopType);
         }
 
-        if (flag_RPM_wave == 1)
-        {
+        if (flag_RPM_wave == 1){
             Axis->Set_manual_rpm = (*CTRL).timebase * 20;
-            if ( (*CTRL).timebase * 20 > 400)
-            {
+            if ( (*CTRL).timebase * 20 > 400){
                 Axis->Set_manual_rpm = 400;
             }
         }
@@ -1309,16 +1299,13 @@ void ENABLE_PWM_OUTPUT(int positionLoopType, int use_first_set_three_phase)
     //(*CTRL).o->cmd_uAB_to_inverter[0]
 
     // operation mode为5的时候，执行下面测试逆变器输出电压的代码
-    if (Axis->Select_exp_operation == XCUBE_TaTbTc_DEBUG_MODE)
-    {
-        if (axisCnt == 0)
-        {
+    if (Axis->Select_exp_operation == XCUBE_TaTbTc_DEBUG_MODE){
+        if (axisCnt == 0){
             EPwm1Regs.CMPA.bit.CMPA = (*CTRL).svgen1.Ta * 50000000 * CL_TS; // 0-5000，5000表示0%的占空比
             EPwm2Regs.CMPA.bit.CMPA = (*CTRL).svgen1.Tb * 50000000 * CL_TS;
             EPwm3Regs.CMPA.bit.CMPA = (*CTRL).svgen1.Tc * 50000000 * CL_TS;
         }
-        if (axisCnt == 1)
-        {
+        if (axisCnt == 1){
             EPwm4Regs.CMPA.bit.CMPA = (*CTRL).svgen2.Ta * 50000000 * CL_TS;
             EPwm5Regs.CMPA.bit.CMPA = (*CTRL).svgen2.Tb * 50000000 * CL_TS;
             EPwm6Regs.CMPA.bit.CMPA = (*CTRL).svgen2.Tc * 50000000 * CL_TS;
