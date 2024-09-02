@@ -49,6 +49,9 @@ struct DebugExperiment{
     REAL delta;
     REAL CLBW_HZ;
     REAL VL_EXE_PER_CL_EXE;
+    REAL LIMIT_DC_BUS_UTILIZATION;
+    REAL LIMIT_OVERLOAD_FACTOR;
+    int  Select_exp_operation;
 };
 extern struct DebugExperiment debug;
 

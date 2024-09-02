@@ -20,7 +20,7 @@ void main(void){
     DINT;               // 3.1 Clear all interrupts and initialize PIE vector table.
     InitPieCtrl();      // 3.2 Initialize the PIE control registers to their default state. The default state is all PIE interrupts disabled and flags are cleared.
     IER = 0x0000;       // 3.3 Disable CPU __interrupts,
-    IFR = 0x0000;       // 3.4 and clear all CPU __interrupt flags.
+    IFR = 0x0000;       // 3.4 and clear all CPU __interrupt flags.a
     InitPieVectTable(); // 3.5 Initialize the PIE vector table with pointers to the shell Interrupt Service Routines (ISR). At end, ENPIE = 1.
     InitCpuTimers();     // for Slessinv TIE.R1 for measuring the execution time
     ConfigCpuTimer(&CpuTimer1, 200, 1000000); // 200MHz, INTERRUPT_period = 1e6 us
@@ -116,8 +116,8 @@ void main_measurement(){
     
     // measure d-axis angle and then use a poor algorithm to calculate speed
     measurement_enc();
-    CTRL->i->varOmega     = CTRL->enc->varOmega;
-    CTRL->i->theta_d_elec = CTRL->enc->theta_d_elec;
+    CTRL->i->varOmega     = CTRL->enc->varOmega; // same as (*CTRL).i->varOmega = (*CTRL).enc->varOmega;
+    CTRL->i->theta_d_elec = CTRL->enc->theta_d_elec; // same as (*CTRL).i->theta_d_elec = (*CTRL).enc->theta_d_elec;
 
     // measure current
     if (axisCnt == 0) measurement_current_axisCnt0();
@@ -144,13 +144,14 @@ void main_measurement(){
     if (G.flag_overwite_vdc) Axis->vdc = G.overwrite_vdc;
     {
         // Vdc用于实时更新电流环限幅
-        PID_iD->OutLimit = Axis->vdc * 0.5773672;
-        PID_iQ->OutLimit = Axis->vdc * 0.5773672;
+        PID_iD->OutLimit = Axis->vdc * 0.5773672 * debug.LIMIT_DC_BUS_UTILIZATION;
+        PID_iQ->OutLimit = Axis->vdc * 0.5773672 * debug.LIMIT_DC_BUS_UTILIZATION;
+        PID_Speed->OutLimit = debug.LIMIT_OVERLOAD_FACTOR * d_sim.init.IN;
+
 
         // 电流环输出限幅2V
         // PID_iD->OutLimit = 2;
         // PID_iQ->OutLimit = 2; 
-
         // PID_iX->outLimit = Axis->vdc * 0.5773672;
         // PID_iY->outLimit = Axis->vdc * 0.5773672;
     }
@@ -213,7 +214,8 @@ void main_measurement(){
 extern REAL imife_realtime_gain_off;
 
 REAL wubo_debug_flag_PWM = 0;
-// 这里需要传入use这个变量来决定两个逆变器的PWM信号要不要输入
+REAL wubo_debug_motor_enc_dirc[2] = {1.0, -1.0};
+
 // 20240720前的有一个bug：我们只通过Axis_1.FLAG_ENABLE_PWM_OUTPUT来决定PWM信号是否输出，但是对应的PWM开通关断函数下，是无脑地对
 // 两个逆变器的PWM信号同时进行了开关，这样会导致两个逆变器的PWM信号都输出。
 void PanGuMainISR(void){

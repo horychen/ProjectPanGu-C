@@ -2,7 +2,7 @@
 #include <ACMSim.h>
 
 void overwrite_d_sim(){
-    ;
+    // for now 20240902 do nothing
 }
 
 void _user_init(){
@@ -11,7 +11,7 @@ void _user_init(){
     overwrite_d_sim(); // overwrite d_sim with user's algorithm
     init_CTRL_Part1();
 
-    debug.use_first_set_three_phase = 2;
+    debug.use_first_set_three_phase = 1;
     debug.error = 0;
     debug.who_is_user = d_sim.user.who_is_user;
     if(CTRL->motor->Rreq>0){
@@ -39,7 +39,7 @@ void _user_init(){
 
     debug.Overwrite_Current_Frequency = 1;
     debug.Overwrite_theta_d = 0.0;
-    debug.set_id_command = 2;
+    debug.set_id_command = 0;
     debug.set_iq_command = 0;
     debug.set_rpm_speed_command = 50;
     debug.set_deg_position_command = 0.0;
@@ -62,6 +62,9 @@ void _user_init(){
     debug.delta = d_sim.FOC.delta;
     debug.CLBW_HZ = d_sim.FOC.CLBW_HZ;
     debug.VL_EXE_PER_CL_EXE = d_sim.FOC.VL_EXE_PER_CL_EXE;
+    debug.LIMIT_DC_BUS_UTILIZATION = d_sim.CL.LIMIT_DC_BUS_UTILIZATION;
+    debug.LIMIT_OVERLOAD_FACTOR = d_sim.VL.LIMIT_OVERLOAD_FACTOR;
+    debug.Select_exp_operation = d_sim.user.Select_exp_operation;
 
     // debug.bool_apply_WC_tunner_for_speed_loop= True
     // debug.bool_sweeping_frequency_for_speed_loop= True
@@ -94,6 +97,8 @@ void _user_commands(){
     }
 
     #if PC_SIMULATION == TRUE
+        /* 加入恒负载 */
+        ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN * d_sim.VL.LIMIT_OVERLOAD_FACTOR * 0);
 
         if(debug.who_is_user == USER_BEZIER){
             if ((*CTRL).timebase > CL_TS){
@@ -113,7 +118,6 @@ void _user_commands(){
                 // break;
             }
         }else if(debug.who_is_user == USER_WB){
-
             if ((*CTRL).timebase > CL_TS){
                 (*CTRL).i->cmd_varOmega = debug.set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
             }

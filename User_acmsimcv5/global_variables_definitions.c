@@ -194,8 +194,8 @@ void init_experiment(){
     // observer_init();
     // init_pmsm_observers(); // 永磁电机观测器初始化
 }
-    // 我们在初始化 debug 全局结构体的时候，需要用到一部分 CTRL 中的电机参数，所以要先把这一部分提前初始化。
 void init_CTRL_Part1(){
+    // 我们在初始化 debug 全局结构体的时候，需要用到一部分 CTRL 中的电机参数，所以要先把这一部分提前初始化。
     allocate_CTRL(CTRL);
 
     /* Basic quantities */

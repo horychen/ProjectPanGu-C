@@ -10,6 +10,7 @@ void _user_wubo_WC_Tuner();
 void _user_wubo_WC_Tuner_Online();
 void _user_wubo_TI_Tuner_Online();
 void _user_wubo_controller();
+REAL _user_wubo_WC_Tuner_Part2(REAL zeta, REAL omega_n, REAL max_CLBW_PER_min_CLBW);
 
 /* For Sweeping */
 void _user_wubo_SpeedSweeping_command(); // 给定扫频的幅值

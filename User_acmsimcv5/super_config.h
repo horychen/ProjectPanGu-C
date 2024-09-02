@@ -63,6 +63,7 @@ typedef struct {
     BOOL bool_sweeping_frequency_for_speed_loop;
     BOOL Null_D_Control;
     BOOL verbose;
+    long Select_exp_operation;
     long CMD_CURRENT_SINE_AMPERE;
     long CMD_SPEED_SINE_RPM;
     long CMD_SPEED_SINE_HZ;
