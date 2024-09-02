@@ -43,8 +43,8 @@ void init_d_sim() {
     d_sim.user.bezier_A_current_limit = 16.9;
     d_sim.user.bezier_seconds_step_command = 0.2;
     d_sim.user.bezier_seconds_load_disturbance = 0.4;
-    d_sim.user.zeta = 0.707;
-    d_sim.user.omega_n = 600;
+    d_sim.user.zeta = 1.00;
+    d_sim.user.omega_n = 200;
     d_sim.user.max_CLBW_PER_min_CLBW = 0.9;
     d_sim.user.VL_FEEDBACK_KFB = 0;
     d_sim.user.bool_apply_WC_tunner_for_speed_loop = TRUE;

@@ -11,7 +11,7 @@ void _user_init(){
     overwrite_d_sim(); // overwrite d_sim with user's algorithm
     init_CTRL_Part1();
 
-    debug.use_first_set_three_phase = 1;
+    debug.use_first_set_three_phase = 2;
     debug.error = 0;
     debug.who_is_user = d_sim.user.who_is_user;
     if(CTRL->motor->Rreq>0){

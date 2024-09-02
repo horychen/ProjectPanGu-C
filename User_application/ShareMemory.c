@@ -245,8 +245,8 @@ void write_DAC_buffer(){
             (*Axis4DAC).channels[1] = 24;
             (*Axis4DAC).channels[2] = 31;
             (*Axis4DAC).channels[3] = 32;
-            (*Axis4DAC).channels[4] = 25;
-            (*Axis4DAC).channels[5] = 26;
+            (*Axis4DAC).channels[4] = 29;
+            (*Axis4DAC).channels[5] = 30;
             (*Axis4DAC).channels[6] = 63;
             (*Axis4DAC).channels[7] = 64;
         }
