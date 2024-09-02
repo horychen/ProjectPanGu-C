@@ -518,14 +518,12 @@ REAL wubo_debug_USE_DEATIME_PRECOMP = 0;
 
 void voltage_commands_to_pwm()
 {
-    if (axisCnt == 0)
-    {
+    if (axisCnt == 0){
         // SVPWM of the motor 3-phase
         (*CTRL).svgen1.Ualpha = (*CTRL).o->cmd_uAB_to_inverter[0];
         (*CTRL).svgen1.Ubeta = (*CTRL).o->cmd_uAB_to_inverter[1];
 
-        if (enable_vvvf)
-        {
+        if (enable_vvvf){
             (*CTRL).svgen1.Ualpha = vvvf_voltage * cos(vvvf_frequency * 2 * M_PI * (*CTRL).timebase);
             (*CTRL).svgen1.Ubeta  = vvvf_voltage * sin(vvvf_frequency * 2 * M_PI * (*CTRL).timebase);
         }
@@ -534,52 +532,43 @@ void voltage_commands_to_pwm()
         (*CTRL).svgen1.CMPA[0] = (*CTRL).svgen1.Ta * SYSTEM_TBPRD;
         (*CTRL).svgen1.CMPA[1] = (*CTRL).svgen1.Tb * SYSTEM_TBPRD;
         (*CTRL).svgen1.CMPA[2] = (*CTRL).svgen1.Tc * SYSTEM_TBPRD;
-
-//#if USE_DEATIME_PRECOMP
-
-        if(wubo_debug_USE_DEATIME_PRECOMP)
-        {
+        //#if USE_DEATIME_PRECOMP
+        if(wubo_debug_USE_DEATIME_PRECOMP){
             DeadtimeCompensation(Axis->iuvw[0], Axis->iuvw[1], Axis->iuvw[2], (*CTRL).svgen1.CMPA, (*CTRL).svgen1.CMPA_DBC);
             EPwm1Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen1.CMPA_DBC[0];
             EPwm2Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen1.CMPA_DBC[1];
             EPwm3Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen1.CMPA_DBC[2];
         }
-        else
-        {
+        else{
             EPwm1Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen1.CMPA[0];
             EPwm2Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen1.CMPA[1];
             EPwm3Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen1.CMPA[2];
         }
-
     }
-    if (axisCnt == 1)
-    {
+
+    if (axisCnt == 1){
         // SVPWM of the suspension 3-phase
         (*CTRL).svgen2.Ualpha = (*CTRL).o->cmd_uAB_to_inverter[0];
         (*CTRL).svgen2.Ubeta = (*CTRL).o->cmd_uAB_to_inverter[1];
 
-        if (enable_vvvf)
-        {
+        if (enable_vvvf){
             (*CTRL).svgen2.Ualpha = vvvf_voltage * cos(vvvf_frequency * 2 * M_PI * (*CTRL).timebase);
             (*CTRL).svgen2.Ubeta = vvvf_voltage * sin(vvvf_frequency * 2 * M_PI * (*CTRL).timebase);
         }
-
         SVGEN_Drive(&(*CTRL).svgen2); //, -(*CTRL).UNot);
         (*CTRL).svgen2.CMPA[0] = (*CTRL).svgen2.Ta * SYSTEM_TBPRD;
         (*CTRL).svgen2.CMPA[1] = (*CTRL).svgen2.Tb * SYSTEM_TBPRD;
         (*CTRL).svgen2.CMPA[2] = (*CTRL).svgen2.Tc * SYSTEM_TBPRD;
-
-#if USE_DEATIME_PRECOMP
-        DeadtimeCompensation(Axis->iuvw[3], Axis->iuvw[4], Axis->iuvw[5], (*CTRL).svgen2.CMPA, (*CTRL).svgen2.CMPA_DBC);
-        EPwm4Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen2.CMPA_DBC[0];
-        EPwm5Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen2.CMPA_DBC[1];
-        EPwm6Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen2.CMPA_DBC[2];
-
-#else
-        EPwm4Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen2.CMPA[0];
-        EPwm5Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen2.CMPA[1];
-        EPwm6Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen2.CMPA[2];
-#endif
+        #if USE_DEATIME_PRECOMP
+            DeadtimeCompensation(Axis->iuvw[3], Axis->iuvw[4], Axis->iuvw[5], (*CTRL).svgen2.CMPA, (*CTRL).svgen2.CMPA_DBC);
+            EPwm4Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen2.CMPA_DBC[0];
+            EPwm5Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen2.CMPA_DBC[1];
+            EPwm6Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen2.CMPA_DBC[2];
+        #else
+            EPwm4Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen2.CMPA[0];
+            EPwm5Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen2.CMPA[1];
+            EPwm6Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen2.CMPA[2];
+        #endif
     }
 
     //    svgen2.Ualpha = svgen1.Ualpha*0.5        + svgen1.Ubeta*0.8660254; // rotate 60 deg
@@ -697,7 +686,7 @@ void cla_test_codes(){
 
 
 
-REAL wubo_debug[4];
+extern REAL wubo_debug_motor_enc_dirc[2];
 
 /* 读取编码器的位置 */
 void measurement_position_count_axisCnt0(){
@@ -711,7 +700,7 @@ void measurement_position_count_axisCnt0(){
         position_count_SCI_fromCPU2 = position_count_SCI_shank_fromCPU2;
     #endif
         // 正电流导致编码器读数增大：
-        CTRL->enc->encoder_abs_cnt = (int32)position_count_SCI_fromCPU2 - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis;
+        CTRL->enc->encoder_abs_cnt = wubo_debug_motor_enc_dirc[0] * (int32)position_count_SCI_fromCPU2 - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis;
 }
 
 
@@ -720,7 +709,7 @@ void measurement_position_count_axisCnt1(){
         position_count_SCI_fromCPU2 = position_count_SCI_hip_fromCPU2;
     #endif
         // 正电流导致编码器读数减小
-        CTRL->enc->encoder_abs_cnt = - ( (int32)position_count_SCI_fromCPU2 - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis );
+        CTRL->enc->encoder_abs_cnt = wubo_debug_motor_enc_dirc[1] * ( (int32)position_count_SCI_fromCPU2 - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis );
         // dq变化中，d轴理论上指向永磁体的北极，
 }
 
@@ -1207,6 +1196,10 @@ void DISABLE_PWM_OUTPUT(int use_first_set_three_phase)
         PID_Speed->OutPrev = 0;
         PID_iD->OutPrev = 0;
         PID_iQ->OutPrev = 0;
+
+        // 清空速度InnerLoop缓存
+        PID_Speed->KFB_Term_Prev = 0;
+        PID_Speed->KFB_Term = 0;
         // PID_iX->OutPrev = 0;
         // PID_iy->OutPrev = 0;
 
@@ -1251,8 +1244,17 @@ void ENABLE_PWM_OUTPUT(int positionLoopType, int use_first_set_three_phase)
 
     if (use_first_set_three_phase == 1){
         DSP_PWM_ENABLE
+        // 第一套逆变器工作的时候，确保第二套逆变器关闭
+        Axis_2.pCTRL->svgen2.Ta = 0;
+        Axis_2.pCTRL->svgen2.Tb = 0;
+        Axis_2.pCTRL->svgen2.Tc = 0;
+
     } else if (use_first_set_three_phase == 2){
         DSP_2PWM_ENABLE
+        // 同上
+        Axis_1.pCTRL->svgen1.Ta = 0;
+        Axis_1.pCTRL->svgen1.Tb = 0;
+        Axis_1.pCTRL->svgen1.Tc = 0;
     } 
     else if (use_first_set_three_phase == -1){
         DSP_PWM_ENABLE
@@ -1268,7 +1270,9 @@ void ENABLE_PWM_OUTPUT(int positionLoopType, int use_first_set_three_phase)
 
     // 根据指令，产生控制输出（电压）
     #if ENABLE_COMMISSIONING == FALSE
-                                                                //(*CTRL).s->Motor_or_Gnerator = sign((*CTRL).i->cmd_iDQ[1]) == sign(CTRL->enc->rpm); // sign((*CTRL).i->cmd_iDQ[1]) != sign((*CTRL).i->cmd_speed_rpm))
+        // 根据debug切换相应的operation mode
+        Axis->Select_exp_operation = debug.Select_exp_operation;
+        //(*CTRL).s->Motor_or_Gnerator = sign((*CTRL).i->cmd_iDQ[1]) == sign(CTRL->enc->rpm); // sign((*CTRL).i->cmd_iDQ[1]) != sign((*CTRL).i->cmd_speed_rpm))
         runtime_command_and_tuning(Axis->Select_exp_operation);
         // 0x03 is shank
         //    position_count_CAN_fromCPU2 = position_count_CAN_ID0x03_fromCPU2;
