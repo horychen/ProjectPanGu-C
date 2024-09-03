@@ -144,7 +144,7 @@ int32 cnt_four_bar_map_motor_encoder_angle=0;
     #define OFFSET_VDC_BUS_IPM1   4.17834394   // -1.01456189
     #define SCALE_VDC_BUS_IPM1   0.15848980    // 0.17604031
 
-//Lem 1閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹鑹查敓鏂ゆ嫹閿熻?楁唻鎷烽敓鏂ゆ嫹adc b7 b8 b9
+//Lem 2閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹鑹查敓鏂ゆ嫹閿熻?楁唻鎷烽敓鏂ゆ嫹adc b7 b8 b9
     #define OFFSET_LEM_B7   2027 //2023.89473684 // ADCB7
     #define OFFSET_LEM_B8   2043 //2042.33333333 // ADCB8
     #define OFFSET_LEM_B9   2048 //2043.43859649 // ADCB9
@@ -153,10 +153,10 @@ int32 cnt_four_bar_map_motor_encoder_angle=0;
     #define SCALE_LEM_B8   0.03038256 // ADCB8
     #define SCALE_LEM_B9   0.03039058 // ADCB9
 
-//Lem 2閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹鑹查敓鏂ゆ嫹閿熻?楁唻鎷烽敓鏂ゆ嫹adc a1 a2 a3
-    #define OFFSET_LEM_A1   2920 //更换了一个LEM，值变大了好多 //2020 //2029.57894737 // ADCA1
-    #define OFFSET_LEM_A2   2043 //2043.08771930 // ADCA2
-    #define OFFSET_LEM_A3   2044 //2042.98245614 // ADCA3
+//Lem 1閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹鑹查敓鏂ゆ嫹閿熻?楁唻鎷烽敓鏂ゆ嫹adc a1 a2 a3
+    #define OFFSET_LEM_A1   851  //2920 //更换了一个LEM，值变大了好多 //2020 //2029.57894737 // ADCA1
+    #define OFFSET_LEM_A2   868  //2043 //2043.08771930 // ADCA2
+    #define OFFSET_LEM_A3   858  //2044 //2042.98245614 // ADCA3
     #define SCALE_LEM_A1   0.03080704 // ADCA1
     #define SCALE_LEM_A2   0.03060669 // ADCA2
     #define SCALE_LEM_A3   0.03045988 // ADCA3
