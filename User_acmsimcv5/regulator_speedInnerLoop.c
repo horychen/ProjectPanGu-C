@@ -324,8 +324,13 @@ void _user_wubo_WC_Tuner(){
     // 吴波用：
     if(debug.who_is_user == USER_WB){
         PID_Speed->calc = (void (*)(Uint32)) InnerLoopFeedback_calc;
-        PID_iD->calc = (void (*)(Uint32)) wubo_PID_calc;
-        PID_iQ->calc = (void (*)(Uint32)) wubo_PID_calc;
+        #if WUBO_INCREMENTAL_PID_CURRENT
+            PID_iD->calc = (void (*)(Uint32)) wubo_PID_calc;
+            PID_iQ->calc = (void (*)(Uint32)) wubo_PID_calc;
+        #else
+            PID_iD->calc = (void (*)(Uint32)) PID_calc;
+            PID_iQ->calc = (void (*)(Uint32)) PID_calc;
+        #endif
     }
     REAL FOC_CLBW = 1;
     REAL K0 = 10;
@@ -362,8 +367,13 @@ void _user_wubo_WC_Tuner_Online(){
     // 吴波用：
     if(debug.who_is_user == USER_WB){
         PID_Speed->calc = (void (*)(Uint32)) InnerLoopFeedback_calc;
-        PID_iD->calc = (void (*)(Uint32)) wubo_PID_calc;
-        PID_iQ->calc = (void (*)(Uint32)) wubo_PID_calc;
+        #if WUBO_INCREMENTAL_PID_CURRENT
+            PID_iD->calc = (void (*)(Uint32)) wubo_PID_calc;
+            PID_iQ->calc = (void (*)(Uint32)) wubo_PID_calc;
+        #else
+            PID_iD->calc = (void (*)(Uint32)) PID_calc;
+            PID_iQ->calc = (void (*)(Uint32)) PID_calc;
+        #endif
     }
 
     REAL FOC_CLBW = 0;
@@ -377,8 +387,13 @@ void _user_wubo_WC_Tuner_Online(){
 void _user_wubo_TI_Tuner_Online(){
     if(debug.who_is_user == USER_WB){
         PID_Speed->calc = (void (*)(Uint32)) InnerLoopFeedback_calc;
-        PID_iD->calc = (void (*)(Uint32)) wubo_PID_calc;
-        PID_iQ->calc = (void (*)(Uint32)) wubo_PID_calc;
+        #if WUBO_INCREMENTAL_PID_CURRENT
+            PID_iD->calc = (void (*)(Uint32)) wubo_PID_calc;
+            PID_iQ->calc = (void (*)(Uint32)) wubo_PID_calc;
+        #else
+            PID_iD->calc = (void (*)(Uint32)) PID_calc;
+            PID_iQ->calc = (void (*)(Uint32)) PID_calc;
+        #endif
     }
 
     /* Tuned by debug */

@@ -5,6 +5,8 @@
 // 吴波用：
 void InnerLoopFeedback_calc(st_pid_regulator_handle);
 
+#define WUBO_INCREMENTAL_PID_CURRENT FALSE
+
 /* WUBO */
 void _user_wubo_WC_Tuner();
 void _user_wubo_WC_Tuner_Online();

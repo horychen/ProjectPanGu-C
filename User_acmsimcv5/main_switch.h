@@ -52,6 +52,7 @@ struct DebugExperiment{
     REAL LIMIT_DC_BUS_UTILIZATION;
     REAL LIMIT_OVERLOAD_FACTOR;
     int  Select_exp_operation;
+    BOOL bool_apply_decoupling_voltages_to_current_regulation;
 };
 extern struct DebugExperiment debug;
 

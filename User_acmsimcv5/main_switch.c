@@ -40,7 +40,7 @@ void _user_init(){
     debug.Overwrite_Current_Frequency = 1;
     debug.Overwrite_theta_d = 0.0;
     debug.set_id_command = 0;
-    debug.set_iq_command = 0;
+    debug.set_iq_command = 2;
     debug.set_rpm_speed_command = 50;
     debug.set_deg_position_command = 0.0;
 
@@ -65,6 +65,7 @@ void _user_init(){
     debug.LIMIT_DC_BUS_UTILIZATION = d_sim.CL.LIMIT_DC_BUS_UTILIZATION;
     debug.LIMIT_OVERLOAD_FACTOR = d_sim.VL.LIMIT_OVERLOAD_FACTOR;
     debug.Select_exp_operation = d_sim.user.Select_exp_operation;
+    debug.bool_apply_decoupling_voltages_to_current_regulation = d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation;
 
     // debug.bool_apply_WC_tunner_for_speed_loop= True
     // debug.bool_sweeping_frequency_for_speed_loop= True
@@ -221,7 +222,7 @@ void main_switch(long mode_select){
     case MODE_SWEEPING_FREQUENCY: // 20
         _user_wubo_SpeedSweeping_command();
         // speed_sweeping_frequency();
-        break;  
+        break;
     default:
         // 电压指令(*CTRL).o->cmd_uAB[0/1]通过逆变器，产生实际电压ACM.ual, ACM.ube（变换到dq系下得到ACM.ud，ACM.uq）
         // voltage_commands_to_pwm(); // this function only exists in DSP codes
