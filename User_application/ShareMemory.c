@@ -46,6 +46,7 @@ extern REAL eddy_displacement[2];
 extern REAL target_position_cnt;
 extern long long sci_pos;
 long int counter=0;
+int bool_test_dac_sinusoidal = FALSE;
 
 //extern REAL target_position_cnt = 5000;
 //extern REAL KP = 0.05;
@@ -405,15 +406,17 @@ void write_DAC_buffer(){
             Write.dac_buffer[6] = (*Axis4DAC).dac_watch[(*Axis4DAC).channels[6]] + (*Axis4DAC).dac_offset[6];
             Write.dac_buffer[7] = (*Axis4DAC).dac_watch[(*Axis4DAC).channels[7]] + (*Axis4DAC).dac_offset[7];
 
-        //    Write.dac_buffer[0] = sin(CL_TS*counter);
-        //    Write.dac_buffer[1] = cos(CL_TS*counter);
-        //    Write.dac_buffer[2] = sin(CL_TS*counter);
-        //    Write.dac_buffer[3] = cos(CL_TS*counter);
-        //    Write.dac_buffer[4] = sin(CL_TS*counter);
-        //    Write.dac_buffer[5] = cos(CL_TS*counter);
-        //    Write.dac_buffer[6] = sin(CL_TS*counter);
-        //    Write.dac_buffer[7] = cos(CL_TS*counter);
-        ////
+            if(bool_test_dac_sinusoidal == TRUE){
+                Write.dac_buffer[0] = sin(CL_TS*counter);
+                Write.dac_buffer[1] = cos(CL_TS*counter);
+                Write.dac_buffer[2] = sin(CL_TS*counter);
+                Write.dac_buffer[3] = cos(CL_TS*counter);
+                Write.dac_buffer[4] = sin(CL_TS*counter);
+                Write.dac_buffer[5] = cos(CL_TS*counter);
+                Write.dac_buffer[6] = sin(CL_TS*counter);
+                Write.dac_buffer[7] = cos(CL_TS*counter);
+            }
+
         ////    Write.dac_buffer[0] = AdcaResultRegs.ADCRESULT3 * 0.000244140625;
         ////    Write.dac_buffer[1] = AdccResultRegs.ADCRESULT2 * 0.000244140625;
         //    Write.dac_buffer[2] = AdcaResultRegs.ADCRESULT1 * 0.000244140625; //VSO3

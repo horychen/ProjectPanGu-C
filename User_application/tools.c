@@ -1,16 +1,70 @@
 #include <All_Definition.h>
 
 
-#ifdef _LEG_GROUP // mmlab drive version 1
+#ifdef _MOTOR_GROUP // mmlab drive version 2 （吴波、严政章、杨子恺等）
+
+    // Abs encoder comm. via 485 tamagawa protocol
+    #define PIN_485_SCIB_WE_SCICTX_UART3pin7 31
+    #define PIN_485_SCIA_WE_SCICRX_UART3pin8 37
+
+    // DC BUS
+    #define OFFSET_VDC_BUS_IPM1 8
+    #define SCALE_VDC_BUS_IPM1 0.1846154
+
+    // Lem 1的三个蓝色块块分别是adc b7 b8 b9 // 令逆变器输出端指向电机为正方向，若LEM上的箭头与正方向相同，则SCALE为正数，若LEM上的箭头与正方向相反，则SCALE为负数，
+    #define OFFSET_LEM_B7 2020 // 2023.89473684 // ADCB7
+    #define OFFSET_LEM_B8 2029 // 2042.33333333 // ADCB8
+    #define OFFSET_LEM_B9 2038 // 2043.43859649 // ADCB9
+    #define SCALE_LEM_B7 0.03076297 // ADCB7
+    #define SCALE_LEM_B8 0.03038256 // ADCB8
+    #define SCALE_LEM_B9 0.03039058 // ADCB9
+
+    // Lem 2的三个蓝色块块分别是adc a1 a2 a3
+    #define OFFSET_LEM_A1 2010 // 2034      // 2029.57894737 // ADCA1
+    #define OFFSET_LEM_A2 2038 // 2049      // 2043.08771930 // ADCA2
+    #define OFFSET_LEM_A3 2029 // 2050      // 2042.98245614 // ADCA3
+    #define SCALE_LEM_A1 0.0305 // 0.03080704 // ADCA1
+    #define SCALE_LEM_A2 0.030334 // 0.03060669 // ADCA2
+    #define SCALE_LEM_A3 0.02983 // 0.03045988 // ADCA3
+
+#else
+#ifdef _INDUCTION_MOTOR_GROUP // mmlab drive version 3 （王千等）
+
+    // Abs encoder comm. via 485 tamagawa protocol
+    #define PIN_485_SCIB_WE_SCICTX_UART3pin7 31
+    #define PIN_485_SCIA_WE_SCICRX_UART3pin8 37
+
+    // ADC
+    #define OFFSET_VDC_BUS_IPM1 8
+    #define OFFSET_LEM_B7 2008 // 2024-09-02
+    #define OFFSET_LEM_B8 2035 // 2024-09-02
+    #define OFFSET_LEM_B9 2045 // 2024-09-02
+    #define OFFSET_LEM_A1 2010 // ???
+    #define OFFSET_LEM_A2 2038 // ???
+    #define OFFSET_LEM_A3 2029 // ???
+
+    #define SCALE_VDC_BUS_IPM1 0.1846154 // ???
+    #define SCALE_LEM_B7 0.03076297
+    #define SCALE_LEM_B8 0.03038256
+    #define SCALE_LEM_B9 0.03039058
+    #define SCALE_LEM_A1 0.0305
+    #define SCALE_LEM_A2 0.030334
+    #define SCALE_LEM_A3 0.02983
+
+#else // _LEG_GROUP // mmlab drive version 1 (陈艺铭、朱俊磊、胡瑀等)
+
+    // Abs encoder comm. via 485 tamagawa protocol
+    #define PIN_485_SCIB_WE_SCICTX_UART3pin7 140
+    #define PIN_485_SCIA_WE_SCICRX_UART3pin8 139
+
     // DC BUS
     #define OFFSET_VDC_BUS_IPM1 8 // -1.01456189
     #define SCALE_VDC_BUS_IPM1 0.183916 // 0.17604031
 
-    // Lem 1的三个蓝色块块分别是adc b7 b8 b9
+    // Lem 1的三个蓝色块块分别是adc b7 b8 b9 // 令逆变器输出端指向电机为正方向，若LEM上的箭头与正方向相同，则SCALE为正数，若LEM上的箭头与正方向相反，则SCALE为负数，
     #define OFFSET_LEM_B7 2025 // 2023.89473684 // ADCB7
     #define OFFSET_LEM_B8 2041 // 2042.33333333 // ADCB8
     #define OFFSET_LEM_B9 2045 // 2043.43859649 // ADCB9
-    // 令逆变器输出端指向电机为正方向，若LEM上的箭头与正方向相同，则SCALE为正数，若LEM上的箭头与正方向相反，则SCALE为负数，
     #define SCALE_LEM_B7 0.03076297 // ADCB7
     #define SCALE_LEM_B8 0.03038256 // ADCB8
     #define SCALE_LEM_B9 0.03039058 // ADCB9
@@ -22,29 +76,8 @@
     #define SCALE_LEM_A1 0.03080704 // ADCA1
     #define SCALE_LEM_A2 0.03060669 // ADCA2
     #define SCALE_LEM_A3 0.03045988 // ADCA3
-#else
-    #ifdef _MOTOR_GROUP // mmlab drive version 2
-        // DC BUS
-        #define OFFSET_VDC_BUS_IPM1 8
-        #define SCALE_VDC_BUS_IPM1 0.1846154
 
-        // Lem 1的三个蓝色块块分别是adc b7 b8 b9
-        #define OFFSET_LEM_B7 2020 // 2023.89473684 // ADCB7
-        #define OFFSET_LEM_B8 2029 // 2042.33333333 // ADCB8
-        #define OFFSET_LEM_B9 2038 // 2043.43859649 // ADCB9
-        // 令逆变器输出端指向电机为正方向，若LEM上的箭头与正方向相同，则SCALE为正数，若LEM上的箭头与正方向相反，则SCALE为负数，
-        #define SCALE_LEM_B7 0.03076297 // ADCB7
-        #define SCALE_LEM_B8 0.03038256 // ADCB8
-        #define SCALE_LEM_B9 0.03039058 // ADCB9
-
-        // Lem 2的三个蓝色块块分别是adc a1 a2 a3
-        #define OFFSET_LEM_A1 2010 // 2034      // 2029.57894737 // ADCA1
-        #define OFFSET_LEM_A2 2038 // 2049      // 2043.08771930 // ADCA2
-        #define OFFSET_LEM_A3 2029 // 2050      // 2042.98245614 // ADCA3
-        #define SCALE_LEM_A1 0.0305 // 0.03080704 // ADCA1
-        #define SCALE_LEM_A2 0.030334 // 0.03060669 // ADCA2
-        #define SCALE_LEM_A3 0.02983 // 0.03045988 // ADCA3
-    #endif
+#endif
 #endif
 
 Uint32 position_count_SCI_shank_fromCPU2;
@@ -121,24 +154,13 @@ void EUREKA_GPIO_SETUP(){
     // // GPIO139 - 485-SCIA-WE-(use SCICRX as GPIO, in UART3 pin8)
     // GPIO_SetupPinMux(37, GPIO_MUX_CPU2, 0);
     // GPIO_SetupPinOptions(37, GPIO_OUTPUT, GPIO_ASYNC);
-    #ifdef _LEG_GROUP
-        // GPIO140 - 485-SCIB-WE-(use SCICTX as GPIO, in UART3 pin7)
-        GPIO_SetupPinMux(140, GPIO_MUX_CPU2, 0);
-        GPIO_SetupPinOptions(140, GPIO_OUTPUT, GPIO_ASYNC);
-        // GPIO139 - 485-SCIA-WE-(use SCICRX as GPIO, in UART3 pin8)
-        GPIO_SetupPinMux(139, GPIO_MUX_CPU2, 0);
-        GPIO_SetupPinOptions(139, GPIO_OUTPUT, GPIO_ASYNC);
-    #else
-        #ifdef _MOTOR_GROUP
-            GPIO_SetupPinMux(31, GPIO_MUX_CPU2, 0);
-            GPIO_SetupPinOptions(31, GPIO_OUTPUT, GPIO_ASYNC);
-            // GPIO139 - 485-SCIA-WE-(use SCICRX as GPIO, in UART3 pin8)
-            GPIO_SetupPinMux(37, GPIO_MUX_CPU2, 0);
-            GPIO_SetupPinOptions(37, GPIO_OUTPUT, GPIO_ASYNC);
-        #endif
-    #endif
-    // =========FOR EUREKA===========
 
+    GPIO_SetupPinMux    (PIN_485_SCIB_WE_SCICTX_UART3pin7, GPIO_MUX_CPU2, 0); // GPIO140 - 485-SCIB-WE-(use SCICTX as GPIO, in UART3 pin7)
+    GPIO_SetupPinOptions(PIN_485_SCIB_WE_SCICTX_UART3pin7, GPIO_OUTPUT, GPIO_ASYNC);
+    GPIO_SetupPinMux    (PIN_485_SCIA_WE_SCICRX_UART3pin8, GPIO_MUX_CPU2, 0); // GPIO139 - 485-SCIA-WE-(use SCICRX as GPIO, in UART3 pin8)
+    GPIO_SetupPinOptions(PIN_485_SCIA_WE_SCICRX_UART3pin8, GPIO_OUTPUT, GPIO_ASYNC);
+
+    // =========FOR EUREKA===========
     //        // =========TEST BOARD PIN============
     //        // =========NOT FOR EUREKA===========
     //        //GPIO30 - CANRXA
@@ -225,26 +247,35 @@ void init_experiment_AD_gain_and_offset()
 
     /* two motor OFFSET */
     #if NUMBER_OF_AXES == 2
-        #ifdef _LEG_GROUP
+        #if ENCODER_TYPE == INCREMENTAL_ENCODER_QEP                      /* eQEP OFFSET */
             if(axisCnt==0){
-                Axis_1.pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = SHANK__OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
+                Axis->pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
             }
             if(axisCnt==1){
-                Axis_2.pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = HIP__OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
+                Axis->pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
             }
-        #else
-            #ifdef _MOTOR_GROUP
+        #elif ENCODER_TYPE == ABSOLUTE_ENCODER_MD1
             if(axisCnt==0){
                 Axis->pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = MOTOR1_OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
             }
             if(axisCnt==1){
                 Axis->pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = MOTOR2_OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
             }
-            #endif
+        #elif (ENCODER_TYPE == ABSOLUTE_ENCODER_SCI_SHANK) || (ENCODER_TYPE == ABSOLUTE_ENCODER_SCI_HIP)
+            if(axisCnt==0){
+                Axis_1.pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = SHANK__OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
+            }
+            if(axisCnt==1){
+                Axis_2.pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = HIP__OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
+            }
         #endif
     #else
-    /* eQEP OFFSET */
-        #if (ENCODER_TYPE == ABSOLUTE_ENCODER_SCI_SHANK)
+        #if ENCODER_TYPE == INCREMENTAL_ENCODER_QEP                  /* eQEP OFFSET */
+            Axis->pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
+        #elif ENCODER_TYPE == ABSOLUTE_ENCODER_MD1
+            Axis_1.pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = MOTOR1_OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
+            // Axis_2.pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = MOTOR2_OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
+        #elif (ENCODER_TYPE == ABSOLUTE_ENCODER_SCI_SHANK)
             Axis->pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = SHANK__OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
         #elif (ENCODER_TYPE == ABSOLUTE_ENCODER_SCI_HIP)
             Axis->pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = HIP__OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
