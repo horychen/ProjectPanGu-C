@@ -3,7 +3,7 @@
 
 void EUREKA_GPIO_SETUP();
 void axis_basic_setup(int axisCnt);
-
+extern REAL iq_command_from_PC;
 #define ANGLE_SHIFT_FOR_FIRST_INVERTER 0.0  // Torque Inverter
 #define ANGLE_SHIFT_FOR_SECOND_INVERTER 0.0 // Suspension Inverter
 
@@ -34,7 +34,7 @@ void DISABLE_PWM_OUTPUT(int use_first_set_three_phase);
 void ENABLE_PWM_OUTPUT(int positionLoopType, int use_first_set_three_phase);
 
 void read_count_from_cpu02_dsp_cores_2();
-
+void write_RPM_to_cpu02_dsp_cores_2();
 void cla_test_codes();
 void test_ipc_tocpu02();
 

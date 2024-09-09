@@ -46,7 +46,7 @@ struct DebugExperiment{
 };
 extern struct DebugExperiment debug;
 
-
+extern REAL iq_command_from_PC;
 /* USER: Macros */
 
 /* User Specified Functions */

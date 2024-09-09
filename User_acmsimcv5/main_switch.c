@@ -165,6 +165,9 @@ void main_switch(long mode_select){
         _user_virtual_ENC();
         break;
     case MODE_SELECT_FOC: // 3
+        #ifdef PC_Veclocity_Controller
+            debug.set_iq_command = iq_command_from_PC;
+        #endif
         _user_onlyFOC();
         break;
     case MODE_SELECT_FOC_SENSORLESS : //31

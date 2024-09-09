@@ -8,7 +8,7 @@ struct DebugExperiment debug;
 ST_D_SIM d_sim;
 
 REAL one_over_six = 1.0/6.0;
-
+REAL iq_command_from_PC = 0.0;
 // 定义内存空间（结构体）
 st_motor_parameters     t_motor_1={0};
 st_enc                  t_enc_1={0};

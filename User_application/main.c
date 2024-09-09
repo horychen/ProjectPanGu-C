@@ -1,5 +1,6 @@
 #include <All_Definition.h>
 st_axis Axis_1, *Axis;
+extern bool run_enable_from_PC;
 #if NUMBER_OF_AXES == 2 // ====为了同时运行两台电机，增加的另一份控制结构体
     st_axis Axis_2;
     #define get_Axis_CTRL_pointers \
@@ -273,15 +274,22 @@ __interrupt void EPWM1ISR(void){
 
     // read from CPU02
     read_count_from_cpu02_dsp_cores_2();
-
+    if(IPCRtoLFlagBusy(IPC_FLAG7) == 1){
+        run_enable_from_PC = Read.run_enable;
+        IPCRtoLFlagAcknowledge(IPC_FLAG7);
+    }
     // 对每一个CTRL都需要做一次的代码
     if (debug.use_first_set_three_phase == -1){
         for (axisCnt = 0; axisCnt < NUMBER_OF_AXES; axisCnt++){
             get_Axis_CTRL_pointers //(axisCnt, Axis, CTRL);
+            if(axisCnt == 0){
+                write_RPM_to_cpu02_dsp_cores_2();
+            }
             PanGuMainISR();
         }
         axisCnt = 1; // 这里将axisCnt有什么用啊
     }else if (debug.use_first_set_three_phase == 1){
+        write_RPM_to_cpu02_dsp_cores_2();
         axisCnt = 0;
         get_Axis_CTRL_pointers //(axisCnt, Axis, CTRL);
         PanGuMainISR();

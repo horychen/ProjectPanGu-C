@@ -30,7 +30,7 @@ REAL CpuTimer_Delta = 0;
 Uint32 CpuTimer_Before = 0;
 Uint32 CpuTimer_After = 0;
 #endif
-
+bool run_enable_from_PC = FALSE;
 int counter_missing_position_measurement = 0;
 int max_counter_missing_position_measurement = 0;
 
@@ -265,6 +265,7 @@ void init_spi() {
 
     DevCfgRegs.CPUSEL5.bit.SCI_A = 1; // assign sci-a to cpu2
     DevCfgRegs.CPUSEL5.bit.SCI_B = 1; // assign sci-b to cpu2
+    DevCfgRegs.CPUSEL5.bit.SCI_C = 1;
 
     DevCfgRegs.CPUSEL8.bit.CAN_A = 1; // assign can-a to cpu2
     DevCfgRegs.CPUSEL8.bit.CAN_B = 1; // assign can-b to cpu2
@@ -1294,7 +1295,13 @@ void ENABLE_PWM_OUTPUT(int positionLoopType, int use_first_set_three_phase)
                 Axis->Set_manual_rpm = 400;
             }
         }
-
+        if(IPCRtoLFlagBusy(IPC_FLAG8) == 1){
+            iq_command_from_PC = Read.current_cmd_from_PC;
+            IPCRtoLFlagAcknowledge(IPC_FLAG8);
+        }
+        if(run_enable_from_PC == false){
+            iq_command_from_PC = 0.0;
+        }
         main_switch(debug.mode_select);
 
     //(*CTRL).o->cmd_uAB_to_inverter[0]
@@ -1342,23 +1349,9 @@ void read_count_from_cpu02_dsp_cores_2()
         rad_four_bar_map_motor_encoder_angle = deg_four_bar_map_motor_encoder_angle * 0.017453292519943295;
         cnt_four_bar_map_motor_encoder_angle = deg_four_bar_map_motor_encoder_angle * 23301.68888888889;
 
-// 这段放需要测时间的代码后面，观察CpuTimer_Delta的取值，代表经过了多少个 1/200e6 秒。
-#if PC_SIMULATION == FALSE
-        CpuTimer_After = CpuTimer1.RegsAddr->TIM.all; // get count
-        CpuTimer_Delta = (REAL)CpuTimer_Before - (REAL)CpuTimer_After;
-// EALLOW;
-// CpuTimer1.RegsAddr->TCR.bit.TSS = 1; // stop (not needed because of the line TRB=1)
-// EDIS;
-#endif
 
-// 这段放需要测时间的代码前面
-#if PC_SIMULATION == FALSE
-        EALLOW;
-        CpuTimer1.RegsAddr->TCR.bit.TRB = 1;           // reset cpu timer to period value
-        CpuTimer1.RegsAddr->TCR.bit.TSS = 0;           // start/restart
-        CpuTimer_Before = CpuTimer1.RegsAddr->TIM.all; // get count
-        EDIS;
-#endif
+
+
     }
     else
     {
@@ -1374,4 +1367,34 @@ void read_count_from_cpu02_dsp_cores_2()
         IPCRtoLFlagAcknowledge(IPC_FLAG11);
     }
 #endif
+}
+
+
+void write_RPM_to_cpu02_dsp_cores_2(){
+    if(run_enable_from_PC == false){
+        return;
+    }
+    if (IPCLtoRFlagBusy(IPC_FLAG9) == 0){
+        run_enable_from_PC = false;
+        // 这段放需要测时间的代码后面，观察CpuTimer_Delta的取值，代表经过了多少个 1/200e6 秒。
+        #if PC_SIMULATION == FALSE
+        CpuTimer_After = CpuTimer1.RegsAddr->TIM.all; // get count
+        CpuTimer_Delta = (REAL)CpuTimer_Before - (REAL)CpuTimer_After;
+        // EALLOW;
+        // CpuTimer1.RegsAddr->TCR.bit.TSS = 1; // stop (not needed because of the line TRB=1)
+        // EDIS;
+        #endif
+
+        Write.Read_RPM = (*CTRL).i->varOmega;
+        IPCLtoRFlagSet(IPC_FLAG9);
+        
+        // 这段放需要测时间的代码前面
+        #if PC_SIMULATION == FALSE
+                EALLOW;
+                CpuTimer1.RegsAddr->TCR.bit.TRB = 1;           // reset cpu timer to period value
+                CpuTimer1.RegsAddr->TCR.bit.TSS = 0;           // start/restart
+                CpuTimer_Before = CpuTimer1.RegsAddr->TIM.all; // get count
+                EDIS;
+        #endif
+    }
 }
