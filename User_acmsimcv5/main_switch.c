@@ -61,7 +61,7 @@ void _user_init(){
 void _user_commands(){
 
     /* 实验RPM给定 */
-    (*CTRL).i->cmd_varOmega = debug.set_rpm_speed_command[0] * RPM_2_MECH_RAD_PER_SEC;
+    (*CTRL).i->cmd_varOmega = debug.set_rpm_speed_command[axisCnt] * RPM_2_MECH_RAD_PER_SEC;
 
     if (CTRL->motor->Rreq > 0){
         // 感应电机需要励磁
@@ -138,15 +138,15 @@ void _user_commands(){
 }
 
 void main_switch(long mode_select){
-    static long mode_select_last = 0;
-    static int mode_initialized = FALSE;
-    if(mode_select != mode_select_last){
-        mode_initialized = TRUE;
+    static long mode_select_last[2] = {0, 0};
+    static int mode_initialized[2] = {FALSE, FALSE};
+    if(mode_select != mode_select_last[axisCnt]){
+        mode_initialized[axisCnt] = TRUE;
     }
     switch (mode_select){
     case MODE_SELECT_PWM_DIRECT: // 1
-        if(mode_initialized == FALSE){
-            mode_initialized = TRUE;
+        if(mode_initialized[axisCnt] == FALSE){
+            mode_initialized[axisCnt] = TRUE;
             (*CTRL).svgen1.Ta = 0.5;
             (*CTRL).svgen1.Tb = 0.5;
             (*CTRL).svgen1.Tc = 0.5;
@@ -156,12 +156,12 @@ void main_switch(long mode_select){
         }
         break;
     case MODE_SELECT_VOLTAGE_OPEN_LOOP: // 11
-        (*CTRL).o->cmd_uAB_to_inverter[0] = debug.vvvf_voltage[0] * cos(debug.vvvf_frequency[0]*2*M_PI* CTRL->timebase);
-        (*CTRL).o->cmd_uAB_to_inverter[1] = debug.vvvf_voltage[0] * sin(debug.vvvf_frequency[0]*2*M_PI* CTRL->timebase);
+        (*CTRL).o->cmd_uAB_to_inverter[0] = debug.vvvf_voltage[axisCnt] * cos(debug.vvvf_frequency[axisCnt]*2*M_PI* CTRL->timebase);
+        (*CTRL).o->cmd_uAB_to_inverter[1] = debug.vvvf_voltage[axisCnt] * sin(debug.vvvf_frequency[axisCnt]*2*M_PI* CTRL->timebase);
         break;
     case MODE_SELECT_WITHOUT_ENCODER_CURRENT_VECTOR_ROTATE: // 2
-        if(mode_initialized == FALSE){
-            mode_initialized = TRUE;
+        if(mode_initialized[axisCnt] == FALSE){
+            mode_initialized[axisCnt] = TRUE;
             // TODO: add your default setup
         }
         _user_virtual_ENC();
@@ -377,24 +377,24 @@ double angle_diff(double a, double b) {
 }
 
 void _user_virtual_ENC(){
-    if (fabs(debug.Overwrite_Current_Frequency[0]) > 0)
+    if (fabs(debug.Overwrite_Current_Frequency[axisCnt]) > 0)
         {
-            debug.Overwrite_theta_d[0] += CL_TS * debug.Overwrite_Current_Frequency[0] * 2 * M_PI;
-            if (debug.Overwrite_theta_d[0] > M_PI)  debug.Overwrite_theta_d[0] -= 2 * M_PI;
-            if (debug.Overwrite_theta_d[0] < -M_PI) debug.Overwrite_theta_d[0] += 2 * M_PI;
+            debug.Overwrite_theta_d[axisCnt] += CL_TS * debug.Overwrite_Current_Frequency[axisCnt] * 2 * M_PI;
+            if (debug.Overwrite_theta_d[axisCnt] > M_PI)  debug.Overwrite_theta_d[axisCnt] -= 2 * M_PI;
+            if (debug.Overwrite_theta_d[axisCnt] < -M_PI) debug.Overwrite_theta_d[axisCnt] += 2 * M_PI;
         }
         else
         {
-            debug.Overwrite_theta_d[0] = 0.0;
+            debug.Overwrite_theta_d[axisCnt] = 0.0;
         }
-    (*CTRL).s->cosT = cos(debug.Overwrite_theta_d[0]);
-    (*CTRL).s->sinT = sin(debug.Overwrite_theta_d[0]);
+    (*CTRL).s->cosT = cos(debug.Overwrite_theta_d[axisCnt]);
+    (*CTRL).s->sinT = sin(debug.Overwrite_theta_d[axisCnt]);
     (*CTRL).i->iDQ[0] = AB2M((*CTRL).i->iAB[0], (*CTRL).i->iAB[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
     (*CTRL).i->iDQ[1] = AB2T((*CTRL).i->iAB[0], (*CTRL).i->iAB[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
 
     /* 直接给定电流环command，速度环的command由程序给出 */
-    (*CTRL).i->cmd_iDQ[0] = debug.set_id_command[0]; 
-    (*CTRL).i->cmd_iDQ[1] = debug.set_iq_command[0];
+    (*CTRL).i->cmd_iDQ[0] = debug.set_id_command[axisCnt]; 
+    (*CTRL).i->cmd_iDQ[1] = debug.set_iq_command[axisCnt];
     PID_iD->Fbk = (*CTRL).i->iDQ[0];
     PID_iD->Ref = (*CTRL).i->cmd_iDQ[0];
     PID_iD->calc(PID_iD);
@@ -452,8 +452,8 @@ void _user_onlyFOC(){
         PID_iD->Ref = set_iq_cmd; // 故意反的
     #endif
     #endif
-    (*CTRL).i->cmd_iDQ[0] = debug.set_id_command[0]; 
-    (*CTRL).i->cmd_iDQ[1] = debug.set_iq_command[0];
+    (*CTRL).i->cmd_iDQ[0] = debug.set_id_command[axisCnt]; 
+    (*CTRL).i->cmd_iDQ[1] = debug.set_iq_command[axisCnt];
     PID_iD->Fbk = (*CTRL).i->iDQ[0];
     PID_iD->Ref = (*CTRL).i->cmd_iDQ[0];
     PID_iD->calc(PID_iD);
@@ -493,7 +493,7 @@ void _user_pmsm_observer(void){
 
     /// 3. 调用观测器：估计的电气转子位置和电气转子转速反馈
     // observer_marino2005();
-    if (debug.SENSORLESS_CONTROL[0] == TRUE){ // （无感）
+    if (debug.SENSORLESS_CONTROL[axisCnt] == TRUE){ // （无感）
         (*CTRL).i->varOmega     = CTRL->motor->npp_inv * PMSM_ELECTRICAL_SPEED_FEEDBACK;    // OBSV.harnefors.omg_elec;
         (*CTRL).i->theta_d_elec = CTRL->motor->npp_inv * PMSM_ELECTRICAL_POSITION_FEEDBACK; // OBSV.harnefors.theta_d;
     }

@@ -1251,10 +1251,12 @@ void ENABLE_PWM_OUTPUT(int positionLoopType, int use_first_set_three_phase)
     if (use_first_set_three_phase == 1)
     {
         DSP_PWM_ENABLE
+        DSP_2PWM_DISABLE
     } 
     else if (use_first_set_three_phase == 2)
     {
         DSP_2PWM_ENABLE
+        DSP_PWM_DISABLE
     } 
     else if (use_first_set_three_phase == -1)
     {
@@ -1295,7 +1297,7 @@ void ENABLE_PWM_OUTPUT(int positionLoopType, int use_first_set_three_phase)
             }
         }
 
-        main_switch(debug.mode_select[0]);
+        main_switch(debug.mode_select[axisCnt]);
 
     //(*CTRL).o->cmd_uAB_to_inverter[0]
 
