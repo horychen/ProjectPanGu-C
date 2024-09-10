@@ -7,6 +7,9 @@ struct ControllerForExperiment *CTRL;
 struct DebugExperiment debug;
 ST_D_SIM d_sim;
 
+// 定义顶级debug结构体
+REAL wubo_debug_global[10] = {0,0,0,0,0,0,0,0,0,0};
+
 REAL one_over_six = 1.0/6.0;
 
 // 定义内存空间（结构体）
@@ -240,7 +243,7 @@ void init_CTRL_Part2(){
     /* Black Box Model | Controller quantities */
 
     // 控制器tuning
-    if(debug.who_is_user == USER_WB){
+    if(debug.who_is_user == USER_WB && debug.bool_apply_WC_tunner_for_speed_loop == TRUE){
         _user_wubo_WC_Tuner();
         #if PC_SIMULATION == TRUE
             printf(">>> Wc_Tuner is Applied to the Speed Loop Control <<<\n");

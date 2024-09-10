@@ -40,7 +40,7 @@ REAL brentq(callback_type f, const REAL xa, const REAL xb, scipy_zeros_info *sol
     /* the tolerance is 2*delta */
     REAL delta;
     REAL stry, dpre, dblk;
-    int i;
+    int16 i;
 
     fpre = (*f)(xpre, func_data_param);
     fcur = (*f)(xcur, func_data_param);
@@ -77,7 +77,7 @@ REAL brentq(callback_type f, const REAL xa, const REAL xb, scipy_zeros_info *sol
             fblk = fpre;
             spre = scur = xcur - xpre;
         }
-        if (fabs(fblk) < fabs(fcur))
+        if (fabsf(fblk) < fabsf(fcur))
         {
             xpre = xcur;
             xcur = xblk;
@@ -88,15 +88,15 @@ REAL brentq(callback_type f, const REAL xa, const REAL xb, scipy_zeros_info *sol
             fblk = fpre;
         }
 
-        delta = (xtol + rtol * fabs(xcur)) / 2;
+        delta = (xtol + rtol * fabsf(xcur)) / 2;
         sbis = (xblk - xcur) / 2;
-        if (fcur == 0 || fabs(sbis) < delta)
+        if (fcur == 0 || fabsf(sbis) < delta)
         {
             solver_stats->error_num = CONVERGED;
             return xcur;
         }
 
-        if (fabs(spre) > delta && fabs(fcur) < fabs(fpre))
+        if (fabsf(spre) > delta && fabsf(fcur) < fabsf(fpre))
         {
             if (xpre == xblk)
             {
@@ -110,7 +110,7 @@ REAL brentq(callback_type f, const REAL xa, const REAL xb, scipy_zeros_info *sol
                 dblk = (fblk - fcur) / (xblk - xcur);
                 stry = -fcur * (fblk * dblk - fpre * dpre) / (dblk * dpre * (fblk - fpre));
             }
-            if (2 * fabs(stry) < MIN(fabs(spre), 3 * fabs(sbis) - delta))
+            if (2 * fabsf(stry) < MIN(fabsf(spre), 3 * fabsf(sbis) - delta))
             {
                 /* good short step */
                 spre = scur;
@@ -132,7 +132,7 @@ REAL brentq(callback_type f, const REAL xa, const REAL xb, scipy_zeros_info *sol
 
         xpre = xcur;
         fpre = fcur;
-        if (fabs(scur) > delta)
+        if (fabsf(scur) > delta)
         {
             xcur += scur;
         }

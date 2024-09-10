@@ -5,17 +5,20 @@
 // 吴波用：
 void InnerLoopFeedback_calc(st_pid_regulator_handle);
 
-#define WUBO_INCREMENTAL_PID_CURRENT FALSE
+#define WUBO_INCREMENTAL_PID_CURRENT TRUE
 
 /* WUBO */
 void _user_wubo_WC_Tuner();
 void _user_wubo_WC_Tuner_Online();
 void _user_wubo_TI_Tuner_Online();
-void _user_wubo_controller();
+void _user_wubo_SpeedInnerLoop_controller(st_pid_regulator *r);
 REAL _user_wubo_WC_Tuner_Part2(REAL zeta, REAL omega_n, REAL max_CLBW_PER_min_CLBW);
 
+/* Valina */
+void decoupling_current_loop();
+
 /* For Sweeping */
-void _user_wubo_SpeedSweeping_command(); // 给定扫频的幅值
+void _user_wubo_Sweeping_Command(); // 给定扫频的幅值
 
 
 

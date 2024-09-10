@@ -1223,12 +1223,10 @@ void DISABLE_PWM_OUTPUT(int use_first_set_three_phase)
     }
 
     /* 在不输出PWM波形的时候，也就是“开关”为OFF的时候，更新SpeedInnerLoop的参数*/
-    if (debug.who_is_user == USER_WB){
+    if (debug.who_is_user == USER_WB && debug.bool_apply_WC_tunner_for_speed_loop == TRUE){
         _user_wubo_WC_Tuner_Online(); // 和_user_wubo_WC_Tuner函数区别
-    }
-    if(debug.who_is_user == USER_WB2){
+    }else
         _user_wubo_TI_Tuner_Online();
-    }
 
     DELAY_US(5);
     GpioDataRegs.GPDCLEAR.bit.GPIO106 = 1; // TODO: What is this doing?

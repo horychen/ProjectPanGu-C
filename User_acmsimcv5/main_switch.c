@@ -34,19 +34,19 @@ void _user_init(){
         // debug.mode_select = MODE_SELECT_VELOCITY_LOOP_WC_TUNER;                // 43
         /* Position Loop  */
         // debug.mode_select = MODE_SELECT_POSITION_LOOP;                         //  5
-        /* Commission  */
+        /* Commission  */.
         // debug.mode_select = MODE_SELECT_COMMISSIONING;                         //  9
 
     debug.Overwrite_Current_Frequency = 1;
-    debug.Overwrite_theta_d = 0.0;
-    debug.set_id_command = 0;
-    debug.set_iq_command = 2;
-    debug.set_rpm_speed_command = 50;
-    debug.set_deg_position_command = 0.0;
+    debug.Overwrite_theta_d           = 0.0;
+    debug.set_id_command              = 0;
+    debug.set_iq_command              = 1;
+    debug.set_rpm_speed_command       = 200;
+    debug.set_deg_position_command    = 0.0;
 
-    debug.INVERTER_NONLINEARITY_COMPENSATION_INIT = 0;
-    debug.INVERTER_NONLINEARITY = 0;
-    debug.SENSORLESS_CONTROL = 0;
+    debug.INVERTER_NONLINEARITY_COMPENSATION_INIT = d_sim.user.INVERTER_NONLINEARITY_COMPENSATION_METHOD;
+      // debug.INVERTER_NONLINEARITY = 0;
+    debug.SENSORLESS_CONTROL      = 0;
     debug.SENSORLESS_CONTROL_HFSI = 0;
 
     debug.vvvf_voltage = 3.0;
@@ -56,28 +56,30 @@ void _user_init(){
     }
 
     /* debug测试用变量 */
-    debug.zeta = d_sim.user.zeta;
-    debug.omega_n = d_sim.user.omega_n;
-    debug.max_CLBW_PER_min_CLBW = d_sim.user.max_CLBW_PER_min_CLBW;
-    debug.delta = d_sim.FOC.delta;
-    debug.CLBW_HZ = d_sim.FOC.CLBW_HZ;
-    debug.VL_EXE_PER_CL_EXE = d_sim.FOC.VL_EXE_PER_CL_EXE;
-    debug.LIMIT_DC_BUS_UTILIZATION = d_sim.CL.LIMIT_DC_BUS_UTILIZATION;
-    debug.LIMIT_OVERLOAD_FACTOR = d_sim.VL.LIMIT_OVERLOAD_FACTOR;
-    debug.Select_exp_operation = d_sim.user.Select_exp_operation;
-    debug.bool_apply_decoupling_voltages_to_current_regulation = d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation;
+    //吴波用
+    debug.zeta                                                 = d_sim.user.zeta;
+    debug.omega_n                                              = d_sim.user.omega_n;
+    debug.max_CLBW_PER_min_CLBW                                = d_sim.user.max_CLBW_PER_min_CLBW;
+    debug.delta                                                = d_sim.FOC.delta;
+    debug.CLBW_HZ                                              = d_sim.FOC.CLBW_HZ;
+    debug.VL_EXE_PER_CL_EXE                                    = d_sim.FOC.VL_EXE_PER_CL_EXE;
+    debug.LIMIT_DC_BUS_UTILIZATION                             = d_sim.CL.LIMIT_DC_BUS_UTILIZATION;
+    debug.LIMIT_OVERLOAD_FACTOR                                = d_sim.VL.LIMIT_OVERLOAD_FACTOR;
+    debug.Select_exp_operation                                 = d_sim.user.Select_exp_operation;
 
-    // debug.bool_apply_WC_tunner_for_speed_loop= True
-    // debug.bool_sweeping_frequency_for_speed_loop= True
-    // debug.Null_D_Control = True
-    // debug.bool_apply_sweeping_frequency_excitation= True
-    // debug.CMD_CURRENT_SINE_AMPERE = 1 # [A]
-    // debug.CMD_SPEED_SINE_RPM = 30 # [r/min]
-    // debug.CMD_SPEED_SINE_HZ = 0 # [Hz] 这些写1代表从2Hz开始扫频
-    // debug.CMD_SPEED_SINE_STEP_SIZE = 1 # [Hz]
-    // debug.CMD_SPEED_SINE_LAST_END_TIME = 0.0
-    // debug.CMD_SPEED_SINE_END_TIME = 0.0
-    // debug.CMD_SPEED_SINE_HZ_CEILING = 1000 # [Hz]
+    debug.bool_apply_decoupling_voltages_to_current_regulation = d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation;
+    debug.bool_apply_WC_tunner_for_speed_loop                  = d_sim.user.bool_apply_WC_tunner_for_speed_loop;
+    debug.bool_sweeping_frequency_for_speed_loop               = d_sim.user.bool_sweeping_frequency_for_speed_loop;
+    debug.bool_Null_D_Control                                       = d_sim.user.bool_Null_D_Control;
+    debug.bool_apply_sweeping_frequency_excitation             = d_sim.user.bool_apply_sweeping_frequency_excitation;
+    //扫频用
+    debug.CMD_CURRENT_SINE_AMPERE                              = d_sim.user.CMD_CURRENT_SINE_AMPERE;
+    debug.CMD_SPEED_SINE_RPM                                   = d_sim.user.CMD_SPEED_SINE_RPM;
+    debug.CMD_SPEED_SINE_HZ                                    = d_sim.user.CMD_SPEED_SINE_HZ;
+    debug.CMD_SPEED_SINE_STEP_SIZE                             = d_sim.user.CMD_SPEED_SINE_STEP_SIZE;
+    debug.CMD_SPEED_SINE_LAST_END_TIME                         = d_sim.user.CMD_SPEED_SINE_LAST_END_TIME;
+    debug.CMD_SPEED_SINE_END_TIME                              = d_sim.user.CMD_SPEED_SINE_END_TIME;
+    debug.CMD_SPEED_SINE_HZ_CEILING                            = d_sim.user.CMD_SPEED_SINE_HZ_CEILING;
 }
 
 void _user_commands(){
@@ -92,6 +94,7 @@ void _user_commands(){
     }else{
         // 表贴永磁采用 iD=0 控制
         (*CTRL).i->cmd_iDQ[0] = 0.0;
+        // (*CTRL).i->cmd_iDQ[0] = -20.0;
 
         // 凸极永磁采用 iD<0 获得更大的 有功磁链（aka 转矩系数）
         // (*CTRL).i->cmd_iDQ[0] = -1.0;
@@ -122,12 +125,12 @@ void _user_commands(){
             if ((*CTRL).timebase > CL_TS){
                 (*CTRL).i->cmd_varOmega = debug.set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
             }
-            if ((*CTRL).timebase > 0.2){
+            if ((*CTRL).timebase > 0.08){
                 (*CTRL).i->cmd_varOmega = - debug.set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
             }
             if ((*CTRL).timebase > 0.4){
                 #if PC_SIMULATION
-                    ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN * d_sim.VL.LIMIT_OVERLOAD_FACTOR * 0.9);
+                    ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN * d_sim.VL.LIMIT_OVERLOAD_FACTOR * 0);
                 #endif
             }
         }else if(debug.who_is_user == USER_CJH){
@@ -188,15 +191,11 @@ void main_switch(long mode_select){
         break;
     case MODE_SELECT_VELOCITY_LOOP: // 4
         _user_commands();         // 用户指令
-        if(debug.who_is_user==USER_WB){
-            _user_wubo_controller();
-        }else{
-            FOC_with_vecocity_control((*CTRL).i->theta_d_elec, 
-            (*CTRL).i->varOmega, 
+        FOC_with_vecocity_control((*CTRL).i->theta_d_elec, 
+            (*CTRL).i->varOmega,
             (*CTRL).i->cmd_varOmega, 
             (*CTRL).i->cmd_iDQ, 
             (*CTRL).i->iAB);
-        }
         break;
     case MODE_SELECT_VELOCITY_LOOP_SENSORLESS : //41
         _user_commands();
@@ -220,8 +219,13 @@ void main_switch(long mode_select){
     case MODE_SELECT_COMMISSIONING: // 9
         break;
     case MODE_SWEEPING_FREQUENCY: // 20
-        _user_wubo_SpeedSweeping_command();
-        // speed_sweeping_frequency();
+        _user_wubo_Sweeping_Command();
+        FOC_with_vecocity_control((*CTRL).i->theta_d_elec, 
+            (*CTRL).i->varOmega,
+            (*CTRL).i->cmd_varOmega, 
+            (*CTRL).i->cmd_iDQ, 
+            (*CTRL).i->iAB);
+        // _user_wubo_controller();
         break;
     default:
         // 电压指令(*CTRL).o->cmd_uAB[0/1]通过逆变器，产生实际电压ACM.ual, ACM.ube（变换到dq系下得到ACM.ud，ACM.uq）
@@ -239,9 +243,12 @@ REAL Veclocity_Controller(REAL cmd_varOmega, REAL varOmega){
 
         PID_Speed->Ref = cmd_varOmega;
         PID_Speed->Fbk = varOmega;
-
+        
+        /* Here is the algorithem*/
         if(debug.who_is_user == USER_BEZIER)
             control_output(PID_Speed, &BzController);
+        else if(debug.who_is_user == USER_WB)
+            _user_wubo_SpeedInnerLoop_controller(PID_Speed);
         else
             PID_Speed->calc(PID_Speed);
 
@@ -255,7 +262,7 @@ void FOC_with_vecocity_control(REAL theta_d_elec,
         REAL cmd_iDQ[2],
         REAL iAB[2]){
 
-    cmd_iDQ[0] = 0.0;     // id=0 control
+    if(debug.bool_Null_D_Control == TRUE) cmd_iDQ[0] = 0;
     cmd_iDQ[1] = Veclocity_Controller(cmd_varOmega, varOmega);
 
     /// 5.Sweep 扫频将覆盖上面产生的励磁、转矩电流指令
@@ -278,11 +285,6 @@ void FOC_with_vecocity_control(REAL theta_d_elec,
     (*CTRL).i->iDQ[0] = iDQ[0];
     (*CTRL).i->iDQ[1] = iDQ[1];
 
-    /* 更新依赖于dq轴电流的物理量 */
-    REAL Tem     = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * (MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * iDQ[0]) * iDQ[1];     // 转矩 For luenberger position observer for HFSI
-    REAL cmd_Tem = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * (MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * cmd_iDQ[0]) * cmd_iDQ[1];
-    MOTOR.KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * iDQ[0];
-
     /* 速度双环的电流环 */
     // d-axis
     PID_iD->Fbk = iDQ[0];
@@ -292,6 +294,11 @@ void FOC_with_vecocity_control(REAL theta_d_elec,
     PID_iQ->Fbk = iDQ[1];
     PID_iQ->Ref = cmd_iDQ[1];
     PID_iQ->calc(PID_iQ);
+
+    /* 更新依赖于dq轴电流的物理量 */
+    REAL Tem     = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * (MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * iDQ[0]) * iDQ[1];     // 转矩 For luenberger position observer for HFSI
+    REAL cmd_Tem = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * (MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * cmd_iDQ[0]) * cmd_iDQ[1];
+    MOTOR.KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * iDQ[0];
 
     /* 电流环前馈DQ轴解耦 */
     REAL decoupled_d_axis_voltage;
@@ -328,7 +335,10 @@ void FOC_with_vecocity_control(REAL theta_d_elec,
     // (*CTRL).o->cmd_uAB[1+2] = MT2B((*CTRL).o->cmd_uDQ[0+2], (*CTRL).o->cmd_uDQ[1+2], (*CTRL).s->cosT2, (*CTRL).s->sinT2);
 
     /// 8. 补偿逆变器非线性
-    main_inverter_voltage_command(TRUE);
+    // main_inverter_voltage_command(TRUE);
+
+    /* wubo:补偿逆变器非线性 */
+    wubo_inverter_Compensation( iAB );
 }
 
 void _user_virtual_ENC(){
@@ -442,6 +452,9 @@ void _user_onlyFOC(){
 
     (*CTRL).o->cmd_uAB_to_inverter[0] = (*CTRL).o->cmd_uAB[0];
     (*CTRL).o->cmd_uAB_to_inverter[1] = (*CTRL).o->cmd_uAB[1];
+
+    /* 补偿逆变器非线性 */
+    wubo_inverter_Compensation( (*CTRL).i->iAB );
 }
 
 void _user_pmsm_observer(void){
@@ -598,10 +611,10 @@ void _user_pmsm_observer(void){
 #endif
 
 REAL _user_load_model(){
-    static double Tload = 0.0;
+    static REAL Tload = 0.0;
     // static int load_state = 0;
-    // static double dc_part = LOAD_TORQUE;
-    // static double viscous_part = 0.0; // 这个变量去到Config文件里面了
+    // static REAL dc_part = LOAD_TORQUE;
+    // static REAL viscous_part = 0.0; // 这个变量去到Config文件里面了
     // viscous_part = VISCOUS_COEFF*ACM.rpm*RPM_2_ELEC_RAD_PER_SEC;
     // Tload = dc_part + viscous_part;
     if(CTRL_1.timebase > 0.5){

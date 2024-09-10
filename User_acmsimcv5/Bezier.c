@@ -1,12 +1,10 @@
 #include "ACMSim.h"
 #include "Bezier.h"
 
-
 /* 管仲焘在用的东西 */
 BezierController BzController;
 
-
-#define BEZIER_NUMBER_OF_POINTS (d_sim.user.bezier_order+1)
+#define BEZIER_NUMBER_OF_POINTS (d_sim.user.bezier_order + 1)
 
 /**
  * @struct FindTParams
@@ -41,17 +39,17 @@ int Comb(const int n, const int m)
  * @param BezierController The Bezier controller
  * @return The point on the Bezier curve
  */
-Point bezier(const REAL *t, const BezierController *BzierController)
-{
-    Point re = {0.0, 0.0};
-    int i;
-    for (i = 0; i < BEZIER_NUMBER_OF_POINTS; i++)
-    {
-        re.x += BzierController->points[i].x * (REAL)Comb(BEZIER_NUMBER_OF_POINTS - 1, i) * powf(1 - *t, BEZIER_NUMBER_OF_POINTS - 1 - i) * powf(*t, i);
-        re.y += BzierController->points[i].y * (REAL)Comb(BEZIER_NUMBER_OF_POINTS - 1, i) * powf(1 - *t, BEZIER_NUMBER_OF_POINTS - 1 - i) * powf(*t, i);
-    }
-    return re;
-}
+// Point bezier(const REAL *t, const BezierController *BzierController)
+// {
+//     Point re = {0.0, 0.0};
+//     int i;
+//     for (i = 0; i < BEZIER_NUMBER_OF_POINTS; i++)
+//     {
+//         re.x += BzierController->points[i].x * (REAL)Comb(BEZIER_NUMBER_OF_POINTS - 1, i) * powf(1 - *t, BEZIER_NUMBER_OF_POINTS - 1 - i) * powf(*t, i);
+//         re.y += BzierController->points[i].y * (REAL)Comb(BEZIER_NUMBER_OF_POINTS - 1, i) * powf(1 - *t, BEZIER_NUMBER_OF_POINTS - 1 - i) * powf(*t, i);
+//     }
+//     return re;
+// }
 
 /**
  * @brief Calculates the x-coordinate on the Bezier curve at the given parameter t
@@ -59,9 +57,16 @@ Point bezier(const REAL *t, const BezierController *BzierController)
  * @param BezierController The Bezier controller
  * @return The x-coordinate on the Bezier curve
  */
+//inline
 REAL bezier_x(const REAL *t, const BezierController *BzierController)
 {
-    return bezier(t, BzierController).x;
+    int i;
+    REAL re = 0.0;
+    for (i = 0; i < BEZIER_NUMBER_OF_POINTS; i++)
+    {
+        re += BzierController->points[i].x * (REAL)Comb(BEZIER_NUMBER_OF_POINTS - 1, i) * powf(1 - *t, BEZIER_NUMBER_OF_POINTS - 1 - i) * powf(*t, i);
+    }
+    return re;
 }
 
 /**
@@ -70,9 +75,16 @@ REAL bezier_x(const REAL *t, const BezierController *BzierController)
  * @param BezierController The Bezier controller
  * @return The y-coordinate on the Bezier curve
  */
+//inline
 REAL bezier_y(const REAL *t, const BezierController *BzierController)
 {
-    return bezier(t, BzierController).y;
+    int i;
+    REAL re = 0.0;
+    for (i = 0; i < BEZIER_NUMBER_OF_POINTS; i++)
+    {
+        re += BzierController->points[i].y * (REAL)Comb(BEZIER_NUMBER_OF_POINTS - 1, i) * powf(1 - *t, BEZIER_NUMBER_OF_POINTS - 1 - i) * powf(*t, i);
+    }
+    return re;
 }
 
 /**
@@ -83,6 +95,7 @@ REAL bezier_y(const REAL *t, const BezierController *BzierController)
  * @param params A pointer to the FindTParams struct containing the BezierController and target_x.
  * @return The difference between the x-coordinate of the Bezier curve point and the target x-coordinate.
  */
+//inline
 REAL bezier_x_diff(REAL t, void *params)
 {
     FindTParams *p = (FindTParams *)params;
@@ -105,9 +118,9 @@ REAL find_t_for_given_x(const REAL x, const BezierController *BzierController)
     REAL root = brentq(bezier_x_diff, 0.0f, 1.0f, &solver_stats, &params);
     if (solver_stats.error_num != CONVERGED)
     {
-        #if PC_SIMULATION
-            printf("Error: %d\n", solver_stats.error_num);
-        #endif
+#if PC_SIMULATION
+        printf("Error: %d\n", solver_stats.error_num);
+#endif
     }
     return root;
 }
@@ -132,7 +145,8 @@ REAL find_y_for_given_x(const REAL x, const BezierController *BzierController)
 #ifndef ARGS_PATH
 #define ARGS_PATH "../args.txt"
 #endif
-void set_points(BezierController *BzierController){
+void set_points(BezierController *BzierController)
+{
 
     int i;
 
@@ -144,54 +158,57 @@ void set_points(BezierController *BzierController){
     // REAL x_tmp[] = {0, 0.001483522141517538, 0.3925131729155844, 4.055584989134949, 0.7597112568584444, 5.152056419843189};
     // REAL y_tmp[] = {0, 4.894113784453421, 4.969405552328565, 0.3448187910584064, 8.039303402140806, 9.006185362086445};
 
-    #if FALSE // 动态分配 points 的内存
-        BEZIER_NUMBER_OF_POINTS = sizeof(x_tmp) / sizeof(x_tmp[0]);
-        BzierController->order = BEZIER_NUMBER_OF_POINTS - 1;
-        #if PC_SIMULATION
-            printf("num_points: %d\n", BEZIER_NUMBER_OF_POINTS);
-        #endif
-        BzierController->points = realloc(BzierController->points, sizeof(Point) * BEZIER_NUMBER_OF_POINTS);
-    #else
-        BzierController->order = d_sim.user.bezier_order;
-        #if PC_SIMULATION
-            REAL x_tmp[BEZIER_NUMBER_OF_POINTS];
-            REAL y_tmp[BEZIER_NUMBER_OF_POINTS];
-            FILE *fw; fw = fopen(ARGS_PATH, "r");
-            if (fw == NULL)
-            {
-                #if PC_SIMULATION
-                    printf("Error opening file!\n");
-                #endif
-                exit(1);
-            }
-            printf("Bezier control points:\n");
-            for (i = 0; i < BEZIER_NUMBER_OF_POINTS; ++i) {
-                if (fscanf(fw, "%f,%f\n", &x_tmp[i], &y_tmp[i]) != 2) {
-                    #if PC_SIMULATION
-                        printf("Error reading line %d\n", i + 1);
-                    #endif
-                    exit(1);
-                }
-                #if PC_SIMULATION
-                    printf("\t%d, %lf %lf\n", i, x_tmp[i], y_tmp[i]);
-                #endif
-            }
-            fclose(fw);  // 关闭文件
-        #else
-            SIM_2_EXP_DEFINE_BEZIER_POINTS_X
-            SIM_2_EXP_DEFINE_BEZIER_POINTS_Y
-        #endif
-        for (i = 0; i < BEZIER_NUMBER_OF_POINTS; ++i){
-            BzierController->points[i].x = x_tmp[i];
-            BzierController->points[i].y = y_tmp[i];
+#if FALSE // 动态分配 points 的内存
+    BEZIER_NUMBER_OF_POINTS = sizeof(x_tmp) / sizeof(x_tmp[0]);
+    BzierController->order = BEZIER_NUMBER_OF_POINTS - 1;
+#if PC_SIMULATION
+    printf("num_points: %d\n", BEZIER_NUMBER_OF_POINTS);
+#endif
+    BzierController->points = realloc(BzierController->points, sizeof(Point) * BEZIER_NUMBER_OF_POINTS);
+#else
+    BzierController->order = d_sim.user.bezier_order;
+#if PC_SIMULATION
+    REAL x_tmp[BEZIER_NUMBER_OF_POINTS];
+    REAL y_tmp[BEZIER_NUMBER_OF_POINTS];
+    FILE *fw;
+    fw = fopen(ARGS_PATH, "r");
+    if (fw == NULL)
+    {
+#if PC_SIMULATION
+        printf("Error opening file!\n");
+#endif
+        exit(1);
+    }
+    printf("Bezier control points:\n");
+    for (i = 0; i < BEZIER_NUMBER_OF_POINTS; ++i)
+    {
+        if (fscanf(fw, "%f,%f\n", &x_tmp[i], &y_tmp[i]) != 2)
+        {
+#if PC_SIMULATION
+            printf("Error reading line %d\n", i + 1);
+#endif
+            exit(1);
         }
-    #endif
+#if PC_SIMULATION
+        printf("\t%d, %lf %lf\n", i, x_tmp[i], y_tmp[i]);
+#endif
+    }
+    fclose(fw); // 关闭文件
+#else
+    SIM_2_EXP_DEFINE_BEZIER_POINTS_X
+    SIM_2_EXP_DEFINE_BEZIER_POINTS_Y
+#endif
+    for (i = 0; i < BEZIER_NUMBER_OF_POINTS; ++i)
+    {
+        BzierController->points[i].x = x_tmp[i];
+        BzierController->points[i].y = y_tmp[i];
+    }
+#endif
     if (BzierController->points == NULL)
     {
         errno = ENOMEM;
         return;
     }
-
 }
 
 /**
@@ -200,17 +217,16 @@ void set_points(BezierController *BzierController){
  * @param BziController The Bezier controller
  */
 
-void control_output(st_pid_regulator *r, BezierController *BziController)
-{
+void control_output(st_pid_regulator *r, BezierController *BziController){
     r->Err = r->Ref - r->Fbk;
-    REAL error = r->Err;
+    REAL error = r->Err * MECH_RAD_PER_SEC_2_RPM;
     // #if PC_SIMULATION printf("error: %lf\n", error); #endif
-    if (fabs(error) > BziController->points[BziController->order].x)
+    if (fabsf(error) > BziController->points[BziController->order].x)
     {
         error = copysignf(BziController->points[BziController->order].x, error);
     }
     // #if PC_SIMULATION printf("error after Bezier: %lf\n", error); #endif
-    REAL out = find_y_for_given_x(fabs(error), BziController);
+    REAL out = find_y_for_given_x(fabsf(error), BziController);
     r->OutPrev = r->Out;
     // r->Out = out*( error / (error + 1e-7) );
     r->Out = copysignf(out, error);

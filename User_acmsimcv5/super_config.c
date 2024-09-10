@@ -13,11 +13,12 @@ void init_d_sim() {
     d_sim.init.Js = 0.000755295972;
     d_sim.init.Vdc = 48;
 
+    d_sim.sim.INVERTER_NONLINEARITY = 0;
     d_sim.sim.CL_TS = 0.0001;
-    d_sim.sim.NUMBER_OF_STEPS = 25000;
+    d_sim.sim.NUMBER_OF_STEPS = 600;
     d_sim.sim.MACHINE_SIMULATIONs_PER_SAMPLING_PERIOD = 1;
 
-    d_sim.FOC.delta = 40.0;
+    d_sim.FOC.delta = 5;
     d_sim.FOC.CLBW_HZ = 400.0;
     d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation = FALSE;
     d_sim.FOC.VL_EXE_PER_CL_EXE = 5;
@@ -28,12 +29,12 @@ void init_d_sim() {
     d_sim.CL.SERIES_KI_Q_AXIS = 231.578947368421;
     d_sim.CL.LIMIT_DC_BUS_UTILIZATION = 0.95;
 
-    d_sim.VL.SERIES_KP = 0.36852374714364783;
-    d_sim.VL.SERIES_KI = 1.5707963267948966;
+    d_sim.VL.SERIES_KP = 2.9481899771491826;
+    d_sim.VL.SERIES_KI = 100.53096491487338;
     d_sim.VL.LIMIT_OVERLOAD_FACTOR = 0.95;
 
     d_sim.user.who_is_user = 2023231051;
-    d_sim.user.mode_select_synchronous_motor = 3;
+    d_sim.user.mode_select_synchronous_motor = 4;
     d_sim.user.mode_select_induction_motor = 32;
     d_sim.user.bezier_NUMBER_OF_STEPS = 5000;
     d_sim.user.bezier_order = 4;
@@ -43,21 +44,24 @@ void init_d_sim() {
     d_sim.user.bezier_A_current_limit = 16.9;
     d_sim.user.bezier_seconds_step_command = 0.2;
     d_sim.user.bezier_seconds_load_disturbance = 0.4;
-    d_sim.user.zeta = 1.0;
-    d_sim.user.omega_n = 250;
+    d_sim.user.zeta = 0.707;
+    d_sim.user.omega_n = 1000;
     d_sim.user.max_CLBW_PER_min_CLBW = 0.9;
     d_sim.user.VL_FEEDBACK_KFB = 0;
     d_sim.user.bool_apply_WC_tunner_for_speed_loop = TRUE;
     d_sim.user.bool_sweeping_frequency_for_speed_loop = TRUE;
-    d_sim.user.Null_D_Control = TRUE;
+    d_sim.user.bool_Null_D_Control = TRUE;
     d_sim.user.verbose = TRUE;
+    d_sim.user.bool_bool_Null_D_Control = TRUE;
+    d_sim.user.bool_apply_sweeping_frequency_excitation = TRUE;
     d_sim.user.Select_exp_operation = 0;
+    d_sim.user.INVERTER_NONLINEARITY_COMPENSATION_METHOD = 0;
     d_sim.user.CMD_CURRENT_SINE_AMPERE = 1;
-    d_sim.user.CMD_SPEED_SINE_RPM = 30;
+    d_sim.user.CMD_SPEED_SINE_RPM = 100;
     d_sim.user.CMD_SPEED_SINE_HZ = 0;
     d_sim.user.CMD_SPEED_SINE_STEP_SIZE = 1;
     d_sim.user.CMD_SPEED_SINE_LAST_END_TIME = 0.0;
     d_sim.user.CMD_SPEED_SINE_END_TIME = 0.0;
-    d_sim.user.CMD_SPEED_SINE_HZ_CEILING = 1000;
+    d_sim.user.CMD_SPEED_SINE_HZ_CEILING = 20;
 
 }

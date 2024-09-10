@@ -8,15 +8,14 @@
         r->Out = r->OutPrev \
                 + r->Kp * ( r->Err - r->ErrPrev ) + r->Ki_CODE * r->Err;
 
-        r->ErrPrev = r->Err; 
-        r->OutPrev = r->Out;
-
-        // 控制器的限幅需要写在OutPrev幅值之后，否则电流环idq暂态跟踪误差会达到50%左右
-        // 20240812：理论分析，限幅放在之前之后貌似没有区别，但仿真结果确实不同
+        // 限幅必须在这里做
         if(r->Out > r->OutLimit)
             r->Out = r->OutLimit;
         else if(r->Out < -r->OutLimit)
             r->Out = -r->OutLimit;
+
+        r->ErrPrev = r->Err; 
+        r->OutPrev = r->Out;
     }
 #else
     void PID_calc(st_pid_regulator *r){

@@ -37,7 +37,7 @@ struct DebugExperiment{
     REAL set_iq_command;
     REAL set_id_command;
     int INVERTER_NONLINEARITY_COMPENSATION_INIT;
-    int INVERTER_NONLINEARITY;
+    // int INVERTER_NONLINEARITY;
     int SENSORLESS_CONTROL;
     int SENSORLESS_CONTROL_HFSI;
     REAL vvvf_voltage;
@@ -53,6 +53,17 @@ struct DebugExperiment{
     REAL LIMIT_OVERLOAD_FACTOR;
     int  Select_exp_operation;
     BOOL bool_apply_decoupling_voltages_to_current_regulation;
+    BOOL bool_apply_WC_tunner_for_speed_loop;
+    BOOL bool_sweeping_frequency_for_speed_loop;
+    BOOL bool_Null_D_Control;
+    BOOL bool_apply_sweeping_frequency_excitation;
+    REAL CMD_CURRENT_SINE_AMPERE;
+    REAL CMD_SPEED_SINE_RPM;
+    REAL CMD_SPEED_SINE_HZ;
+    REAL CMD_SPEED_SINE_STEP_SIZE;
+    REAL CMD_SPEED_SINE_LAST_END_TIME;
+    REAL CMD_SPEED_SINE_END_TIME;
+    REAL CMD_SPEED_SINE_HZ_CEILING;
 };
 extern struct DebugExperiment debug;
 
@@ -63,7 +74,6 @@ extern struct DebugExperiment debug;
 void _user_init(); // 非常重要的初始化
 void _user_time_varying_parameters();// 时变参数
 void _user_observer();
-void _user_wubo_controller(); // REAL Vdc, REAL theta_d_elec, REAL varOmega, REAL varTheta, REAL iDQ[2], REAL cmd_uDQ[ 
 void _user_onlyFOC(); // only current loop works
 void _user_virtual_ENC(); // 使用内部给定角度代替码盘位置反馈
 

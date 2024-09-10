@@ -5,7 +5,7 @@
  *      Author: JIAHAO
  *///cpu2 CONNECTION
 
-#include <All_Definition.h>
+#include "All_Definition.h"
 
 extern REAL vvvf_voltage;
 extern REAL vvvf_frequency;
@@ -169,6 +169,13 @@ void write_DAC_buffer(){
         (*Axis4DAC).dac_watch[62] = INV.ube_comp *0.125;
         (*Axis4DAC).dac_watch[63] = CTRL->enc->varOmega * 0.35;
 
+        //* 速度控制器的输出信号
+        (*Axis4DAC).dac_watch[64] = PID_Speed->P_Term * 1;
+        (*Axis4DAC).dac_watch[65] = PID_Speed->I_Term * 0.1;
+        (*Axis4DAC).dac_watch[66] = PID_Speed->KFB_Term * 0.1;
+        
+        (*Axis4DAC).dac_watch[67] = PID_Speed->Out * 0.1;
+        (*Axis4DAC).dac_watch[68] = PID_Speed->OutPrev *0.1;
 
 
         # if ENABLE_COMMISSIONING == TRUE
@@ -249,6 +256,15 @@ void write_DAC_buffer(){
             (*Axis4DAC).channels[5] = 30;
             (*Axis4DAC).channels[6] = 63;
             (*Axis4DAC).channels[7] = 64;
+        }else if((*Axis4DAC).channels_preset==9){(*Axis4DAC).channels_preset=0;
+            (*Axis4DAC).channels[0] = 64; // for controller output
+            (*Axis4DAC).channels[1] = 65;
+            (*Axis4DAC).channels[2] = 66;
+            (*Axis4DAC).channels[3] = 67;
+            (*Axis4DAC).channels[4] = 68;
+            (*Axis4DAC).channels[5] = 27;
+            (*Axis4DAC).channels[6] = 28;
+            (*Axis4DAC).channels[7] = 22;
         }
         if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
 

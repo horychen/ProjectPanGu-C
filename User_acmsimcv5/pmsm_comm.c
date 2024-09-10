@@ -1082,7 +1082,7 @@ void COMM_inertiaId(REAL id_fb, REAL iq_fb, REAL cosPark, REAL sinPark, REAL omg
     q1_dot = AWAYA_LAMBDA*( -q1 + filtered_speed/MOTOR_NUMBER_OF_POLE_PAIRS );
     q1 += CL_TS * q1_dot;
 
-    static double filtered_q0 = 0.0;
+    static REAL filtered_q0 = 0.0;
     filtered_q0  = _lpf(q0, filtered_q0, FILTER_CONSTANT);
 
     static REAL tau_est_lpf = 0.0;

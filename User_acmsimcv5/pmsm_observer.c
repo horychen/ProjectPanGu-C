@@ -55,7 +55,7 @@ void eso_one_parameter_tuning(REAL omega_ob){
         OBSV.esoaf.ell[2] = (MOTOR.Js*MOTOR.npp_inv) * 1*omega_ob*omega_ob*omega_ob;
         OBSV.esoaf.ell[3] = 0.0;
     }else{
-        // TODO: double check?
+        // TODO: REAL check?
         OBSV.esoaf.ell[0] =                            4*omega_ob;
         OBSV.esoaf.ell[1] =                            6*omega_ob*omega_ob;
         OBSV.esoaf.ell[2] = (MOTOR.Js*MOTOR.npp_inv) * 4*omega_ob*omega_ob*omega_ob;

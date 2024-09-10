@@ -23,6 +23,7 @@ typedef struct {
    float32 FbkPrev;
    float32 KFB_Term_Prev;
    float32 OutWithInnerLoopFeedback;
+   float32 check_KI_KFB;
    void (*calc)();
 } st_pid_regulator;
 typedef st_pid_regulator *st_pid_regulator_handle;
@@ -51,6 +52,7 @@ void PID_calc(st_pid_regulator_handle); // pid_regulator中定义了默认的离
   /*Previous Feedback*/  0.0, \
   /*Previous Inner Feedback Term*/  0.0, \
   /* OutWithInnerLoopFeedback */ 0.0, \
+  /* Check KI KFB who is larger */ 0.0, \
   (void (*)(Uint32)) PID_calc \
 }
 

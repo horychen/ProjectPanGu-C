@@ -1,7 +1,7 @@
 #include "ACMSim.h"
 
 // #if PC_SIMULATION==FALSE
-// double CpuTimer_Delta = 0;
+// REAL CpuTimer_Delta = 0;
 // Uint32 CpuTimer_Before = 0;
 // Uint32 CpuTimer_After = 0;
 // #endif
@@ -301,7 +301,7 @@ void flux_observer(){
 
     // #if PC_SIMULATION==FALSE
     // CpuTimer_After = CpuTimer1.RegsAddr->TIM.all; // get count
-    // CpuTimer_Delta = (double)CpuTimer_Before - (double)CpuTimer_After;
+    // CpuTimer_Delta = (REAL)CpuTimer_Before - (REAL)CpuTimer_After;
     // #endif
 
     // VM_Harnefors2003_SCVM();
