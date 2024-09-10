@@ -27,6 +27,7 @@ typedef struct {
 } st_pid_regulator;
 typedef st_pid_regulator *st_pid_regulator_handle;
 void PID_calc(st_pid_regulator_handle);
+void PID_calc4test(st_pid_regulator_handle);
 #define st_pid_regulator_DEFAULTS { \
   /*Reference*/ 0.0, \
   /*Feedback*/ 0.0, \

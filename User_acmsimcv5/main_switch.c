@@ -237,11 +237,24 @@ REAL Veclocity_Controller(REAL cmd_varOmega, REAL varOmega){
 
         PID_Speed->Ref = cmd_varOmega;
         PID_Speed->Fbk = varOmega;
-
-        if(debug.who_is_user[0] == USER_BEZIER)
-            control_output(PID_Speed, &BzController);
-        else
+        if(axisCnt ==0)
+        {
             PID_Speed->calc(PID_Speed);
+        }
+        else if (axisCnt == 1)
+        {
+            #if 0
+                PID_Speed->calc = (void (*)(Uint32)) PID_calc4test;
+            #else
+                PID_Speed->calc = (void (*)(Uint32)) PID_calc;
+            #endif
+            PID_Speed->calc(PID_Speed);
+        }
+        
+        // if(debug.who_is_user[0] == USER_BEZIER)
+        //     control_output(PID_Speed, &BzController);
+        // else
+        //     PID_Speed->calc(PID_Speed);
 
     }
     return PID_Speed->Out;
