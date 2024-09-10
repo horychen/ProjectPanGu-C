@@ -2,6 +2,8 @@
 #define user_defined_functions_H
 #include "ACMSim.h"
 
+#define NUM_OF_MOTORS 2
+
 #define USER_CJH    101976
 #define USER_XM     102209
 #define USER_BEZIER 224
@@ -28,21 +30,21 @@
 struct DebugExperiment{
     int use_first_set_three_phase;
     long error;
-    long who_is_user;
-    long mode_select;
-    REAL Overwrite_Current_Frequency;
-    REAL Overwrite_theta_d;
-    REAL set_deg_position_command;
-    REAL set_rpm_speed_command;
-    REAL set_iq_command;
-    REAL set_id_command;
-    int INVERTER_NONLINEARITY_COMPENSATION_INIT;
-    int INVERTER_NONLINEARITY;
-    int SENSORLESS_CONTROL;
-    int SENSORLESS_CONTROL_HFSI;
-    REAL vvvf_voltage;
-    REAL vvvf_frequency;
-    int positionLoopType;
+    long who_is_user[NUM_OF_MOTORS];
+    long mode_select[NUM_OF_MOTORS];
+    REAL Overwrite_Current_Frequency[NUM_OF_MOTORS];
+    REAL Overwrite_theta_d[NUM_OF_MOTORS];
+    REAL set_deg_position_command[NUM_OF_MOTORS];
+    REAL set_rpm_speed_command[NUM_OF_MOTORS];
+    REAL set_iq_command[NUM_OF_MOTORS];
+    REAL set_id_command[NUM_OF_MOTORS];
+    int INVERTER_NONLINEARITY_COMPENSATION_INIT[NUM_OF_MOTORS];
+    int INVERTER_NONLINEARITY[NUM_OF_MOTORS];
+    int SENSORLESS_CONTROL[NUM_OF_MOTORS];
+    int SENSORLESS_CONTROL_HFSI[NUM_OF_MOTORS];
+    REAL vvvf_voltage[NUM_OF_MOTORS];
+    REAL vvvf_frequency[NUM_OF_MOTORS];
+    int positionLoopType[NUM_OF_MOTORS];
 };
 extern struct DebugExperiment debug;
 

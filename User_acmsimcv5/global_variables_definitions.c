@@ -226,7 +226,7 @@ void init_CTRL_Part2(){
     /* Inverter */
     (*CTRL).inv->filter_pole = 3000 * 2 * M_PI;
     inverterNonlinearity_Initialization();
-    G.FLAG_INVERTER_NONLINEARITY_COMPENSATION = debug.INVERTER_NONLINEARITY_COMPENSATION_INIT;
+    G.FLAG_INVERTER_NONLINEARITY_COMPENSATION = debug.INVERTER_NONLINEARITY_COMPENSATION_INIT[0];
     // G.FLAG_TUNING_CURRENT_SCALE_FACTOR = TUNING_CURRENT_SCALE_FACTOR_INIT;
 
 
@@ -242,7 +242,7 @@ void init_CTRL_Part2(){
     /* Black Box Model | Controller quantities */
 
     // 控制器tuning
-    if(debug.who_is_user == USER_WB){
+    if(debug.who_is_user[0] == USER_WB){
         _user_wubo_WC_Tuner();
         #if PC_SIMULATION == TRUE
             printf(">>> Wc_Tuner is Applied to the Speed Loop Control <<<\n");

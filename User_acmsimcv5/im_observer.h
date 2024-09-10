@@ -164,6 +164,7 @@ extern struct Variables_SimulatedVM simvm;
 void VM_Ohtani1992();
 void VM_HoltzQuan2002();
 void VM_HoltzQuan2003();
+void init_LascuAndreescus2006();
 void VM_LascuAndreescus2006();
 void VM_HuWu1998();
 void VM_Stojic2015();

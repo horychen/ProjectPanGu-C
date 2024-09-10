@@ -50,6 +50,7 @@
 /* Algorithms */
 
     /* Select [Shared Flux Estimator] */
+    // #define AFE_USED FE.clfe4PMSM
     #define AFE_USED FE.no_sat
     // #define AFE_USED FE.huwu
     // #define AFE_USED FE.htz // this is for ESO speed estimation
@@ -94,14 +95,23 @@
     #define GAIN_OHTANI (5)
     #define VM_OHTANI_CORRECTION_GAIN_P (5)
     /* B *//// default: P=5, I=2.5
-    #define VM_PROPOSED_PI_CORRECTION_GAIN_P 30// 20暂态能跟上但是又滞后，200后面暂态就跟不上了  //10 // (5)
-    #define VM_PROPOSED_PI_CORRECTION_GAIN_I 80000//2.5 //2  // (2.5)
+    #define VM_PROPOSED_PI_CORRECTION_GAIN_P 1// 
+    #define VM_PROPOSED_PI_CORRECTION_GAIN_I 2.5//80000//2.5 //2  // (2.5)
+    /* No Saturation */
+    #define VM_NOSAT_PI_CORRECTION_GAIN_P 7// 难调
+    #define VM_NOSAT_PI_CORRECTION_GAIN_I 0//80000//2.5 //2  // (2.5)
+    /* Saturation_time_Without_Limiting */
+    #define STWL_GAIN_KP 
+    #define STWL_GAIN_KI 
     /* C *//// default: P=0.125*5, I=0.125*2.5, KCM=0
-    #define OUTPUT_ERROR_CLEST_GAIN_KP (0.125*5)
-    #define OUTPUT_ERROR_CLEST_GAIN_KI (0.125*2.5)
-    #define OUTPUT_ERROR_CLEST_GAIN_KCM (0*0.8)
+    #define OUTPUT_ERROR_CLEST_GAIN_KP (0.04)
+    #define OUTPUT_ERROR_CLEST_GAIN_KI (0.5)
+    #define OUTPUT_ERROR_CLEST_GAIN_KCM (0.0002*0.8)
+    /* Closed Loop flux estimator for PMSM*/
+    #define OUTPUT_ERROR_CLEF4PMSM_GAIN_KP (0.04)
+    #define OUTPUT_ERROR_CLEF4PMSM_GAIN_KI (0.5)
     /* Holtz 2002 */// default: 20
-    #define HOLTZ_2002_GAIN_OFFSET 10 //1 // 20 is too large, causing unstable control during reversal
+    #define HOLTZ_2002_GAIN_OFFSET 20 //1 // 20 is too large, causing unstable control during reversal
     /* Harnefors SCVM 2003 */// default: 2
     #define GAIN_HARNEFORS_LAMBDA 2
 

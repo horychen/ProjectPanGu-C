@@ -6,6 +6,7 @@
 Uint32 position_count_SCI_shank_fromCPU2;
 Uint32 position_count_SCI_hip_fromCPU2;
 Uint32 position_count_SCI_fromCPU2;
+Uint32 position_count_SCI_fromCPU2_test_4_motor1;
 Uint32 position_count_CAN_ID0x01_fromCPU2;
 Uint32 position_count_CAN_ID0x03_fromCPU2;
 Uint32 position_count_CAN_fromCPU2;
@@ -695,7 +696,7 @@ void cla_test_codes(){
 
 
 
-REAL wubo_debug[4];
+REAL wubo_debug[4]={1,-1,0,0};
 
 void measurement_position_count_axisCnt0(){
     #if (ENCODER_TYPE == ABSOLUTE_ENCODER_SCI_SHANK)
@@ -715,9 +716,10 @@ void measurement_position_count_axisCnt0(){
 void measurement_position_count_axisCnt1(){
     #if NUMBER_OF_AXES == 2
         position_count_SCI_fromCPU2 = position_count_SCI_hip_fromCPU2;
+        position_count_SCI_fromCPU2_test_4_motor1 = position_count_SCI_shank_fromCPU2;
     #endif
         // 正电流导致编码器读数减小
-        CTRL->enc->encoder_abs_cnt = -( (int32)position_count_SCI_fromCPU2 - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis );
+        CTRL->enc->encoder_abs_cnt = -1 * ( (int32)position_count_SCI_fromCPU2 - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis );
         // dq变化中，d轴理论上指向永磁体的北极，
 }
 
@@ -808,8 +810,6 @@ void measurement_enc(){
 
     // CTRL->enc->rpm = PostionSpeedMeasurement_MovingAvergage(QPOSCNT, CTRL->enc);
 }
-
-
 
 void measurement_current_axisCnt0(){
     // LEM1
@@ -1295,7 +1295,7 @@ void ENABLE_PWM_OUTPUT(int positionLoopType, int use_first_set_three_phase)
             }
         }
 
-        main_switch(debug.mode_select);
+        main_switch(debug.mode_select[0]);
 
     //(*CTRL).o->cmd_uAB_to_inverter[0]
 
