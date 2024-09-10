@@ -629,7 +629,7 @@ void Online_PAA_Based_Compensation(void)
         // INV.sig_a2 += CL_TS * -100 * AFEOE.output_error_dq[0];
 
         // use nonlinear (saturation) FE
-        INV.sig_a2 += CL_TS * -INV.gamma_a2 * (*CTRL).s->Motor_or_Generator * (MOTOR.KActive - FE.htz.psi_2_ampl_lpf);
+//        INV.sig_a2 += CL_TS * -INV.gamma_a2 * (*CTRL).s->Motor_or_Generator * (MOTOR.KActive - FE.htz.psi_2_ampl_lpf);
 
         /* Sensored: Adaptive a2 based on position error */
         /* To use this, you must have a large enough stator current */

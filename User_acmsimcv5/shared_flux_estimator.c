@@ -1345,21 +1345,21 @@ void Main_Saturation_time_Without_Limiting(){
 
 void simulation_test_flux_estimators(){
     // MainFE_HUWU_1998();
-    Main_No_Saturation_Based();
-    VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
-    Main_VM_ClosedLoopFluxEstimatorForPMSM();
+    // Main_No_Saturation_Based();
+    // VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
+    // Main_VM_ClosedLoopFluxEstimatorForPMSM();
     Main_the_active_flux_estimator();
-    VM_LascuAndreescus2006();
-    Main_Saturation_time_Without_Limiting();
+    // VM_LascuAndreescus2006();
+    // Main_Saturation_time_Without_Limiting();
     // VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
 }
 
 void init_FE(){
     // init_FE_huwu();
-    init_ClosedLoopFluxEstimatorForPMSM();
+    // init_ClosedLoopFluxEstimatorForPMSM();
     init_afe();
-    init_No_Saturation_Based();
-    init_FE_htz();
-    init_LascuAndreescus2006();
-    init_Saturation_time_Without_Limiting();
+    // init_No_Saturation_Based();
+    // init_FE_htz();
+    // init_LascuAndreescus2006();
+    // init_Saturation_time_Without_Limiting();
 }

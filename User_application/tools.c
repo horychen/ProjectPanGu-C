@@ -6,7 +6,6 @@
 Uint32 position_count_SCI_shank_fromCPU2;
 Uint32 position_count_SCI_hip_fromCPU2;
 Uint32 position_count_SCI_fromCPU2;
-Uint32 position_count_SCI_fromCPU2_test_4_motor1;
 Uint32 position_count_CAN_ID0x01_fromCPU2;
 Uint32 position_count_CAN_ID0x03_fromCPU2;
 Uint32 position_count_CAN_fromCPU2;
@@ -716,7 +715,6 @@ void measurement_position_count_axisCnt0(){
 void measurement_position_count_axisCnt1(){
     #if NUMBER_OF_AXES == 2
         position_count_SCI_fromCPU2 = position_count_SCI_hip_fromCPU2;
-        position_count_SCI_fromCPU2_test_4_motor1 = position_count_SCI_shank_fromCPU2;
     #endif
         // 正电流导致编码器读数减小
         CTRL->enc->encoder_abs_cnt = -1 * ( (int32)position_count_SCI_fromCPU2 - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis );
@@ -1264,10 +1262,10 @@ void ENABLE_PWM_OUTPUT(int positionLoopType, int use_first_set_three_phase)
         DSP_2PWM_ENABLE
     }
 
-    if (FE.htz.u_offset[0] > 0.1)
-    {
-        FE.htz.u_offset[0] = 0;
-    }
+//    if (FE.htz.u_offset[0] > 0.1)
+//    {
+//        FE.htz.u_offset[0] = 0;
+//    }
     // DSP中控制器的时间
     (*CTRL).timebase_counter += 1;
     (*CTRL).timebase = CL_TS * (*CTRL).timebase_counter; //(*CTRL).timebase += CL_TS; // 2048 = float/REAL max

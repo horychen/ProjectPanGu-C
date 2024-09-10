@@ -51,7 +51,7 @@
 
     /* Select [Shared Flux Estimator] */
     // #define AFE_USED FE.clfe4PMSM
-    #define AFE_USED FE.no_sat
+    #define AFE_USED FE.AFEOE
     // #define AFE_USED FE.huwu
     // #define AFE_USED FE.htz // this is for ESO speed estimation
     // #define AFE_USED FE.picorr // this is for ESO speed estimation

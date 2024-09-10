@@ -8,6 +8,11 @@
         r->Out = r->OutPrev \
                 + r->Kp * ( r->Err - r->ErrPrev ) + r->Ki_CODE * r->Err;
 
+        // 比例
+        r->P_Term = r->Err * r->Kp;
+        // 积分
+        r->I_Term += r->Err * r->Ki_CODE;
+
         // 控制器的限幅需要写在OutPrev幅值之后，否则电流环idq暂态跟踪误差会达到50%左右
         // 20240812：理论分析，限幅放在之前之后貌似没有区别，但仿真结果确实不同
         if(r->Out > r->OutLimit)

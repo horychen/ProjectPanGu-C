@@ -190,7 +190,7 @@ void main_switch(long mode_select){
         break;
     case MODE_SELECT_VELOCITY_LOOP_SENSORLESS : //41
         _user_commands();
-        pmsm_observers();
+        // pmsm_observers();
         // observer();
         // FOC_with_vecocity_control(FE.AFEOE.theta_d,
         //     OBSV.nsoaf.xOmg * MOTOR.npp_inv,
@@ -208,7 +208,7 @@ void main_switch(long mode_select){
     case MODE_SELECT_VELOCITY_LOOP_WC_TUNER: // 43
         break;
     case MODE_SELECT_Marino2005: //44
-        controller_marino2005_with_commands();
+        // controller_marino2005_with_commands();
         break;
     case MODE_SELECT_POSITION_LOOP: // 5
         break;
@@ -439,8 +439,8 @@ void _user_onlyFOC(){
     // 帕克变换
     (*CTRL).s->cosT = cos((*CTRL).i->theta_d_elec);
     (*CTRL).s->sinT = sin((*CTRL).i->theta_d_elec);
-    (*CTRL).i->iDQ[0] = AB2M((*CTRL).i->iAB[0], (*CTRL).i->iAB[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
     (*CTRL).i->iDQ[1] = AB2T((*CTRL).i->iAB[0], (*CTRL).i->iAB[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
+    (*CTRL).i->iDQ[0] = AB2M((*CTRL).i->iAB[0], (*CTRL).i->iAB[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
 
     /// 5.Sweep 扫频将覆盖上面产生的励磁、转矩电流指令
     #if EXCITATION_TYPE == EXCITATION_SWEEP_FREQUENCY

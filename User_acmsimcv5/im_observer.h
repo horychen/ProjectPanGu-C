@@ -177,7 +177,7 @@ void VM_ProposedCmdErrFdkCorInFrameRho();
 void VM_ClosedLoopFluxEstimator();
 
 void VM_Saturated_ExactOffsetCompensation();
-void VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
+// void VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
 void VM_Saturated_ExactOffsetCompensation_WithParallelNonSaturatedEstimator();
 // void stableFME();
 

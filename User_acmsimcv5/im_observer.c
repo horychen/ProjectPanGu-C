@@ -606,7 +606,7 @@ void flux_observer(){
  ********************************************/
     /* 9. Holtz and Quan 2003 (LPF) */
     void VM_HoltzQuan2003(){
-        VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();    
+        // VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();    
     }
 
     /* 10. Holtz and Quan 2003 (Integrator) */
@@ -943,6 +943,7 @@ void flux_observer(){
 
 
 /* Holtz 2003 implemented in ACMSIMC-V4 */
+#if AFE_35_SATURATION_TIME_DIFFERENCE
 REAL imife_realtime_gain_off = 1.0;
 void init_FE_htz(){
     int ind;
@@ -1325,7 +1326,7 @@ void VM_Saturated_ExactOffsetCompensation_WithParallelNonSaturatedEstimator(){
         psi_offset 是磁链波形正负面积的积分。 u_offset 在一定时间内是造成这 psi_offset 的磁链导数。
     */
 }
-
+#endif
 /* Init functions */
 void rk4_init(){
 
@@ -1346,7 +1347,7 @@ void observer_init(){
 
     // init_esoaf();
 
-    init_FE_htz();
+    // init_FE_htz();
 
     int i;
     for(i=0; i<2; ++i){
