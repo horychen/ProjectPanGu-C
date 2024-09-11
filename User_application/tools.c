@@ -144,7 +144,7 @@ void EUREKA_GPIO_SETUP(){
 void axis_basic_setup(int axisCnt){
     Axis->ID = 100 + axisCnt;
     Axis->pCTRL = CTRL;
-
+    Axis->pdebug = debug;
 //    allocate_CTRL(CTRL);
     init_experiment();
     init_experiment_AD_gain_and_offset();
@@ -1295,7 +1295,7 @@ void ENABLE_PWM_OUTPUT(int positionLoopType, int use_first_set_three_phase)
             }
         }
 
-        main_switch(debug.mode_select);
+        main_switch((*debug).mode_select);
 
     //(*CTRL).o->cmd_uAB_to_inverter[0]
 

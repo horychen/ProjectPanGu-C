@@ -44,9 +44,9 @@ struct DebugExperiment{
     REAL vvvf_frequency;
     int positionLoopType;
 };
-extern struct DebugExperiment debug;
-
-
+extern struct DebugExperiment *debug;
+extern struct DebugExperiment debug_1;
+extern struct DebugExperiment debug_2;
 /* USER: Macros */
 
 /* User Specified Functions */

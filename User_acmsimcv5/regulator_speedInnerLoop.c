@@ -186,7 +186,7 @@
 
 void _user_wubo_WC_Tuner(){
     // 吴波用：
-    if(debug.who_is_user == USER_WB){
+    if((*debug).who_is_user == USER_WB){
         PID_Speed->calc = (void (*)(Uint32)) InnerLoopFeedback_calc;
     }
 
@@ -274,21 +274,21 @@ void _user_controller_wubo(){
         (*CTRL).s->the_vc_count = 1;
         PID_Speed->Ref = (*CTRL).i->cmd_varOmega;
         PID_Speed->Fbk = (*CTRL).i->varOmega;
-        if(debug.who_is_user == USER_BEZIER)
+        if((*debug).who_is_user == USER_BEZIER)
         {
             control_output(PID_Speed, &BzController);
         }
-        else if(debug.who_is_user == USER_WB)
+        else if((*debug).who_is_user == USER_WB)
         {
             PID_Speed->calc(PID_Speed);
         }
-        else if(debug.who_is_user == USER_CJH)
+        else if((*debug).who_is_user == USER_CJH)
         {
             PID_Speed->calc(PID_Speed);
         }
         else
         {
-            debug.error = 998;
+            (*debug).error = 998;
         }
         (*CTRL).i->cmd_iDQ[1] = PID_Speed->Out;
     }

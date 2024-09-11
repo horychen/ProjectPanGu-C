@@ -105,6 +105,7 @@
 typedef struct{
     int ID;
     struct ControllerForExperiment *pCTRL;
+    struct DebugExperiment *pdebug;
     // Commonly used for prototype motor testing
        //int use_first_set_three_phase;
         int Set_current_loop;
