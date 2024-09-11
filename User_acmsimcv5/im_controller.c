@@ -661,7 +661,7 @@ void init_im_controller(){
     (*CTRL).i->m1 = IM_FLUX_COMMAND_SINE_PART;
     (*CTRL).i->omega1 = 2*M_PI*IM_FLUX_COMMAND_SINE_HERZ;
 
-    // debug.SENSORLESS_CONTROL = SENSORLESS_CONTROL;
+    // (*debug).SENSORLESS_CONTROL = SENSORLESS_CONTROL;
     // (*CTRL).s->ctrl_strategy = CONTROL_STRATEGY;
 
     #define AKATSU00 FALSE

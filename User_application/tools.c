@@ -155,6 +155,7 @@ void EUREKA_GPIO_SETUP(){
 void axis_basic_setup(int axisCnt){
     Axis->ID = 100 + axisCnt;
     Axis->pCTRL = CTRL;
+    Axis->Pdebug = debug;
 
     allocate_CTRL(CTRL);
     init_experiment();
@@ -1183,6 +1184,7 @@ void DISABLE_PWM_OUTPUT(int use_first_set_three_phase)
     DSP_2PWM_DISABLE
 
     /* Only init once for easy debug */
+    /* wubo：每次执行ENABLE PWM OUT时候会将下面的flag置为0 从而每次关闭开启开关都会执行下面的操作！上面说的有问题？*/
     if (!G.flag_experimental_initialized)
     {
         G.flag_experimental_initialized = TRUE;
@@ -1223,7 +1225,7 @@ void DISABLE_PWM_OUTPUT(int use_first_set_three_phase)
     }
 
     /* 在不输出PWM波形的时候，也就是“开关”为OFF的时候，更新SpeedInnerLoop的参数*/
-    if (debug.who_is_user == USER_WB && debug.bool_apply_WC_tunner_for_speed_loop == TRUE){
+    if ((*debug).who_is_user == USER_WB && (*debug).bool_apply_WC_tunner_for_speed_loop == TRUE){
         _user_wubo_WC_Tuner_Online(); // 和_user_wubo_WC_Tuner函数区别
     }else
         _user_wubo_TI_Tuner_Online();
@@ -1268,8 +1270,9 @@ void ENABLE_PWM_OUTPUT(int positionLoopType, int use_first_set_three_phase)
 
     // 根据指令，产生控制输出（电压）
     #if ENABLE_COMMISSIONING == FALSE
-        // 根据debug切换相应的operation mode
-        Axis->Select_exp_operation = debug.Select_exp_operation;
+        // 根据Axis自己的debug切换相应的operation mode
+        //* 现在Axis中有许多一样的参数，需要化简
+        Axis->Select_exp_operation = (*debug).Select_exp_operation;
         //(*CTRL).s->Motor_or_Gnerator = sign((*CTRL).i->cmd_iDQ[1]) == sign(CTRL->enc->rpm); // sign((*CTRL).i->cmd_iDQ[1]) != sign((*CTRL).i->cmd_speed_rpm))
         runtime_command_and_tuning(Axis->Select_exp_operation);
         // 0x03 is shank
@@ -1292,7 +1295,7 @@ void ENABLE_PWM_OUTPUT(int positionLoopType, int use_first_set_three_phase)
             }
         }
 
-        main_switch(debug.mode_select);
+        main_switch((*debug).mode_select);
 
     #else
         commissioning(); // 参数辨识用

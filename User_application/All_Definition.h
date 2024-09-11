@@ -106,6 +106,7 @@
 typedef struct{
     int ID;
     struct ControllerForExperiment *pCTRL;
+    struct DebugExperiment *Pdebug;
     // Commonly used for prototype motor testing
        //int use_first_set_three_phase;
         int Set_current_loop;
@@ -153,9 +154,11 @@ typedef struct{
         int channels[NO_OF_DAC_CHANNELS];
         int channels_preset;
 } st_axis;
+
 extern st_axis Axis_1;
 extern st_axis Axis_2;
 extern st_axis *Axis;
+extern REAL wubo_debug_tools[10];
 
 /* Tools that main use */
     #include "tools.h"

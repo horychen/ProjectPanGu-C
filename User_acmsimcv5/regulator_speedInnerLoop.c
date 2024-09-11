@@ -65,9 +65,8 @@ void _user_wubo_WC_Tuner(){
             printf(">>> Zero-pole cancellation can be done <<<\n");
         }
     #endif
-    
-    PID_iD->OutLimit  = 0.5773 * d_sim.CL.LIMIT_DC_BUS_UTILIZATION * d_sim.init.Vdc;
-    PID_iQ->OutLimit  = 0.5773 * d_sim.CL.LIMIT_DC_BUS_UTILIZATION * d_sim.init.Vdc;
+    PID_iD->OutLimit    = 0.5773 * d_sim.CL.LIMIT_DC_BUS_UTILIZATION * d_sim.init.Vdc;
+    PID_iQ->OutLimit    = 0.5773 * d_sim.CL.LIMIT_DC_BUS_UTILIZATION * d_sim.init.Vdc;
     PID_Speed->OutLimit = d_sim.VL.LIMIT_OVERLOAD_FACTOR * d_sim.init.IN;
     // >>实验<<限幅的部分我放在pangu-c的main.c中的measurement函数里面，也就是说，测量此时的Vdc，然后根据Vdc觉得限幅的大小
 }
@@ -75,14 +74,14 @@ void _user_wubo_WC_Tuner(){
 void _user_wubo_WC_Tuner_Online(){
     /* Tuned by debug */
     REAL FOC_CLBW, K0;
-    FOC_CLBW, K0 = _user_wubo_WC_Tuner_Part2(debug.zeta, debug.omega_n, debug.max_CLBW_PER_min_CLBW);
+    FOC_CLBW, K0 = _user_wubo_WC_Tuner_Part2((*debug).zeta, (*debug).omega_n, (*debug).max_CLBW_PER_min_CLBW);
     // >>实验<<限幅的部分我放在pangu-c的main.c中的measurement函数里面，也就是说，测量此时的Vdc，然后根据Vdc觉得限幅的大小
 }
 
 void _user_wubo_TI_Tuner_Online(){
     /* Tuned by debug */
-    REAL CLBW_HZ = debug.CLBW_HZ;
-    REAL delta = debug.delta;
+    REAL CLBW_HZ = (*debug).CLBW_HZ;
+    REAL delta = (*debug).delta;
 
     // TODO: 下面的psi_A在IM上应该不能用，因为我拿的是电机参数中原始的KE
     REAL Ld = d_sim.init.Ld;
@@ -116,10 +115,16 @@ void _user_wubo_TI_Tuner_Online(){
 }
 
 void _user_wubo_SpeedInnerLoop_controller(st_pid_regulator *r){
+        //* 存储控制器的各项输出
+        r->P_Term += r->Kp * ( r->Err - r->ErrPrev );
+        r->I_Term += r->Ki_CODE * r->Err;
+        r->KFB_Term = 1 * r->KFB * r->Fbk;
+
         r->Err = r->Ref - r->Fbk;
         r->Out = r->OutPrev + \
                 r->Kp * ( r->Err - r->ErrPrev ) \
                 + r->Ki_CODE * r->Err; // - r->KFB_Term;
+                
         //* 这里对Out做限幅是为了后面给OutPrev的值时，make sure it is able to cover the speed steady error carried by KFB
         if(r->Out > r->OutLimit + r->KFB_Term)
             r->Out = r->OutLimit + r->KFB_Term;
@@ -128,11 +133,6 @@ void _user_wubo_SpeedInnerLoop_controller(st_pid_regulator *r){
 
         r->ErrPrev = r->Err; 
         r->OutPrev = r->Out;
-
-        //* 存储控制器的各项输出
-        r->P_Term += r->Kp * ( r->Err - r->ErrPrev );
-        r->I_Term += r->Ki_CODE * r->Err;
-        r->KFB_Term = 1 * r->KFB * r->Fbk;
 
         r->Out = r->Out - r->KFB_Term;
         if(r->Out > r->OutLimit)
@@ -144,33 +144,34 @@ void _user_wubo_SpeedInnerLoop_controller(st_pid_regulator *r){
 void _user_wubo_Sweeping_Command(){
     #if PC_SIMULATION //* 先让扫频只在simulation中跑
         ACM.TLoad = 0; // 强制将负载设置为0
-        if ((*CTRL).timebase > debug.CMD_SPEED_SINE_END_TIME){
+        if ((*CTRL).timebase > (*debug).CMD_SPEED_SINE_END_TIME){
             // next frequency
-            debug.CMD_SPEED_SINE_HZ += debug.CMD_SPEED_SINE_STEP_SIZE;
+            (*debug).CMD_SPEED_SINE_HZ += (*debug).CMD_SPEED_SINE_STEP_SIZE;
             // next end time
-            debug.CMD_SPEED_SINE_LAST_END_TIME = debug.CMD_SPEED_SINE_END_TIME;
-            debug.CMD_SPEED_SINE_END_TIME += 1.0/debug.CMD_SPEED_SINE_HZ; // 1.0 Duration for each frequency
+            (*debug).CMD_SPEED_SINE_LAST_END_TIME = (*debug).CMD_SPEED_SINE_END_TIME;
+            (*debug).CMD_SPEED_SINE_END_TIME += 1.0/(*debug).CMD_SPEED_SINE_HZ; // 1.0 Duration for each frequency
             // WUBO：这里扫频的思路是每隔一个frequency的时间，扫频信号提升1个Hz，例如1Hz的信号走1s，1/2Hz的信号走0.5s，1/3Hz的信号走0.33s，
             // 依次类推，所以单单从图上看时间是不能直接看出 Bandwidth到底是多少，但是可以用级数求和直接表示？
         }
-        if (debug.CMD_SPEED_SINE_HZ > debug.CMD_SPEED_SINE_HZ_CEILING){
+        if ((*debug).CMD_SPEED_SINE_HZ > (*debug).CMD_SPEED_SINE_HZ_CEILING){
             (*CTRL).i->cmd_varOmega = 0.0; // 到达扫频的频率上限，速度归零
             (*CTRL).i->cmd_iDQ[1] = 0.0;
         }else{
-            if (debug.bool_sweeping_frequency_for_speed_loop == TRUE){
-                (*CTRL).i->cmd_varOmega = RPM_2_MECH_RAD_PER_SEC * debug.CMD_SPEED_SINE_RPM * sin(2* M_PI *debug.CMD_SPEED_SINE_HZ*((*CTRL).timebase - debug.CMD_SPEED_SINE_LAST_END_TIME));
+            if ((*debug).bool_sweeping_frequency_for_speed_loop == TRUE){
+                (*CTRL).i->cmd_varOmega = RPM_2_MECH_RAD_PER_SEC * (*debug).CMD_SPEED_SINE_RPM * sin(2* M_PI *(*debug).CMD_SPEED_SINE_HZ*((*CTRL).timebase - (*debug).CMD_SPEED_SINE_LAST_END_TIME));
             }else{
                 // 让电机转起来，然后在d轴上电流扫频？
                 //* 所以让电机转起来的原因是？？？
-                debug.bool_Null_D_Control = FALSE; //确保Null iD不开启
-                (*CTRL).i->cmd_varOmega = debug.set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
-                (*CTRL).i->cmd_varOmega = 100 * RPM_2_MECH_RAD_PER_SEC;
-                
-                (*CTRL).i->cmd_iDQ[0]   = debug.CMD_CURRENT_SINE_AMPERE * sin(2* M_PI *debug.CMD_SPEED_SINE_HZ*((*CTRL).timebase - debug.CMD_SPEED_SINE_LAST_END_TIME));
+                (*debug).bool_Null_D_Control = FALSE; //确保Null iD不开启
+                (*CTRL).i->cmd_varOmega = (*debug).CMD_SPEED_SINE_RPM * RPM_2_MECH_RAD_PER_SEC;
+                (*CTRL).i->cmd_iDQ[0]   = (*debug).CMD_CURRENT_SINE_AMPERE * sin(2* M_PI *(*debug).CMD_SPEED_SINE_HZ*((*CTRL).timebase - (*debug).CMD_SPEED_SINE_LAST_END_TIME));
             }
         }
     #endif
 }
+
+
+
 
 
 /* 20240910 教师节 下面的代码可能成为历史 史称910离散PI运动 */
@@ -380,14 +381,14 @@ void _user_wubo_Sweeping_Command(){
 //         (*CTRL).s->the_vc_count = 1;
 //         PID_Speed->Ref = (*CTRL).i->cmd_varOmega;
 //         PID_Speed->Fbk = (*CTRL).i->varOmega;
-//         if(debug.who_is_user == USER_BEZIER){
+//         if((*debug).who_is_user == USER_BEZIER){
 //             control_output(PID_Speed, &BzController);
-//         }else if(debug.who_is_user == USER_WB){
+//         }else if((*debug).who_is_user == USER_WB){
 //             PID_Speed->calc(PID_Speed);
-//         }else if(debug.who_is_user == USER_CJH){
+//         }else if((*debug).who_is_user == USER_CJH){
 //             PID_Speed->calc(PID_Speed);
 //         }else{
-//             debug.error = 998;
+//             (*debug).error = 998;
 //         }
 //         // Get iQ Command
 //         (*CTRL).i->cmd_iDQ[1] = PID_Speed->Out; 
@@ -406,7 +407,7 @@ void _user_wubo_Sweeping_Command(){
 
 
 //     /* 启动D_Cuurent = 0A */
-//     if(debug.bool_Null_D_Control == TRUE) (*CTRL).i->cmd_iDQ[0] = 0;
+//     if((*debug).bool_Null_D_Control == TRUE) (*CTRL).i->cmd_iDQ[0] = 0;
 
 //     /* 速度双环的电流环 */
 //     // d-axis

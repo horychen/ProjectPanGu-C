@@ -54,7 +54,7 @@ long int counter=0;
 
 
 void write_DAC_buffer(){
-    if(debug.use_first_set_three_phase==2){
+    if((*debug).use_first_set_three_phase==2){
         Axis4DAC = &Axis_2;
     }else{
         Axis4DAC = &Axis_1;
@@ -171,8 +171,8 @@ void write_DAC_buffer(){
 
         //* 速度控制器的输出信号
         (*Axis4DAC).dac_watch[64] = PID_Speed->P_Term * 1;
-        (*Axis4DAC).dac_watch[65] = PID_Speed->I_Term * 0.1;
-        (*Axis4DAC).dac_watch[66] = PID_Speed->KFB_Term * 0.1;
+        (*Axis4DAC).dac_watch[65] = PID_Speed->I_Term * 0.04 * wubo_debug_tools[0];
+        (*Axis4DAC).dac_watch[66] = PID_Speed->KFB_Term * 0.04 * wubo_debug_tools[0];
         
         (*Axis4DAC).dac_watch[67] = PID_Speed->Out * 0.1;
         (*Axis4DAC).dac_watch[68] = PID_Speed->OutPrev *0.1;
@@ -262,6 +262,15 @@ void write_DAC_buffer(){
             (*Axis4DAC).channels[2] = 66;
             (*Axis4DAC).channels[3] = 67;
             (*Axis4DAC).channels[4] = 68;
+            (*Axis4DAC).channels[5] = 27;
+            (*Axis4DAC).channels[6] = 28;
+            (*Axis4DAC).channels[7] = 22;
+        }else if((*Axis4DAC).channels_preset==10){(*Axis4DAC).channels_preset=0;
+            (*Axis4DAC).channels[0] = 22; // for controller output
+            (*Axis4DAC).channels[1] = 24;
+            (*Axis4DAC).channels[2] = 64;
+            (*Axis4DAC).channels[3] = 65;
+            (*Axis4DAC).channels[4] = 66;
             (*Axis4DAC).channels[5] = 27;
             (*Axis4DAC).channels[6] = 28;
             (*Axis4DAC).channels[7] = 22;

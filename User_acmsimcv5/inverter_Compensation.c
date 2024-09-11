@@ -11,7 +11,7 @@ REAL inverter_current_point[NUMBER_OF_COMPENSATION_POINTS] = {0.85, 0.216, 0.03,
 REAL inverter_voltage_point[NUMBER_OF_COMPENSATION_POINTS] = {4.06, 3.67 , 1.83, 0, -2.36 , -3.58, -4.066};  // Unit:V
 
 void wubo_inverter_Compensation(REAL iAB[2]){
-    if (debug.INVERTER_NONLINEARITY_COMPENSATION_INIT == 0){
+    if ((*debug).INVERTER_NONLINEARITY_COMPENSATION_INIT == 0){
         // No Compensation
         (*CTRL).o->cmd_uAB_to_inverter[0] = (*CTRL).o->cmd_uAB[0];
         (*CTRL).o->cmd_uAB_to_inverter[1] = (*CTRL).o->cmd_uAB[1];
@@ -31,12 +31,12 @@ void wubo_inverter_Compensation(REAL iAB[2]){
         iw = AB2W_AI(iAB[0], iAB[1]);
 
         /* Calculation for uabc_dist */
-        if (debug.INVERTER_NONLINEARITY_COMPENSATION_INIT == 1){
+        if ((*debug).INVERTER_NONLINEARITY_COMPENSATION_INIT == 1){
             // Six First-Order Curve for Compensation
             dist_ua = wubo_inverter_Compensation_get_dist_voltage(iu);
             dist_ub = wubo_inverter_Compensation_get_dist_voltage(iv);
             dist_uc = wubo_inverter_Compensation_get_dist_voltage(iw);
-        }else if (debug.INVERTER_NONLINEARITY_COMPENSATION_INIT == 2){
+        }else if ((*debug).INVERTER_NONLINEARITY_COMPENSATION_INIT == 2){
             // 二分查表法 AKA.真查表法
             dist_ua = CJH_LUT_index_inverter_compensation_get_dist_voltage(iu);
             dist_ub = CJH_LUT_index_inverter_compensation_get_dist_voltage(iv);

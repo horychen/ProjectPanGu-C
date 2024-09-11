@@ -65,7 +65,11 @@ struct DebugExperiment{
     REAL CMD_SPEED_SINE_END_TIME;
     REAL CMD_SPEED_SINE_HZ_CEILING;
 };
-extern struct DebugExperiment debug;
+
+/* To separate two debugs */
+extern struct DebugExperiment debug_1;
+extern struct DebugExperiment debug_2;
+extern struct DebugExperiment *debug;
 
 
 /* USER: Macros */

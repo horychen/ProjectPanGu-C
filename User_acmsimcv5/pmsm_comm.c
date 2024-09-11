@@ -2,7 +2,7 @@
 #include "ACMSim.h"
 
 #if 0
-if(debug.mode_select == MODE_SELECT_COMMISSIONING){
+if((*debug).mode_select == MODE_SELECT_COMMISSIONING){
 }
 
 /* The most accurate initial position detection method is actually proposed in my 2017 TDDA paper that make use of the fact that large d-axis current do not any create torque. */

@@ -163,7 +163,7 @@ REAL difference_between_two_angles(REAL first, REAL second)
         printf("\t[utility.c] Rreq = %f Ohm\n", (ACM.Rreq));
         printf("\t[utility.c] NUMBER_OF_STEPS = %d\n", (int)d_sim.sim.NUMBER_OF_STEPS); 
         printf("\tMACHINE_SIMULATIONs_PER_SAMPLING_PERIOD = %d\n", d_sim.sim.MACHINE_SIMULATIONs_PER_SAMPLING_PERIOD);
-        // if(debug.SENSORLESS_CONTROL==TRUE){
+        // if((*debug).SENSORLESS_CONTROL==TRUE){
         //     printf("\t[utility.c] Sensorless using observer.\n");
         // }else{
         //     printf("\t[utility.c] Sensored control.\n");
@@ -182,6 +182,6 @@ REAL difference_between_two_angles(REAL first, REAL second)
         printf("\td_sim.FOC.delta = %g\n", (REAL)d_sim.FOC.delta);
         printf("\td_sim.user.zeta = %.3f\n", (REAL)d_sim.user.zeta);
         printf("\td_sim.user.omega_n = %.3f\n", (REAL)d_sim.user.omega_n);
-        printf("\tdebug.error=%d\n\tdebug.mode_select=%d\n\tdebug.who_is_user=%d\n", (int)debug.error, (int)debug.mode_select, (int)debug.who_is_user);
+        printf("\tdebug.error=%d\n\tdebug.mode_select=%d\n\tdebug.who_is_user=%d\n", (int)(*debug).error, (int)(*debug).mode_select, (int)(*debug).who_is_user);
 }
 #endif

@@ -4,11 +4,10 @@
 int axisCnt = 0;
 struct ControllerForExperiment CTRL_1;
 struct ControllerForExperiment *CTRL;
-struct DebugExperiment debug;
-ST_D_SIM d_sim;
+struct DebugExperiment *debug;
+struct DebugExperiment debug_1;
 
-// 定义顶级debug结构体
-REAL wubo_debug_global[10] = {0,0,0,0,0,0,0,0,0,0};
+ST_D_SIM d_sim;
 
 REAL one_over_six = 1.0/6.0;
 
@@ -31,6 +30,7 @@ st_pid_regulator _PID_Position_1 = st_pid_regulator_DEFAULTS;
 #if PC_SIMULATION == FALSE
     //#pragma DATA_SECTION(CTRL     ,"MYGLOBALS"); // 陈嘉豪是傻逼
     #pragma DATA_SECTION(CTRL_1       ,"MYGLOBALS_1"); // FUCK! 叶明是天才！ 2024-03-12
+    #pragma DATA_SECTION(debug_1      ,"MYGLOBALS_1");
     #pragma DATA_SECTION(t_motor_1    ,"MYGLOBALS_1");
     #pragma DATA_SECTION(t_enc_1      ,"MYGLOBALS_1");
     #pragma DATA_SECTION(t_psd_1      ,"MYGLOBALS_1");
@@ -50,6 +50,7 @@ st_pid_regulator _PID_Position_1 = st_pid_regulator_DEFAULTS;
     #if NUMBER_OF_AXES == 2
         // 注意，一定要先extern再pragma？？？
         #pragma DATA_SECTION(CTRL_2     ,"MYGLOBALS_2"); // FUCK! 叶明是天才！ 2024-03-12
+        #pragma DATA_SECTION(debug_2      ,"MYGLOBALS_1");
         #pragma DATA_SECTION(t_motor_2    ,"MYGLOBALS_2");
         #pragma DATA_SECTION(t_enc_2      ,"MYGLOBALS_2");
         #pragma DATA_SECTION(t_psd_2      ,"MYGLOBALS_2");
@@ -66,6 +67,7 @@ st_pid_regulator _PID_Position_1 = st_pid_regulator_DEFAULTS;
         #pragma DATA_SECTION(_PID_Position_2   ,"MYGLOBALS_2");
         #pragma DATA_SECTION(_PID_Speed_2   ,"MYGLOBALS_2");
         struct ControllerForExperiment CTRL_2;
+        struct DebugExperiment debug_2;
 
         st_motor_parameters     t_motor_2={0};
         st_enc                  t_enc_2={0};
@@ -227,7 +229,7 @@ void init_CTRL_Part2(){
     /* Inverter */
     (*CTRL).inv->filter_pole = 3000 * 2 * M_PI;
     inverterNonlinearity_Initialization();
-    G.FLAG_INVERTER_NONLINEARITY_COMPENSATION = debug.INVERTER_NONLINEARITY_COMPENSATION_INIT;
+    G.FLAG_INVERTER_NONLINEARITY_COMPENSATION = (*debug).INVERTER_NONLINEARITY_COMPENSATION_INIT;
     // G.FLAG_TUNING_CURRENT_SCALE_FACTOR = TUNING_CURRENT_SCALE_FACTOR_INIT;
 
 
@@ -243,7 +245,7 @@ void init_CTRL_Part2(){
     /* Black Box Model | Controller quantities */
 
     // 控制器tuning
-    if(debug.who_is_user == USER_WB && debug.bool_apply_WC_tunner_for_speed_loop == TRUE){
+    if((*debug).who_is_user == USER_WB && (*debug).bool_apply_WC_tunner_for_speed_loop == TRUE){
         _user_wubo_WC_Tuner();
         #if PC_SIMULATION == TRUE
             printf(">>> Wc_Tuner is Applied to the Speed Loop Control <<<\n");
