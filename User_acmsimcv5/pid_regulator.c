@@ -81,6 +81,8 @@ void ACMSIMC_PIDTuner(){
     PID_iQ->Kp  = d_sim.CL.SERIES_KP_Q_AXIS;
     PID_Speed->Kp = d_sim.VL.SERIES_KP;
 
+    PID_Speed->Kp = 2.1;
+
     PID_iD->Ki_CODE  = d_sim.CL.SERIES_KI_D_AXIS * d_sim.CL.SERIES_KP_D_AXIS * CL_TS;
     PID_iQ->Ki_CODE  = d_sim.CL.SERIES_KI_Q_AXIS * d_sim.CL.SERIES_KP_Q_AXIS * CL_TS;
     PID_Speed->Ki_CODE = d_sim.VL.SERIES_KI        * d_sim.VL.SERIES_KP        * VL_TS;
@@ -177,7 +179,7 @@ float PIDController_Update(st_PIDController *pid) {
 void PID_calc4test(st_pid_regulator *r){
         r->Kp = 0.7370474942872957;
         r->Ki_CODE = 9.26e-4;
-        
+
         r->Err = r->Ref - r->Fbk;
         r->Out = r->OutPrev \
                 + r->Kp * ( r->Err - r->ErrPrev ) + r->Ki_CODE * r->Err;

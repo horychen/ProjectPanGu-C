@@ -107,6 +107,7 @@ struct SharedFluxEstimatorForExperiment{
             REAL limiter_KE;
             REAL k_af;
             REAL psi_2_limited[2];
+            REAL theta_e;
         } AFEOE;
     #endif
     #if AFE_31_HOLT_QUAN_2003_LPF_ORIGINIAL 

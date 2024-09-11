@@ -388,7 +388,7 @@ void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REA
         }
 
         FE.AFEOE.theta_d = atan2(FE.AFEOE.psi_2[1], FE.AFEOE.psi_2[0]);
-
+        FE.AFEOE.theta_e = angle_diff(FE.AFEOE.theta_d, CTRL_1.i->theta_d_elec);
         // Convert output error to dq frame
         // REAL KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * (*CTRL).i->iDQ[0];
         /* TODO: 思考这个dq角度怎么选最好，要不要换成电压向量的角度而不是转子角度？ */

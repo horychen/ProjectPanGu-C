@@ -168,6 +168,7 @@ void main_switch(long mode_select){
         break;
     case MODE_SELECT_FOC: // 3
         _user_onlyFOC();
+        pmsm_observers();
         break;
     case MODE_SELECT_FOC_SENSORLESS : //31
         //TODO:

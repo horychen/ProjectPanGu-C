@@ -163,6 +163,7 @@ void write_DAC_buffer(){
 
         (*Axis4DAC).dac_watch[61] = INV.ual_comp *0.125;
         (*Axis4DAC).dac_watch[62] = INV.ube_comp *0.125;
+
 //        (*Axis4DAC).dac_watch[63] = FE.no_sat.psi_2[0];
 //        (*Axis4DAC).dac_watch[64] = FE.no_sat.psi_2[1];
 
@@ -338,7 +339,11 @@ void write_DAC_buffer(){
             (*Axis4DAC).dac_watch[66] =  Axis_1.pCTRL->s->Speed->I_Term * 1;
             (*Axis4DAC).dac_watch[67] =  Axis_2.pCTRL->s->Speed->P_Term;
             (*Axis4DAC).dac_watch[68] =  Axis_2.pCTRL->s->Speed->I_Term * 1;
-
+            (*Axis4DAC).dac_watch[69] = FE.AFEOE.theta_d * 0.1;
+            (*Axis4DAC).dac_watch[70] = CTRL_1.i->theta_d_elec * 0.1;
+            (*Axis4DAC).dac_watch[71] = FE.AFEOE.theta_e;
+            (*Axis4DAC).dac_watch[72] = FE.AFEOE.psi_2[0];
+            (*Axis4DAC).dac_watch[73] = FE.AFEOE.psi_2[1];
 
             # if ENABLE_COMMISSIONING == TRUE
                 (*Axis4DAC).dac_watch[61] = COMM.Js * 1e3;
