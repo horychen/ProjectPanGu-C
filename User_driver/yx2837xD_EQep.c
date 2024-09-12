@@ -58,6 +58,7 @@ void InitEQepGpio()
 volatile struct EQEP_REGS *eQEP[] =
 { &EQep1Regs,
   &EQep2Regs,
+  &EQep3Regs,
 };
 void InitEQep1Gpio(void)
 {
@@ -366,6 +367,8 @@ void eQEP_initialize(int m)
     // GpioDataRegs.GPDSET.bit.GPIO106=1;
     // DELAY_US(30001);      //RESET �ߵ�ƽ����30MS
     // GpioDataRegs.GPDCLEAR.bit.GPIO106=1;
+    
+    (*eQEP[m]).QPOSMAX = SYSTEM_QEP_QPOSMAX; // (4*SYSTEM_QEP_LINE);//(4*v.LineEncoder);
 
     (*eQEP[m]).QDECCTL.all = QDECCTL_INIT_STATE;
     (*eQEP[m]).QDECCTL.bit.SWAP = SYSTEM_QEP_SWAP_DISABLE;
@@ -373,7 +376,6 @@ void eQEP_initialize(int m)
     (*eQEP[m]).QPOSCTL.all = QPOSCTL_INIT_STATE;
     (*eQEP[m]).QUPRD = SYSTEM_QEP_UNITTIME_ISR *200000000;		        	// Unit Timer for 1K
     (*eQEP[m]).QCAPCTL.all = QCAPCTL_INIT_STATE;
-    (*eQEP[m]).QPOSMAX = SYSTEM_QEP_QPOSMAX; // (4*SYSTEM_QEP_LINE);//(4*v.LineEncoder);
 
     EQep1Regs.QEPCTL.bit.IEI = 0;        // disable POSCNT=POSINIT @ Index
     EQep1Regs.QCLR.bit.UTO=1; //�����ʱ�жϱ�־λ
