@@ -54,7 +54,7 @@ long int counter=0;
 
 
 void write_DAC_buffer(){
-    if((*debug).use_first_set_three_phase==2){
+    if(use_first_set_three_phase==2){
         Axis4DAC = &Axis_2;
     }else{
         Axis4DAC = &Axis_1;
@@ -76,13 +76,15 @@ void write_DAC_buffer(){
         (*Axis4DAC).dac_watch[8] = (*CTRL).o->cmd_uAB[0]*0.125; // +-12V -> 0-3V
         (*Axis4DAC).dac_watch[9] = (*CTRL).o->cmd_uAB[1]*0.125;
 
-        (*Axis4DAC).dac_watch[10] = FE.htz.psi_2_ampl*0.25;
-        (*Axis4DAC).dac_watch[11] = FE.htz.psi_2_ampl_lpf*0.25;
-        (*Axis4DAC).dac_watch[12] = FE.htz.psi_2[0]*0.25;
-        (*Axis4DAC).dac_watch[13] = FE.htz.psi_2[1]*0.25;
-        (*Axis4DAC).dac_watch[14] = FE.htz.theta_d*0.1;
-        (*Axis4DAC).dac_watch[15] = FE.htz.u_offset[0]*2;
-        (*Axis4DAC).dac_watch[16] = FE.htz.u_offset[1]*2;
+//        (*Axis4DAC).dac_watch[10] = FE.htz.psi_2_ampl*0.25;
+//        (*Axis4DAC).dac_watch[11] = FE.htz.psi_2_ampl_lpf*0.25;
+//        (*Axis4DAC).dac_watch[12] = FE.htz.psi_2[0]*0.25;
+//        (*Axis4DAC).dac_watch[13] = FE.htz.psi_2[1]*0.25;
+//        (*Axis4DAC).dac_watch[14] = FE.htz.theta_d*0.1;
+//        (*Axis4DAC).dac_watch[15] = FE.htz.u_offset[0]*2;
+//        (*Axis4DAC).dac_watch[16] = FE.htz.u_offset[1]*2;
+        (*Axis4DAC).dac_watch[10] = (*CTRL).o->cmd_uAB_to_inverter[0];
+        (*Axis4DAC).dac_watch[11] = (*CTRL).o->cmd_uAB_to_inverter[1];
 
         (*Axis4DAC).dac_watch[17] = (*CTRL).svgen2.Ta;
         (*Axis4DAC).dac_watch[18] = (*CTRL).svgen2.Tb;
@@ -178,6 +180,8 @@ void write_DAC_buffer(){
         (*Axis4DAC).dac_watch[68] = PID_Speed->OutPrev *0.1;
 
 
+
+
         # if ENABLE_COMMISSIONING == TRUE
             (*Axis4DAC).dac_watch[61] = COMM.Js * 1e3;
             (*Axis4DAC).dac_watch[62] = COMM.current_command*0.2;
@@ -230,12 +234,12 @@ void write_DAC_buffer(){
             (*Axis4DAC).channels[6] = 59;
             (*Axis4DAC).channels[7] = 60;
         }else if((*Axis4DAC).channels_preset==6){(*Axis4DAC).channels_preset=0;
-            (*Axis4DAC).channels[0] = 21;
+            (*Axis4DAC).channels[0] = 21;// for MOTOR 1 Speed control and MOTOR 2 current control as a constant torque
             (*Axis4DAC).channels[1] = 22;
-            (*Axis4DAC).channels[2] = 23;
-            (*Axis4DAC).channels[3] = 24;
-            (*Axis4DAC).channels[4] = 27;
-            (*Axis4DAC).channels[5] = 28;
+            (*Axis4DAC).channels[2] = 27;
+            (*Axis4DAC).channels[3] = 28;
+            (*Axis4DAC).channels[4] = 31;
+            (*Axis4DAC).channels[5] = 32;
             (*Axis4DAC).channels[6] = 63;
             (*Axis4DAC).channels[7] = 64;
         }else if((*Axis4DAC).channels_preset==7){(*Axis4DAC).channels_preset=0;
@@ -266,7 +270,7 @@ void write_DAC_buffer(){
             (*Axis4DAC).channels[6] = 28;
             (*Axis4DAC).channels[7] = 22;
         }else if((*Axis4DAC).channels_preset==10){(*Axis4DAC).channels_preset=0;
-            (*Axis4DAC).channels[0] = 22; // for controller output
+            (*Axis4DAC).channels[0] = 22; // for what?
             (*Axis4DAC).channels[1] = 24;
             (*Axis4DAC).channels[2] = 64;
             (*Axis4DAC).channels[3] = 65;

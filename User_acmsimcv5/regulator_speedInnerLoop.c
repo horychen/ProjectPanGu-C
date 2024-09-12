@@ -142,8 +142,8 @@ void _user_wubo_SpeedInnerLoop_controller(st_pid_regulator *r){
 }
 
 void _user_wubo_Sweeping_Command(){
-    #if PC_SIMULATION //* 先让扫频只在simulation中跑
-        ACM.TLoad = 0; // 强制将负载设置为0
+    // #if PC_SIMULATION //* 先让扫频只在simulation中跑
+        // ACM.TLoad = 0; // 强制将负载设置为0
         if ((*CTRL).timebase > (*debug).CMD_SPEED_SINE_END_TIME){
             // next frequency
             (*debug).CMD_SPEED_SINE_HZ += (*debug).CMD_SPEED_SINE_STEP_SIZE;
@@ -155,7 +155,7 @@ void _user_wubo_Sweeping_Command(){
         }
         if ((*debug).CMD_SPEED_SINE_HZ > (*debug).CMD_SPEED_SINE_HZ_CEILING){
             (*CTRL).i->cmd_varOmega = 0.0; // 到达扫频的频率上限，速度归零
-            (*CTRL).i->cmd_iDQ[1] = 0.0;
+            (*debug).set_id_command = 0.0;
         }else{
             if ((*debug).bool_sweeping_frequency_for_speed_loop == TRUE){
                 (*CTRL).i->cmd_varOmega = RPM_2_MECH_RAD_PER_SEC * (*debug).CMD_SPEED_SINE_RPM * sin(2* M_PI *(*debug).CMD_SPEED_SINE_HZ*((*CTRL).timebase - (*debug).CMD_SPEED_SINE_LAST_END_TIME));
@@ -163,11 +163,15 @@ void _user_wubo_Sweeping_Command(){
                 // 让电机转起来，然后在d轴上电流扫频？
                 //* 所以让电机转起来的原因是？？？
                 (*debug).bool_Null_D_Control = FALSE; //确保Null iD不开启
-                (*CTRL).i->cmd_varOmega = (*debug).CMD_SPEED_SINE_RPM * RPM_2_MECH_RAD_PER_SEC;
-                (*CTRL).i->cmd_iDQ[0]   = (*debug).CMD_CURRENT_SINE_AMPERE * sin(2* M_PI *(*debug).CMD_SPEED_SINE_HZ*((*CTRL).timebase - (*debug).CMD_SPEED_SINE_LAST_END_TIME));
+                if (FALSE)
+                    (*CTRL).i->cmd_varOmega = (*debug).CMD_SPEED_SINE_RPM * RPM_2_MECH_RAD_PER_SEC;
+                else
+                    (*CTRL).i->cmd_varOmega = 0;
+                (*debug).set_iq_command = 0.0;
+                (*debug).set_id_command = (*debug).CMD_CURRENT_SINE_AMPERE * sin(2* M_PI *(*debug).CMD_SPEED_SINE_HZ*((*CTRL).timebase - (*debug).CMD_SPEED_SINE_LAST_END_TIME));
             }
         }
-    #endif
+    // #endif
 }
 
 

@@ -4,20 +4,19 @@
 REAL wubo_debug_tools[10] = {1,0,0,0,0,0,0,0,0,0};
 st_axis Axis_1, *Axis;
 
-
 #if NUMBER_OF_AXES == 2 // ====为了同时运行两台电机，增加的另一份控制结构体
     st_axis Axis_2;
     #define get_Axis_CTRL_pointers \
         if (axisCnt == 0)          \
         {                          \
-            Axis  = &Axis_1;        \
-            CTRL  = &CTRL_1;        \
-            debug = &debug_1;       \
+            Axis  = &Axis_1;       \
+            CTRL  = &CTRL_1;       \
+            debug = &debug_1;      \
         }                          \
         if (axisCnt == 1)          \
         {                          \
-            Axis  = &Axis_2;        \
-            CTRL  = &CTRL_2;        \
+            Axis  = &Axis_2;       \
+            CTRL  = &CTRL_2;       \
             debug = &debug_2;       \
         }
 #endif
@@ -85,7 +84,6 @@ void main(void){
     get_bezier_points(); // for testing Cury the leg trajectgory tracking
 
     init_d_sim();      // d_sim is used to initalize the machine
-
     for (axisCnt = 0; axisCnt < NUMBER_OF_AXES; axisCnt++){
         get_Axis_CTRL_pointers
         _user_init();      // debug initilization for user
@@ -234,11 +232,11 @@ void PanGuMainISR(void){
 
     if (!Axis_1.FLAG_ENABLE_PWM_OUTPUT){
         wubo_debug_flag_PWM = 1;
-        DISABLE_PWM_OUTPUT((*debug).use_first_set_three_phase);
+        DISABLE_PWM_OUTPUT(use_first_set_three_phase);
         // TODO:需要增加让另外一项axis的Ta Tb Tc在不使用或者
     }else{
         wubo_debug_flag_PWM = 2;
-        ENABLE_PWM_OUTPUT((*debug).positionLoopType, (*debug).use_first_set_three_phase);
+        ENABLE_PWM_OUTPUT((*debug).positionLoopType, use_first_set_three_phase);
     }
 }
 
@@ -274,26 +272,23 @@ __interrupt void EPWM1ISR(void){
     #if NUMBER_OF_DSP_CORES == 2
         write_DAC_buffer();
     #endif
-
     #if ENABLE_ECAP
         do_enhanced_capture();
     #endif
-
     // read from CPU02
     read_count_from_cpu02_dsp_cores_2();
-
     // 对每一个CTRL都需要做一次的代码
-    if ((*debug).use_first_set_three_phase == -1){
+    if (use_first_set_three_phase == -1){
         for (axisCnt = 0; axisCnt < NUMBER_OF_AXES; axisCnt++){
             get_Axis_CTRL_pointers //(axisCnt, Axis, CTRL);
             PanGuMainISR();
         }
         axisCnt = 1; // 这里将axisCnt有什么用啊
-    }else if ((*debug).use_first_set_three_phase == 1){
+    }else if (use_first_set_three_phase == 1){
         axisCnt = 0;
         get_Axis_CTRL_pointers //(axisCnt, Axis, CTRL);
         PanGuMainISR();
-    }else if ((*debug).use_first_set_three_phase == 2){
+    }else if (use_first_set_three_phase == 2){
         axisCnt = 1;
         get_Axis_CTRL_pointers //(axisCnt, Axis, CTRL);
         PanGuMainISR();

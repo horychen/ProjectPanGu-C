@@ -180,7 +180,7 @@ void axis_basic_setup(int axisCnt){
 
     Axis->FLAG_ENABLE_PWM_OUTPUT = FALSE;
 
-    Axis->channels_preset = 8; // 9; // 101;    }
+    Axis->channels_preset = 7; // 9; // 101;    }
 
     Axis->pCTRL->enc->sum_qepPosCnt = 0;
     Axis->pCTRL->enc->cursor = 0;
@@ -1222,6 +1222,21 @@ void DISABLE_PWM_OUTPUT(int use_first_set_three_phase)
             (*CTRL).g->overwrite_vdc = 28;
         }
         (*CTRL).g->flag_overwite_vdc = 0;
+
+        /* WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING*/
+        (*CTRL).timebase_counter = 0;   
+        (*CTRL).timebase = 0.0;
+        (*debug).CMD_CURRENT_SINE_AMPERE                              = d_sim.user.CMD_CURRENT_SINE_AMPERE;
+        (*debug).CMD_SPEED_SINE_RPM                                   = d_sim.user.CMD_SPEED_SINE_RPM;
+        (*debug).CMD_SPEED_SINE_HZ                                    = d_sim.user.CMD_SPEED_SINE_HZ;
+        (*debug).CMD_SPEED_SINE_STEP_SIZE                             = d_sim.user.CMD_SPEED_SINE_STEP_SIZE;
+        (*debug).CMD_SPEED_SINE_LAST_END_TIME                         = d_sim.user.CMD_SPEED_SINE_LAST_END_TIME;
+        (*debug).CMD_SPEED_SINE_END_TIME                              = d_sim.user.CMD_SPEED_SINE_END_TIME;
+        (*debug).CMD_SPEED_SINE_HZ_CEILING                            = d_sim.user.CMD_SPEED_SINE_HZ_CEILING;
+        /* WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING*/
+        /* WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING*/
+        /* WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING*/
+        /* WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING*/
     }
 
     /* 在不输出PWM波形的时候，也就是“开关”为OFF的时候，更新SpeedInnerLoop的参数*/
@@ -1245,16 +1260,16 @@ void ENABLE_PWM_OUTPUT(int positionLoopType, int use_first_set_three_phase)
     if (use_first_set_three_phase == 1){
         DSP_PWM_ENABLE
         // 第一套逆变器工作的时候，确保第二套逆变器关闭
-        Axis_2.pCTRL->svgen2.Ta = 0;
-        Axis_2.pCTRL->svgen2.Tb = 0;
-        Axis_2.pCTRL->svgen2.Tc = 0;
+        EPwm4Regs.CMPA.bit.CMPA = 2500;
+        EPwm5Regs.CMPA.bit.CMPA = 2500;
+        EPwm6Regs.CMPA.bit.CMPA = 2500;
 
     } else if (use_first_set_three_phase == 2){
         DSP_2PWM_ENABLE
         // 同上
-        Axis_1.pCTRL->svgen1.Ta = 0;
-        Axis_1.pCTRL->svgen1.Tb = 0;
-        Axis_1.pCTRL->svgen1.Tc = 0;
+        EPwm1Regs.CMPA.bit.CMPA = 2500;
+        EPwm2Regs.CMPA.bit.CMPA = 2500;
+        EPwm3Regs.CMPA.bit.CMPA = 2500;
     } 
     else if (use_first_set_three_phase == -1){
         DSP_PWM_ENABLE

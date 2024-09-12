@@ -11,7 +11,7 @@ void _user_init(){
     overwrite_d_sim(); // overwrite d_sim with user's algorithm
     init_CTRL_Part1();
 
-    (*debug).use_first_set_three_phase = 1;
+    // (*debug).use_first_set_three_phase = 1;
     (*debug).error = 0;
     (*debug).who_is_user = d_sim.user.who_is_user;
     if(CTRL->motor->Rreq>0){
@@ -39,7 +39,7 @@ void _user_init(){
 
     (*debug).Overwrite_Current_Frequency = 1;
     (*debug).Overwrite_theta_d           = 0.0;
-    (*debug).set_id_command              = 0;
+    (*debug).set_id_command              = 1;
     (*debug).set_iq_command              = 1;
     (*debug).set_rpm_speed_command       = 50;
     (*debug).set_deg_position_command    = 0.0;
@@ -70,7 +70,7 @@ void _user_init(){
     (*debug).bool_apply_decoupling_voltages_to_current_regulation = d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation;
     (*debug).bool_apply_WC_tunner_for_speed_loop                  = d_sim.user.bool_apply_WC_tunner_for_speed_loop;
     (*debug).bool_sweeping_frequency_for_speed_loop               = d_sim.user.bool_sweeping_frequency_for_speed_loop;
-    (*debug).bool_Null_D_Control                                       = d_sim.user.bool_Null_D_Control;
+    (*debug).bool_Null_D_Control                                  = d_sim.user.bool_Null_D_Control;
     (*debug).bool_apply_sweeping_frequency_excitation             = d_sim.user.bool_apply_sweeping_frequency_excitation;
     //扫频用
     (*debug).CMD_CURRENT_SINE_AMPERE                              = d_sim.user.CMD_CURRENT_SINE_AMPERE;
@@ -83,7 +83,6 @@ void _user_init(){
 }
 
 void _user_commands(){
-
     /* 实验RPM给定 */
     (*CTRL).i->cmd_varOmega = (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
 
@@ -180,7 +179,10 @@ void main_switch(long mode_select){
         _user_virtual_ENC();
         break;
     case MODE_SELECT_FOC: // 3
-        _user_onlyFOC();
+        _user_commands();         // 用户指令
+        _user_onlyFOC((*CTRL).i->theta_d_elec,
+                        (*CTRL).i->cmd_iDQ, 
+                        (*CTRL).i->iAB);
         break;
     case MODE_SELECT_FOC_SENSORLESS : //31
         //TODO:
@@ -220,11 +222,15 @@ void main_switch(long mode_select){
         break;
     case MODE_SWEEPING_FREQUENCY: // 20
         _user_wubo_Sweeping_Command();
-        FOC_with_vecocity_control((*CTRL).i->theta_d_elec, 
-            (*CTRL).i->varOmega,
-            (*CTRL).i->cmd_varOmega, 
-            (*CTRL).i->cmd_iDQ, 
-            (*CTRL).i->iAB);
+        if ( (*debug).bool_sweeping_frequency_for_speed_loop == TRUE ){
+            FOC_with_vecocity_control((*CTRL).i->theta_d_elec, 
+                        (*CTRL).i->varOmega,
+                        (*CTRL).i->cmd_varOmega, 
+                        (*CTRL).i->cmd_iDQ, 
+                        (*CTRL).i->iAB);
+        }else if ( (*debug).bool_sweeping_frequency_for_speed_loop == FALSE ){
+            _user_onlyFOC();
+        }
         // _user_wubo_controller();
         break;
     default:

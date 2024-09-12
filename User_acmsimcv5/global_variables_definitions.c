@@ -6,6 +6,7 @@ struct ControllerForExperiment CTRL_1;
 struct ControllerForExperiment *CTRL;
 struct DebugExperiment *debug;
 struct DebugExperiment debug_1;
+int use_first_set_three_phase = 1;
 
 ST_D_SIM d_sim;
 
