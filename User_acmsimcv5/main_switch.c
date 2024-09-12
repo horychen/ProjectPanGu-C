@@ -1,6 +1,9 @@
 // user_defined_functions.c
 #include <ACMSim.h>
 
+REAL global_id_ampl = 10;
+REAL global_id_freq = 10;
+
 void overwrite_d_sim(){
     // for now 20240902 do nothing
 }
@@ -39,8 +42,9 @@ void _user_init(){
 
     (*debug).Overwrite_Current_Frequency = 1;
     (*debug).Overwrite_theta_d           = 0.0;
+
     (*debug).set_id_command              = 1;
-    (*debug).set_iq_command              = 1;
+    (*debug).set_iq_command              = 0;
     (*debug).set_rpm_speed_command       = 50;
     (*debug).set_deg_position_command    = 0.0;
 
@@ -179,10 +183,12 @@ void main_switch(long mode_select){
         _user_virtual_ENC();
         break;
     case MODE_SELECT_FOC: // 3
-        _user_commands();         // 用户指令
+        (*debug).set_id_command = global_id_ampl * sin(2 * M_PI * global_id_freq * (*CTRL).timebase);
         _user_onlyFOC((*CTRL).i->theta_d_elec,
                         (*CTRL).i->cmd_iDQ, 
                         (*CTRL).i->iAB);
+    /* 补偿逆变器非线性 */
+    wubo_inverter_Compensation( (*CTRL).i->iAB );
         break;
     case MODE_SELECT_FOC_SENSORLESS : //31
         //TODO:
