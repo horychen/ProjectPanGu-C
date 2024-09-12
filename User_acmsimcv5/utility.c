@@ -4,10 +4,10 @@ extern REAL sig_a3;
 
 /* 功能函数 */
 // 符号函数
-// double sign(double x)
-// {
-    // return (x > 0) - (x < 0);
-// }
+ double sign(double x)
+ {
+     return (x > 0) - (x < 0);
+ }
 
 int32 sign_integer(int32 x)
 {
@@ -175,7 +175,7 @@ void print_info()
     printf("\t[utility.c] Rreq = %f Ohm\n", (ACM.Rreq));
     printf("\t[utility.c] NUMBER_OF_STEPS = %d\t", (int)d_sim.sim.NUMBER_OF_STEPS);
     printf("MACHINE_SIMULATIONs_PER_SAMPLING_PERIOD = %d\n", d_sim.sim.MACHINE_SIMULATIONs_PER_SAMPLING_PERIOD);
-    // if((*debug).SENSORLESS_CONTROL==TRUE){
+    // if(debug.SENSORLESS_CONTROL==TRUE){
     //     printf("\t[utility.c] Sensorless using observer.\n");
     // }else{
     //     printf("\t[utility.c] Sensored control.\n");
@@ -193,6 +193,6 @@ void print_info()
     printf("\tPID_iD.Ki_CODE = %f\n", PID_iD->Ki_CODE);
     printf("\td_sim.FOC.CLBW_HZ = %g\n", (REAL)d_sim.FOC.CLBW_HZ);
     printf("\td_sim.FOC.delta = %g\n", (REAL)d_sim.FOC.delta);
-    printf("\tdebug.error=%d\n\tdebug.mode_select=%d\n\tdebug.who_is_user=%d\n", (int)(*debug).error, (int)(*debug).mode_select, (int)(*debug).who_is_user);
+    printf("\tdebug.error=%d\n\tdebug.mode_select=%d\n\tdebug.who_is_user=%d\n", (int)debug.error, (int)debug.mode_select, (int)debug.who_is_user);
 }
 #endif
