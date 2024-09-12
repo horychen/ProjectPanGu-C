@@ -143,8 +143,8 @@ void main_switch(long mode_select){
     }
     switch (mode_select){
     case MODE_SELECT_PWM_DIRECT: // 1
-        if(mode_initialized[axisCnt] == FALSE){
-            mode_initialized[axisCnt] = TRUE;
+        if(mode_initialized == FALSE){
+            mode_initialized = TRUE;
             (*CTRL).svgen1.Ta = 0.5;
             (*CTRL).svgen1.Tb = 0.5;
             (*CTRL).svgen1.Tc = 0.5;
@@ -158,8 +158,8 @@ void main_switch(long mode_select){
         (*CTRL).o->cmd_uAB_to_inverter[1] = (*debug).vvvf_voltage * sin((*debug).vvvf_frequency*2*M_PI* CTRL->timebase);
         break;
     case MODE_SELECT_WITHOUT_ENCODER_CURRENT_VECTOR_ROTATE: // 2
-        if(mode_initialized[axisCnt] == FALSE){
-            mode_initialized[axisCnt] = TRUE;
+        if(mode_initialized == FALSE){
+            mode_initialized = TRUE;
             // TODO: add your default setup
         }
         _user_virtual_ENC();
@@ -237,7 +237,8 @@ REAL Veclocity_Controller(REAL cmd_varOmega, REAL varOmega){
         PID_Speed->Ref = cmd_varOmega;
         // PID_Speed->Ref = 5 * MECH_RAD_PER_SEC_2_RPM;
         PID_Speed->Fbk = varOmega;
-
+        if(axisCnt ==0)
+        {
         if((*debug).who_is_user == USER_BEZIER)
             control_output(PID_Speed, &BzController);
         else
@@ -245,11 +246,6 @@ REAL Veclocity_Controller(REAL cmd_varOmega, REAL varOmega){
         }
         else if (axisCnt == 1)
         {
-            #if 0
-                PID_Speed->calc = (void (*)(Uint32)) PID_calc4test;
-            #else
-                PID_Speed->calc = (void (*)(Uint32)) PID_calc;
-            #endif
             PID_Speed->calc(PID_Speed);
         }
         
