@@ -45,7 +45,7 @@ REAL Jerk_time = 0.002;
 REAL accerleration_time_inv=8;
 REAL imife_reversal_end_time = 5.0; // s
 REAL marino_speed_freq = 4;
-
+#if AFE_35_SATURATION_TIME_DIFFERENCE
 void controller_marino2005_with_commands(){
 
     /// 0. 参数时变
@@ -446,7 +446,7 @@ void controller_marino2005(){
     // (*CTRL).o->cmd_iAB[0] = MT2A((*CTRL).i->cmd_iDQ[0], (*CTRL).i->cmd_iDQ[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
     // (*CTRL).o->cmd_iAB[1] = MT2B((*CTRL).i->cmd_iDQ[0], (*CTRL).i->cmd_iDQ[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
 }
-
+#endif
 
 
 void controller_IFOC(){
@@ -661,7 +661,7 @@ void init_im_controller(){
     (*CTRL).i->m1 = IM_FLUX_COMMAND_SINE_PART;
     (*CTRL).i->omega1 = 2*M_PI*IM_FLUX_COMMAND_SINE_HERZ;
 
-    // debug.SENSORLESS_CONTROL = SENSORLESS_CONTROL;
+    // (*debug).SENSORLESS_CONTROL = SENSORLESS_CONTROL;
     // (*CTRL).s->ctrl_strategy = CONTROL_STRATEGY;
 
     #define AKATSU00 FALSE

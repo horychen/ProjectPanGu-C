@@ -1,84 +1,7 @@
 #include <All_Definition.h>
+#include <Device_define.h>
 
 
-#ifdef _MOTOR_GROUP // mmlab drive version 2 （吴波、严政章、杨子恺等）
-
-    // Abs encoder comm. via 485 tamagawa protocol
-    #define PIN_485_SCIB_WE_SCICTX_UART3pin7 31
-    #define PIN_485_SCIA_WE_SCICRX_UART3pin8 37
-
-    // DC BUS
-    #define OFFSET_VDC_BUS_IPM1 8
-    #define SCALE_VDC_BUS_IPM1 0.1846154
-
-    // Lem 1的三个蓝色块块分别是adc b7 b8 b9 // 令逆变器输出端指向电机为正方向，若LEM上的箭头与正方向相同，则SCALE为正数，若LEM上的箭头与正方向相反，则SCALE为负数，
-    #define OFFSET_LEM_B7 2020 // 2023.89473684 // ADCB7
-    #define OFFSET_LEM_B8 2029 // 2042.33333333 // ADCB8
-    #define OFFSET_LEM_B9 2038 // 2043.43859649 // ADCB9
-    #define SCALE_LEM_B7 0.03076297 // ADCB7
-    #define SCALE_LEM_B8 0.03038256 // ADCB8
-    #define SCALE_LEM_B9 0.03039058 // ADCB9
-
-    // Lem 2的三个蓝色块块分别是adc a1 a2 a3
-    #define OFFSET_LEM_A1 2010 // 2034      // 2029.57894737 // ADCA1
-    #define OFFSET_LEM_A2 2038 // 2049      // 2043.08771930 // ADCA2
-    #define OFFSET_LEM_A3 2029 // 2050      // 2042.98245614 // ADCA3
-    #define SCALE_LEM_A1 0.0305 // 0.03080704 // ADCA1
-    #define SCALE_LEM_A2 0.030334 // 0.03060669 // ADCA2
-    #define SCALE_LEM_A3 0.02983 // 0.03045988 // ADCA3
-
-#else
-#ifdef _INDUCTION_MOTOR_GROUP // mmlab drive version 3 （王千等）
-
-    // Abs encoder comm. via 485 tamagawa protocol
-    #define PIN_485_SCIB_WE_SCICTX_UART3pin7 31
-    #define PIN_485_SCIA_WE_SCICRX_UART3pin8 37
-
-    // ADC
-    #define OFFSET_VDC_BUS_IPM1 8
-    #define OFFSET_LEM_B7 2008 // 2024-09-02
-    #define OFFSET_LEM_B8 2035 // 2024-09-02
-    #define OFFSET_LEM_B9 2045 // 2024-09-02
-    #define OFFSET_LEM_A1 2010 // ???
-    #define OFFSET_LEM_A2 2038 // ???
-    #define OFFSET_LEM_A3 2029 // ???
-
-    #define SCALE_VDC_BUS_IPM1 0.1846154 // ???
-    #define SCALE_LEM_B7 0.03076297
-    #define SCALE_LEM_B8 0.03038256
-    #define SCALE_LEM_B9 0.03039058
-    #define SCALE_LEM_A1 0.0305
-    #define SCALE_LEM_A2 0.030334
-    #define SCALE_LEM_A3 0.02983
-
-#else // _LEG_GROUP // mmlab drive version 1 (陈艺铭、朱俊磊、胡瑀等)
-
-    // Abs encoder comm. via 485 tamagawa protocol
-    #define PIN_485_SCIB_WE_SCICTX_UART3pin7 140
-    #define PIN_485_SCIA_WE_SCICRX_UART3pin8 139
-
-    // DC BUS
-    #define OFFSET_VDC_BUS_IPM1 8 // -1.01456189
-    #define SCALE_VDC_BUS_IPM1 0.183916 // 0.17604031
-
-    // Lem 1的三个蓝色块块分别是adc b7 b8 b9 // 令逆变器输出端指向电机为正方向，若LEM上的箭头与正方向相同，则SCALE为正数，若LEM上的箭头与正方向相反，则SCALE为负数，
-    #define OFFSET_LEM_B7 2025 // 2023.89473684 // ADCB7
-    #define OFFSET_LEM_B8 2041 // 2042.33333333 // ADCB8
-    #define OFFSET_LEM_B9 2045 // 2043.43859649 // ADCB9
-    #define SCALE_LEM_B7 0.03076297 // ADCB7
-    #define SCALE_LEM_B8 0.03038256 // ADCB8
-    #define SCALE_LEM_B9 0.03039058 // ADCB9
-
-    // Lem 2的三个蓝色块块分别是adc a1 a2 a3
-    #define OFFSET_LEM_A1 2030      // 2029.57894737 // ADCA1
-    #define OFFSET_LEM_A2 2043      // 2043.08771930 // ADCA2
-    #define OFFSET_LEM_A3 2042      // 2042.98245614 // ADCA3
-    #define SCALE_LEM_A1 0.03080704 // ADCA1
-    #define SCALE_LEM_A2 0.03060669 // ADCA2
-    #define SCALE_LEM_A3 0.03045988 // ADCA3
-
-#endif
-#endif
 
 Uint32 position_count_SCI_shank_fromCPU2;
 Uint32 position_count_SCI_hip_fromCPU2;
@@ -116,6 +39,7 @@ void EUREKA_GPIO_SETUP(){
 // =========FOR EUREKA===========
     // https://www.ti.com/lit/ug/spruhm8j/spruhm8j.pdf?ts=1710763002632&ref_url=https%253A%252F%252Fwww.ti.com%252Fproduct%252FTMS320F28377D%253Futm_source%253Dgoogle%2526utm_medium%253Dcpc%2526utm_campaign%253Depd-c2x-null-44700045336317350_prodfolderdynamic-cpc-pf-google-wwe_int%2526utm_content%253Dprodfolddynamic%2526ds_k%253DDYNAMIC+SEARCH+ADS%2526DCM%253Dyes%2526gad_source%253D1%2526gclid%253DCjwKCAjwzN-vBhAkEiwAYiO7oBh2RIh8aEZiiEHzGLlyxsdf34XwLyRi-Ci53QGwm9calxyVXTdsEBoC7IwQAvD_BwE%2526gclsrc%253Daw.ds
     // Chapter 8.7.1
+    /*
     // GPIO62 - CANRXA
     GPIO_SetupPinMux(62, GPIO_MUX_CPU2, 6);
     GPIO_SetupPinOptions(62, GPIO_INPUT, GPIO_ASYNC);
@@ -147,7 +71,43 @@ void EUREKA_GPIO_SETUP(){
     //GPIO38 - SCITX-C
     GPIO_SetupPinMux(38, GPIO_MUX_CPU2, 5);
     GPIO_SetupPinOptions(38, GPIO_OUTPUT, GPIO_PUSHPULL);
+    */
+
+    //CANRXA
+    GPIO_SetupPinMux(62, GPIO_MUX_CPU2, 6);
+    GPIO_SetupPinOptions(62, GPIO_INPUT, GPIO_ASYNC);
+    //CANTXA
+    GPIO_SetupPinMux(19, GPIO_MUX_CPU2, 3);
+    GPIO_SetupPinOptions(19, GPIO_OUTPUT, GPIO_PUSHPULL);
+    //CANRXB
+    GPIO_SetupPinMux(21, GPIO_MUX_CPU2, 3);
+    GPIO_SetupPinOptions(21, GPIO_INPUT, GPIO_ASYNC);
+    //CANTXB
+    GPIO_SetupPinMux(20, GPIO_MUX_CPU2, 3);
+    GPIO_SetupPinOptions(20, GPIO_OUTPUT, GPIO_PUSHPULL);
     
+    //485RX-SCIA
+    GPIO_SetupPinMux(PIN_SCI_RXDA, GPIO_MUX_CPU2, MUX_SCI_RXDA);
+    GPIO_SetupPinOptions(PIN_SCI_RXDA, GPIO_INPUT, GPIO_PUSHPULL);
+
+    //485TX-SCIA
+    GPIO_SetupPinMux(PIN_SCI_TXDA, GPIO_MUX_CPU2, MUX_SCI_TXDA);
+    GPIO_SetupPinOptions(PIN_SCI_TXDA, GPIO_OUTPUT, GPIO_PUSHPULL);
+
+    //485RX-SCIB
+    GPIO_SetupPinMux(PIN_SCI_RXDB, GPIO_MUX_CPU2, MUX_SCI_RXDB);
+    GPIO_SetupPinOptions(PIN_SCI_RXDB, GPIO_INPUT, GPIO_PUSHPULL);
+    //485TX-SCIB
+    GPIO_SetupPinMux(PIN_SCI_TXDB, GPIO_MUX_CPU2, MUX_SCI_TXDB);
+    GPIO_SetupPinOptions(PIN_SCI_TXDB, GPIO_OUTPUT, GPIO_PUSHPULL);
+
+    //SCIRX-C
+    GPIO_SetupPinMux(PIN_SCI_RXDC, GPIO_MUX_CPU2, MUX_SCI_RXDC);
+    GPIO_SetupPinOptions(PIN_SCI_RXDC, GPIO_INPUT, GPIO_PUSHPULL);
+    //SCITX-C
+    GPIO_SetupPinMux(PIN_SCI_TXDC, GPIO_MUX_CPU2, MUX_SCI_TXDC);
+    GPIO_SetupPinOptions(PIN_SCI_TXDC, GPIO_OUTPUT, GPIO_PUSHPULL);
+
     // // GPIO31 - 485-SCIB-WE-(use SCICTX as GPIO, in UART3 pin7)
     // GPIO_SetupPinMux(31, GPIO_MUX_CPU2, 0);
     // GPIO_SetupPinOptions(31, GPIO_OUTPUT, GPIO_ASYNC);
@@ -184,7 +144,7 @@ void EUREKA_GPIO_SETUP(){
 void axis_basic_setup(int axisCnt){
     Axis->ID = 100 + axisCnt;
     Axis->pCTRL = CTRL;
-
+    Axis->pdebug = debug;
 //    allocate_CTRL(CTRL);
     init_experiment();
     init_experiment_AD_gain_and_offset();
@@ -735,7 +695,7 @@ void cla_test_codes(){
 
 
 
-REAL wubo_debug[4];
+REAL wubo_debug[4]={1,-1,0,0};
 
 void measurement_position_count_axisCnt0(){
     #if (ENCODER_TYPE == ABSOLUTE_ENCODER_SCI_SHANK)
@@ -757,7 +717,7 @@ void measurement_position_count_axisCnt1(){
         position_count_SCI_fromCPU2 = position_count_SCI_hip_fromCPU2;
     #endif
         // 正电流导致编码器读数减小
-        CTRL->enc->encoder_abs_cnt = -( (int32)position_count_SCI_fromCPU2 - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis );
+        CTRL->enc->encoder_abs_cnt = -1 * ( (int32)position_count_SCI_fromCPU2 - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis );
         // dq变化中，d轴理论上指向永磁体的北极，
 }
 
@@ -849,8 +809,6 @@ void measurement_enc(){
     // CTRL->enc->rpm = PostionSpeedMeasurement_MovingAvergage(QPOSCNT, CTRL->enc);
 }
 
-
-
 void measurement_current_axisCnt0(){
     // LEM1
     Axis->iuvw[0] = ((REAL)(AdcaResultRegs.ADCRESULT1) - Axis->adc_offset[1]) * Axis->adc_scale[1]; //
@@ -860,9 +818,13 @@ void measurement_current_axisCnt0(){
     // 电流接口
     if (USE_3_CURRENT_SENSORS)
     {
-        Axis->iabg[0] = UVW2A_AI(Axis->iuvw[0], Axis->iuvw[1], Axis->iuvw[2]);
-        Axis->iabg[1] = UVW2B_AI(Axis->iuvw[0], Axis->iuvw[1], Axis->iuvw[2]);
-        Axis->iabg[2] = UVW2G_AI(Axis->iuvw[0], Axis->iuvw[1], Axis->iuvw[2]);
+        // Axis->iabg[0] = UVW2A_AI(Axis->iuvw[0], Axis->iuvw[1], Axis->iuvw[2]);
+        // Axis->iabg[1] = UVW2B_AI(Axis->iuvw[0], Axis->iuvw[1], Axis->iuvw[2]);
+        // Axis->iabg[2] = UVW2G_AI(Axis->iuvw[0], Axis->iuvw[1], Axis->iuvw[2]);
+        Axis->iabg[0] = UVW2A_AI(Axis->iuvw[PIN_ADCA_U], Axis->iuvw[PIN_ADCA_V], Axis->iuvw[PIN_ADCA_W]);
+        Axis->iabg[1] = UVW2B_AI(Axis->iuvw[PIN_ADCA_U], Axis->iuvw[PIN_ADCA_V], Axis->iuvw[PIN_ADCA_W]);
+        Axis->iabg[2] = UVW2G_AI(Axis->iuvw[PIN_ADCA_U], Axis->iuvw[PIN_ADCA_V], Axis->iuvw[PIN_ADCA_W]);
+        
     }
     else
     {
@@ -882,9 +844,12 @@ void measurement_current_axisCnt1()
     // 电流接口
     if (USE_3_CURRENT_SENSORS)
     {
-        Axis->iabg[0] = UVW2A_AI(Axis->iuvw[3], Axis->iuvw[4], Axis->iuvw[5]);
-        Axis->iabg[1] = UVW2B_AI(Axis->iuvw[3], Axis->iuvw[4], Axis->iuvw[5]);
-        Axis->iabg[2] = UVW2G_AI(Axis->iuvw[3], Axis->iuvw[4], Axis->iuvw[5]);
+        // Axis->iabg[0] = UVW2A_AI(Axis->iuvw[3], Axis->iuvw[4], Axis->iuvw[5]);
+        // Axis->iabg[1] = UVW2B_AI(Axis->iuvw[3], Axis->iuvw[4], Axis->iuvw[5]);
+        // Axis->iabg[2] = UVW2G_AI(Axis->iuvw[3], Axis->iuvw[4], Axis->iuvw[5]);
+        Axis->iabg[0] = UVW2A_AI(Axis->iuvw[PIN_ADCB_U], Axis->iuvw[PIN_ADCB_V], Axis->iuvw[PIN_ADCB_W]);
+        Axis->iabg[1] = UVW2B_AI(Axis->iuvw[PIN_ADCB_U], Axis->iuvw[PIN_ADCB_V], Axis->iuvw[PIN_ADCB_W]);
+        Axis->iabg[2] = UVW2G_AI(Axis->iuvw[PIN_ADCB_U], Axis->iuvw[PIN_ADCB_V], Axis->iuvw[PIN_ADCB_W]);
     }
     else
     {
@@ -1284,10 +1249,12 @@ void ENABLE_PWM_OUTPUT(int positionLoopType, int use_first_set_three_phase)
     if (use_first_set_three_phase == 1)
     {
         DSP_PWM_ENABLE
+        DSP_2PWM_DISABLE
     } 
     else if (use_first_set_three_phase == 2)
     {
         DSP_2PWM_ENABLE
+        DSP_PWM_DISABLE
     } 
     else if (use_first_set_three_phase == -1)
     {
@@ -1295,10 +1262,10 @@ void ENABLE_PWM_OUTPUT(int positionLoopType, int use_first_set_three_phase)
         DSP_2PWM_ENABLE
     }
 
-    if (FE.htz.u_offset[0] > 0.1)
-    {
-        FE.htz.u_offset[0] = 0;
-    }
+//    if (FE.htz.u_offset[0] > 0.1)
+//    {
+//        FE.htz.u_offset[0] = 0;
+//    }
     // DSP中控制器的时间
     (*CTRL).timebase_counter += 1;
     (*CTRL).timebase = CL_TS * (*CTRL).timebase_counter; //(*CTRL).timebase += CL_TS; // 2048 = float/REAL max
@@ -1328,7 +1295,7 @@ void ENABLE_PWM_OUTPUT(int positionLoopType, int use_first_set_three_phase)
             }
         }
 
-        main_switch(debug.mode_select);
+        main_switch((*debug).mode_select);
 
     //(*CTRL).o->cmd_uAB_to_inverter[0]
 

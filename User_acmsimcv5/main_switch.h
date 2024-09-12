@@ -2,6 +2,8 @@
 #define user_defined_functions_H
 #include "ACMSim.h"
 
+#define NUM_OF_MOTORS 2
+
 #define USER_CJH    101976
 #define USER_XM     102209
 #define USER_BEZIER 224
@@ -44,9 +46,9 @@ struct DebugExperiment{
     REAL vvvf_frequency;
     int positionLoopType;
 };
-extern struct DebugExperiment debug;
-
-
+extern struct DebugExperiment *debug;
+extern struct DebugExperiment debug_1;
+extern struct DebugExperiment debug_2;
 /* USER: Macros */
 
 /* User Specified Functions */

@@ -4,9 +4,9 @@
 int axisCnt = 0;
 struct ControllerForExperiment CTRL_1;
 struct ControllerForExperiment *CTRL;
-struct DebugExperiment debug;
+struct DebugExperiment debug_1;
+struct DebugExperiment *debug;
 ST_D_SIM d_sim;
-
 REAL one_over_six = 1.0/6.0;
 
 // 定义内存空间（结构体）
@@ -63,6 +63,7 @@ st_pid_regulator _PID_Position_1 = st_pid_regulator_DEFAULTS;
         #pragma DATA_SECTION(_PID_Position_2   ,"MYGLOBALS_2");
         #pragma DATA_SECTION(_PID_Speed_2   ,"MYGLOBALS_2");
         struct ControllerForExperiment CTRL_2;
+        struct DebugExperiment debug_2;
 
         st_motor_parameters     t_motor_2={0};
         st_enc                  t_enc_2={0};
@@ -226,7 +227,7 @@ void init_CTRL_Part2(){
     /* Inverter */
     (*CTRL).inv->filter_pole = 3000 * 2 * M_PI;
     inverterNonlinearity_Initialization();
-    G.FLAG_INVERTER_NONLINEARITY_COMPENSATION = debug.INVERTER_NONLINEARITY_COMPENSATION_INIT;
+    G.FLAG_INVERTER_NONLINEARITY_COMPENSATION = (*debug).INVERTER_NONLINEARITY_COMPENSATION_INIT;
     // G.FLAG_TUNING_CURRENT_SCALE_FACTOR = TUNING_CURRENT_SCALE_FACTOR_INIT;
 
 
@@ -242,7 +243,7 @@ void init_CTRL_Part2(){
     /* Black Box Model | Controller quantities */
 
     // 控制器tuning
-    if(debug.who_is_user == USER_WB){
+    if((*debug).who_is_user == USER_WB){
         _user_wubo_WC_Tuner();
         #if PC_SIMULATION == TRUE
             printf(">>> Wc_Tuner is Applied to the Speed Loop Control <<<\n");

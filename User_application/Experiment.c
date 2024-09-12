@@ -45,7 +45,7 @@ void init_experiment_overwrite(){
     if((*Axis).Select_exp_operation == AS_LOAD_MOTOR_CONST){
         (*CTRL).g->FLAG_INVERTER_NONLINEARITY_COMPENSATION = 2; // use sigmoid as compensation
     }else{
-        (*CTRL).g->FLAG_INVERTER_NONLINEARITY_COMPENSATION = debug.INVERTER_NONLINEARITY_COMPENSATION_INIT;
+        (*CTRL).g->FLAG_INVERTER_NONLINEARITY_COMPENSATION = (*debug).INVERTER_NONLINEARITY_COMPENSATION_INIT;
     }
 
     /* Overwrite */
@@ -125,7 +125,7 @@ void init_experiment_overwrite(){
     //    AFEOE.limiter_KE = 1.15 * MOTOR.KE; // this depends on KE value
 
     /* SlessInv */
-    FE.htz.psi_aster_max = (*CTRL).motor->KE - 0.003;
+//    FE.htz.psi_aster_max = (*CTRL).motor->KE - 0.003;
 
     // for debug
     (*CTRL).s->PSD_Done = FALSE;
@@ -138,7 +138,7 @@ void runtime_command_and_tuning(){
     if((*Axis).Select_exp_operation == AS_LOAD_MOTOR_CONST){
 
         //(*CTRL).s->go_sensorless = 0;
-        debug.mode_select = MODE_SELECT_VELOCITY_LOOP;
+        (*debug).mode_select = MODE_SELECT_VELOCITY_LOOP;
 
         G.FLAG_INVERTER_NONLINEARITY_COMPENSATION = 0;
         if((*CTRL).timebase < 2){
@@ -161,7 +161,7 @@ void runtime_command_and_tuning(){
     }
     if((*Axis).Select_exp_operation == AS_LOAD_MOTOR_RAMP){
         //(*CTRL).s->go_sensorless = 0;
-        debug.mode_select = MODE_SELECT_VELOCITY_LOOP;
+        (*debug).mode_select = MODE_SELECT_VELOCITY_LOOP;
 
         if((*CTRL).timebase < 0.4){
             PID_Speed->OutLimit = 4.2;

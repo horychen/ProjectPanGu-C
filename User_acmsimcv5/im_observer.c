@@ -10,8 +10,8 @@
 #if MACHINE_TYPE == 1 || MACHINE_TYPE == 11
 
 #if PC_SIMULATION
-    #define OFFSET_VOLTAGE_ALPHA (0*0.1 *((*CTRL).timebase>20)) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
-    #define OFFSET_VOLTAGE_BETA  (0*0.1 *((*CTRL).timebase>4)) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
+    #define OFFSET_VOLTAGE_ALPHA 0//(0*0.1 *((*CTRL).timebase>20)) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
+    #define OFFSET_VOLTAGE_BETA  0//(0*0.1 *((*CTRL).timebase>4)) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
 #else
     #define OFFSET_VOLTAGE_ALPHA (0.0)
     #define OFFSET_VOLTAGE_BETA  (0.0)
@@ -388,6 +388,19 @@ void flux_observer(){
     }
 
     /* 3. Lascu and Andreescus 2006 TODO 非常好奇Lascu的方法会怎样！和我们的xRho校正项对比！ */
+    void init_LascuAndreescus2006(){
+        int ind;
+        FE.lascu.x[0] = d_sim.init.KE;
+        FE.lascu.x[1] = 0;
+        FE.lascu.x[2] = 0;
+        FE.lascu.x[3] = 0;
+        for (ind=0;ind<2;++ind) {
+        FE.lascu.psi_1[ind] = (ind == 0) ? d_sim.init.KE : 0;
+        FE.lascu.psi_2[ind] = (ind == 0) ? d_sim.init.KE : 0;
+        FE.lascu.correction_integral_term[ind] = 0;
+        FE.lascu.u_offset[ind] = 0;
+    }
+    }
     void rhf_LascuAndreescus2006_Dynamics(REAL t, REAL *x, REAL *fx){
         REAL rotor_flux[2];
         rotor_flux[0] = x[0]-(*CTRL).motor->Lsigma*IS(0);
@@ -593,7 +606,7 @@ void flux_observer(){
  ********************************************/
     /* 9. Holtz and Quan 2003 (LPF) */
     void VM_HoltzQuan2003(){
-        VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();    
+        // VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();    
     }
 
     /* 10. Holtz and Quan 2003 (Integrator) */
@@ -930,13 +943,15 @@ void flux_observer(){
 
 
 /* Holtz 2003 implemented in ACMSIMC-V4 */
+#if AFE_35_SATURATION_TIME_DIFFERENCE
 REAL imife_realtime_gain_off = 1.0;
 void init_FE_htz(){
     int ind;
     for(ind=0;ind<2;++ind){
         FE.htz.emf_stator[ind] = 0;
 
-        FE.htz.psi_1[ind] = 0;
+        FE.htz.psi_1[0] = d_sim.init.KE;
+        FE.htz.psi_1[1] = 0;
         FE.htz.psi_2[ind] = 0;
         FE.htz.psi_2_prev[ind] = 0;
 
@@ -982,8 +997,8 @@ void init_FE_htz(){
     }
 }
 void rhf_Holtz2003_Dynamics(REAL t, REAL *x, REAL *fx){
-    FE.htz.emf_stator[0] = US(0) - FE.htz.rs_est*IS(0) - FE.htz.u_offset[0] + OFFSET_VOLTAGE_ALPHA;
-    FE.htz.emf_stator[1] = US(1) - FE.htz.rs_est*IS(1) - FE.htz.u_offset[1] + OFFSET_VOLTAGE_BETA ;
+    FE.htz.emf_stator[0] = US(0) - (*CTRL).motor->R * IS(0) - FE.htz.u_offset[0] + OFFSET_VOLTAGE_ALPHA;
+    FE.htz.emf_stator[1] = US(1) - (*CTRL).motor->R * IS(1) - FE.htz.u_offset[1] + OFFSET_VOLTAGE_BETA ;
     fx[0] = (FE.htz.emf_stator[0]);
     fx[1] = (FE.htz.emf_stator[1]);
 }
@@ -1000,8 +1015,8 @@ void VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit(){
     #define BOOL_USE_METHOD_INTEGRAL_INPUT TRUE
 
     // Euler's method is shit at higher speeds
-    FE.htz.emf_stator[0] = US_C(0) - FE.htz.rs_est*IS_C(0) - FE.htz.u_offset[0];
-    FE.htz.emf_stator[1] = US_C(1) - FE.htz.rs_est*IS_C(1) - FE.htz.u_offset[1];
+    FE.htz.emf_stator[0] = US_C(0) - (*CTRL).motor->R*IS_C(0) - FE.htz.u_offset[0];
+    FE.htz.emf_stator[1] = US_C(1) - (*CTRL).motor->R*IS_C(1) - FE.htz.u_offset[1];
     // FE.htz.psi_1[0] += CL_TS*(FE.htz.emf_stator[0]);
     // FE.htz.psi_1[1] += CL_TS*(FE.htz.emf_stator[1]);
 
@@ -1288,7 +1303,8 @@ void VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit(){
     // FE.htz.psi_1_nonSat[1] = FE.htz.psi_1[1];
     // FE.htz.psi_2_nonSat[0] = FE.htz.psi_2[0];
     // FE.htz.psi_2_nonSat[1] = FE.htz.psi_2[1];
-
+    FE.htz.theta_d = atan2(FE.htz.psi_2[1], FE.htz.psi_2[0]);
+    //FE.htz.theta_e = angle_diff(FE.htz.theta_d, ACM.theta_d) * ONE_OVER_2PI * 360;
     FE.htz.psi_2_prev[0] = FE.htz.psi_2[0];
     FE.htz.psi_2_prev[1] = FE.htz.psi_2[1];
 }
@@ -1310,7 +1326,7 @@ void VM_Saturated_ExactOffsetCompensation_WithParallelNonSaturatedEstimator(){
         psi_offset 是磁链波形正负面积的积分。 u_offset 在一定时间内是造成这 psi_offset 的磁链导数。
     */
 }
-
+#endif
 /* Init functions */
 void rk4_init(){
 
@@ -1331,7 +1347,7 @@ void observer_init(){
 
     // init_esoaf();
 
-    init_FE_htz();
+    // init_FE_htz();
 
     int i;
     for(i=0; i<2; ++i){

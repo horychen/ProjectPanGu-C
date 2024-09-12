@@ -8,8 +8,10 @@
         r->Out = r->OutPrev \
                 + r->Kp * ( r->Err - r->ErrPrev ) + r->Ki_CODE * r->Err;
 
-        r->ErrPrev = r->Err; 
-        r->OutPrev = r->Out;
+        // 比例
+        r->P_Term = r->Err * r->Kp;
+        // 积分
+        r->I_Term += r->Err * r->Ki_CODE;
 
         // 控制器的限幅需要写在OutPrev幅值之后，否则电流环idq暂态跟踪误差会达到50%左右
         // 20240812：理论分析，限幅放在之前之后貌似没有区别，但仿真结果确实不同
@@ -17,6 +19,10 @@
             r->Out = r->OutLimit;
         else if(r->Out < -r->OutLimit)
             r->Out = -r->OutLimit;
+        
+        r->ErrPrev = r->Err; 
+        r->OutPrev = r->Out;
+
     }
 #else
     void PID_calc(st_pid_regulator *r){
@@ -74,6 +80,8 @@ void ACMSIMC_PIDTuner(){
     PID_iD->Kp  = d_sim.CL.SERIES_KP_D_AXIS;
     PID_iQ->Kp  = d_sim.CL.SERIES_KP_Q_AXIS;
     PID_Speed->Kp = d_sim.VL.SERIES_KP;
+
+    PID_Speed->Kp = 2.1;
 
     PID_iD->Ki_CODE  = d_sim.CL.SERIES_KI_D_AXIS * d_sim.CL.SERIES_KP_D_AXIS * CL_TS;
     PID_iQ->Ki_CODE  = d_sim.CL.SERIES_KI_Q_AXIS * d_sim.CL.SERIES_KP_Q_AXIS * CL_TS;
@@ -168,3 +176,26 @@ float PIDController_Update(st_PIDController *pid) {
     return pid->out;
 }
 
+void PID_calc4test(st_pid_regulator *r){
+        r->Kp = 0.7370474942872957;
+        r->Ki_CODE = 9.26e-4;
+
+        r->Err = r->Ref - r->Fbk;
+        r->Out = r->OutPrev \
+                + r->Kp * ( r->Err - r->ErrPrev ) + r->Ki_CODE * r->Err;
+
+        // 比例
+        r->P_Term = r->Err * r->Kp; 
+        // 积分
+        r->I_Term += r->Err * r->Ki_CODE;
+
+        // 控制器的限幅需要写在OutPrev幅值之后，否则电流环idq暂态跟踪误差会达到50%左右
+        // 20240812：理论分析，限幅放在之前之后貌似没有区别，但仿真结果确实不同
+        if(r->Out > r->OutLimit)
+            r->Out = r->OutLimit;
+        else if(r->Out < -r->OutLimit)
+            r->Out = -r->OutLimit;
+        
+        r->ErrPrev = r->Err; 
+        r->OutPrev = r->Out;
+}
