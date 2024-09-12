@@ -1,5 +1,8 @@
 #ifndef ADD_IM_OBSERVER_H
 #define ADD_IM_OBSERVER_H
+
+void rk4_init();
+#if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
 #if MACHINE_TYPE == 1 || MACHINE_TYPE == 11
 
 /* One Big Struct for all PMSM observers */
@@ -102,7 +105,6 @@ struct ObserverControl{
 };
 extern struct ObserverControl ob;
 
-void rk4_init();
 void observer_init();
 void simulation_only_flux_estimator();
 void observer_marino2005();
@@ -177,7 +179,7 @@ void VM_ProposedCmdErrFdkCorInFrameRho();
 void VM_ClosedLoopFluxEstimator();
 
 void VM_Saturated_ExactOffsetCompensation();
-// void VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
+void VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
 void VM_Saturated_ExactOffsetCompensation_WithParallelNonSaturatedEstimator();
 // void stableFME();
 
@@ -198,3 +200,6 @@ void VM_Saturated_ExactOffsetCompensation_WithParallelNonSaturatedEstimator();
 
 #endif
 #endif
+#endif
+
+

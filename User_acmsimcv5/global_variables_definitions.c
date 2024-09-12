@@ -9,6 +9,7 @@ struct DebugExperiment debug_1;
 int use_first_set_three_phase = 1;
 
 ST_D_SIM d_sim;
+
 REAL one_over_six = 1.0/6.0;
 
 // 定义内存空间（结构体）
@@ -160,9 +161,11 @@ struct GlobalWatch watch;
 
 /* Structs for Algorithm */
 
-    struct ObserverForExperiment OBSV;
-    struct SharedFluxEstimatorForExperiment FE;
 
+    struct ObserverForExperiment OBSV;
+#if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
+    struct SharedFluxEstimatorForExperiment FE;
+#endif
     // 游离在顶级之外的算法结构体
     // struct RK4_DATA rk4;
     // struct Harnefors2006 harnefors={0};
@@ -172,9 +175,11 @@ struct GlobalWatch watch;
 
     // 游离在顶级之外的算法结构体
     // struct RK4_DATA rk4;
+    #if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
     struct Marino2005 marino={0};
 
     struct Variables_SimulatedVM                         simvm      ={0};
+    #endif
     // struct Variables_Ohtani1992                          ohtani     ={0};
     // struct Variables_HuWu1998                            huwu       ={0};
     // struct Variables_HoltzQuan2002                       holtz02    ={0};
@@ -191,13 +196,17 @@ struct GlobalWatch watch;
 // struct eQEP_Variables qep={0};
 
 void init_experiment(){
-
+    _user_init();      // debug initilization 
     init_CTRL_Part1();
     init_CTRL_Part2(); // 控制器结构体初始化
+    #if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
     init_FE();  // flux estimator
+    #endif
     rk4_init(); // 龙格库塔法结构体初始化
     // observer_init();
+    #if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
     init_pmsm_observers(); // 永磁电机观测器初始化
+    #endif
 }
 void init_CTRL_Part1(){
     // 我们在初始化 debug 全局结构体的时候，需要用到一部分 CTRL 中的电机参数，所以要先把这一部分提前初始化。
@@ -244,16 +253,16 @@ void init_CTRL_Part2(){
 
     /* Black Box Model | Controller quantities */
 
-    // 控制器tuning
-    if((*debug).who_is_user == USER_WB && (*debug).bool_apply_WC_tunner_for_speed_loop == TRUE){
-        _user_wubo_WC_Tuner();
-        #if PC_SIMULATION == TRUE
-            printf(">>> Wc_Tuner is Applied to the Speed Loop Control <<<\n");
-        #endif
-    }
-    else{
+    /* Controller Parameter Initializaiton */
+    #if WHO_IS_USER == USER_WB
+        if  ( (*debug).bool_apply_WC_tunner_for_speed_loop == TRUE ){
+            _user_wubo_WC_Tuner();
+        }else if( (*debug).bool_apply_WC_tunner_for_speed_loop == FALSE ){
+            ACMSIMC_PIDTuner();
+        }
+    #else
         ACMSIMC_PIDTuner();
-    }
+    #endif
 
     // commands
     (*CTRL).i->cmd_psi = d_sim.init.KE;
@@ -294,6 +303,9 @@ void init_CTRL_Part2(){
     (*CTRL).cap->ECapPassCount[1] = 0;
     (*CTRL).cap->ECapPassCount[2] = 0;
 
-    init_im_controller();
+
+    #if WHO_IS_USER == USER_CJH
+        init_im_controller();
+    #endif
 }
 

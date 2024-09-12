@@ -1,4 +1,5 @@
 #include "ACMSim.h"
+#if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
 /*****************************/
 /* Shared Solver and typedef */
 #define CJH_STYLE_RK4_OBSERVER_RAW_CODE                                  \
@@ -388,7 +389,7 @@ void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REA
         }
 
         FE.AFEOE.theta_d = atan2(FE.AFEOE.psi_2[1], FE.AFEOE.psi_2[0]);
-        FE.AFEOE.theta_e = angle_diff(FE.AFEOE.theta_d, CTRL_1.i->theta_d_elec);
+
         // Convert output error to dq frame
         // REAL KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * (*CTRL).i->iDQ[0];
         /* TODO: 思考这个dq角度怎么选最好，要不要换成电压向量的角度而不是转子角度？ */
@@ -873,7 +874,7 @@ void Main_No_Saturation_Based(){
     FE.no_sat.cosT = FE.no_sat.psi_2[0] * psi_2_ampl_inv;
     FE.no_sat.sinT = FE.no_sat.psi_2[1] * psi_2_ampl_inv; 
     FE.no_sat.theta_d = atan2(FE.no_sat.psi_2[1], FE.no_sat.psi_2[0]);
-    //FE.no_sat.theta_e = angle_diff(FE.no_sat.theta_d, ACM.theta_d) * ONE_OVER_2PI * 360;
+    FE.no_sat.theta_e = angle_diff(FE.no_sat.theta_d, (*CTRL).i->theta_d_elec) * ONE_OVER_2PI * 360;
 }
 
 #endif
@@ -971,7 +972,7 @@ void Main_No_Saturation_Based(){
         FE.clfe4PMSM.psi_2[1] = FE.clfe4PMSM.psi_1[1] - (*CTRL).motor->Lq*IS_C(1);    
         FE.clfe4PMSM.psi_2_ampl = sqrt(FE.clfe4PMSM.psi_2[0]*FE.clfe4PMSM.psi_2[0]+FE.clfe4PMSM.psi_2[1]*FE.clfe4PMSM.psi_2[1]);
         FE.clfe4PMSM.theta_d = atan2(FE.clfe4PMSM.psi_2[1], FE.clfe4PMSM.psi_2[0]);
-        //FE.clfe4PMSM.theta_e = angle_diff(FE.clfe4PMSM.theta_d, ACM.theta_d) * ONE_OVER_2PI * 360;
+        FE.clfe4PMSM.theta_e = angle_diff(FE.clfe4PMSM.theta_d, (*CTRL).i->theta_d_elec) * ONE_OVER_2PI * 360;
     }
 #endif
 #if AFE_39_SATURATION_TIME_WITHOUT_LIMITING
@@ -1331,7 +1332,7 @@ void Main_Saturation_time_Without_Limiting(){
     // FE.stwl.psi_2_nonSat[0] = FE.stwl.psi_2[0];
     // FE.stwl.psi_2_nonSat[1] = FE.stwl.psi_2[1];
     FE.stwl.theta_d = atan2(FE.stwl.psi_2[1], FE.stwl.psi_2[0]);
-    //FE.stwl.theta_e = angle_diff(FE.stwl.theta_d, ACM.theta_d) * ONE_OVER_2PI * 360;
+    FE.stwl.theta_e = angle_diff(FE.stwl.theta_d, (*CTRL).i->theta_d_elec) * ONE_OVER_2PI * 360;
     FE.stwl.psi_2_prev[0] = FE.stwl.psi_2[0];
     FE.stwl.psi_2_prev[1] = FE.stwl.psi_2[1];
 };
@@ -1345,21 +1346,23 @@ void Main_Saturation_time_Without_Limiting(){
 
 void simulation_test_flux_estimators(){
     // MainFE_HUWU_1998();
-    // Main_No_Saturation_Based();
-    // VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
-    // Main_VM_ClosedLoopFluxEstimatorForPMSM();
+    Main_No_Saturation_Based();
+    VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
+    Main_VM_ClosedLoopFluxEstimatorForPMSM();
     Main_the_active_flux_estimator();
-    // VM_LascuAndreescus2006();
-    // Main_Saturation_time_Without_Limiting();
+    VM_LascuAndreescus2006();
+    Main_Saturation_time_Without_Limiting();
     // VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
 }
 
 void init_FE(){
     // init_FE_huwu();
-    // init_ClosedLoopFluxEstimatorForPMSM();
+    init_ClosedLoopFluxEstimatorForPMSM();
     init_afe();
-    // init_No_Saturation_Based();
-    // init_FE_htz();
-    // init_LascuAndreescus2006();
-    // init_Saturation_time_Without_Limiting();
+    init_No_Saturation_Based();
+    init_FE_htz();
+    init_LascuAndreescus2006();
+    init_Saturation_time_Without_Limiting();
 }
+
+#endif

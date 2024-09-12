@@ -420,6 +420,8 @@ REAL shift2pi(REAL thetaA)
     }
 }
 // REAL watch_theta_trapezoidal = 0.0;
+#if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
+
 void Modified_ParkSul_Compensation(void)
 {
 
@@ -735,3 +737,4 @@ void Online_PAA_Based_Compensation(void)
 //     return 0;
 
 // }
+#endif

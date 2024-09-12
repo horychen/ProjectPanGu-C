@@ -62,8 +62,6 @@ void write_DAC_buffer(){
     }
 
     if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
-
-        // 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟侥憋拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤，锟角碉拷锟斤拷效锟斤拷围锟斤拷 [-1, 1]锟斤拷
         // wubo:我用的这套设备dac：dac_watch在dsp中输出[-1,1]V,通过dac板子输出[-3,3V]
         (*Axis4DAC).dac_watch[0] = Axis_1.iuvw[0]*0.2;
         (*Axis4DAC).dac_watch[1] = Axis_1.iuvw[1]*0.2;
@@ -76,13 +74,7 @@ void write_DAC_buffer(){
         (*Axis4DAC).dac_watch[7] = (*CTRL).i->iAB[1]*0.25;
         (*Axis4DAC).dac_watch[8] = (*CTRL).o->cmd_uAB[0]*0.125; // +-12V -> 0-3V
         (*Axis4DAC).dac_watch[9] = (*CTRL).o->cmd_uAB[1]*0.125;
-//        (*Axis4DAC).dac_watch[10] = FE.htz.psi_2_ampl*0.25;
-//        (*Axis4DAC).dac_watch[11] = FE.htz.psi_2_ampl_lpf*0.25;
-//        (*Axis4DAC).dac_watch[12] = FE.htz.psi_2[0]*0.25;
-//        (*Axis4DAC).dac_watch[13] = FE.htz.psi_2[1]*0.25;
-//        (*Axis4DAC).dac_watch[14] = FE.htz.theta_d*0.1;
-//        (*Axis4DAC).dac_watch[15] = FE.htz.u_offset[0]*2;
-//        (*Axis4DAC).dac_watch[16] = FE.htz.u_offset[1]*2;
+
         (*Axis4DAC).dac_watch[10] = (*CTRL).o->cmd_uAB_to_inverter[0];
         (*Axis4DAC).dac_watch[11] = (*CTRL).o->cmd_uAB_to_inverter[1];
 
@@ -106,6 +98,78 @@ void write_DAC_buffer(){
         (*Axis4DAC).dac_watch[30] = Axis_2.pCTRL->i->iDQ[0]    * 0.1;
         (*Axis4DAC).dac_watch[31] = Axis_2.pCTRL->i->cmd_iDQ[1]* 0.1;
         (*Axis4DAC).dac_watch[32] = Axis_2.pCTRL->i->iDQ[1]    * 0.1;
+
+
+        (*Axis4DAC).dac_watch[36] = vvvf_voltage * cos(vvvf_frequency*2*M_PI*(*CTRL).timebase);
+
+        (*Axis4DAC).dac_watch[40] = (*CTRL).i->iDQ[0]*0.1;
+        (*Axis4DAC).dac_watch[41] = (*CTRL).i->iDQ[1]*0.1;
+
+        (*Axis4DAC).dac_watch[42] = CTRL_2.s->iQ->Ref; /// 131072.0 ;
+        (*Axis4DAC).dac_watch[43] = CTRL_2.s->iQ->Fbk; /// 131072.0 ;
+        (*Axis4DAC).dac_watch[44] = CTRL_2.s->Position->Ref *7.62939453125e-06; /// 131072.0 ;
+        (*Axis4DAC).dac_watch[45] = CTRL_2.s->Position->Fbk *7.62939453125e-06; /// 131072.0 ;
+
+
+
+        (*Axis4DAC).dac_watch[52] = (*Axis4DAC).used_theta_d_elec *0.1; // encoder angle
+
+        (*Axis4DAC).dac_watch[61] = INV.ual_comp *0.125;
+        (*Axis4DAC).dac_watch[62] = INV.ube_comp *0.125;
+        (*Axis4DAC).dac_watch[63] = CTRL->enc->varOmega * 0.35;
+
+
+        #if WHO_IS_USER == USER_WB
+                //* Speed Controller Output
+            (*Axis4DAC).dac_watch[64] = PID_Speed->P_Term * 1;
+            (*Axis4DAC).dac_watch[65] = PID_Speed->I_Term * 0.04 * wubo_debug_tools[0];
+            (*Axis4DAC).dac_watch[66] = PID_Speed->KFB_Term * 0.04 * wubo_debug_tools[0];
+
+            (*Axis4DAC).dac_watch[67] = PID_Speed->Out * 0.1;
+            (*Axis4DAC).dac_watch[68] = PID_Speed->OutPrev *0.1;
+        #endif
+
+        #if WHO_IS_USER == USER_YZZ
+            (*Axis4DAC).dac_watch[10] = FE.htz.psi_2_ampl*0.25;
+            (*Axis4DAC).dac_watch[11] = FE.htz.psi_2_ampl_lpf*0.25;
+            (*Axis4DAC).dac_watch[12] = FE.htz.psi_2[0]*0.25;
+            (*Axis4DAC).dac_watch[13] = FE.htz.psi_2[1]*0.25;
+            (*Axis4DAC).dac_watch[14] = FE.htz.theta_d*0.1;
+            (*Axis4DAC).dac_watch[15] = FE.htz.u_offset[0]*2;
+            (*Axis4DAC).dac_watch[16] = FE.htz.u_offset[1]*2;
+            (*Axis4DAC).dac_watch[34] = FE.htz.sat_min_time[0]*100;
+            (*Axis4DAC).dac_watch[35] = FE.htz.sat_min_time[1]*100;
+            (*Axis4DAC).dac_watch[51] = AFE_USED.theta_d *0.1;
+            (*Axis4DAC).dac_watch[63] = FE.no_sat.psi_2[0];
+            (*Axis4DAC).dac_watch[64] = FE.no_sat.psi_2[1];
+        #endif
+
+        # if ENABLE_COMMISSIONING == TRUE
+            (*Axis4DAC).dac_watch[61] = COMM.Js * 1e3;
+            (*Axis4DAC).dac_watch[62] = COMM.current_command*0.2;
+        # endif
+
+        
+        // ZJL IMPEDENCE CONTROL
+        // FOR LAOZHU change zero to the student ID
+        #if WHO_IS_USER == 0
+            (*Axis4DAC).dac_watch[53] = HIP_PREV_ANGLE;
+            (*Axis4DAC).dac_watch[54] = SHANK_PREV_ANGLE;
+            (*Axis4DAC).dac_watch[55] = IMPENDENCE_HIP_D_ANGULAR*0.1;
+            (*Axis4DAC).dac_watch[56] = IMPENDENCE_SHANK_D_ANGULAR*0.1;
+            (*Axis4DAC).dac_watch[57] = IQOUT_HIP*0.1;
+            (*Axis4DAC).dac_watch[58] = IQOUT_SHANK*0.1;
+            (*Axis4DAC).dac_watch[59] = position_count_SCI_hip_fromCPU2*1e-08;
+            (*Axis4DAC).dac_watch[60] = position_count_SCI_shank_fromCPU2*1e-08;
+        #endif
+
+
+                // (*Axis4DAC).dac_watch[49] = CTRL_1.i->varOmega  * MECH_RAD_PER_SEC_2_RPM *0.002;
+        // (*Axis4DAC).dac_watch[50] = CTRL_1.i->cmd_varOmega * MECH_RAD_PER_SEC_2_RPM *0.002;
+
+        // 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟侥憋拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤，锟角碉拷锟斤拷效锟斤拷围锟斤拷 [-1, 1]锟斤拷
+
+        
 
         // (*Axis4DAC).dac_watch[63] = (*CTRL).o->cmd_uAB_to_inverter[0] * 0.125;
         // (*Axis4DAC).dac_watch[64] = (*CTRL).o->cmd_uAB_to_inverter[1] * 0.125;
@@ -139,55 +203,18 @@ void write_DAC_buffer(){
 //        (*Axis4DAC).dac_watch[31] = (*CTRL).o->cmd_iAB[1]*0.2;
 //        (*Axis4DAC).dac_watch[32] = yk;
 //        (*Axis4DAC).dac_watch[33] = uk;
-        (*Axis4DAC).dac_watch[34] = FE.htz.sat_min_time[0]*100;
-        (*Axis4DAC).dac_watch[35] = FE.htz.sat_min_time[1]*100;
-        (*Axis4DAC).dac_watch[36] = vvvf_voltage * cos(vvvf_frequency*2*M_PI*(*CTRL).timebase);
-//        (*Axis4DAC).dac_watch[39] = FE.htz.theta_d*0.1;
 
-        (*Axis4DAC).dac_watch[40] = (*CTRL).i->iDQ[0]*0.1;
-        (*Axis4DAC).dac_watch[41] = (*CTRL).i->iDQ[1]*0.1;
 
-        (*Axis4DAC).dac_watch[42] = CTRL_2.s->iQ->Ref; /// 131072.0 ;
-        (*Axis4DAC).dac_watch[43] = CTRL_2.s->iQ->Fbk; /// 131072.0 ;
-        (*Axis4DAC).dac_watch[44] = CTRL_2.s->Position->Ref *7.62939453125e-06; /// 131072.0 ;
-        (*Axis4DAC).dac_watch[45] = CTRL_2.s->Position->Fbk *7.62939453125e-06; /// 131072.0 ;
 
-        (*Axis4DAC).dac_watch[49] = CTRL_1.i->varOmega  * MECH_RAD_PER_SEC_2_RPM *0.002;
-        (*Axis4DAC).dac_watch[50] = CTRL_1.i->cmd_varOmega * MECH_RAD_PER_SEC_2_RPM *0.002;
-        (*Axis4DAC).dac_watch[51] = AFE_USED.theta_d *0.1;
-        (*Axis4DAC).dac_watch[52] = (*Axis4DAC).used_theta_d_elec *0.1; // encoder angle
-
-        // ZJL IMPEDENCE CONTROL
-        (*Axis4DAC).dac_watch[53] = HIP_PREV_ANGLE;
-        (*Axis4DAC).dac_watch[54] = SHANK_PREV_ANGLE;
-        (*Axis4DAC).dac_watch[55] = IMPENDENCE_HIP_D_ANGULAR*0.1;
-        (*Axis4DAC).dac_watch[56] = IMPENDENCE_SHANK_D_ANGULAR*0.1;
-        (*Axis4DAC).dac_watch[57] = IQOUT_HIP*0.1;
-        (*Axis4DAC).dac_watch[58] = IQOUT_SHANK*0.1;
-        (*Axis4DAC).dac_watch[59] = position_count_SCI_hip_fromCPU2*1e-08;
-        (*Axis4DAC).dac_watch[60] = position_count_SCI_shank_fromCPU2*1e-08;
-
-        (*Axis4DAC).dac_watch[61] = INV.ual_comp *0.125;
-        (*Axis4DAC).dac_watch[62] = INV.ube_comp *0.125;
-        (*Axis4DAC).dac_watch[63] = CTRL->enc->varOmega * 0.35;
-
-        //* 速度控制器的输出信号
-        (*Axis4DAC).dac_watch[64] = PID_Speed->P_Term * 1;
-        (*Axis4DAC).dac_watch[65] = PID_Speed->I_Term * 0.04 * wubo_debug_tools[0];
-        (*Axis4DAC).dac_watch[66] = PID_Speed->KFB_Term * 0.04 * wubo_debug_tools[0];
         
-        (*Axis4DAC).dac_watch[67] = PID_Speed->Out * 0.1;
-        (*Axis4DAC).dac_watch[68] = PID_Speed->OutPrev *0.1;
 
 
-//        (*Axis4DAC).dac_watch[63] = FE.no_sat.psi_2[0];
-//        (*Axis4DAC).dac_watch[64] = FE.no_sat.psi_2[1];
 
 
-        # if ENABLE_COMMISSIONING == TRUE
-            (*Axis4DAC).dac_watch[61] = COMM.Js * 1e3;
-            (*Axis4DAC).dac_watch[62] = COMM.current_command*0.2;
-        # endif
+
+
+
+
 
 
         if((*Axis4DAC).channels_preset==1){(*Axis4DAC).channels_preset=0;

@@ -10,6 +10,7 @@
 #define US_P(X) OBSV.rk4.us_prev[X]
 #define IS_P(X) OBSV.rk4.is_prev[X]
 
+#if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
 void init_rk4();
 
 #define AFE_11_OHTANI_1992 0
@@ -25,11 +26,11 @@ void init_rk4();
 #define AFE_32_HOLT_QUAN_2003_INTEGRATOR 0
 #define AFE_33_EXACT_OFFSET_COMPENSATION 0
 #define AFE_34_ADAPTIVE_LIMIT 0
-#define AFE_35_SATURATION_TIME_DIFFERENCE  0
+#define AFE_35_SATURATION_TIME_DIFFERENCE  1
 #define AFE_36_TOP_BUTT_EXACT_COMPENSATION 0
-#define AFE_37_NO_SATURATION_BASED 0
-#define AFE_38_OUTPUT_ERROR_CLOSED_LOOP 0
-#define AFE_39_SATURATION_TIME_WITHOUT_LIMITING 0
+#define AFE_37_NO_SATURATION_BASED 1
+#define AFE_38_OUTPUT_ERROR_CLOSED_LOOP 1
+#define AFE_39_SATURATION_TIME_WITHOUT_LIMITING 1
 #define AFE_40_JO_CHOI_METHOD 0
 
 typedef void (*pointer_flux_estimator_dynamics)(REAL t, REAL *x, REAL *fx);
@@ -548,14 +549,16 @@ extern struct SharedFluxEstimatorForExperiment FE;
 void simulation_test_flux_estimators();
     void Main_the_active_flux_estimator();
     void MainFE_HuWu_1998();
-    // void VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
-    // void Main_No_Saturation_Based();
-    // void Main_VM_ClosedLoopFluxEstimatorForPMSM();
-    // void Main_Saturation_time_Without_Limiting();
+    void VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
+    void Main_No_Saturation_Based();
+    void Main_VM_ClosedLoopFluxEstimatorForPMSM();
+    void Main_Saturation_time_Without_Limiting();
 void init_afe();
 void init_FE();
-// void init_FE_htz(); // Holtz 2003
-// void init_No_Saturation_Based(); // No Saturation Based
-// void init_ClosedLoopFluxEstimatorForPMSM(); // Closed Loop Flux Estimator For PMSM
-// void init_Saturation_time_Without_Limiting();
+void init_FE_htz(); // Holtz 2003
+void init_No_Saturation_Based(); // No Saturation Based
+void init_ClosedLoopFluxEstimatorForPMSM(); // Closed Loop Flux Estimator For PMSM
+void init_Saturation_time_Without_Limiting();
+#endif
+
 #endif

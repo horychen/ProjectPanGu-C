@@ -8,7 +8,7 @@
         r->Out = r->OutPrev \
                 + r->Kp * ( r->Err - r->ErrPrev ) + r->Ki_CODE * r->Err;
 
-        // 限幅必须在这里做
+        //限幅必须在这里做
         if(r->Out > r->OutLimit)
             r->Out = r->OutLimit;
         else if(r->Out < -r->OutLimit)

@@ -2,177 +2,179 @@
 
 // int wubo_debug[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
 
-REAL _user_wubo_WC_Tuner_Part2(REAL zeta, REAL omega_n, REAL max_CLBW_PER_min_CLBW){
+/* Here is a good example to show that we user WHO_IS_USER to make your own code to be compiled */
+#if WHO_IS_USER == USER_WB
+    REAL _user_wubo_WC_Tuner_Part2(REAL zeta, REAL omega_n, REAL max_CLBW_PER_min_CLBW){
+        REAL Ld = d_sim.init.Ld;
+        REAL Lq = d_sim.init.Lq;
+        REAL R = d_sim.init.R;
+        REAL Js = d_sim.init.Js;
+        REAL npp = d_sim.init.npp;
+        REAL KE = d_sim.init.KE;
+        
+        // motor parameters
+        REAL KT = 1.5 * npp * KE;  // torque constant
+        REAL K0 = KT / Js;  // motor constant
 
-    REAL Ld = d_sim.init.Ld;
-    REAL Lq = d_sim.init.Lq;
-    REAL R = d_sim.init.R;
-    REAL Js = d_sim.init.Js;
-    REAL npp = d_sim.init.npp;
-    REAL KE = d_sim.init.KE;
-    
-    // motor parameters
-    REAL KT = 1.5 * npp * KE;  // torque constant
-    REAL K0 = KT / Js;  // motor constant
+        REAL max_CLBW = zeta * omega_n * 4;
+        REAL min_CLBW = zeta * omega_n * 2;
 
-    REAL max_CLBW = zeta * omega_n * 4;
-    REAL min_CLBW = zeta * omega_n * 2;
+        // 通过一个小于1的比例系数来选取电流环带宽
+        REAL FOC_CLBW = max_CLBW_PER_min_CLBW * max_CLBW +  (1-max_CLBW_PER_min_CLBW) * min_CLBW;
+        // printf("FOC_CLBW = %f\n", FOC_CLBW);
 
-    // 通过一个小于1的比例系数来选取电流环带宽
-    REAL FOC_CLBW = max_CLBW_PER_min_CLBW * max_CLBW +  (1-max_CLBW_PER_min_CLBW) * min_CLBW;
-    // printf("FOC_CLBW = %f\n", FOC_CLBW);
-
-    REAL Series_D_KP = FOC_CLBW * Ld;
-    REAL Series_D_KI = R / Ld;
-    REAL Series_Q_KP = FOC_CLBW * Lq;
-    REAL Series_Q_KI = R / Lq;
-    REAL Series_Speed_KP = omega_n * omega_n / (FOC_CLBW * K0);
-    REAL Series_Speed_KFB = (2*zeta*omega_n*FOC_CLBW - 4*zeta*zeta*omega_n*omega_n) / (FOC_CLBW*K0);
-    REAL Series_Speed_KI = ( FOC_CLBW - (sqrt(FOC_CLBW * FOC_CLBW - 4*FOC_CLBW*K0*Series_Speed_KFB)) ) * 0.5;
+        REAL Series_D_KP = FOC_CLBW * Ld;
+        REAL Series_D_KI = R / Ld;
+        REAL Series_Q_KP = FOC_CLBW * Lq;
+        REAL Series_Q_KI = R / Lq;
+        REAL Series_Speed_KP = omega_n * omega_n / (FOC_CLBW * K0);
+        REAL Series_Speed_KFB = (2*zeta*omega_n*FOC_CLBW - 4*zeta*zeta*omega_n*omega_n) / (FOC_CLBW*K0);
+        REAL Series_Speed_KI = ( FOC_CLBW - (sqrt(FOC_CLBW * FOC_CLBW - 4*FOC_CLBW*K0*Series_Speed_KFB)) ) * 0.5;
 
 
-    PID_iD->Kp = Series_D_KP;
-    PID_iQ->Kp = Series_Q_KP;
-    PID_Speed->Kp = Series_Speed_KP;
+        PID_iD->Kp = Series_D_KP;
+        PID_iQ->Kp = Series_Q_KP;
+        PID_Speed->Kp = Series_Speed_KP;
 
-    PID_iD->Ki_CODE = Series_D_KI * Series_D_KP * CL_TS;
-    PID_iQ->Ki_CODE = Series_Q_KI * Series_Q_KP * CL_TS;
-    PID_Speed->Ki_CODE = Series_Speed_KI * Series_Speed_KP * VL_TS;
-    PID_Speed->KFB = Series_Speed_KFB;
+        PID_iD->Ki_CODE = Series_D_KI * Series_D_KP * CL_TS;
+        PID_iQ->Ki_CODE = Series_Q_KI * Series_Q_KP * CL_TS;
+        PID_Speed->Ki_CODE = Series_Speed_KI * Series_Speed_KP * VL_TS;
+        PID_Speed->KFB = Series_Speed_KFB;
 
-    #if PC_SIMULATION == TRUE
-        printf("Dual Loop Theoritical Bandwidth is: \n");
-        printf("FOC_CLBW = %f rad/s\n", FOC_CLBW);
-        printf("FOC_CLBW = %f Hz\n", FOC_CLBW * ONE_OVER_2PI);
-        printf("K0       = %f\n",       K0);
-    #endif
+        #if PC_SIMULATION == TRUE
+            printf("Dual Loop Theoritical Bandwidth is: \n");
+            printf("FOC_CLBW = %f rad/s\n", FOC_CLBW);
+            printf("FOC_CLBW = %f Hz\n", FOC_CLBW * ONE_OVER_2PI);
+            printf("K0       = %f\n",       K0);
+        #endif
 
-    return FOC_CLBW, K0;
-}
+        return FOC_CLBW, K0;
+    }
 
-    /* Tuned by d_sim */
-void _user_wubo_WC_Tuner(){
-    REAL FOC_CLBW, K0;
-    FOC_CLBW, K0 = _user_wubo_WC_Tuner_Part2(d_sim.user.zeta, d_sim.user.omega_n, d_sim.user.max_CLBW_PER_min_CLBW);
+        /* Tuned by d_sim */
+    void _user_wubo_WC_Tuner(){
+        REAL FOC_CLBW, K0;
+        FOC_CLBW, K0 = _user_wubo_WC_Tuner_Part2(d_sim.user.zeta, d_sim.user.omega_n, d_sim.user.max_CLBW_PER_min_CLBW);
 
-    #if PC_SIMULATION == TRUE
-        printf("FOC_CLBW = %f rad/s\n", FOC_CLBW);
-        printf("FOC_CLBW = %f Hz\n", FOC_CLBW * ONE_OVER_2PI);
-        printf("K0       = %f\n",       K0);
-        if (FOC_CLBW - 4 * K0 * PID_Speed->KFB < 0){
-            printf("can not do zero-pole cancellation\n");
-        }else{
-            printf(">>> Zero-pole cancellation can be done <<<\n");
-        }
-    #endif
-    PID_iD->OutLimit    = 0.5773 * d_sim.CL.LIMIT_DC_BUS_UTILIZATION * d_sim.init.Vdc;
-    PID_iQ->OutLimit    = 0.5773 * d_sim.CL.LIMIT_DC_BUS_UTILIZATION * d_sim.init.Vdc;
-    PID_Speed->OutLimit = d_sim.VL.LIMIT_OVERLOAD_FACTOR * d_sim.init.IN;
-    // >>实验<<限幅的部分我放在pangu-c的main.c中的measurement函数里面，也就是说，测量此时的Vdc，然后根据Vdc觉得限幅的大小
-}
-
-void _user_wubo_WC_Tuner_Online(){
-    /* Tuned by debug */
-    REAL FOC_CLBW, K0;
-    FOC_CLBW, K0 = _user_wubo_WC_Tuner_Part2((*debug).zeta, (*debug).omega_n, (*debug).max_CLBW_PER_min_CLBW);
-    // >>实验<<限幅的部分我放在pangu-c的main.c中的measurement函数里面，也就是说，测量此时的Vdc，然后根据Vdc觉得限幅的大小
-}
-
-void _user_wubo_TI_Tuner_Online(){
-    /* Tuned by debug */
-    REAL CLBW_HZ = (*debug).CLBW_HZ;
-    REAL delta = (*debug).delta;
-
-    // TODO: 下面的psi_A在IM上应该不能用，因为我拿的是电机参数中原始的KE
-    REAL Ld = d_sim.init.Ld;
-    REAL Lq = d_sim.init.Lq;
-    REAL R = d_sim.init.R;
-    REAL Js = d_sim.init.Js;
-    REAL npp = d_sim.init.npp;
-    REAL KE = d_sim.init.KE;
-
-    // motor parameters
-    REAL KT = 1.5 * npp * KE;  // torque constant
-    REAL K0 = KT / Js;  // motor constant
-    
-    REAL Series_D_KP = CLBW_HZ * 2 * M_PI * Ld;
-    REAL Series_D_KI = R / Ld;
-    REAL Series_Q_KP = CLBW_HZ * 2 * M_PI * Lq;
-    REAL Series_Q_KI = R / Lq;
-    REAL Series_Speed_KI = 2* M_PI * CLBW_HZ / (delta * delta); //THIS IS INTEGRAL GAIN
-    REAL Series_Speed_KP = delta * Series_Speed_KI / KT * Js;
-
-    PID_iD->Kp = Series_D_KP;
-    PID_iQ->Kp = Series_Q_KP;
-    PID_Speed->Kp = Series_Speed_KP;
-
-    PID_iD->Ki_CODE = Series_D_KI * Series_D_KP * CL_TS;
-    PID_iQ->Ki_CODE = Series_Q_KI * Series_Q_KP * CL_TS;
-    PID_Speed->Ki_CODE = Series_Speed_KI * Series_Speed_KP * VL_TS;
-
-    // 应该可以删去，但我不放心有trick bug
-    PID_Speed->KFB = 0.0;
-}
-
-void _user_wubo_SpeedInnerLoop_controller(st_pid_regulator *r){
-        //* 存储控制器的各项输出
-        r->P_Term += r->Kp * ( r->Err - r->ErrPrev );
-        r->I_Term += r->Ki_CODE * r->Err;
-        r->KFB_Term = 1 * r->KFB * r->Fbk;
-
-        r->Err = r->Ref - r->Fbk;
-        r->Out = r->OutPrev + \
-                r->Kp * ( r->Err - r->ErrPrev ) \
-                + r->Ki_CODE * r->Err; // - r->KFB_Term;
-                
-        //* 这里对Out做限幅是为了后面给OutPrev的值时，make sure it is able to cover the speed steady error carried by KFB
-        if(r->Out > r->OutLimit + r->KFB_Term)
-            r->Out = r->OutLimit + r->KFB_Term;
-        else if(r->Out < -r->OutLimit + r->KFB_Term)
-            r->Out = -r->OutLimit + r->KFB_Term;
-
-        r->ErrPrev = r->Err; 
-        r->OutPrev = r->Out;
-
-        r->Out = r->Out - r->KFB_Term;
-        if(r->Out > r->OutLimit)
-            r->Out = r->OutLimit;
-        else if(r->Out < -r->OutLimit)
-            r->Out = -r->OutLimit;
-}
-
-void _user_wubo_Sweeping_Command(){
-    // #if PC_SIMULATION //* 先让扫频只在simulation中跑
-        // ACM.TLoad = 0; // 强制将负载设置为0
-        if ((*CTRL).timebase > (*debug).CMD_SPEED_SINE_END_TIME){
-            // next frequency
-            (*debug).CMD_SPEED_SINE_HZ += (*debug).CMD_SPEED_SINE_STEP_SIZE;
-            // next end time
-            (*debug).CMD_SPEED_SINE_LAST_END_TIME = (*debug).CMD_SPEED_SINE_END_TIME;
-            (*debug).CMD_SPEED_SINE_END_TIME += 1.0/(*debug).CMD_SPEED_SINE_HZ; // 1.0 Duration for each frequency
-            // WUBO：这里扫频的思路是每隔一个frequency的时间，扫频信号提升1个Hz，例如1Hz的信号走1s，1/2Hz的信号走0.5s，1/3Hz的信号走0.33s，
-            // 依次类推，所以单单从图上看时间是不能直接看出 Bandwidth到底是多少，但是可以用级数求和直接表示？
-        }
-        if ((*debug).CMD_SPEED_SINE_HZ > (*debug).CMD_SPEED_SINE_HZ_CEILING){
-            (*CTRL).i->cmd_varOmega = 0.0; // 到达扫频的频率上限，速度归零
-            (*debug).set_id_command = 0.0;
-        }else{
-            if ((*debug).bool_sweeping_frequency_for_speed_loop == TRUE){
-                (*CTRL).i->cmd_varOmega = RPM_2_MECH_RAD_PER_SEC * (*debug).CMD_SPEED_SINE_RPM * sin(2* M_PI *(*debug).CMD_SPEED_SINE_HZ*((*CTRL).timebase - (*debug).CMD_SPEED_SINE_LAST_END_TIME));
+        #if PC_SIMULATION == TRUE
+            printf("FOC_CLBW = %f rad/s\n", FOC_CLBW);
+            printf("FOC_CLBW = %f Hz\n", FOC_CLBW * ONE_OVER_2PI);
+            printf("K0       = %f\n",       K0);
+            if (FOC_CLBW - 4 * K0 * PID_Speed->KFB < 0){
+                printf("can not do zero-pole cancellation\n");
             }else{
-                // 让电机转起来，然后在d轴上电流扫频？
-                //* 所以让电机转起来的原因是？？？
-                (*debug).bool_Null_D_Control = FALSE; //确保Null iD不开启
-                if (FALSE)
-                    (*CTRL).i->cmd_varOmega = (*debug).CMD_SPEED_SINE_RPM * RPM_2_MECH_RAD_PER_SEC;
-                else
-                    (*CTRL).i->cmd_varOmega = 0;
-                (*debug).set_iq_command = 0.0;
-                (*debug).set_id_command = (*debug).CMD_CURRENT_SINE_AMPERE * sin(2* M_PI *(*debug).CMD_SPEED_SINE_HZ*((*CTRL).timebase - (*debug).CMD_SPEED_SINE_LAST_END_TIME));
+                printf(">>> Zero-pole cancellation can be done <<<\n");
             }
-        }
-    // #endif
-}
+        #endif
+        PID_iD->OutLimit    = 0.5773 * d_sim.CL.LIMIT_DC_BUS_UTILIZATION * d_sim.init.Vdc;
+        PID_iQ->OutLimit    = 0.5773 * d_sim.CL.LIMIT_DC_BUS_UTILIZATION * d_sim.init.Vdc;
+        PID_Speed->OutLimit = d_sim.VL.LIMIT_OVERLOAD_FACTOR * d_sim.init.IN;
+        // >>实验<<限幅的部分我放在pangu-c的main.c中的measurement函数里面，也就是说，测量此时的Vdc，然后根据Vdc觉得限幅的大小
+    }
+
+    void _user_wubo_WC_Tuner_Online(){
+        /* Tuned by debug */
+        REAL FOC_CLBW, K0;
+        FOC_CLBW, K0 = _user_wubo_WC_Tuner_Part2((*debug).zeta, (*debug).omega_n, (*debug).max_CLBW_PER_min_CLBW);
+        // >>实验<<限幅的部分我放在pangu-c的main.c中的measurement函数里面，也就是说，测量此时的Vdc，然后根据Vdc觉得限幅的大小
+    }
+
+    void _user_wubo_TI_Tuner_Online(){
+        /* Tuned by debug */
+        REAL CLBW_HZ = (*debug).CLBW_HZ;
+        REAL delta = (*debug).delta;
+
+        // TODO: 下面的psi_A在IM上应该不能用，因为我拿的是电机参数中原始的KE
+        REAL Ld = d_sim.init.Ld;
+        REAL Lq = d_sim.init.Lq;
+        REAL R = d_sim.init.R;
+        REAL Js = d_sim.init.Js;
+        REAL npp = d_sim.init.npp;
+        REAL KE = d_sim.init.KE;
+
+        // motor parameters
+        REAL KT = 1.5 * npp * KE;  // torque constant
+        REAL K0 = KT / Js;  // motor constant
+        
+        REAL Series_D_KP = CLBW_HZ * 2 * M_PI * Ld;
+        REAL Series_D_KI = R / Ld;
+        REAL Series_Q_KP = CLBW_HZ * 2 * M_PI * Lq;
+        REAL Series_Q_KI = R / Lq;
+        REAL Series_Speed_KI = 2* M_PI * CLBW_HZ / (delta * delta); //THIS IS INTEGRAL GAIN
+        REAL Series_Speed_KP = delta * Series_Speed_KI / KT * Js;
+
+        PID_iD->Kp = Series_D_KP;
+        PID_iQ->Kp = Series_Q_KP;
+        PID_Speed->Kp = Series_Speed_KP;
+
+        PID_iD->Ki_CODE = Series_D_KI * Series_D_KP * CL_TS;
+        PID_iQ->Ki_CODE = Series_Q_KI * Series_Q_KP * CL_TS;
+        PID_Speed->Ki_CODE = Series_Speed_KI * Series_Speed_KP * VL_TS;
+
+        // 应该可以删去，但我不放心有trick bug
+        PID_Speed->KFB = 0.0;
+    }
+
+    void _user_wubo_SpeedInnerLoop_controller(st_pid_regulator *r){
+            //* 存储控制器的各项输出
+            r->P_Term += r->Kp * ( r->Err - r->ErrPrev );
+            r->I_Term += r->Ki_CODE * r->Err;
+            r->KFB_Term = 1 * r->KFB * r->Fbk;
+
+            r->Err = r->Ref - r->Fbk;
+            r->Out = r->OutPrev + \
+                    r->Kp * ( r->Err - r->ErrPrev ) \
+                    + r->Ki_CODE * r->Err; // - r->KFB_Term;
+                    
+            //* 这里对Out做限幅是为了后面给OutPrev的值时，make sure it is able to cover the speed steady error carried by KFB
+            if(r->Out > r->OutLimit + r->KFB_Term)
+                r->Out = r->OutLimit + r->KFB_Term;
+            else if(r->Out < -r->OutLimit + r->KFB_Term)
+                r->Out = -r->OutLimit + r->KFB_Term;
+
+            r->ErrPrev = r->Err; 
+            r->OutPrev = r->Out;
+
+            r->Out = r->Out - r->KFB_Term;
+            if(r->Out > r->OutLimit)
+                r->Out = r->OutLimit;
+            else if(r->Out < -r->OutLimit)
+                r->Out = -r->OutLimit;
+    }
+
+    void _user_wubo_Sweeping_Command(){
+        // #if PC_SIMULATION //* 先让扫频只在simulation中跑
+            // ACM.TLoad = 0; // 强制将负载设置为0
+            if ((*CTRL).timebase > (*debug).CMD_SPEED_SINE_END_TIME){
+                // next frequency
+                (*debug).CMD_SPEED_SINE_HZ += (*debug).CMD_SPEED_SINE_STEP_SIZE;
+                // next end time
+                (*debug).CMD_SPEED_SINE_LAST_END_TIME = (*debug).CMD_SPEED_SINE_END_TIME;
+                (*debug).CMD_SPEED_SINE_END_TIME += 1.0/(*debug).CMD_SPEED_SINE_HZ; // 1.0 Duration for each frequency
+                // WUBO：这里扫频的思路是每隔一个frequency的时间，扫频信号提升1个Hz，例如1Hz的信号走1s，1/2Hz的信号走0.5s，1/3Hz的信号走0.33s，
+                // 依次类推，所以单单从图上看时间是不能直接看出 Bandwidth到底是多少，但是可以用级数求和直接表示？
+            }
+            if ((*debug).CMD_SPEED_SINE_HZ > (*debug).CMD_SPEED_SINE_HZ_CEILING){
+                (*CTRL).i->cmd_varOmega = 0.0; // 到达扫频的频率上限，速度归零
+                (*debug).set_id_command = 0.0;
+            }else{
+                if ((*debug).bool_sweeping_frequency_for_speed_loop == TRUE){
+                    (*CTRL).i->cmd_varOmega = RPM_2_MECH_RAD_PER_SEC * (*debug).CMD_SPEED_SINE_RPM * sin(2* M_PI *(*debug).CMD_SPEED_SINE_HZ*((*CTRL).timebase - (*debug).CMD_SPEED_SINE_LAST_END_TIME));
+                }else{
+                    // 让电机转起来，然后在d轴上电流扫频？
+                    //* 所以让电机转起来的原因是？？？
+                    (*debug).bool_Null_D_Control = FALSE; //确保Null iD不开启
+                    if (FALSE)
+                        (*CTRL).i->cmd_varOmega = (*debug).CMD_SPEED_SINE_RPM * RPM_2_MECH_RAD_PER_SEC;
+                    else
+                        (*CTRL).i->cmd_varOmega = 0;
+                    (*debug).set_iq_command = 0.0;
+                    (*debug).set_id_command = (*debug).CMD_CURRENT_SINE_AMPERE * sin(2* M_PI *(*debug).CMD_SPEED_SINE_HZ*((*CTRL).timebase - (*debug).CMD_SPEED_SINE_LAST_END_TIME));
+                }
+            }
+        // #endif
+    }
+#endif
 
 
 

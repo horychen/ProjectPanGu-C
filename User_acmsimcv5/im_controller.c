@@ -1,5 +1,7 @@
 #include "ACMSim.h"
 
+#if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
+
 // #if PC_SIMULATION==FALSE
 // REAL CpuTimer_Delta = 0;
 // Uint32 CpuTimer_Before = 0;
@@ -741,3 +743,7 @@ void init_im_controller(){
     // PID调谐
     // ACMSIMC_PIDTuner();
 }
+
+
+
+#endif

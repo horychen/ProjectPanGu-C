@@ -118,10 +118,7 @@ REAL difference_between_two_angles(REAL first, REAL second)
     {
         if (d_sim.user.verbose)
             printf("\tData @ %s\n", DATA_FILE_NAME);
-
-        fprintf(fw, DATA_LABELS);
-
-        {
+            fprintf(fw, DATA_LABELS);{
             // 将除了变量数据和变量名以外的信息写入文件“info.dat”，包括采样时间，降采样倍数，数据文件名。
             // FILE *fw2;
             // fw2 = fopen("../dat/info.dat", "w");
@@ -144,6 +141,14 @@ REAL difference_between_two_angles(REAL first, REAL second)
         }
     }
     void print_info(){
+        #if WHO_IS_USER == USER_WB
+            if ( (*debug).bool_apply_WC_tunner_for_speed_loop == TRUE ){
+                printf(">>> Wc_Tuner is Applied to the Speed Loop Control <<<\n");
+            }else{
+                printf("!!! Other tunner is Applied to the Speed Loop Control !!!\n");
+            }
+        #endif
+
         if(d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation == TRUE){
             printf(">>> Voltages to Cuurent Regulation is Applied <<<\n");
         }else{
@@ -159,29 +164,40 @@ REAL difference_between_two_angles(REAL first, REAL second)
         }else{
             printf("!!! Inverter Nonlinearity Compensation is NOT Applied !!!\n");
         }
-
+        if (d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation == TRUE)
+        {
+    #if PC_SIMULATION == TRUE
+            printf(">>> Voltages to Cuurent Regulation is Applied <<<\n");
+    #endif
+        }
         printf("\t[utility.c] Rreq = %f Ohm\n", (ACM.Rreq));
-        printf("\t[utility.c] NUMBER_OF_STEPS = %d\n", (int)d_sim.sim.NUMBER_OF_STEPS); 
-        printf("\tMACHINE_SIMULATIONs_PER_SAMPLING_PERIOD = %d\n", d_sim.sim.MACHINE_SIMULATIONs_PER_SAMPLING_PERIOD);
+        printf("\t[utility.c] NUMBER_OF_STEPS = %d\t", (int)d_sim.sim.NUMBER_OF_STEPS);
+        printf("MACHINE_SIMULATIONs_PER_SAMPLING_PERIOD = %d\n", d_sim.sim.MACHINE_SIMULATIONs_PER_SAMPLING_PERIOD);
         // if((*debug).SENSORLESS_CONTROL==TRUE){
         //     printf("\t[utility.c] Sensorless using observer.\n");
         // }else{
         //     printf("\t[utility.c] Sensored control.\n");
         // }
-        if(d_sim.init.Rreq>0.0)printf("\t[im_controller.c] Marino's alpha: %g in [%g, %g]?\n" , marino.xAlpha, marino.xAlpha_min, marino.xAlpha_Max);
-        printf("\t[utility.c] Speed series PI:   Kp=%.3f, Ki=%.6f, limit=%.1f A\n\n", PID_Speed->Kp, d_sim.VL.SERIES_KI, PID_Speed->OutLimit);
+        #if(WHO_IS_USER == USER_CJH)
+            if (d_sim.init.Rreq > 0.0) printf("\t[im_controller.c] Marino's alpha: %g in [%g, %g]?\n", marino.xAlpha, marino.xAlpha_min, marino.xAlpha_Max);
+        #endif
+
+        printf("\t[utility.c] Speed series PI:   Kp=%.3f, Ki=%.6f, limit=%.1f A\n", PID_Speed->Kp, d_sim.VL.SERIES_KI, PID_Speed->OutLimit);
         printf("\t[utility.c] Current series PI: Kp=%.3f, Ki=%.6f, limit=%.1f V\n", PID_iQ->Kp, d_sim.CL.SERIES_KI_Q_AXIS, PID_iQ->OutLimit);
         printf("\tPID_Speed.Kp = %f\n", PID_Speed->Kp);
         printf("\tPID_Speed.Ki_CODE = %f\n", PID_Speed->Ki_CODE);
-        printf("\tPID_Speed.KFB = %f\n",PID_Speed->KFB);
+        printf("\tPID_Speed.KFB = %f\n", PID_Speed->KFB);
         printf("\tPID_iQ.Kp = %f\n", PID_iQ->Kp);
         printf("\tPID_iQ.Ki_CODE = %f\n", PID_iQ->Ki_CODE);
         printf("\tPID_iD.Kp = %f\n", PID_iD->Kp);
         printf("\tPID_iD.Ki_CODE = %f\n", PID_iD->Ki_CODE);
         printf("\td_sim.FOC.CLBW_HZ = %g\n", (REAL)d_sim.FOC.CLBW_HZ);
         printf("\td_sim.FOC.delta = %g\n", (REAL)d_sim.FOC.delta);
-        printf("\td_sim.user.zeta = %.3f\n", (REAL)d_sim.user.zeta);
-        printf("\td_sim.user.omega_n = %.3f\n", (REAL)d_sim.user.omega_n);
-        printf("\tdebug.error=%d\n\tdebug.mode_select=%d\n\tdebug.who_is_user=%d\n", (int)(*debug).error, (int)(*debug).mode_select, (int)(*debug).who_is_user);
+        printf("\t(*debug).error=%d\n\t(*debug).mode_select=%d\n\t(*debug).who_is_user=%d\n", (int)(*debug).error, (int)(*debug).mode_select, (int)(*debug).who_is_user);
+        #if WHO_IS_USER == USER_WB
+            printf("\tPID_Speed.KFB = %f\n",PID_Speed->KFB);
+            printf("\td_sim.user.zeta = %.3f\n", (REAL)d_sim.user.zeta);
+            printf("\td_sim.user.omega_n = %.3f\n", (REAL)d_sim.user.omega_n);
+        #endif
 }
 #endif

@@ -7,6 +7,7 @@
     #include "ACMSim.h"
     #include "ACMConfig.h"
     #include "Experiment.h"
+    #include "Device_define.h" // 和具体硬件（腿组，电机组，感应电机组）相关的配置参数在这
 
     //#include "math.h"
     //#include "IQmathLib.h"
