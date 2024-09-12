@@ -7,11 +7,13 @@ st_axis Axis_1, *Axis;
         {                          \
             Axis = &Axis_1;        \
             CTRL = &CTRL_1;        \
+            debug = &debug_1;  \
         }                          \
         if (axisCnt == 1)          \
         {                          \
             Axis = &Axis_2;        \
             CTRL = &CTRL_2;        \
+            debug = &debug_2;\
         }
 #endif
 void main(void){
@@ -225,11 +227,11 @@ void PanGuMainISR(void){
 
     if (!Axis_1.FLAG_ENABLE_PWM_OUTPUT){
         wubo_debug_flag_PWM = 1;
-        DISABLE_PWM_OUTPUT(debug.use_first_set_three_phase);
+        DISABLE_PWM_OUTPUT(debug_1.use_first_set_three_phase);
         // TODO:需要增加让另外一项axis的Ta Tb Tc在不使用或者
     }else{
         wubo_debug_flag_PWM = 2;
-        ENABLE_PWM_OUTPUT(debug.positionLoopType, debug.use_first_set_three_phase);
+        ENABLE_PWM_OUTPUT((*debug).positionLoopType, debug_1.use_first_set_three_phase);
     }
 
 }
@@ -275,17 +277,17 @@ __interrupt void EPWM1ISR(void){
     read_count_from_cpu02_dsp_cores_2();
 
     // 对每一个CTRL都需要做一次的代码
-    if (debug.use_first_set_three_phase == -1){
+    if (debug_1.use_first_set_three_phase == -1){
         for (axisCnt = 0; axisCnt < NUMBER_OF_AXES; axisCnt++){
             get_Axis_CTRL_pointers //(axisCnt, Axis, CTRL);
             PanGuMainISR();
         }
         axisCnt = 1; // 这里将axisCnt有什么用啊
-    }else if (debug.use_first_set_three_phase == 1){
+    }else if (debug_1.use_first_set_three_phase == 1){
         axisCnt = 0;
         get_Axis_CTRL_pointers //(axisCnt, Axis, CTRL);
         PanGuMainISR();
-    }else if (debug.use_first_set_three_phase == 2){
+    }else if (debug_1.use_first_set_three_phase == 2){
         axisCnt = 1;
         get_Axis_CTRL_pointers //(axisCnt, Axis, CTRL);
         PanGuMainISR();

@@ -46,9 +46,9 @@ struct DebugExperiment{
     REAL vvvf_frequency[NUM_OF_MOTORS];
     int positionLoopType[NUM_OF_MOTORS];
 };
-extern struct DebugExperiment debug;
-
-
+extern struct DebugExperiment *debug;
+extern struct DebugExperiment debug_1;
+extern struct DebugExperiment debug_2;
 /* USER: Macros */
 
 /* User Specified Functions */

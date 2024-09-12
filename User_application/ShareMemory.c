@@ -55,7 +55,7 @@ int bool_test_dac_sinusoidal = FALSE;
 
 
 void write_DAC_buffer(){
-    if(debug.use_first_set_three_phase==2){
+    if(debug_1.use_first_set_three_phase==2){
         Axis4DAC = &Axis_2;
     }else{
         Axis4DAC = &Axis_1;

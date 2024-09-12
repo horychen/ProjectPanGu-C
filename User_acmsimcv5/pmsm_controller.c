@@ -566,7 +566,7 @@ void Online_PAA_Based_Compensation(void)
 
     // Phase A current's fundamental component transformation
     /* 这里使用哪个角度的关键不在于是有感的角度还是无感的角度，而是你FOC电流控制器（Park变换）用的角度是哪个？ */
-    if (debug.SENSORLESS_CONTROL[0])
+    if ((*debug).SENSORLESS_CONTROL)
     {
         INV.thetaA = -M_PI * 1.5 + PMSM_ELECTRICAL_POSITION_FEEDBACK + atan2((*CTRL).i->cmd_iDQ[1], (*CTRL).i->cmd_iDQ[0]); /* Q: why -pi*(1.5)? */ /* ParkSul2014 suggests to use PLL to extract thetaA from current command */
     }
