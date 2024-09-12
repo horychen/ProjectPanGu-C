@@ -7,7 +7,6 @@
     #include "ACMSim.h"
     #include "ACMConfig.h"
     #include "Experiment.h"
-    #include <AppCury.h>
 
     //#include "math.h"
     //#include "IQmathLib.h"

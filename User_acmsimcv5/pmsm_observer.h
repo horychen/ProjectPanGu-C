@@ -4,11 +4,11 @@
     /* Commissioning */
     #define EXCITE_BETA_AXIS_AND_MEASURE_PHASE_B TRUE
     #if PC_SIMULATION
-        #define ENABLE_COMMISSIONING FALSE /*Simulation*/
+        #define ENABLE_COMMISSIONING TRUE /*Simulation*/
         #define SELF_COMM_INVERTER FALSE
-        #define TUNING_CURRENT_SCALE_FACTOR_INIT FALSE
+        #define TUNING_CURRENT_SCALE_FACTOR_INIT FALSE2
     #else
-        #define ENABLE_COMMISSIONING FALSE /*Experiment*/
+        #define ENABLE_COMMISSIONING TRUE /*Experiment*/
         #define SELF_COMM_INVERTER FALSE
         #define TUNING_CURRENT_SCALE_FACTOR_INIT FALSE
         /*As we use (*CTRL).o->iab_cmd for look up, now dead-time compensation during ENABLE_COMMISSIONING is not active*/
@@ -102,9 +102,9 @@
         // #define NSOAF_SPMSM // use AP Error
         #define NSOAF_IPMSM // use only OE
         #define TUNING_IGNORE_UQ TRUE
-        #define NSOAF_OMEGA_OBSERVER 300 // >150 [rad/s] // cannot be too small (e.g., 145, KP will be negative),
+        #define NSOAF_OMEGA_OBSERVER 170 // >150 [rad/s] // cannot be too small (e.g., 145, KP will be negative),
             #define NSOAF_TL_P (1) // 1 for experimental starting // 4 for 1500 rpm // 2 for 800 rpm
-            #define NSOAF_TL_I (20)
+            #define NSOAF_TL_I (30)
             #define NSOAF_TL_D (0)
 
     /* CHEN 2021 ESO with Active Flux Concept */

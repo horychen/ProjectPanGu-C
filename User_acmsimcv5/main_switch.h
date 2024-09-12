@@ -9,6 +9,7 @@
 #define USER_WB     2023231051
 #define USER_YZZ    2023231060
 #define USER_WB2    970308
+#define USER_GEN    240828
 
 #define MODE_SELECT_PWM_DIRECT         1
 #define MODE_SELECT_VOLTAGE_OPEN_LOOP  11
@@ -24,6 +25,7 @@
 #define MODE_SELECT_POSITION_LOOP            5
 #define MODE_SELECT_COMMISSIONING            9
 #define MODE_SWEEPING_FREQUENCY              20
+#define MODE_SELECT_GENERATOR                8
 
 struct DebugExperiment{
     long error;
@@ -81,6 +83,8 @@ void _user_wubo_controller(); // REAL Vdc, REAL theta_d_elec, REAL varOmega, REA
 void _user_onlyFOC(); // only current loop works
 void _user_virtual_ENC(); // 使用内部给定角度代替码盘位置反馈
 
+void Generator(); // 电机发电模式
+double angle_diff(double a, double b);
 // 指令和负载
 extern struct SweepFreq{
     REAL time;

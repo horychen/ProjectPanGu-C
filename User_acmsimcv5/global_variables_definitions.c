@@ -9,7 +9,6 @@ struct DebugExperiment debug_1;
 int use_first_set_three_phase = 1;
 
 ST_D_SIM d_sim;
-
 REAL one_over_six = 1.0/6.0;
 
 // 定义内存空间（结构体）
@@ -193,12 +192,12 @@ struct GlobalWatch watch;
 
 void init_experiment(){
 
-    // init_CTRL_Part1();
+    init_CTRL_Part1();
     init_CTRL_Part2(); // 控制器结构体初始化
     init_FE();  // flux estimator
     rk4_init(); // 龙格库塔法结构体初始化
     // observer_init();
-    // init_pmsm_observers(); // 永磁电机观测器初始化
+    init_pmsm_observers(); // 永磁电机观测器初始化
 }
 void init_CTRL_Part1(){
     // 我们在初始化 debug 全局结构体的时候，需要用到一部分 CTRL 中的电机参数，所以要先把这一部分提前初始化。

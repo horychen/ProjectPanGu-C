@@ -21,6 +21,7 @@ typedef struct {
     REAL cmd_rotor_flux_Wb;
     REAL cmd_Tem;
     REAL cmd_iDQ[2];
+
     REAL cmd_uDQ[2];
     // feedback
     REAL Vdc;
@@ -42,6 +43,7 @@ typedef struct {
     REAL m0;
     REAL m1;
     REAL omega1;
+    REAL theta_d_elec_previous;
 } st_controller_inputs;
 typedef struct {
     // field oriented control

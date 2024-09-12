@@ -83,6 +83,7 @@ extern struct GlobalWatch watch;
 /* Declaration of Utility Function */
 int isNumber(double x);
 double sign(double x);
+inline REAL signf(REAL x) { return (x > 0) - (x < 0); }
 double fabs(double x);
 REAL _lpf(REAL x, REAL y_tminus1, REAL time_const_inv);
 REAL PostionSpeedMeasurement_MovingAvergage(int32 QPOSCNT, st_enc *p_enc);

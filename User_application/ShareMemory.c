@@ -46,6 +46,7 @@ extern REAL eddy_displacement[2];
 extern REAL target_position_cnt;
 extern long long sci_pos;
 long int counter=0;
+int bool_test_dac_sinusoidal = FALSE;
 
 //extern REAL target_position_cnt = 5000;
 //extern REAL KP = 0.05;
@@ -75,7 +76,6 @@ void write_DAC_buffer(){
         (*Axis4DAC).dac_watch[7] = (*CTRL).i->iAB[1]*0.25;
         (*Axis4DAC).dac_watch[8] = (*CTRL).o->cmd_uAB[0]*0.125; // +-12V -> 0-3V
         (*Axis4DAC).dac_watch[9] = (*CTRL).o->cmd_uAB[1]*0.125;
-
 //        (*Axis4DAC).dac_watch[10] = FE.htz.psi_2_ampl*0.25;
 //        (*Axis4DAC).dac_watch[11] = FE.htz.psi_2_ampl_lpf*0.25;
 //        (*Axis4DAC).dac_watch[12] = FE.htz.psi_2[0]*0.25;
@@ -142,7 +142,7 @@ void write_DAC_buffer(){
         (*Axis4DAC).dac_watch[34] = FE.htz.sat_min_time[0]*100;
         (*Axis4DAC).dac_watch[35] = FE.htz.sat_min_time[1]*100;
         (*Axis4DAC).dac_watch[36] = vvvf_voltage * cos(vvvf_frequency*2*M_PI*(*CTRL).timebase);
-        (*Axis4DAC).dac_watch[39] = FE.htz.theta_d*0.1;
+//        (*Axis4DAC).dac_watch[39] = FE.htz.theta_d*0.1;
 
         (*Axis4DAC).dac_watch[40] = (*CTRL).i->iDQ[0]*0.1;
         (*Axis4DAC).dac_watch[41] = (*CTRL).i->iDQ[1]*0.1;
@@ -152,10 +152,10 @@ void write_DAC_buffer(){
         (*Axis4DAC).dac_watch[44] = CTRL_2.s->Position->Ref *7.62939453125e-06; /// 131072.0 ;
         (*Axis4DAC).dac_watch[45] = CTRL_2.s->Position->Fbk *7.62939453125e-06; /// 131072.0 ;
 
-        (*Axis4DAC).dac_watch[49] = CTRL_1.i->varOmega  * ELEC_RAD_PER_SEC_2_RPM *0.002;
-        //(*Axis4DAC).dac_watch[50] = nsoaf.xOmg * ELEC_RAD_PER_SEC_2_RPM *0.002;
+        (*Axis4DAC).dac_watch[49] = CTRL_1.i->varOmega  * MECH_RAD_PER_SEC_2_RPM *0.002;
+        (*Axis4DAC).dac_watch[50] = CTRL_1.i->cmd_varOmega * MECH_RAD_PER_SEC_2_RPM *0.002;
         (*Axis4DAC).dac_watch[51] = AFE_USED.theta_d *0.1;
-        (*Axis4DAC).dac_watch[52] = (*Axis4DAC).used_theta_d_elec *0.1;
+        (*Axis4DAC).dac_watch[52] = (*Axis4DAC).used_theta_d_elec *0.1; // encoder angle
 
         // ZJL IMPEDENCE CONTROL
         (*Axis4DAC).dac_watch[53] = HIP_PREV_ANGLE;
@@ -180,6 +180,8 @@ void write_DAC_buffer(){
         (*Axis4DAC).dac_watch[68] = PID_Speed->OutPrev *0.1;
 
 
+//        (*Axis4DAC).dac_watch[63] = FE.no_sat.psi_2[0];
+//        (*Axis4DAC).dac_watch[64] = FE.no_sat.psi_2[1];
 
 
         # if ENABLE_COMMISSIONING == TRUE
