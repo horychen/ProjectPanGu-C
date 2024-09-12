@@ -187,7 +187,7 @@ struct GlobalWatch watch;
 
 void init_experiment(){
 
-    // init_CTRL_Part1();
+    init_CTRL_Part1();
     init_CTRL_Part2(); // 控制器结构体初始化
     init_FE();  // flux estimator
     rk4_init(); // 龙格库塔法结构体初始化

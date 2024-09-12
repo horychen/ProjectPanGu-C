@@ -74,7 +74,7 @@ void main(void){
     #endif
 
     // 4.4 Initialize algorithms
-
+    init_experiment();
 
     get_bezier_points(); // for testing Cury the leg trajectgory tracking
     for (axisCnt = 0; axisCnt < NUMBER_OF_AXES; axisCnt++){
