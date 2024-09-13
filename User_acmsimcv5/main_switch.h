@@ -55,6 +55,7 @@ struct DebugExperiment{
     REAL CLBW_HZ;
     REAL VL_EXE_PER_CL_EXE;
     int  Select_exp_operation;
+    BOOL bool_initilized;
     BOOL bool_apply_decoupling_voltages_to_current_regulation;
     #if WHO_IS_USER == USER_WB
         REAL zeta;
