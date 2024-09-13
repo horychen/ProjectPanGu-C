@@ -1,7 +1,7 @@
 // user_defined_functions.c
 #include <ACMSim.h>
 
-REAL global_id_ampl = 10;
+REAL global_id_ampl = 1;
 REAL global_id_freq = 10;
 
 void overwrite_d_sim(){
@@ -62,8 +62,6 @@ void _user_init(){
         (*debug).bool_apply_decoupling_voltages_to_current_regulation = d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation;
         (*debug).INVERTER_NONLINEARITY_COMPENSATION_INIT = d_sim.user.INVERTER_NONLINEARITY_COMPENSATION_METHOD;
 
-    }
-
     // (*debug).INVERTER_NONLINEARITY = 0;
     #if WHO_IS_USER == USER_YZZ
         (*debug).SENSORLESS_CONTROL      = 0;
@@ -92,6 +90,7 @@ void _user_init(){
         (*debug).CMD_SPEED_SINE_END_TIME                              = d_sim.user.CMD_SPEED_SINE_END_TIME;
         (*debug).CMD_SPEED_SINE_HZ_CEILING                            = d_sim.user.CMD_SPEED_SINE_HZ_CEILING;
     #endif
+    }
 }
 
 void _user_commands(){

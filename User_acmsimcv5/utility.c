@@ -186,7 +186,6 @@ REAL difference_between_two_angles(REAL first, REAL second)
         printf("\t[utility.c] Current series PI: Kp=%.3f, Ki=%.6f, limit=%.1f V\n", PID_iQ->Kp, d_sim.CL.SERIES_KI_Q_AXIS, PID_iQ->OutLimit);
         printf("\tPID_Speed.Kp = %f\n", PID_Speed->Kp);
         printf("\tPID_Speed.Ki_CODE = %f\n", PID_Speed->Ki_CODE);
-        printf("\tPID_Speed.KFB = %f\n", PID_Speed->KFB);
         printf("\tPID_iQ.Kp = %f\n", PID_iQ->Kp);
         printf("\tPID_iQ.Ki_CODE = %f\n", PID_iQ->Ki_CODE);
         printf("\tPID_iD.Kp = %f\n", PID_iD->Kp);
