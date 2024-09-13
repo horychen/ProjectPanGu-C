@@ -2,11 +2,11 @@
 
 // 定义顶级结构体（指针的集合）
 int axisCnt = 0;
+int use_first_set_three_phase = 1;
 struct ControllerForExperiment CTRL_1;
 struct ControllerForExperiment *CTRL;
 struct DebugExperiment *debug;
 struct DebugExperiment debug_1;
-int use_first_set_three_phase = 1;
 
 ST_D_SIM d_sim;
 
@@ -31,7 +31,7 @@ st_pid_regulator _PID_Position_1 = st_pid_regulator_DEFAULTS;
 #if PC_SIMULATION == FALSE
     //#pragma DATA_SECTION(CTRL     ,"MYGLOBALS"); // 陈嘉豪是傻逼
     #pragma DATA_SECTION(CTRL_1       ,"MYGLOBALS_1"); // FUCK! 叶明是天才！ 2024-03-12
-    #pragma DATA_SECTION(debug_1      ,"MYGLOBALS_1");
+    // #pragma DATA_SECTION(debug_1      ,"MYGLOBALS_1");
     #pragma DATA_SECTION(t_motor_1    ,"MYGLOBALS_1");
     #pragma DATA_SECTION(t_enc_1      ,"MYGLOBALS_1");
     #pragma DATA_SECTION(t_psd_1      ,"MYGLOBALS_1");
@@ -51,7 +51,7 @@ st_pid_regulator _PID_Position_1 = st_pid_regulator_DEFAULTS;
     #if NUMBER_OF_AXES == 2
         // 注意，一定要先extern再pragma？？？
         #pragma DATA_SECTION(CTRL_2     ,"MYGLOBALS_2"); // FUCK! 叶明是天才！ 2024-03-12
-        #pragma DATA_SECTION(debug_2      ,"MYGLOBALS_1");
+        // #pragma DATA_SECTION(debug_2      ,"MYGLOBALS_1");
         #pragma DATA_SECTION(t_motor_2    ,"MYGLOBALS_2");
         #pragma DATA_SECTION(t_enc_2      ,"MYGLOBALS_2");
         #pragma DATA_SECTION(t_psd_2      ,"MYGLOBALS_2");

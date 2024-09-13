@@ -14,51 +14,55 @@ void _user_init(){
     overwrite_d_sim(); // overwrite d_sim with user's algorithm
     init_CTRL_Part1();
 
-    // (*debug).use_first_set_three_phase = 1;
-    (*debug).error = 0;
-    (*debug).who_is_user = d_sim.user.who_is_user;
-    if(CTRL->motor->Rreq>0){
-        (*debug).mode_select = d_sim.user.mode_select_induction_motor;
-    }else{
-        (*debug).mode_select = d_sim.user.mode_select_synchronous_motor;
+    if ((*debug).bool_initilized == FALSE){
+
+        // (*debug).use_first_set_three_phase = 1;
+        (*debug).bool_initilized = TRUE;
+        (*debug).error = 0;
+        (*debug).who_is_user = d_sim.user.who_is_user;
+        if(CTRL->motor->Rreq>0){
+            (*debug).mode_select = d_sim.user.mode_select_induction_motor;
+        }else{
+            (*debug).mode_select = d_sim.user.mode_select_synchronous_motor;
+        }
+            /* Open Loop  */
+            // (*debug).mode_select = MODE_SELECT_PWM_DIRECT;                            //  1
+            // (*debug).mode_select = MODE_SELECT_VOLTAGE_OPEN_LOOP;                     // 11
+            /*  Without the Encoder */
+            // (*debug).mode_select = MODE_SELECT_WITHOUT_ENCODER_CURRENT_VECTOR_ROTATE; //  2
+            /* FOC  */
+            // (*debug).mode_select = MODE_SELECT_FOC;                                   //  3
+            // (*debug).mode_select = MODE_SELECT_FOC_SENSORLESS;                        // 31
+            // (*debug).mode_select = MODE_SELECT_INDIRECT_FOC;                          // 32
+            /* Speed Loop  */
+            // (*debug).mode_select = MODE_SELECT_VELOCITY_LOOP;                         //  4
+            // (*debug).mode_select = MODE_SELECT_VELOCITY_LOOP_SENSORLESS;              // 41
+            // (*debug).mode_select = MODE_SELECT_VELOCITY_LOOP_WC_TUNER;                // 43
+            /* Position Loop  */
+            // (*debug).mode_select = MODE_SELECT_POSITION_LOOP;                         //  5
+            /* Commission  */
+            // (*debug).mode_select = MODE_SELECT_COMMISSIONING;                         //  9
+
+        (*debug).Overwrite_Current_Frequency = 1;
+        (*debug).Overwrite_theta_d           = 0.0;
+
+        (*debug).set_id_command              = 1;
+        (*debug).set_iq_command              = 1;
+        (*debug).set_rpm_speed_command       = 50;
+        (*debug).set_deg_position_command    = 0.0;
+        (*debug).vvvf_voltage = 3.0;
+        (*debug).vvvf_frequency = 5.0;
+
+        (*debug).delta                                                = d_sim.FOC.delta;
+        (*debug).CLBW_HZ                                              = d_sim.FOC.CLBW_HZ;
+        (*debug).VL_EXE_PER_CL_EXE                                    = d_sim.FOC.VL_EXE_PER_CL_EXE;
+        (*debug).LIMIT_DC_BUS_UTILIZATION                             = d_sim.CL.LIMIT_DC_BUS_UTILIZATION;
+        (*debug).LIMIT_OVERLOAD_FACTOR                                = d_sim.VL.LIMIT_OVERLOAD_FACTOR;
+        (*debug).Select_exp_operation                                 = d_sim.user.Select_exp_operation;
+        (*debug).bool_apply_decoupling_voltages_to_current_regulation = d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation;
+        (*debug).INVERTER_NONLINEARITY_COMPENSATION_INIT = d_sim.user.INVERTER_NONLINEARITY_COMPENSATION_METHOD;
+
     }
-        /* Open Loop  */
-        // (*debug).mode_select = MODE_SELECT_PWM_DIRECT;                            //  1
-        // (*debug).mode_select = MODE_SELECT_VOLTAGE_OPEN_LOOP;                     // 11
-        /*  Without the Encoder */
-        // (*debug).mode_select = MODE_SELECT_WITHOUT_ENCODER_CURRENT_VECTOR_ROTATE; //  2
-        /* FOC  */
-        // (*debug).mode_select = MODE_SELECT_FOC;                                   //  3
-        // (*debug).mode_select = MODE_SELECT_FOC_SENSORLESS;                        // 31
-        // (*debug).mode_select = MODE_SELECT_INDIRECT_FOC;                          // 32
-        /* Speed Loop  */
-        // (*debug).mode_select = MODE_SELECT_VELOCITY_LOOP;                         //  4
-        // (*debug).mode_select = MODE_SELECT_VELOCITY_LOOP_SENSORLESS;              // 41
-        // (*debug).mode_select = MODE_SELECT_VELOCITY_LOOP_WC_TUNER;                // 43
-        /* Position Loop  */
-        // (*debug).mode_select = MODE_SELECT_POSITION_LOOP;                         //  5
-        /* Commission  */
-        // (*debug).mode_select = MODE_SELECT_COMMISSIONING;                         //  9
-
-    (*debug).Overwrite_Current_Frequency = 1;
-    (*debug).Overwrite_theta_d           = 0.0;
-
-    (*debug).set_id_command              = 1;
-    (*debug).set_iq_command              = 1;
-    (*debug).set_rpm_speed_command       = 50;
-    (*debug).set_deg_position_command    = 0.0;
-    (*debug).vvvf_voltage = 3.0;
-    (*debug).vvvf_frequency = 5.0;
-
-    (*debug).delta                                                = d_sim.FOC.delta;
-    (*debug).CLBW_HZ                                              = d_sim.FOC.CLBW_HZ;
-    (*debug).VL_EXE_PER_CL_EXE                                    = d_sim.FOC.VL_EXE_PER_CL_EXE;
-    (*debug).LIMIT_DC_BUS_UTILIZATION                             = d_sim.CL.LIMIT_DC_BUS_UTILIZATION;
-    (*debug).LIMIT_OVERLOAD_FACTOR                                = d_sim.VL.LIMIT_OVERLOAD_FACTOR;
-    (*debug).Select_exp_operation                                 = d_sim.user.Select_exp_operation;
-    (*debug).bool_apply_decoupling_voltages_to_current_regulation = d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation;
-    (*debug).INVERTER_NONLINEARITY_COMPENSATION_INIT = d_sim.user.INVERTER_NONLINEARITY_COMPENSATION_METHOD;
-
 
     // (*debug).INVERTER_NONLINEARITY = 0;
     #if WHO_IS_USER == USER_YZZ

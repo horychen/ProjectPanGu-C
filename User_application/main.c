@@ -17,9 +17,10 @@ st_axis Axis_1, *Axis;
         {                          \
             Axis  = &Axis_2;       \
             CTRL  = &CTRL_2;       \
-            debug = &debug_2;       \
+            debug = &debug_2;      \
         }
 #endif
+
 void main(void){
 
     InitSysCtrl();      // 1. Initialize System Control: PLL, WatchDog, enable Peripheral Clocks.
@@ -36,16 +37,19 @@ void main(void){
     #endif
     #ifdef _STANDALONE
         #ifdef _FLASH
-            // 当你需要离线断电再上电运行时用这个：
+            // use this code when u need to cut off the power and reboot it offline
             //  Send boot command to allow the CPU02 application to begin execution
             IPCBootCPU2(C1C2_BROM_BOOTMODE_BOOT_FROM_FLASH);
         #else
             //  Send boot command to allow the CPU02 application to begin execution
-            // 这句话我不知道什么意义，可能还是不要比较好。
+            // seriesly i dont know what does this sentences mean, do no change it might as well
+            // i dont know what does sentence
             // IPCBootCPU2(C1C2_BROM_BOOTMODE_BOOT_FROM_RAM);
         #endif
     #endif
+    
     // 4.2 Initialize peripherals
+    
     ePWM_initialize();
     ADC_initialize();
     eQEP_initialize(0);
@@ -53,7 +57,8 @@ void main(void){
     // 4.3 Assign peripherals to CPU02
     /* SPI and SCI */
     #if NUMBER_OF_DSP_CORES == 1
-        // 同步！！！！！
+        // Synchronous !!!!!!!!
+        // 
         InitHighSpeedSpiGpio();
         // InitSpiaGpio();
         InitSpi();
@@ -86,11 +91,11 @@ void main(void){
     init_d_sim();      // d_sim is used to initalize the machine
     for (axisCnt = 0; axisCnt < NUMBER_OF_AXES; axisCnt++){
         get_Axis_CTRL_pointers
+        (*debug).bool_initilized = FALSE;
         _user_init();      // debug initilization for user
         axis_basic_setup(axisCnt); // 根据axiscnt对Axis，CTRL的1和2号结构体，进行初始化操作
     }
     axisCnt = 1;
-
     // 5. Handle Interrupts
     handle_interrupts();
 
@@ -233,11 +238,11 @@ void PanGuMainISR(void){
 
     if (!Axis_1.FLAG_ENABLE_PWM_OUTPUT){
         wubo_debug_flag_PWM = 1;
-        DISABLE_PWM_OUTPUT(use_first_set_three_phase);
+        DISABLE_PWM_OUTPUT();
         // TODO:需要增加让另外一项axis的Ta Tb Tc在不使用或者
     }else{
         wubo_debug_flag_PWM = 2;
-        ENABLE_PWM_OUTPUT((*debug).positionLoopType, use_first_set_three_phase);
+        ENABLE_PWM_OUTPUT((*debug).positionLoopType);
     }
 }
 
@@ -284,7 +289,7 @@ __interrupt void EPWM1ISR(void){
             get_Axis_CTRL_pointers //(axisCnt, Axis, CTRL);
             PanGuMainISR();
         }
-        axisCnt = 1; // 这里将axisCnt有什么用啊
+        axisCnt = 1; // 这里将axisCnt有什么用啊？因为axisCnt等于2你就会飞了，内存乱写
     }else if (use_first_set_three_phase == 1){
         axisCnt = 0;
         get_Axis_CTRL_pointers //(axisCnt, Axis, CTRL);
