@@ -89,6 +89,7 @@ void main(void){
         _user_init();      // debug initilization for user
         axis_basic_setup(axisCnt); // 根据axiscnt对Axis，CTRL的1和2号结构体，进行初始化操作
     }
+    axisCnt = 1;
 
     // 5. Handle Interrupts
     handle_interrupts();

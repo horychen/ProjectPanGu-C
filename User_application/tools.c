@@ -1227,15 +1227,15 @@ void DISABLE_PWM_OUTPUT(int use_first_set_three_phase)
 
         /* WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING*/
         #if WHO_IS_USER == USER_WB
-            *CTRL).timebase_counter = 0;   
-            *CTRL).timebase = 0.0;
-            *debug).CMD_CURRENT_SINE_AMPERE                              = d_sim.user.CMD_CURRENT_SINE_AMPERE;
-            *debug).CMD_SPEED_SINE_RPM                                   = d_sim.user.CMD_SPEED_SINE_RPM;
-            *debug).CMD_SPEED_SINE_HZ                                    = d_sim.user.CMD_SPEED_SINE_HZ;
-            *debug).CMD_SPEED_SINE_STEP_SIZE                             = d_sim.user.CMD_SPEED_SINE_STEP_SIZE;
-            *debug).CMD_SPEED_SINE_LAST_END_TIME                         = d_sim.user.CMD_SPEED_SINE_LAST_END_TIME;
-            *debug).CMD_SPEED_SINE_END_TIME                              = d_sim.user.CMD_SPEED_SINE_END_TIME;
-            *debug).CMD_SPEED_SINE_HZ_CEILING                            = d_sim.user.CMD_SPEED_SINE_HZ_CEILING;
+            (*CTRL).timebase_counter = 0;
+            (*CTRL).timebase = 0.0;
+            (*debug).CMD_CURRENT_SINE_AMPERE      = d_sim.user.CMD_CURRENT_SINE_AMPERE;
+            (*debug).CMD_SPEED_SINE_RPM           = d_sim.user.CMD_SPEED_SINE_RPM;
+            (*debug).CMD_SPEED_SINE_HZ            = d_sim.user.CMD_SPEED_SINE_HZ;
+            (*debug).CMD_SPEED_SINE_STEP_SIZE     = d_sim.user.CMD_SPEED_SINE_STEP_SIZE;
+            (*debug).CMD_SPEED_SINE_LAST_END_TIME = d_sim.user.CMD_SPEED_SINE_LAST_END_TIME;
+            (*debug).CMD_SPEED_SINE_END_TIME      = d_sim.user.CMD_SPEED_SINE_END_TIME;
+            (*debug).CMD_SPEED_SINE_HZ_CEILING    = d_sim.user.CMD_SPEED_SINE_HZ_CEILING;
         #endif
         /* WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING*/
         /* WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING*/
@@ -1245,9 +1245,11 @@ void DISABLE_PWM_OUTPUT(int use_first_set_three_phase)
 
     /* 在不输出PWM波形的时候，也就是“开关”为OFF的时候，更新SpeedInnerLoop的参数*/
     #if WHO_IS_USER == USER_WB
-        if ((*debug).who_is_user == USER_WB && (*debug).bool_apply_WC_tunner_for_speed_loop == TRUE){
-        _user_wubo_WC_Tuner_Online(); // 和_user_wubo_WC_Tuner函数区别
-        _user_wubo_TI_Tuner_Online();
+        if ( (*debug).bool_apply_WC_tunner_for_speed_loop == TRUE ){
+            _user_wubo_WC_Tuner_Online(); // 和_user_wubo_WC_Tuner函数区别
+        }else{
+            _user_wubo_TI_Tuner_Online();
+        }
     #else
         //TODO: Here needs a online tuning function for public use
     #endif
@@ -1256,14 +1258,15 @@ void DISABLE_PWM_OUTPUT(int use_first_set_three_phase)
     GpioDataRegs.GPDCLEAR.bit.GPIO106 = 1; // TODO: What is this doing?
 }
 
+
 REAL RPM_wave_conunter = 0;
 REAL RPM_wave = 0;
 REAL flag_RPM_wave = 0;
 
+
 void ENABLE_PWM_OUTPUT(int positionLoopType, int use_first_set_three_phase)
 {
     G.flag_experimental_initialized = FALSE;
-
     if (use_first_set_three_phase == 1){
         DSP_PWM_ENABLE
         // 第一套逆变器工作的时候，确保第二套逆变器关闭
@@ -1303,12 +1306,12 @@ void ENABLE_PWM_OUTPUT(int positionLoopType, int use_first_set_three_phase)
         // 0x01 is hip
         // position_count_CAN_fromCPU2 = position_count_CAN_ID0x01_fromCPU2;
 
-        if (positionLoopType == 0){
+        if ( positionLoopType == 0 ){
             // do nothing
         }
         else{
             // do position loop
-            Axis->Set_manual_rpm = call_position_loop_controller(positionLoopType);
+            Axis->Set_manual_rpm = call_position_loop_controller( (*debug).positionLoopType );
         }
 
         if (flag_RPM_wave == 1){
