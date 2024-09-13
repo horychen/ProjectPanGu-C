@@ -91,6 +91,7 @@ void main(void){
     init_d_sim();      // d_sim is used to initalize the machine
     for (axisCnt = 0; axisCnt < NUMBER_OF_AXES; axisCnt++){
         get_Axis_CTRL_pointers
+        (*debug).bool_initilized = FALSE;
         _user_init();      // debug initilization for user
         axis_basic_setup(axisCnt); // 根据axiscnt对Axis，CTRL的1和2号结构体，进行初始化操作
     }
@@ -237,11 +238,11 @@ void PanGuMainISR(void){
 
     if (!Axis_1.FLAG_ENABLE_PWM_OUTPUT){
         wubo_debug_flag_PWM = 1;
-        DISABLE_PWM_OUTPUT(use_first_set_three_phase);
+        DISABLE_PWM_OUTPUT();
         // TODO:需要增加让另外一项axis的Ta Tb Tc在不使用或者
     }else{
         wubo_debug_flag_PWM = 2;
-        ENABLE_PWM_OUTPUT((*debug).positionLoopType, use_first_set_three_phase);
+        ENABLE_PWM_OUTPUT((*debug).positionLoopType);
     }
 }
 

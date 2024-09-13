@@ -1181,7 +1181,7 @@ REAL call_position_loop_controller(int positionLoopType)
     return Axis->Set_manual_rpm;
 }
 
-void DISABLE_PWM_OUTPUT(int use_first_set_three_phase)
+void DISABLE_PWM_OUTPUT()
 {
     DSP_PWM_DISABLE
     DSP_2PWM_DISABLE
@@ -1261,7 +1261,7 @@ REAL RPM_wave_conunter = 0;
 REAL RPM_wave = 0;
 REAL flag_RPM_wave = 0;
 
-void ENABLE_PWM_OUTPUT(int positionLoopType, int use_first_set_three_phase)
+void ENABLE_PWM_OUTPUT(int positionLoopType)
 {
     G.flag_experimental_initialized = FALSE;
 
@@ -1271,15 +1271,13 @@ void ENABLE_PWM_OUTPUT(int positionLoopType, int use_first_set_three_phase)
         EPwm4Regs.CMPA.bit.CMPA = 2500;
         EPwm5Regs.CMPA.bit.CMPA = 2500;
         EPwm6Regs.CMPA.bit.CMPA = 2500;
-
     } else if (use_first_set_three_phase == 2){
         DSP_2PWM_ENABLE
         // 同上
         EPwm1Regs.CMPA.bit.CMPA = 2500;
         EPwm2Regs.CMPA.bit.CMPA = 2500;
         EPwm3Regs.CMPA.bit.CMPA = 2500;
-    } 
-    else if (use_first_set_three_phase == -1){
+    }else if (use_first_set_three_phase == -1){
         DSP_PWM_ENABLE
         DSP_2PWM_ENABLE
     }
@@ -1322,7 +1320,7 @@ void ENABLE_PWM_OUTPUT(int positionLoopType, int use_first_set_three_phase)
         main_switch((*debug).mode_select);
 
     #else
-        commissioning(); // 参数辨识用
+        commissioning(); //Parammeter Identification
     #endif
 
     //(*CTRL).o->cmd_uAB_to_inverter[0]
@@ -1341,7 +1339,9 @@ void ENABLE_PWM_OUTPUT(int positionLoopType, int use_first_set_three_phase)
         }
     }
     else // 否则根据上面的控制率controller()由voltage_commands_to_pwm()计算出的电压，输出到逆变器
-        voltage_commands_to_pwm();
+        {
+            voltage_commands_to_pwm();
+        }
 }
 
 void read_count_from_cpu02_dsp_cores_2()
