@@ -673,7 +673,7 @@ void main(void){
     // 7. Main loop
     while(1){
         I2CA_ReadData_Channel(0);
-        DELAY_US(300);
+        DELAY_US(300);              //延迟 300 毫秒？
         I2CA_ReadData_Channel(1);
 
 

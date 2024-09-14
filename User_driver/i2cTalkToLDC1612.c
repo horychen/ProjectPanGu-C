@@ -3,6 +3,7 @@
 //###########################################################################
 
 #include <All_Definition.h>
+//#include "i2cTalkToLDC1612.h"  //Current we needn't use it.
 
 // Note: I2C Macros used in this example can be found in the
 // F2837xD_I2C_defines.h file
@@ -31,6 +32,13 @@ int Parse_result_data(Uint16 channel, Uint32 raw_result, Uint32* result);
 Uint32 Set_ERROR_CONFIG(Uint16 value);
 void Read_sensor_infomation();
 Uint32 reset_sensor();
+
+/*定义第几个线圈*/
+int channel_0_number, channel_1_number;
+
+#define channel_0_number FALSE
+#define channel_1_number FALSE
+
 
 
 __interrupt void i2c_int1a_isr(void);
@@ -275,18 +283,103 @@ Uint32 I2CA_ReadData_Channel(Uint16 channel){
 // Configuration of single channel
 
 int Single_channel_config(Uint16 channel){
-    // The value of Rp, L, C, Q_factor can be set from TI calculator.
-    Set_Rp(CHANNEL_0, 15.727);
-    Set_L(CHANNEL_0, 18.147);
-    Set_C(CHANNEL_0, 100);
-    Set_Q_factor(CHANNEL_0, 35.97);
+    // The value of Rp, L, C, Q_factor can be set from TI calculator(https://webench.ti.com/wb5/LDC/#/spirals).
+    switch (channel_0_number){
+        case 1:
+            Set_Rp(CHANNEL_0, 3.259);
+            Set_L(CHANNEL_0, 51.35);
+            Set_C(CHANNEL_0, 1000);
+            Set_Q_factor(CHANNEL_0, 14.32);
+            break;
+        case 2:
+            Set_Rp(CHANNEL_0, 1.462);
+            Set_L(CHANNEL_0, 6.6);
+            Set_C(CHANNEL_0, 1000);
+            Set_Q_factor(CHANNEL_0, 17.96);
+            break;
+        case 3:
+            Set_Rp(CHANNEL_0, 1.637);
+            Set_L(CHANNEL_0, 5.65);
+            Set_C(CHANNEL_0, 1000);
+            Set_Q_factor(CHANNEL_0, 21.74);
+            break;
+        case 4:
+            Set_Rp(CHANNEL_0, 1.462);
+            Set_L(CHANNEL_0, 6.6);
+            Set_C(CHANNEL_0, 1000);
+            Set_Q_factor(CHANNEL_0, 17.96);
+            break;
+        case 5:
+            Set_Rp(CHANNEL_0, 1.156);
+            Set_L(CHANNEL_0, 4.15);
+            Set_C(CHANNEL_0, 1000);
+            Set_Q_factor(CHANNEL_0, 17.91);
+            break;
+        case 6:
 
-    //
-    Set_Rp(CHANNEL_1, 15.727);
-    Set_L(CHANNEL_1, 18.147);
-    Set_C(CHANNEL_1, 100);
-    Set_Q_factor(CHANNEL_1, 35.97);
-    //
+            break;
+        case 7:
+            Set_Rp(CHANNEL_0, 1.637);
+            Set_L(CHANNEL_0, 5.65);
+            Set_C(CHANNEL_0, 1000);
+            Set_Q_factor(CHANNEL_0, 21.74);
+    //        Set_Rp(CHANNEL_0, 15.727);
+    //        Set_L(CHANNEL_0, 18.147);
+    //        Set_C(CHANNEL_0, 100);
+    //        Set_Q_factor(CHANNEL_0, 35.97);
+            break;
+//        default:
+    }
+
+    switch (channel_1_number){
+        case 1:
+            Set_Rp(CHANNEL_1, 3.259);
+            Set_L(CHANNEL_1, 51.35);
+            Set_C(CHANNEL_1, 1000);
+            Set_Q_factor(CHANNEL_1, 14.32);
+            break;
+        case 2:
+            Set_Rp(CHANNEL_1, 1.462);
+            Set_L(CHANNEL_1, 6.6);
+            Set_C(CHANNEL_1, 1000);
+            Set_Q_factor(CHANNEL_1, 17.96);
+            break;
+        case 3:
+            Set_Rp(CHANNEL_1, 1.637);
+            Set_L(CHANNEL_1, 5.65);
+            Set_C(CHANNEL_1, 1000);
+            Set_Q_factor(CHANNEL_1, 21.74);
+            break;
+        case 4:
+            Set_Rp(CHANNEL_1, 1.462);
+            Set_L(CHANNEL_1, 6.6);
+            Set_C(CHANNEL_1, 1000);
+            Set_Q_factor(CHANNEL_1, 17.96);
+            break;
+        case 5:
+            Set_Rp(CHANNEL_1, 1.156);
+            Set_L(CHANNEL_1, 4.15);
+            Set_C(CHANNEL_1, 1000);
+            Set_Q_factor(CHANNEL_1, 17.91);
+            break;
+        case 6:
+
+            break;
+        case 7:
+            Set_Rp(CHANNEL_1, 1.637);
+            Set_L(CHANNEL_1, 5.65);
+            Set_C(CHANNEL_1, 1000);
+            Set_Q_factor(CHANNEL_1, 21.74);
+    //        Set_Rp(CHANNEL_1, 15.727);
+    //        Set_L(CHANNEL_1, 18.147);
+    //        Set_C(CHANNEL_1, 100);
+    //        Set_Q_factor(CHANNEL_1, 35.97);
+            break;
+//        default:
+//            return Please input number from 1 to 7
+//            printf("Please input number from 1 to 7 \n");
+    }
+
     if (Set_FIN_FREF_DIV(CHANNEL_0)) {
             return -1;
         }
