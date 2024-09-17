@@ -13,7 +13,7 @@ void init_spi();
 void handle_interrupts();
 void main_loop();
 void DeadtimeCompensation(REAL Current_U, REAL Current_V, REAL Current_W, REAL CMPA[], REAL CMPA_DBC[]);
-
+void test_pwm_output();
 
 void voltage_commands_to_pwm();
 void voltage_measurement_based_on_eCAP();

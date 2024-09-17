@@ -814,20 +814,16 @@ void measurement_enc(){
 
 void measurement_current_axisCnt0(){
     // LEM1
-    Axis->iuvw[0] = ((REAL)(AdcaResultRegs.ADCRESULT1) - Axis->adc_offset[1]) * Axis->adc_scale[1]; //
-    Axis->iuvw[1] = ((REAL)(AdcaResultRegs.ADCRESULT2) - Axis->adc_offset[2]) * Axis->adc_scale[2]; //
-    Axis->iuvw[2] = ((REAL)(AdcaResultRegs.ADCRESULT3) - Axis->adc_offset[3]) * Axis->adc_scale[3]; //
+    Axis->iuvw[PIN_ADCA_U] = ((REAL)(AdcaResultRegs.ADCRESULT1) - Axis->adc_offset[1]) * Axis->adc_scale[1]; //
+    Axis->iuvw[PIN_ADCA_V] = ((REAL)(AdcaResultRegs.ADCRESULT2) - Axis->adc_offset[2]) * Axis->adc_scale[2]; //
+    Axis->iuvw[PIN_ADCA_W] = ((REAL)(AdcaResultRegs.ADCRESULT3) - Axis->adc_offset[3]) * Axis->adc_scale[3]; //
 
     // 电流接口
     if (USE_3_CURRENT_SENSORS)
     {
-        // Axis->iabg[0] = UVW2A_AI(Axis->iuvw[0], Axis->iuvw[1], Axis->iuvw[2]);
-        // Axis->iabg[1] = UVW2B_AI(Axis->iuvw[0], Axis->iuvw[1], Axis->iuvw[2]);
-        // Axis->iabg[2] = UVW2G_AI(Axis->iuvw[0], Axis->iuvw[1], Axis->iuvw[2]);
-        Axis->iabg[0] = UVW2A_AI(Axis->iuvw[PIN_ADCA_U], Axis->iuvw[PIN_ADCA_V], Axis->iuvw[PIN_ADCA_W]);
-        Axis->iabg[1] = UVW2B_AI(Axis->iuvw[PIN_ADCA_U], Axis->iuvw[PIN_ADCA_V], Axis->iuvw[PIN_ADCA_W]);
-        Axis->iabg[2] = UVW2G_AI(Axis->iuvw[PIN_ADCA_U], Axis->iuvw[PIN_ADCA_V], Axis->iuvw[PIN_ADCA_W]);
-        
+        Axis->iabg[0] = UVW2A_AI(Axis->iuvw[0], Axis->iuvw[1], Axis->iuvw[2]);
+        Axis->iabg[1] = UVW2B_AI(Axis->iuvw[0], Axis->iuvw[1], Axis->iuvw[2]);
+        Axis->iabg[2] = UVW2G_AI(Axis->iuvw[0], Axis->iuvw[1], Axis->iuvw[2]);
     }
     else
     {
@@ -1245,6 +1241,21 @@ REAL RPM_wave_conunter = 0;
 REAL RPM_wave = 0;
 REAL flag_RPM_wave = 0;
 
+void test_pwm_output(){
+    if (axisCnt == 0)
+    {
+        EPwm1Regs.CMPA.bit.CMPA = (*CTRL).svgen1.Ta * 50000000 * CL_TS; // 0-5000，5000表示0%的占空比
+        EPwm2Regs.CMPA.bit.CMPA = (*CTRL).svgen1.Tb * 50000000 * CL_TS;
+        EPwm3Regs.CMPA.bit.CMPA = (*CTRL).svgen1.Tc * 50000000 * CL_TS;
+    }
+    if (axisCnt == 1)
+    {
+        EPwm4Regs.CMPA.bit.CMPA = (*CTRL).svgen2.Ta * 50000000 * CL_TS;
+        EPwm5Regs.CMPA.bit.CMPA = (*CTRL).svgen2.Tb * 50000000 * CL_TS;
+        EPwm6Regs.CMPA.bit.CMPA = (*CTRL).svgen2.Tc * 50000000 * CL_TS;
+    }
+}
+
 void ENABLE_PWM_OUTPUT(int positionLoopType, int use_first_set_three_phase)
 {
     G.flag_experimental_initialized = FALSE;
@@ -1308,20 +1319,7 @@ void ENABLE_PWM_OUTPUT(int positionLoopType, int use_first_set_three_phase)
 
     // operation mode为5的时候，执行下面测试逆变器输出电压的代码
     if (Axis->Select_exp_operation == XCUBE_TaTbTc_DEBUG_MODE)
-    {
-        if (axisCnt == 0)
-        {
-            EPwm1Regs.CMPA.bit.CMPA = (*CTRL).svgen1.Ta * 50000000 * CL_TS; // 0-5000，5000表示0%的占空比
-            EPwm2Regs.CMPA.bit.CMPA = (*CTRL).svgen1.Tb * 50000000 * CL_TS;
-            EPwm3Regs.CMPA.bit.CMPA = (*CTRL).svgen1.Tc * 50000000 * CL_TS;
-        }
-        if (axisCnt == 1)
-        {
-            EPwm4Regs.CMPA.bit.CMPA = (*CTRL).svgen2.Ta * 50000000 * CL_TS;
-            EPwm5Regs.CMPA.bit.CMPA = (*CTRL).svgen2.Tb * 50000000 * CL_TS;
-            EPwm6Regs.CMPA.bit.CMPA = (*CTRL).svgen2.Tc * 50000000 * CL_TS;
-        }
-    }
+        test_pwm_output();
     else // 否则根据上面的控制率controller()由voltage_commands_to_pwm()计算出的电压，输出到逆变器
         voltage_commands_to_pwm();
 }
