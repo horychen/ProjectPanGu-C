@@ -2,13 +2,16 @@
 
 // 定义顶级结构体（指针的集合）
 int axisCnt = 0;
+int use_first_set_three_phase = 1;
 struct ControllerForExperiment CTRL_1;
 struct ControllerForExperiment *CTRL;
-struct DebugExperiment debug;
+struct DebugExperiment *debug;
+struct DebugExperiment debug_1;
+
 ST_D_SIM d_sim;
 
 REAL one_over_six = 1.0/6.0;
-REAL iq_command_from_PC = 0.0;
+
 // 定义内存空间（结构体）
 st_motor_parameters     t_motor_1={0};
 st_enc                  t_enc_1={0};
@@ -28,6 +31,7 @@ st_pid_regulator _PID_Position_1 = st_pid_regulator_DEFAULTS;
 #if PC_SIMULATION == FALSE
     //#pragma DATA_SECTION(CTRL     ,"MYGLOBALS"); // 陈嘉豪是傻逼
     #pragma DATA_SECTION(CTRL_1       ,"MYGLOBALS_1"); // FUCK! 叶明是天才！ 2024-03-12
+    // #pragma DATA_SECTION(debug_1      ,"MYGLOBALS_1");
     #pragma DATA_SECTION(t_motor_1    ,"MYGLOBALS_1");
     #pragma DATA_SECTION(t_enc_1      ,"MYGLOBALS_1");
     #pragma DATA_SECTION(t_psd_1      ,"MYGLOBALS_1");
@@ -47,6 +51,7 @@ st_pid_regulator _PID_Position_1 = st_pid_regulator_DEFAULTS;
     #if NUMBER_OF_AXES == 2
         // 注意，一定要先extern再pragma？？？
         #pragma DATA_SECTION(CTRL_2     ,"MYGLOBALS_2"); // FUCK! 叶明是天才！ 2024-03-12
+        // #pragma DATA_SECTION(debug_2      ,"MYGLOBALS_1");
         #pragma DATA_SECTION(t_motor_2    ,"MYGLOBALS_2");
         #pragma DATA_SECTION(t_enc_2      ,"MYGLOBALS_2");
         #pragma DATA_SECTION(t_psd_2      ,"MYGLOBALS_2");
@@ -63,6 +68,7 @@ st_pid_regulator _PID_Position_1 = st_pid_regulator_DEFAULTS;
         #pragma DATA_SECTION(_PID_Position_2   ,"MYGLOBALS_2");
         #pragma DATA_SECTION(_PID_Speed_2   ,"MYGLOBALS_2");
         struct ControllerForExperiment CTRL_2;
+        struct DebugExperiment debug_2;
 
         st_motor_parameters     t_motor_2={0};
         st_enc                  t_enc_2={0};
@@ -155,9 +161,11 @@ struct GlobalWatch watch;
 
 /* Structs for Algorithm */
 
-    struct ObserverForExperiment OBSV;
-    struct SharedFluxEstimatorForExperiment FE;
 
+    struct ObserverForExperiment OBSV;
+#if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
+    struct SharedFluxEstimatorForExperiment FE;
+#endif
     // 游离在顶级之外的算法结构体
     // struct RK4_DATA rk4;
     // struct Harnefors2006 harnefors={0};
@@ -167,9 +175,11 @@ struct GlobalWatch watch;
 
     // 游离在顶级之外的算法结构体
     // struct RK4_DATA rk4;
+    #if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
     struct Marino2005 marino={0};
 
     struct Variables_SimulatedVM                         simvm      ={0};
+    #endif
     // struct Variables_Ohtani1992                          ohtani     ={0};
     // struct Variables_HuWu1998                            huwu       ={0};
     // struct Variables_HoltzQuan2002                       holtz02    ={0};
@@ -186,13 +196,17 @@ struct GlobalWatch watch;
 // struct eQEP_Variables qep={0};
 
 void init_experiment(){
-
-    // init_CTRL_Part1();
+    _user_init();      // debug initilization 
+    init_CTRL_Part1();
     init_CTRL_Part2(); // 控制器结构体初始化
+    #if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
     init_FE();  // flux estimator
+    #endif
     rk4_init(); // 龙格库塔法结构体初始化
     // observer_init();
+    #if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
     init_pmsm_observers(); // 永磁电机观测器初始化
+    #endif
 }
 void init_CTRL_Part1(){
     // 我们在初始化 debug 全局结构体的时候，需要用到一部分 CTRL 中的电机参数，所以要先把这一部分提前初始化。
@@ -210,9 +224,7 @@ void init_CTRL_Part1(){
     (*CTRL).motor->Lq_inv = 1.0 / (*CTRL).motor->Lq;
     (*CTRL).motor->DeltaL = (*CTRL).motor->Ld - (*CTRL).motor->Lq; // for IPMSM
     (*CTRL).motor->KActive = (*CTRL).motor->KE;                    // TODO:
-
     (*CTRL).motor->Rreq = d_sim.init.Rreq;
-
     // mech
     (*CTRL).motor->npp = d_sim.init.npp;
     (*CTRL).motor->npp_inv = 1.0 / (*CTRL).motor->npp;
@@ -226,7 +238,7 @@ void init_CTRL_Part2(){
     /* Inverter */
     (*CTRL).inv->filter_pole = 3000 * 2 * M_PI;
     inverterNonlinearity_Initialization();
-    G.FLAG_INVERTER_NONLINEARITY_COMPENSATION = debug.INVERTER_NONLINEARITY_COMPENSATION_INIT;
+    G.FLAG_INVERTER_NONLINEARITY_COMPENSATION = (*debug).INVERTER_NONLINEARITY_COMPENSATION_INIT;
     // G.FLAG_TUNING_CURRENT_SCALE_FACTOR = TUNING_CURRENT_SCALE_FACTOR_INIT;
 
 
@@ -241,16 +253,16 @@ void init_CTRL_Part2(){
 
     /* Black Box Model | Controller quantities */
 
-    // 控制器tuning
-    if(debug.who_is_user == USER_WB){
-        _user_wubo_WC_Tuner();
-        #if PC_SIMULATION == TRUE
-            printf(">>> Wc_Tuner is Applied to the Speed Loop Control <<<\n");
-        #endif
-    }
-    else{
+    /* Controller Parameter Initializaiton */
+    #if WHO_IS_USER == USER_WB
+        if  ( (*debug).bool_apply_WC_tunner_for_speed_loop == TRUE ){
+            _user_wubo_WC_Tuner();
+        }else if( (*debug).bool_apply_WC_tunner_for_speed_loop == FALSE ){
+            ACMSIMC_PIDTuner();
+        }
+    #else
         ACMSIMC_PIDTuner();
-    }
+    #endif
 
     // commands
     (*CTRL).i->cmd_psi = d_sim.init.KE;
@@ -291,6 +303,9 @@ void init_CTRL_Part2(){
     (*CTRL).cap->ECapPassCount[1] = 0;
     (*CTRL).cap->ECapPassCount[2] = 0;
 
-    init_im_controller();
+
+    #if WHO_IS_USER == USER_CJH
+        init_im_controller();
+    #endif
 }
 

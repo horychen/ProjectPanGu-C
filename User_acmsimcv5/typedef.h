@@ -83,7 +83,7 @@ typedef float32 REAL;
 #define AMPL2POW (1.22474487)
 
 // 模拟测量环节，可以在此为测量电机添加噪声、温飘等，也可以在此实现类似光电编码器的转速测量环节。
-#define RANDOM (((double)rand() / (RAND_MAX)) * 2 - 1) // [-1, 1]
+#define RANDOM (((REAL)rand() / (RAND_MAX)) * 2 - 1) // [-1, 1]
 
 extern REAL one_over_six;
 #endif

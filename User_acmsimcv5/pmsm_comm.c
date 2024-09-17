@@ -1,6 +1,6 @@
 // https://stackoverflow.com/questions/1591361/understanding-typedefs-for-function-pointers-in-c
 #include "ACMSim.h"
-
+#if ENABLE_COMMISSIONING
 /* The most accurate initial position detection method is actually proposed in my 2017 TDDA paper that make use of the fact that large d-axis current do not any create torque. */
 
 /* Initial Position Detection needs position update rate is at 1/CL_TS. */
@@ -548,9 +548,6 @@ void COMM_resistanceId_v2(REAL id_fb, REAL iq_fb){
                         #endif
                     }
                     COMM.R = m;
-                    #if PC_SIMULATION
-                        printf("R=%g, %g, %g\n", m,b,r);
-                    #endif
                     COMM.inverter_voltage_drop = b;
                 }
                 #if PC_SIMULATION
@@ -1075,7 +1072,7 @@ void COMM_inertiaId(REAL id_fb, REAL iq_fb, REAL cosPark, REAL sinPark, REAL omg
     q1_dot = AWAYA_LAMBDA*( -q1 + filtered_speed/d_sim.init.npp );
     q1 += CL_TS * q1_dot;
 
-    static double filtered_q0 = 0.0;
+    static REAL filtered_q0 = 0.0;
     filtered_q0  = _lpf(q0, filtered_q0, FILTER_CONSTANT);
 
     static REAL tau_est_lpf = 0.0;
@@ -1262,3 +1259,4 @@ void StepByStepCommissioning(){
 
     /* End *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/      
 }
+#endif

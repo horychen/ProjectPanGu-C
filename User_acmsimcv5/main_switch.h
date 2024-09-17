@@ -2,12 +2,18 @@
 #define user_defined_functions_H
 #include "ACMSim.h"
 
+
+// /* This code should be at the super_config.h*/
+// #define WHO_IS_USER 2023231051
+// /* This code should be at the super_config.h*/
+
 #define USER_CJH    101976
 #define USER_XM     102209
 #define USER_BEZIER 224
 #define USER_GZT    2021531030
 #define USER_WB     2023231051
 #define USER_YZZ    2023231060
+#define USER_WB2    970308
 #define USER_GEN    240828
 
 #define MODE_SELECT_PWM_DIRECT         1
@@ -19,14 +25,14 @@
 #define MODE_SELECT_VELOCITY_LOOP            4
 #define MODE_SELECT_VELOCITY_LOOP_SENSORLESS 41
 #define MODE_SELECT_TESTING_SENSORLESS       42
-#define MODE_SELECT_VELOCITY_LOOP_WC_TUNER   43
+#define MODE_SELECT_VELOCITY_LOOP_WC_TUNER   43 // 这个模式被弃用了，现在于USER_WB中实现WC Tuner
 #define MODE_SELECT_Marino2005               44
 #define MODE_SELECT_POSITION_LOOP            5
 #define MODE_SELECT_COMMISSIONING            9
+#define MODE_SWEEPING_FREQUENCY              20
 #define MODE_SELECT_GENERATOR                8
 
 struct DebugExperiment{
-    int use_first_set_three_phase;
     long error;
     long who_is_user;
     long mode_select;
@@ -43,17 +49,45 @@ struct DebugExperiment{
     REAL vvvf_voltage;
     REAL vvvf_frequency;
     int positionLoopType;
+    REAL LIMIT_DC_BUS_UTILIZATION;
+    REAL LIMIT_OVERLOAD_FACTOR;
+    REAL delta;
+    REAL CLBW_HZ;
+    REAL VL_EXE_PER_CL_EXE;
+    int  Select_exp_operation;
+    BOOL bool_initilized;
+    BOOL bool_apply_decoupling_voltages_to_current_regulation;
+    #if WHO_IS_USER == USER_WB
+        REAL zeta;
+        REAL omega_n;
+        REAL max_CLBW_PER_min_CLBW;
+        BOOL bool_apply_WC_tunner_for_speed_loop;
+        BOOL bool_sweeping_frequency_for_speed_loop;
+        BOOL bool_Null_D_Control;
+        BOOL bool_apply_sweeping_frequency_excitation;
+        REAL CMD_CURRENT_SINE_AMPERE;
+        REAL CMD_SPEED_SINE_RPM;
+        REAL CMD_SPEED_SINE_HZ;
+        REAL CMD_SPEED_SINE_STEP_SIZE;
+        REAL CMD_SPEED_SINE_LAST_END_TIME;
+        REAL CMD_SPEED_SINE_END_TIME;
+        REAL CMD_SPEED_SINE_HZ_CEILING;
+    #endif
 };
-extern struct DebugExperiment debug;
+/* To separate two debugs */
+extern int use_first_set_three_phase;
 
-extern REAL iq_command_from_PC;
+
+extern struct DebugExperiment debug_1;
+extern struct DebugExperiment debug_2;
+extern struct DebugExperiment *debug;
 /* USER: Macros */
 
 /* User Specified Functions */
 void _user_init(); // 非常重要的初始化
 void _user_time_varying_parameters();// 时变参数
 void _user_observer();
-void _user_controller_wubo(); // REAL Vdc, REAL theta_d_elec, REAL varOmega, REAL varTheta, REAL iDQ[2], REAL cmd_uDQ[ 
+void _user_wubo_controller(); // REAL Vdc, REAL theta_d_elec, REAL varOmega, REAL varTheta, REAL iDQ[2], REAL cmd_uDQ[ 
 void _user_onlyFOC(); // only current loop works
 void _user_virtual_ENC(); // 使用内部给定角度代替码盘位置反馈
 void Generator(); // 电机发电模式

@@ -103,24 +103,36 @@ REAL sigmoid_online(REAL x, REAL Vsat, REAL a3)
 }
 
 /* 真查表法 // C代码参考ui_curve_v4.py */
-#define LUT_N_LC 70
-#define LUT_N_HC 29
-REAL lut_lc_voltage[70] = {0, -0.0105529, 0.31933, 0.364001, 0.415814, 0.489953, 0.602715, 0.769718, 0.971424, 1.21079, 1.50055, 1.83306, 2.16318, 2.54303, 2.92186, 3.24129, 3.51575, 3.75058, 3.97849, 4.16454, 4.33493, 4.49719, 4.64278, 4.76509, 4.88146, 4.99055, 5.06347, 5.16252, 5.24808, 5.30369, 5.36092, 5.44246, 5.50212, 5.5786, 5.63384, 5.69022, 5.74442, 5.79613, 5.8491, 5.89762, 5.93325, 5.98141, 6.01726, 6.06201, 6.09346, 6.13419, 6.16634, 6.19528, 6.2233, 6.25819, 6.29004, 6.31378, 6.34112, 6.3669, 6.38991, 6.4147, 6.4381, 6.46156, 6.48171, 6.49962, 6.51565, 6.53689, 6.5566, 6.57761, 6.59515, 6.60624, 6.62549, 6.64589, 6.65606, 6.67132};
-REAL lut_hc_voltage[29] = {6.69023, 6.80461, 6.89879, 6.96976, 7.02613, 7.08644, 7.12535, 7.17312, 7.20858, 7.2444, 7.27558, 7.30321, 7.32961, 7.35726, 7.38272, 7.39944, 7.42055, 7.43142, 7.4416, 7.43598, 7.44959, 7.45352, 7.45434, 7.45356, 7.45172, 7.45522, 7.45602, 7.44348, 7.43926};
-#define LUT_STEPSIZE_BIG 0.11641244037931034
-#define LUT_STEPSIZE_SMALL 0.01237159786376811
-#define LUT_STEPSIZE_BIG_INVERSE 8.59014721057018
-#define LUT_STEPSIZE_SMALL_INVERSE 80.83030268294078
-#define LUT_I_TURNING_LC 0.8660118504637677
-#define LUT_I_TURNING_HC 4.241972621463768
-#define V_PLATEAU 7.43925517763064
+// #define LUT_N_LC 70
+// #define LUT_N_HC 29
+// REAL lut_lc_voltage[70] = {0, -0.0105529, 0.31933, 0.364001, 0.415814, 0.489953, 0.602715, 0.769718, 0.971424, 1.21079, 1.50055, 1.83306, 2.16318, 2.54303, 2.92186, 3.24129, 3.51575, 3.75058, 3.97849, 4.16454, 4.33493, 4.49719, 4.64278, 4.76509, 4.88146, 4.99055, 5.06347, 5.16252, 5.24808, 5.30369, 5.36092, 5.44246, 5.50212, 5.5786, 5.63384, 5.69022, 5.74442, 5.79613, 5.8491, 5.89762, 5.93325, 5.98141, 6.01726, 6.06201, 6.09346, 6.13419, 6.16634, 6.19528, 6.2233, 6.25819, 6.29004, 6.31378, 6.34112, 6.3669, 6.38991, 6.4147, 6.4381, 6.46156, 6.48171, 6.49962, 6.51565, 6.53689, 6.5566, 6.57761, 6.59515, 6.60624, 6.62549, 6.64589, 6.65606, 6.67132};
+// REAL lut_hc_voltage[29] = {6.69023, 6.80461, 6.89879, 6.96976, 7.02613, 7.08644, 7.12535, 7.17312, 7.20858, 7.2444, 7.27558, 7.30321, 7.32961, 7.35726, 7.38272, 7.39944, 7.42055, 7.43142, 7.4416, 7.43598, 7.44959, 7.45352, 7.45434, 7.45356, 7.45172, 7.45522, 7.45602, 7.44348, 7.43926};
+// #define LUT_STEPSIZE_BIG 0.11641244037931034
+// #define LUT_STEPSIZE_SMALL 0.01237159786376811
+// #define LUT_STEPSIZE_BIG_INVERSE 8.59014721057018
+// #define LUT_STEPSIZE_SMALL_INVERSE 80.83030268294078
+// #define LUT_I_TURNING_LC 0.8660118504637677
+// #define LUT_I_TURNING_HC 4.241972621463768
+// #define V_PLATEAU 7.43925517763064
+
+
+#define LUT_N_LC  70
+#define LUT_N_HC  29
+REAL lut_lc_voltage[70] = {0, 1.8746, 2.144, 2.34136, 2.49419, 2.60973, 2.74337, 2.88097, 3.00094, 3.10985, 3.23057, 3.34807, 3.4332, 3.50093, 3.55079, 3.59368, 3.61982, 3.64135, 3.65953, 3.67652, 3.69216, 3.7051, 3.71887, 3.73073, 3.73901, 3.75071, 3.75723, 3.76842, 3.77575, 3.78264, 3.78858, 3.79489, 3.80023, 3.80754, 3.8125, 3.81981, 3.82407, 3.8291, 3.83278, 3.83879, 3.84318, 3.84597, 3.85316, 3.85658, 3.85856, 3.86383, 3.86556, 3.86962, 3.87269, 3.87618, 3.87955, 3.88147, 3.88496, 3.88746, 3.88879, 3.89325, 3.89452, 3.8973, 3.89922, 3.9023, 3.90339, 3.90545, 3.90747, 3.90848, 3.91075, 3.91321, 3.915, 3.917, 3.91789, 3.91824};
+REAL lut_hc_voltage[29] = {3.92009, 3.96505, 4.00084, 4.02508, 4.04373, 4.05894, 4.07484, 4.08679, 4.09461, 4.10467, 4.11101, 4.11741, 4.12254, 4.12758, 4.1317, 4.13569, 4.14004, 4.14258, 4.1448, 4.14871, 4.14937, 4.15295, 4.15194, 4.15295, 4.15107, 4.15136, 4.15206, 4.1492, 4.14973};
+#define LUT_STEPSIZE_BIG 0.3796966241724138
+#define LUT_STEPSIZE_SMALL 0.012110000369565214
+#define LUT_STEPSIZE_BIG_INVERSE 2.633681566644419
+#define LUT_STEPSIZE_SMALL_INVERSE 82.5763806344048
+#define LUT_I_TURNING_LC 0.847700025869565
+#define LUT_I_TURNING_HC 11.858902126869566
+#define V_PLATEAU 4.149734790202423
 
 REAL lookup_compensation_voltage_indexed(REAL current_value)
 {
     REAL abs_current_value = fabs(current_value);
 
-    if (abs_current_value < LUT_I_TURNING_LC)
-    {
+    if (abs_current_value < LUT_I_TURNING_LC){
         REAL float_index = abs_current_value * LUT_STEPSIZE_SMALL_INVERSE;
         int index = (int)float_index;
         REAL slope;
@@ -130,8 +142,7 @@ REAL lookup_compensation_voltage_indexed(REAL current_value)
             slope = (lut_lc_voltage[index + 1] - lut_lc_voltage[index]) * LUT_STEPSIZE_SMALL_INVERSE;
         return sign(current_value) * (lut_lc_voltage[index] + slope * (abs_current_value - index * LUT_STEPSIZE_SMALL));
     }
-    else
-    {
+    else{
         REAL float_index = (abs_current_value - LUT_I_TURNING_LC) * LUT_STEPSIZE_BIG_INVERSE;
         int index = (int)float_index; // THIS IS A RELATIVE INDEX!
         REAL slope;
@@ -146,8 +157,7 @@ void get_distorted_voltage_via_LUT_indexed(REAL ial, REAL ibe, REAL *ualbe_dist)
 {
 
     /* 查表法 */
-    if (TRUE)
-    {
+    if (TRUE){
         REAL ia, ib, ic;
         ia = 1 * (ial);
         ib = 1 * (-0.5 * ial - SIN_DASH_2PI_SLASH_3 * ibe);
@@ -163,9 +173,7 @@ void get_distorted_voltage_via_LUT_indexed(REAL ial, REAL ibe, REAL *ualbe_dist)
         // Clarke transformation（三分之二，0.5倍根号三）
         ualbe_dist[0] = 0.66666667 * (dist_ua - 0.5 * dist_ub - 0.5 * dist_uc);
         ualbe_dist[1] = 0.66666667 * 0.8660254 * (dist_ub - dist_uc); // 0.5773502695534
-    }
-    else
-    {
+    }else{
         /* AB2U_AI 这宏假设了零序分量为零，即ia+ib+ic=0，但是电压并不一定满足吧，所以还是得用上面的？ */
         REAL ia, ib;            //,ic;
         ia = AB2U_AI(ial, ibe); // ia = 1 * (       ial                              );
@@ -184,20 +192,13 @@ REAL lookup_phase_current(REAL current, REAL *lut_voltage, REAL *lut_current, in
 {
     /* assume lut_voltage[0] is negative and lut_voltage[-1] is positive */
     int j;
-    if (current < lut_current[0])
-    {
+    if (current < lut_current[0]){
         return lut_voltage[0];
-    }
-    else if (current > lut_current[length_of_lut - 1])
-    {
+    }else if (current > lut_current[length_of_lut - 1]){
         return lut_voltage[length_of_lut - 1];
-    }
-    else
-    {
-        for (j = 0; j < length_of_lut - 1; ++j)
-        {
-            if (current > lut_current[j] && current < lut_current[j + 1])
-            {
+    }else{
+        for (j = 0; j < length_of_lut - 1; ++j){
+            if (current > lut_current[j] && current < lut_current[j + 1]){
                 REAL slope = (lut_voltage[j + 1] - lut_voltage[j]) / (lut_current[j + 1] - lut_current[j]);
                 return (current - lut_current[j]) * slope + lut_voltage[j];
                 // return 0.5*(lut_voltage[j]+lut_voltage[j+1]); // this is just wrong! stupid!
@@ -247,8 +248,7 @@ void get_distorted_voltage_via_LUT(REAL ual, REAL ube, REAL ial, REAL ibe, REAL 
     // The data are measured in stator resistance identification with amplitude invariant d-axis current and d-axis voltage.
 
     /* 查表法 */
-    if (TRUE)
-    {
+    if (TRUE){
         REAL ia, ib, ic;
         ia = 1 * (ial);
         ib = 1 * (-0.5 * ial - SIN_DASH_2PI_SLASH_3 * ibe);
@@ -261,9 +261,7 @@ void get_distorted_voltage_via_LUT(REAL ual, REAL ube, REAL ial, REAL ibe, REAL 
         // Clarke transformation（三分之二，0.5倍根号三）
         ualbe_dist[0] = 0.66666667 * (dist_ua - 0.5 * dist_ub - 0.5 * dist_uc);
         ualbe_dist[1] = 0.66666667 * 0.8660254 * (dist_ub - dist_uc); // 0.5773502695534
-    }
-    else
-    {
+    }else{
         /* AB2U_AI 这宏假设了零序分量为零，即ia+ib+ic=0，但是电压并不一定满足吧，所以还是得用上面的？ */
         REAL ia, ib;            //,ic;
         ia = AB2U_AI(ial, ibe); // ia = 1 * (       ial                              );
@@ -422,6 +420,8 @@ REAL shift2pi(REAL thetaA)
     }
 }
 // REAL watch_theta_trapezoidal = 0.0;
+#if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
+
 void Modified_ParkSul_Compensation(void)
 {
 
@@ -503,13 +503,13 @@ void Modified_ParkSul_Compensation(void)
     }
 #endif
 
-#if INVERTER_NONLINEARITY == 3 // [ModelLUT]
+#if __INVERTER_NONLINEARITY == 3 // [ModelLUT]
     // INV.Vsat = 6.67054;
-#elif INVERTER_NONLINEARITY == 2 // [ModelSigmoid]
+#elif __INVERTER_NONLINEARITY == 2 // [ModelSigmoid]
     // INV.Vsat = sigmoid(100)*1.0;
     // INV.Vsat = sigmoid(100)*0.95;
     // INV.Vsat = sigmoid(100)*1.05;
-#elif INVERTER_NONLINEARITY == 1 // [ModelSul96]
+#elif __INVERTER_NONLINEARITY == 1 // [ModelSul96]
     REAL TM = _Toff - _Ton - _Tdead + _Tcomp; // Sul1996
     REAL Udist = (_Udc * TM * CL_TS_INVERSE - _Vce0 - _Vd0) / 6.0;
     INV.Vsat = 3 * fabs(Udist); // 4 = 2*sign(ia) - sign(ib) - sign(ic) when ia is positive and ib/ic is negative
@@ -566,7 +566,7 @@ void Online_PAA_Based_Compensation(void)
 
     // Phase A current's fundamental component transformation
     /* 这里使用哪个角度的关键不在于是有感的角度还是无感的角度，而是你FOC电流控制器（Park变换）用的角度是哪个？ */
-    if (debug.SENSORLESS_CONTROL)
+    if ((*debug).SENSORLESS_CONTROL)
     {
         INV.thetaA = -M_PI * 1.5 + PMSM_ELECTRICAL_POSITION_FEEDBACK + atan2((*CTRL).i->cmd_iDQ[1], (*CTRL).i->cmd_iDQ[0]); /* Q: why -pi*(1.5)? */ /* ParkSul2014 suggests to use PLL to extract thetaA from current command */
     }
@@ -737,3 +737,4 @@ void Online_PAA_Based_Compensation(void)
 //     return 0;
 
 // }
+#endif

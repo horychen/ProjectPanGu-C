@@ -23,10 +23,14 @@ typedef struct {
    float32 FbkPrev;
    float32 KFB_Term_Prev;
    float32 OutWithInnerLoopFeedback;
+   float32 check_KI_KFB;
    void (*calc)();
 } st_pid_regulator;
 typedef st_pid_regulator *st_pid_regulator_handle;
-void PID_calc(st_pid_regulator_handle);
+
+void ACMSIMC_PIDTuner();
+void PID_calc(st_pid_regulator_handle); // pid_regulator中定义了默认的离散PID，因为吴波在速度环加入了innerLoop，他的离散PID和默认的有些许区别
+
 #define st_pid_regulator_DEFAULTS { \
   /*Reference*/ 0.0, \
   /*Feedback*/ 0.0, \
@@ -48,8 +52,10 @@ void PID_calc(st_pid_regulator_handle);
   /*Previous Feedback*/  0.0, \
   /*Previous Inner Feedback Term*/  0.0, \
   /* OutWithInnerLoopFeedback */ 0.0, \
+  /* Check KI KFB who is larger */ 0.0, \
   (void (*)(Uint32)) PID_calc \
 }
+
 extern st_pid_regulator PID_iD;
 extern st_pid_regulator PID_iQ;
 extern st_pid_regulator PID_Speed;
@@ -59,8 +65,6 @@ extern st_pid_regulator PID_Position;
 // extern st_pid_regulator pid1_ic;
 // extern st_pid_regulator pid2_ix;
 // extern st_pid_regulator pid2_iy;
-
-void ACMSIMC_PIDTuner();
 
 typedef struct{
     /* Controller gains */

@@ -1,6 +1,6 @@
 #ifndef IM_CONTROLLER_H
 #define IM_CONTROLLER_H
-
+#if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
 #if MACHINE_TYPE == 1 || MACHINE_TYPE == 11
 
 // 这个结构体声明的是基本的IFOC中所没有的变量的集合体。
@@ -62,5 +62,6 @@ void init_im_controller();
 // void cmd_slow_speed_reversal(REAL timebase, REAL instant, REAL interval, REAL rpm_cmd);
 
 
+#endif
 #endif
 #endif

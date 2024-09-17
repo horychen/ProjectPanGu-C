@@ -1,7 +1,9 @@
 #include "ACMSim.h"
 
+#if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
+
 // #if PC_SIMULATION==FALSE
-// double CpuTimer_Delta = 0;
+// REAL CpuTimer_Delta = 0;
 // Uint32 CpuTimer_Before = 0;
 // Uint32 CpuTimer_After = 0;
 // #endif
@@ -435,7 +437,7 @@ void controller_marino2005(){
 
     // #if PC_SIMULATION==FALSE
     // CpuTimer_After = CpuTimer1.RegsAddr->TIM.all; // get count
-    // CpuTimer_Delta = (double)CpuTimer_Before - (double)CpuTimer_After;
+    // CpuTimer_Delta = (REAL)CpuTimer_Before - (REAL)CpuTimer_After;
     // #endif
 
     // use the second 3 phase inverter
@@ -661,7 +663,7 @@ void init_im_controller(){
     (*CTRL).i->m1 = IM_FLUX_COMMAND_SINE_PART;
     (*CTRL).i->omega1 = 2*M_PI*IM_FLUX_COMMAND_SINE_HERZ;
 
-    // debug.SENSORLESS_CONTROL = SENSORLESS_CONTROL;
+    // (*debug).SENSORLESS_CONTROL = SENSORLESS_CONTROL;
     // (*CTRL).s->ctrl_strategy = CONTROL_STRATEGY;
 
     #define AKATSU00 FALSE
@@ -741,3 +743,7 @@ void init_im_controller(){
     // PID调谐
     // ACMSIMC_PIDTuner();
 }
+
+
+
+#endif

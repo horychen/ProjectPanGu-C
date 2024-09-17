@@ -35,10 +35,13 @@ int Comb(const int n, const int m);
 
 // Point bezier(const REAL *t, const BezierController *BziController);
 
+//inline
 REAL bezier_x(const REAL *t, const BezierController *BziController);
 
+//inline
 REAL bezier_y(const REAL *t, const BezierController *BziController);
 
+//inline
 REAL bezier_x_diff(REAL t, void *params);
 
 REAL find_t_for_given_x(const REAL x, const BezierController *BziController);

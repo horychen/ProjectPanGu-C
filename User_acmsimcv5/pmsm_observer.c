@@ -1,6 +1,6 @@
 #include "ACMSim.h"
 
-
+#if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
 /********************************************/
 /* 4rd-order ESO 
  ********************************************/
@@ -55,7 +55,7 @@ void eso_one_parameter_tuning(REAL omega_ob){
         OBSV.esoaf.ell[2] = (MOTOR.Js*MOTOR.npp_inv) * 1*omega_ob*omega_ob*omega_ob;
         OBSV.esoaf.ell[3] = 0.0;
     }else{
-        // TODO: double check?
+        // TODO: REAL check?
         OBSV.esoaf.ell[0] =                            4*omega_ob;
         OBSV.esoaf.ell[1] =                            6*omega_ob*omega_ob;
         OBSV.esoaf.ell[2] = (MOTOR.Js*MOTOR.npp_inv) * 4*omega_ob*omega_ob*omega_ob;
@@ -1308,8 +1308,7 @@ void pmsm_observers(){
         /* 资源有限 */
         #if SELECT_ALGORITHM == ALG_NSOAF
             // MainFE_HuWu_1998(); // use algorithm 2
-            // Main_the_active_flux_estimator();
-            Main_No_Saturation_Based();
+            Main_the_active_flux_estimator();
             //Main_VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
             Main_nsoaf_chen2020();
         #elif SELECT_ALGORITHM == ALG_ESOAF
@@ -1394,3 +1393,4 @@ void init_pmsm_observers(){
         #endif
     #endif
 }
+#endif

@@ -1,65 +1,102 @@
 // user_defined_functions.c
 #include <ACMSim.h>
 
+REAL global_id_ampl = 10;
+REAL global_id_freq = 10;
+
 void overwrite_d_sim(){
-    ;
+    // for now 20240902 do nothing
 }
 
 void _user_init(){
 
-    // init_d_sim();   // initilizating d_sim is removed into main.c to run only once
+    init_d_sim();   // initilizating d_sim is removed into main.c to run only once
     overwrite_d_sim(); // overwrite d_sim with user's algorithm
     init_CTRL_Part1();
 
-    debug.use_first_set_three_phase = 1;
-    debug.error = 0;
-    debug.who_is_user = d_sim.user.who_is_user;
-    if(CTRL->motor->Rreq>0){
-        debug.mode_select = d_sim.user.mode_select_induction_motor;
-    }else{
-        debug.mode_select = d_sim.user.mode_select_synchronous_motor;
+    if ((*debug).bool_initilized == FALSE){
+
+        // (*debug).use_first_set_three_phase = 1;
+        (*debug).bool_initilized = TRUE;
+        (*debug).error = 0;
+        (*debug).who_is_user = d_sim.user.who_is_user;
+        if(CTRL->motor->Rreq>0){
+            (*debug).mode_select = d_sim.user.mode_select_induction_motor;
+        }else{
+            (*debug).mode_select = d_sim.user.mode_select_synchronous_motor;
+        }
+            /* Open Loop  */
+            // (*debug).mode_select = MODE_SELECT_PWM_DIRECT;                            //  1
+            // (*debug).mode_select = MODE_SELECT_VOLTAGE_OPEN_LOOP;                     // 11
+            /*  Without the Encoder */
+            // (*debug).mode_select = MODE_SELECT_WITHOUT_ENCODER_CURRENT_VECTOR_ROTATE; //  2
+            /* FOC  */
+            // (*debug).mode_select = MODE_SELECT_FOC;                                   //  3
+            // (*debug).mode_select = MODE_SELECT_FOC_SENSORLESS;                        // 31
+            // (*debug).mode_select = MODE_SELECT_INDIRECT_FOC;                          // 32
+            /* Speed Loop  */
+            // (*debug).mode_select = MODE_SELECT_VELOCITY_LOOP;                         //  4
+            // (*debug).mode_select = MODE_SELECT_VELOCITY_LOOP_SENSORLESS;              // 41
+            // (*debug).mode_select = MODE_SELECT_VELOCITY_LOOP_WC_TUNER;                // 43
+            /* Position Loop  */
+            // (*debug).mode_select = MODE_SELECT_POSITION_LOOP;                         //  5
+            /* Commission  */
+            // (*debug).mode_select = MODE_SELECT_COMMISSIONING;                         //  9
+
+        (*debug).Overwrite_Current_Frequency = 1;
+        (*debug).Overwrite_theta_d           = 0.0;
+
+        (*debug).set_id_command              = 1;
+        (*debug).set_iq_command              = 1;
+        (*debug).set_rpm_speed_command       = 50;
+        (*debug).set_deg_position_command    = 0.0;
+        (*debug).vvvf_voltage = 3.0;
+        (*debug).vvvf_frequency = 5.0;
+
+        (*debug).delta                                                = d_sim.FOC.delta;
+        (*debug).CLBW_HZ                                              = d_sim.FOC.CLBW_HZ;
+        (*debug).VL_EXE_PER_CL_EXE                                    = d_sim.FOC.VL_EXE_PER_CL_EXE;
+        (*debug).LIMIT_DC_BUS_UTILIZATION                             = d_sim.CL.LIMIT_DC_BUS_UTILIZATION;
+        (*debug).LIMIT_OVERLOAD_FACTOR                                = d_sim.VL.LIMIT_OVERLOAD_FACTOR;
+        (*debug).Select_exp_operation                                 = d_sim.user.Select_exp_operation;
+        (*debug).bool_apply_decoupling_voltages_to_current_regulation = d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation;
+        (*debug).INVERTER_NONLINEARITY_COMPENSATION_INIT = d_sim.user.INVERTER_NONLINEARITY_COMPENSATION_METHOD;
+
     }
-        /* Open Loop  */
-        // debug.mode_select = MODE_SELECT_PWM_DIRECT;                            //  1
-        // debug.mode_select = MODE_SELECT_VOLTAGE_OPEN_LOOP;                     // 11
-        /*  Without the Encoder */
-        // debug.mode_select = MODE_SELECT_WITHOUT_ENCODER_CURRENT_VECTOR_ROTATE; //  2
-        /* FOC  */
-        // debug.mode_select = MODE_SELECT_FOC;                                   //  3
-        // debug.mode_select = MODE_SELECT_FOC_SENSORLESS;                        // 31
-        // debug.mode_select = MODE_SELECT_INDIRECT_FOC;                          // 32
-        /* Speed Loop  */
-        // debug.mode_select = MODE_SELECT_VELOCITY_LOOP;                         //  4
-        // debug.mode_select = MODE_SELECT_VELOCITY_LOOP_SENSORLESS;              // 41
-        // debug.mode_select = MODE_SELECT_VELOCITY_LOOP_WC_TUNER;                // 43
-        /* Position Loop  */
-        // debug.mode_select = MODE_SELECT_POSITION_LOOP;                         //  5
-        /* Commission  */
-        // debug.mode_select = MODE_SELECT_COMMISSIONING;                         //  9
 
-    debug.Overwrite_Current_Frequency = 0;
-    debug.Overwrite_theta_d = 0.0;
-    debug.set_id_command = 0;
-    debug.set_iq_command = 1;
-    debug.set_rpm_speed_command = 400;
-    debug.set_deg_position_command = 0.0;
+    // (*debug).INVERTER_NONLINEARITY = 0;
+    #if WHO_IS_USER == USER_YZZ
+        (*debug).SENSORLESS_CONTROL      = 0;
+        (*debug).SENSORLESS_CONTROL_HFSI = 0;
+    #endif
 
-    debug.INVERTER_NONLINEARITY_COMPENSATION_INIT = 0;
-    debug.INVERTER_NONLINEARITY = 0;
-    debug.SENSORLESS_CONTROL = 0;
-    debug.SENSORLESS_CONTROL_HFSI = 0;
-
-    debug.vvvf_voltage = 3.0;
-    debug.vvvf_frequency = 5.0;
-    if (debug.who_is_user == USER_BEZIER){
+    #if WHO_IS_USER == USER_BEZIER
         set_points(&BzController);
-    }
+    #endif
+
+    #if WHO_IS_USER == 2023231051
+        //For WuBo
+        (*debug).zeta                                                 = d_sim.user.zeta;
+        (*debug).omega_n                                              = d_sim.user.omega_n;
+        (*debug).max_CLBW_PER_min_CLBW                                = d_sim.user.max_CLBW_PER_min_CLBW;
+        (*debug).bool_apply_WC_tunner_for_speed_loop                  = d_sim.user.bool_apply_WC_tunner_for_speed_loop;
+        (*debug).bool_sweeping_frequency_for_speed_loop               = d_sim.user.bool_sweeping_frequency_for_speed_loop;
+        (*debug).bool_Null_D_Control                                  = d_sim.user.bool_Null_D_Control;
+        (*debug).bool_apply_sweeping_frequency_excitation             = d_sim.user.bool_apply_sweeping_frequency_excitation;
+        //For Sweeping
+        (*debug).CMD_CURRENT_SINE_AMPERE                              = d_sim.user.CMD_CURRENT_SINE_AMPERE;
+        (*debug).CMD_SPEED_SINE_RPM                                   = d_sim.user.CMD_SPEED_SINE_RPM;
+        (*debug).CMD_SPEED_SINE_HZ                                    = d_sim.user.CMD_SPEED_SINE_HZ;
+        (*debug).CMD_SPEED_SINE_STEP_SIZE                             = d_sim.user.CMD_SPEED_SINE_STEP_SIZE;
+        (*debug).CMD_SPEED_SINE_LAST_END_TIME                         = d_sim.user.CMD_SPEED_SINE_LAST_END_TIME;
+        (*debug).CMD_SPEED_SINE_END_TIME                              = d_sim.user.CMD_SPEED_SINE_END_TIME;
+        (*debug).CMD_SPEED_SINE_HZ_CEILING                            = d_sim.user.CMD_SPEED_SINE_HZ_CEILING;
+    #endif
 }
 
 void _user_commands(){
-
-    /* 实验RPM给定 */
-    (*CTRL).i->cmd_varOmega = debug.set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
+    /* RPM GIVEN */
+    (*CTRL).i->cmd_varOmega = (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
 
     if (CTRL->motor->Rreq > 0){
         // 感应电机需要励磁
@@ -68,14 +105,14 @@ void _user_commands(){
     }else{
         // 表贴永磁采用 iD=0 控制
         (*CTRL).i->cmd_iDQ[0] = 0.0;
+        // (*CTRL).i->cmd_iDQ[0] = -20.0;
 
         // 凸极永磁采用 iD<0 获得更大的 有功磁链（aka 转矩系数）
         // (*CTRL).i->cmd_iDQ[0] = -1.0;
     }
 
     #if PC_SIMULATION == TRUE
-
-        if(debug.who_is_user == USER_BEZIER){
+        #if WHO_IS_USER == USER_BEZIER
             if ((*CTRL).timebase > CL_TS){
                 (*CTRL).i->cmd_varOmega = d_sim.user.bezier_rpm_maximum_effective_speed_error * RPM_2_MECH_RAD_PER_SEC;
             }
@@ -92,52 +129,61 @@ void _user_commands(){
             if ((*CTRL).timebase > d_sim.user.bezier_seconds_load_disturbance+0.1){
                 // break;
             }
-        }else if(debug.who_is_user == USER_WB){
-
+        #elif WHO_IS_USER == USER_WB
+            /* 加入恒负载 */
+            ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN * d_sim.VL.LIMIT_OVERLOAD_FACTOR * 0);
             if ((*CTRL).timebase > CL_TS){
-                (*CTRL).i->cmd_varOmega = debug.set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
+                (*CTRL).i->cmd_varOmega = (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
             }
-            if ((*CTRL).timebase > 0.2){
-                (*CTRL).i->cmd_varOmega = - debug.set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
+            if ((*CTRL).timebase > 0.08){
+                (*CTRL).i->cmd_varOmega = - (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
             }
             if ((*CTRL).timebase > 0.4){
                 #if PC_SIMULATION
-                    ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN * d_sim.VL.LIMIT_OVERLOAD_FACTOR * 0.9);
+                    ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN * d_sim.VL.LIMIT_OVERLOAD_FACTOR * 0);
                 #endif
             }
-        }else if(debug.who_is_user == USER_CJH){
+        #elif WHO_IS_USER == USER_CJH
             (*CTRL).i->cmd_varOmega = 0.0;
             if ((*CTRL).timebase > 1.0){
-                (*CTRL).i->cmd_varOmega = debug.set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
+                (*CTRL).i->cmd_varOmega = (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
             }
             if ((*CTRL).timebase > 2){
-                (*CTRL).i->cmd_varOmega = - debug.set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
+                (*CTRL).i->cmd_varOmega = - (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
             }
             if ((*CTRL).timebase > 3.0){
                 #if PC_SIMULATION
                     ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);
                 #endif
             }
-        }else if(debug.who_is_user == USER_YZZ){
+        #elif WHO_IS_USER == USER_YZZ
             (*CTRL).i->cmd_varOmega = 0.0;
             if ((*CTRL).timebase > CL_TS){
-                (*CTRL).i->cmd_varOmega = debug.set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
+                (*CTRL).i->cmd_varOmega = (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
             }
-            if ((*CTRL).timebase > 0.5){
-                (*CTRL).i->cmd_varOmega = - debug.set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
+            if ((*CTRL).timebase > 0.3){
+                (*CTRL).i->cmd_varOmega = - (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
             }
-            if ((*CTRL).timebase > 0.8){
+            if ((*CTRL).timebase > 0.6){
                 #if PC_SIMULATION
                     ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);
                 #endif
             }
-        }
-    #endif
+        #endif
+   #endif
 }
 
 void main_switch(long mode_select){
     static long mode_select_last = 0;
     static int mode_initialized = FALSE;
+    #if PC_SIMULATION == FALSE
+        if (axisCnt == 0) {
+            CTRL = &CTRL_1;  // 根据axisCnt选择CTRL_1
+        } else if (axisCnt == 1) {
+            CTRL = &CTRL_2;  // 根据axisCnt选择CTRL_2
+        }
+    #endif
+
     if(mode_select != mode_select_last){
         mode_initialized = TRUE;
     }
@@ -148,14 +194,14 @@ void main_switch(long mode_select){
             (*CTRL).svgen1.Ta = 0.5;
             (*CTRL).svgen1.Tb = 0.5;
             (*CTRL).svgen1.Tc = 0.5;
-            // TODO: apply to experimental voltage function
-            // TODO: apply to experimental voltage function
-            // TODO: apply to experimental voltage function
         }
+        #if PC_SIMULATION==FALSE
+            void test_pwm_output();
+        #endif
         break;
     case MODE_SELECT_VOLTAGE_OPEN_LOOP: // 11
-        (*CTRL).o->cmd_uAB_to_inverter[0] = debug.vvvf_voltage * cos(debug.vvvf_frequency*2*M_PI* CTRL->timebase);
-        (*CTRL).o->cmd_uAB_to_inverter[1] = debug.vvvf_voltage * sin(debug.vvvf_frequency*2*M_PI* CTRL->timebase);
+        (*CTRL).o->cmd_uAB_to_inverter[0] = (*debug).vvvf_voltage * cos((*debug).vvvf_frequency*2*M_PI* CTRL->timebase);
+        (*CTRL).o->cmd_uAB_to_inverter[1] = (*debug).vvvf_voltage * sin((*debug).vvvf_frequency*2*M_PI* CTRL->timebase);
         break;
     case MODE_SELECT_WITHOUT_ENCODER_CURRENT_VECTOR_ROTATE: // 2
         if(mode_initialized == FALSE){
@@ -165,8 +211,8 @@ void main_switch(long mode_select){
         _user_virtual_ENC();
         break;
     case MODE_SELECT_FOC: // 3
-        #ifdef PC_Veclocity_Controller
-            debug.set_iq_command = iq_command_from_PC;
+        #if WHO_IS_USER == USER_WB
+            (*debug).set_id_command = global_id_ampl * sin(2 * M_PI * global_id_freq * (*CTRL).timebase);
         #endif
         _user_onlyFOC();
         break;
@@ -175,23 +221,23 @@ void main_switch(long mode_select){
         break;
     case MODE_SELECT_INDIRECT_FOC:   // 32
         _user_commands();         // 用户指令
+        #if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
         controller_IFOC();
+        #endif
         break;
     case MODE_SELECT_VELOCITY_LOOP: // 4
         _user_commands();         // 用户指令
-        if(debug.who_is_user==USER_WB){
-            _user_controller_wubo();
-        }else{
-            FOC_with_vecocity_control((*CTRL).i->theta_d_elec, 
-            (*CTRL).i->varOmega, 
+        FOC_with_vecocity_control((*CTRL).i->theta_d_elec, 
+            (*CTRL).i->varOmega,
             (*CTRL).i->cmd_varOmega, 
             (*CTRL).i->cmd_iDQ, 
             (*CTRL).i->iAB);
-        }
         break;
     case MODE_SELECT_VELOCITY_LOOP_SENSORLESS : //41
+        #if WHO_IS_USER == USER_YZZ
         _user_commands();
         pmsm_observers();
+        #endif
         // observer();
         // FOC_with_vecocity_control(FE.AFEOE.theta_d,
         //     OBSV.nsoaf.xOmg * MOTOR.npp_inv,
@@ -209,41 +255,65 @@ void main_switch(long mode_select){
     case MODE_SELECT_VELOCITY_LOOP_WC_TUNER: // 43
         break;
     case MODE_SELECT_Marino2005: //44
+    #if (WHO_IS_USER == USER_CJH)
         controller_marino2005_with_commands();
+    #endif
         break;
     case MODE_SELECT_POSITION_LOOP: // 5
         break;
     case MODE_SELECT_COMMISSIONING: // 9
-        commissioning();
+        #if ENABLE_COMMISSIONING == TRUE
+            commissioning();
+        #endif
         break;
     case MODE_SELECT_GENERATOR://8
-        // Generator();
+        #if PC_SIMULATION == TRUE
+            Generator();
+        #endif
         // ACM.R = 0.4; 
         // ACM.Ld = 0.017;
         // ACM.Lq = 0.015;
         break;
+        case MODE_SWEEPING_FREQUENCY: // 20
+        #if WHO_IS_USER == USER_WB
+            _user_wubo_Sweeping_Command();
+            if ( (*debug).bool_sweeping_frequency_for_speed_loop == TRUE ){
+                FOC_with_vecocity_control((*CTRL).i->theta_d_elec, 
+                            (*CTRL).i->varOmega,
+                            (*CTRL).i->cmd_varOmega, 
+                            (*CTRL).i->cmd_iDQ, 
+                            (*CTRL).i->iAB);
+            }else if ( (*debug).bool_sweeping_frequency_for_speed_loop == FALSE ){
+                _user_onlyFOC();
+            }
+            // _user_wubo_controller();
+            #endif
+            break;
     default:
         // 电压指令(*CTRL).o->cmd_uAB[0/1]通过逆变器，产生实际电压ACM.ual, ACM.ube（变换到dq系下得到ACM.ud，ACM.uq）
         // voltage_commands_to_pwm(); // this function only exists in DSP codes
         // inverter_model(); // in Simulation
-        debug.error = 999;
+        (*debug).error = 999;
         break;
     }
 }
 
 REAL Veclocity_Controller(REAL cmd_varOmega, REAL varOmega){
-    /// 5. 转速环（使用反馈转速）
+
     if ((*CTRL).s->the_vc_count++ >= SPEED_LOOP_CEILING){
         (*CTRL).s->the_vc_count = 1;
 
         PID_Speed->Ref = cmd_varOmega;
         PID_Speed->Fbk = varOmega;
-
-        if(debug.who_is_user == USER_BEZIER)
+        
+        /* Here is the algorithem*/
+        #if WHO_IS_USER == USER_BEZIER
             control_output(PID_Speed, &BzController);
-        else
+        #elif WHO_IS_USER == USER_WB
+            _user_wubo_SpeedInnerLoop_controller(PID_Speed);
+        #else
             PID_Speed->calc(PID_Speed);
-
+        #endif
     }
     return PID_Speed->Out;
 }
@@ -254,8 +324,9 @@ void FOC_with_vecocity_control(REAL theta_d_elec,
         REAL cmd_iDQ[2],
         REAL iAB[2]){
 
-    cmd_iDQ[0] = 0.0;     // id=0 control
-    // cmd_iDQ[0] = 1;     // id=0 control
+    // if((*debug).bool_Null_D_Control == TRUE) cmd_iDQ[0] = 0;
+    /* Default is the Null D control */
+    cmd_iDQ[0] = 0;
     cmd_iDQ[1] = Veclocity_Controller(cmd_varOmega, varOmega);
     // cmd_iDQ[1] = 0.0;     // iq=0 control
 
@@ -263,11 +334,11 @@ void FOC_with_vecocity_control(REAL theta_d_elec,
     /// 5.Sweep 扫频将覆盖上面产生的励磁、转矩电流指令
     #if EXCITATION_TYPE == EXCITATION_SWEEP_FREQUENCY
     #if SWEEP_FREQ_C2V == TRUE
-        cmd_iDQ[1] = debug.set_iq_command;
+        cmd_iDQ[1] = (*debug).set_iq_command;
     #endif
     #if SWEEP_FREQ_C2C == TRUE
         cmd_iDQ[1] = 0.0;
-        cmd_iDQ[0] = debug.set_iq_command; // 故意反的
+        cmd_iDQ[0] = (*debug).set_iq_command; // 故意反的
     #endif
     #endif
 
@@ -280,11 +351,6 @@ void FOC_with_vecocity_control(REAL theta_d_elec,
     (*CTRL).i->iDQ[0] = iDQ[0];
     (*CTRL).i->iDQ[1] = iDQ[1];
 
-    /* 更新依赖于dq轴电流的物理量 */
-    REAL Tem     = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * (MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * iDQ[0]) * iDQ[1];     // 转矩 For luenberger position observer for HFSI
-    REAL cmd_Tem = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * (MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * cmd_iDQ[0]) * cmd_iDQ[1];
-    MOTOR.KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * iDQ[0];
-
     /* 速度双环的电流环 */
     // d-axis
     PID_iD->Fbk = iDQ[0];
@@ -294,6 +360,11 @@ void FOC_with_vecocity_control(REAL theta_d_elec,
     PID_iQ->Fbk = iDQ[1];
     PID_iQ->Ref = cmd_iDQ[1];
     PID_iQ->calc(PID_iQ);
+
+    /* 更新依赖于dq轴电流的物理量 */
+    REAL Tem     = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * (MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * iDQ[0]) * iDQ[1];     // 转矩 For luenberger position observer for HFSI
+    REAL cmd_Tem = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * (MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * cmd_iDQ[0]) * cmd_iDQ[1];
+    MOTOR.KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * iDQ[0];
 
     /* 电流环前馈DQ轴解耦 */
     REAL decoupled_d_axis_voltage;
@@ -329,8 +400,14 @@ void FOC_with_vecocity_control(REAL theta_d_elec,
     // (*CTRL).o->cmd_uAB[0+2] = MT2A((*CTRL).o->cmd_uDQ[0+2], (*CTRL).o->cmd_uDQ[1+2], (*CTRL).s->cosT2, (*CTRL).s->sinT2);
     // (*CTRL).o->cmd_uAB[1+2] = MT2B((*CTRL).o->cmd_uDQ[0+2], (*CTRL).o->cmd_uDQ[1+2], (*CTRL).s->cosT2, (*CTRL).s->sinT2);
 
+    
     /// 8. 补偿逆变器非线性
-    main_inverter_voltage_command(TRUE);
+    #if WHO_IS_USER == USER_WB
+        /* wubo:补偿逆变器非线性 */
+        wubo_inverter_Compensation( iAB );
+    #else 
+        main_inverter_voltage_command(TRUE);
+    #endif
 }
 #if PC_SIMULATION == TRUE
 void Generator(){
@@ -378,24 +455,24 @@ double angle_diff(double a, double b) {
 }
 
 void _user_virtual_ENC(){
-    if (fabs(debug.Overwrite_Current_Frequency) > 0)
+    if (fabs((*debug).Overwrite_Current_Frequency) > 0)
         {
-            debug.Overwrite_theta_d += CL_TS * debug.Overwrite_Current_Frequency * 2 * M_PI;
-            if (debug.Overwrite_theta_d > M_PI)  debug.Overwrite_theta_d -= 2 * M_PI;
-            if (debug.Overwrite_theta_d < -M_PI) debug.Overwrite_theta_d += 2 * M_PI;
+            (*debug).Overwrite_theta_d += CL_TS * (*debug).Overwrite_Current_Frequency * 2 * M_PI;
+            if ((*debug).Overwrite_theta_d > M_PI)  (*debug).Overwrite_theta_d -= 2 * M_PI;
+            if ((*debug).Overwrite_theta_d < -M_PI) (*debug).Overwrite_theta_d += 2 * M_PI;
         }
         else
         {
-            debug.Overwrite_theta_d = 0.0;
+            (*debug).Overwrite_theta_d = 0.0;
         }
-    (*CTRL).s->cosT = cos(debug.Overwrite_theta_d);
-    (*CTRL).s->sinT = sin(debug.Overwrite_theta_d);
+    (*CTRL).s->cosT = cos((*debug).Overwrite_theta_d);
+    (*CTRL).s->sinT = sin((*debug).Overwrite_theta_d);
     (*CTRL).i->iDQ[0] = AB2M((*CTRL).i->iAB[0], (*CTRL).i->iAB[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
     (*CTRL).i->iDQ[1] = AB2T((*CTRL).i->iAB[0], (*CTRL).i->iAB[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
 
     /* 直接给定电流环command，速度环的command由程序给出 */
-    (*CTRL).i->cmd_iDQ[0] = debug.set_id_command; 
-    (*CTRL).i->cmd_iDQ[1] = debug.set_iq_command;
+    (*CTRL).i->cmd_iDQ[0] = (*debug).set_id_command; 
+    (*CTRL).i->cmd_iDQ[1] = (*debug).set_iq_command;
     PID_iD->Fbk = (*CTRL).i->iDQ[0];
     PID_iD->Ref = (*CTRL).i->cmd_iDQ[0];
     PID_iD->calc(PID_iD);
@@ -453,8 +530,8 @@ void _user_onlyFOC(){
         PID_iD->Ref = set_iq_cmd; // 故意反的
     #endif
     #endif
-    (*CTRL).i->cmd_iDQ[0] = debug.set_id_command; 
-    (*CTRL).i->cmd_iDQ[1] = debug.set_iq_command;
+    (*CTRL).i->cmd_iDQ[0] = (*debug).set_id_command; 
+    (*CTRL).i->cmd_iDQ[1] = (*debug).set_iq_command;
     PID_iD->Fbk = (*CTRL).i->iDQ[0];
     PID_iD->Ref = (*CTRL).i->cmd_iDQ[0];
     PID_iD->calc(PID_iD);
@@ -488,17 +565,26 @@ void _user_onlyFOC(){
 
     (*CTRL).o->cmd_uAB_to_inverter[0] = (*CTRL).o->cmd_uAB[0];
     (*CTRL).o->cmd_uAB_to_inverter[1] = (*CTRL).o->cmd_uAB[1];
-}
 
+    /// 8. 补偿逆变器非线性
+    #if WHO_IS_USER == USER_WB
+        /* wubo:补偿逆变器非线性 */
+        wubo_inverter_Compensation( (*CTRL).i->iAB );
+    #elif WHO_IS_USER != USER_WB
+        main_inverter_voltage_command(TRUE);
+    #endif
+}
+#if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
 void _user_pmsm_observer(void){
 
     /// 3. 调用观测器：估计的电气转子位置和电气转子转速反馈
     // observer_marino2005();
-    if (debug.SENSORLESS_CONTROL == TRUE){ // （无感）
+    if ((*debug).SENSORLESS_CONTROL == TRUE){ // （无感）
         (*CTRL).i->varOmega     = CTRL->motor->npp_inv * PMSM_ELECTRICAL_SPEED_FEEDBACK;    // OBSV.harnefors.omg_elec;
         (*CTRL).i->theta_d_elec = CTRL->motor->npp_inv * PMSM_ELECTRICAL_POSITION_FEEDBACK; // OBSV.harnefors.theta_d;
     }
 }
+#endif
 
 #if PC_SIMULATION
     void _user_time_varying_parameters(){
@@ -519,13 +605,13 @@ void _user_pmsm_observer(void){
 
     void cmd_fast_speed_reversal(REAL timebase, REAL instant, REAL interval, REAL rpm_cmd){
         if(timebase > instant+2*interval){
-            debug.set_rpm_speed_command = 1*1500 + rpm_cmd;
+            (*debug).set_rpm_speed_command = 1*1500 + rpm_cmd;
         }else if(timebase > instant+interval){
-            debug.set_rpm_speed_command = 1*1500 + -rpm_cmd;
+            (*debug).set_rpm_speed_command = 1*1500 + -rpm_cmd;
         }else if(timebase > instant){
-            debug.set_rpm_speed_command = 1*1500 + rpm_cmd;
+            (*debug).set_rpm_speed_command = 1*1500 + rpm_cmd;
         }else{
-            debug.set_rpm_speed_command = 20; // default initial command
+            (*debug).set_rpm_speed_command = 20; // default initial command
         }
     }
 
@@ -644,10 +730,10 @@ void _user_pmsm_observer(void){
 #endif
 
 REAL _user_load_model(){
-    static double Tload = 0.0;
+    static REAL Tload = 0.0;
     // static int load_state = 0;
-    // static double dc_part = LOAD_TORQUE;
-    // static double viscous_part = 0.0; // 这个变量去到Config文件里面了
+    // static REAL dc_part = LOAD_TORQUE;
+    // static REAL viscous_part = 0.0; // 这个变量去到Config文件里面了
     // viscous_part = VISCOUS_COEFF*ACM.rpm*RPM_2_ELEC_RAD_PER_SEC;
     // Tload = dc_part + viscous_part;
     if(CTRL_1.timebase > 0.5){
@@ -805,18 +891,24 @@ void main_inverter_voltage_command(int bool_use_cmd_iAB){
         INV.ube_comp = ualbe_dist[1];
     }
     else if (G.FLAG_INVERTER_NONLINEARITY_COMPENSATION == 1)
-    {
+    {   
+        #if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
         /* 梯形波自适应 */
         Modified_ParkSul_Compensation();
         (*CTRL).o->cmd_uAB_to_inverter[0] = (*CTRL).o->cmd_uAB[0] + INV.ual_comp;
         (*CTRL).o->cmd_uAB_to_inverter[1] = (*CTRL).o->cmd_uAB[1] + INV.ube_comp;
+
+        #endif
     }
     else if (G.FLAG_INVERTER_NONLINEARITY_COMPENSATION == 5)
-    {
+    {   
+        #if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
         /* Sigmoid自适应 */
         Online_PAA_Based_Compensation();
         (*CTRL).o->cmd_uAB_to_inverter[0] = (*CTRL).o->cmd_uAB[0] + INV.ual_comp;
         (*CTRL).o->cmd_uAB_to_inverter[1] = (*CTRL).o->cmd_uAB[1] + INV.ube_comp;
+
+        #endif
     }
 }
 

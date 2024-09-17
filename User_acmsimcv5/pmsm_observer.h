@@ -8,12 +8,12 @@
         #define SELF_COMM_INVERTER FALSE
         #define TUNING_CURRENT_SCALE_FACTOR_INIT FALSE2
     #else
-        #define ENABLE_COMMISSIONING TRUE /*Experiment*/
+        #define ENABLE_COMMISSIONING FALSE /*Experiment*/
         #define SELF_COMM_INVERTER FALSE
         #define TUNING_CURRENT_SCALE_FACTOR_INIT FALSE
         /*As we use (*CTRL).o->iab_cmd for look up, now dead-time compensation during ENABLE_COMMISSIONING is not active*/
     #endif
-
+#if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
     /* Select Algorithm 2*/
         #define ALG_NSOAF 1
         #define ALG_Park_Sul 2
@@ -23,6 +23,7 @@
         #define ALG_Farza_2009 6
         #define ALG_Harnefors_2006 7
         #define ALG_ESOAF 10
+
 
     // #define SELECT_ALGORITHM ALG_ESOAF
     #define SELECT_ALGORITHM ALG_NSOAF
@@ -122,6 +123,7 @@
         #define CJH_EEMF_K2 (CJH_EEMF_K1*CJH_EEMF_K1*0.25) // see my TCST paper@(18)
         #define CJH_EEMF_GAMMA_OMEGA (5e6)
 
+#endif
     /* Harnefors 2006 */
 
 
@@ -372,6 +374,7 @@ struct ObserverForExperiment{
 };
 extern struct ObserverForExperiment OBSV;
 
+#if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
 
 void init_QiaoXia2013();
 void init_ChiXu2009();
@@ -397,6 +400,6 @@ void init_pmsm_observers();
     #define IDQ_C(X)   OBSV.harnefors.is_dq_curr[X]
     #define IDQ_P(X)   OBSV.harnefors.is_dq_prev[X]
     #define PIDQ(X)    OBSV.harnefors.pis_dq[X]
-
+#endif
 
 #endif

@@ -57,6 +57,7 @@ int Comb(const int n, const int m)
  * @param BezierController The Bezier controller
  * @return The x-coordinate on the Bezier curve
  */
+//inline
 REAL bezier_x(const REAL *t, const BezierController *BzierController)
 {
     int i;
@@ -74,6 +75,7 @@ REAL bezier_x(const REAL *t, const BezierController *BzierController)
  * @param BezierController The Bezier controller
  * @return The y-coordinate on the Bezier curve
  */
+//inline
 REAL bezier_y(const REAL *t, const BezierController *BzierController)
 {
     int i;
@@ -93,6 +95,7 @@ REAL bezier_y(const REAL *t, const BezierController *BzierController)
  * @param params A pointer to the FindTParams struct containing the BezierController and target_x.
  * @return The difference between the x-coordinate of the Bezier curve point and the target x-coordinate.
  */
+//inline
 REAL bezier_x_diff(REAL t, void *params)
 {
     FindTParams *p = (FindTParams *)params;
@@ -214,10 +217,9 @@ void set_points(BezierController *BzierController)
  * @param BziController The Bezier controller
  */
 
-void control_output(st_pid_regulator *r, BezierController *BziController)
-{
+void control_output(st_pid_regulator *r, BezierController *BziController){
     r->Err = r->Ref - r->Fbk;
-    REAL error = r->Err;
+    REAL error = r->Err * MECH_RAD_PER_SEC_2_RPM;
     // #if PC_SIMULATION printf("error: %lf\n", error); #endif
     if (fabsf(error) > BziController->points[BziController->order].x)
     {
