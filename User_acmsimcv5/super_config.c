@@ -35,7 +35,7 @@ void init_d_sim() {
 
     d_sim.user.verbose = TRUE;
     d_sim.user.who_is_user = 102209;
-    d_sim.user.mode_select_synchronous_motor = 4;
+    d_sim.user.mode_select_synchronous_motor = 3;
     d_sim.user.mode_select_induction_motor = 32;
     d_sim.user.bezier_NUMBER_OF_STEPS = 5000;
     d_sim.user.bezier_order = 4;

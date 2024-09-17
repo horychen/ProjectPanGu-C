@@ -1,7 +1,7 @@
 // user_defined_functions.c
 #include <ACMSim.h>
 
-REAL global_id_ampl = 10;
+REAL global_id_ampl = 1;
 REAL global_id_freq = 10;
 
 void overwrite_d_sim(){
@@ -173,7 +173,7 @@ void _user_commands(){
    #endif
 }
 
-void main_switch(long mode_select){
+int main_switch(long mode_select){
     static long mode_select_last = 0;
     static int mode_initialized = FALSE;
     #if PC_SIMULATION == FALSE
@@ -195,9 +195,7 @@ void main_switch(long mode_select){
             (*CTRL).svgen1.Tb = 0.5;
             (*CTRL).svgen1.Tc = 0.5;
         }
-        #if PC_SIMULATION==FALSE
-            void test_pwm_output();
-        #endif
+        return 5; // set Axis->Select_exp_operation
         break;
     case MODE_SELECT_VOLTAGE_OPEN_LOOP: // 11
         (*CTRL).o->cmd_uAB_to_inverter[0] = (*debug).vvvf_voltage * cos((*debug).vvvf_frequency*2*M_PI* CTRL->timebase);
@@ -296,6 +294,7 @@ void main_switch(long mode_select){
         (*debug).error = 999;
         break;
     }
+    return 0;
 }
 
 REAL Veclocity_Controller(REAL cmd_varOmega, REAL varOmega){

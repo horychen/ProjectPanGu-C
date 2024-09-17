@@ -58,6 +58,7 @@ void InitEQepGpio()
 volatile struct EQEP_REGS *eQEP[] =
 { &EQep1Regs,
   &EQep2Regs,
+  &EQep3Regs,
 };
 void InitEQep1Gpio(void)
 {

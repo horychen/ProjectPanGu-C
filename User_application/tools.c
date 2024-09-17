@@ -698,6 +698,8 @@ void cla_test_codes(){
 
 REAL wubo_debug[4];
 
+#if ENCODER_TYPE != INCREMENTAL_ENCODER_QEP
+
 void measurement_position_count_axisCnt0(){
     #if (ENCODER_TYPE == ABSOLUTE_ENCODER_SCI_SHANK)
             position_count_SCI_fromCPU2 = position_count_SCI_shank_fromCPU2;
@@ -721,7 +723,6 @@ void measurement_position_count_axisCnt1(){
         CTRL->enc->encoder_abs_cnt = -( (int32)position_count_SCI_fromCPU2 - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis );
         // dq变化中，d轴理论上指向永磁体的北极，
 }
-
 
 void measurement_enc(){
     if (!bool_use_SCI_encoder){
@@ -809,6 +810,7 @@ void measurement_enc(){
 
     // CTRL->enc->rpm = PostionSpeedMeasurement_MovingAvergage(QPOSCNT, CTRL->enc);
 }
+#endif
 
 
 
@@ -1263,9 +1265,11 @@ void ENABLE_PWM_OUTPUT(int positionLoopType, int use_first_set_three_phase)
     if (use_first_set_three_phase == 1)
     {
         DSP_PWM_ENABLE
+        DSP_2PWM_DISABLE
     } 
     else if (use_first_set_three_phase == 2)
     {
+        DSP_PWM_DISABLE
         DSP_2PWM_ENABLE
     } 
     else if (use_first_set_three_phase == -1)
@@ -1273,47 +1277,52 @@ void ENABLE_PWM_OUTPUT(int positionLoopType, int use_first_set_three_phase)
         DSP_PWM_ENABLE
         DSP_2PWM_ENABLE
     }
+#if WHO_IS_USER == USER_YZZ
 
     if (FE.htz.u_offset[0] > 0.1)
     {
         FE.htz.u_offset[0] = 0;
     }
+#endif
     // DSP中控制器的时间
     (*CTRL).timebase_counter += 1;
     (*CTRL).timebase = CL_TS * (*CTRL).timebase_counter; //(*CTRL).timebase += CL_TS; // 2048 = float/REAL max
 
+#if WHO_IS_USER != USER_XM
     // 根据指令，产生控制输出（电压）
-                                                                //(*CTRL).s->Motor_or_Gnerator = sign((*CTRL).i->cmd_iDQ[1]) == sign(CTRL->enc->rpm); // sign((*CTRL).i->cmd_iDQ[1]) != sign((*CTRL).i->cmd_speed_rpm))
-        runtime_command_and_tuning(Axis->Select_exp_operation);
-        // 0x03 is shank
-        //    position_count_CAN_fromCPU2 = position_count_CAN_ID0x03_fromCPU2;
-        // 0x01 is hip
-        // position_count_CAN_fromCPU2 = position_count_CAN_ID0x01_fromCPU2;
+                                                            //(*CTRL).s->Motor_or_Gnerator = sign((*CTRL).i->cmd_iDQ[1]) == sign(CTRL->enc->rpm); // sign((*CTRL).i->cmd_iDQ[1]) != sign((*CTRL).i->cmd_speed_rpm))
+    runtime_command_and_tuning(Axis->Select_exp_operation);
+    // 0x03 is shank
+    //    position_count_CAN_fromCPU2 = position_count_CAN_ID0x03_fromCPU2;
+    // 0x01 is hip
+    // position_count_CAN_fromCPU2 = position_count_CAN_ID0x01_fromCPU2;
 
-        if (positionLoopType == 0){
-            // do nothing
-        }
-        else{
-            // do position loop
-            Axis->Set_manual_rpm = call_position_loop_controller(positionLoopType);
-        }
+    if (positionLoopType == 0){
+        // do nothing
+    }
+    else{
+        // do position loop
+        Axis->Set_manual_rpm = call_position_loop_controller(positionLoopType);
+    }
 
-        if (flag_RPM_wave == 1)
+    if (flag_RPM_wave == 1)
+    {
+        Axis->Set_manual_rpm = (*CTRL).timebase * 20;
+        if ( (*CTRL).timebase * 20 > 400)
         {
-            Axis->Set_manual_rpm = (*CTRL).timebase * 20;
-            if ( (*CTRL).timebase * 20 > 400)
-            {
-                Axis->Set_manual_rpm = 400;
-            }
+            Axis->Set_manual_rpm = 400;
         }
-        if(IPCRtoLFlagBusy(IPC_FLAG8) == 1){
-            iq_command_from_PC = Read.current_cmd_from_PC;
-            IPCRtoLFlagAcknowledge(IPC_FLAG8);
-        }
-        if(run_enable_from_PC == false){
-            iq_command_from_PC = 0.0;
-        }
-        main_switch(debug.mode_select);
+    }
+    //        if(IPCRtoLFlagBusy(IPC_FLAG8) == 1){
+    //            iq_command_from_PC = Read.current_cmd_from_PC;
+    //            IPCRtoLFlagAcknowledge(IPC_FLAG8);
+    //        }
+    //        if(run_enable_from_PC == false){
+    //            iq_command_from_PC = 0.0;
+    //        }
+#endif
+
+    Axis->Select_exp_operation = main_switch(debug->mode_select);
 
     //(*CTRL).o->cmd_uAB_to_inverter[0]
 

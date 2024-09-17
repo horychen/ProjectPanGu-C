@@ -55,7 +55,7 @@ int bool_test_dac_sinusoidal = FALSE;
 
 
 void write_DAC_buffer(){
-    if(debug.use_first_set_three_phase==2){
+    if(use_first_set_three_phase==2){
         Axis4DAC = &Axis_2;
     }else{
         Axis4DAC = &Axis_1;
@@ -76,6 +76,7 @@ void write_DAC_buffer(){
         (*Axis4DAC).dac_watch[7] = (*CTRL).i->iAB[1]*0.25;
         (*Axis4DAC).dac_watch[8] = (*CTRL).o->cmd_uAB[0]*0.125; // +-12V -> 0-3V
         (*Axis4DAC).dac_watch[9] = (*CTRL).o->cmd_uAB[1]*0.125;
+#if WHO_IS_USER == USER_YZZ
         (*Axis4DAC).dac_watch[10] = FE.htz.psi_2_ampl*0.25;
         (*Axis4DAC).dac_watch[11] = FE.htz.psi_2_ampl_lpf*0.25;
         (*Axis4DAC).dac_watch[12] = FE.htz.psi_2[0]*0.25;
@@ -83,7 +84,7 @@ void write_DAC_buffer(){
         (*Axis4DAC).dac_watch[14] = FE.htz.theta_d*0.1;
         (*Axis4DAC).dac_watch[15] = FE.htz.u_offset[0]*2;
         (*Axis4DAC).dac_watch[16] = FE.htz.u_offset[1]*2;
-
+#endif
         (*Axis4DAC).dac_watch[17] = (*CTRL).svgen2.Ta;
         (*Axis4DAC).dac_watch[18] = (*CTRL).svgen2.Tb;
         (*Axis4DAC).dac_watch[19] = (*CTRL).svgen2.Tc;
@@ -133,11 +134,12 @@ void write_DAC_buffer(){
         (*Axis4DAC).dac_watch[31] = (*CTRL).i->cmd_iDQ[1]*0.1;
         (*Axis4DAC).dac_watch[32] = yk;
         (*Axis4DAC).dac_watch[33] = uk;
+#if WHO_IS_USER == USER_YZZ
         (*Axis4DAC).dac_watch[34] = FE.htz.sat_min_time[0]*100;
         (*Axis4DAC).dac_watch[35] = FE.htz.sat_min_time[1]*100;
         (*Axis4DAC).dac_watch[36] = vvvf_voltage * cos(vvvf_frequency*2*M_PI*(*CTRL).timebase);
         (*Axis4DAC).dac_watch[39] = FE.htz.theta_d*0.1;
-
+#endif
         (*Axis4DAC).dac_watch[40] = (*CTRL).i->iDQ[0]*0.1;
         (*Axis4DAC).dac_watch[41] = (*CTRL).i->iDQ[1]*0.1;
 
@@ -148,9 +150,10 @@ void write_DAC_buffer(){
 
         (*Axis4DAC).dac_watch[49] = CTRL_1.i->varOmega  * MECH_RAD_PER_SEC_2_RPM *0.002;
         (*Axis4DAC).dac_watch[50] = CTRL_1.i->cmd_varOmega * MECH_RAD_PER_SEC_2_RPM *0.002;
+#if WHO_IS_USER == USER_YZZ
         (*Axis4DAC).dac_watch[51] = AFE_USED.theta_d *0.1;
         (*Axis4DAC).dac_watch[52] = (*Axis4DAC).used_theta_d_elec *0.1; // encoder angle
-
+#endif
         // ZJL IMPEDENCE CONTROL
         (*Axis4DAC).dac_watch[53] = HIP_PREV_ANGLE;
         (*Axis4DAC).dac_watch[54] = SHANK_PREV_ANGLE;
@@ -163,9 +166,10 @@ void write_DAC_buffer(){
 
         (*Axis4DAC).dac_watch[61] = INV.ual_comp *0.125;
         (*Axis4DAC).dac_watch[62] = INV.ube_comp *0.125;
+#if WHO_IS_USER == USER_YZZ
         (*Axis4DAC).dac_watch[63] = FE.no_sat.psi_2[0];
         (*Axis4DAC).dac_watch[64] = FE.no_sat.psi_2[1];
-
+#endif
 
         # if ENABLE_COMMISSIONING == TRUE
             (*Axis4DAC).dac_watch[61] = COMM.Js * 1e3;
@@ -243,6 +247,7 @@ void write_DAC_buffer(){
             (*Axis4DAC).dac_watch[7] = (*CTRL).i->iAB[1]*0.25;
             (*Axis4DAC).dac_watch[8] = (*CTRL).o->cmd_uAB[0]*0.125; // +-12V -> 0-3V
             (*Axis4DAC).dac_watch[9] = (*CTRL).o->cmd_uAB[1]*0.125;
+#if WHO_IS_USER == USER_YZZ
             (*Axis4DAC).dac_watch[10] = FE.htz.psi_2_ampl*0.25;
             (*Axis4DAC).dac_watch[11] = FE.htz.psi_2_ampl_lpf*0.25;
             (*Axis4DAC).dac_watch[12] = FE.htz.psi_2[0]*0.25;
@@ -250,7 +255,7 @@ void write_DAC_buffer(){
             (*Axis4DAC).dac_watch[14] = FE.htz.theta_d*0.1;
             (*Axis4DAC).dac_watch[15] = FE.htz.u_offset[0]*2;
             (*Axis4DAC).dac_watch[16] = FE.htz.u_offset[1]*2;
-
+#endif
             (*Axis4DAC).dac_watch[17] = (*CTRL).svgen2.Ta;
             (*Axis4DAC).dac_watch[18] = (*CTRL).svgen2.Tb;
             (*Axis4DAC).dac_watch[19] = (*CTRL).svgen2.Tc;
@@ -301,11 +306,12 @@ void write_DAC_buffer(){
             (*Axis4DAC).dac_watch[31] = (*CTRL).i->cmd_iDQ[1]*0.1;
             (*Axis4DAC).dac_watch[32] = yk;
             (*Axis4DAC).dac_watch[33] = uk;
+#if WHO_IS_USER == USER_YZZ
             (*Axis4DAC).dac_watch[34] = FE.htz.sat_min_time[0]*100;
             (*Axis4DAC).dac_watch[35] = FE.htz.sat_min_time[1]*100;
             (*Axis4DAC).dac_watch[36] = vvvf_voltage * cos(vvvf_frequency*2*M_PI*(*CTRL).timebase);
             (*Axis4DAC).dac_watch[39] = FE.htz.theta_d*0.1;
-
+#endif
             (*Axis4DAC).dac_watch[40] = (*CTRL).i->iDQ[0]*0.1;
             (*Axis4DAC).dac_watch[41] = (*CTRL).i->iDQ[1]*0.1;
 
@@ -317,7 +323,10 @@ void write_DAC_buffer(){
             (*Axis4DAC).dac_watch[49] = (*CTRL).i->cmd_varOmega  * MECH_RAD_PER_SEC_2_RPM *0.002;
             //(*Axis4DAC).dac_watch[50] = nsoaf.xOmg * ELEC_RAD_PER_SEC_2_RPM *0.002;
             (*Axis4DAC).dac_watch[50] = (*CTRL).i->varOmega * MECH_RAD_PER_SEC_2_RPM *0.002;
+#if WHO_IS_USER == USER_YZZ
             (*Axis4DAC).dac_watch[51] = AFE_USED.theta_d *0.1;
+
+#endif
             (*Axis4DAC).dac_watch[52] = (*Axis4DAC).used_theta_d_elec *0.1;
 
             // ZJL IMPEDENCE CONTROL
