@@ -1,6 +1,7 @@
 #include "ACMSim.h"
 
 #define INCREMENTAL_PID TRUE
+#define CUT_OFF_KI_WHEN_SATURATION FALSE
 #if INCREMENTAL_PID
     void PID_calc(st_pid_regulator *r){
 
@@ -17,6 +18,8 @@
         r->ErrPrev = r->Err; 
         r->OutPrev = r->Out;
     }
+#elif CUT_OFF_KI_WHEN_SATURATION
+
 #else
     void PID_calc(st_pid_regulator *r){
         #define DYNAMIC_CLAPMING TRUE
@@ -74,13 +77,23 @@ void ACMSIMC_PIDTuner(){
     PID_iQ->Kp  = d_sim.CL.SERIES_KP_Q_AXIS;
     PID_Speed->Kp = d_sim.VL.SERIES_KP;
 
-    PID_iD->Ki_CODE  = d_sim.CL.SERIES_KI_D_AXIS * d_sim.CL.SERIES_KP_D_AXIS * CL_TS;
-    PID_iQ->Ki_CODE  = d_sim.CL.SERIES_KI_Q_AXIS * d_sim.CL.SERIES_KP_Q_AXIS * CL_TS;
-    PID_Speed->Ki_CODE = d_sim.VL.SERIES_KI        * d_sim.VL.SERIES_KP        * VL_TS;
+    #if CURRENT_LOOP_KI_TIMES_TEN
+        PID_iD->Ki_CODE  = d_sim.CL.SERIES_KI_D_AXIS * d_sim.CL.SERIES_KP_D_AXIS * CL_TS * 10;
+        PID_iQ->Ki_CODE  = d_sim.CL.SERIES_KI_Q_AXIS * d_sim.CL.SERIES_KP_Q_AXIS * CL_TS * 10;
+    #else
+        PID_iD->Ki_CODE  = d_sim.CL.SERIES_KI_D_AXIS * d_sim.CL.SERIES_KP_D_AXIS * CL_TS;
+        PID_iQ->Ki_CODE  = d_sim.CL.SERIES_KI_Q_AXIS * d_sim.CL.SERIES_KP_Q_AXIS * CL_TS;
+    #endif
+
+    PID_Speed->Ki_CODE = d_sim.VL.SERIES_KI      * d_sim.VL.SERIES_KP        * VL_TS;
 
     PID_iD->OutLimit  = 0.57735 * d_sim.CL.LIMIT_DC_BUS_UTILIZATION * d_sim.init.Vdc;
     PID_iQ->OutLimit  = 0.57735 * d_sim.CL.LIMIT_DC_BUS_UTILIZATION * d_sim.init.Vdc;
     PID_Speed->OutLimit = d_sim.VL.LIMIT_OVERLOAD_FACTOR * d_sim.init.IN;
+
+    // see when codes run here
+    extern REAL wubo_debug_tools[10];
+    wubo_debug_tools[1] = 99;
 
     // pid2_ix.Kp = CURRENT_KP;
     // pid2_iy.Kp = CURRENT_KP;

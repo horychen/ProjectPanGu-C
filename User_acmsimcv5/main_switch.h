@@ -32,6 +32,7 @@
 #define MODE_SWEEPING_FREQUENCY              20
 #define MODE_SELECT_UDQ_GIVEN_TEST           30
 #define MODE_SELECT_GENERATOR                8
+#define MODE_SELECT_NB_MODE                  99
 
 
 /* change PI algorithm*/

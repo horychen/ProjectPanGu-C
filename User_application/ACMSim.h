@@ -64,6 +64,7 @@
 #include "Bezier.h"
 #include "regulator_speedInnerLoop.h"
 #include "inverter_Compensation.h"
+#include "pi_math.h"
 
 #define CURRENT_LOOP_KI_TIMES_TEN FALSE
 #define WUBO_ONLINE_TUNING FALSE
@@ -84,10 +85,10 @@ extern struct GlobalWatch watch;
 
 
 /* Declaration of Utility Function */
-int isNumber(double x);
-double sign(double x);
+int isNumber(REAL x);
+REAL sign(REAL x);
 inline REAL signf(REAL x) { return (x > 0) - (x < 0); }
-double fabs(double x);
+REAL fabs(REAL x);
 REAL _lpf(REAL x, REAL y_tminus1, REAL time_const_inv);
 REAL PostionSpeedMeasurement_MovingAvergage(int32 QPOSCNT, st_enc *p_enc);
 extern REAL one_over_six;

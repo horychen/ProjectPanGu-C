@@ -8,7 +8,6 @@ File name:       PI.H
 
 #include "typedef.h"
 
-
 typedef struct {  REAL  Ref;   			// Input: reference set-point
 				  REAL  Fbk;   			// Input: feedback
 				  REAL  Out;   			// Output: controller output 
@@ -43,9 +42,9 @@ Default initalisation values for the PI_GRANDO objects
                            1.0 	\
               			  }
 
-PI_CONTROLLER pi_id;
-PI_CONTROLLER pi_iq;
-PI_CONTROLLER pi_spd;
+extern PI_CONTROLLER pi_id;
+extern PI_CONTROLLER pi_iq;
+extern PI_CONTROLLER pi_spd;
 
 /*------------------------------------------------------------------------------
 	PI_GRANDO Macro Definition
