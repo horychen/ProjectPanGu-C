@@ -1,8 +1,20 @@
 // user_defined_functions.c
 #include <ACMSim.h>
 
-REAL global_id_ampl = 1;
-REAL global_id_freq = 10;
+REAL global_id_ampl = 1.5;
+REAL global_id_freq = 0.0;
+
+REAL global_id_freq_ampl = 1;
+REAL global_id_freq_freq_ampl = 1;
+
+REAL global_id_freq_freq = 0.1;
+REAL global_id_freq_freq_freq = 4.99999987e-06;
+
+REAL local_id_commmand = 0.0;
+
+REAL tmp = 0.0;
+REAL tmp_id_freq = 0.0;
+REAL tmp_id_freq_freq = 0.0;
 
 void overwrite_d_sim(){
     // for now 20240902 do nothing
@@ -47,7 +59,7 @@ void _user_init(){
         (*debug).Overwrite_theta_d           = 0.0;
 
         (*debug).set_id_command              = 1;
-        (*debug).set_iq_command              = 1;
+        (*debug).set_iq_command              = 0;
         (*debug).set_rpm_speed_command       = 50;
         (*debug).set_deg_position_command    = 0.0;
         (*debug).vvvf_voltage = 3.0;
@@ -210,8 +222,13 @@ int main_switch(long mode_select){
         break;
     case MODE_SELECT_FOC: // 3
         #if WHO_IS_USER == USER_WB
+            // (*debug).set_iq_command = 0;
             (*debug).set_id_command = global_id_ampl * sin(2 * M_PI * global_id_freq * (*CTRL).timebase);
         #endif
+        tmp = global_id_freq * (*CTRL).timebase;
+        tmp -= (long)tmp;
+        (*debug).set_id_command = global_id_ampl * sinf(2.0 * M_PI * tmp);
+        local_id_commmand = global_id_ampl * sinf(2.0 * M_PI * tmp);
         _user_onlyFOC();
         break;
     case MODE_SELECT_FOC_SENSORLESS : //31
@@ -287,6 +304,24 @@ int main_switch(long mode_select){
             // _user_wubo_controller();
             #endif
             break;
+    case MODE_SELECT_NB_MODE: // 99
+        /* You can make sound */
+        tmp_id_freq_freq = global_id_freq_freq_freq * (*CTRL).timebase;
+        tmp_id_freq_freq -= (long)tmp_id_freq_freq;
+        global_id_freq_freq = global_id_freq_freq_ampl * sinf (2.0 * M_PI * tmp_id_freq_freq);
+
+
+        tmp_id_freq = global_id_freq_freq * (*CTRL).timebase;
+        tmp_id_freq -= (long)tmp_id_freq;
+        global_id_freq = global_id_freq_ampl * sinf (2.0 * M_PI * tmp_id_freq);
+
+        tmp = global_id_freq * (*CTRL).timebase;
+        tmp -= (long)tmp;
+        // (*debug).set_id_command = global_id_ampl * sinf(2.0 * M_PI * global_id_freq * (*CTRL).timebase);
+        // local_id_commmand = global_id_ampl * sinf(2.0 * M_PI * global_id_freq * (*CTRL).timebase);
+        (*debug).set_id_command = global_id_ampl * sinf(2.0 * M_PI * tmp);
+        local_id_commmand = global_id_ampl * sinf(2.0 * M_PI * tmp);
+        _user_onlyFOC();
     default:
         // 电压指令(*CTRL).o->cmd_uAB[0/1]通过逆变器，产生实际电压ACM.ual, ACM.ube（变换到dq系下得到ACM.ud，ACM.uq）
         // voltage_commands_to_pwm(); // this function only exists in DSP codes
@@ -529,7 +564,7 @@ void _user_onlyFOC(){
         PID_iD->Ref = set_iq_cmd; // 故意反的
     #endif
     #endif
-    (*CTRL).i->cmd_iDQ[0] = (*debug).set_id_command; 
+    (*CTRL).i->cmd_iDQ[0] = (*debug).set_id_command;
     (*CTRL).i->cmd_iDQ[1] = (*debug).set_iq_command;
     PID_iD->Fbk = (*CTRL).i->iDQ[0];
     PID_iD->Ref = (*CTRL).i->cmd_iDQ[0];

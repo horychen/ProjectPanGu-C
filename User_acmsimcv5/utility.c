@@ -4,18 +4,19 @@ extern REAL sig_a3;
 
 /* 功能函数 */
 // 符号函数
-// #if PC_SIMULATION == TRUE //* utility的函数定义要小心，由于仿真和emy-c的ACMSim.h的内容不同，可能会导致编译错误
-double sign(double x){
-    return (x > 0) - (x < 0);
-}
-// #endif
+//* utility的函数定义要小心，由于仿真和emy-c的ACMSim.h的内容不同，可能会导致编译错误
 
-int32 sign_integer(int32 x){
+REAL sign(REAL x){
+   return (x > 0) - (x < 0);
+}
+
+
+REAL sign_integer(int32 x){
     return (x > 0) - (x < 0);
 }
 
 // 判断是否为有效浮点数
-int isNumber(double x){
+int isNumber(REAL x){
     // This looks like it should always be TRUE,
     // but it's FALSE if x is an NaN (1.#QNAN0).
     return (x == x);
@@ -32,6 +33,7 @@ REAL _hpf(REAL x, REAL *lpf_y, REAL tau_inv){
     return x - *lpf_y;
 }
 
+#if ENCODER_TYPE == INCREMENTAL_ENCODER_QEP
 // #define MA_SEQUENCE_LENGTH         20 // 20 * CL_TS = window of moving average in seconds
 // #define MA_SEQUENCE_LENGTH_INVERSE 0.05
 // REAL ENC.MA_qepPosCnt[MA_SEQUENCE_LENGTH];
@@ -45,18 +47,18 @@ REAL PostionSpeedMeasurement_MovingAvergage(int32 QPOSCNT, st_enc *p_enc){
 
     /* 获取绝对位置 [cnt] 用于转子位置解算 */
     enc.encoder_abs_cnt_previous = enc.encoder_abs_cnt;
-    enc.encoder_abs_cnt = (int32)QPOSCNT + enc.OffsetCountBetweenIndexAndUPhaseAxis;
+    enc.encoder_abs_cnt = positive_current_QPOSCNT_counting_down * ( (int32)QPOSCNT - enc.OffsetCountBetweenIndexAndUPhaseAxis);
     if (enc.encoder_abs_cnt > SYSTEM_QEP_QPOSMAX_PLUS_1){
         enc.encoder_abs_cnt -= SYSTEM_QEP_QPOSMAX_PLUS_1;
     }
     if (enc.encoder_abs_cnt < 0){
         enc.encoder_abs_cnt += SYSTEM_QEP_QPOSMAX_PLUS_1;
     }
-    enc.theta_d__state = enc.encoder_abs_cnt * CNT_2_ELEC_RAD;
-    if (enc.theta_d__state > M_PI)
-        enc.theta_d__state -= 2 * M_PI;
-    if (enc.theta_d__state < -M_PI)
-        enc.theta_d__state += 2 * M_PI;
+    enc.theta_d_elec = enc.encoder_abs_cnt * CNT_2_ELEC_RAD;
+    //    if (enc.theta_d__state > M_PI)
+    //        enc.theta_d__state -= 2 * M_PI;
+    //    if (enc.theta_d__state < -M_PI)
+    //        enc.theta_d__state += 2 * M_PI;
 
     /* Part Two: Moving Average with a update period of CL_TS */
 
@@ -76,16 +78,13 @@ REAL PostionSpeedMeasurement_MovingAvergage(int32 QPOSCNT, st_enc *p_enc){
         enc.cursor = 0; // Reset enc.cursor
     }
     enc.rpm = enc.sum_qepPosCnt * SYSTEM_QEP_REV_PER_PULSE * 60 * MA_SEQUENCE_LENGTH_INVERSE * CL_TS_INVERSE;
-    enc.varOmega = enc.rpm * RPM_2_ELEC_RAD_PER_SEC; // 机械转速（单位：RPM）-> 电气角速度（单位：elec.rad/s)
-    enc.theta_d_elec = enc.theta_d__state;
+    enc.varOmega = enc.rpm * RPM_2_MECH_RAD_PER_SEC; // 机械转速（单位：RPM）-> 电气角速度（单位：elec.rad/s)
 
-    // Output of the moving average is speed. (*CTRL).i->rpm = how many counts / time elapsed
-    return enc.rpm;
-    // return ENC.sum_qepPosCnt*SYSTEM_QEP_REV_PER_PULSE * 60 / (MA_SEQUENCE_LENGTH*CL_TS);
-    // return ENC.sum_qepPosCnt*SYSTEM_QEP_REV_PER_PULSE * 6e4; // 6e4 = 60 / (MA_SEQUENCE_LENGTH*CL_TS)
-
+    return 0.0;
 #undef enc
 }
+
+#endif
 
 REAL difference_between_two_angles(REAL first, REAL second)
 {
@@ -186,6 +185,7 @@ REAL difference_between_two_angles(REAL first, REAL second)
         printf("\t[utility.c] Current series PI: Kp=%.3f, Ki=%.6f, limit=%.1f V\n", PID_iQ->Kp, d_sim.CL.SERIES_KI_Q_AXIS, PID_iQ->OutLimit);
         printf("\tPID_Speed.Kp = %f\n", PID_Speed->Kp);
         printf("\tPID_Speed.Ki_CODE = %f\n", PID_Speed->Ki_CODE);
+        printf("\tPID_Speed.KFB = %f\n", PID_Speed->KFB);
         printf("\tPID_iQ.Kp = %f\n", PID_iQ->Kp);
         printf("\tPID_iQ.Ki_CODE = %f\n", PID_iQ->Ki_CODE);
         printf("\tPID_iD.Kp = %f\n", PID_iD->Kp);

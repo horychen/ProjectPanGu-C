@@ -31,6 +31,7 @@
 #define MODE_SELECT_COMMISSIONING            9
 #define MODE_SWEEPING_FREQUENCY              20
 #define MODE_SELECT_GENERATOR                8
+#define MODE_SELECT_NB_MODE                  99
 
 struct DebugExperiment{
     long error;
