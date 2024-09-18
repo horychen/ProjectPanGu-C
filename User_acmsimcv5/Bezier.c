@@ -20,6 +20,21 @@ typedef struct
     REAL target_x;                           ///< Target x-coordinate value.
 } FindTParams;
 
+
+int CombTable[10][10] = {
+    {1},
+    {1, 1},
+    {1, 2, 1},
+    {1, 3, 3, 1},
+    {1, 4, 6, 4, 1},
+    {1, 5, 10, 10, 5, 1},
+    {1, 6, 15, 20, 15, 6, 1},
+    {1, 7, 21, 35, 35, 21, 7, 1},
+    {1, 8, 28, 56, 70, 56, 28, 8, 1},
+    {1, 9, 36, 84, 126, 126, 84, 36, 9, 1}};
+
+
+
 /**
  * @brief Calculates the binomial coefficient
  * @param n The total number of elements
@@ -28,6 +43,7 @@ typedef struct
  */
 int Comb(const int n, const int m)
 {
+    return CombTable[n][m];
     if (m == 0 || m == n)
         return 1;
     return Comb(n - 1, m) + Comb(n - 1, m - 1);
@@ -233,9 +249,10 @@ void control_output(st_pid_regulator *r, BezierController *BziController){
     // #if PC_SIMULATION printf("%.1f, %.1f\t", BziController.points[BziController.num_points].x, sign(error)); #endif
     // #if PC_SIMULATION printf("%.1f, %.1f, %.1f\t", r->Out, r->OutLimit, out); #endif
     // #if PC_SIMULATION printf("%.1f, %.1f, %.1f\n", r->Err, r->Ref, r->Fbk); #endif
-    r->ErrPrev = r->Err;
+    
     if (r->Out > r->OutLimit)
         r->Out = r->OutLimit;
     else if (r->Out < -r->OutLimit)
         r->Out = -r->OutLimit;
+    r->ErrPrev = r->Err;
 }

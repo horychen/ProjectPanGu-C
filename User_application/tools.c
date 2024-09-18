@@ -396,6 +396,13 @@ void main_loop() {
         #if NUMBER_OF_DSP_CORES == 1
             single_core_dac();
         #endif
+
+        //Bezier Controller
+        CTRL_1.s->Speed->Ref = CTRL_1.i->cmd_varOmega;
+        CTRL_1.s->Speed->Fbk = CTRL_1.i->varOmega;
+        (*debug).set_id_command = 0;
+        control_output(CTRL_1.s->Speed, &BzController);
+        (*debug).set_iq_command = CTRL_1.s->Speed->Out;
     }
 }
 

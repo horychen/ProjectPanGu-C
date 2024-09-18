@@ -103,6 +103,7 @@ void main(void){
     cla_test_codes();
 
     // 8. Main loop
+    
     main_loop();
 }
 
