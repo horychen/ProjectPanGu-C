@@ -1,17 +1,16 @@
 *.code-workspace
 .vscode/
 
+
 /Debug/
 /Release/
 /lib/
 /targetConfigs/
 /NewTargetConfiguration.ccxml
-
 /.ccsproject
 /.cproject
-/.project
-
 # /.gitignore
+/.project
 # /.settings
 
 Release/*

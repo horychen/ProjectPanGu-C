@@ -147,10 +147,6 @@ REAL difference_between_two_angles(REAL first, REAL second)
             }else{
                 printf("!!! Other tunner is Applied to the Speed Loop Control !!!\n");
             }
-            if CURRENT_LOOP_KI_TIMES_TEN
-                printf(">>> Current Loop Ki is 10 times larger <<<\n");
-            else
-                printf("!!! Current Loop Ki is NOT 10 times larger !!!\n");
         #endif
 
         if(d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation == TRUE){
@@ -168,7 +164,12 @@ REAL difference_between_two_angles(REAL first, REAL second)
         }else{
             printf("!!! Inverter Nonlinearity Compensation is NOT Applied !!!\n");
         }
-
+        if (d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation == TRUE)
+        {
+    #if PC_SIMULATION == TRUE
+            printf(">>> Voltages to Cuurent Regulation is Applied <<<\n");
+    #endif
+        }
         printf("\t[utility.c] Rreq = %f Ohm\n", (ACM.Rreq));
         printf("\t[utility.c] NUMBER_OF_STEPS = %d\t", (int)d_sim.sim.NUMBER_OF_STEPS);
         printf("MACHINE_SIMULATIONs_PER_SAMPLING_PERIOD = %d\n", d_sim.sim.MACHINE_SIMULATIONs_PER_SAMPLING_PERIOD);
@@ -185,7 +186,6 @@ REAL difference_between_two_angles(REAL first, REAL second)
         printf("\t[utility.c] Current series PI: Kp=%.3f, Ki=%.6f, limit=%.1f V\n", PID_iQ->Kp, d_sim.CL.SERIES_KI_Q_AXIS, PID_iQ->OutLimit);
         printf("\tPID_Speed.Kp = %f\n", PID_Speed->Kp);
         printf("\tPID_Speed.Ki_CODE = %f\n", PID_Speed->Ki_CODE);
-        printf("\tPID_Speed.KFB = %f\n", PID_Speed->KFB);
         printf("\tPID_iQ.Kp = %f\n", PID_iQ->Kp);
         printf("\tPID_iQ.Ki_CODE = %f\n", PID_iQ->Ki_CODE);
         printf("\tPID_iD.Kp = %f\n", PID_iD->Kp);

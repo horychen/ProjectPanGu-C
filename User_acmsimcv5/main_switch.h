@@ -110,7 +110,7 @@ void _user_pmsm_commands();
 void cmd_fast_speed_reversal(REAL timebase, REAL instant, REAL interval, REAL rpm_cmd);
 void cmd_slow_speed_reversal(REAL timebase, REAL instant, REAL interval, REAL rpm_cmd);
 
-void main_switch(long mode_select);
+int main_switch(long mode_select);
 void FOC_with_vecocity_control(REAL theta_d_elec,
          REAL varOmega,
          REAL cmd_varOmega,
