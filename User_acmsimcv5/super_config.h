@@ -3,7 +3,7 @@
 #define SUPER_CONFIG_H
 #include "typedef.h"
 
-#define WHO_IS_USER 102209 
+#define WHO_IS_USER 2023231060 
 
 typedef struct {
     long npp;
@@ -25,7 +25,7 @@ typedef struct {
 } ST_sim;
 
 typedef struct {
-    long delta;
+    REAL delta;
     REAL CLBW_HZ;
     BOOL bool_apply_decoupling_voltages_to_current_regulation;
     long VL_EXE_PER_CL_EXE;
