@@ -62,6 +62,8 @@ void _user_init(){
         (*debug).bool_apply_decoupling_voltages_to_current_regulation = d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation;
         (*debug).INVERTER_NONLINEARITY_COMPENSATION_INIT = d_sim.user.INVERTER_NONLINEARITY_COMPENSATION_METHOD;
 
+    }
+
     // (*debug).INVERTER_NONLINEARITY = 0;
     #if WHO_IS_USER == USER_YZZ
         (*debug).SENSORLESS_CONTROL      = 0;
@@ -90,7 +92,6 @@ void _user_init(){
         (*debug).CMD_SPEED_SINE_END_TIME                              = d_sim.user.CMD_SPEED_SINE_END_TIME;
         (*debug).CMD_SPEED_SINE_HZ_CEILING                            = d_sim.user.CMD_SPEED_SINE_HZ_CEILING;
     #endif
-    }
 }
 
 void _user_commands(){
@@ -172,7 +173,7 @@ void _user_commands(){
    #endif
 }
 
-void main_switch(long mode_select){
+int main_switch(long mode_select){
     static long mode_select_last = 0;
     static int mode_initialized = FALSE;
     #if PC_SIMULATION == FALSE
@@ -193,10 +194,8 @@ void main_switch(long mode_select){
             (*CTRL).svgen1.Ta = 0.5;
             (*CTRL).svgen1.Tb = 0.5;
             (*CTRL).svgen1.Tc = 0.5;
-            // TODO: apply to experimental voltage function
-            // TODO: apply to experimental voltage function
-            // TODO: apply to experimental voltage function
         }
+        return 5; // set Axis->Select_exp_operation
         break;
     case MODE_SELECT_VOLTAGE_OPEN_LOOP: // 11
         (*CTRL).o->cmd_uAB_to_inverter[0] = (*debug).vvvf_voltage * cos((*debug).vvvf_frequency*2*M_PI* CTRL->timebase);
@@ -295,6 +294,7 @@ void main_switch(long mode_select){
         (*debug).error = 999;
         break;
     }
+    return 0;
 }
 
 REAL Veclocity_Controller(REAL cmd_varOmega, REAL varOmega){

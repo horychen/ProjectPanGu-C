@@ -1,9 +1,6 @@
-#include <All_Definition.h>
-//TODO:这个变量需要删除
-/* For wubo debuger */
-REAL wubo_debug_tools[10] = {1,0,0,0,0,0,0,0,0,0};
+#include "All_Definition.h"
 st_axis Axis_1, *Axis;
-
+extern bool run_enable_from_PC;
 #if NUMBER_OF_AXES == 2 // ====为了同时运行两台电机，增加的另一份控制结构体
     st_axis Axis_2;
     #define get_Axis_CTRL_pointers \
@@ -86,6 +83,8 @@ void main(void){
     #endif
 
     // 4.4 Initialize algorithms
+    init_experiment();
+
     get_bezier_points(); // for testing Cury the leg trajectgory tracking
 
     init_d_sim();      // d_sim is used to initalize the machine
@@ -122,15 +121,19 @@ void main(void){
 
 void main_measurement(){
 
-    // read encoder counter data from absolute encoder
-    CTRL->enc->encoder_abs_cnt_previous = CTRL->enc->encoder_abs_cnt;
-    if (axisCnt == 0) measurement_position_count_axisCnt0(); 
-    if (axisCnt == 1) measurement_position_count_axisCnt1();
-    
-    // measure d-axis angle and then use a poor algorithm to calculate speed
-    measurement_enc();
-    CTRL->i->varOmega     = CTRL->enc->varOmega; // same as (*CTRL).i->varOmega = (*CTRL).enc->varOmega;
-    CTRL->i->theta_d_elec = CTRL->enc->theta_d_elec; // same as (*CTRL).i->theta_d_elec = (*CTRL).enc->theta_d_elec;
+    #if ENCODER_TYPE == INCREMENTAL_ENCODER_QEP
+        PostionSpeedMeasurement_MovingAvergage(EQep1Regs.QPOSCNT, CTRL->enc);
+    #else
+        // read encoder counter data from absolute encoder
+        CTRL->enc->encoder_abs_cnt_previous = CTRL->enc->encoder_abs_cnt;
+        if (axisCnt == 0) measurement_position_count_axisCnt0();
+        if (axisCnt == 1) measurement_position_count_axisCnt1();
+
+        // measure d-axis angle and then use a poor algorithm to calculate speed
+        measurement_enc();
+    #endif
+    CTRL->i->varOmega     = CTRL->enc->varOmega;
+    CTRL->i->theta_d_elec = CTRL->enc->theta_d_elec;
 
     // measure current
     if (axisCnt == 0) measurement_current_axisCnt0();
@@ -283,14 +286,22 @@ __interrupt void EPWM1ISR(void){
     #endif
     // read from CPU02
     read_count_from_cpu02_dsp_cores_2();
+    if(IPCRtoLFlagBusy(IPC_FLAG7) == 1){
+        run_enable_from_PC = Read.run_enable;
+        IPCRtoLFlagAcknowledge(IPC_FLAG7);
+    }
     // 对每一个CTRL都需要做一次的代码
     if (use_first_set_three_phase == -1){
         for (axisCnt = 0; axisCnt < NUMBER_OF_AXES; axisCnt++){
             get_Axis_CTRL_pointers //(axisCnt, Axis, CTRL);
+            if(axisCnt == 0){
+                write_RPM_to_cpu02_dsp_cores_2();
+            }
             PanGuMainISR();
         }
         axisCnt = 1; // 这里将axisCnt有什么用啊？因为axisCnt等于2你就会飞了，内存乱写
     }else if (use_first_set_three_phase == 1){
+        write_RPM_to_cpu02_dsp_cores_2();
         axisCnt = 0;
         get_Axis_CTRL_pointers //(axisCnt, Axis, CTRL);
         PanGuMainISR();

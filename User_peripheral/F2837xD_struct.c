@@ -36,8 +36,8 @@ volatile struct EPWM_REGS *EPWM[MAX_EPWM] =
        &EPwm7Regs, &EPwm8Regs, &EPwm9Regs,
        &EPwm10Regs, &EPwm11Regs, &EPwm12Regs };
 
-volatile struct EQEP_REGS *EQEP[MAX_EQEP] =
-{   0, &EQep1Regs, &EQep2Regs, &EQep3Regs };
+// volatile struct EQEP_REGS *EQEP[MAX_EQEP] =
+// {   0, &EQep1Regs, &EQep2Regs, &EQep3Regs };
 
 volatile struct I2C_REGS *I2C[MAX_I2C] =
 {   0, &I2caRegs };

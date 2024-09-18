@@ -29,7 +29,7 @@ REAL CpuTimer_Delta = 0;
 Uint32 CpuTimer_Before = 0;
 Uint32 CpuTimer_After = 0;
 #endif
-
+bool run_enable_from_PC = FALSE;
 int counter_missing_position_measurement = 0;
 int max_counter_missing_position_measurement = 0;
 
@@ -265,6 +265,7 @@ void init_spi() {
 
     DevCfgRegs.CPUSEL5.bit.SCI_A = 1; // assign sci-a to cpu2
     DevCfgRegs.CPUSEL5.bit.SCI_B = 1; // assign sci-b to cpu2
+    DevCfgRegs.CPUSEL5.bit.SCI_C = 1;
 
     DevCfgRegs.CPUSEL8.bit.CAN_A = 1; // assign can-a to cpu2
     DevCfgRegs.CPUSEL8.bit.CAN_B = 1; // assign can-b to cpu2
@@ -686,7 +687,8 @@ void cla_test_codes(){
 
 extern REAL wubo_debug_motor_enc_dirc[2];
 
-/* 读取编码器的位置 */
+#if ENCODER_TYPE != INCREMENTAL_ENCODER_QEP
+
 void measurement_position_count_axisCnt0(){
     #if (ENCODER_TYPE == ABSOLUTE_ENCODER_SCI_SHANK)
             position_count_SCI_fromCPU2 = position_count_SCI_shank_fromCPU2;
@@ -795,27 +797,21 @@ void measurement_enc(){
     //    if(ENCODER_TYPE == ABSOLUTE_ENCODER_CAN_ID0x03){
     //        QPOSCNT = position_count_CAN_ID0x03_fromCPU2;
     //    }
-    #if ENCODER_TYPE == INCREMENTAL_ENCODER_QEP
-        CTRL->enc->rpm = PostionSpeedMeasurement_MovingAvergage( (*EQEP)[1].QPOSCNT, CTRL->enc );
-    #endif
 }
+#endif
 
 void measurement_current_axisCnt0(){
     // LEM1
-    Axis->iuvw[0] = ((REAL)(AdcaResultRegs.ADCRESULT1) - Axis->adc_offset[1]) * Axis->adc_scale[1]; //
-    Axis->iuvw[1] = ((REAL)(AdcaResultRegs.ADCRESULT2) - Axis->adc_offset[2]) * Axis->adc_scale[2]; //
-    Axis->iuvw[2] = ((REAL)(AdcaResultRegs.ADCRESULT3) - Axis->adc_offset[3]) * Axis->adc_scale[3]; //
+    Axis->iuvw[PIN_ADCA_U] = ((REAL)(AdcaResultRegs.ADCRESULT1) - Axis->adc_offset[1]) * Axis->adc_scale[1]; //
+    Axis->iuvw[PIN_ADCA_V] = ((REAL)(AdcaResultRegs.ADCRESULT2) - Axis->adc_offset[2]) * Axis->adc_scale[2]; //
+    Axis->iuvw[PIN_ADCA_W] = ((REAL)(AdcaResultRegs.ADCRESULT3) - Axis->adc_offset[3]) * Axis->adc_scale[3]; //
 
     // 电流接口
     if (USE_3_CURRENT_SENSORS)
     {
-        // Axis->iabg[0] = UVW2A_AI(Axis->iuvw[0], Axis->iuvw[1], Axis->iuvw[2]);
-        // Axis->iabg[1] = UVW2B_AI(Axis->iuvw[0], Axis->iuvw[1], Axis->iuvw[2]);
-        // Axis->iabg[2] = UVW2G_AI(Axis->iuvw[0], Axis->iuvw[1], Axis->iuvw[2]);
-        Axis->iabg[0] = UVW2A_AI(Axis->iuvw[PIN_ADCA_U], Axis->iuvw[PIN_ADCA_V], Axis->iuvw[PIN_ADCA_W]);
-        Axis->iabg[1] = UVW2B_AI(Axis->iuvw[PIN_ADCA_U], Axis->iuvw[PIN_ADCA_V], Axis->iuvw[PIN_ADCA_W]);
-        Axis->iabg[2] = UVW2G_AI(Axis->iuvw[PIN_ADCA_U], Axis->iuvw[PIN_ADCA_V], Axis->iuvw[PIN_ADCA_W]);
-        
+        Axis->iabg[0] = UVW2A_AI(Axis->iuvw[0], Axis->iuvw[1], Axis->iuvw[2]);
+        Axis->iabg[1] = UVW2B_AI(Axis->iuvw[0], Axis->iuvw[1], Axis->iuvw[2]);
+        Axis->iabg[2] = UVW2G_AI(Axis->iuvw[0], Axis->iuvw[1], Axis->iuvw[2]);
     }
     else
     {
@@ -1264,6 +1260,21 @@ REAL RPM_wave_conunter = 0;
 REAL RPM_wave = 0;
 REAL flag_RPM_wave = 0;
 
+void test_pwm_output(){
+    if (axisCnt == 0)
+    {
+        EPwm1Regs.CMPA.bit.CMPA = (*CTRL).svgen1.Ta * 50000000 * CL_TS; // 0-5000，5000表示0%的占空比
+        EPwm2Regs.CMPA.bit.CMPA = (*CTRL).svgen1.Tb * 50000000 * CL_TS;
+        EPwm3Regs.CMPA.bit.CMPA = (*CTRL).svgen1.Tc * 50000000 * CL_TS;
+    }
+    if (axisCnt == 1)
+    {
+        EPwm4Regs.CMPA.bit.CMPA = (*CTRL).svgen2.Ta * 50000000 * CL_TS;
+        EPwm5Regs.CMPA.bit.CMPA = (*CTRL).svgen2.Tb * 50000000 * CL_TS;
+        EPwm6Regs.CMPA.bit.CMPA = (*CTRL).svgen2.Tc * 50000000 * CL_TS;
+    }
+}
+
 void ENABLE_PWM_OUTPUT(int positionLoopType)
 {
     G.flag_experimental_initialized = FALSE;
@@ -1283,47 +1294,52 @@ void ENABLE_PWM_OUTPUT(int positionLoopType)
         DSP_PWM_ENABLE
         DSP_2PWM_ENABLE
     }
-    #if WHO_IS_USER == USER_YZZ
-        if (FE.htz.u_offset[0] > 0.1){
-            FE.htz.u_offset[0] = 0;
-        }
-    #endif
+#if WHO_IS_USER == USER_YZZ
+
+    if (FE.htz.u_offset[0] > 0.1)
+    {
+        FE.htz.u_offset[0] = 0;
+    }
+#endif
     // DSP中控制器的时间
     (*CTRL).timebase_counter += 1;
     (*CTRL).timebase = CL_TS * (*CTRL).timebase_counter; //(*CTRL).timebase += CL_TS; // 2048 = float/REAL max
 
+#if WHO_IS_USER != USER_XM
     // 根据指令，产生控制输出（电压）
-    #if ENABLE_COMMISSIONING == FALSE
-        // 根据Axis自己的debug切换相应的operation mode
-        //* 现在Axis中有许多一样的参数，需要化简
-        Axis->Select_exp_operation = (*debug).Select_exp_operation;
-        //(*CTRL).s->Motor_or_Gnerator = sign((*CTRL).i->cmd_iDQ[1]) == sign(CTRL->enc->rpm); // sign((*CTRL).i->cmd_iDQ[1]) != sign((*CTRL).i->cmd_speed_rpm))
-        runtime_command_and_tuning(Axis->Select_exp_operation);
-        // 0x03 is shank
-        //    position_count_CAN_fromCPU2 = position_count_CAN_ID0x03_fromCPU2;
-        // 0x01 is hip
-        // position_count_CAN_fromCPU2 = position_count_CAN_ID0x01_fromCPU2;
+                                                            //(*CTRL).s->Motor_or_Gnerator = sign((*CTRL).i->cmd_iDQ[1]) == sign(CTRL->enc->rpm); // sign((*CTRL).i->cmd_iDQ[1]) != sign((*CTRL).i->cmd_speed_rpm))
+    runtime_command_and_tuning(Axis->Select_exp_operation);
+    // 0x03 is shank
+    //    position_count_CAN_fromCPU2 = position_count_CAN_ID0x03_fromCPU2;
+    // 0x01 is hip
+    // position_count_CAN_fromCPU2 = position_count_CAN_ID0x01_fromCPU2;
 
-        if ( positionLoopType == 0 ){
-            // do nothing
+    if (positionLoopType == 0){
+        // do nothing
+    }
+    else{
+        // do position loop
+        Axis->Set_manual_rpm = call_position_loop_controller(positionLoopType);
+    }
+
+    if (flag_RPM_wave == 1)
+    {
+        Axis->Set_manual_rpm = (*CTRL).timebase * 20;
+        if ( (*CTRL).timebase * 20 > 400)
+        {
+            Axis->Set_manual_rpm = 400;
         }
-        else{
-            // do position loop
-            Axis->Set_manual_rpm = call_position_loop_controller(positionLoopType);
-        }
+    }
+    //        if(IPCRtoLFlagBusy(IPC_FLAG8) == 1){
+    //            iq_command_from_PC = Read.current_cmd_from_PC;
+    //            IPCRtoLFlagAcknowledge(IPC_FLAG8);
+    //        }
+    //        if(run_enable_from_PC == false){
+    //            iq_command_from_PC = 0.0;
+    //        }
+#endif
 
-        if (flag_RPM_wave == 1){
-            Axis->Set_manual_rpm = (*CTRL).timebase * 20;
-            if ( (*CTRL).timebase * 20 > 400){
-                Axis->Set_manual_rpm = 400;
-            }
-        }
-
-        main_switch((*debug).mode_select);
-
-    #else
-        commissioning(); //Parammeter Identification
-    #endif
+    Axis->Select_exp_operation = main_switch(debug->mode_select);
 
     //(*CTRL).o->cmd_uAB_to_inverter[0]
 
@@ -1368,23 +1384,9 @@ void read_count_from_cpu02_dsp_cores_2()
         rad_four_bar_map_motor_encoder_angle = deg_four_bar_map_motor_encoder_angle * 0.017453292519943295;
         cnt_four_bar_map_motor_encoder_angle = deg_four_bar_map_motor_encoder_angle * 23301.68888888889;
 
-// 这段放需要测时间的代码后面，观察CpuTimer_Delta的取值，代表经过了多少个 1/200e6 秒。
-#if PC_SIMULATION == FALSE
-        CpuTimer_After = CpuTimer1.RegsAddr->TIM.all; // get count
-        CpuTimer_Delta = (REAL)CpuTimer_Before - (REAL)CpuTimer_After;
-// EALLOW;
-// CpuTimer1.RegsAddr->TCR.bit.TSS = 1; // stop (not needed because of the line TRB=1)
-// EDIS;
-#endif
 
-// 这段放需要测时间的代码前面
-#if PC_SIMULATION == FALSE
-        EALLOW;
-        CpuTimer1.RegsAddr->TCR.bit.TRB = 1;           // reset cpu timer to period value
-        CpuTimer1.RegsAddr->TCR.bit.TSS = 0;           // start/restart
-        CpuTimer_Before = CpuTimer1.RegsAddr->TIM.all; // get count
-        EDIS;
-#endif
+
+
     }
     else
     {
@@ -1400,4 +1402,34 @@ void read_count_from_cpu02_dsp_cores_2()
         IPCRtoLFlagAcknowledge(IPC_FLAG11);
     }
 #endif
+}
+
+
+void write_RPM_to_cpu02_dsp_cores_2(){
+    if(run_enable_from_PC == false){
+        return;
+    }
+    if (IPCLtoRFlagBusy(IPC_FLAG9) == 0){
+        run_enable_from_PC = false;
+        // 这段放需要测时间的代码后面，观察CpuTimer_Delta的取值，代表经过了多少个 1/200e6 秒。
+        #if PC_SIMULATION == FALSE
+        CpuTimer_After = CpuTimer1.RegsAddr->TIM.all; // get count
+        CpuTimer_Delta = (REAL)CpuTimer_Before - (REAL)CpuTimer_After;
+        // EALLOW;
+        // CpuTimer1.RegsAddr->TCR.bit.TSS = 1; // stop (not needed because of the line TRB=1)
+        // EDIS;
+        #endif
+
+        Write.Read_RPM = (*CTRL).i->varOmega;
+        IPCLtoRFlagSet(IPC_FLAG9);
+        
+        // 这段放需要测时间的代码前面
+        #if PC_SIMULATION == FALSE
+                EALLOW;
+                CpuTimer1.RegsAddr->TCR.bit.TRB = 1;           // reset cpu timer to period value
+                CpuTimer1.RegsAddr->TCR.bit.TSS = 0;           // start/restart
+                CpuTimer_Before = CpuTimer1.RegsAddr->TIM.all; // get count
+                EDIS;
+        #endif
+    }
 }

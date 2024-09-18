@@ -74,10 +74,15 @@ void write_DAC_buffer(){
         (*Axis4DAC).dac_watch[7] = (*CTRL).i->iAB[1]*0.25;
         (*Axis4DAC).dac_watch[8] = (*CTRL).o->cmd_uAB[0]*0.125; // +-12V -> 0-3V
         (*Axis4DAC).dac_watch[9] = (*CTRL).o->cmd_uAB[1]*0.125;
-
-        (*Axis4DAC).dac_watch[10] = (*CTRL).o->cmd_uAB_to_inverter[0];
-        (*Axis4DAC).dac_watch[11] = (*CTRL).o->cmd_uAB_to_inverter[1];
-
+#if WHO_IS_USER == USER_YZZ
+        (*Axis4DAC).dac_watch[10] = FE.htz.psi_2_ampl*0.25;
+        (*Axis4DAC).dac_watch[11] = FE.htz.psi_2_ampl_lpf*0.25;
+        (*Axis4DAC).dac_watch[12] = FE.htz.psi_2[0]*0.25;
+        (*Axis4DAC).dac_watch[13] = FE.htz.psi_2[1]*0.25;
+        (*Axis4DAC).dac_watch[14] = FE.htz.theta_d*0.1;
+        (*Axis4DAC).dac_watch[15] = FE.htz.u_offset[0]*2;
+        (*Axis4DAC).dac_watch[16] = FE.htz.u_offset[1]*2;
+#endif
         (*Axis4DAC).dac_watch[17] = (*CTRL).svgen2.Ta;
         (*Axis4DAC).dac_watch[18] = (*CTRL).svgen2.Tb;
         (*Axis4DAC).dac_watch[19] = (*CTRL).svgen2.Tc;
@@ -199,21 +204,12 @@ void write_DAC_buffer(){
         // (*Axis4DAC).dac_watch[27] = position_count_CAN_ID0x03_fromCPU2 *1.52587890625e-05; // / 131072.0 *2;
         // (*Axis4DAC).dac_watch[28] = position_count_CAN_ID0x01_fromCPU2 *1.52587890625e-05; // / 131072.0 *2;
 
-//        (*Axis4DAC).dac_watch[30] = (*CTRL).o->cmd_iAB[0]*0.2;
-//        (*Axis4DAC).dac_watch[31] = (*CTRL).o->cmd_iAB[1]*0.2;
-//        (*Axis4DAC).dac_watch[32] = yk;
-//        (*Axis4DAC).dac_watch[33] = uk;
-
-
-
-        
-
-
-
-
-
-
-
+        (*Axis4DAC).dac_watch[30] = (*CTRL).i->cmd_iDQ[0]*0.1;
+        (*Axis4DAC).dac_watch[31] = (*CTRL).i->cmd_iDQ[1]*0.1;
+        (*Axis4DAC).dac_watch[32] = yk;
+        (*Axis4DAC).dac_watch[33] = uk;
+        (*Axis4DAC).dac_watch[49] = CTRL_1.i->varOmega  * MECH_RAD_PER_SEC_2_RPM *0.002;
+        (*Axis4DAC).dac_watch[50] = CTRL_1.i->cmd_varOmega * MECH_RAD_PER_SEC_2_RPM *0.002;
 
 
 
@@ -320,6 +316,34 @@ void write_DAC_buffer(){
             Write.dac_buffer[6] = (*Axis4DAC).dac_watch[(*Axis4DAC).channels[6]] + (*Axis4DAC).dac_offset[6];
             Write.dac_buffer[7] = (*Axis4DAC).dac_watch[(*Axis4DAC).channels[7]] + (*Axis4DAC).dac_offset[7];
 
+            if(bool_test_dac_sinusoidal == TRUE){
+                Write.dac_buffer[0] = sin(CL_TS*counter);
+                Write.dac_buffer[1] = cos(CL_TS*counter);
+                Write.dac_buffer[2] = sin(CL_TS*counter);
+                Write.dac_buffer[3] = cos(CL_TS*counter);
+                Write.dac_buffer[4] = sin(CL_TS*counter);
+                Write.dac_buffer[5] = cos(CL_TS*counter);
+                Write.dac_buffer[6] = sin(CL_TS*counter);
+                Write.dac_buffer[7] = cos(CL_TS*counter);
+            }
+
+        ////    Write.dac_buffer[0] = AdcaResultRegs.ADCRESULT3 * 0.000244140625;
+        ////    Write.dac_buffer[1] = AdccResultRegs.ADCRESULT2 * 0.000244140625;
+        //    Write.dac_buffer[2] = AdcaResultRegs.ADCRESULT1 * 0.000244140625; //VSO3
+        ////    Write.dac_buffer[3] = AdccResultRegs.ADCRESULT4 * 0.000244140625;
+        ////    Write.dac_buffer[4] = AdccResultRegs.ADCRESULT5 * 0.000244140625;
+        ////    Write.dac_buffer[5] = AdccResultRegs.ADCRESULT5 * 0.000244140625;
+        //    Write.dac_buffer[6] = AdccResultRegs.ADCRESULT5 * 0.000244140625;
+        ////    Write.dac_buffer[7] = AdccResultRegs.ADCRESULT2 * 0.000244140625;
+
+        //    Write.dac_buffer[0] = (*Axis4DAC).iuvw[0];
+        //    Write.dac_buffer[1] = (*Axis4DAC).iuvw[1];
+        //    Write.dac_buffer[2] = (*Axis4DAC).iuvw[2];
+        //    Write.dac_buffer[3] = (*Axis4DAC).iuvw[0];
+        //    Write.dac_buffer[4] = (*Axis4DAC).iuvw[1];
+        //    Write.dac_buffer[5] = (*Axis4DAC).iuvw[2];
+        //    Write.dac_buffer[6] = (*Axis4DAC).iuvw[0];
+        //    Write.dac_buffer[7] = (*Axis4DAC).iuvw[1];
             counter += 1;
 
             (*Axis4DAC).dac_time += CL_TS;

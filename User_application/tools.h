@@ -3,7 +3,7 @@
 
 void EUREKA_GPIO_SETUP();
 void axis_basic_setup(int axisCnt);
-
+extern REAL iq_command_from_PC;
 #define ANGLE_SHIFT_FOR_FIRST_INVERTER 0.0  // Torque Inverter
 #define ANGLE_SHIFT_FOR_SECOND_INVERTER 0.0 // Suspension Inverter
 
@@ -13,7 +13,7 @@ void init_spi();
 void handle_interrupts();
 void main_loop();
 void DeadtimeCompensation(REAL Current_U, REAL Current_V, REAL Current_W, REAL CMPA[], REAL CMPA_DBC[]);
-
+void test_pwm_output();
 
 void voltage_commands_to_pwm();
 void voltage_measurement_based_on_eCAP();
@@ -34,7 +34,7 @@ void DISABLE_PWM_OUTPUT();
 void ENABLE_PWM_OUTPUT(int positionLoopType);
 
 void read_count_from_cpu02_dsp_cores_2();
-
+void write_RPM_to_cpu02_dsp_cores_2();
 void cla_test_codes();
 void test_ipc_tocpu02();
 

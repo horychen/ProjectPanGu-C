@@ -22,6 +22,7 @@ struct IPC_MEMORY_READ{
     REAL position_cmd_elec;
     REAL speed_cmd_elec;
     REAL current_cmd_from_PC;
+    bool run_enable;
     int16 SCI_char;
 };// ˫�����
 extern struct IPC_MEMORY_READ Read;
