@@ -75,7 +75,6 @@ typedef struct {
     REAL CMD_SPEED_SINE_LAST_END_TIME;
     REAL CMD_SPEED_SINE_END_TIME;
     long CMD_SPEED_SINE_HZ_CEILING;
-    long VL_FEEDBACK_KFB;
 } ST_user;
 
 
