@@ -1,8 +1,18 @@
 // user_defined_functions.c
 #include <ACMSim.h>
 
-REAL global_id_ampl = 10;
+#include "pi_math.h" /* from CYM */
+
+REAL global_id_ampl = 1;
 REAL global_id_freq = 10;
+
+REAL global_uD_ampl = 0.0;
+REAL global_uD_square_time = 1; // second
+REAL gloval_uD_square_time_sum = 0.0; //
+
+extern PI_CONTROLLER pi_id;
+extern PI_CONTROLLER pi_iq;
+extern PI_CONTROLLER pi_spd;
 
 void overwrite_d_sim(){
     // for now 20240902 do nothing
@@ -46,8 +56,8 @@ void _user_init(){
         (*debug).Overwrite_Current_Frequency = 1;
         (*debug).Overwrite_theta_d           = 0.0;
 
-        (*debug).set_id_command              = 1;
-        (*debug).set_iq_command              = 1;
+        (*debug).set_id_command              = 0;
+        (*debug).set_iq_command              = 0;
         (*debug).set_rpm_speed_command       = 50;
         (*debug).set_deg_position_command    = 0.0;
         (*debug).vvvf_voltage = 3.0;
@@ -62,36 +72,34 @@ void _user_init(){
         (*debug).bool_apply_decoupling_voltages_to_current_regulation = d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation;
         (*debug).INVERTER_NONLINEARITY_COMPENSATION_INIT = d_sim.user.INVERTER_NONLINEARITY_COMPENSATION_METHOD;
 
+        #if WHO_IS_USER == USER_YZZ
+            (*debug).SENSORLESS_CONTROL      = 0;
+            (*debug).SENSORLESS_CONTROL_HFSI = 0;
+        #endif
+
+        #if WHO_IS_USER == USER_BEZIER
+            set_points(&BzController);
+        #endif
+
+        #if WHO_IS_USER == 2023231051
+            //For WuBo
+            (*debug).zeta                                                 = d_sim.user.zeta;
+            (*debug).omega_n                                              = d_sim.user.omega_n;
+            (*debug).max_CLBW_PER_min_CLBW                                = d_sim.user.max_CLBW_PER_min_CLBW;
+            (*debug).bool_apply_WC_tunner_for_speed_loop                  = d_sim.user.bool_apply_WC_tunner_for_speed_loop;
+            (*debug).bool_sweeping_frequency_for_speed_loop               = d_sim.user.bool_sweeping_frequency_for_speed_loop;
+            (*debug).bool_Null_D_Control                                  = d_sim.user.bool_Null_D_Control;
+            (*debug).bool_apply_sweeping_frequency_excitation             = d_sim.user.bool_apply_sweeping_frequency_excitation;
+            //For Sweeping
+            (*debug).CMD_CURRENT_SINE_AMPERE                              = d_sim.user.CMD_CURRENT_SINE_AMPERE;
+            (*debug).CMD_SPEED_SINE_RPM                                   = d_sim.user.CMD_SPEED_SINE_RPM;
+            (*debug).CMD_SPEED_SINE_HZ                                    = d_sim.user.CMD_SPEED_SINE_HZ;
+            (*debug).CMD_SPEED_SINE_STEP_SIZE                             = d_sim.user.CMD_SPEED_SINE_STEP_SIZE;
+            (*debug).CMD_SPEED_SINE_LAST_END_TIME                         = d_sim.user.CMD_SPEED_SINE_LAST_END_TIME;
+            (*debug).CMD_SPEED_SINE_END_TIME                              = d_sim.user.CMD_SPEED_SINE_END_TIME;
+            (*debug).CMD_SPEED_SINE_HZ_CEILING                            = d_sim.user.CMD_SPEED_SINE_HZ_CEILING;
+        #endif
     }
-
-    // (*debug).INVERTER_NONLINEARITY = 0;
-    #if WHO_IS_USER == USER_YZZ
-        (*debug).SENSORLESS_CONTROL      = 0;
-        (*debug).SENSORLESS_CONTROL_HFSI = 0;
-    #endif
-
-    #if WHO_IS_USER == USER_BEZIER
-        set_points(&BzController);
-    #endif
-
-    #if WHO_IS_USER == 2023231051
-        //For WuBo
-        (*debug).zeta                                                 = d_sim.user.zeta;
-        (*debug).omega_n                                              = d_sim.user.omega_n;
-        (*debug).max_CLBW_PER_min_CLBW                                = d_sim.user.max_CLBW_PER_min_CLBW;
-        (*debug).bool_apply_WC_tunner_for_speed_loop                  = d_sim.user.bool_apply_WC_tunner_for_speed_loop;
-        (*debug).bool_sweeping_frequency_for_speed_loop               = d_sim.user.bool_sweeping_frequency_for_speed_loop;
-        (*debug).bool_Null_D_Control                                  = d_sim.user.bool_Null_D_Control;
-        (*debug).bool_apply_sweeping_frequency_excitation             = d_sim.user.bool_apply_sweeping_frequency_excitation;
-        //For Sweeping
-        (*debug).CMD_CURRENT_SINE_AMPERE                              = d_sim.user.CMD_CURRENT_SINE_AMPERE;
-        (*debug).CMD_SPEED_SINE_RPM                                   = d_sim.user.CMD_SPEED_SINE_RPM;
-        (*debug).CMD_SPEED_SINE_HZ                                    = d_sim.user.CMD_SPEED_SINE_HZ;
-        (*debug).CMD_SPEED_SINE_STEP_SIZE                             = d_sim.user.CMD_SPEED_SINE_STEP_SIZE;
-        (*debug).CMD_SPEED_SINE_LAST_END_TIME                         = d_sim.user.CMD_SPEED_SINE_LAST_END_TIME;
-        (*debug).CMD_SPEED_SINE_END_TIME                              = d_sim.user.CMD_SPEED_SINE_END_TIME;
-        (*debug).CMD_SPEED_SINE_HZ_CEILING                            = d_sim.user.CMD_SPEED_SINE_HZ_CEILING;
-    #endif
 }
 
 void _user_commands(){
@@ -135,10 +143,10 @@ void _user_commands(){
             if ((*CTRL).timebase > CL_TS){
                 (*CTRL).i->cmd_varOmega = (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
             }
-            if ((*CTRL).timebase > 0.08){
+            if ((*CTRL).timebase > 10){
                 (*CTRL).i->cmd_varOmega = - (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
             }
-            if ((*CTRL).timebase > 0.4){
+            if ((*CTRL).timebase > 20){
                 #if PC_SIMULATION
                     ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN * d_sim.VL.LIMIT_OVERLOAD_FACTOR * 0);
                 #endif
@@ -214,7 +222,7 @@ void main_switch(long mode_select){
         #if WHO_IS_USER == USER_WB
             (*debug).set_id_command = global_id_ampl * sin(2 * M_PI * global_id_freq * (*CTRL).timebase);
         #endif
-        _user_onlyFOC();
+            _user_onlyFOC();
         break;
     case MODE_SELECT_FOC_SENSORLESS : //31
         //TODO:
@@ -274,7 +282,7 @@ void main_switch(long mode_select){
         // ACM.Ld = 0.017;
         // ACM.Lq = 0.015;
         break;
-        case MODE_SWEEPING_FREQUENCY: // 20
+    case MODE_SWEEPING_FREQUENCY: // 20
         #if WHO_IS_USER == USER_WB
             _user_wubo_Sweeping_Command();
             if ( (*debug).bool_sweeping_frequency_for_speed_loop == TRUE ){
@@ -287,8 +295,43 @@ void main_switch(long mode_select){
                 _user_onlyFOC();
             }
             // _user_wubo_controller();
-            #endif
-            break;
+        #endif
+        break;
+    case MODE_SELECT_UDQ_GIVEN_TEST: // 30
+        // 帕克变换
+        (*CTRL).s->cosT = cos((*CTRL).i->theta_d_elec);
+        (*CTRL).s->sinT = sin((*CTRL).i->theta_d_elec);
+        (*CTRL).i->iDQ[0] = AB2M((*CTRL).i->iAB[0], (*CTRL).i->iAB[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
+        (*CTRL).i->iDQ[1] = AB2T((*CTRL).i->iAB[0], (*CTRL).i->iAB[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
+
+        // Doing the plus to the golbal_uD_square_two_times is stupid cause u will always plus it running the code
+        // Hence u got no chance run the else if content ! fuck it
+        //* advice from LaoBan: timebase should be integer
+        if (gloval_uD_square_time_sum + 4 * global_uD_square_time < (*CTRL).timebase) {
+            gloval_uD_square_time_sum += 4 * global_uD_square_time;
+        }
+        REAL relative_timebase_to_one_cycle = (*CTRL).timebase - gloval_uD_square_time_sum;
+        if (relative_timebase_to_one_cycle < global_uD_square_time) {
+            (*CTRL).o->cmd_uDQ[0] = global_uD_ampl;
+        } else if (relative_timebase_to_one_cycle < global_uD_square_time * 2) {
+            (*CTRL).o->cmd_uDQ[0] = 0;
+        } else if (relative_timebase_to_one_cycle < global_uD_square_time * 3) {
+            (*CTRL).o->cmd_uDQ[0] = -global_uD_ampl;
+        } else {
+            (*CTRL).o->cmd_uDQ[0] = 0;
+        }
+
+        // printf("%f\n", gloval_uD_square_time_sum);
+        // (*CTRL).o->cmd_uDQ[0] = global_uD_ampl * sin(2 * M_PI * global_uD_freq * (*CTRL).timebase);
+        (*CTRL).o->cmd_uDQ[1] = 0;
+
+        (*CTRL).s->cosT_compensated_1p5omegaTs = (*CTRL).s->cosT;
+        (*CTRL).s->sinT_compensated_1p5omegaTs = (*CTRL).s->sinT;
+        (*CTRL).o->cmd_uAB[0] = MT2A((*CTRL).o->cmd_uDQ[0], (*CTRL).o->cmd_uDQ[1], (*CTRL).s->cosT_compensated_1p5omegaTs, (*CTRL).s->sinT_compensated_1p5omegaTs);
+        (*CTRL).o->cmd_uAB[1] = MT2B((*CTRL).o->cmd_uDQ[0], (*CTRL).o->cmd_uDQ[1], (*CTRL).s->cosT_compensated_1p5omegaTs, (*CTRL).s->sinT_compensated_1p5omegaTs);
+        (*CTRL).o->cmd_uAB_to_inverter[0] = (*CTRL).o->cmd_uAB[0];
+        (*CTRL).o->cmd_uAB_to_inverter[1] = (*CTRL).o->cmd_uAB[1];
+        break;
     default:
         // 电压指令(*CTRL).o->cmd_uAB[0/1]通过逆变器，产生实际电压ACM.ual, ACM.ube（变换到dq系下得到ACM.ud，ACM.uq）
         // voltage_commands_to_pwm(); // this function only exists in DSP codes
@@ -532,24 +575,57 @@ void _user_onlyFOC(){
     #endif
     (*CTRL).i->cmd_iDQ[0] = (*debug).set_id_command; 
     (*CTRL).i->cmd_iDQ[1] = (*debug).set_iq_command;
-    PID_iD->Fbk = (*CTRL).i->iDQ[0];
-    PID_iD->Ref = (*CTRL).i->cmd_iDQ[0];
-    PID_iD->calc(PID_iD);
 
-    PID_iQ->Fbk = (*CTRL).i->iDQ[1];
-    PID_iQ->Ref = (*CTRL).i->cmd_iDQ[1];
-    PID_iQ->calc(PID_iQ);
+    #if USE_LAOMING_PI
+        /* New Sytle from Lao Ming */
+        pi_id.Kp = PID_iD->Kp;
+        pi_id.Ki = d_sim.CL.SERIES_KI_D_AXIS * CL_TS;
+        pi_id.Umax = PID_iD->OutLimit;
+        pi_id.Umin = -PID_iD->OutLimit;
+        // printf("id max is %f\n", pi_id.Umax);
+        
+        pi_iq.Kp = PID_iQ->Kp;
+        pi_iq.Ki = d_sim.CL.SERIES_KI_Q_AXIS * CL_TS;
+        pi_iq.Umax = PID_iQ->OutLimit;
+        pi_iq.Umin = -PID_iQ->OutLimit;
+        
+        pi_id.Fbk = (*CTRL).i->iDQ[0];
+        pi_id.Ref = (*CTRL).i->cmd_iDQ[0];
+        pi_id.Out = PI_MACRO(pi_id);
 
-    // 电流环前馈DQ轴解耦
-    REAL decoupled_d_axis_voltage;
-    REAL decoupled_q_axis_voltage;
-    if(d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation == TRUE){
-        decoupled_d_axis_voltage = PID_iD->Out - PID_iQ->Fbk * MOTOR.Lq * (*CTRL).i->varOmega * MOTOR.npp;
-        decoupled_q_axis_voltage = PID_iQ->Out + (MOTOR.KActive + PID_iD->Fbk * MOTOR.Ld) * (*CTRL).i->varOmega * MOTOR.npp;
-    }else{
-        decoupled_d_axis_voltage = PID_iD->Out;
-        decoupled_q_axis_voltage = PID_iQ->Out;
-    }
+        pi_iq.Fbk = (*CTRL).i->iDQ[1];
+        pi_iq.Ref = (*CTRL).i->cmd_iDQ[1];
+        pi_iq.Out = PI_MACRO(pi_iq);
+
+        REAL decoupled_d_axis_voltage;
+        REAL decoupled_q_axis_voltage;
+        if(d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation == TRUE){
+            decoupled_d_axis_voltage = pi_id.Out - pi_iq.Fbk * MOTOR.Lq * (*CTRL).i->varOmega * MOTOR.npp;
+            decoupled_q_axis_voltage = pi_iq.Out + (MOTOR.KActive + pi_id.Fbk * MOTOR.Ld) * (*CTRL).i->varOmega * MOTOR.npp;
+        }else{
+            decoupled_d_axis_voltage = pi_id.Out;
+            decoupled_q_axis_voltage = pi_iq.Out;
+        }
+    #else
+        PID_iD->Fbk = (*CTRL).i->iDQ[0];
+        PID_iD->Ref = (*CTRL).i->cmd_iDQ[0];
+        PID_iD->calc(PID_iD);
+
+        PID_iQ->Fbk = (*CTRL).i->iDQ[1];
+        PID_iQ->Ref = (*CTRL).i->cmd_iDQ[1];
+        PID_iQ->calc(PID_iQ);
+
+        // 电流环前馈DQ轴解耦
+        REAL decoupled_d_axis_voltage;
+        REAL decoupled_q_axis_voltage;
+        if(d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation == TRUE){
+            decoupled_d_axis_voltage = PID_iD->Out - PID_iQ->Fbk * MOTOR.Lq * (*CTRL).i->varOmega * MOTOR.npp;
+            decoupled_q_axis_voltage = PID_iQ->Out + (MOTOR.KActive + PID_iD->Fbk * MOTOR.Ld) * (*CTRL).i->varOmega * MOTOR.npp;
+        }else{
+            decoupled_d_axis_voltage = PID_iD->Out;
+            decoupled_q_axis_voltage = PID_iQ->Out;
+        }
+    #endif
 
     /* 对补偿后的dq轴电压进行限幅度 */
     if (decoupled_d_axis_voltage > PID_iD->OutLimit) decoupled_d_axis_voltage = PID_iD->OutLimit;

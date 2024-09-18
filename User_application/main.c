@@ -1,7 +1,5 @@
 #include <All_Definition.h>
-//TODO:这个变量需要删除
-/* For wubo debuger */
-REAL wubo_debug_tools[10] = {1,0,0,0,0,0,0,0,0,0};
+
 st_axis Axis_1, *Axis;
 
 #if NUMBER_OF_AXES == 2 // ====为了同时运行两台电机，增加的另一份控制结构体
@@ -18,7 +16,7 @@ st_axis Axis_1, *Axis;
             Axis  = &Axis_2;       \
             CTRL  = &CTRL_2;       \
             debug = &debug_2;      \
-        }
+        }                           
 #endif
 
 void main(void){
@@ -95,6 +93,7 @@ void main(void){
         _user_init();      // debug initilization for user
         axis_basic_setup(axisCnt); // 根据axiscnt对Axis，CTRL的1和2号结构体，进行初始化操作
     }
+    wubo_debug_tools[2] = 99;
     axisCnt = 1;
     // 5. Handle Interrupts
     handle_interrupts();

@@ -83,40 +83,62 @@ void write_DAC_buffer(){
         (*Axis4DAC).dac_watch[19] = (*CTRL).svgen2.Tc;
         (*Axis4DAC).dac_watch[20] = (*CTRL).s->omega_syn * ELEC_RAD_PER_SEC_2_RPM *0.002;
 
-        // (*Axis4DAC).dac_watch[21] = Axis_1.Set_manual_rpm *0.002;
-        (*Axis4DAC).dac_watch[21] = Axis_1.pCTRL->i->cmd_varOmega * MECH_RAD_PER_SEC_2_RPM * 0.002; // 500RPM - 3V
-        (*Axis4DAC).dac_watch[22] = Axis_1.pCTRL->i->varOmega     * MECH_RAD_PER_SEC_2_RPM * 0.002;
-        (*Axis4DAC).dac_watch[23] = Axis_2.pCTRL->i->cmd_varOmega * MECH_RAD_PER_SEC_2_RPM * 0.002; // 500RPM - 3V
-        (*Axis4DAC).dac_watch[24] = Axis_2.pCTRL->i->varOmega     * MECH_RAD_PER_SEC_2_RPM * 0.002;
 
-        (*Axis4DAC).dac_watch[25] = Axis_1.pCTRL->i->cmd_iDQ[0]* 0.1; // 0.6V -> 2A
-        (*Axis4DAC).dac_watch[26] = Axis_1.pCTRL->i->iDQ[0]    * 0.1;
-        (*Axis4DAC).dac_watch[27] = Axis_1.pCTRL->i->cmd_iDQ[1]* 0.1;
-        (*Axis4DAC).dac_watch[28] = Axis_1.pCTRL->i->iDQ[1]    * 0.1;
+        /* Speed Loop Info */
+        /* !!! Noticing PID_Speed only works when ENABLE_PWM_OUT !!! */
+        (*Axis4DAC).dac_watch[21] = Axis_1.Pdebug->set_rpm_speed_command * 0.002; // 500RPM - 3V
+        (*Axis4DAC).dac_watch[22] = Axis_1.pCTRL->i->varOmega * MECH_RAD_PER_SEC_2_RPM * 0.002;
+        (*Axis4DAC).dac_watch[23] = PID_Speed->Err * MECH_RAD_PER_SEC_2_RPM * 0.002; // 500RPM - 3V
+        (*Axis4DAC).dac_watch[24] = (PID_Speed->Ref - PID_Speed->Fbk) * MECH_RAD_PER_SEC_2_RPM * 0.002;
 
-        (*Axis4DAC).dac_watch[29] = Axis_2.pCTRL->i->cmd_iDQ[0]* 0.1; // 3V -> 10A
-        (*Axis4DAC).dac_watch[30] = Axis_2.pCTRL->i->iDQ[0]    * 0.1;
-        (*Axis4DAC).dac_watch[31] = Axis_2.pCTRL->i->cmd_iDQ[1]* 0.1;
-        (*Axis4DAC).dac_watch[32] = Axis_2.pCTRL->i->iDQ[1]    * 0.1;
+        /* D-Current Info */
+        (*Axis4DAC).dac_watch[25] = PID_iD->Ref * 0.1; // 0.6V -> 2A
+        (*Axis4DAC).dac_watch[26] = PID_iD->Fbk * 0.1;
+        (*Axis4DAC).dac_watch[27] = PID_iD->Err * 0.1;
+        (*Axis4DAC).dac_watch[28] = (PID_iD->Ref - PID_iD->Fbk) * 0.1;
+
+        /* Q-Current Info */
+        (*Axis4DAC).dac_watch[29] = PID_iQ->Ref * 0.1; // 0.6V -> 2A
+        (*Axis4DAC).dac_watch[30] = PID_iQ->Fbk * 0.1;
+        (*Axis4DAC).dac_watch[31] = PID_iQ->Err * 0.1;
+        (*Axis4DAC).dac_watch[32] = PID_iQ->Out * 0.1;
+
+        /* UDQ given test */
+        (*Axis4DAC).dac_watch[33] = (*CTRL).o->cmd_uDQ[0] * 0.2;
+        (*Axis4DAC).dac_watch[34] = (*CTRL).o->cmd_uDQ[1] * 0.2;
+        (*Axis4DAC).dac_watch[35] = (*CTRL).i->iDQ[0] * 0.5;
+        (*Axis4DAC).dac_watch[36] = (*CTRL).i->iDQ[1] * 0.5;
+        (*Axis4DAC).dac_watch[37] = (*CTRL).i->iAB[0] * 0.5;
 
 
-        (*Axis4DAC).dac_watch[36] = vvvf_voltage * cos(vvvf_frequency*2*M_PI*(*CTRL).timebase);
-
-        (*Axis4DAC).dac_watch[40] = (*CTRL).i->iDQ[0]*0.1;
-        (*Axis4DAC).dac_watch[41] = (*CTRL).i->iDQ[1]*0.1;
-
-        (*Axis4DAC).dac_watch[42] = CTRL_2.s->iQ->Ref; /// 131072.0 ;
-        (*Axis4DAC).dac_watch[43] = CTRL_2.s->iQ->Fbk; /// 131072.0 ;
-        (*Axis4DAC).dac_watch[44] = CTRL_2.s->Position->Ref *7.62939453125e-06; /// 131072.0 ;
-        (*Axis4DAC).dac_watch[45] = CTRL_2.s->Position->Fbk *7.62939453125e-06; /// 131072.0 ;
 
 
+        // /* D-current Info */
+        // #if USE_LAOMING_PI
+        // (*Axis4DAC).dac_watch[33] = pi_
+        // #endif
 
-        (*Axis4DAC).dac_watch[52] = (*Axis4DAC).used_theta_d_elec *0.1; // encoder angle
+//        (*Axis4DAC).dac_watch[36] = vvvf_voltage * cos(vvvf_frequency*2*M_PI*(*CTRL).timebase);
+//
+//        (*Axis4DAC).dac_watch[44] = CTRL_2.s->Position->Ref *7.62939453125e-06; /// 131072.0 ;
+//        (*Axis4DAC).dac_watch[45] = CTRL_2.s->Position->Fbk *7.62939453125e-06; /// 131072.0 ;
+//
+//        (*Axis4DAC).dac_watch[52] = (*Axis4DAC).used_theta_d_elec *0.1; // encoder angle
+//        (*Axis4DAC).dac_watch[61] = INV.ual_comp *0.125;
+//        (*Axis4DAC).dac_watch[62] = INV.ube_comp *0.125;
+//        (*Axis4DAC).dac_watch[63] = CTRL->enc->varOmega * 0.35;
 
-        (*Axis4DAC).dac_watch[61] = INV.ual_comp *0.125;
-        (*Axis4DAC).dac_watch[62] = INV.ube_comp *0.125;
-        (*Axis4DAC).dac_watch[63] = CTRL->enc->varOmega * 0.35;
+
+//        #if WHO_IS_USER == USER_WB
+//            (*Axis4DAC).dac_watch[0] = 0;
+//            (*Axis4DAC).dac_watch[1] = 0;
+//            (*Axis4DAC).dac_watch[2] = 0;
+//            (*Axis4DAC).dac_watch[3] = 0;
+//            (*Axis4DAC).dac_watch[4] = 0;
+//            (*Axis4DAC).dac_watch[5] = 0;
+//            (*Axis4DAC).dac_watch[6] = 0;
+//            (*Axis4DAC).dac_watch[7] = 0;
+//        #endif
 
 
         #if WHO_IS_USER == USER_WB
@@ -127,6 +149,7 @@ void write_DAC_buffer(){
 
             (*Axis4DAC).dac_watch[67] = PID_Speed->Out * 0.1;
             (*Axis4DAC).dac_watch[68] = PID_Speed->OutPrev *0.1;
+            (*Axis4DAC).dac_watch[69] = (*CTRL).svgen1.utilization_ratio * 0.5;
         #endif
 
         #if WHO_IS_USER == USER_YZZ
@@ -164,153 +187,50 @@ void write_DAC_buffer(){
         #endif
 
 
-                // (*Axis4DAC).dac_watch[49] = CTRL_1.i->varOmega  * MECH_RAD_PER_SEC_2_RPM *0.002;
-        // (*Axis4DAC).dac_watch[50] = CTRL_1.i->cmd_varOmega * MECH_RAD_PER_SEC_2_RPM *0.002;
-
-        // 锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟侥憋拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤，锟角碉拷锟斤拷效锟斤拷围锟斤拷 [-1, 1]锟斤拷
-
-        
-
-        // (*Axis4DAC).dac_watch[63] = (*CTRL).o->cmd_uAB_to_inverter[0] * 0.125;
-        // (*Axis4DAC).dac_watch[64] = (*CTRL).o->cmd_uAB_to_inverter[1] * 0.125;
-
-        // (*Axis4DAC).dac_watch[25] = (*CTRL).i->cmd_iDQ[0]*0.2;
-        // (*Axis4DAC).dac_watch[26] = (*CTRL).i->iDQ[0]*0.2;
-        // (*Axis4DAC).dac_watch[27] = (*CTRL).i->cmd_iDQ[1]*0.2;
-        // (*Axis4DAC).dac_watch[28] = (*CTRL).i->iDQ[1]*0.2; // 0.6V->1A
-
-    //    (*Axis4DAC).dac_watch[21] = marino.xOmg * ELEC_RAD_PER_SEC_2_RPM *0.002;
-        // (*Axis4DAC).dac_watch[21] = curycontroller.theta1*0.1; // CTRL_2.s->spd->Ref*0.0001;//curycontroller.theta1*0.1; /// 131072.0 *2;
-        // (*Axis4DAC).dac_watch[22] = curycontroller.dot_theta1*0.1; // CTRL_2.s->spd->Fbk*0.0001; /// 131072.0 *2;
-        // (*Axis4DAC).dac_watch[23] = curycontroller.theta2*0.1; // CTRL_1.s->spd->Ref*0.0001; // * ELEC_RAD_PER_SEC_2_RPM *0.002;
-        // (*Axis4DAC).dac_watch[24] = curycontroller.dot_theta2*0.1; // CTRL_1.s->spd->Fbk*0.0001; //i->varOmega  * ELEC_RAD_PER_SEC_2_RPM *0.002;
-    //    (*Axis4DAC).dac_watch[25] = CTRL_1.i->cmd_iDQ[1] * 0.1;
-    //    (*Axis4DAC).dac_watch[26] = CTRL_2.i->cmd_iDQ[1] * 0.1;
-
-    //    (*Axis4DAC).dac_watch[22] = target_position_cnt*0.0003-((*CTRL).enc->encoder_abs_cnt)*0.0003;
-    //    (*Axis4DAC).dac_watch[23] = GpioDataRegs.GPEDAT.bit.GPIO135;
-    //    (*Axis4DAC).dac_watch[24] = GpioDataRegs.GPEDAT.bit.GPIO136;
-    //    (*Axis4DAC).dac_watch[25] = GpioDataRegs.GPEDAT.bit.GPIO137;
-    //    (*Axis4DAC).dac_watch[22] = marino.xTL*0.025;
-    //    (*Axis4DAC).dac_watch[23] = marino.xRho*0.1;
-    //    (*Axis4DAC).dac_watch[24] = marino.xAlpha*0.1;
-    //    (*Axis4DAC).dac_watch[25] = marino.e_psi_Dmu;
-    //    (*Axis4DAC).dac_watch[26] = marino.e_psi_Qmu;
-        // (*Axis4DAC).dac_watch[27] = position_count_CAN_ID0x03_fromCPU2 *1.52587890625e-05; // / 131072.0 *2;
-        // (*Axis4DAC).dac_watch[28] = position_count_CAN_ID0x01_fromCPU2 *1.52587890625e-05; // / 131072.0 *2;
-
-//        (*Axis4DAC).dac_watch[30] = (*CTRL).o->cmd_iAB[0]*0.2;
-//        (*Axis4DAC).dac_watch[31] = (*CTRL).o->cmd_iAB[1]*0.2;
-//        (*Axis4DAC).dac_watch[32] = yk;
-//        (*Axis4DAC).dac_watch[33] = uk;
-
-
-
-        
-
-
-
-
-
-
-
-
-
-
         if((*Axis4DAC).channels_preset==1){(*Axis4DAC).channels_preset=0;
-            (*Axis4DAC).channels[0] = 23;
-            (*Axis4DAC).channels[1] = 24;
-            (*Axis4DAC).channels[2] = 25;
-            (*Axis4DAC).channels[3] = 26;
-            (*Axis4DAC).channels[4] = 32;
-            (*Axis4DAC).channels[5] = 33;
-            (*Axis4DAC).channels[6] = 21;
-            (*Axis4DAC).channels[7] = 22;
+            /* Speed Loop info with iQ current info */
+            (*Axis4DAC).channels[0] = 21; // PID_Speed->Ref
+            (*Axis4DAC).channels[1] = 22; // PID_Speed->Fbk
+            (*Axis4DAC).channels[2] = 23; // PID_Speed->Err
+            (*Axis4DAC).channels[3] = 24; // PID_Speed->Ref - PID_Speed->Fbk
+            (*Axis4DAC).channels[4] = 29; // PID_iQ->Ref
+            (*Axis4DAC).channels[5] = 30; // PID_iQ->Fbk
+            (*Axis4DAC).channels[6] = 31; // PID_iQ->Err
+            (*Axis4DAC).channels[7] = 32; // PID_iQ->Out
         }else if((*Axis4DAC).channels_preset==2){(*Axis4DAC).channels_preset=0;
-            (*Axis4DAC).channels[0] = 26;//49; // 42; //12;
-            (*Axis4DAC).channels[1] = 41;//50; // 43; //4; //13;
-            (*Axis4DAC).channels[2] = 23 ; // 44; //28;
-            (*Axis4DAC).channels[3] = 24;//52; // 45;
-            (*Axis4DAC).channels[4] = 42;
-            (*Axis4DAC).channels[5] = 43;
-            (*Axis4DAC).channels[6] = 21;
-            (*Axis4DAC).channels[7] = 22;
+            /* iD current and iQ current info */
+            (*Axis4DAC).channels[0] = 25; // PID_iD->Ref
+            (*Axis4DAC).channels[1] = 26; // PID_iD->Fbk
+            (*Axis4DAC).channels[2] = 27; // PID_iD->Err
+            (*Axis4DAC).channels[3] = 28; // PID_iD->Out
+            (*Axis4DAC).channels[4] = 69; // PID_iQ->Ref
+            (*Axis4DAC).channels[5] = 30; // PID_iQ->Fbk
+            (*Axis4DAC).channels[6] = 31; // PID_iQ->Err
+            (*Axis4DAC).channels[7] = 32; // PID_iQ->Out
         }else if((*Axis4DAC).channels_preset==3){(*Axis4DAC).channels_preset=0;
-            (*Axis4DAC).channels[0] = 44;//42; //12;
-            (*Axis4DAC).channels[1] = 45;//43; //4; //13;
-            (*Axis4DAC).channels[2] = 42; //28;
-            (*Axis4DAC).channels[3] = 43;
-            (*Axis4DAC).channels[4] = 21;
-            (*Axis4DAC).channels[5] = 22;
-            (*Axis4DAC).channels[6] = 23;
-            (*Axis4DAC).channels[7] = 24;
+            /* DAC offset tune */
+            (*Axis4DAC).channels[0] = 0; // 0
+            (*Axis4DAC).channels[1] = 1; // 0
+            (*Axis4DAC).channels[2] = 2; // 0
+            (*Axis4DAC).channels[3] = 3; // 0
+            (*Axis4DAC).channels[4] = 4; // 0
+            (*Axis4DAC).channels[5] = 5; // 0
+            (*Axis4DAC).channels[6] = 6; // 0
+            (*Axis4DAC).channels[7] = 7; // 0
         }else if((*Axis4DAC).channels_preset==4){(*Axis4DAC).channels_preset=0;
-            (*Axis4DAC).channels[0] = 21;
-            (*Axis4DAC).channels[1] = 22;
-            (*Axis4DAC).channels[2] = 23;
-            (*Axis4DAC).channels[3] = 24;
-            (*Axis4DAC).channels[4] = 4;
-            (*Axis4DAC).channels[5] = 5;
-            (*Axis4DAC).channels[6] = 3;
-            (*Axis4DAC).channels[7] = 4;
-        }else if((*Axis4DAC).channels_preset==5){(*Axis4DAC).channels_preset=0;
-            (*Axis4DAC).channels[0] = 53;
-            (*Axis4DAC).channels[1] = 54;
-            (*Axis4DAC).channels[2] = 55;
-            (*Axis4DAC).channels[3] = 56;
-            (*Axis4DAC).channels[4] = 57;
-            (*Axis4DAC).channels[5] = 58;
-            (*Axis4DAC).channels[6] = 59;
-            (*Axis4DAC).channels[7] = 60;
-        }else if((*Axis4DAC).channels_preset==6){(*Axis4DAC).channels_preset=0;
-            (*Axis4DAC).channels[0] = 21;// for MOTOR 1 Speed control and MOTOR 2 current control as a constant torque
-            (*Axis4DAC).channels[1] = 22;
-            (*Axis4DAC).channels[2] = 27;
-            (*Axis4DAC).channels[3] = 28;
-            (*Axis4DAC).channels[4] = 31;
-            (*Axis4DAC).channels[5] = 32;
-            (*Axis4DAC).channels[6] = 63;
-            (*Axis4DAC).channels[7] = 64;
-        }else if((*Axis4DAC).channels_preset==7){(*Axis4DAC).channels_preset=0;
-            (*Axis4DAC).channels[0] = 21;// only for MOTOR 1
-            (*Axis4DAC).channels[1] = 22;
-            (*Axis4DAC).channels[2] = 27;
-            (*Axis4DAC).channels[3] = 28;
-            (*Axis4DAC).channels[4] = 25;
-            (*Axis4DAC).channels[5] = 26;
-            (*Axis4DAC).channels[6] = 63;
-            (*Axis4DAC).channels[7] = 64;
-        }else if((*Axis4DAC).channels_preset==8){(*Axis4DAC).channels_preset=0;
-            (*Axis4DAC).channels[0] = 23; // only for MOTOR 2
-            (*Axis4DAC).channels[1] = 24;
-            (*Axis4DAC).channels[2] = 31;
-            (*Axis4DAC).channels[3] = 32;
-            (*Axis4DAC).channels[4] = 29;
-            (*Axis4DAC).channels[5] = 30;
-            (*Axis4DAC).channels[6] = 63;
-            (*Axis4DAC).channels[7] = 64;
-        }else if((*Axis4DAC).channels_preset==9){(*Axis4DAC).channels_preset=0;
-            (*Axis4DAC).channels[0] = 64; // for controller output
-            (*Axis4DAC).channels[1] = 65;
-            (*Axis4DAC).channels[2] = 66;
-            (*Axis4DAC).channels[3] = 67;
-            (*Axis4DAC).channels[4] = 68;
-            (*Axis4DAC).channels[5] = 27;
-            (*Axis4DAC).channels[6] = 28;
-            (*Axis4DAC).channels[7] = 22;
-        }else if((*Axis4DAC).channels_preset==10){(*Axis4DAC).channels_preset=0;
-            (*Axis4DAC).channels[0] = 22; // for what?
-            (*Axis4DAC).channels[1] = 24;
-            (*Axis4DAC).channels[2] = 64;
-            (*Axis4DAC).channels[3] = 65;
-            (*Axis4DAC).channels[4] = 66;
-            (*Axis4DAC).channels[5] = 27;
-            (*Axis4DAC).channels[6] = 28;
-            (*Axis4DAC).channels[7] = 22;
+            /* uDQ given test */
+            (*Axis4DAC).channels[0] = 33; // 0
+            (*Axis4DAC).channels[1] = 34; // 0
+            (*Axis4DAC).channels[2] = 35; // 0
+            (*Axis4DAC).channels[3] = 36; // 0
+            (*Axis4DAC).channels[4] = 37; // 0
+            (*Axis4DAC).channels[5] = 5; // 0
+            (*Axis4DAC).channels[6] = 6; // 0
+            (*Axis4DAC).channels[7] = 7; // 0
         }
         if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
-
             // 锟斤拷通锟斤拷DAC锟斤拷锟斤拷锟斤拷锟斤拷薷锟�(*Axis4DAC).channels锟斤拷锟斤拷锟斤拷确锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟叫�(*Axis4DAC).dac_watch锟斤拷锟斤拷锟叫的憋拷锟斤拷锟斤拷
+
             Write.dac_buffer[0] = (*Axis4DAC).dac_watch[(*Axis4DAC).channels[0]] + (*Axis4DAC).dac_offset[0];
             Write.dac_buffer[1] = (*Axis4DAC).dac_watch[(*Axis4DAC).channels[1]] + (*Axis4DAC).dac_offset[1];
             Write.dac_buffer[2] = (*Axis4DAC).dac_watch[(*Axis4DAC).channels[2]] + (*Axis4DAC).dac_offset[2];
@@ -332,6 +252,7 @@ void write_DAC_buffer(){
 //            Write.dac_buffer[5] = cos(CL_TS*counter);
 //            Write.dac_buffer[6] = sin(CL_TS*counter);
 //            Write.dac_buffer[7] = cos(CL_TS*counter);
+
 
 
             if(((*Axis4DAC).dac_time)<3){

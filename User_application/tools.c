@@ -168,7 +168,7 @@ void axis_basic_setup(int axisCnt){
 
     Axis->FLAG_ENABLE_PWM_OUTPUT = FALSE;
 
-    Axis->channels_preset = 7; // 9; // 101;    }
+    Axis->channels_preset = 2; // 9; // 101;
 
     Axis->pCTRL->enc->sum_qepPosCnt = 0;
     Axis->pCTRL->enc->cursor = 0;
@@ -398,7 +398,7 @@ void main_loop() {
     }
 }
 
-REAL wubo_debug_SYSTEM_PWM_DEADTIME_COMPENSATION = 500;
+REAL wubo_debug_SYSTEM_PWM_DEADTIME_COMPENSATION = 200;
 
 void DeadtimeCompensation(REAL Current_U, REAL Current_V, REAL Current_W, REAL CMPA[], REAL CMPA_DBC[])
 {
@@ -519,7 +519,7 @@ void voltage_commands_to_pwm()
     if (axisCnt == 0){
         // SVPWM of the motor 3-phase
         (*CTRL).svgen1.Ualpha = (*CTRL).o->cmd_uAB_to_inverter[0];
-        (*CTRL).svgen1.Ubeta = (*CTRL).o->cmd_uAB_to_inverter[1];
+        (*CTRL).svgen1.Ubeta  = (*CTRL).o->cmd_uAB_to_inverter[1];
 
         if (enable_vvvf){
             (*CTRL).svgen1.Ualpha = vvvf_voltage * cos(vvvf_frequency * 2 * M_PI * (*CTRL).timebase);
@@ -1245,12 +1245,16 @@ void DISABLE_PWM_OUTPUT()
     }
 
     /* 在不输出PWM波形的时候，也就是“开关”为OFF的时候，更新SpeedInnerLoop的参数*/
-    #if WHO_IS_USER == USER_WB
-        if ((*debug).who_is_user == USER_WB && (*debug).bool_apply_WC_tunner_for_speed_loop == TRUE){
-        _user_wubo_WC_Tuner_Online(); // 和_user_wubo_WC_Tuner函数区别
-        _user_wubo_TI_Tuner_Online();
-    #else
-        //TODO: Here needs a online tuning function for public use
+    #if WUBO_ONLINE_TUNING
+        #if WHO_IS_USER == USER_WB
+            if ( (*debug).who_is_user == USER_WB && (*debug).bool_apply_WC_tunner_for_speed_loop == TRUE ){
+                _user_wubo_WC_Tuner_Online(); // 和_user_wubo_WC_Tuner函数区别
+            }else{
+                _user_wubo_TI_Tuner_Online();
+            }
+        #else
+            //TODO: Here needs a online tuning function for public use
+        #endif
     #endif
 
     DELAY_US(5);

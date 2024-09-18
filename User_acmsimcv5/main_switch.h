@@ -30,7 +30,12 @@
 #define MODE_SELECT_POSITION_LOOP            5
 #define MODE_SELECT_COMMISSIONING            9
 #define MODE_SWEEPING_FREQUENCY              20
+#define MODE_SELECT_UDQ_GIVEN_TEST           30
 #define MODE_SELECT_GENERATOR                8
+
+
+/* change PI algorithm*/
+#define USE_LAOMING_PI FALSE
 
 struct DebugExperiment{
     long error;

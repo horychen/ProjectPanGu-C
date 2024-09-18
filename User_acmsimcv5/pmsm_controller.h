@@ -10,6 +10,7 @@ typedef struct {
     REAL  Tc;     // Output: reference phase-c switching function
     REAL CMPA[3]; // PWM compare register value original
     REAL CMPA_DBC[3]; // PWM compare register value dead-band compensated
+    REAL utilization_ratio; //* The squart of the sum of the square of Ualpha and Ubeta
 } SVGENDQ;
 
 typedef struct {

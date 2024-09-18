@@ -6,6 +6,7 @@
  */
 #include <All_Definition.h>
 
+
 void SVGEN_Drive(SVGENDQ* ptrV){
 
     float Va,Vb,Vc,t1,t2,temp_sv1,temp_sv2;
@@ -16,6 +17,8 @@ void SVGEN_Drive(SVGENDQ* ptrV){
     REAL Inverse_Voltage_DC_BUS = 1.0 / Axis->vdc;
     temp_sv1=(v.Ubeta*0.8660254)*Inverse_Voltage_DC_BUS;
     temp_sv2=(1.5*v.Ualpha)     *Inverse_Voltage_DC_BUS;
+
+    v.utilization_ratio = sqrtf(temp_sv1 * temp_sv1 + temp_sv2 * temp_sv2);
 
     //t_voltage=G.Voltage_DC_BUS*0.577367;
 

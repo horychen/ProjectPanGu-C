@@ -65,6 +65,9 @@
 #include "regulator_speedInnerLoop.h"
 #include "inverter_Compensation.h"
 
+#define CURRENT_LOOP_KI_TIMES_TEN FALSE
+#define WUBO_ONLINE_TUNING FALSE
+
 // Header for global_variabels_definition.c
 struct GlobalWatch
 {
@@ -112,7 +115,7 @@ REAL difference_between_two_angles(REAL first, REAL second);
 //#define ENCODER_TYPE ABSOLUTE_ENCODER_MD1 // ABSOLUTE_ENCODER_SCI_SHANK
 
 #ifdef _MOTOR_GROUP
-    #define ENCODER_TYPE INCREMENTAL_ENCODER_QEP
+    #define ENCODER_TYPE ABSOLUTE_ENCODER_MD1
 #endif
 
 
@@ -174,8 +177,8 @@ REAL difference_between_two_angles(REAL first, REAL second);
     #define CNT_2_ELEC_RAD (SYSTEM_QEP_REV_PER_PULSE * 2 * M_PI * INIT_NPP)
     #define SYSTEM_QEP_QPOSMAX (SYSTEM_QEP_PULSES_PER_REV - 1)
     #define SYSTEM_QEP_QPOSMAX_PLUS_1 (SYSTEM_QEP_PULSES_PER_REV)
-    #define MOTOR1_OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS 110228
-    #define MOTOR2_OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS 57115
+    #define MOTOR1_OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS 110288
+    #define MOTOR2_OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS 5151
     // 30144 wb tuned with id_cmd = 2A, 20240715
     // MOTOR1 30190 wb tuned with id_cmd = 3A, 20240719
     // MOTOR2 41668 wb tuned with id_cmd = 3A, 20240719

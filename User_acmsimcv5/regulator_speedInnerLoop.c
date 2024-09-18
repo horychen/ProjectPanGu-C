@@ -1,7 +1,5 @@
 #include "ACMSim.h"
 
-// int wubo_debug[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-
 /* Here is a good example to show that we user WHO_IS_USER to make your own code to be compiled */
 #if WHO_IS_USER == USER_WB
     REAL _user_wubo_WC_Tuner_Part2(REAL zeta, REAL omega_n, REAL max_CLBW_PER_min_CLBW){
@@ -36,8 +34,14 @@
         PID_iQ->Kp = Series_Q_KP;
         PID_Speed->Kp = Series_Speed_KP;
 
-        PID_iD->Ki_CODE = Series_D_KI * Series_D_KP * CL_TS;
-        PID_iQ->Ki_CODE = Series_Q_KI * Series_Q_KP * CL_TS;
+        #if CURRENT_LOOP_KI_TIMES_TEN
+            PID_iD->Ki_CODE = Series_D_KI * Series_D_KP * CL_TS * 10;
+            PID_iQ->Ki_CODE = Series_Q_KI * Series_Q_KP * CL_TS * 10;
+        #else
+            PID_iD->Ki_CODE = Series_D_KI * Series_D_KP * CL_TS;
+            PID_iQ->Ki_CODE = Series_Q_KI * Series_Q_KP * CL_TS;
+        #endif
+        
         PID_Speed->Ki_CODE = Series_Speed_KI * Series_Speed_KP * VL_TS;
         PID_Speed->KFB = Series_Speed_KFB;
 
@@ -70,6 +74,10 @@
         PID_iQ->OutLimit    = 0.5773 * d_sim.CL.LIMIT_DC_BUS_UTILIZATION * d_sim.init.Vdc;
         PID_Speed->OutLimit = d_sim.VL.LIMIT_OVERLOAD_FACTOR * d_sim.init.IN;
         // >>实验<<限幅的部分我放在pangu-c的main.c中的measurement函数里面，也就是说，测量此时的Vdc，然后根据Vdc觉得限幅的大小
+
+        // see when codes run here
+        extern REAL wubo_debug_tools[10];
+        wubo_debug_tools[2] = 99;
     }
 
     void _user_wubo_WC_Tuner_Online(){
@@ -77,6 +85,10 @@
         REAL FOC_CLBW, K0;
         FOC_CLBW, K0 = _user_wubo_WC_Tuner_Part2((*debug).zeta, (*debug).omega_n, (*debug).max_CLBW_PER_min_CLBW);
         // >>实验<<限幅的部分我放在pangu-c的main.c中的measurement函数里面，也就是说，测量此时的Vdc，然后根据Vdc觉得限幅的大小
+
+        // see when codes run here
+        extern REAL wubo_debug_tools[10];
+        wubo_debug_tools[3] = 99;
     }
 
     void _user_wubo_TI_Tuner_Online(){
@@ -107,12 +119,22 @@
         PID_iQ->Kp = Series_Q_KP;
         PID_Speed->Kp = Series_Speed_KP;
 
-        PID_iD->Ki_CODE = Series_D_KI * Series_D_KP * CL_TS;
-        PID_iQ->Ki_CODE = Series_Q_KI * Series_Q_KP * CL_TS;
+        #if CURRENT_LOOP_KI_TIMES_TEN
+            PID_iD->Ki_CODE = Series_D_KI * Series_D_KP * CL_TS * 10;
+            PID_iQ->Ki_CODE = Series_Q_KI * Series_Q_KP * CL_TS * 10;
+        #else
+            PID_iD->Ki_CODE = Series_D_KI * Series_D_KP * CL_TS;
+            PID_iQ->Ki_CODE = Series_Q_KI * Series_Q_KP * CL_TS;
+        #endif
+        
         PID_Speed->Ki_CODE = Series_Speed_KI * Series_Speed_KP * VL_TS;
 
         // 应该可以删去，但我不放心有trick bug
         PID_Speed->KFB = 0.0;
+
+        // see when codes run here
+        extern REAL wubo_debug_tools[10];
+        wubo_debug_tools[4] = 99;
     }
 
     void _user_wubo_SpeedInnerLoop_controller(st_pid_regulator *r){

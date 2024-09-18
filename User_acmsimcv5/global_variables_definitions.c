@@ -8,6 +8,10 @@ struct ControllerForExperiment *CTRL;
 struct DebugExperiment *debug;
 struct DebugExperiment debug_1;
 
+//TODO:这个变量需要删除
+/* For wubo debuger */
+REAL wubo_debug_tools[10] = {1,0,0,0,0,0,0,0,0,0};
+
 ST_D_SIM d_sim;
 
 REAL one_over_six = 1.0/6.0;
