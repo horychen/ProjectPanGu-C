@@ -1,7 +1,7 @@
 // user_defined_functions.c
 #include "ACMSim.h"
 
-REAL global_id_ampl = 1.5;
+REAL global_id_ampl = 0;
 REAL global_id_freq = 1;
 
 REAL global_id_freq_ampl = 1;
@@ -63,8 +63,8 @@ void _user_init(){
         (*debug).Overwrite_theta_d           = 0.0;
 
         (*debug).set_id_command              = 0;
-        (*debug).set_iq_command              = 0;
-        (*debug).set_rpm_speed_command       = 100;
+        (*debug).set_iq_command              = 0.5;
+        (*debug).set_rpm_speed_command       = 0;
         (*debug).set_deg_position_command    = 0.0;
         (*debug).vvvf_voltage = 3.0;
         (*debug).vvvf_frequency = 5.0;

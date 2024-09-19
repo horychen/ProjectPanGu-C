@@ -165,15 +165,14 @@ void write_DAC_buffer(){
             (*Axis4DAC).dac_watch[60] = position_count_SCI_shank_fromCPU2*1e-08;
         #endif
 
-
         if((*Axis4DAC).channels_preset==1){(*Axis4DAC).channels_preset=0;
             /* Speed Loop info with iQ current info */
             (*Axis4DAC).channels[0] = 21; // PID_Speed->Ref
             (*Axis4DAC).channels[1] = 22; // PID_Speed->Fbk
-            (*Axis4DAC).channels[2] = 23; // PID_Speed->Err
-            (*Axis4DAC).channels[3] = 24; // PID_Speed->Ref - PID_Speed->Fbk
-            (*Axis4DAC).channels[4] = 29; // PID_iQ->Ref
-            (*Axis4DAC).channels[5] = 30; // PID_iQ->Fbk
+            (*Axis4DAC).channels[2] = 29; // PID_iQ->Ref
+            (*Axis4DAC).channels[3] = 30; // PID_iQ->Fbk
+            (*Axis4DAC).channels[4] = 23; // PID_Speed->Err
+            (*Axis4DAC).channels[5] = 24; // PID_Speed->Ref - PID_Speed->Fbk
             (*Axis4DAC).channels[6] = 31; // PID_iQ->Err
             (*Axis4DAC).channels[7] = 32; // PID_iQ->Out
         }else if((*Axis4DAC).channels_preset==2){(*Axis4DAC).channels_preset=0;

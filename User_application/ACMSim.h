@@ -124,6 +124,10 @@ REAL difference_between_two_angles(REAL first, REAL second);
     #define ENCODER_TYPE INCREMENTAL_ENCODER_QEP
 #endif
 
+#ifdef _PROJECT_FORMULA_GROUP /* Careful! Formula groups' board is on the PMSM SD80 since 20240919 hence it takes incremental enc */
+    #define ENCODER_TYPE INCREMENTAL_ENCODER_QEP
+#endif
+
 #define INIT_NPP d_sim.init.npp
 
 #if ENCODER_TYPE == INCREMENTAL_ENCODER_QEP
