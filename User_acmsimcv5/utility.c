@@ -12,8 +12,7 @@ REAL sign(REAL x){
    return (x > 0) - (x < 0);
 }
 
-
-REAL sign_integer(int32 x){
+int32 sign_integer(int32 x){
     return (x > 0) - (x < 0);
 }
 
