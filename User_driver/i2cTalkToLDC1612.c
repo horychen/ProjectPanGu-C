@@ -3,7 +3,7 @@
 //###########################################################################
 
 #include <All_Definition.h>
-//#include "i2cTalkToLDC1612.h"  //Current we needn't use it.
+#include "i2cTalkToLDC1612.h"  //Current we needn't use it.
 
 // Note: I2C Macros used in this example can be found in the
 // F2837xD_I2C_defines.h file
@@ -32,14 +32,6 @@ int Parse_result_data(Uint16 channel, Uint32 raw_result, Uint32* result);
 Uint32 Set_ERROR_CONFIG(Uint16 value);
 void Read_sensor_infomation();
 Uint32 reset_sensor();
-
-/*定义第几个线圈*/
-int channel_0_number, channel_1_number;
-
-#define channel_0_number FALSE
-#define channel_1_number FALSE
-
-
 
 __interrupt void i2c_int1a_isr(void);
 void pass(void);
@@ -75,6 +67,11 @@ void fail(void);
 // Global variables
 // Two bytes will be used for the outgoing address,
 // thus only setup 14 bytes maximum
+
+/*定义第几个线圈*/
+int channel_0_number = FALSE;
+int channel_1_number = FALSE;
+
 Uint16 ERROR;
 
 Uint16 dataHigh;
