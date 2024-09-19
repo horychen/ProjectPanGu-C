@@ -134,15 +134,15 @@
     #define PIN_ADCB_W 5
 
     // ADC
-    #define OFFSET_VDC_BUS_IPM1 10
+    #define OFFSET_VDC_BUS_IPM1 8
     #define OFFSET_LEM_B7 2005 // 2024-09-02
-    #define OFFSET_LEM_B8 2035 // 2024-09-02
+    #define OFFSET_LEM_B8 2038 // 2024-09-02
     #define OFFSET_LEM_B9 2043 // 2024-09-02
-    #define OFFSET_LEM_A1 2033// ???
-    #define OFFSET_LEM_A2 2045 // ???
-    #define OFFSET_LEM_A3 2059 // ???
+    #define OFFSET_LEM_A1 2038// ???
+    #define OFFSET_LEM_A2 2050 // ???
+    #define OFFSET_LEM_A3 2065 // ???
 
-    #define SCALE_VDC_BUS_IPM1 0.1846154 // ???
+    #define SCALE_VDC_BUS_IPM1 0.169014 // ???
     #define SCALE_LEM_B7 0.03076297
     #define SCALE_LEM_B8 0.03038256
     #define SCALE_LEM_B9 0.03039058
