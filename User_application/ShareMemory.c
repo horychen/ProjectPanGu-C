@@ -89,14 +89,14 @@ void write_DAC_buffer(){
         (*Axis4DAC).dac_watch[24] = (PID_Speed->Ref - PID_Speed->Fbk) * MECH_RAD_PER_SEC_2_RPM * 0.002;
 
         /* D-Current Info */
-        (*Axis4DAC).dac_watch[25] = PID_iD->Ref * 0.1; // 0.6V -> 2A
-        (*Axis4DAC).dac_watch[26] = PID_iD->Fbk * 0.1;
+        (*Axis4DAC).dac_watch[25] = (*CTRL).i->cmd_iDQ[0] * 0.1; // 0.6V -> 2A
+        (*Axis4DAC).dac_watch[26] = (*CTRL).i->iDQ[0] * 0.1;
         (*Axis4DAC).dac_watch[27] = PID_iD->Err * 0.1;
         (*Axis4DAC).dac_watch[28] = (PID_iD->Ref - PID_iD->Fbk) * 0.1;
 
         /* Q-Current Info */
-        (*Axis4DAC).dac_watch[29] = PID_iQ->Ref * 0.1; // 0.6V -> 2A
-        (*Axis4DAC).dac_watch[30] = PID_iQ->Fbk * 0.1;
+        (*Axis4DAC).dac_watch[29] = (*CTRL).i->cmd_iDQ[1] * 0.1; // 0.6V -> 2A
+        (*Axis4DAC).dac_watch[30] = (*CTRL).i->iDQ[1] * 0.1;
         (*Axis4DAC).dac_watch[31] = PID_iQ->Err * 0.1;
         (*Axis4DAC).dac_watch[32] = PID_iQ->Out * 0.1;
 
@@ -182,14 +182,14 @@ void write_DAC_buffer(){
             (*Axis4DAC).channels[1] = 26; // PID_iD->Fbk
             (*Axis4DAC).channels[2] = 27; // PID_iD->Err
             (*Axis4DAC).channels[3] = 28; // PID_iD->Out
-            (*Axis4DAC).channels[4] = 69; // PID_iQ->Ref
-            (*Axis4DAC).channels[5] = 30; // PID_iQ->Fbk
-            (*Axis4DAC).channels[6] = 31; // PID_iQ->Err
-            (*Axis4DAC).channels[7] = 32; // PID_iQ->Out
+            (*Axis4DAC).channels[4] = 29;
+            (*Axis4DAC).channels[5] = 30;
+            (*Axis4DAC).channels[6] = 31;
+            (*Axis4DAC).channels[7] = 32;
         }else if((*Axis4DAC).channels_preset==3){(*Axis4DAC).channels_preset=0;
             /* DAC offset tune */
-            (*Axis4DAC).channels[0] = 0; // 0
-            (*Axis4DAC).channels[1] = 1; // 0
+            (*Axis4DAC).channels[0] = 29; // 
+            (*Axis4DAC).channels[1] = 30; // 
             (*Axis4DAC).channels[2] = 2; // 0
             (*Axis4DAC).channels[3] = 3; // 0
             (*Axis4DAC).channels[4] = 4; // 0

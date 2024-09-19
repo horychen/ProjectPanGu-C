@@ -4,11 +4,11 @@ extern REAL sig_a3;
 
 /* 功能函数 */
 // 符号函数
-//#if PC_SIMULATION == TRUE //* utility的函数定义要小心，由于仿真和emy-c的ACMSim.h的内容不同，可能会导致编译错误
+// #if PC_SIMULATION == TRUE //* utility的函数定义要小心，由于仿真和emy-c的ACMSim.h的内容不同，可能会导致编译错误
 REAL sign(REAL x){
    return (x > 0) - (x < 0);
 }
-//#endif
+// #endif
 
 int32 sign_integer(int32 x){
     return (x > 0) - (x < 0);

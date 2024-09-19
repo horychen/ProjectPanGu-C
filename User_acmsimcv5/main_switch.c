@@ -20,7 +20,6 @@ REAL global_uD_ampl = 0.0;
 REAL global_uD_square_time = 1; // second
 REAL gloval_uD_square_time_sum = 0.0; //
 
-
 void overwrite_d_sim(){
     // for now 20240902 do nothing
 }
@@ -60,12 +59,12 @@ void _user_init(){
             /* Commission  */
             // (*debug).mode_select = MODE_SELECT_COMMISSIONING;                         //  9
 
-        (*debug).Overwrite_Current_Frequency = 1;
+        (*debug).Overwrite_Current_Frequency = 1.0;
         (*debug).Overwrite_theta_d           = 0.0;
 
         (*debug).set_id_command              = 0;
         (*debug).set_iq_command              = 0;
-        (*debug).set_rpm_speed_command       = 50;
+        (*debug).set_rpm_speed_command       = 100;
         (*debug).set_deg_position_command    = 0.0;
         (*debug).vvvf_voltage = 3.0;
         (*debug).vvvf_frequency = 5.0;

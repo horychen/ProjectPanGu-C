@@ -250,9 +250,9 @@ void init_CTRL_Part2(){
     //(*CTRL).enc->OffsetCountBetweenIndexAndUPhaseAxis = 0;
     //(*CTRL).enc->theta_d_offset = (*CTRL).enc->OffsetCountBetweenIndexAndUPhaseAxis * CNT_2_ELEC_RAD;
 
-    /* Console */
+    /* Console Here is ralated with COMMOSSION*/
     // See init_experiment_overwrite() in CJHMainISR.c
-    G.flag_do_inverter_characteristics = 0;
+    G.flag_do_inverter_characteristics = 1.0;
     G.overwrite_vdc = 20;
 
     /* Black Box Model | Controller quantities */

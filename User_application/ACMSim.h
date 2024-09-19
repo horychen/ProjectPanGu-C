@@ -67,7 +67,7 @@
 #include "pi_math.h"
 
 #define CURRENT_LOOP_KI_TIMES_TEN FALSE
-#define WUBO_ONLINE_TUNING FALSE
+#define WUBO_ONLINE_TUNING TRUE
 
 // Header for global_variabels_definition.c
 struct GlobalWatch
