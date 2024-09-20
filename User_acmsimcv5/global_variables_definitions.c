@@ -248,7 +248,7 @@ void init_CTRL_Part2(){
 
     /* Console */
     // See init_experiment_overwrite() in CJHMainISR.c
-    G.flag_do_inverter_characteristics = 0;
+    G.flag_do_inverter_characteristics = 1;
     G.overwrite_vdc = 20;
 
     /* Black Box Model | Controller quantities */
