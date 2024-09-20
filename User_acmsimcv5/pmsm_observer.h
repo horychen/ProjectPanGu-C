@@ -12,7 +12,7 @@
         #define SELF_COMM_INVERTER FALSE
         #define TUNING_CURRENT_SCALE_FACTOR_INIT FALSE2
     #else
-        #define ENABLE_COMMISSIONING FALSE /*Experiment*/
+        #define ENABLE_COMMISSIONING TRUE /*Experiment*/
         #define SELF_COMM_INVERTER FALSE
         #define TUNING_CURRENT_SCALE_FACTOR_INIT FALSE
         /*As we use (*CTRL).o->iab_cmd for look up, now dead-time compensation during ENABLE_COMMISSIONING is not active*/
