@@ -23,6 +23,8 @@ int16 ExtendSecond = 2;
 Uint32 jitterTestInitialPos;
 Uint32 jitterTestPosCmd;
 
+
+
 REAL LEG_BOUCING_SPEED = 400;
 int bool_use_SCI_encoder = TRUE;
 
@@ -141,25 +143,36 @@ int32 cnt_four_bar_map_motor_encoder_angle=0;
 #ifdef _MMDv1 // mmlab drive version 1
 
 // DC BUS
-    #define OFFSET_VDC_BUS_IPM1   4.17834394   // -1.01456189
+    #define OFFSET_VDC_BUS_IPM1  4.17834394   // -1.01456189
     #define SCALE_VDC_BUS_IPM1   0.15848980    // 0.17604031
 
 //Lem 2閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹鑹查敓鏂ゆ嫹閿熻?楁唻鎷烽敓鏂ゆ嫹adc b7 b8 b9
-    #define OFFSET_LEM_B7   2027 //2023.89473684 // ADCB7
-    #define OFFSET_LEM_B8   2043 //2042.33333333 // ADCB8
-    #define OFFSET_LEM_B9   2048 //2043.43859649 // ADCB9
+    #define OFFSET_LEM_B7   2000 //2023.89473684 // ADCB7
+    #define OFFSET_LEM_B8   2035 //2042.33333333 // ADCB8
+    #define OFFSET_LEM_B9   2040 //2043.43859649 // ADCB9
     // 閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹鎸囬敓鏂ゆ嫹閿熸枻鎷蜂负閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹LEM閿熻緝鐨勭》鎷峰ご閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷峰悓閿熸枻鎷烽敓鏂ゆ嫹SCALE涓洪敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷稬EM閿熻緝鐨勭》鎷峰ご閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹閿熸磥鍙嶉敓鏂ゆ嫹閿熸枻鎷稴CALE涓洪敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹
     #define SCALE_LEM_B7   0.03076297 // ADCB7
     #define SCALE_LEM_B8   0.03038256 // ADCB8
     #define SCALE_LEM_B9   0.03039058 // ADCB9
 
 //Lem 1閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹鑹查敓鏂ゆ嫹閿熻?楁唻鎷烽敓鏂ゆ嫹adc a1 a2 a3
-    #define OFFSET_LEM_A1   851  //2920 //更换了一个LEM，值变大了好多 //2020 //2029.57894737 // ADCA1
-    #define OFFSET_LEM_A2   868  //2043 //2043.08771930 // ADCA2
-    #define OFFSET_LEM_A3   858  //2044 //2042.98245614 // ADCA3
+    #define OFFSET_LEM_A1   2770  //2920 //更换了一个LEM，值变大了好多 //2020 //2029.57894737 // ADCA1
+    #define OFFSET_LEM_A2   2034  //2043 //2043.08771930 // ADCA2
+    #define OFFSET_LEM_A3   2031  //2044 //2042.98245614 // ADCA3
     #define SCALE_LEM_A1   0.03080704 // ADCA1
     #define SCALE_LEM_A2   0.03060669 // ADCA2
     #define SCALE_LEM_A3   0.03045988 // ADCA3
+
+    // Displacement sensor
+    #define OFFSET_PLACE_X1    4461341  //样机x轴位置1
+    #define OFFSET_PLACE_Y1    4639271  //样机y轴位置1
+
+    #define OFFSET_PLACE_X2    4561234  //样机x轴位置2
+    #define OFFSET_PLACE_Y2    4513212  //样机y轴位置2
+
+    #define SCALE_PLACE_X      4.2894311E-5
+    #define SCALE_PLACE_Y      4.3412197E-5
+
 
 #else
     scale and offset...
@@ -203,6 +216,17 @@ void init_experiment_AD_gain_and_offset(){
     /* eQEP OFFSET */
     CTRL.enc->OffsetCountBetweenIndexAndUPhaseAxis = OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
     CTRL.enc->theta_d_offset = CTRL.enc->OffsetCountBetweenIndexAndUPhaseAxis * CNT_2_ELEC_RAD;
+}
+void init_experiment_PLACE_gain_and_offset(){
+    Axis.place_offset[0] = OFFSET_PLACE_X1;
+    Axis.place_offset[1] = OFFSET_PLACE_Y1;
+    Axis.place_scale[0] = SCALE_PLACE_X;
+    Axis.place_scale[1] = SCALE_PLACE_Y;
+    /* 下面是针对4路位移传感器的定义 */
+    Axis.place_offset[2] = OFFSET_PLACE_X2;
+    Axis.place_offset[3] = OFFSET_PLACE_Y2;
+    Axis.place_scale[2] = SCALE_PLACE_X;
+    Axis.place_scale[3] = SCALE_PLACE_Y;
 }
 void main(void){
 
@@ -392,6 +416,17 @@ void main(void){
     // 4.4 Initialize algorithms
     init_experiment();
     init_experiment_AD_gain_and_offset();
+    init_experiment_PLACE_gain_and_offset();
+
+    // 4.5 Use GPIO0, GPIO1 and reuse mode is 6 (I2C)
+    /*This part is corresponding to the Seeed's Github, of which address is attached below:
+     https://github.com/Seeed-Studio/Seeed_LDC1612/blob/master/Seeed_LDC1612.cpp
+     This part is corresponding to sensor.single_channel_config from Seeed-LDC1612 */
+    GPIO_SetupPinMux(0, GPIO_MUX_CPU1, 6);
+    GPIO_SetupPinMux(1, GPIO_MUX_CPU1, 6);
+    I2CA_Init();
+    Single_channel_config(0); // 0 for CHANNEL_0
+
 
     // 5. Handle Interrupts
     /* Re-map PIE Vector Table to user defined ISR functions. */
@@ -499,6 +534,9 @@ void main(void){
 
     // 7. Main loop
     while(1){
+        I2CA_ReadData_Channel(0);
+        DELAY_US(300);              //延迟 300 毫秒？
+        I2CA_ReadData_Channel(1);
 
         if (Motor_mode_START==1){
             Axis.FLAG_ENABLE_PWM_OUTPUT = 1;
@@ -907,7 +945,14 @@ void measurement(){
     //    Axis.iuvw[1]=((REAL)(AdcaResultRegs.ADCRESULT2 ) - Axis.adc_offset[2]) * Axis.adc_scale[2]; //
     //    Axis.iuvw[2]=((REAL)(AdcaResultRegs.ADCRESULT3 ) - Axis.adc_offset[3]) * Axis.adc_scale[3]; //
 
-
+    /* Displacement sensor */
+    Axis.place_sensor[0] = (raw_value_zero - Axis.place_offset[0])*Axis.place_scale[0];
+    Axis.place_sensor[1] = (raw_value_one  - Axis.place_offset[1])*Axis.place_scale[1];
+//    Axis.place_sensor[2] = (raw_value_two  - Axis.place_offset[2])*Axis.place_scale[2];
+//    Axis.place_sensor[3] = (raw_value_three - Axis.place_offset[3])*Axis.place_scale[3];
+    if (Axis.place_sensor[0] > 0){
+            // Axis.xx
+    }
 
     // 閿熺??纰夋嫹鍘嬮敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹鍗犻敓绉告瘮鐚存嫹姣嶉敓绔?纰夋嫹鍘嬮敓鏂ゆ嫹
     //voltage_measurement_based_on_eCAP();
@@ -1078,6 +1123,8 @@ void PanGuMainISR(void){
 
             init_experiment();
             init_experiment_AD_gain_and_offset();
+            init_experiment_PLACE_gain_and_offset();
+
             //G.Select_exp_operation = 3; // fixed
             init_experiment_overwrite();
 
