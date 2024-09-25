@@ -40,7 +40,7 @@
     #define OFFSET_LEM_A2 2060 // 2024-09-17
     #define OFFSET_LEM_A3 2054 // 2024-09-17
 
-    #define SCALE_VDC_BUS_IPM1 0.1846154 // ???
+    #define SCALE_VDC_BUS_IPM1 0.15625 // ???
     #define SCALE_LEM_B7 0.03076297
     #define SCALE_LEM_B8 0.03038256
     #define SCALE_LEM_B9 0.03039058
