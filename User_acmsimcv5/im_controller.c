@@ -449,7 +449,298 @@ void controller_marino2005(){
     // (*CTRL).o->cmd_iAB[1] = MT2B((*CTRL).i->cmd_iDQ[0], (*CTRL).i->cmd_iDQ[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
 }
 
+void controller_PMSMife_with_commands(){
 
+    /// 1. 生成转速指令
+    static REAL rpm_speed_command=0.0, amp_current_command=0.0;
+    {
+        // commands(&rpm_speed_command, &amp_current_command);
+        static REAL local_dc_rpm_cmd = 10.0;
+        static REAL local_dc_rpm_cmd_deriv = 0.0;
+
+        static REAL last_omg_cmd=0.0;
+        REAL OMG1;
+        #define DELAY 100
+        #define OFF 1000
+        if((*CTRL).timebase>6){/*Variable Speed: Sinusoidal Speed + Ramp Speed*/
+            if      ((*CTRL).timebase>7.0){
+                OMG1 = (2*M_PI*marino_speed_freq);
+            }else if((*CTRL).timebase>6.875){
+                OMG1 = (2*M_PI*32);
+            }else if((*CTRL).timebase>6.75){
+                OMG1 = (2*M_PI*16);
+            }else if((*CTRL).timebase>6.5){
+                OMG1 = (2*M_PI*8);
+            }else{
+                OMG1 = (2*M_PI*4);
+            }
+            //OMG1 = (2*M_PI*4);
+            OMG1 = 0;
+
+            // 反转(step speed)
+            if(BOOL_FAST_REVERSAL){
+                if((int)((*CTRL).timebase*accerleration_time_inv)%10==0){ //*8*400/750
+                    local_dc_rpm_cmd_deriv = -imife_accerleration_fast;
+                }else if((int)((*CTRL).timebase*accerleration_time_inv)%10==5){
+                    local_dc_rpm_cmd_deriv = imife_accerleration_fast;
+                }
+                else 
+                    local_dc_rpm_cmd_deriv = 0;
+
+            }
+
+            // 反转
+            if(BOOL_FAST_REVERSAL==FALSE){
+                if((*CTRL).timebase>10 && (*CTRL).timebase<15+imife_reversal_end_time){/*Reversal*/
+                    // OMG1 = 0;
+                    // TODO: test positive and negative high speed
+                    local_dc_rpm_cmd_deriv = -imife_accerleration_slow;
+                }else if((*CTRL).timebase>15+imife_reversal_end_time && (*CTRL).timebase<15.2+imife_reversal_end_time){
+                    local_dc_rpm_cmd_deriv =  1000; //imife_accerleration_fast;
+                }else if((*CTRL).timebase>15.2+imife_reversal_end_time && (*CTRL).timebase<15.4+imife_reversal_end_time){
+                    local_dc_rpm_cmd_deriv = - 1000; //imife_accerleration_fast;
+                }else if((*CTRL).timebase>15.4+imife_reversal_end_time && (*CTRL).timebase<15.6+imife_reversal_end_time){
+                    local_dc_rpm_cmd_deriv =  1000; //imife_accerleration_fast;
+                }else if((*CTRL).timebase>15.6+imife_reversal_end_time && (*CTRL).timebase<15.8+imife_reversal_end_time){
+                    local_dc_rpm_cmd_deriv = - 1000; //imife_accerleration_fast;
+                }else if((*CTRL).timebase>15.8+imife_reversal_end_time && (*CTRL).timebase<16.0+imife_reversal_end_time){
+                    local_dc_rpm_cmd_deriv =  1000; //imife_accerleration_fast;
+                }else{
+                    local_dc_rpm_cmd_deriv = 0.0;
+                }
+            }
+
+            local_dc_rpm_cmd            += CL_TS * local_dc_rpm_cmd_deriv;
+
+            rpm_speed_command              = (SINE_AMPL          * sin(OMG1*(*CTRL).timebase) + local_dc_rpm_cmd       );
+            (*CTRL).i->cmd_varOmega        = (SINE_AMPL          * sin(OMG1*(*CTRL).timebase) + local_dc_rpm_cmd       )*RPM_2_MECH_RAD_PER_SEC;
+            (*CTRL).i->cmd_deriv_varOmega  = (SINE_AMPL*OMG1     * cos(OMG1*(*CTRL).timebase) + local_dc_rpm_cmd_deriv )*RPM_2_MECH_RAD_PER_SEC;
+            (*CTRL).i->cmd_dderiv_varOmega = (SINE_AMPL*OMG1*OMG1*-sin(OMG1*(*CTRL).timebase) + 0                      )*RPM_2_MECH_RAD_PER_SEC;
+        }else if((*CTRL).timebase>5+OFF){/*Constant Speed*/
+            rpm_speed_command           = local_dc_rpm_cmd;
+            (*CTRL).i->cmd_varOmega        = rpm_speed_command*RPM_2_MECH_RAD_PER_SEC;
+            (*CTRL).i->cmd_deriv_varOmega  = 0;
+            (*CTRL).i->cmd_dderiv_varOmega = 0;
+        }else if((*CTRL).timebase>3+OFF){/*Ramp Speed*/
+            rpm_speed_command += CL_TS*150;
+            local_dc_rpm_cmd            = rpm_speed_command;
+            (*CTRL).i->cmd_varOmega        = rpm_speed_command*RPM_2_MECH_RAD_PER_SEC;
+            (*CTRL).i->cmd_deriv_varOmega  = ((*CTRL).i->cmd_varOmega - last_omg_cmd)*CL_TS_INVERSE;
+            (*CTRL).i->cmd_dderiv_varOmega = 0;
+
+            last_omg_cmd = (*CTRL).i->cmd_varOmega;
+        }else if((*CTRL).timebase>2+OFF){/*Ramp Speed (Downward)*/
+            rpm_speed_command -= CL_TS*150;
+            local_dc_rpm_cmd            = rpm_speed_command;
+            (*CTRL).i->cmd_varOmega        = rpm_speed_command*RPM_2_MECH_RAD_PER_SEC;
+            (*CTRL).i->cmd_deriv_varOmega  = ((*CTRL).i->cmd_varOmega - last_omg_cmd)*CL_TS_INVERSE;
+            (*CTRL).i->cmd_dderiv_varOmega = 0;
+
+            last_omg_cmd = (*CTRL).i->cmd_varOmega;
+        }else if((*CTRL).timebase>1.5+OFF){/*Ramp Speed*/
+            rpm_speed_command += CL_TS*150;
+            local_dc_rpm_cmd            = rpm_speed_command;
+            (*CTRL).i->cmd_varOmega        = rpm_speed_command*RPM_2_MECH_RAD_PER_SEC;
+            (*CTRL).i->cmd_deriv_varOmega  = ((*CTRL).i->cmd_varOmega - last_omg_cmd)*CL_TS_INVERSE;
+            (*CTRL).i->cmd_dderiv_varOmega = 0;
+
+            last_omg_cmd = (*CTRL).i->cmd_varOmega;
+        }else if((*CTRL).timebase>1.5+0.0){ /*Constant Speed*/
+            rpm_speed_command           = local_dc_rpm_cmd;
+            (*CTRL).i->cmd_varOmega        = rpm_speed_command*RPM_2_MECH_RAD_PER_SEC;
+            (*CTRL).i->cmd_deriv_varOmega  = 0;
+            (*CTRL).i->cmd_dderiv_varOmega = 0;
+        }else if((*CTRL).timebase>0.5+0.0){ /*Ramp Speed*/
+            // rpm_speed_command           += CL_TS*imife_ramp_slope;
+            // local_dc_rpm_cmd            = rpm_speed_command;
+            // (*CTRL).i->cmd_varOmega        = rpm_speed_command*RPM_2_MECH_RAD_PER_SEC;
+            // (*CTRL).i->cmd_deriv_varOmega  = ((*CTRL).i->cmd_varOmega - last_omg_cmd)*CL_TS_INVERSE;
+            // (*CTRL).i->cmd_dderiv_varOmega = 0;
+            // last_omg_cmd = (*CTRL).i->cmd_varOmega;
+            rpm_speed_command           = local_dc_rpm_cmd;
+            (*CTRL).i->cmd_varOmega        = rpm_speed_command*RPM_2_MECH_RAD_PER_SEC;
+            (*CTRL).i->cmd_deriv_varOmega  = 0;
+            (*CTRL).i->cmd_dderiv_varOmega = 0;
+        }else{ /*Bulding Flux*/
+            rpm_speed_command           = 0; // 0*20                   * sin(2*M_PI*(*CTRL).timebase);
+            (*CTRL).i->cmd_varOmega        = 0; // 0*20                   * sin(2*M_PI*(*CTRL).timebase)*RPM_2_MECH_RAD_PER_SEC;
+            (*CTRL).i->cmd_deriv_varOmega  = 0; // 0*20*(2*M_PI)          * cos(2*M_PI*(*CTRL).timebase)*RPM_2_MECH_RAD_PER_SEC;
+            (*CTRL).i->cmd_dderiv_varOmega = 0; // 0*20*(2*M_PI)*(2*M_PI) *-sin(2*M_PI*(*CTRL).timebase)*RPM_2_MECH_RAD_PER_SEC;
+        }
+    }
+
+    // // Overwrite speed command
+    // if(CONSTANT_SPEED_OPERATION!=0){
+    //     rpm_speed_command           = 0;
+    //     (*CTRL).i->cmd_varOmega        = CONSTANT_SPEED_OPERATION*RPM_2_MECH_RAD_PER_SEC;
+    //     (*CTRL).i->cmd_deriv_varOmega  = 0;
+    //     (*CTRL).i->cmd_dderiv_varOmega = 0;
+    // }
+
+    /// 2. 生成磁链指令
+    // #define TIME_COST 0.1
+    // if((*CTRL).timebase<TIME_COST){
+    //     (*CTRL).i->cmd_psi_raw   += CL_TS*(*CTRL).i->m0/TIME_COST;
+    //     (*CTRL).i->cmd_psi        = (*CTRL).i->cmd_psi_raw;
+    //     (*CTRL).i->cmd_deriv_psi  = (*CTRL).i->m0/TIME_COST;
+    //     (*CTRL).i->cmd_dderiv_psi = 0.0;
+    // }else{
+    //     // (*CTRL).i->m1 = 0.0;
+    //     (*CTRL).i->cmd_psi_raw    = (*CTRL).i->m0 + (*CTRL).i->m1 * sin((*CTRL).i->omega1*(*CTRL).timebase);
+    //     (*CTRL).i->cmd_psi        = (*CTRL).i->cmd_psi_raw; // _lpf((*CTRL).i->cmd_psi_raw, (*CTRL).i->cmd_psi, 5);
+    //     (*CTRL).i->cmd_deriv_psi  = (*CTRL).i->m1 * (*CTRL).i->omega1 * cos((*CTRL).i->omega1*(*CTRL).timebase);
+    //     (*CTRL).i->cmd_dderiv_psi = (*CTRL).i->m1 * (*CTRL).i->omega1 * (*CTRL).i->omega1 * -sin((*CTRL).i->omega1*(*CTRL).timebase);
+    // }
+    // (*CTRL).i->cmd_psi_inv = 1.0 / (*CTRL).i->cmd_psi;
+    // (*CTRL).i->cmd_psi_active[0] = MT2A((*CTRL).i->cmd_psi, 0.0, (*CTRL).s->cosT, (*CTRL).s->sinT); // TODO 这里的cosT和sinT还没更新到当前步，有没有关系？
+    // (*CTRL).i->cmd_psi_active[1] = MT2B((*CTRL).i->cmd_psi, 0.0, (*CTRL).s->cosT, (*CTRL).s->sinT);
+
+    /// 调用具体的控制器
+    // controller_IFOC();
+    controller_PMSMife();
+
+    main_inverter_voltage_command(0);
+}
+
+void controller_PMSMife(){
+    
+    // Cascaded from other system
+    /* Flux Est. */
+    pmsm_observers();
+
+    // TODO: 反馈磁链用谁？
+    PMife.psi_D2 = AB2M(FLUX_FEEDBACK_ALPHA, FLUX_FEEDBACK_BETA, (*CTRL).s->cosT, (*CTRL).s->sinT);
+    PMife.psi_Q2 = AB2T(FLUX_FEEDBACK_ALPHA, FLUX_FEEDBACK_BETA, (*CTRL).s->cosT, (*CTRL).s->sinT);
+    #if PC_SIMULATION
+        // PMife.psi_D2 = AB2M(ACM.psi_A2, ACM.psi_B2, (*CTRL).s->cosT, (*CTRL).s->sinT);
+        // PMife.psi_Q2 = AB2T(ACM.psi_A2, ACM.psi_B2, (*CTRL).s->cosT, (*CTRL).s->sinT);
+    #endif
+
+    // /*Si2lation only flux*/
+    // PMife.psi_D2 = simvm.psi_D2_ode1;
+    // PMife.psi_Q2 = simvm.psi_Q2_ode1;
+    // PMife.psi_D2 = ACM.psi_D2; // nonono, the dq flux should be obtained using (*CTRL).s->cosT/sinT.
+    // PMife.psi_Q2 = ACM.psi_Q2; // nonono, the dq flux should be obtained using (*CTRL).s->cosT/sinT.
+
+    // flux error quantities should be updated when feedback is updated | verified: this has nothing to do with the biased xTL at high speeds
+    PMife.e_psi_D2 = PMife.psi_D2 - (*CTRL).i->cmd_psi;
+    PMife.e_psi_Q2 = PMife.psi_Q2 - 0.0;
+
+    // PMife.e_psi_Dmu *= PMife_sat_d_axis_flux_control; // no luck
+    // PMife.e_psi_Qmu *= PMife_sat_q_axis_flux_control; // no luck
+
+
+    // API to the fourth-order system of observer and identifiers
+    observer_PMSMife();
+    (*CTRL).i->theta_d_elec = PMife.xRho;
+    REAL xOMG = PMife.xOmg; // * MOTOR.npp_inv;
+    (*CTRL).i->TLoad        = PMife.xTL;
+
+    // #define xOMG (CTRL->i->varOmega*MOTOR.npp)
+    // REAL xOMG = (*CTRL).i->varOmega * MOTOR.npp;
+
+    // 磁场可测 debug
+    // PMife.psi_Dmu = simvm.psi_D2;
+    // PMife.psi_Qmu = simvm.psi_Q2;
+    // (*CTRL).i->theta_d_elec = ACM.theta_M;
+    // (*CTRL).i->varOmega = (*CTRL).i->varOmega;
+    // (*CTRL).motor->alpha = ACM.alpha;
+    // (*CTRL).i->TLoad = ACM.TLoad;
+
+    // flux error quantities (moved up)
+    // PMife.e_psi_Dmu = PMife.psi_Dmu - (*CTRL).i->cmd_psi;
+    // PMife.e_psi_Qmu = PMife.psi_Qmu - 0.0;
+
+    // (*CTRL).motor->Lmu = (*CTRL).motor->Rreq * (*CTRL).motor->alpha_inv;
+    // (*CTRL).motor->Lmu_inv = 1.0 / (*CTRL).motor->Lmu;
+
+    // αβ to DQ
+    (*CTRL).s->cosT = cos((*CTRL).i->theta_d_elec);
+    (*CTRL).s->sinT = sin((*CTRL).i->theta_d_elec);
+    (*CTRL).i->iDQ[0] = AB2M(IS_C(0), IS_C(1), (*CTRL).s->cosT, (*CTRL).s->sinT);
+    (*CTRL).i->iDQ[1] = AB2T(IS_C(0), IS_C(1), (*CTRL).s->cosT, (*CTRL).s->sinT);
+
+    if(TRUE){
+        // 永磁同步电机不需要iD_cmd和iD_cmd，tomei 也没有给出
+        PMife.deriv_iQ_cmd =   (*CTRL).motor->npp_inv*(*CTRL).motor->Js * CLARKE_TRANS_TORQUE_GAIN_INVERSE*(*CTRL).motor->npp_inv * (\
+            1.0*(-PMife.k_omega*deriv_sat_kappa(xOMG -(*CTRL).i->cmd_varOmega ) * (PMife.deriv_xOmg - (*CTRL).i->cmd_deriv_varOmega ) + (*CTRL).motor->Js_inv*(*CTRL).motor->npp*PMife.deriv_xTL + (*CTRL).i->cmd_dderiv_varOmega  ) * (*CTRL).i->cmd_psi_inv\
+        //   - 1.0*(-PMife.k_omega*      sat_kappa(xOMG -(*CTRL).i->cmd_varOmega ) + (*CTRL).motor->Js_inv*(*CTRL).motor->npp*(*CTRL).i->TLoad + (*CTRL).i->cmd_deriv_varOmega ) * ((*CTRL).i->cmd_deriv_psi * (*CTRL).i->cmd_psi_inv*(*CTRL).i->cmd_psi_inv)
+            );
+
+        // current error quantities
+        (*CTRL).i->cmd_iDQ[0] = 0;//Tomei said that the reference i*d(t) for id was set to zero.
+        (*CTRL).i->cmd_iDQ[1] = ( (*CTRL).motor->npp_inv*(*CTRL).motor->Js *( 1*(*CTRL).i->cmd_deriv_varOmega  - PMife.k_omega*sat_kappa(xOMG -(*CTRL).i->cmd_varOmega ) ) + (*CTRL).i->TLoad ) * (CLARKE_TRANS_TORQUE_GAIN_INVERSE*(*CTRL).motor->npp_inv*(*CTRL).i->cmd_psi_inv);
+        PMife.e_iDs = (*CTRL).i->iDQ[0] - (*CTRL).i->cmd_iDQ[0];
+        PMife.e_iQs = (*CTRL).i->iDQ[1] - (*CTRL).i->cmd_iDQ[1];
+
+        PMife.torque_cmd = CLARKE_TRANS_TORQUE_GAIN * (*CTRL).motor->npp * ((*CTRL).i->cmd_iDQ[1] * (*CTRL).i->cmd_psi   - (*CTRL).i->cmd_iDQ[0]*(0));
+        PMife.torque__fb = CLARKE_TRANS_TORQUE_GAIN * (*CTRL).motor->npp * ((*CTRL).i->iDQ[1]     * PMife.psi_D2 - (*CTRL).i->iDQ[0] * PMife.psi_Q2);
+        // PMife.torque__fb = CLARKE_TRANS_TORQUE_GAIN * (*CTRL).motor->npp * ((*CTRL).i->iDQ[1]     * PMife.psi_Dmu);
+
+        // known signals to feedforward (to cancel)
+        //不太明白在本系统中KA=KE 还是KA= KE + (Ld-Lq)i_d，KA= (Ld-Lq)di_d/dt 这项的di_d/dt是否为零，对于实际的电机系统来说di_d/dt不为零
+        PMife.Gamma_D = - (*CTRL).motor->Lq_inv * (*CTRL).motor->R * (*CTRL).i->cmd_iDQ[0] + (*CTRL).i->iDQ[0] * xOMG - PMife.deriv_iD_cmd;
+        PMife.Gamma_Q = - (*CTRL).motor->Lq_inv * (*CTRL).motor->R * (*CTRL).i->cmd_iDQ[1] - (*CTRL).i->iDQ[1] * xOMG - (*CTRL).i->cmd_psi * (*CTRL).motor->Lq_inv - PMife.deriv_iQ_cmd;
+
+        // voltage commands
+        (*CTRL).o->cmd_uDQ[0] = (*CTRL).motor->Lq * (- PMife.ki * PMife.e_iDs - PMife.Gamma_D);
+        (*CTRL).o->cmd_uDQ[1] = (*CTRL).motor->Lq * (- PMife.ki * PMife.e_iQs - PMife.Gamma_Q);
+
+    }else{
+        // PI control with PMife observer works if 
+        // damping factor = 6.5
+        // VLBW = 5 Hz
+        PID_iD->Fbk = (*CTRL).i->iDQ[0];
+        PID_iQ->Fbk = (*CTRL).i->iDQ[1];
+
+        /// 5. 转速环
+        static int im_vc_count = 1;
+        if(im_vc_count++ == SPEED_LOOP_CEILING){
+            im_vc_count = 1;
+
+            PID_Speed->Ref = (*CTRL).i->cmd_varOmega ; //rpm_speed_command*RPM_2_ELEC_RAD_PER_SEC;
+            PID_Speed->Fbk = xOMG ;
+            PID_Speed->calc(PID_Speed);
+            PID_iQ->Ref = PID_Speed->Out;
+            (*CTRL).i->cmd_iDQ[1] = PID_iQ->Ref;
+        }
+        (*CTRL).i->cmd_psi = IM_FLUX_COMMAND_DC_PART;
+        (*CTRL).i->cmd_iDQ[0] = (*CTRL).i->cmd_psi * (*CTRL).motor->Lmu_inv;
+        PID_iD->Ref = (*CTRL).i->cmd_iDQ[0];
+
+        /// 6. 电流环
+        REAL decoupled_M_axis_voltage=0.0, decoupled_T_axis_voltage=0.0;
+        PID_iD->calc(PID_iD);
+        PID_iQ->calc(PID_iQ);
+
+        decoupled_M_axis_voltage = PID_iD->Out;
+        decoupled_T_axis_voltage = PID_iQ->Out;
+
+        (*CTRL).o->cmd_uDQ[0] = decoupled_M_axis_voltage;
+        (*CTRL).o->cmd_uDQ[1] = decoupled_T_axis_voltage;
+
+        /// 7. 反帕克变换
+        // (*CTRL).o->cmd_uAB[0] = MT2A(decoupled_M_axis_voltage, decoupled_T_axis_voltage, (*CTRL).s->cosT, (*CTRL).s->sinT);
+        // (*CTRL).o->cmd_uAB[1] = MT2B(decoupled_M_axis_voltage, decoupled_T_axis_voltage, (*CTRL).s->cosT, (*CTRL).s->sinT);
+    }
+
+    (*CTRL).o->cmd_uAB[0] = MT2A((*CTRL).o->cmd_uDQ[0], (*CTRL).o->cmd_uDQ[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
+    (*CTRL).o->cmd_uAB[1] = MT2B((*CTRL).o->cmd_uDQ[0], (*CTRL).o->cmd_uDQ[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
+
+    // #if PC_SIMULATION==FALSE
+    // CpuTimer_After = CpuTimer1.RegsAddr->TIM.all; // get count
+    // CpuTimer_Delta = (REAL)CpuTimer_Before - (REAL)CpuTimer_After;
+    // #endif
+
+    // use the second 3 phase inverter
+    // (*CTRL).o->cmd_uAB[0+2] = (*CTRL).o->cmd_uAB[0];
+    // (*CTRL).o->cmd_uAB[1+2] = (*CTRL).o->cmd_uAB[1];
+
+    // for view in scope
+    // (*CTRL).o->cmd_iAB[0] = MT2A((*CTRL).i->cmd_iDQ[0], (*CTRL).i->cmd_iDQ[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
+    // (*CTRL).o->cmd_iAB[1] = MT2B((*CTRL).i->cmd_iDQ[0], (*CTRL).i->cmd_iDQ[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
+
+}
 
 void controller_IFOC(){
 
@@ -744,6 +1035,174 @@ void init_im_controller(){
     // ACMSIMC_PIDTuner();
 }
 
+void init_PMSMife_controller(){
 
+    #define LOCAL_SCALE 1.0
+    PMife.kz         = LOCAL_SCALE * 2*700.0; // zd, zq
+    PMife.k_omega    = LOCAL_SCALE * 0.5*10000*60.0; // 6000  // e_omega // 增大这个可以消除稳态转速波形中的正弦扰动（源自q轴电流给定波形中的正弦扰动，注意实际的q轴电流里面是没有正弦扰动的）
+    PMife.ki = 10000;
+
+    PMife.kappa      = 1e4*24; // \in [0.1, 1e4*24] no difference // e_omega // 增大这个意义不大，转速控制误差基本上已经是零了，所以kappa取0.05和24没有啥区别。
+
+    // lammbda_inv和gamma_inv是竞争的关系
+    // PMife.lambda_inv = 5* 0.1 * 1.5 * 6000.0;          // omega 磁链反馈为实际值时，这两个增益取再大都没有意义。
+    // PMife.gamma_inv  = 10 * 3e0 * 180/INIT_JS; // TL    磁链反馈为实际值时，这两个增益取再大都没有意义。
+    // PMife.delta_inv  = 0*75.0; // alpha 要求磁链幅值时变
+
+    PMife.lambda_inv = LAMBDA_INV_xOmg;  // 2022-11-22 实验中发现这个过大（2700）导致系统整个一个正弦波动，母线功率持续400W，减小为1000以后母线功率37W。
+    PMife.gamma_inv  = GAMMA_INV_xTL;
+    PMife.delta_inv  = DELTA_INV_alpha;
+
+    PMife.xTL_Max = 8.0;
+
+    PMife.xRho = 0.0;
+    PMife.xTL = 0.0;
+    PMife.xOmg = 0.0;
+
+    PMife.deriv_xTL = 0.0;
+    PMife.deriv_xAlpha = 0.0;
+    PMife.deriv_xOmg = 0.0;
+
+    PMife.psi_D2 = 0.0;
+    PMife.psi_Q2 = 0.0;
+
+    PMife.zD = 0.0;
+    PMife.zQ = 0.0;
+    PMife.e_iDs = 0.0;
+    PMife.e_iQs = 0.0;
+    PMife.e_psi_D2 = 0.0;
+    PMife.e_psi_Q2 = 0.0;
+
+    PMife.deriv_iD_cmd = 0.0;
+    PMife.deriv_iQ_cmd = 0.0;
+
+    PMife.Gamma_D = 0.0;
+    PMife.Gamma_Q = 0.0;
+
+    PMife.torque_cmd = 0.0;
+    PMife.torque__fb = 0.0;
+
+    // struct Holtz2003
+    simvm.psi_D2 = 0.0;
+    simvm.psi_Q2 = 0.0;
+    simvm.psi_D1_ode1 = 0.0;
+    simvm.psi_Q1_ode1 = 0.0;
+    simvm.psi_D2_ode1 = 0.0;
+    simvm.psi_Q2_ode1 = 0.0;
+    simvm.psi_D1_ode4 = 0.0;
+    simvm.psi_Q1_ode4 = 0.0;
+    simvm.psi_D2_ode4 = 0.0;
+    simvm.psi_Q2_ode4 = 0.0;
+
+
+
+
+
+    int i=0,j=0;
+
+    (*CTRL).timebase = 0.0;
+
+    /* Parameter (including speed) Adaptation */ 
+        (*CTRL).motor->R      = d_sim.init.R;
+
+        (*CTRL).motor->npp    = d_sim.init.npp;
+        (*CTRL).motor->Lq = d_sim.init.Lq;
+        (*CTRL).motor->Js     = d_sim.init.Js;
+
+        (*CTRL).motor->npp_inv     = 1.0/(*CTRL).motor->npp;
+        (*CTRL).motor->Lq_inv  = 1.0/(*CTRL).motor->Lq;
+        (*CTRL).motor->Js_inv      = 1.0/(*CTRL).motor->Js;
+
+        // (*CTRL).i->TLoad  = 0.0;
+
+    (*CTRL).s->cosT = 1.0;
+    (*CTRL).s->sinT = 0.0;
+    (*CTRL).s->cosT2 = 1.0;
+    (*CTRL).s->sinT2 = 0.0;
+
+    (*CTRL).i->m0 = IM_FLUX_COMMAND_DC_PART;
+    (*CTRL).i->m1 = IM_FLUX_COMMAND_SINE_PART;
+    (*CTRL).i->omega1 = 2*M_PI*IM_FLUX_COMMAND_SINE_HERZ;
+
+    // (*debug).SENSORLESS_CONTROL = SENSORLESS_CONTROL;
+    // (*CTRL).s->ctrl_strategy = CONTROL_STRATEGY;
+
+    #define AKATSU00 FALSE
+    #if AKATSU00 == TRUE
+    int ind;
+    for(ind=0;ind<2;++ind){
+    // for(i=0;i<2;++i){
+        hav.emf_stator[ind] = 0;
+
+        hav.psi_1[ind] = 0;
+        hav.psi_2[ind] = 0;
+        hav.psi_2_prev[ind] = 0;
+
+        hav.psi_1_nonSat[ind] = 0;
+        hav.psi_2_nonSat[ind] = 0;
+
+        hav.psi_1_min[ind] = 0;
+        hav.psi_1_max[ind] = 0;
+        hav.psi_2_min[ind] = 0;
+        hav.psi_2_max[ind] = 0;
+
+        hav.rs_est = 3.04;
+        hav.rreq_est = 1.6;
+
+        hav.Delta_t = 1;
+        hav.u_off[ind] = 0;
+        hav.u_off_integral_input[ind] = 0;
+        hav.gain_off = 0.025;
+
+        hav.flag_pos2negLevelA[ind] = 0;
+        hav.flag_pos2negLevelB[ind] = 0;
+        hav.time_pos2neg[ind] = 0;
+        hav.time_pos2neg_prev[ind] = 0;
+
+        hav.flag_neg2posLevelA[ind] = 0;
+        hav.flag_neg2posLevelB[ind] = 0;
+        hav.time_neg2pos[ind] = 0;
+        hav.time_neg2pos_prev[ind] = 0;    
+
+        hav.sat_min_time[ind] = 0.0;
+        hav.sat_max_time[ind] = 0.0;
+    }
+
+    a92v.awaya_lambda = 31.4*1;
+    a92v.q0 = 0.0;
+    a92v.q1_dot = 0.0;
+    a92v.q1 = 0.0;
+    a92v.tau_est = 0.0;
+    a92v.sum_A = 0.0;
+    a92v.sum_B = 0.0;
+    a92v.est_Js_variation = 0.0;
+    a92v.est_Js = 0.0;
+    #endif
+
+    // /*Jadot2009*/
+    // (*CTRL).is_ref[0] = 0.0;
+    // (*CTRL).is_ref[1] = 0.0;
+    // (*CTRL).psi_ref[0] = 0.0;
+    // (*CTRL).psi_ref[1] = 0.0;
+
+    // (*CTRL).pi_vsJadot_0.Kp = 7; 
+    // (*CTRL).pi_vsJadot_0.Ti = 1.0/790.0; 
+    // (*CTRL).pi_vsJadot_0.Kp = 15; 
+    // (*CTRL).pi_vsJadot_0.Ti = 0.075; 
+    // (*CTRL).pi_vsJadot_0.Ki = (*CTRL).pi_vsJadot_0.Kp / (*CTRL).pi_vsJadot_0.Ti * TS;
+    // (*CTRL).pi_vsJadot_0.i_state = 0.0;
+    // (*CTRL).pi_vsJadot_0.i_limit = 300.0; // unit: Volt
+
+    // (*CTRL).pi_vsJadot_1.Kp = 7; 
+    // (*CTRL).pi_vsJadot_1.Ti = 1.0/790.0; 
+    // (*CTRL).pi_vsJadot_1.Kp = 15; 
+    // (*CTRL).pi_vsJadot_1.Ti = 0.075; 
+    // (*CTRL).pi_vsJadot_1.Ki = (*CTRL).pi_vsJadot_1.Kp / (*CTRL).pi_vsJadot_1.Ti * TS;
+    // (*CTRL).pi_vsJadot_1.i_state = 0.0;
+    // (*CTRL).pi_vsJadot_1.i_limit = 300.0; // unit: Volt
+
+    // PID调谐
+    // ACMSIMC_PIDTuner();
+}
 
 #endif

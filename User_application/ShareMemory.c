@@ -147,6 +147,11 @@ void write_DAC_buffer(){
             (*Axis4DAC).dac_watch[51] = AFE_USED.theta_d *0.1;
             (*Axis4DAC).dac_watch[64] = FE.no_sat.psi_2[0];
             (*Axis4DAC).dac_watch[65] = FE.no_sat.psi_2[1];
+            (*Axis4DAC).dac_watch[70] = FE.clfe4PMSM.psi_2[0] *0.25;
+            (*Axis4DAC).dac_watch[71] = FE.clfe4PMSM.psi_2[1] *0.25;
+            (*Axis4DAC).dac_watch[72] = FE.clfe4PMSM.theta_d * 0.1;
+            (*Axis4DAC).dac_watch[73] = FE.clfe4PMSM.theta_e * 0.1;
+            (*Axis4DAC).dac_watch[74] = (*CTRL).i->theta_d_elec * 0.1;
         #endif
 
         # if ENABLE_COMMISSIONING == TRUE
@@ -216,10 +221,10 @@ void write_DAC_buffer(){
 
 
         if((*Axis4DAC).channels_preset==1){(*Axis4DAC).channels_preset=0;
-            (*Axis4DAC).channels[0] = 23;
-            (*Axis4DAC).channels[1] = 24;
-            (*Axis4DAC).channels[2] = 25;
-            (*Axis4DAC).channels[3] = 26;
+            (*Axis4DAC).channels[0] = 70;
+            (*Axis4DAC).channels[1] = 71;
+            (*Axis4DAC).channels[2] = 72;
+            (*Axis4DAC).channels[3] = 73;
             (*Axis4DAC).channels[4] = 32;
             (*Axis4DAC).channels[5] = 33;
             (*Axis4DAC).channels[6] = 21;

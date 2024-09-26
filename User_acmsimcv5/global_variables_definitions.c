@@ -177,6 +177,7 @@ struct GlobalWatch watch;
     // struct RK4_DATA rk4;
     #if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
     struct Marino2005 marino={0};
+    struct PMSMife PMife={0};
 
     struct Variables_SimulatedVM                         simvm      ={0};
     #endif
@@ -218,9 +219,9 @@ void init_CTRL_Part1(){
     /* Machine parameters */
     // elec
     (*CTRL).motor->R  = d_sim.init.R;
-    (*CTRL).motor->KE = d_sim.init.KE; // * (0.1/0.1342); // 【实验编号：】
+    (*CTRL).motor->KE = d_sim.init.KE -0.05;// -0.1 // * (0.1/0.1342); // 【实验编号：】
     (*CTRL).motor->Ld = d_sim.init.Ld;
-    (*CTRL).motor->Lq = d_sim.init.Lq;
+    (*CTRL).motor->Lq = d_sim.init.Lq;//- 0.002
     (*CTRL).motor->Lq_inv = 1.0 / (*CTRL).motor->Lq;
     (*CTRL).motor->DeltaL = (*CTRL).motor->Ld - (*CTRL).motor->Lq; // for IPMSM
     (*CTRL).motor->KActive = (*CTRL).motor->KE;                    // TODO:
@@ -306,6 +307,10 @@ void init_CTRL_Part2(){
 
     #if WHO_IS_USER == USER_CJH
         init_im_controller();
+    #endif
+
+    #if WHO_IS_USER == USER_YZZ
+        init_PMSMife_controller();
     #endif
 }
 

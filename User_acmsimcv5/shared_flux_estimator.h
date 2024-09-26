@@ -413,6 +413,8 @@ struct SharedFluxEstimatorForExperiment{
         REAL psi_2_ampl;
         REAL u_offset[2];
         REAL correction_integral_term[2];
+        REAL theta_d;
+        REAL theta_e;
     } lascu;
     struct Variables_Stojic2015{
         REAL psi_1[2];

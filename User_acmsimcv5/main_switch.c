@@ -15,6 +15,9 @@ REAL local_id_commmand = 0.0;
 REAL tmp = 0.0;
 REAL tmp_id_freq = 0.0;
 REAL tmp_id_freq_freq = 0.0;
+int index_1 = 0;
+long count_1 = 0;
+REAL find_max_speed[200] = {0.0};
 
 void overwrite_d_sim(){
     // for now 20240902 do nothing
@@ -58,9 +61,9 @@ void _user_init(){
         (*debug).Overwrite_Current_Frequency = 1;
         (*debug).Overwrite_theta_d           = 0.0;
 
-        (*debug).set_id_command              = 1;
-        (*debug).set_iq_command              = 0;
-        (*debug).set_rpm_speed_command       = 50;
+        (*debug).set_id_command              = 0;
+        (*debug).set_iq_command              = 1;
+        (*debug).set_rpm_speed_command       = 100;
         (*debug).set_deg_position_command    = 0.0;
         (*debug).vvvf_voltage = 3.0;
         (*debug).vvvf_frequency = 5.0;
@@ -169,17 +172,43 @@ void _user_commands(){
                 #endif
             }
         #elif WHO_IS_USER == USER_YZZ
+            // (*CTRL).i->cmd_varOmega = 0.0;
+            // if ((*CTRL).timebase > CL_TS){
+            //     (*CTRL).i->cmd_varOmega = - (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
+            // }
+            // if ((*CTRL).timebase > 1){
+            //     (*CTRL).i->cmd_varOmega = + (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
+            // }
+            // if ((*CTRL).timebase > 2){
+            //     #if PC_SIMULATION
+            //         ACM.TLoad = (0.4 * 1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);
+            //     #endif
+            // }
+            // if ((*CTRL).timebase > 3){
+            //     #if PC_SIMULATION
+            //         ACM.TLoad = (0.3 * 1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);
+            //     #endif
+            // }
             (*CTRL).i->cmd_varOmega = 0.0;
             if ((*CTRL).timebase > CL_TS){
-                (*CTRL).i->cmd_varOmega = (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
+                (*debug).set_iq_command = 0.07;
+                // (*CTRL).i->cmd_varOmega = - (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
             }
-            if ((*CTRL).timebase > 0.3){
-                (*CTRL).i->cmd_varOmega = - (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
+            if ((*CTRL).timebase > 1){
+                (*debug).set_iq_command = 0.02;
+                // (*CTRL).i->cmd_varOmega = + (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
             }
-            if ((*CTRL).timebase > 0.6){
-                #if PC_SIMULATION
-                    ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);
-                #endif
+            if ((*CTRL).timebase > 2){
+                (*debug).set_iq_command = 0.07;
+                // #if PC_SIMULATION
+                //     ACM.TLoad = (0.4 * 1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);
+                // #endif
+            }
+            if ((*CTRL).timebase > 3){
+                // #if PC_SIMULATION
+                //     ACM.TLoad = (0.3 * 1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);
+                // #endif
+                (*debug).set_iq_command = 0;
             }
         #endif
    #endif
@@ -227,8 +256,33 @@ int main_switch(long mode_select){
         #endif
         tmp = global_id_freq * (*CTRL).timebase;
         tmp -= (long)tmp;
-        (*debug).set_id_command = global_id_ampl * sinf(2.0 * M_PI * tmp);
-        local_id_commmand = global_id_ampl * sinf(2.0 * M_PI * tmp);
+        // (*debug).set_id_command = global_id_ampl * sinf(2.0 * M_PI * tmp);
+        // local_id_commmand = global_id_ampl * sinf(2.0 * M_PI * tmp);    
+        if ((*CTRL).motor->KE < 0.4){
+            if(count_1 >100000){
+                (*CTRL).motor->KE  += 0.01;
+                find_max_speed[index_1]= (*CTRL).i->varOmega;
+                index_1 +=1;
+                count_1 = 0;
+            }
+            else{
+                count_1 +=1;
+            }
+        }
+        // if ((*CTRL).motor->Lq < 0.006){
+        //     if(count >10000){
+        //         (*CTRL).motor->Lq  += 0.0001;
+        //         find_max_speed[index]= (*CTRL).i->varOmega;
+        //         index +=1;
+        //         count = 0;
+        //     }
+        //     else{
+        //         count +=1;
+        //     }
+        // }
+        _user_commands(); 
+        pmsm_observers();
+        (*CTRL).i->theta_d_elec = FE.clfe4PMSM.theta_d;
         _user_onlyFOC();
         break;
     case MODE_SELECT_FOC_SENSORLESS : //31
@@ -250,20 +304,23 @@ int main_switch(long mode_select){
         break;
     case MODE_SELECT_VELOCITY_LOOP_SENSORLESS : //41
         #if WHO_IS_USER == USER_YZZ
-        _user_commands();
-        pmsm_observers();
+        // _user_commands();
+        // pmsm_observers();
+        // observer_PMSMife();
+        controller_PMSMife_with_commands();
         #endif
+        
         // observer();
         // FOC_with_vecocity_control(FE.AFEOE.theta_d,
         //     OBSV.nsoaf.xOmg * MOTOR.npp_inv,
         //     (*CTRL).i->cmd_varOmega,
         //     (*CTRL).i->cmd_iDQ,
         //     (*CTRL).i->iAB);
-        FOC_with_vecocity_control((*CTRL).i->theta_d_elec, 
-            (*CTRL).i->varOmega, 
-            (*CTRL).i->cmd_varOmega, 
-            (*CTRL).i->cmd_iDQ, 
-            (*CTRL).i->iAB);
+        // FOC_with_vecocity_control((*CTRL).i->theta_d_elec, 
+        //     (*CTRL).i->varOmega, 
+        //     (*CTRL).i->cmd_varOmega, 
+        //     (*CTRL).i->cmd_iDQ, 
+        //     (*CTRL).i->iAB);
         break;
     case MODE_SELECT_TESTING_SENSORLESS : //42`
         break;
@@ -363,8 +420,13 @@ void FOC_with_vecocity_control(REAL theta_d_elec,
     cmd_iDQ[0] = 0;
     cmd_iDQ[1] = Veclocity_Controller(cmd_varOmega, varOmega);
     // cmd_iDQ[1] = 0.0;     // iq=0 control
-
-
+    (*CTRL).s->omega_syn = varOmega * (*CTRL).motor->npp;
+    (*CTRL).s->xRho += CL_TS * (*CTRL).s->omega_syn;
+    if((*CTRL).s->xRho > M_PI){
+        (*CTRL).s->xRho -= 2*M_PI;
+    }else if((*CTRL).s->xRho < -M_PI){
+        (*CTRL).s->xRho += 2*M_PI; // 反转！
+    }
     /// 5.Sweep 扫频将覆盖上面产生的励磁、转矩电流指令
     #if EXCITATION_TYPE == EXCITATION_SWEEP_FREQUENCY
     #if SWEEP_FREQ_C2V == TRUE

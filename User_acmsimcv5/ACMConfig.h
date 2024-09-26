@@ -83,7 +83,7 @@
     #define xAlpha_LAW_TERM_D 1 // regressor is commanded d-axis rotor current, and error is d-axis flux control error.
     #define xAlpha_LAW_TERM_Q 0 // regressor is commanded q-axis stator current, and error is q-axis flux control error.
     // 磁链反馈用谁 /// "htz",,ohtani",picorr",lascu",clest",harnefors
-    #define IFE FE.picorr
+    #define IFE FE.clfe4PMSM
     // #define IFE FE.htz
     #define FLUX_FEEDBACK_ALPHA         IFE.psi_2[0]
     #define FLUX_FEEDBACK_BETA          IFE.psi_2[1]
@@ -95,11 +95,11 @@
     #define GAIN_OHTANI (5)
     #define VM_OHTANI_CORRECTION_GAIN_P (5)
     /* B *//// default: P=5, I=2.5
-    #define VM_PROPOSED_PI_CORRECTION_GAIN_P 1// 
-    #define VM_PROPOSED_PI_CORRECTION_GAIN_I 2.5//80000//2.5 //2  // (2.5)
+    #define VM_PROPOSED_PI_CORRECTION_GAIN_P 50// 
+    #define VM_PROPOSED_PI_CORRECTION_GAIN_I 20//80000//2.5 //2  // (2.5)
     /* No Saturation */
     #define VM_NOSAT_PI_CORRECTION_GAIN_P 7// 难调
-    #define VM_NOSAT_PI_CORRECTION_GAIN_I 0//80000//2.5 //2  // (2.5)
+    #define VM_NOSAT_PI_CORRECTION_GAIN_I 20//80000//2.5 //2  // (2.5)
     /* Saturation_time_Without_Limiting */
     #define STWL_GAIN_KP 
     #define STWL_GAIN_KI 
@@ -111,7 +111,7 @@
     #define OUTPUT_ERROR_CLEF4PMSM_GAIN_KP (0.04)
     #define OUTPUT_ERROR_CLEF4PMSM_GAIN_KI (0.5)
     /* Holtz 2002 */// default: 20
-    #define HOLTZ_2002_GAIN_OFFSET 20 //1 // 20 is too large, causing unstable control during reversal
+    #define HOLTZ_2002_GAIN_OFFSET 10 //1 // 20 is too large, causing unstable control during reversal
     /* Harnefors SCVM 2003 */// default: 2
     #define GAIN_HARNEFORS_LAMBDA 2
 

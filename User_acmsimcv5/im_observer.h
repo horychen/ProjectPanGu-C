@@ -108,6 +108,7 @@ extern struct ObserverControl ob;
 void observer_init();
 void simulation_only_flux_estimator();
 void observer_marino2005();
+void observer_PMSMife();
 
 // struct Chen21_ESO_AF{
 //     #define NS_CHEN_2021 4

@@ -207,7 +207,7 @@ void init_COMM(){
     COMM.number_of_repeats_Js = 0.0;
 
     // global status vairbale
-    COMM.bool_comm_status = 3;
+    COMM.bool_comm_status = 5;
 
     COMM.counterEntered = 0;
     COMM.i = 0;

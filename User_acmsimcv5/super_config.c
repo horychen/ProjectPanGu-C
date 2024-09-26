@@ -3,19 +3,19 @@
 #include <stdio.h>
 
 void init_d_sim() {
-    d_sim.init.npp = 5;
-    d_sim.init.IN = 16.8;
-    d_sim.init.R = 0.044;
-    d_sim.init.Ld = 0.00019;
-    d_sim.init.Lq = 0.00019;
-    d_sim.init.KE = 0.01717;
+    d_sim.init.npp = 4;
+    d_sim.init.IN = 3;
+    d_sim.init.R = 1.6469;
+    d_sim.init.Ld = 0.0032;
+    d_sim.init.Lq = 0.0032;
+    d_sim.init.KE = 0.12618;
     d_sim.init.Rreq = 0.0;
-    d_sim.init.Js = 0.000755295972;
-    d_sim.init.Vdc = 48;
+    d_sim.init.Js = 0.00049836;
+    d_sim.init.Vdc = 110;
 
     d_sim.sim.INVERTER_NONLINEARITY = 0;
     d_sim.sim.CL_TS = 0.0001;
-    d_sim.sim.NUMBER_OF_STEPS = 20000;
+    d_sim.sim.NUMBER_OF_STEPS = 150000;
     d_sim.sim.MACHINE_SIMULATIONs_PER_SAMPLING_PERIOD = 1;
 
     d_sim.FOC.delta = 10.0;
@@ -23,19 +23,19 @@ void init_d_sim() {
     d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation = TRUE;
     d_sim.FOC.VL_EXE_PER_CL_EXE = 1;
 
-    d_sim.CL.SERIES_KP_D_AXIS = 0.5969026041820606;
-    d_sim.CL.SERIES_KI_D_AXIS = 231.578947368421;
-    d_sim.CL.SERIES_KP_Q_AXIS = 0.5969026041820606;
-    d_sim.CL.SERIES_KI_Q_AXIS = 231.578947368421;
+    d_sim.CL.SERIES_KP_D_AXIS = 10.053096491487338;
+    d_sim.CL.SERIES_KI_D_AXIS = 514.65625;
+    d_sim.CL.SERIES_KP_Q_AXIS = 10.053096491487338;
+    d_sim.CL.SERIES_KI_Q_AXIS = 514.65625;
     d_sim.CL.LIMIT_DC_BUS_UTILIZATION = 0.96;
 
-    d_sim.VL.SERIES_KP = 1.8426187357182389;
+    d_sim.VL.SERIES_KP = 0.2068003533104836;
     d_sim.VL.SERIES_KI = 31.415926535897928;
     d_sim.VL.LIMIT_OVERLOAD_FACTOR = 1.0;
 
     d_sim.user.verbose = TRUE;
     d_sim.user.who_is_user = 2023231060;
-    d_sim.user.mode_select_synchronous_motor = 41;
+    d_sim.user.mode_select_synchronous_motor = 3;
     d_sim.user.mode_select_induction_motor = 32;
     d_sim.user.bezier_NUMBER_OF_STEPS = 5000;
     d_sim.user.bezier_order = 4;
