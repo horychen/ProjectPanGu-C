@@ -136,7 +136,7 @@ REAL difference_between_two_angles(REAL first, REAL second);
 #define CNT_2_ELEC_RAD (SYSTEM_QEP_REV_PER_PULSE * 2 * M_PI * d_sim.init.npp)
 #define SYSTEM_QEP_QPOSMAX (9999)
 #define SYSTEM_QEP_QPOSMAX_PLUS_1 (10000)
-#define OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS 4860 // cjh tuned with id_cmd = 3A @2024-09-17
+#define OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS 7331 // cjh tuned with id_cmd = 3A @2024-09-17
 #define positive_current_QPOSCNT_counting_down (-1) // 正向旋转的电流导致增量式编码器QEP读数减少 则填 -1，否则默认为 1。
 #elif (ENCODER_TYPE == ABSOLUTE_ENCODER_SCI_SHANK) || (ENCODER_TYPE == ABSOLUTE_ENCODER_SCI_HIP)
 #define SYSTEM_QEP_PULSES_PER_REV (8388608)

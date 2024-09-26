@@ -548,6 +548,23 @@ void _user_commands(){
                 #endif
             }
         #elif WHO_IS_USER == USER_YZZ
+            // (*CTRL).i->cmd_varOmega = 0.0;
+            // if ((*CTRL).timebase > CL_TS){
+            //     (*CTRL).i->cmd_varOmega = - (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
+            // }
+            // if ((*CTRL).timebase > 1){
+            //     (*CTRL).i->cmd_varOmega = + (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
+            // }
+            // if ((*CTRL).timebase > 2){
+            //     #if PC_SIMULATION
+            //         ACM.TLoad = (0.4 * 1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);
+            //     #endif
+            // }
+            // if ((*CTRL).timebase > 3){
+            //     #if PC_SIMULATION
+            //         ACM.TLoad = (0.3 * 1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);
+            //     #endif
+            // }
             (*CTRL).i->cmd_varOmega = 0.0;
             if ((*CTRL).timebase > CL_TS){
                 (*CTRL).i->cmd_varOmega = - (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
@@ -668,7 +685,6 @@ int main_switch(long mode_select){
         // observer_PMSMife();
         controller_PMSMife_with_commands();
         #endif
-
         break;
     case MODE_SELECT_TESTING_SENSORLESS : //42
         break;
