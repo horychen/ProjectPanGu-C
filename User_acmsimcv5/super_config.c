@@ -15,22 +15,22 @@ void init_d_sim() {
 
     d_sim.sim.INVERTER_NONLINEARITY = 0;
     d_sim.sim.CL_TS = 0.0001;
-    d_sim.sim.NUMBER_OF_STEPS = 150000;
+    d_sim.sim.NUMBER_OF_STEPS = 100000;
     d_sim.sim.MACHINE_SIMULATIONs_PER_SAMPLING_PERIOD = 1;
 
     d_sim.FOC.delta = 10.0;
-    d_sim.FOC.CLBW_HZ = 500.0;
+    d_sim.FOC.CLBW_HZ = 1500.0;
     d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation = TRUE;
     d_sim.FOC.VL_EXE_PER_CL_EXE = 1;
 
-    d_sim.CL.SERIES_KP_D_AXIS = 10.053096491487338;
+    d_sim.CL.SERIES_KP_D_AXIS = 30.159289474462014;
     d_sim.CL.SERIES_KI_D_AXIS = 514.65625;
-    d_sim.CL.SERIES_KP_Q_AXIS = 10.053096491487338;
+    d_sim.CL.SERIES_KP_Q_AXIS = 30.159289474462014;
     d_sim.CL.SERIES_KI_Q_AXIS = 514.65625;
     d_sim.CL.LIMIT_DC_BUS_UTILIZATION = 0.96;
 
-    d_sim.VL.SERIES_KP = 0.2068003533104836;
-    d_sim.VL.SERIES_KI = 31.415926535897928;
+    d_sim.VL.SERIES_KP = 0.6204010599314508;
+    d_sim.VL.SERIES_KI = 94.24777960769379;
     d_sim.VL.LIMIT_OVERLOAD_FACTOR = 1.0;
 
     d_sim.user.verbose = TRUE;

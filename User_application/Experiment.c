@@ -222,7 +222,7 @@ void runtime_command_and_tuning(){
     }
 
     /* ���ּ� */
-    if((*CTRL).motor->KE > 0.2){
+    if((*CTRL).motor->KE > 0.4){
         (*CTRL).motor->KE=0.1;
     }
     if((*Axis).Set_manual_rpm>3000){

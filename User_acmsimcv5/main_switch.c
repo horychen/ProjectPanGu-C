@@ -16,9 +16,12 @@ REAL tmp = 0.0;
 REAL tmp_id_freq = 0.0;
 REAL tmp_id_freq_freq = 0.0;
 int index_1 = 0;
-long count_1 = 0;
-REAL find_max_speed[200] = {0.0};
-
+REAL count_1 = 0;
+REAL find_max_speed[100] = {0.0};
+REAL find_max_parameter[100] = {0.0};
+REAL sum_omega = 0;
+REAL ave_omega = 0;
+REAL sum_cnt = 0;
 void overwrite_d_sim(){
     // for now 20240902 do nothing
 }
@@ -254,31 +257,39 @@ int main_switch(long mode_select){
             // (*debug).set_iq_command = 0;
             (*debug).set_id_command = global_id_ampl * sin(2 * M_PI * global_id_freq * (*CTRL).timebase);
         #endif
-        tmp = global_id_freq * (*CTRL).timebase;
-        tmp -= (long)tmp;
-        // (*debug).set_id_command = global_id_ampl * sinf(2.0 * M_PI * tmp);
-        // local_id_commmand = global_id_ampl * sinf(2.0 * M_PI * tmp);    
-        if ((*CTRL).motor->KE < 0.4){
-            if(count_1 >100000){
-                (*CTRL).motor->KE  += 0.01;
-                find_max_speed[index_1]= (*CTRL).i->varOmega;
+
+        if ((*CTRL).motor->Lq < 0.0062){
+            if(count_1 >50000){
+                find_max_parameter[index_1] = (*CTRL).motor->Lq;
+                (*CTRL).motor->Lq  += 0.0005;
+                ave_omega = sum_omega * 1e-4;
+                find_max_speed[index_1]= ave_omega;
                 index_1 +=1;
                 count_1 = 0;
+                sum_omega = 0;
+                sum_cnt=0;
             }
-            else{
-                count_1 +=1;
+            else if ((count_1 > 40000)&&(count_1 < 50000)){
+                sum_omega += CTRL->enc->rpm;
+                sum_cnt +=1;    
             }
+            count_1 +=1;
         }
-        // if ((*CTRL).motor->Lq < 0.006){
-        //     if(count >10000){
-        //         (*CTRL).motor->Lq  += 0.0001;
-        //         find_max_speed[index]= (*CTRL).i->varOmega;
-        //         index +=1;
-        //         count = 0;
+        // if ((*CTRL).motor->KE < 0.4){
+        //     if(count_1 >100000){
+        //         (*CTRL).motor->KE  += 0.01;
+        //         ave_omega = sum_omega * 1e-4;
+        //         find_max_speed[index_1]= ave_omega;
+        //         index_1 +=1;
+        //         count_1 = 0;
+        //         sum_omega = 0;
+        //         sum_cnt=0;
         //     }
-        //     else{
-        //         count +=1;
+        //     else if ((count_1 > 90000)&&(count_1 < 100000)){
+        //         sum_omega += CTRL->enc->rpm;
+        //         sum_cnt +=1;    
         //     }
+        //     count_1 +=1;
         // }
         _user_commands(); 
         pmsm_observers();
