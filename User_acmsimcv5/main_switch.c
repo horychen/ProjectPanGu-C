@@ -15,6 +15,11 @@ REAL local_id_commmand = 0.0;
 REAL tmp = 0.0;
 REAL tmp_id_freq = 0.0;
 REAL tmp_id_freq_freq = 0.0;
+
+REAL global_uD_ampl = 0.0;
+REAL global_uD_square_time = 1; // second
+REAL gloval_uD_square_time_sum = 0.0; //
+REAL omega_2_current_gain = -0.06;
 int index_1 = 0;
 REAL count_1 = 0;
 REAL find_max_speed[100] = {0.0};
@@ -257,11 +262,13 @@ int main_switch(long mode_select){
             // (*debug).set_iq_command = 0;
             (*debug).set_id_command = global_id_ampl * sin(2 * M_PI * global_id_freq * (*CTRL).timebase);
         #endif
-
+        _user_onlyFOC();
+        break;
+    case MODE_SELECT_FOC_SENSORLESS : //31
         if ((*CTRL).motor->Lq < 0.0062){
-            if(count_1 >50000){
+            if(count_1 >10000){
                 find_max_parameter[index_1] = (*CTRL).motor->Lq;
-                (*CTRL).motor->Lq  += 0.0005;
+                (*CTRL).motor->Lq  += 0.0001;
                 ave_omega = sum_omega * 1e-4;
                 find_max_speed[index_1]= ave_omega;
                 index_1 +=1;
@@ -269,7 +276,7 @@ int main_switch(long mode_select){
                 sum_omega = 0;
                 sum_cnt=0;
             }
-            else if ((count_1 > 40000)&&(count_1 < 50000)){
+            else if ((count_1 > 9000)&&(count_1 < 10000)){
                 sum_omega += CTRL->enc->rpm;
                 sum_cnt +=1;    
             }
@@ -295,8 +302,6 @@ int main_switch(long mode_select){
         pmsm_observers();
         (*CTRL).i->theta_d_elec = FE.clfe4PMSM.theta_d;
         _user_onlyFOC();
-        break;
-    case MODE_SELECT_FOC_SENSORLESS : //31
         //TODO:
         break;
     case MODE_SELECT_INDIRECT_FOC:   // 32
@@ -304,6 +309,15 @@ int main_switch(long mode_select){
         #if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
         controller_IFOC();
         #endif
+        break;
+    case MODE_SELECT_FOC_AS_DC_GENERATOR : //33
+        _user_commands(); 
+            (*debug).set_iq_command = (*CTRL).i->varOmega * omega_2_current_gain;
+        #if PC_SIMULATION
+            (*debug).set_iq_command = (*CTRL).i->cmd_varOmega * omega_2_current_gain;
+        #endif
+        _user_onlyFOC();
+        //TODO:
         break;
     case MODE_SELECT_VELOCITY_LOOP: // 4
         _user_commands();         // 用户指令
@@ -333,7 +347,7 @@ int main_switch(long mode_select){
         //     (*CTRL).i->cmd_iDQ, 
         //     (*CTRL).i->iAB);
         break;
-    case MODE_SELECT_TESTING_SENSORLESS : //42`
+    case MODE_SELECT_TESTING_SENSORLESS : //42
         break;
     case MODE_SELECT_VELOCITY_LOOP_WC_TUNER: // 43
         break;

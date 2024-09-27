@@ -22,6 +22,7 @@
 #define MODE_SELECT_FOC                      3
 #define MODE_SELECT_FOC_SENSORLESS           31
 #define MODE_SELECT_INDIRECT_FOC             32
+#define MODE_SELECT_FOC_AS_DC_GENERATOR      33
 #define MODE_SELECT_VELOCITY_LOOP            4
 #define MODE_SELECT_VELOCITY_LOOP_SENSORLESS 41
 #define MODE_SELECT_TESTING_SENSORLESS       42
@@ -32,6 +33,9 @@
 #define MODE_SWEEPING_FREQUENCY              20
 #define MODE_SELECT_GENERATOR                8
 #define MODE_SELECT_NB_MODE                  99
+
+/* change PI algorithm*/
+#define USE_LAOMING_PI FALSE
 
 struct DebugExperiment{
     long error;
