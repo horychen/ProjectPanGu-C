@@ -25,7 +25,7 @@ typedef struct {
 } ST_sim;
 
 typedef struct {
-    REAL delta;
+    long delta;
     REAL CLBW_HZ;
     BOOL bool_apply_decoupling_voltages_to_current_regulation;
     long VL_EXE_PER_CL_EXE;

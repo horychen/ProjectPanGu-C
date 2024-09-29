@@ -680,10 +680,10 @@ int main_switch(long mode_select){
         #endif
 
         #if WHO_IS_USER == USER_YZZ
-        // _user_commands();
-        // pmsm_observers();
+        _user_commands();
+        pmsm_observers();
         // observer_PMSMife();
-        controller_PMSMife_with_commands();
+        // controller_PMSMife_with_commands();
         #endif
         break;
     case MODE_SELECT_TESTING_SENSORLESS : //42
