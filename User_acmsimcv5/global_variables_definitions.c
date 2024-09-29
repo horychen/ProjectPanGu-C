@@ -221,7 +221,7 @@ void init_CTRL_Part1(){
     (*CTRL).motor->R  = d_sim.init.R;
     (*CTRL).motor->KE = d_sim.init.KE; // * (0.1/0.1342); // 【实验编号：】
     (*CTRL).motor->Ld = d_sim.init.Ld;
-    (*CTRL).motor->Lq = d_sim.init.Lq - 0.002;
+    (*CTRL).motor->Lq = d_sim.init.Lq;
     (*CTRL).motor->Lq_inv = 1.0 / (*CTRL).motor->Lq;
     (*CTRL).motor->DeltaL = (*CTRL).motor->Ld - (*CTRL).motor->Lq; // for IPMSM
     (*CTRL).motor->KActive = (*CTRL).motor->KE;                    // TODO:

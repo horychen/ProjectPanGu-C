@@ -84,13 +84,13 @@ void _user_init(){
         (*debug).Select_exp_operation                                 = d_sim.user.Select_exp_operation;
         (*debug).bool_apply_decoupling_voltages_to_current_regulation = d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation;
         (*debug).INVERTER_NONLINEARITY_COMPENSATION_INIT = d_sim.user.INVERTER_NONLINEARITY_COMPENSATION_METHOD;
-
     }
 
     // (*debug).INVERTER_NONLINEARITY = 0;
     #if WHO_IS_USER == USER_YZZ
         (*debug).SENSORLESS_CONTROL      = 0;
         (*debug).SENSORLESS_CONTROL_HFSI = 0;
+        (*debug).BOOL_FOC_SENSORLESS_MODE_OPEN = 0;
     #endif
 
     #if WHO_IS_USER == USER_BEZIER
@@ -221,12 +221,12 @@ void _user_commands(){
             // }
             (*CTRL).i->cmd_varOmega = 0.0;
             if ((*CTRL).timebase > CL_TS){
-                (*debug).set_iq_command = 0.07;
-                // (*CTRL).i->cmd_varOmega = - (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
+                // (*debug).set_iq_command = 0.07;
+                (*CTRL).i->cmd_varOmega = - (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
             }
             if ((*CTRL).timebase > 1){
-                (*debug).set_iq_command = 0.02;
-                // (*CTRL).i->cmd_varOmega = + (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
+                // (*debug).set_iq_command = 0.02;
+                (*CTRL).i->cmd_varOmega = + (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
             }
             if ((*CTRL).timebase > 2){
                 (*debug).set_iq_command = 0.07;
@@ -237,9 +237,9 @@ void _user_commands(){
             }
             if ((*CTRL).timebase > 3){
                 // #if PC_SIMULATION
-                //     ACM.TLoad = (0.3 * 1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);
+                    ACM.TLoad = (0.3 * 1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);
                 // #endif
-                (*debug).set_iq_command = 0;
+                // (*debug).set_iq_command = 0;
             }
         #endif
    #endif
@@ -340,7 +340,9 @@ int main_switch(long mode_select){
         // }
         _user_commands(); 
         pmsm_observers();
-        (*CTRL).i->theta_d_elec = FE.clfe4PMSM.theta_d;
+        if ((*debug).BOOL_FOC_SENSORLESS_MODE_OPEN == TRUE){
+            (*CTRL).i->theta_d_elec = FE.clfe4PMSM.theta_d;
+        }
         _user_onlyFOC();
         #endif
         //TODO:

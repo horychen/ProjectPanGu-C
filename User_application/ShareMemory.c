@@ -127,9 +127,6 @@ void write_DAC_buffer(){
         #if WHO_IS_USER == USER_WB
                 //* Speed Controller Output
             (*Axis4DAC).dac_watch[64] = PID_Speed->P_Term * 1;
-            (*Axis4DAC).dac_watch[65] = PID_Speed->I_Term * 0.04 * wubo_debug_tools[0];
-            (*Axis4DAC).dac_watch[66] = PID_Speed->KFB_Term * 0.04 * wubo_debug_tools[0];
-
             (*Axis4DAC).dac_watch[67] = PID_Speed->Out * 0.1;
             (*Axis4DAC).dac_watch[68] = PID_Speed->OutPrev *0.1;
         #endif
@@ -144,7 +141,7 @@ void write_DAC_buffer(){
             (*Axis4DAC).dac_watch[16] = FE.htz.u_offset[1]*2;
             (*Axis4DAC).dac_watch[34] = FE.htz.sat_min_time[0]*100;
             (*Axis4DAC).dac_watch[35] = FE.htz.sat_min_time[1]*100;
-            (*Axis4DAC).dac_watch[51] = AFE_USED.theta_d *0.1;
+            (*Axis4DAC).dac_watch[51] = FE.no_sat.theta_d *0.1;
             (*Axis4DAC).dac_watch[64] = FE.no_sat.psi_2[0];
             (*Axis4DAC).dac_watch[65] = FE.no_sat.psi_2[1];
             (*Axis4DAC).dac_watch[70] = FE.clfe4PMSM.psi_2[0] *0.25;
@@ -152,6 +149,9 @@ void write_DAC_buffer(){
             (*Axis4DAC).dac_watch[72] = FE.clfe4PMSM.theta_d * 0.1;
             (*Axis4DAC).dac_watch[73] = FE.clfe4PMSM.theta_e * 0.1;
             (*Axis4DAC).dac_watch[74] = (*CTRL).i->theta_d_elec * 0.1;
+            (*Axis4DAC).dac_watch[75] = FE.htz.current_filtered[0] * 0.25;
+            (*Axis4DAC).dac_watch[76] = FE.htz.current_filtered[1] * 0.25;
+            (*Axis4DAC).dac_watch[77] = Axis->iuvw[0]+Axis->iuvw[1]+Axis->iuvw[2];
         #endif
 
         # if ENABLE_COMMISSIONING == TRUE

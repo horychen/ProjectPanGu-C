@@ -195,6 +195,7 @@ struct SharedFluxEstimatorForExperiment{
             REAL omg_est;
             REAL slip_est;
             REAL theta_e;
+            REAL current_filtered[2];
         } htz;
     #endif
     #if AFE_36_TOP_BUTT_EXACT_COMPENSATION 
