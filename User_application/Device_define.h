@@ -74,7 +74,7 @@
 
     // DC BUS
     #define OFFSET_VDC_BUS_IPM1 8
-    #define SCALE_VDC_BUS_IPM1 0.1846154
+    #define SCALE_VDC_BUS_IPM1 0.17690418
 
     //ADC UVW to PIN config
     #define PIN_ADCA_U 0
