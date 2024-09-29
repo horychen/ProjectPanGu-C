@@ -1122,8 +1122,10 @@ void init_FE_htz(){
     }
 }
 void rhf_Holtz2003_Dynamics(REAL t, REAL *x, REAL *fx){
-    FE.htz.emf_stator[0] = US(0) - (*CTRL).motor->R * IS(0) - FE.htz.u_offset[0] + OFFSET_VOLTAGE_ALPHA;
-    FE.htz.emf_stator[1] = US(1) - (*CTRL).motor->R * IS(1) - FE.htz.u_offset[1] + OFFSET_VOLTAGE_BETA ;
+    // FE.htz.emf_stator[0] = US(0) - (*CTRL).motor->R * IS(0) - FE.htz.u_offset[0] + OFFSET_VOLTAGE_ALPHA;
+    // FE.htz.emf_stator[1] = US(1) - (*CTRL).motor->R * IS(1) - FE.htz.u_offset[1] + OFFSET_VOLTAGE_BETA ;
+    FE.htz.emf_stator[0] = US(0) - (*CTRL).motor->R * FE.htz.current_filtered[0] - FE.htz.u_offset[0] + OFFSET_VOLTAGE_ALPHA;
+    FE.htz.emf_stator[1] = US(1) - (*CTRL).motor->R * FE.htz.current_filtered[1] - FE.htz.u_offset[1] + OFFSET_VOLTAGE_BETA ;
     fx[0] = (FE.htz.emf_stator[0]);
     fx[1] = (FE.htz.emf_stator[1]);
 }
@@ -1134,21 +1136,22 @@ REAL marino_sat_q_axis_flux_control = 1.0;
 int bool_positive_extra_limit = TRUE;
 void VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit(){
     #define PSI_MU_ASTER_MAX FE.htz.psi_aster_max // Holtz缺点就是实际磁链超过给定磁链时，失效！自动检测上下界同时饱和的情况，然后增大限幅？
-    #define BOOL_TURN_ON_ADAPTIVE_EXTRA_LIMIT FALSE // The limit is extended when both upper and lower limit are reached in a cycle.
+    #define BOOL_TURN_ON_ADAPTIVE_EXTRA_LIMIT TRUE // The limit is extended when both upper and lower limit are reached in a cycle.
 
     #define BOOL_USE_METHOD_LPF_INPUT      FALSE
     #define BOOL_USE_METHOD_INTEGRAL_INPUT TRUE
-
+    FE.htz.current_filtered[0] = _lpf(IS(0), FE.htz.current_filtered[0], 150);
+    FE.htz.current_filtered[1] = _lpf(IS(1), FE.htz.current_filtered[1], 150);
     // Euler's method is shit at higher speeds
-    FE.htz.emf_stator[0] = US_C(0) - (*CTRL).motor->R*IS_C(0) - FE.htz.u_offset[0];
-    FE.htz.emf_stator[1] = US_C(1) - (*CTRL).motor->R*IS_C(1) - FE.htz.u_offset[1];
+    FE.htz.emf_stator[0] = US_C(0) - (*CTRL).motor->R*FE.htz.current_filtered[0] - FE.htz.u_offset[0];
+    FE.htz.emf_stator[1] = US_C(1) - (*CTRL).motor->R*FE.htz.current_filtered[1] - FE.htz.u_offset[1];
     // FE.htz.psi_1[0] += CL_TS*(FE.htz.emf_stator[0]);
     // FE.htz.psi_1[1] += CL_TS*(FE.htz.emf_stator[1]);
 
     // rk4 
     general_2states_rk4_solver(&rhf_Holtz2003_Dynamics, (*CTRL).timebase, FE.htz.psi_1, CL_TS);
-    FE.htz.psi_2[0] = FE.htz.psi_1[0] - (*CTRL).motor->Lq*IS_C(0);
-    FE.htz.psi_2[1] = FE.htz.psi_1[1] - (*CTRL).motor->Lq*IS_C(1);
+    FE.htz.psi_2[0] = FE.htz.psi_1[0] - (*CTRL).motor->Lq*FE.htz.current_filtered[0];
+    FE.htz.psi_2[1] = FE.htz.psi_1[1] - (*CTRL).motor->Lq*FE.htz.current_filtered[1];
     FE.htz.psi_2_ampl = sqrt(FE.htz.psi_2[0]*FE.htz.psi_2[0]+FE.htz.psi_2[1]*FE.htz.psi_2[1]);
 
     // 限幅前求角度还是应该限幅后？
@@ -1158,8 +1161,8 @@ void VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit(){
 
     FE.htz.psi_1_nonSat[0] += CL_TS*(FE.htz.emf_stator[0]);
     FE.htz.psi_1_nonSat[1] += CL_TS*(FE.htz.emf_stator[1]);
-    FE.htz.psi_2_nonSat[0] = FE.htz.psi_1_nonSat[0] - (*CTRL).motor->Lq*IS_C(0);
-    FE.htz.psi_2_nonSat[1] = FE.htz.psi_1_nonSat[1] - (*CTRL).motor->Lq*IS_C(1);
+    FE.htz.psi_2_nonSat[0] = FE.htz.psi_1_nonSat[0] - (*CTRL).motor->Lq*FE.htz.current_filtered[0];
+    FE.htz.psi_2_nonSat[1] = FE.htz.psi_1_nonSat[1] - (*CTRL).motor->Lq*FE.htz.current_filtered[1];
 
     // FE.htz.psi_aster_max = (*CTRL).taao_flux_cmd + 0.05;
     FE.htz.psi_aster_max = (*CTRL).i->cmd_psi + FE.htz.extra_limit;
@@ -1218,13 +1221,13 @@ void VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit(){
     }
 
     // 限幅后的转子磁链，再求取限幅后的定子磁链
-    FE.htz.psi_1[0] = FE.htz.psi_2[0] + (*CTRL).motor->Lq*IS_C(0);
-    FE.htz.psi_1[1] = FE.htz.psi_2[1] + (*CTRL).motor->Lq*IS_C(1);
+    FE.htz.psi_1[0] = FE.htz.psi_2[0] + (*CTRL).motor->Lq*FE.htz.current_filtered[0];
+    FE.htz.psi_1[1] = FE.htz.psi_2[1] + (*CTRL).motor->Lq*FE.htz.current_filtered[1];
 
     // Speed Estimation
     if(TRUE){
-        // FE.htz.ireq[0] = (*CTRL).Lmu_inv*FE.htz.psi_2[0] - IS_C(0);
-        // FE.htz.ireq[1] = (*CTRL).Lmu_inv*FE.htz.psi_2[1] - IS_C(1);
+        // FE.htz.ireq[0] = (*CTRL).Lmu_inv*FE.htz.psi_2[0] - FE.htz.current_filtered[0];
+        // FE.htz.ireq[1] = (*CTRL).Lmu_inv*FE.htz.psi_2[1] - FE.htz.current_filtered[1];
         REAL temp;
         temp = (FE.htz.psi_1[0]*FE.htz.psi_1[0]+FE.htz.psi_1[1]*FE.htz.psi_1[1]);
         if(temp>0.001){
@@ -1232,7 +1235,7 @@ void VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit(){
         }
         temp = (FE.htz.psi_2[0]*FE.htz.psi_2[0]+FE.htz.psi_2[1]*FE.htz.psi_2[1]);
         if(temp>0.001){
-            FE.htz.slip_est = (*CTRL).motor->Rreq*(IS_C(0)*-FE.htz.psi_2[1]+IS_C(1)*FE.htz.psi_2[0]) / temp;
+            FE.htz.slip_est = (*CTRL).motor->Rreq*(FE.htz.current_filtered[0]*-FE.htz.psi_2[1]+FE.htz.current_filtered[1]*FE.htz.psi_2[0]) / temp;
         }
         FE.htz.omg_est = FE.htz.field_speed_est - FE.htz.slip_est;
     }

@@ -33,20 +33,21 @@
 
     // ADC
     #define OFFSET_VDC_BUS_IPM1 8
-    #define OFFSET_LEM_B7 2034 // 2024-09-17
-    #define OFFSET_LEM_B8 2069 // 2024-09-02
-    #define OFFSET_LEM_B9 2058 // 2024-09-02
-    #define OFFSET_LEM_A1 2025 // 2024-09-17
-    #define OFFSET_LEM_A2 2060 // 2024-09-17
-    #define OFFSET_LEM_A3 2054 // 2024-09-17
+    #define OFFSET_LEM_A1 2035 // 2024-09-17 20240929 wubo tuned
+    #define OFFSET_LEM_A2 2060 // 2024-09-17 20240929 wubo tuned
+    #define OFFSET_LEM_A3 2060 // 2024-09-17 20240929 wubo tuned
+    #define OFFSET_LEM_B7 2038 // 2024-09-17
+    #define OFFSET_LEM_B8 2064 // 2024-09-02
+    #define OFFSET_LEM_B9 2055 // 2024-09-02
 
-    #define SCALE_VDC_BUS_IPM1 0.15625 // ???
-    #define SCALE_LEM_B7 0.03076297
+
+    #define SCALE_VDC_BUS_IPM1 0.1515789 // ???
+    #define SCALE_LEM_A1 0.0307058822
+    #define SCALE_LEM_A2 0.0320731699
+    #define SCALE_LEM_A3 0.0308571402
+    #define SCALE_LEM_B7 0.03342105
     #define SCALE_LEM_B8 0.03038256
     #define SCALE_LEM_B9 0.03039058
-    #define SCALE_LEM_A1 0.0305
-    #define SCALE_LEM_A2 0.030334
-    #define SCALE_LEM_A3 0.02983
 #endif
 
 #ifdef _MOTOR_GROUP // mmlab drive version 2 （吴波、严政章、杨子恺等）

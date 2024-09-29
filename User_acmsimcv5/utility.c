@@ -53,10 +53,12 @@ REAL PostionSpeedMeasurement_MovingAvergage(int32 QPOSCNT, st_enc *p_enc){
         enc.encoder_abs_cnt += SYSTEM_QEP_QPOSMAX_PLUS_1;
     }
     enc.theta_d_elec = enc.encoder_abs_cnt * CNT_2_ELEC_RAD;
-    //    if (enc.theta_d__state > M_PI)
-    //        enc.theta_d__state -= 2 * M_PI;
-    //    if (enc.theta_d__state < -M_PI)
-    //        enc.theta_d__state += 2 * M_PI;
+    while (enc.theta_d_elec > M_PI){
+        enc.theta_d_elec -= 2 * M_PI;
+    }
+    while (enc.theta_d_elec < -M_PI){
+        enc.theta_d_elec += 2 * M_PI;
+    }
 
     /* Part Two: Moving Average with a update period of CL_TS */
 

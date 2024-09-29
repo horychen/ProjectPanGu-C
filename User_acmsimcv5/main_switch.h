@@ -78,6 +78,9 @@ struct DebugExperiment{
         REAL CMD_SPEED_SINE_END_TIME;
         REAL CMD_SPEED_SINE_HZ_CEILING;
     #endif
+    #if WHO_IS_USER == USER_YZZ
+        BOOL BOOL_FOC_SENSORLESS_MODE_OPEN;
+    #endif
 };
 /* To separate two debugs */
 extern int use_first_set_three_phase;
