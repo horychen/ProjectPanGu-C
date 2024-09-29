@@ -2,7 +2,7 @@
 #include <ACMSim.h>
 
 REAL global_id_ampl = 1.5;
-REAL global_id_freq = 0.0;
+REAL global_id_freq = 1.0;
 
 REAL global_id_freq_ampl = 1;
 REAL global_id_freq_freq_ampl = 1;
@@ -66,11 +66,11 @@ void _user_init(){
             /* Commission  */
             // (*debug).mode_select = MODE_SELECT_COMMISSIONING;                         //  9
 
-        (*debug).Overwrite_Current_Frequency = 1;
+        (*debug).Overwrite_Current_Frequency = 0;
         (*debug).Overwrite_theta_d           = 0.0;
 
         (*debug).set_id_command              = 0;
-        (*debug).set_iq_command              = 1;
+        (*debug).set_iq_command              = 0;
         (*debug).set_rpm_speed_command       = 100;
         (*debug).set_deg_position_command    = 0.0;
         (*debug).vvvf_voltage = 3.0;
@@ -153,18 +153,40 @@ void _user_commands(){
                 // break;
             }
         #elif WHO_IS_USER == USER_WB
-            /* 加入恒负载 */
-            ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN * d_sim.VL.LIMIT_OVERLOAD_FACTOR * 0);
+            // /* 加入恒负载 */
+            // ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN * d_sim.VL.LIMIT_OVERLOAD_FACTOR * 0);
+            // if ((*CTRL).timebase > CL_TS){
+            //     (*CTRL).i->cmd_varOmega = (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
+            // }
+            // if ((*CTRL).timebase > 0.08){
+            //     (*CTRL).i->cmd_varOmega = - (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
+            // }
+            // if ((*CTRL).timebase > 0.4){
+            //     #if PC_SIMULATION
+            //         ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN * d_sim.VL.LIMIT_OVERLOAD_FACTOR * 0);
+            //     #endif
+            // }
+            (*CTRL).i->cmd_varOmega = 0.0;
             if ((*CTRL).timebase > CL_TS){
-                (*CTRL).i->cmd_varOmega = (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
-            }
-            if ((*CTRL).timebase > 0.08){
+                // (*debug).set_iq_command = 0.07;
                 (*CTRL).i->cmd_varOmega = - (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
             }
-            if ((*CTRL).timebase > 0.4){
-                #if PC_SIMULATION
-                    ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN * d_sim.VL.LIMIT_OVERLOAD_FACTOR * 0);
-                #endif
+            if ((*CTRL).timebase > 1){
+                // (*debug).set_iq_command = 0.02;
+                (*CTRL).i->cmd_varOmega = + (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
+            }
+            if ((*CTRL).timebase > 2){
+                // (*debug).set_iq_command = 0.07;
+                // #if PC_SIMULATION
+                //     ACM.TLoad = (0.4 * 1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);
+                // #endif
+                (*CTRL).i->cmd_varOmega = 0.5 * (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
+            }
+            if ((*CTRL).timebase > 3){
+                // #if PC_SIMULATION
+                //     ACM.TLoad = (0.3 * 1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);
+                // #endif
+                // (*debug).set_iq_command = 0;
             }
         #elif WHO_IS_USER == USER_CJH
             (*CTRL).i->cmd_varOmega = 0.0;
@@ -211,6 +233,7 @@ void _user_commands(){
                 // #if PC_SIMULATION
                 //     ACM.TLoad = (0.4 * 1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);
                 // #endif
+                // (*CTRL).i->cmd_varOmega = 0.5 * (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
             }
             if ((*CTRL).timebase > 3){
                 // #if PC_SIMULATION
@@ -260,13 +283,30 @@ int main_switch(long mode_select){
     case MODE_SELECT_FOC: // 3
         #if WHO_IS_USER == USER_WB
             // (*debug).set_iq_command = 0;
-            (*debug).set_id_command = global_id_ampl * sin(2 * M_PI * global_id_freq * (*CTRL).timebase);
+            // (*debug).set_id_command = global_id_ampl * sin(2 * M_PI * global_id_freq * (*CTRL).timebase);
+            // (*debug).set_iq_command = 0.0;
+            // tmp = global_id_freq * (`*CTRL).timebase;
+            // tmp -= (long)tmp;
+            // // (*debug).set_id_command = global_id_ampl * sinf(2.0 * M_PI * global_id_freq * (*CTRL).timebase);
+            // // local_id_commmand = global_id_ampl * sinf(2.0 * M_PI * global_id_freq * (*CTRL).timebase);
+            // (*debug).set_id_command = global_id_ampl * sinf(2.0 * M_PI * tmp);
+            
+            //* The current command from Lao Yan's Exp
         #endif
+            _user_commands();
+            // (*debug).set_iq_command = (*CTRL).i->varOmega * omega_2_current_gain;
+            // #if PC_SIMULATION
+            //     (*debug).set_iq_command = (*CTRL).i->cmd_varOmega * omega_2_current_gain;
+            // #endif
+        tmp = global_id_freq * (*CTRL).timebase;
+        tmp -= (long)tmp;
+        (*debug).set_id_command = global_id_ampl * sinf(2.0 * M_PI * tmp);
         _user_onlyFOC();
         break;
     case MODE_SELECT_FOC_SENSORLESS : //31
+        #if WHO_IS_USER == USER_YZZ
         if ((*CTRL).motor->Lq < 0.0062){
-            if(count_1 >10000){
+            if(count_1 >50000){
                 find_max_parameter[index_1] = (*CTRL).motor->Lq;
                 (*CTRL).motor->Lq  += 0.0001;
                 ave_omega = sum_omega * 1e-4;
@@ -276,7 +316,7 @@ int main_switch(long mode_select){
                 sum_omega = 0;
                 sum_cnt=0;
             }
-            else if ((count_1 > 9000)&&(count_1 < 10000)){
+            else if ((count_1 > 40000)&&(count_1 < 50000)){
                 sum_omega += CTRL->enc->rpm;
                 sum_cnt +=1;    
             }
@@ -302,6 +342,7 @@ int main_switch(long mode_select){
         pmsm_observers();
         (*CTRL).i->theta_d_elec = FE.clfe4PMSM.theta_d;
         _user_onlyFOC();
+        #endif
         //TODO:
         break;
     case MODE_SELECT_INDIRECT_FOC:   // 32
@@ -329,10 +370,10 @@ int main_switch(long mode_select){
         break;
     case MODE_SELECT_VELOCITY_LOOP_SENSORLESS : //41
         #if WHO_IS_USER == USER_YZZ
-        // _user_commands();
-        // pmsm_observers();
+        _user_commands();
+        pmsm_observers();
         // observer_PMSMife();
-        controller_PMSMife_with_commands();
+        // controller_PMSMife_with_commands();
         #endif
         
         // observer();
@@ -341,11 +382,11 @@ int main_switch(long mode_select){
         //     (*CTRL).i->cmd_varOmega,
         //     (*CTRL).i->cmd_iDQ,
         //     (*CTRL).i->iAB);
-        // FOC_with_vecocity_control((*CTRL).i->theta_d_elec, 
-        //     (*CTRL).i->varOmega, 
-        //     (*CTRL).i->cmd_varOmega, 
-        //     (*CTRL).i->cmd_iDQ, 
-        //     (*CTRL).i->iAB);
+        FOC_with_vecocity_control((*CTRL).i->theta_d_elec, 
+            (*CTRL).i->varOmega, 
+            (*CTRL).i->cmd_varOmega, 
+            (*CTRL).i->cmd_iDQ, 
+            (*CTRL).i->iAB);
         break;
     case MODE_SELECT_TESTING_SENSORLESS : //42
         break;
