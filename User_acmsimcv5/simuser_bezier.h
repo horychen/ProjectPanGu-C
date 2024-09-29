@@ -1,5 +1,5 @@
-#ifndef SIMUSER_CJH_H
-#define SIMUSER_CJH_H
+#ifndef SIMUSER_BEZIER_H
+#define SIMUSER_BEZIER_H
 
 #if WHO_IS_USER == USER_BEZIER
 

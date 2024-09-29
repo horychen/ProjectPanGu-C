@@ -377,7 +377,9 @@ void bezier_controller_run_in_main(){
         #endif
     }
     if ((*CTRL).timebase > d_sim.user.bezier_seconds_load_disturbance+0.1){
-        ACM.TLoad = 0.0;
+        #if PC_SIMULATION
+            ACM.TLoad = 0.0;
+        #endif
     }
     PID_Speed->Ref = (*CTRL).i->cmd_varOmega;
     PID_Speed->Fbk = (*CTRL).i->varOmega;

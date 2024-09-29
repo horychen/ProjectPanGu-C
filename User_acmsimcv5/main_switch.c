@@ -294,7 +294,6 @@ void init_CTRL(){
     #endif
     PID_iD->OutLimit  = 0.57735 * d_sim.CL.LIMIT_DC_BUS_UTILIZATION * d_sim.init.Vdc; // TODO：初始化的时候如果没有给母线供电这里会有问题，但在中断里如果持续刷新限幅就没事。
     PID_iQ->OutLimit  = 0.57735 * d_sim.CL.LIMIT_DC_BUS_UTILIZATION * d_sim.init.Vdc; // TODO：初始化的时候如果没有给母线供电这里会有问题，但在中断里如果持续刷新限幅就没事。
-    printf("UQ limit is %f\n", PID_iQ->OutLimit);
     /* Capture */
     (*CTRL).cap->flag_nonlinear_filtering = FALSE;
     (*CTRL).cap->flag_bad_U_capture = FALSE;
