@@ -1,7 +1,4 @@
 #include "All_Definition.h"
-
-
-
 Uint32 position_count_SCI_shank_fromCPU2;
 Uint32 position_count_SCI_hip_fromCPU2;
 Uint32 position_count_SCI_fromCPU2;
@@ -145,7 +142,7 @@ void axis_basic_setup(int axisCnt){
     Axis->pCTRL = CTRL;
     Axis->Pdebug = debug;
 
-    allocate_CTRL(CTRL);
+    // allocate_CTRL(CTRL); // This operation is moved into init_CTRL hence i think this code should not be here 20240929 WB
     init_experiment();
     init_experiment_AD_gain_and_offset();
 
@@ -168,7 +165,7 @@ void axis_basic_setup(int axisCnt){
 
     Axis->FLAG_ENABLE_PWM_OUTPUT = FALSE;
 
-    Axis->channels_preset = 1; // 9; // 101;
+    Axis->channels_preset = 2; // 9; // 101;
 
     Axis->pCTRL->enc->sum_qepPosCnt = 0;
     Axis->pCTRL->enc->cursor = 0;
@@ -574,6 +571,7 @@ void voltage_commands_to_pwm()
     //    svgen2.Ubeta  = svgen1.Ualpha*-0.8660254 + svgen1.Ubeta*0.5;
 }
 
+#if WHO_IS_USER == USER_YZZ || WHO_IS_USER == USER_CJH
 void voltage_measurement_based_on_eCAP()
 {
     CAP.terminal_voltage[0] = (CAP.terminal_DutyOnRatio[0]) * Axis->vdc - Axis->vdc * 0.5; // -0.5 is due to duty ratio calculation; - vdc * 0.5 is referring to the center of dc bus capacitor.
@@ -639,6 +637,7 @@ void voltage_measurement_based_on_eCAP()
     CAP.dq_mismatch[0] = (*CTRL).o->cmd_uDQ_to_inverter[0] - CAP.dq[0];
     CAP.dq_mismatch[1] = (*CTRL).o->cmd_uDQ_to_inverter[1] - CAP.dq[1];
 }
+#endif
 
 
 void test_ipc_tocpu02()
@@ -1199,8 +1198,10 @@ void DISABLE_PWM_OUTPUT()
         PID_iQ->OutPrev = 0;
 
         // 清空速度InnerLoop缓存
-        PID_Speed->KFB_Term_Prev = 0;
-        PID_Speed->KFB_Term = 0;
+//        PID_Speed->KFB_Term_Prev = 0;
+        #if WHO_IS_USER == USER_WB
+            SIL_Controller.KFB_Term = 0;
+        #endif
         // PID_iX->OutPrev = 0;
         // PID_iy->OutPrev = 0;
 

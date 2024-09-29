@@ -54,17 +54,17 @@
 
 // Everthing that is configurable is in here
 #include "ACMConfig.h"
-#include "pid_regulator.h"
 #include "shared_flux_estimator.h"
-#include "im_controller.h"
-#include "im_observer.h"
-#include "pmsm_controller.h"
 #include "pmsm_observer.h"
 #include "pmsm_comm.h"
-#include "Bezier.h"
-#include "regulator_speedInnerLoop.h"
-#include "inverter_Compensation.h"
 #include "pi_math.h"
+
+/* User Function */
+#include "simuser_wb.h"
+#include "simuser_cjh.h"
+#include "simuser_yzz.h"
+#include "simuser_bezier.h"
+
 
 #define CURRENT_LOOP_KI_TIMES_TEN FALSE
 #define WUBO_ONLINE_TUNING TRUE
@@ -90,7 +90,7 @@ REAL sign(REAL x);
 inline REAL signf(REAL x) { return (x > 0) - (x < 0); }
 REAL fabs(REAL x);
 REAL _lpf(REAL x, REAL y_tminus1, REAL time_const_inv);
-REAL PostionSpeedMeasurement_MovingAvergage(int32 QPOSCNT, st_enc *p_enc);
+//REAL PostionSpeedMeasurement_MovingAvergage(int32 QPOSCNT, st_enc *p_enc);
 extern REAL one_over_six;
 REAL difference_between_two_angles(REAL first, REAL second);
 

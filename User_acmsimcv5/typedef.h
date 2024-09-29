@@ -86,4 +86,53 @@ typedef float32 REAL;
 #define RANDOM (((REAL)rand() / (RAND_MAX)) * 2 - 1) // [-1, 1]
 
 extern REAL one_over_six;
+
+
+
+/* User */
+#include "super_config.h"
+#include "main_switch.h"
+
+// 速度环 increase to 3 times because of the bug in dynamics clamping
+#define VL_SERIES_KI_CODE             (VL_SERIES_KI*VL_SERIES_KP*VL_TS)
+#define SPEED_LOOP_LIMIT_AMPERE       (1 * d_sim.init.npp) // (1.0*1.414*INIT_IN)
+
+/* 控制策略 */
+    // #define VOLTAGE_CURRENT_DECOUPLING_CIRCUIT FALSE
+    #define SATURATED_MAGNETIC_CIRCUIT FALSE
+
+#define CL_TS          (d_sim.sim.CLTS)
+#define CL_TS_INVERSE  (1.0 / CL_TS)
+#define VL_TS          (d_sim.FOC.VL_EXE_PER_CL_EXE*CL_TS)
+#define PL_TS          VL_TS
+#define SPEED_LOOP_CEILING (d_sim.FOC.VL_EXE_PER_CL_EXE)
+    // #define TS_UPSAMPLING_FREQ_EXE (CL_TS / MACHINE_TS)
+    // #define TS_UPSAMPLING_FREQ_EXE_INVERSE (1.0/TS_UPSAMPLING_FREQ_EXE)
+    #define MACHINE_TS         (CL_TS*d_sim.sim.MACHINE_SIMULATIONs_PER_SAMPLING_PERIOD)
+    #define MACHINE_TS_INVERSE (1.0/MACHINE_TS)
+
+// #define LOAD_INERTIA    0.0
+#define LOAD_TORQUE     0.2 // 0.0
+#define VISCOUS_COEFF   0.0007 // 0.0007
+
+
+
+#define PMSM_PERMANENT_MAGNET_FLUX_LINKAGE d_sim.init.KE
+    #define MOTOR_RATED_POWER_WATT 750
+    #define MOTOR_RATED_SPEED_RPM 3000
+    #define MOTOR_RATED_TORQUE ( MOTOR_RATED_POWER_WATT / (MOTOR_RATED_SPEED_RPM/60.0*2*3.1415926) )
+    #define MOTOR_TORQUE_CONSTANT ( MOTOR_RATED_TORQUE / (d_sim.init.IN*1.414) )
+    #define MOTOR_BACK_EMF_CONSTANT ( MOTOR_TORQUE_CONSTANT / 1.5 / d_sim.init.npp )
+    #define MOTOR_BACK_EMF_CONSTANT_mV_PER_RPM ( MOTOR_BACK_EMF_CONSTANT * 1e3 / (1.0/d_sim.init.npp/2/3.1415926*60) )
+    #define SPEED_LOOP_LIMIT_NEWTON_METER (1.0*MOTOR_RATED_TORQUE)
+
+
+
+
+
+
+
+
+
+
 #endif

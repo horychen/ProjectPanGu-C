@@ -1,4 +1,7 @@
 #include "ACMSim.h"
+#include "math.h"
+#include "stdio.h"
+
 extern REAL sig_a2;
 extern REAL sig_a3;
 
@@ -39,48 +42,48 @@ REAL _hpf(REAL x, REAL *lpf_y, REAL tau_inv){
 // REAL sum_qepPosCnt = 0.0;
 // unsigned int ENC.cursor=0; // ENC.cursor is between 0~79, and it decides which element in MA queue should be kicked out.
 REAL PostionSpeedMeasurement_MovingAvergage(int32 QPOSCNT, st_enc *p_enc){
-// EQep1Regs
-#define enc (*p_enc)
+    // EQep1Regs
+    #define enc (*p_enc)
 
-    /* Part One: Read QEP Registers to get Position */
+        /* Part One: Read QEP Registers to get Position */
 
-    /* 获取绝对位置 [cnt] 用于转子位置解算 */
-    enc.encoder_abs_cnt_previous = enc.encoder_abs_cnt;
-    enc.encoder_abs_cnt = positive_current_QPOSCNT_counting_down * ( (int32)QPOSCNT - enc.OffsetCountBetweenIndexAndUPhaseAxis);
-    if (enc.encoder_abs_cnt > SYSTEM_QEP_QPOSMAX_PLUS_1){
-        enc.encoder_abs_cnt -= SYSTEM_QEP_QPOSMAX_PLUS_1;
-    }
-    if (enc.encoder_abs_cnt < 0){
-        enc.encoder_abs_cnt += SYSTEM_QEP_QPOSMAX_PLUS_1;
-    }
-    enc.theta_d_elec = enc.encoder_abs_cnt * CNT_2_ELEC_RAD;
-    //    if (enc.theta_d__state > M_PI)
-    //        enc.theta_d__state -= 2 * M_PI;
-    //    if (enc.theta_d__state < -M_PI)
-    //        enc.theta_d__state += 2 * M_PI;
+        /* 获取绝对位置 [cnt] 用于转子位置解算 */
+        enc.encoder_abs_cnt_previous = enc.encoder_abs_cnt;
+        enc.encoder_abs_cnt = positive_current_QPOSCNT_counting_down * ( (int32)QPOSCNT - enc.OffsetCountBetweenIndexAndUPhaseAxis);
+        if (enc.encoder_abs_cnt > SYSTEM_QEP_QPOSMAX_PLUS_1){
+            enc.encoder_abs_cnt -= SYSTEM_QEP_QPOSMAX_PLUS_1;
+        }
+        if (enc.encoder_abs_cnt < 0){
+            enc.encoder_abs_cnt += SYSTEM_QEP_QPOSMAX_PLUS_1;
+        }
+        enc.theta_d_elec = enc.encoder_abs_cnt * CNT_2_ELEC_RAD;
+        //    if (enc.theta_d__state > M_PI)
+        //        enc.theta_d__state -= 2 * M_PI;
+        //    if (enc.theta_d__state < -M_PI)
+        //        enc.theta_d__state += 2 * M_PI;
 
-    /* Part Two: Moving Average with a update period of CL_TS */
+        /* Part Two: Moving Average with a update period of CL_TS */
 
-    /* 获取位置增量 [cnt] 用于滑动平均转速解算 */
-    enc.encoder_incremental_cnt = enc.encoder_abs_cnt - enc.encoder_abs_cnt_previous;
-    // 增量超过ppr的一半则认为是发生了Cnt被Z信号清零事件
-    if (enc.encoder_incremental_cnt < -0.5 * SYSTEM_QEP_QPOSMAX_PLUS_1)
-        enc.encoder_incremental_cnt += (int32)SYSTEM_QEP_QPOSMAX_PLUS_1;
-    else if (enc.encoder_incremental_cnt > 0.5 * SYSTEM_QEP_QPOSMAX_PLUS_1)
-        enc.encoder_incremental_cnt -= (int32)SYSTEM_QEP_QPOSMAX_PLUS_1;
+        /* 获取位置增量 [cnt] 用于滑动平均转速解算 */
+        enc.encoder_incremental_cnt = enc.encoder_abs_cnt - enc.encoder_abs_cnt_previous;
+        // 增量超过ppr的一半则认为是发生了Cnt被Z信号清零事件
+        if (enc.encoder_incremental_cnt < -0.5 * SYSTEM_QEP_QPOSMAX_PLUS_1)
+            enc.encoder_incremental_cnt += (int32)SYSTEM_QEP_QPOSMAX_PLUS_1;
+        else if (enc.encoder_incremental_cnt > 0.5 * SYSTEM_QEP_QPOSMAX_PLUS_1)
+            enc.encoder_incremental_cnt -= (int32)SYSTEM_QEP_QPOSMAX_PLUS_1;
 
-    enc.sum_qepPosCnt -= enc.MA_qepPosCnt[enc.cursor];
-    enc.sum_qepPosCnt += enc.encoder_incremental_cnt;
-    enc.MA_qepPosCnt[enc.cursor] = enc.encoder_incremental_cnt;
-    enc.cursor += 1; // 完事以后再加一
-    if (enc.cursor >= MA_SEQUENCE_LENGTH){
-        enc.cursor = 0; // Reset enc.cursor
-    }
-    enc.rpm = enc.sum_qepPosCnt * SYSTEM_QEP_REV_PER_PULSE * 60 * MA_SEQUENCE_LENGTH_INVERSE * CL_TS_INVERSE;
-    enc.varOmega = enc.rpm * RPM_2_MECH_RAD_PER_SEC; // 机械转速（单位：RPM）-> 电气角速度（单位：elec.rad/s)
+        enc.sum_qepPosCnt -= enc.MA_qepPosCnt[enc.cursor];
+        enc.sum_qepPosCnt += enc.encoder_incremental_cnt;
+        enc.MA_qepPosCnt[enc.cursor] = enc.encoder_incremental_cnt;
+        enc.cursor += 1; // 完事以后再加一
+        if (enc.cursor >= MA_SEQUENCE_LENGTH){
+            enc.cursor = 0; // Reset enc.cursor
+        }
+        enc.rpm = enc.sum_qepPosCnt * SYSTEM_QEP_REV_PER_PULSE * 60 * MA_SEQUENCE_LENGTH_INVERSE * CL_TS_INVERSE;
+        enc.varOmega = enc.rpm * RPM_2_MECH_RAD_PER_SEC; // 机械转速（单位：RPM）-> 电气角速度（单位：elec.rad/s)
 
-    return 0.0;
-#undef enc
+        return 0.0;
+    #undef enc
 }
 
 #endif
@@ -110,7 +113,10 @@ REAL difference_between_two_angles(REAL first, REAL second)
     }
 }
 
+
+
 #if PC_SIMULATION == TRUE
+    #define DOWN_SAMPLE 1
     // 写变量meta-data到文件
     void write_header_to_file(FILE *fw)
     {
@@ -169,7 +175,7 @@ REAL difference_between_two_angles(REAL first, REAL second)
 
         printf("\t[utility.c] Rreq = %f Ohm\n", (ACM.Rreq));
         printf("\t[utility.c] NUMBER_OF_STEPS = %d\t", (int)d_sim.sim.NUMBER_OF_STEPS);
-        printf("MACHINE_SIMULATIONs_PER_SAMPLING_PERIOD = %d\n", d_sim.sim.MACHINE_SIMULATIONs_PER_SAMPLING_PERIOD);
+        printf("MACHINE_SIMULATIONs_PER_SAMPLING_PERIOD = %ld\n", d_sim.sim.MACHINE_SIMULATIONs_PER_SAMPLING_PERIOD);
         // if((*debug).SENSORLESS_CONTROL==TRUE){
         //     printf("\t[utility.c] Sensorless using observer.\n");
         // }else{
@@ -183,18 +189,36 @@ REAL difference_between_two_angles(REAL first, REAL second)
         printf("\t[utility.c] Current series PI: Kp=%.3f, Ki=%.6f, limit=%.1f V\n", PID_iQ->Kp, d_sim.CL.SERIES_KI_Q_AXIS, PID_iQ->OutLimit);
         printf("\tPID_Speed.Kp = %f\n", PID_Speed->Kp);
         printf("\tPID_Speed.Ki_CODE = %f\n", PID_Speed->Ki_CODE);
-        printf("\tPID_Speed.KFB = %f\n", PID_Speed->KFB);
         printf("\tPID_iQ.Kp = %f\n", PID_iQ->Kp);
         printf("\tPID_iQ.Ki_CODE = %f\n", PID_iQ->Ki_CODE);
         printf("\tPID_iD.Kp = %f\n", PID_iD->Kp);
         printf("\tPID_iD.Ki_CODE = %f\n", PID_iD->Ki_CODE);
         printf("\td_sim.FOC.CLBW_HZ = %g\n", (REAL)d_sim.FOC.CLBW_HZ);
         printf("\td_sim.FOC.delta = %g\n", (REAL)d_sim.FOC.delta);
-        printf("\t(*debug).error=%d\n\t(*debug).mode_select=%d\n\t(*debug).who_is_user=%d\n", (int)(*debug).error, (int)(*debug).mode_select, (int)(*debug).who_is_user);
-        #if WHO_IS_USER == USER_WB
-            printf("\tPID_Speed.KFB = %f\n",PID_Speed->KFB);
+        printf("\t(*debug).error = %d\n\t(*debug).mode_select = %d\n\t(*debug).who_is_user = %d\n", (int)(*debug).error, (int)(*debug).mode_select, (int)(*debug).who_is_user);
+        #if (WHO_IS_USER == USER_WB)
+            printf("\tSIL_Controller.KFB = %f\n",SIL_Controller.KFB);
             printf("\td_sim.user.zeta = %.3f\n", (REAL)d_sim.user.zeta);
             printf("\td_sim.user.omega_n = %.3f\n", (REAL)d_sim.user.omega_n);
         #endif
 }
 #endif
+
+REAL angle_diff(REAL a, REAL b) {
+    // a 和 b 必须在 [0, 2 * M_PI] 范围内
+    a = fmod(a, 2 * M_PI);
+    b = fmod(b, 2 * M_PI);
+    REAL d1 = a - b;
+    REAL d2;
+    if (d1 > 0) {
+        d2 = a - (b + 2 * M_PI); // d2 是负的
+    } else {
+        d2 = (2 * M_PI + a) - b; // d2 是正的
+    }
+    if (fabs(d1) < fabs(d2)) {
+        return d1;
+    } else {
+        return d2;
+    }
+}
+

@@ -1,6 +1,7 @@
 #ifndef SHARED_FLUX_ESTIMATOR_H
 #define SHARED_FLUX_ESTIMATOR_H
 
+#if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
 
 /* Macro for External Access Interface */
 #define US(X)   OBSV.rk4.us[X]
@@ -413,6 +414,8 @@ struct SharedFluxEstimatorForExperiment{
         REAL psi_2_ampl;
         REAL u_offset[2];
         REAL correction_integral_term[2];
+        REAL theta_d;
+        REAL theta_e;
     } lascu;
     struct Variables_Stojic2015{
         REAL psi_1[2];
@@ -562,3 +565,6 @@ void init_Saturation_time_Without_Limiting();
 #endif
 
 #endif
+#endif
+
+

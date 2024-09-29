@@ -1,6 +1,10 @@
 #ifndef ADD_PMSM_OBSERVER_H
 #define ADD_PMSM_OBSERVER_H
 
+
+#if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
+
+
     /* Commissioning */
     #define EXCITE_BETA_AXIS_AND_MEASURE_PHASE_B TRUE
     #if PC_SIMULATION
@@ -403,3 +407,5 @@ void init_pmsm_observers();
 #endif
 
 #endif
+#endif
+

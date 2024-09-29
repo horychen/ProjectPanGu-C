@@ -1,6 +1,7 @@
 #include "All_Definition.h"
 st_axis Axis_1, *Axis;
 extern bool run_enable_from_PC;
+
 #if NUMBER_OF_AXES == 2 // ====为了同时运行两台电机，增加的另一份控制结构体
     st_axis Axis_2;
     #define get_Axis_CTRL_pointers \
@@ -17,7 +18,6 @@ extern bool run_enable_from_PC;
             debug = &debug_2;      \
         }                           
 #endif
-
 void main(void){
 
     InitSysCtrl();      // 1. Initialize System Control: PLL, WatchDog, enable Peripheral Clocks.
@@ -64,7 +64,6 @@ void main(void){
     #elif NUMBER_OF_DSP_CORES == 2
         /* 双核配置*/
         init_spi();
-
         EUREKA_GPIO_SETUP();
         //        // =========TEST BOARD PIN============
         //        // =========NOT FOR EUREKA===========
@@ -83,18 +82,20 @@ void main(void){
     #endif
 
     // 4.4 Initialize algorithms
-    init_experiment();
+    /* All this init operation should be same as emy-c WUBO*/
+    init_d_sim();      // do this only once here
+    init_debug();      // do this only once here
+//    init_experiment(); // 控制器结构体初始化（同实验）
 
-    get_bezier_points(); // for testing Cury the leg trajectgory tracking
+    //* What's this?
+    get_bezier_points(); // for testing Cury the leg trajectgory tracking 
 
-    init_d_sim();      // d_sim is used to initalize the machine
     for (axisCnt = 0; axisCnt < NUMBER_OF_AXES; axisCnt++){
         get_Axis_CTRL_pointers
-        (*debug).bool_initilized = FALSE;
-        _user_init();      // debug initilization for user
+        // (*debug).bool_initilized = FALSE;
+        // _user_init();      // debug initilization for user 20240929 is the operation is moved outside of for loop
         axis_basic_setup(axisCnt); // 根据axiscnt对Axis，CTRL的1和2号结构体，进行初始化操作
     }
-    wubo_debug_tools[2] = 99;
     axisCnt = 1;
     // 5. Handle Interrupts
     handle_interrupts();
@@ -145,12 +146,14 @@ void main_measurement(){
     (*CTRL).i->iAB[1] = Axis->iabg[1];
 
     // 观测器专用变量（与你无关，别管啦！）
-    IS_C(0) = Axis->iabg[0];
-    IS_C(1) = Axis->iabg[1];
-    US_C(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
-    US_C(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
-    US_P(0) = US_C(0);
-    US_P(1) = US_C(1);
+    # if( WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
+        IS_C(0) = Axis->iabg[0];
+        IS_C(1) = Axis->iabg[1];
+        US_C(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
+        US_C(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
+        US_P(0) = US_C(0);
+        US_P(1) = US_C(1);
+    #endif
 
     // 线电压（占空比）测量（基于占空比和母线电压）
     // voltage_measurement_based_on_eCAP();

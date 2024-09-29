@@ -95,8 +95,8 @@ void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REA
     #undef NS
 }
 #if PC_SIMULATION == TRUE
-    #define OFFSET_VOLTAGE_ALPHA 0//(0.09*-0.01 *((*CTRL).timebase>0.3)) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
-    #define OFFSET_VOLTAGE_BETA  0//(0.09*+0.01 *((*CTRL).timebase>0.3)) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
+    #define OFFSET_VOLTAGE_ALPHA 0//(1*-0.01 *((*CTRL).timebase>0.3)) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
+    #define OFFSET_VOLTAGE_BETA  0//(1*+0.01 *((*CTRL).timebase>0.3)) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
 #else
     #define OFFSET_VOLTAGE_ALPHA 0
     #define OFFSET_VOLTAGE_BETA  0
@@ -389,7 +389,7 @@ void general_10states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REA
         }
 
         FE.AFEOE.theta_d = atan2(FE.AFEOE.psi_2[1], FE.AFEOE.psi_2[0]);
-
+        FE.AFEOE.theta_e = angle_diff(FE.AFEOE.theta_d, (*CTRL).i->theta_d_elec) * ONE_OVER_2PI * 360;
         // Convert output error to dq frame
         // REAL KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * (*CTRL).i->iDQ[0];
         /* TODO: 思考这个dq角度怎么选最好，要不要换成电压向量的角度而不是转子角度？ */

@@ -53,7 +53,6 @@ int bool_test_dac_sinusoidal = FALSE;
 //extern REAL direction
 
 
-
 void write_DAC_buffer(){
     if(use_first_set_three_phase==2){
         Axis4DAC = &Axis_2;
@@ -121,14 +120,7 @@ void write_DAC_buffer(){
 
 
         #if WHO_IS_USER == USER_WB
-                //* Speed Controller Output
-            (*Axis4DAC).dac_watch[64] = PID_Speed->P_Term * 1;
-            (*Axis4DAC).dac_watch[65] = PID_Speed->I_Term * 0.04 * wubo_debug_tools[0];
-            (*Axis4DAC).dac_watch[66] = PID_Speed->KFB_Term * 0.04 * wubo_debug_tools[0];
 
-            (*Axis4DAC).dac_watch[67] = PID_Speed->Out * 0.1;
-            (*Axis4DAC).dac_watch[68] = PID_Speed->OutPrev *0.1;
-            (*Axis4DAC).dac_watch[69] = (*CTRL).svgen1.utilization_ratio * 0.5;
         #endif
 
         #if WHO_IS_USER == USER_YZZ

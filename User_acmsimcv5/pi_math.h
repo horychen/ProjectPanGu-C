@@ -43,9 +43,12 @@ Default initalisation values for the PI_GRANDO objects
                            1.0 	\
               			  }
 
-extern PI_CONTROLLER pi_id;
-extern PI_CONTROLLER pi_iq;
-extern PI_CONTROLLER pi_spd;
+
+/* 陈艺铭找到的德州仪器官方PI */
+#define USE_LAOMING_PI FALSE /* change PI algorithm*/
+extern PI_CONTROLLER texas_pi_id;
+extern PI_CONTROLLER texas_pi_iq;
+extern PI_CONTROLLER texas_pi_spd;
 
 /*------------------------------------------------------------------------------
 	PI_GRANDO Macro Definition
