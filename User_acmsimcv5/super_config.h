@@ -3,7 +3,7 @@
 #define SUPER_CONFIG_H
 #include "typedef.h"
 
-#define WHO_IS_USER 2023231060 
+#define WHO_IS_USER 224 
 
 typedef struct {
     long npp;
@@ -25,7 +25,7 @@ typedef struct {
 } ST_sim;
 
 typedef struct {
-    long delta;
+    REAL delta;
     REAL CLBW_HZ;
     BOOL bool_apply_decoupling_voltages_to_current_regulation;
     long VL_EXE_PER_CL_EXE;
@@ -43,6 +43,7 @@ typedef struct {
     REAL SERIES_KP;
     REAL SERIES_KI;
     REAL LIMIT_OVERLOAD_FACTOR;
+    long EXE_PER_CL_EXE;
 } ST_VL;
 
 typedef struct {
@@ -52,6 +53,13 @@ typedef struct {
     long mode_select_induction_motor;
     long INVERTER_NONLINEARITY_COMPENSATION_METHOD;
     long Select_exp_operation;
+    long bezier_NUMBER_OF_STEPS;
+    long bezier_order;
+    long bezier_order_current;
+    REAL bezier_max_p_value;
+    REAL bezier_rpm_maximum_effective_speed_error;
+    REAL bezier_seconds_step_command;
+    REAL bezier_seconds_load_disturbance;
     long VL_FEEDBACK_KFB;
 } ST_user;
 
@@ -64,6 +72,10 @@ typedef struct {
     ST_VL VL;
     ST_user user;
 } ST_D_SIM;
+
+
+
+#define ARGS_PATH "../acmsimc_bezier_points/SD80AEA07530-SC3-4-0.txt"
 
 
 

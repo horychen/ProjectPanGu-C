@@ -15,30 +15,38 @@ void init_d_sim() {
 
     d_sim.sim.INVERTER_NONLINEARITY = 0;
     d_sim.sim.CLTS = 0.0001;
-    d_sim.sim.NUMBER_OF_STEPS = 2000;
+    d_sim.sim.NUMBER_OF_STEPS = 5500;
     d_sim.sim.MACHINE_SIMULATIONs_PER_SAMPLING_PERIOD = 1;
 
-    d_sim.FOC.delta = 10;
-    d_sim.FOC.CLBW_HZ = 1600.0;
-    d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation = FALSE;
+    d_sim.FOC.delta = 2.0;
+    d_sim.FOC.CLBW_HZ = 1000.0;
+    d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation = TRUE;
     d_sim.FOC.VL_EXE_PER_CL_EXE = 1;
 
-    d_sim.CL.SERIES_KP_D_AXIS = 32.169908772759484;
+    d_sim.CL.SERIES_KP_D_AXIS = 20.106192982974676;
     d_sim.CL.SERIES_KI_D_AXIS = 449.99999999999994;
-    d_sim.CL.SERIES_KP_Q_AXIS = 32.169908772759484;
+    d_sim.CL.SERIES_KP_Q_AXIS = 20.106192982974676;
     d_sim.CL.SERIES_KI_Q_AXIS = 449.99999999999994;
-    d_sim.CL.LIMIT_DC_BUS_UTILIZATION = 0.95;
+    d_sim.CL.LIMIT_DC_BUS_UTILIZATION = 0.96;
 
-    d_sim.VL.SERIES_KP = 0.2661173984714628;
-    d_sim.VL.SERIES_KI = 100.53096491487338;
-    d_sim.VL.LIMIT_OVERLOAD_FACTOR = 0.95;
+    d_sim.VL.SERIES_KP = 0.8316168702233212;
+    d_sim.VL.SERIES_KI = 1570.7963267948965;
+    d_sim.VL.LIMIT_OVERLOAD_FACTOR = 1.0;
+    d_sim.VL.EXE_PER_CL_EXE = 1;
 
-    d_sim.user.verbose = TRUE;
-    d_sim.user.who_is_user = 102209;
-    d_sim.user.mode_select_synchronous_motor = 4;
+    d_sim.user.verbose = FALSE;
+    d_sim.user.who_is_user = 224;
+    d_sim.user.mode_select_synchronous_motor = 3;
     d_sim.user.mode_select_induction_motor = 32;
     d_sim.user.INVERTER_NONLINEARITY_COMPENSATION_METHOD = 0;
     d_sim.user.Select_exp_operation = 0;
+    d_sim.user.bezier_NUMBER_OF_STEPS = 5000;
+    d_sim.user.bezier_order = 4;
+    d_sim.user.bezier_order_current = 0;
+    d_sim.user.bezier_max_p_value = 0.0;
+    d_sim.user.bezier_rpm_maximum_effective_speed_error = 500.0;
+    d_sim.user.bezier_seconds_step_command = 0.2;
+    d_sim.user.bezier_seconds_load_disturbance = 0.4;
     d_sim.user.VL_FEEDBACK_KFB = 0;
 
 }
