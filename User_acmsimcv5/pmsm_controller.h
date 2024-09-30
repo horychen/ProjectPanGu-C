@@ -107,8 +107,8 @@ typedef struct {
 
 
 // TODO: Need confirm parameters @Jiahao Chen
-#define MA_SEQUENCE_LENGTH         40 // 40 for Yaojie large Lq motor  // Note MA_SEQUENCE_LENGTH * CL_TS = window of moving average in seconds
-#define MA_SEQUENCE_LENGTH_INVERSE 0.025 // 0.025                        // 20 MA gives speed resolution of 3 rpm for 2500 ppr encoder
+#define MA_SEQUENCE_LENGTH         10 // 40 for Yaojie large Lq motor  // Note MA_SEQUENCE_LENGTH * CL_TS = window of moving average in seconds
+#define MA_SEQUENCE_LENGTH_INVERSE 0.1 // 0.025                        // 20 MA gives speed resolution of 3 rpm for 2500 ppr encoder
 // #define MA_SEQUENCE_LENGTH         20 // 20 * CL_TS = window of moving average in seconds
 // #define MA_SEQUENCE_LENGTH_INVERSE 0.05 // 20 MA gives speed resolution of 3 rpm for 2500 ppr encoder
 // #define MA_SEQUENCE_LENGTH         80
