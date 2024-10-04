@@ -346,6 +346,7 @@ void init_experiment(){
     #if WHO_IS_USER == USER_WB
         /* init here will tune a new PID value. Make sure this init run after init_CTRL() */
         // This should be placed at the front of init_WC_Tuner() to make sure ParaMis do not overwrite the MotorParameters
+        _init_wubo_SignalGE();
         _init_wubo_Hit_Wall();
         _init_wubo_ParaMis(); 
         _init_WC_Tuner();
@@ -642,6 +643,19 @@ int main_switch(long mode_select){
     case MODE_SELECT_VELOCITY_LOOP: // 4
         #if WHO_IS_USER == USER_WB
             INNER_LOOP_SENSITIVITY_ANALYSIS(debug);
+            if ( d_sim.user.bool_apply_HitWall_analysis == TRUE){
+                (*debug).set_rpm_speed_command = d_sim.user.HitWall_high_RPM_command;
+                static REAL last_time = 0.0;
+                static int i = 0.0;
+                REAL interval_time = d_sim.user.HitWall_time_interval;
+                if( ((*CTRL).timebase - last_time > interval_time) && (i < NUMBER_OF_HIT_WALL_VAR_RATIO) ){
+                    PID_iD->OutLimit = d_sim.CL.LIMIT_DC_BUS_UTILIZATION * d_sim.init.Vdc * wubo_HW.Vdc_limit_ratio[i];
+                    PID_iQ->OutLimit = d_sim.CL.LIMIT_DC_BUS_UTILIZATION * d_sim.init.Vdc * wubo_HW.Vdc_limit_ratio[i];
+                    printf("Vdc limit is %f\n", PID_iD->OutLimit);
+                    last_time = (*CTRL).timebase; // here right????????
+                    i = i + 1;
+                }
+            }
         #endif
         _user_commands();         // User commands
         FOC_with_vecocity_control((*CTRL).i->theta_d_elec,

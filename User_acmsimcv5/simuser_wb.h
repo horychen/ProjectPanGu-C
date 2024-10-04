@@ -6,9 +6,8 @@
 
     /* Hit Wall Anaylsis*/
     #define NUMBER_OF_HIT_WALL_VAR_RATIO 10
-    #define NUMBER_OF_HIT_WALL_VAR_RATIO_INV 1/NUMBER_OF_HIT_WALL_VAR_RATIO
+    #define NUMBER_OF_HIT_WALL_VAR_RATIO_MINUS_ONE_INV 1 / (NUMBER_OF_HIT_WALL_VAR_RATIO-1)
     typedef struct {
-        REAL time_interval; // The invertal to take the time 
         REAL Vdc_limit_ratio[NUMBER_OF_HIT_WALL_VAR_RATIO]; // From 200% to 10%
         REAL Motor_Current_limit_ratio[NUMBER_OF_HIT_WALL_VAR_RATIO]; // From 200% to 10%
     }wubo_Hit_Wall;
@@ -37,6 +36,7 @@
 
     /* For Sweeping & Signal Generator */
     void _user_wubo_Sweeping_Command();
+    void _init_wubo_SignalGE();
     REAL wubo_Signal_Generator(int signal_mode);
     #define GENERATE_D_CURRENT_SINE 1
     #define GENERATE_Q_CURRENT_SINE 2
@@ -70,7 +70,8 @@
     void _wubo_ParaMis_asTime();
     void _init_wubo_ParaMis();
     #define TOTAL_PARAMETER_MISMATCH_PERIOD         7
-    #define TOTAL_PARAMETER_MISMATCH_PERIOD_INV     1/TOTAL_PARAMETER_MISMATCH_PERIOD
+    #define TOTAL_PARAMETER_MISMATCH_PERIOD_INV  1 / (TOTAL_PARAMETER_MISMATCH_PERIOD-1)
+    #define TOTAL_PARAMETER_MISMATCH_PERIOD_MINUS_ONE_INV  1 / (TOTAL_PARAMETER_MISMATCH_PERIOD-1)
     #define LD_PARAMETER_MISMATCH_MODE 1
     #define LQ_PARAMETER_MISMATCH_MODE 2
     #define Rs_PARAMETER_MISMATCH_MODE 3
