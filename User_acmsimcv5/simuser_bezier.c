@@ -363,24 +363,24 @@ void control_output(st_pid_regulator *r, BezierController *pBezier){
 }
 
 void bezier_controller_run_in_main(){
-    if ((*CTRL).timebase > CL_TS){
-        (*CTRL).i->cmd_varOmega = d_sim.user.bezier_rpm_maximum_effective_speed_error * RPM_2_MECH_RAD_PER_SEC;
-    }
-    if ((*CTRL).timebase > d_sim.user.bezier_seconds_step_command){
-        (*CTRL).i->cmd_varOmega = -d_sim.user.bezier_rpm_maximum_effective_speed_error * RPM_2_MECH_RAD_PER_SEC;
-    }
-    if ((*CTRL).timebase > d_sim.user.bezier_seconds_load_disturbance){
-        #if PC_SIMULATION
+    #if PC_SIMULATION
+        if ((*CTRL).timebase > CL_TS){
+            (*CTRL).i->cmd_varOmega = d_sim.user.bezier_rpm_maximum_effective_speed_error * RPM_2_MECH_RAD_PER_SEC;
+        }
+        if ((*CTRL).timebase > d_sim.user.bezier_seconds_step_command){
+            (*CTRL).i->cmd_varOmega = -d_sim.user.bezier_rpm_maximum_effective_speed_error * RPM_2_MECH_RAD_PER_SEC;
+        }
+        if ((*CTRL).timebase > d_sim.user.bezier_seconds_load_disturbance){
             ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);
-        #else
             //CTRL_2.i->cmd_iDQ[1] = 0.3;
-        #endif
-    }
-    if ((*CTRL).timebase > d_sim.user.bezier_seconds_load_disturbance+0.1){
-        #if PC_SIMULATION
+        }
+        if ((*CTRL).timebase > d_sim.user.bezier_seconds_load_disturbance+0.1){
             ACM.TLoad = 0.0;
-        #endif
-    }
+        }
+    #else
+        CTRL = &CTRL_1;
+    #endif
+
     PID_Speed->Ref = (*CTRL).i->cmd_varOmega;
     PID_Speed->Fbk = (*CTRL).i->varOmega;
     

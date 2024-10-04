@@ -308,7 +308,28 @@ __interrupt void EPWM1ISR(void){
         write_RPM_to_cpu02_dsp_cores_2();
         axisCnt = 0;
         get_Axis_CTRL_pointers //(axisCnt, Axis, CTRL);
+
+
+        // 这段放需要测时间的代码前面
+        #if PC_SIMULATION == FALSE
+                EALLOW;
+                CpuTimer1.RegsAddr->TCR.bit.TRB = 1;           // reset cpu timer to period value
+                CpuTimer1.RegsAddr->TCR.bit.TSS = 0;           // start/restart
+                CpuTimer_Before = CpuTimer1.RegsAddr->TIM.all; // get count
+                EDIS;
+        #endif
+
         PanGuMainISR();
+
+        // 这段放需要测时间的代码后面，观察CpuTimer_Delta的取值，代表经过了多少个 1/200e6 秒。
+        #if PC_SIMULATION == FALSE
+        CpuTimer_After = CpuTimer1.RegsAddr->TIM.all; // get count
+        CpuTimer_Delta = (REAL)CpuTimer_Before - (REAL)CpuTimer_After;
+        // EALLOW;
+        // CpuTimer1.RegsAddr->TCR.bit.TSS = 1; // stop (not needed because of the line TRB=1)
+        // EDIS;
+        #endif
+
     }else if (use_first_set_three_phase == 2){
         axisCnt = 1;
         get_Axis_CTRL_pointers //(axisCnt, Axis, CTRL);

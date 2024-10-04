@@ -2,9 +2,10 @@
 
 #if WHO_IS_USER == USER_WB
 
-SpeedInnerLoop SIL_Controller;
+wubo_SignalGenerator wubo_SG;
 wubo_Parameter_mismatch wubo_ParaMis;
 wubo_Hit_Wall wubo_HW;
+SpeedInnerLoop SIL_Controller;
 
 
 REAL global_id_ampl[NUMBER_OF_FREQUENCY_LEVEL] = {1, 1, 1};
@@ -54,11 +55,7 @@ void UDQ_GIVEN_TEST(){
     } else {
         (*CTRL).o->cmd_uDQ[0] = 0;
     }
-
-    // printf("%f\n", gloval_uD_square_time_sum);
-    // (*CTRL).o->cmd_uDQ[0] = global_uD_ampl * sin(2 * M_PI * global_uD_freq * (*CTRL).timebase);
     (*CTRL).o->cmd_uDQ[1] = 0;
-
     (*CTRL).s->cosT_compensated_1p5omegaTs = (*CTRL).s->cosT;
     (*CTRL).s->sinT_compensated_1p5omegaTs = (*CTRL).s->sinT;
     (*CTRL).o->cmd_uAB[0] = MT2A((*CTRL).o->cmd_uDQ[0], (*CTRL).o->cmd_uDQ[1], (*CTRL).s->cosT_compensated_1p5omegaTs, (*CTRL).s->sinT_compensated_1p5omegaTs);
@@ -242,15 +239,6 @@ REAL _init_WC_Tuner_Part2(REAL zeta, REAL omega_n, REAL max_CLBW_PER_min_CLBW){
     SIL_Controller.FOC_CLBW = FOC_CLBW;
     SIL_Controller.FOC_VLBW = FOC_VLBW;
 
-    // #if PC_SIMULATION == TRUE
-    //     printf("Dual Loop Theoritical Bandwidth is: \n");
-    //     printf("FOC_VLBW = %f rad/s\n", FOC_VLBW);
-    //     printf("FOC_VLBW = %f Hz\n", FOC_VLBW * ONE_OVER_2PI);
-    //     printf("FOC_CLBW = %f rad/s\n", FOC_CLBW);
-    //     printf("FOC_CLBW = %f Hz\n", FOC_CLBW * ONE_OVER_2PI);
-    //     printf("K0       = %f\n",       K0);
-    // #endif
-
     return  K0;
 }
 void _init_WC_Tuner(){
@@ -374,7 +362,7 @@ void _init_wubo_ParaMis() {
 
     // Initialization of the parameter mismatch
     int i;
-    REAL period_percent = ( max - min ) * TOTAL_PARAMETER_MISMATCH_PERIOD_INV;
+    REAL period_percent = ( max - min ) * TOTAL_PARAMETER_MISMATCH_PERIOD_MINUS_ONE_INV;
     for (i = 0; i <= TOTAL_PARAMETER_MISMATCH_PERIOD - 1; i++) {
         wubo_ParaMis.percent_Para[i] = min + period_percent * (REAL)i;
     }
@@ -401,44 +389,37 @@ void _wubo_ParaMis_asTime(){
 
     if ( relative_timebase_to_one_cycle < period_time) {
         HANDLE_PARAMETER_MISMATCH(d_sim.user.ParaMis_Mode_Select, 0);
-        // printf("Im here 0!\n");
         //* At the first half of one cycle give a positive speed ref then zero at the last half
         if (      relative_timebase_to_one_cycle < 0.5 * period_time ) (*CTRL).i->cmd_varOmega = (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
         else if ( relative_timebase_to_one_cycle < period_time )       (*CTRL).i->cmd_varOmega = 0;
 
     } else if ( relative_timebase_to_one_cycle < 2 * period_time) {
         HANDLE_PARAMETER_MISMATCH(d_sim.user.ParaMis_Mode_Select, 1);
-        // printf("Im here 1!\n");
         if (      relative_timebase_to_one_cycle < 1.5 * period_time ) (*CTRL).i->cmd_varOmega = (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
         else if ( relative_timebase_to_one_cycle < 2 * period_time   ) (*CTRL).i->cmd_varOmega = 0;
 
     } else if ( relative_timebase_to_one_cycle < 3 * period_time) {
         HANDLE_PARAMETER_MISMATCH(d_sim.user.ParaMis_Mode_Select, 2);
-        // printf("Im here 2!\n");
         if (      relative_timebase_to_one_cycle < 2.5 * period_time ) (*CTRL).i->cmd_varOmega = (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
         else if ( relative_timebase_to_one_cycle < 3 * period_time   ) (*CTRL).i->cmd_varOmega = 0;
 
     } else if ( relative_timebase_to_one_cycle < 4 * period_time) {
         HANDLE_PARAMETER_MISMATCH(d_sim.user.ParaMis_Mode_Select, 3);
-        // printf("Im here 3!\n");
         if (      relative_timebase_to_one_cycle < 3.5 * period_time ) (*CTRL).i->cmd_varOmega = (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
         else if ( relative_timebase_to_one_cycle < 4 * period_time   ) (*CTRL).i->cmd_varOmega = 0;
 
     } else if ( relative_timebase_to_one_cycle < 5 * period_time) {
         HANDLE_PARAMETER_MISMATCH(d_sim.user.ParaMis_Mode_Select, 4);
-        // printf("Im here 4!\n");
         if (      relative_timebase_to_one_cycle < 4.5 * period_time ) (*CTRL).i->cmd_varOmega = (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
         else if ( relative_timebase_to_one_cycle < 5 * period_time   ) (*CTRL).i->cmd_varOmega = 0;
 
     } else if ( relative_timebase_to_one_cycle < 6 * period_time) {
         HANDLE_PARAMETER_MISMATCH(d_sim.user.ParaMis_Mode_Select, 5);
-        // printf("Im here 5!\n");
         if (      relative_timebase_to_one_cycle < 5.5 * period_time ) (*CTRL).i->cmd_varOmega = (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
         else if ( relative_timebase_to_one_cycle < 6 * period_time   ) (*CTRL).i->cmd_varOmega = 0;
 
     } else if ( relative_timebase_to_one_cycle < 7 * period_time) {
         HANDLE_PARAMETER_MISMATCH(d_sim.user.ParaMis_Mode_Select, 6);
-        // printf("Im here 6!\n");
         if (      relative_timebase_to_one_cycle < 6.5 * period_time ) (*CTRL).i->cmd_varOmega = (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
         else if ( relative_timebase_to_one_cycle < 7 * period_time   ) (*CTRL).i->cmd_varOmega = 0;
     } else {
@@ -456,16 +437,21 @@ void _wubo_ParaMis_asTime(){
 
 
 /* SIGNAL GENERATOR */
-wubo_SignalGenerator wubo_SG = {
-    .idq_amp          = {1.0, 1.0},
-    .idq_freq         = {500, 500.0}, 
-    .speed_amp        = 100,
-    .speed_freq       = 80,
-    .squareWave_amp   = 50.0,
-    .squareWave_quarter_cycle = 0.5,
-    .squareWave_total_time = 0.0,
-    .signal_out = 0.0
-}; // define with initilization
+void _init_wubo_SignalGE(){
+    wubo_SG.idq_amp[0]       = 1.0;
+    wubo_SG.idq_freq[0]      = 500.0;
+    wubo_SG.idq_amp[1]       = 0.0;
+    wubo_SG.idq_freq[1]      = 500.0;
+
+    wubo_SG.speed_amp        = 100;
+    wubo_SG.speed_freq       = 80;
+
+    wubo_SG.squareWave_amp   = 50.0;
+    wubo_SG.squareWave_quarter_cycle = 0.5;
+    wubo_SG.squareWave_total_time = 0.0;
+    wubo_SG.signal_out = 0.0;
+}
+
 REAL wubo_Signal_Generator(int signal_mode){
     REAL signal_series = 0;
     switch (signal_mode){
@@ -540,15 +526,16 @@ void _user_wubo_Sweeping_Command(){
 
 /* HIT WALL  */
 void _init_wubo_Hit_Wall(){
-    wubo_HW.time_interval = 2.0;
-    REAL max = 2.0;
-    REAL min = 0.1;
+    REAL max = d_sim.user.HitWall_max_limit_ratio;
+    REAL min = d_sim.user.HitWall_min_limit_ratio;
     int i;
 
     for ( i = 0; i < NUMBER_OF_HIT_WALL_VAR_RATIO; i++ ){
-        wubo_HW.Vdc_limit_ratio[i] = ( 2.0 - 0.1) * NUMBER_OF_HIT_WALL_VAR_RATIO_INV * i;
-        wubo_HW.Motor_Current_limit_ratio[i] = ( 2.0 - 0.1) * NUMBER_OF_HIT_WALL_VAR_RATIO_INV * i;
+        wubo_HW.Vdc_limit_ratio[i]           = max - ( max - min ) * NUMBER_OF_HIT_WALL_VAR_RATIO_MINUS_ONE_INV * i;
+        wubo_HW.Motor_Current_limit_ratio[i] = max - ( max - min ) * NUMBER_OF_HIT_WALL_VAR_RATIO_MINUS_ONE_INV * i;
     }
+    
+
 }
 
 

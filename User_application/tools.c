@@ -20,15 +20,17 @@ REAL target_position_cnt_shank = 58000;
 REAL target_position_cnt_hip = 48000;
 int bool_TEMP = FALSE;
 
+
+bool run_enable_from_PC = FALSE;
+int counter_missing_position_measurement = 0;
+int max_counter_missing_position_measurement = 0;
+
 // 声明全局变量
 #if PC_SIMULATION == FALSE
 REAL CpuTimer_Delta = 0;
 Uint32 CpuTimer_Before = 0;
 Uint32 CpuTimer_After = 0;
 #endif
-bool run_enable_from_PC = FALSE;
-int counter_missing_position_measurement = 0;
-int max_counter_missing_position_measurement = 0;
 
 
 void EUREKA_GPIO_SETUP(){
@@ -165,7 +167,10 @@ void axis_basic_setup(int axisCnt){
 
     Axis->FLAG_ENABLE_PWM_OUTPUT = FALSE;
 
-    Axis->channels_preset = 2; // 9; // 101;
+    Axis->channels_preset = 1; // 9; // 101;
+    #if WHO_IS_USER == USER_BEZIER
+        Axis->channels_preset = 5; // 9; // 101;
+    #endif
 
     Axis->pCTRL->enc->sum_qepPosCnt = 0;
     Axis->pCTRL->enc->cursor = 0;
@@ -371,6 +376,12 @@ void handle_interrupts() {
 
 void main_loop() {
     while (1){
+        #if WHO_IS_USER == USER_BEZIER
+            if(d_sim.user.bezier_NUMBER_OF_STEPS<8000){
+                bezier_controller_run_in_main();
+            }
+        #endif
+
         //        mainWhileLoopCounter1++;
         //        mainWhileLoopCounter2=2992;
         //        if (Motor_mode_START==1){
@@ -1414,25 +1425,26 @@ void write_RPM_to_cpu02_dsp_cores_2(){
     }
     if (IPCLtoRFlagBusy(IPC_FLAG9) == 0){
         run_enable_from_PC = false;
-        // 这段放需要测时间的代码后面，观察CpuTimer_Delta的取值，代表经过了多少个 1/200e6 秒。
-        #if PC_SIMULATION == FALSE
-        CpuTimer_After = CpuTimer1.RegsAddr->TIM.all; // get count
-        CpuTimer_Delta = (REAL)CpuTimer_Before - (REAL)CpuTimer_After;
-        // EALLOW;
-        // CpuTimer1.RegsAddr->TCR.bit.TSS = 1; // stop (not needed because of the line TRB=1)
-        // EDIS;
-        #endif
+
+//        // 这段放需要测时间的代码后面，观察CpuTimer_Delta的取值，代表经过了多少个 1/200e6 秒。
+//        #if PC_SIMULATION == FALSE
+//        CpuTimer_After = CpuTimer1.RegsAddr->TIM.all; // get count
+//        CpuTimer_Delta = (REAL)CpuTimer_Before - (REAL)CpuTimer_After;
+//        // EALLOW;
+//        // CpuTimer1.RegsAddr->TCR.bit.TSS = 1; // stop (not needed because of the line TRB=1)
+//        // EDIS;
+//        #endif
 
         Write.Read_RPM = (*CTRL).i->varOmega;
         IPCLtoRFlagSet(IPC_FLAG9);
         
-        // 这段放需要测时间的代码前面
-        #if PC_SIMULATION == FALSE
-                EALLOW;
-                CpuTimer1.RegsAddr->TCR.bit.TRB = 1;           // reset cpu timer to period value
-                CpuTimer1.RegsAddr->TCR.bit.TSS = 0;           // start/restart
-                CpuTimer_Before = CpuTimer1.RegsAddr->TIM.all; // get count
-                EDIS;
-        #endif
+//        // 这段放需要测时间的代码前面
+//        #if PC_SIMULATION == FALSE
+//                EALLOW;
+//                CpuTimer1.RegsAddr->TCR.bit.TRB = 1;           // reset cpu timer to period value
+//                CpuTimer1.RegsAddr->TCR.bit.TSS = 0;           // start/restart
+//                CpuTimer_Before = CpuTimer1.RegsAddr->TIM.all; // get count
+//                EDIS;
+//        #endif
     }
 }

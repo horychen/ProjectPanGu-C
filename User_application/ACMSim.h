@@ -16,6 +16,12 @@
 #include "math.h"
 #include "stdlib.h"
 
+// 声明全局变量
+#if PC_SIMULATION == FALSE
+extern REAL CpuTimer_Delta;
+extern Uint32 CpuTimer_Before;
+extern Uint32 CpuTimer_After;
+#endif
 
 #define abs                    use_fabs_instead_or_you_will_regret
 #define printf                 DoNotCallPrintFunctionInDSP
@@ -34,8 +40,8 @@
     #define SYSTEM_CARRIER_PERIOD              10000 // =100000/10, max is 100kHz
     #define SYSTEM_TBPRD                       5000  // =SYSTEM_CARRIER_PERIOD/2
     //#define SYSTEM_PWM_DEADTIME_CNT            500 // 500 锟斤拷 TBCLK = EPWMCLK/1 = 100 MHz
-    #define SYSTEM_PWM_DEADTIME_CNT            500
-    #define SYSTEM_PWM_DEADTIME_COMPENSATION   500
+    #define SYSTEM_PWM_DEADTIME_CNT            200
+    #define SYSTEM_PWM_DEADTIME_COMPENSATION   200
         // #define SYSTEM_PWM_DEADTIME_COMPENSATION   483
         // Td = 5.0us; Ton = 0.15us; Toff = 0.32us;
         // TM = Td + Ton -Toff;

@@ -138,9 +138,9 @@
     #define OFFSET_LEM_B7 2005 // 2024-09-02
     #define OFFSET_LEM_B8 2038 // 2024-09-02
     #define OFFSET_LEM_B9 2043 // 2024-09-02
-    #define OFFSET_LEM_A1 2038// ???
-    #define OFFSET_LEM_A2 2050 // ???
-    #define OFFSET_LEM_A3 2065 // ???
+    #define OFFSET_LEM_A1 2008 // 2024-10-05 cjh tuned
+    #define OFFSET_LEM_A2 2036 // 2024-10-05 cjh tuned
+    #define OFFSET_LEM_A3 2028 // 2024-10-05 cjh tuned
 
     #define SCALE_VDC_BUS_IPM1 0.169014 // ???
     #define SCALE_LEM_B7 0.03076297
