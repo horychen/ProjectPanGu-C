@@ -85,9 +85,9 @@ void main(void){
     /* All this init operation should be same as emy-c WUBO*/
     init_d_sim();      // do this only once here
     init_debug();      // do this only once here
-//    init_experiment(); // 控制器结构体初始化（同实验）
+    init_experiment(); // 控制器结构体初始化（同实验）
 
-    //* What's this?
+
     get_bezier_points(); // for testing Cury the leg trajectgory tracking 
 
     for (axisCnt = 0; axisCnt < NUMBER_OF_AXES; axisCnt++){

@@ -1,5 +1,6 @@
 #include "ACMSim.h"
 #include "simuser_bezier.h"
+#include "super_config.h"
 #if WHO_IS_USER == USER_BEZIER
 
 /* -----------------Brentq-------------*/
