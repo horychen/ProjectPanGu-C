@@ -109,26 +109,26 @@ typedef struct{
     struct DebugExperiment *Pdebug;
     // Commonly used for prototype motor testing
        //int use_first_set_three_phase;
-        int Set_current_loop;
-        int Set_x_suspension_current_loop;
-        int Set_y_suspension_current_loop;
-        REAL Set_manual_rpm;
-        REAL Prev_manual_rpm;
-        REAL rampRate_rpm;
-        REAL Set_manual_current_id;
-        REAL Set_manual_current_iq;
-        REAL Set_manual_current_ix;
-        REAL Set_manual_current_iy;
-        int Select_exp_operation;
+        //int Set_current_loop;
+        //int Set_x_suspension_current_loop;
+        //int Set_y_suspension_current_loop;
+        //REAL Set_manual_rpm;
+        //REAL Prev_manual_rpm;
+        //REAL rampRate_rpm;
+        //REAL Set_manual_current_id;
+        //REAL Set_manual_current_iq;
+        //REAL Set_manual_current_ix;
+        //REAL Set_manual_current_iy;
+        //int Select_exp_operation;
         //int *pFLAG_INVERTER_NONLINEARITY_COMPENSATION;
-        int flag_overwrite_theta_d;
-        REAL Overwrite_Current_Frequency;
-        REAL Overwrite_Suspension_Current_Frequency;
-        REAL used_theta_d_elec;
-        REAL angle_shift_for_first_inverter;
-        REAL angle_shift_for_second_inverter;
-        REAL OverwriteSpeedOutLimitDuringInit;
-        int FLAG_ENABLE_PWM_OUTPUT; // ���ģʽ��־�?
+        //int flag_overwrite_theta_d;
+        //REAL Overwrite_Current_Frequency;
+        //REAL Overwrite_Suspension_Current_Frequency;
+        //REAL used_theta_d_elec;
+        //REAL angle_shift_for_first_inverter;
+        //REAL angle_shift_for_second_inverter;
+        //REAL OverwriteSpeedOutLimitDuringInit;
+        //int FLAG_ENABLE_PWM_OUTPUT; // ���ģʽ��־�?
     // ADC Offset
         // Automatic Offset Removing
         int AD_offset_flag2;

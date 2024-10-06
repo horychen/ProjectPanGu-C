@@ -46,7 +46,6 @@ void main(void){
     #endif
     
     // 4.2 Initialize peripherals
-    
     ePWM_initialize();
     ADC_initialize();
     eQEP_initialize(0);
@@ -86,10 +85,7 @@ void main(void){
     init_d_sim();      // do this only once here
     init_debug();      // do this only once here
     init_experiment(); // 控制器结构体初始化（同实验）
-
-
     get_bezier_points(); // for testing Cury the leg trajectgory tracking 
-
     for (axisCnt = 0; axisCnt < NUMBER_OF_AXES; axisCnt++){
         get_Axis_CTRL_pointers
         // (*debug).bool_initilized = FALSE;
@@ -97,6 +93,7 @@ void main(void){
         axis_basic_setup(axisCnt); // 根据axiscnt对Axis，CTRL的1和2号结构体，进行初始化操作
     }
     axisCnt = 1;
+
     // 5. Handle Interrupts
     handle_interrupts();
 
@@ -111,11 +108,45 @@ void main(void){
     #endif
 
     // 7. CLA
-    cla_test_codes();
+    // cla_test_codes();
 
     // 8. Main loop
     main_loop();
 }
+
+void main_loop(){
+    while (1){
+        #if WHO_IS_USER == USER_BEZIER
+            if(d_sim.user.bezier_NUMBER_OF_STEPS<8000){
+                bezier_controller_run_in_main();
+            }
+        #endif
+
+        //        mainWhileLoopCounter1++;
+        //        mainWhileLoopCounter2=2992;
+        //        if (Motor_mode_START==1){
+        //            Axis_1.FLAG_ENABLE_PWM_OUTPUT = 1;
+        //            DSP_START_LED1
+        //            DSP_START_LED2
+        //            mainWhileLoopCounter1 = Axis_1.FLAG_ENABLE_PWM_OUTPUT +5;
+        //        }else if (Motor_mode_START==0){
+        //            Axis_1.FLAG_ENABLE_PWM_OUTPUT = 0;
+        //            DSP_STOP_LED1
+        //            DSP_STOP_LED2
+        //            mainWhileLoopCounter1 = Axis_1.FLAG_ENABLE_PWM_OUTPUT +5;
+        //        }
+        //        mainWhileLoopCounter1 = mainWhileLoopCounter2;
+
+        //        mainWhileLoopCounter3 += 1;
+        //        Axis_1.ID += 1;
+        //        mainWhileLoopCounter2 += 1;
+
+        #if NUMBER_OF_DSP_CORES == 1
+            single_core_dac();
+        #endif
+    }
+}
+
 
 /* Below is moved from PanGuMainISR.c */
 
@@ -233,8 +264,180 @@ void main_measurement(){
 // Uint64 timebase_counter = 0;
 extern REAL imife_realtime_gain_off;
 
-REAL wubo_debug_flag_PWM = 0;
-REAL wubo_debug_motor_enc_dirc[2] = {1.0, -1.0};
+//REAL wubo_debug_flag_PWM = 0;
+//REAL wubo_debug_motor_enc_dirc[2] = {1.0, -1.0};
+
+
+
+void DISABLE_PWM_OUTPUT(){
+    DSP_PWM_DISABLE
+    DSP_2PWM_DISABLE
+
+    /* Only init once for easy debug */
+    /* wubo：每次执行ENABLE PWM OUT时候会将下面的flag置为0 从而每次关闭开启开关都会执行下面的操作！上面说的有问题？*/
+    if (!G.flag_experimental_initialized){
+        G.flag_experimental_initialized = TRUE;
+
+        init_experiment();
+        // init_experiment_AD_gain_and_offset();
+        // init_experiment_overwrite();
+
+        // TODO: use a function for this purpose!
+        // 清空积分缓存
+        PID_Speed->OutPrev = 0;
+        PID_iD->OutPrev = 0;
+        PID_iQ->OutPrev = 0;
+
+        // 清空速度InnerLoop缓存
+//        PID_Speed->KFB_Term_Prev = 0;
+        #if WHO_IS_USER == USER_WB
+            SIL_Controller.KFB_Term = 0;
+        #endif
+        // PID_iX->OutPrev = 0;
+        // PID_iy->OutPrev = 0;
+
+        EPwm1Regs.CMPA.bit.CMPA = 2500;
+        EPwm2Regs.CMPA.bit.CMPA = 2500;
+        EPwm3Regs.CMPA.bit.CMPA = 2500;
+        EPwm4Regs.CMPA.bit.CMPA = 2500;
+        EPwm5Regs.CMPA.bit.CMPA = 2500;
+        EPwm6Regs.CMPA.bit.CMPA = 2500;
+
+        //            CTRL_2.s->iD  = &_pid_iD_2;
+        //            CTRL_2.s->iQ  = &_pid_iQ_2;
+        //            CTRL_2.s->spd = &_pid_spd_2;
+        //            CTRL_2.s->pos = &_pid_pos_2;
+
+        if ((*CTRL).g->overwrite_vdc < 5)
+        {
+            (*CTRL).g->overwrite_vdc = 28;
+        }
+        (*CTRL).g->flag_overwite_vdc = 0;
+
+        /* WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING*/
+        #if WHO_IS_USER == USER_WB
+            (*CTRL).timebase_counter = 0;
+            (*CTRL).timebase = 0.0;
+            (*debug).CMD_CURRENT_SINE_AMPERE      = d_sim.user.CMD_CURRENT_SINE_AMPERE;
+            (*debug).CMD_SPEED_SINE_RPM           = d_sim.user.CMD_SPEED_SINE_RPM;
+            (*debug).CMD_SPEED_SINE_HZ            = d_sim.user.CMD_SPEED_SINE_HZ;
+            (*debug).CMD_SPEED_SINE_STEP_SIZE     = d_sim.user.CMD_SPEED_SINE_STEP_SIZE;
+            (*debug).CMD_SPEED_SINE_LAST_END_TIME = d_sim.user.CMD_SPEED_SINE_LAST_END_TIME;
+            (*debug).CMD_SPEED_SINE_END_TIME      = d_sim.user.CMD_SPEED_SINE_END_TIME;
+            (*debug).CMD_SPEED_SINE_HZ_CEILING    = d_sim.user.CMD_SPEED_SINE_HZ_CEILING;
+        #endif
+        /* WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING*/
+        /* WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING*/
+        /* WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING*/
+        /* WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING*/
+    }
+
+    /* 在不输出PWM波形的时候，也就是“开关”为OFF的时候，更新SpeedInnerLoop的参数*/
+    #if WUBO_ONLINE_TUNING
+        #if WHO_IS_USER == USER_WB
+            if ( (*debug).who_is_user == USER_WB && (*debug).bool_apply_WC_tunner_for_speed_loop == TRUE ){
+                _user_wubo_WC_Tuner_Online(); // 和_user_wubo_WC_Tuner函数区别
+            }else{
+                _user_wubo_TI_Tuner_Online();
+            }
+        #else
+            //TODO: Here needs a online tuning function for public use
+        #endif
+    #endif
+
+    DELAY_US(5);
+    GpioDataRegs.GPDCLEAR.bit.GPIO106 = 1; // TODO: What is this doing?
+}
+
+void ENABLE_PWM_OUTPUT(int positionLoopType){
+    G.flag_experimental_initialized = FALSE;
+    if (use_first_set_three_phase == 1){
+        DSP_PWM_ENABLE
+        // 第一套逆变器工作的时候，确保第二套逆变器关闭
+        EPwm4Regs.CMPA.bit.CMPA = 2500;
+        EPwm5Regs.CMPA.bit.CMPA = 2500;
+        EPwm6Regs.CMPA.bit.CMPA = 2500;
+    } else if (use_first_set_three_phase == 2){
+        DSP_2PWM_ENABLE
+        // 同上
+        EPwm1Regs.CMPA.bit.CMPA = 2500;
+        EPwm2Regs.CMPA.bit.CMPA = 2500;
+        EPwm3Regs.CMPA.bit.CMPA = 2500;
+    }else if (use_first_set_three_phase == -1){
+        DSP_PWM_ENABLE
+        DSP_2PWM_ENABLE
+    }
+    #if WHO_IS_USER == USER_YZZ
+
+        if (FE.htz.u_offset[0] > 0.1)
+        {
+            FE.htz.u_offset[0] = 0;
+        }
+    #endif
+    // DSP中控制器的时间
+    (*CTRL).timebase_counter += 1;
+    (*CTRL).timebase = CL_TS * (*CTRL).timebase_counter; //(*CTRL).timebase += CL_TS; // 2048 = float/REAL max
+
+    #if WHO_IS_USER != USER_XM
+        // 根据指令，产生控制输出（电压）
+                                                                //(*CTRL).s->Motor_or_Gnerator = sign((*CTRL).i->cmd_iDQ[1]) == sign(CTRL->enc->rpm); // sign((*CTRL).i->cmd_iDQ[1]) != sign((*CTRL).i->cmd_speed_rpm))
+        //        runtime_command_and_tuning(Axis->Select_exp_operation);
+        //        // 0x03 is shank
+        //        //    position_count_CAN_fromCPU2 = position_count_CAN_ID0x03_fromCPU2;
+        //        // 0x01 is hip
+        //        // position_count_CAN_fromCPU2 = position_count_CAN_ID0x01_fromCPU2;
+        //
+        //        if (positionLoopType == 0){
+        //            // do nothing
+        //        }
+        //        else{
+        //            // do position loop
+        //            Axis->Set_manual_rpm = call_position_loop_controller(positionLoopType);
+        //        }
+        //
+        //        if (flag_RPM_wave == 1)
+        //        {
+        //            Axis->Set_manual_rpm = (*CTRL).timebase * 20;
+        //            if ( (*CTRL).timebase * 20 > 400)
+        //            {
+        //                Axis->Set_manual_rpm = 400;
+        //            }
+        //        }
+
+        //        if(IPCRtoLFlagBusy(IPC_FLAG8) == 1){
+        //            iq_command_from_PC = Read.current_cmd_from_PC;
+        //            IPCRtoLFlagAcknowledge(IPC_FLAG8);
+        //        }
+        //        if(run_enable_from_PC == false){
+        //            iq_command_from_PC = 0.0;
+        //        }
+    #endif
+
+    /* MAIN SWITCH */
+    /* MAIN SWITCH */
+    /* MAIN SWITCH */
+    Axis->Select_exp_operation = main_switch(debug->mode_select);
+
+    //(*CTRL).o->cmd_uAB_to_inverter[0]
+
+    // operation mode为5的时候，执行下面测试逆变器输出电压的代码
+    if (Axis->Select_exp_operation == XCUBE_TaTbTc_DEBUG_MODE){
+        if (axisCnt == 0){
+            EPwm1Regs.CMPA.bit.CMPA = (*CTRL).svgen1.Ta * 50000000 * CL_TS; // 0-5000，5000表示0%的占空比
+            EPwm2Regs.CMPA.bit.CMPA = (*CTRL).svgen1.Tb * 50000000 * CL_TS;
+            EPwm3Regs.CMPA.bit.CMPA = (*CTRL).svgen1.Tc * 50000000 * CL_TS;
+        }
+        if (axisCnt == 1){
+            EPwm4Regs.CMPA.bit.CMPA = (*CTRL).svgen2.Ta * 50000000 * CL_TS;
+            EPwm5Regs.CMPA.bit.CMPA = (*CTRL).svgen2.Tb * 50000000 * CL_TS;
+            EPwm6Regs.CMPA.bit.CMPA = (*CTRL).svgen2.Tc * 50000000 * CL_TS;
+        }
+    }
+    else{ // 否则根据上面的控制率controller()由voltage_commands_to_pwm()计算出的电压，输出到逆变器
+        voltage_commands_to_pwm();
+    }
+}
+
 
 // 20240720前的有一个bug：我们只通过Axis_1.FLAG_ENABLE_PWM_OUTPUT来决定PWM信号是否输出，但是对应的PWM开通关断函数下，是无脑地对
 // 两个逆变器的PWM信号同时进行了开关，这样会导致两个逆变器的PWM信号都输出。
@@ -244,11 +447,9 @@ void PanGuMainISR(void){
     main_measurement(); // 电流传感器和编码器测得三相电流iuvw和角度theta，iuvw通过clark变化得到iabg，后面iabg通过park变换得到idq，idq通过dq变换得到abc
 
     if (!Axis_1.FLAG_ENABLE_PWM_OUTPUT){
-        wubo_debug_flag_PWM = 1;
         DISABLE_PWM_OUTPUT();
         // TODO:需要增加让另外一项axis的Ta Tb Tc在不使用或者
     }else{
-        wubo_debug_flag_PWM = 2;
         ENABLE_PWM_OUTPUT((*debug).positionLoopType);
     }
 }

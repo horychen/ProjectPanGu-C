@@ -14,8 +14,8 @@ int axisCnt = 0;
 int use_first_set_three_phase = 1;
 struct ControllerForExperiment CTRL_1;
 struct ControllerForExperiment *CTRL;
-struct DebugExperiment *debug;
 struct DebugExperiment debug_1;
+struct DebugExperiment *debug = &debug_1;
 REAL one_over_six = 1.0/6.0;
 // 定义内存空间（结构体）
 st_motor_parameters     t_motor_1={0};
@@ -534,17 +534,17 @@ void _user_commands(){
             (*CTRL).i->cmd_varOmega = (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
             // (*CTRL).i->cmd_varOmega = wubo_Signal_Generator(GENERATE_SPEED_SINE) * RPM_2_MECH_RAD_PER_SEC;
             // (*CTRL).i->cmd_varOmega = wubo_Signal_Generator(GENERATE_SPEED_SAUARE_WAVE_WITH_INV) * RPM_2_MECH_RAD_PER_SEC;
-        #elif WHO_IS_USER == USER_CJH
+        #elif WHO_IS_USER == USER_CJH || WHO_IS_USER == USER_XM
             (*CTRL).i->cmd_varOmega = 0.0;
-            if ((*CTRL).timebase > 1.0){
+            if ((*CTRL).timebase > CL_TS){
                 (*CTRL).i->cmd_varOmega = (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
             }
-            if ((*CTRL).timebase > 2){
+            if ((*CTRL).timebase > 0.2){
                 (*CTRL).i->cmd_varOmega = - (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
             }
-            if ((*CTRL).timebase > 3.0){
+            if ((*CTRL).timebase > 0.4){
                 #if PC_SIMULATION
-                    ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);
+                    ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.8);
                 #endif
             }
         #elif WHO_IS_USER == USER_YZZ
@@ -611,6 +611,9 @@ int main_switch(long mode_select){
     case MODE_SELECT_FOC: // 3
         (*CTRL).i->cmd_iDQ[0] = (*debug).set_id_command;
         (*CTRL).i->cmd_iDQ[1] = (*debug).set_iq_command;
+        #if PC_SIMULATION
+            // ACM.TLoad = 1.0 * sin((*CTRL).i->cmd_varOmega * d_sim.init.npp * CTRL->timebase);
+        #endif
         _onlyFOC((*CTRL).i->theta_d_elec, (*CTRL).i->iAB);
         break;
     case MODE_SELECT_FOC_SENSORLESS: //31
