@@ -164,11 +164,11 @@ int32 cnt_four_bar_map_motor_encoder_angle=0;
     #define SCALE_LEM_A3   0.03045988 // ADCA3
 
     // Displacement sensor
-    #define OFFSET_PLACE_X1    4461341  //样机x轴位置1
-    #define OFFSET_PLACE_Y1    4639271  //样机y轴位置1
+    #define OFFSET_PLACE_X1    6094999  //4461341  //样机x轴位置1
+    #define OFFSET_PLACE_Y1    6094999  //4639271  //样机y轴位置1
 
-    #define OFFSET_PLACE_X2    4561234  //样机x轴位置2
-    #define OFFSET_PLACE_Y2    4513212  //样机y轴位置2
+    #define OFFSET_PLACE_X2    6094999  //4561234  //样机x轴位置2
+    #define OFFSET_PLACE_Y2    6094999  //4513212  //样机y轴位置2
 
     #define SCALE_PLACE_X      4.2894311E-5
     #define SCALE_PLACE_Y      4.3412197E-5
