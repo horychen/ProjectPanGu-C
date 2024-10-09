@@ -121,15 +121,15 @@ void main_loop(){
             //                bezier_controller_run_in_main();
             //            }
 
-//            CTRL = &CTRL_1;
-//
-//            PID_Speed->Ref = (*CTRL).i->cmd_varOmega;
-//            PID_Speed->Fbk = (*CTRL).i->varOmega;
-//
-//            control_output(PID_Speed, &BzController);
-//             (*debug).set_iq_command = PID_Speed->Out;
-////            (*debug).set_iq_command = control_output_adaptVersion(PID_Speed, &BzController_AdaptVersion);
-//            (*debug).set_id_command = 0;
+            if(d_sim.user.bezier_NUMBER_OF_STEPS<8000){
+                CTRL = &CTRL_1;
+                PID_Speed->Ref = (*CTRL).i->cmd_varOmega;
+                PID_Speed->Fbk = (*CTRL).i->varOmega;
+                control_output(PID_Speed, &BzController);
+                (*debug).set_iq_command = PID_Speed->Out;
+                // (*debug).set_iq_command = control_output_adaptVersion(PID_Speed, &BzController_AdaptVersion);
+                (*debug).set_id_command = 0;
+            }
 
         #endif
 
@@ -767,7 +767,7 @@ void axis_basic_setup(int axisCnt){
     //
     //    Axis->FLAG_ENABLE_PWM_OUTPUT = FALSE;
 
-    Axis->channels_preset = 1; // 9; // 101;
+    Axis->channels_preset = 5; // 9; // 101;
     #if WHO_IS_USER == USER_BEZIER
         Axis->channels_preset = 5; // 9; // 101;
     #endif
