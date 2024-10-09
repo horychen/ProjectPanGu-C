@@ -62,7 +62,7 @@ typedef float32 REAL;
 #define SIN_2PI_SLASH_3 0.86602540378443871       // sin(2*pi/3)
 #define SIN_DASH_2PI_SLASH_3 -0.86602540378443871 // sin(-2*pi/3)
 #define SQRT_2_SLASH_3 0.81649658092772603        // sqrt(2.0/3.0)
-#define abs use_fabs_instead_or_you_will_regret
+#define abs use_fabsf_instead_or_you_will_regret
 #define MECH_RAD_PER_SEC_2_RPM (60.0 * ONE_OVER_2PI)
 #define ELEC_RAD_PER_SEC_2_RPM (60.0 * ONE_OVER_2PI * (*CTRL).motor->npp_inv)
 // #define ELEC_RAD_PER_SEC_2_RPM ( 60.0/(2*M_PI*(*CTRL).motor->npp) )

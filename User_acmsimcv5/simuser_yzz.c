@@ -391,7 +391,7 @@ void _user_pmsm_observer(void){
             }
 
             /* Time-varying gains */
-            if(fabs((*CTRL).i->cmd_varTheta)*MOTOR.npp_inv*ONE_OVER_2PI<k_af_speed_Hz){ // [Hz]
+            if(fabsf((*CTRL).i->cmd_varTheta)*MOTOR.npp_inv*ONE_OVER_2PI<k_af_speed_Hz){ // [Hz]
                 FE.AFEOE.k_af = 2*M_PI*100;
                 FE.AFEOE.limiter_Flag = TRUE;
             }else{
@@ -1527,7 +1527,7 @@ void rhf_dynamics_ESO(REAL t, REAL *x, REAL *fx){
     OBSV.esoaf.output_error_sine = sin(AFE_USED.theta_d - xPos);
     OBSV.esoaf.output_error = AFE_USED.theta_d - xPos;
     // you should check for sudden change in angle error.
-    if(fabs(OBSV.esoaf.output_error)>M_PI){
+    if(fabsf(OBSV.esoaf.output_error)>M_PI){
         OBSV.esoaf.output_error -= sign(OBSV.esoaf.output_error) * 2*M_PI;
     }
 
@@ -1644,9 +1644,9 @@ void rhf_NSO_Dynamics(REAL t, REAL *x, REAL *fx){
         uQ_now_filtered = _lpf(uQ_now, uQ_now_filtered, 30); // 越大滤越狠
         // uQ_now_filtered = uQ_now;
 
-        OBSV.nsoaf.active_power_real  = + fabs(uQ_now_filtered) * iDQ_now[1];
-        OBSV.nsoaf.active_power_est   = + fabs(uQ_now_filtered) * xIq;
-        OBSV.nsoaf.active_power_error = + fabs(uQ_now_filtered) * OBSV.nsoaf.output_error; 
+        OBSV.nsoaf.active_power_real  = + fabsf(uQ_now_filtered) * iDQ_now[1];
+        OBSV.nsoaf.active_power_est   = + fabsf(uQ_now_filtered) * xIq;
+        OBSV.nsoaf.active_power_error = + fabsf(uQ_now_filtered) * OBSV.nsoaf.output_error; 
     #endif
     #ifdef NSOAF_IPMSM
         OBSV.nsoaf.active_power_real  = + iDQ_now[1];
@@ -1728,9 +1728,9 @@ void Main_nsoaf_chen2020(){
 
     /* Output Error = \tilde i_q (scalar) */
     // OBSV.nsoaf.output_error = iDQ_now[1] - OBSV.nsoaf.xIq;
-    // OBSV.nsoaf.active_power_real  = + fabs(uQ_now) * iDQ_now[1];
-    // OBSV.nsoaf.active_power_est   = + fabs(uQ_now) * OBSV.nsoaf.xIq;
-    // OBSV.nsoaf.active_power_error = + fabs(uQ_now) * OBSV.nsoaf.output_error;
+    // OBSV.nsoaf.active_power_real  = + fabsf(uQ_now) * iDQ_now[1];
+    // OBSV.nsoaf.active_power_est   = + fabsf(uQ_now) * OBSV.nsoaf.xIq;
+    // OBSV.nsoaf.active_power_error = + fabsf(uQ_now) * OBSV.nsoaf.output_error;
 
     OBSV.nsoaf.active_power_real  = + 1 * iDQ_now[1];
     OBSV.nsoaf.active_power_est   = + 1 * OBSV.nsoaf.xIq;
@@ -1765,7 +1765,7 @@ void Main_nsoaf_chen2020(){
         //     OBSV.nsoaf.KD = (j+1) * 0.2 * NSOAF_TL_D;
         //     general_3_states_rk4_solver(&rhf_NSO_Dynamics, (*CTRL).timebase, (OBSV.nsoaf.x+j*NS), CL_TS);
         //     OBSV.nsoaf.output_error = iQ_C - *(OBSV.nsoaf.x+j*NS);
-        //     if(fabs(OBSV.nsoaf.output_error) < fabs(best_output_error)){
+        //     if(fabsf(OBSV.nsoaf.output_error) < fabsf(best_output_error)){
         //         best_output_error = OBSV.nsoaf.output_error;
         //         best_index = j;
         //     }
@@ -2270,7 +2270,7 @@ void Main_harnefors_scvm(){
     // 可调参数壹
     REAL lambda_s = CJH_TUNING_C * LAMBDA * sign(OBSV.harnefors.omg_elec);
     // 可调参数贰
-    REAL alpha_bw_lpf = CJH_TUNING_A*0.1*(1500*RPM_2_ELEC_RAD_PER_SEC) + CJH_TUNING_B*2*LAMBDA*fabs(OBSV.harnefors.omg_elec);
+    REAL alpha_bw_lpf = CJH_TUNING_A*0.1*(1500*RPM_2_ELEC_RAD_PER_SEC) + CJH_TUNING_B*2*LAMBDA*fabsf(OBSV.harnefors.omg_elec);
 
 
     // 一阶差分计算DQ电流的导数
@@ -2376,7 +2376,7 @@ void rhf_QiaoXia2013_Dynamics(REAL t, REAL *x, REAL *fx){
 void Main_QiaoXia2013_emfSMO(){
 
     /* Time-varying gains */
-    qiaoxia.smo_gain = QIAO_XIA_SMO_GAIN * fabs((*CTRL).i->cmd_varOmega*MOTOR.npp) * MOTOR.KE;
+    qiaoxia.smo_gain = QIAO_XIA_SMO_GAIN * fabsf((*CTRL).i->cmd_varOmega*MOTOR.npp) * MOTOR.KE;
     // qiaoxia.smo_gain = QIAO_XIA_SMO_GAIN * 70 * MOTOR.KE;
 
     general_5states_rk4_solver(&rhf_QiaoXia2013_Dynamics, (*CTRL).timebase, qiaoxia.x, CL_TS);
@@ -2501,15 +2501,15 @@ void Main_ChiXu2009_emfSMO(){
 
     #if CHI_XU_USE_CONSTANT_SMO_GAIN == FALSE
         /* Time-varying gains */
-        OBSV.chixu.smo_gain = OBSV.chixu.smo_gain_scale * fabs(OMEGA_SYNC_USED) * MOTOR.KE; // 根据Qiao.Xia 2013的稳定性证明增益要比反电势大。
-        if(fabs(OMEGA_SYNC_USED)<5){ // [rad/s]
+        OBSV.chixu.smo_gain = OBSV.chixu.smo_gain_scale * fabsf(OMEGA_SYNC_USED) * MOTOR.KE; // 根据Qiao.Xia 2013的稳定性证明增益要比反电势大。
+        if(fabsf(OMEGA_SYNC_USED)<5){ // [rad/s]
             // 转速太低以后，就不要再减小滑模增益了
             OBSV.chixu.smo_gain = OBSV.chixu.smo_gain_scale * 5 * MOTOR.KE;
         }
     #endif
 
     /* ell for xZeq */
-    if(fabs((*CTRL).i->cmd_varOmega*MECH_RAD_PER_SEC_2_RPM)>180){
+    if(fabsf((*CTRL).i->cmd_varOmega*MECH_RAD_PER_SEC_2_RPM)>180){
         OBSV.chixu.ell4xZeq = 1.0;
     }else{
         OBSV.chixu.ell4xZeq = -0.5;
@@ -2520,7 +2520,7 @@ void Main_ChiXu2009_emfSMO(){
         properly according to the fundamental frequency of phase
         currents of PMSM */
     #if CHI_XU_USE_CONSTANT_LPF_POLE == FALSE
-        OBSV.chixu.omega_lpf_4_xZeq = 0.05*fabs(OMEGA_SYNC_USED) + OBSV.chixu.omega_lpf_4_xZeq_const_part;
+        OBSV.chixu.omega_lpf_4_xZeq = 0.05*fabsf(OMEGA_SYNC_USED) + OBSV.chixu.omega_lpf_4_xZeq_const_part;
     #endif
 
     general_6states_rk4_solver(&rhf_ChiXu2009_Dynamics, (*CTRL).timebase, OBSV.chixu.x, CL_TS);
@@ -2654,8 +2654,8 @@ void rhf_parksul2014_Dynamics(REAL t, REAL *x, REAL *fx){
 
     /* State: disturbance/offset estimated by an integrator */
     // xHatPsi1
-    fx[2] = -parksul.omega_f * (xPsi1(1)-xD(1)) + 2*fabs(parksul.omega_f)*parksul.internal_error[0];
-    fx[3] = +parksul.omega_f * (xPsi1(0)-xD(0)) + 2*fabs(parksul.omega_f)*parksul.internal_error[1];
+    fx[2] = -parksul.omega_f * (xPsi1(1)-xD(1)) + 2*fabsf(parksul.omega_f)*parksul.internal_error[0];
+    fx[3] = +parksul.omega_f * (xPsi1(0)-xD(0)) + 2*fabsf(parksul.omega_f)*parksul.internal_error[1];
     // xD
     fx[4] = -parksul.omega_f * parksul.internal_error[1];
     fx[5] = +parksul.omega_f * parksul.internal_error[0];
@@ -2679,8 +2679,8 @@ void rhf_parksul2014_Dynamics(REAL t, REAL *x, REAL *fx){
 void Main_parksul2014_FADO(){
 
     /* Time-varying gains */
-    if(fabs(parksul.xOmg)        *MOTOR.npp_inv*ONE_OVER_2PI<1.5){ // [Hz]
-    // if(fabs((*CTRL).i->cmd_varOmega*MOTOR.npp)*MOTOR.npp_inv*ONE_OVER_2PI<1.5){ // [Hz]
+    if(fabsf(parksul.xOmg)        *MOTOR.npp_inv*ONE_OVER_2PI<1.5){ // [Hz]
+    // if(fabsf((*CTRL).i->cmd_varOmega*MOTOR.npp)*MOTOR.npp_inv*ONE_OVER_2PI<1.5){ // [Hz]
         parksul.k_df = 0.0;
         parksul.k_af = 2*M_PI*100;
         parksul.limiter_Flag = TRUE;

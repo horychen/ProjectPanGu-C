@@ -1,5 +1,7 @@
 #include <All_Definition.h>
 
+#if 0
+
 void init_experiment_overwrite(){
 
     /* Mode Changing During Experiment */
@@ -58,7 +60,7 @@ void init_experiment_overwrite(){
         PID_Speed->OutLimit = (*Axis).OverwriteSpeedOutLimitDuringInit;
     #else
         //(*CTRL).g->OverwriteSpeedOutLimitDuringInit = 2; // 6.3; // 150% rated
-        PID_Speed->OutLimit = (*Axis).OverwriteSpeedOutLimitDuringInit;
+        //PID_Speed->OutLimit = (*Axis).OverwriteSpeedOutLimitDuringInit;
     #endif
 
 
@@ -551,3 +553,5 @@ void ramp_speed_operation(){
         #undef FAST_REVERSAL_RATE
     }
 }
+
+#endif

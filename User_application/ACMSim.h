@@ -23,7 +23,7 @@ extern Uint32 CpuTimer_Before;
 extern Uint32 CpuTimer_After;
 #endif
 
-#define abs                    use_fabs_instead_or_you_will_regret
+//#define abs                    use_fabs_instead_or_you_will_regret
 #define printf                 DoNotCallPrintFunctionInDSP
 
 #if PC_SIMULATION == FALSE
@@ -94,7 +94,7 @@ extern struct GlobalWatch watch;
 int isNumber(REAL x);
 REAL sign(REAL x);
 inline REAL signf(REAL x) { return (x > 0) - (x < 0); }
-REAL fabs(REAL x);
+//REAL fabs(REAL x);
 REAL _lpf(REAL x, REAL y_tminus1, REAL time_const_inv);
 //REAL PostionSpeedMeasurement_MovingAvergage(int32 QPOSCNT, st_enc *p_enc);
 extern REAL one_over_six;

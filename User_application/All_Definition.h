@@ -128,7 +128,7 @@ typedef struct{
         //REAL angle_shift_for_first_inverter;
         //REAL angle_shift_for_second_inverter;
         //REAL OverwriteSpeedOutLimitDuringInit;
-        //int FLAG_ENABLE_PWM_OUTPUT; // ���ģʽ��־�?
+        int FLAG_ENABLE_PWM_OUTPUT; // ���ģʽ��־�?
     // ADC Offset
         // Automatic Offset Removing
         int AD_offset_flag2;

@@ -151,6 +151,7 @@ void allocate_CTRL(struct ControllerForExperiment *p){
     #endif
 }
 void init_debug(){
+    debug = &debug_1;
     (*debug).error = 0;
     (*debug).who_is_user = d_sim.user.who_is_user;
     if(d_sim.init.Rreq>0){
@@ -180,7 +181,7 @@ void init_debug(){
     (*debug).Overwrite_theta_d           = 0.0;
 
     (*debug).set_id_command              = 0.0;
-    (*debug).set_iq_command              = 0.0;
+    (*debug).set_iq_command              = 1.0;
     (*debug).set_rpm_speed_command       = 200.0;
     (*debug).set_deg_position_command    = 0.0;
     (*debug).vvvf_voltage = 3.0;
@@ -330,6 +331,7 @@ void init_experiment(){
 
     #if WHO_IS_USER == USER_BEZIER
         set_points(&BzController);
+        set_points(&BzController_AdaptVersion);
     #endif
 
     #if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
@@ -390,7 +392,7 @@ void _pseudoEncoder(){
     /* 断开编码器，开环控制电流矢量选择、跳跃，逆闭着眼 */
     (*CTRL).i->cmd_iDQ[0] = (*debug).set_id_command;
     (*CTRL).i->cmd_iDQ[1] = (*debug).set_iq_command;
-    if (fabs((*debug).Overwrite_Current_Frequency) > 0)
+    if (fabsf((*debug).Overwrite_Current_Frequency) > 0)
     {
         (*debug).Overwrite_theta_d += CL_TS * (*debug).Overwrite_Current_Frequency * 2 * M_PI;
         if ((*debug).Overwrite_theta_d > M_PI)  (*debug).Overwrite_theta_d -= 2 * M_PI;
@@ -654,7 +656,9 @@ int main_switch(long mode_select){
                 if( ((*CTRL).timebase - last_time > interval_time) && (i < NUMBER_OF_HIT_WALL_VAR_RATIO) ){
                     PID_iD->OutLimit = d_sim.CL.LIMIT_DC_BUS_UTILIZATION * d_sim.init.Vdc * wubo_HW.Vdc_limit_ratio[i];
                     PID_iQ->OutLimit = d_sim.CL.LIMIT_DC_BUS_UTILIZATION * d_sim.init.Vdc * wubo_HW.Vdc_limit_ratio[i];
+                    #if PC_SIMULATION
                     printf("Vdc limit is %f\n", PID_iD->OutLimit);
+                    #endif
                     last_time = (*CTRL).timebase; // here right????????
                     i = i + 1;
                 }
@@ -750,7 +754,7 @@ int main_switch(long mode_select){
     void _user_time_varying_parameters(){
         // ACM;
         /// 0. 参数时变
-        // if (fabs((*CTRL).timebase-2.0)<CL_TS){
+        // if (fabsf((*CTRL).timebase-2.0)<CL_TS){
         //     printf("[Runtime] Rotor resistance of the simulated IM has changed!\n");
         //     ACM.alpha = 0.5*IM_ROTOR_RESISTANCE / IM_MAGNETIZING_INDUCTANCE;
         //     ACM.rreq = ACM.alpha*ACM.Lmu;

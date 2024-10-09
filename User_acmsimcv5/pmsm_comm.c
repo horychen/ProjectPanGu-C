@@ -114,7 +114,7 @@ void doPSD(){
         }
 
         // 转到中途的时候，在开始反转之前，赶快判断一下旋转的方向
-        if(fabs((*CTRL).timebase-1.49)<CL_TS){
+        if(fabsf((*CTRL).timebase-1.49)<CL_TS){
             if( (*CTRL).i->theta_d_elec > PSD.theta_d_elec_entered)
                 PSD.direction = 1;
             else{
@@ -219,7 +219,7 @@ void init_COMM(){
 int reachSteadyStateCurrent(REAL current_error, REAL rated_current){
     static long int counterSS = 0;
 
-    if(fabs(current_error) < rated_current * SS_RATED_CURRENT_RATIO){
+    if(fabsf(current_error) < rated_current * SS_RATED_CURRENT_RATIO){
         counterSS += 1;
 
         // Avoid to collect over-shoot data
@@ -278,7 +278,7 @@ int linreg(int n, const REAL x[], const REAL y[], REAL* m, REAL* b, REAL* r){
     REAL term2 = ((n * sumx2) - (sumx * sumx));
     REAL term3 = ((n * sumy2) - (sumy * sumy));
     REAL term23 = (term2 * term3);
-    if (fabs(term23) > 1e-6)
+    if (fabsf(term23) > 1e-6)
         *r = (term1 * term1) / term23; // Excel returns r*r.
     
     return 0; 
@@ -388,7 +388,7 @@ void COMM_resistanceId(REAL id_fb, REAL iq_fb){
 
             COMM.bool_collecting = TRUE;
 
-            if(fabs(COMM.current_command) > RS_ID_MAXIMUM_CURRENT){
+            if(fabsf(COMM.current_command) > RS_ID_MAXIMUM_CURRENT){
 
                 // Get resistance value
                 if(FALSE){
@@ -533,7 +533,7 @@ void COMM_resistanceId_v2(REAL id_fb, REAL iq_fb){
         if(reachSteadyStateCurrent(REGULATOR->Ref-REGULATOR->Fbk, RS_ID_MAXIMUM_CURRENT)){
             COMM.bool_collecting = TRUE;
             /* 判断是否结束 */
-            // if(fabs(COMM.current_command) > RS_ID_MAXIMUM_CURRENT){
+            // if(fabsf(COMM.current_command) > RS_ID_MAXIMUM_CURRENT){
             if(COMM.i>=NOS*2+NOS_II*2){
                 // Get resistance value
                 if(FALSE){
@@ -686,9 +686,9 @@ void COMM_inductanceId_ver2(REAL id_fb, REAL iq_fb){
         REGULATOR->calc(REGULATOR);
 
         #if EXCITE_BETA_AXIS_AND_MEASURE_PHASE_B
-            Delta_current = fabs(iq_fb - COMM.iq_prev);
+            Delta_current = fabsf(iq_fb - COMM.iq_prev);
         #else
-            Delta_current = fabs(id_fb - COMM.id_prev);
+            Delta_current = fabsf(id_fb - COMM.id_prev);
         #endif
         COMM.L = COMM_FAST_SWITCH_MOD*CL_TS * COMM_FAST_SWITCH_VOLTAGE_CHANGE / (1*Delta_current);
 
@@ -857,7 +857,7 @@ REAL slidingModeControl(REAL error, REAL Tload_est){
 
     x1 += CL_TS*SPEED_LOOP_CEILING * (error) * (*CTRL).motor->npp;
 
-    REAL P_output = SM_C * error * (*CTRL).motor->npp + ( 0.0 + SM_K / (SM_VAREPSILON + ( 1.0 + 1.0/fabs(x1) - SM_VAREPSILON)*exp(-SM_DELTA*fabs(S))) ) * sign(S);
+    REAL P_output = SM_C * error * (*CTRL).motor->npp + ( 0.0 + SM_K / (SM_VAREPSILON + ( 1.0 + 1.0/fabsf(x1) - SM_VAREPSILON)*exp(-SM_DELTA*fabsf(S))) ) * sign(S);
 
     if(bool_tuning){
         if(error-1>0){
@@ -986,7 +986,7 @@ void COMM_PMFluxId(REAL id_fb, REAL iq_fb, REAL omg_mech_fb){
     (*CTRL).o->cmd_iAB[1] = MT2B(id_fb, iq_fb, (*CTRL).s->cosT, (*CTRL).s->sinT);
     static REAL last_KE;
     last_KE = COMM.KE;
-    if(fabs(omg_mech_fb)>1e-3){
+    if(fabsf(omg_mech_fb)>1e-3){
         // 有除法的地方就要小心分母为零（1.#INF）：
             // x0(id)[A],x1(iq)[A],x2(speed)[rpm],x3(position)[rad],ud[V],uq[V],IS_C(0),(*CTRL).ual,ACM.ual,ACM.theta_d,DIST_AL,COMM.KE,COMM.Js
             // 0.712084,0.0339154,0.21666,1.51514e-006,-19.4698,0.47952,0.712084,-19.4698,-19.4698,1.51514e-006,0,1.#INF,0
@@ -1004,14 +1004,14 @@ void COMM_PMFluxId(REAL id_fb, REAL iq_fb, REAL omg_mech_fb){
 
     if(bool_tuning==FALSE){
         // KE便是指是否达到稳态？
-        if(fabs(COMM.KE - last_KE)>=0.5e-2){
+        if(fabsf(COMM.KE - last_KE)>=0.5e-2){
             COMM.counterEntered = 0; // 复用一下这个计数器用于判断KE是否收敛，可以少声明一个计数器。
         }else{ 
             // printf("%d, KE=%g, err=%g, accumKE=%g, countKE=%d\n", COMM.counterEntered, COMM.KE, error, accumKE, countKE);
         }
 
         // 转速控制是否达到稳态？
-        if(fabs(error)<5e-1 && omg_mech_fb*MECH_RAD_PER_SEC_2_RPM>10){
+        if(fabsf(error)<5e-1 && omg_mech_fb*MECH_RAD_PER_SEC_2_RPM>10){
             if(COMM.counterEntered < 60000){
 
             }else if(COMM.counterEntered < 120000){
@@ -1144,7 +1144,7 @@ void COMM_inertiaId(REAL id_fb, REAL iq_fb, REAL cosPark, REAL sinPark, REAL omg
 
     // 计算惯量
     if(t >= TEST_SIGNAL_PERIOD){
-        if(fabs(sum_B)<1e-6){
+        if(fabsf(sum_B)<1e-6){
             sum_B = 1e-6; // avoid zero denominator (do not use use sign(sum_B))
         }
         est_Js_variation = + sum_A / sum_B;

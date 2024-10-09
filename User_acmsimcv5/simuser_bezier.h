@@ -39,22 +39,25 @@ typedef struct
     REAL y;
 } Point;
 
-    #if FALSE // 动态分配 points 的内存
+#if FALSE // 动态分配 points 的内存
     typedef struct
     {
         Point *points;
         int num_points;
         int order;
     } BezierController;
-    #else
+#else
     #define BEZIER_MEMORY_MAX 15
-    typedef struct
-    {
+    typedef struct{
         Point points[BEZIER_MEMORY_MAX]; // 暂时先假设最大只有十个点
         int order;
+        REAL adapt_gain;
+        REAL nonlinear_fake_disturbance_estimate;
+        REAL output;
+        REAL error;
     } BezierController;
-    extern BezierController BzController;
-    #endif
+    extern BezierController BzController, BzController_AdaptVersion;
+#endif
 
 int Comb(const int n, const int m);
 

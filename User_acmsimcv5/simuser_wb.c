@@ -167,7 +167,7 @@ REAL lut_hc_voltage_2[29] = {3.92009, 3.96505, 4.00084, 4.02508, 4.04373, 4.0589
 #define V_PLATEAU_2 4.149734790202423
 
 REAL CJH_LUT_index_inverter_compensation_get_dist_voltage(REAL current_value){
-    REAL abs_current_value = fabs(current_value);
+    REAL abs_current_value = fabsf(current_value);
         if(abs_current_value < LUT_I_TURNING_LC_2){
             REAL float_index = abs_current_value * LUT_STEPSIZE_SMALL_INVERSE_2;
             int index = (int)float_index;

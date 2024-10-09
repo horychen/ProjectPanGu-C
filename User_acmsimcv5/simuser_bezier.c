@@ -123,7 +123,7 @@ REAL brentq(callback_type f, const REAL xa, const REAL xb, scipy_zeros_info *sol
 
 /*------------------Bezier--------------*/
 
-BezierController BzController;
+BezierController BzController, BzController_AdaptVersion;
 
 #define BEZIER_NUMBER_OF_POINTS (d_sim.user.bezier_order + 1)
 
@@ -230,18 +230,16 @@ REAL bezier_x_diff(REAL t, void *params)
  * @param BezierController The Bezier controller
  * @return The parameter t
  */
-REAL find_t_for_given_x(const REAL x, const BezierController *BzierController)
-{
+REAL find_t_for_given_x(const REAL x, const BezierController *BzierController){
     FindTParams params;
     params.BzierController = BzierController;
     params.target_x = x;
     scipy_zeros_info solver_stats;
     REAL root = brentq(bezier_x_diff, 0.0f, 1.0f, &solver_stats, &params);
-    if (solver_stats.error_num != CONVERGED)
-    {
-#if PC_SIMULATION
-        printf("Error: %d\n", solver_stats.error_num);
-#endif
+    if (solver_stats.error_num != CONVERGED){
+        #if PC_SIMULATION
+            printf("[Bezier] Error: %d, %g\n", solver_stats.error_num, root);
+        #endif
     }
     return root;
 }
@@ -267,6 +265,10 @@ REAL find_y_for_given_x(const REAL x, const BezierController *BzierController)
 #define ARGS_PATH "../plugin_moo_args.txt"
 #endif
 void set_points(BezierController *pBezier){
+
+    // 自适应增益
+    pBezier->adapt_gain = 250*1e-4;
+    pBezier->nonlinear_fake_disturbance_estimate = 0.0;
 
     int i;
 
@@ -302,7 +304,7 @@ void set_points(BezierController *pBezier){
             if(d_sim.user.verbose)printf("Bezier control points:\n");
             for (i = 0; i < BEZIER_NUMBER_OF_POINTS; ++i){
                 if (fscanf(fw, "%f,%f\n", &x_tmp[i], &y_tmp[i]) != 2){
-                    if(d_sim.user.verbose)if(d_sim.user.verbose)printf("Error reading line %d\n", i + 1);
+                    if(d_sim.user.verbose)printf("Error reading line %d\n", i + 1);
                     exit(1);
                 }
                 if(d_sim.user.verbose)printf("\t%d, %lf %lf\n", i, x_tmp[i], y_tmp[i]);
@@ -315,14 +317,14 @@ void set_points(BezierController *pBezier){
         #else
             SIM_2_EXP_DEFINE_BEZIER_POINTS_X
             SIM_2_EXP_DEFINE_BEZIER_POINTS_Y
+            // TODO
         #endif
         for (i = 0; i < BEZIER_NUMBER_OF_POINTS; ++i){
             pBezier->points[i].x = x_tmp[i];
             pBezier->points[i].y = y_tmp[i];
         }
     #endif
-    if (pBezier->points == NULL)
-    {
+    if (pBezier->points == NULL){
         errno = ENOMEM;
         return;
     }
@@ -335,32 +337,96 @@ void set_points(BezierController *pBezier){
  */
 
 void control_output(st_pid_regulator *r, BezierController *pBezier){
+    // 重新定义一个误差，单位是 r/min
+    r->ErrPrev = r->Err;
     r->Err = r->Ref - r->Fbk;
-    REAL error = r->Err * MECH_RAD_PER_SEC_2_RPM;
-    
-    // #if PC_SIMULATION printf("error: %lf\n", error); #endif
-    
-    if (fabsf(error) > pBezier->points[pBezier->order].x)
-    {
-        // printf("fabsf error: %f , bezier upper: %f \n", fabsf(error), pBezier->points[pBezier->order].x);
-        error = copysignf(pBezier->points[pBezier->order].x, error);
+    pBezier->error = r->Err * MECH_RAD_PER_SEC_2_RPM;
 
+    // error 的绝对值最大只能是 pBezier->points[pBezier->order].x
+    if (fabsf(pBezier->error) > pBezier->points[pBezier->order].x){
+        // printf("fabsf error: %f , bezier upper: %f \n", fabsf(error), pBezier->points[pBezier->order].x);
+        pBezier->error = copysignf(pBezier->points[pBezier->order].x, pBezier->error);
     }
+
+    // bezier curve mapping
+    REAL out = find_y_for_given_x(fabsf(pBezier->error), pBezier);
+
+    r->OutPrev = r->Out;
+    r->Out = copysignf(out, pBezier->error);
     // printf("error: %f\n", error);
     // #if PC_SIMULATION printf("error after Bezier: %lf\n", error); #endif
-    REAL out = find_y_for_given_x(fabsf(error), pBezier);
     // printf("out: %f\n", out);
-    r->OutPrev = r->Out;
     // r->Out = out*( error / (error + 1e-7) );
-    r->Out = copysignf(out, error);
     // #if PC_SIMULATION printf("%.1f, %.1f\t", pBezier.points[pBezier.num_points].x, sign(error)); #endif
     // #if PC_SIMULATION printf("%.1f, %.1f, %.1f\t", r->Out, r->OutLimit, out); #endif
     // #if PC_SIMULATION printf("%.1f, %.1f, %.1f\n", r->Err, r->Ref, r->Fbk); #endif
-    r->ErrPrev = r->Err;
     if (r->Out > r->OutLimit)
         r->Out = r->OutLimit;
     else if (r->Out < -r->OutLimit)
         r->Out = -r->OutLimit;
+}
+REAL control_output_adaptVersion(st_pid_regulator *r, BezierController *pBezier_AdaptVersion){
+    // 消灭稳态误差
+    /* 这个函数必须在 control_output 之后调用，要求 r->Out 是被赋值更新过的 */
+
+
+    pBezier_AdaptVersion->points[0].y = fabsf(pBezier_AdaptVersion->nonlinear_fake_disturbance_estimate);
+    // 限制范围
+    if (pBezier_AdaptVersion->points[0].y <= 0.0){
+        pBezier_AdaptVersion->points[0].y = 0.0;
+    }else if(pBezier_AdaptVersion->points[0].y > 0.45 * (pBezier_AdaptVersion->points[1].y + pBezier_AdaptVersion->points[2].y)){
+        pBezier_AdaptVersion->points[0].y =      0.45 * (pBezier_AdaptVersion->points[1].y + pBezier_AdaptVersion->points[2].y);
+    }
+
+    // bezier curve mapping
+    pBezier_AdaptVersion->error = r->Err * MECH_RAD_PER_SEC_2_RPM;
+
+    // 【去掉符號】 error 的绝对值最大只能是 pBezier->points[pBezier->order].x
+    if (fabsf(pBezier_AdaptVersion->error) > pBezier_AdaptVersion->points[pBezier_AdaptVersion->order].x){
+        pBezier_AdaptVersion->error = copysignf(pBezier_AdaptVersion->points[pBezier_AdaptVersion->order].x, pBezier_AdaptVersion->error);
+    }
+    pBezier_AdaptVersion->output = find_y_for_given_x( fabsf(pBezier_AdaptVersion->error), pBezier_AdaptVersion );
+
+    static long counter = 0;
+    if(++counter>=100){
+        counter = 0;
+        #if PC_SIMULATION
+        printf(
+            "%g, %g, | %g, %g, | %g, %g, %g\n", 
+            CTRL->timebase, 
+            find_y_for_given_x( 0.0, pBezier_AdaptVersion ), 
+            pBezier_AdaptVersion->error, 
+            pBezier_AdaptVersion->output,
+            (*debug).set_iq_command,
+            CTRL->i->cmd_iDQ[1],
+            pBezier_AdaptVersion->nonlinear_fake_disturbance_estimate
+        );
+        #endif
+    }
+
+    pBezier_AdaptVersion->output = copysignf(pBezier_AdaptVersion->output, pBezier_AdaptVersion->error);
+
+    // 如果异号，需要手动补偿offset
+    if(pBezier_AdaptVersion->output * pBezier_AdaptVersion->nonlinear_fake_disturbance_estimate < 0.0){
+        pBezier_AdaptVersion->output += 2*pBezier_AdaptVersion->nonlinear_fake_disturbance_estimate;
+    }
+
+    // if(r->Out > 0.0){
+    //     // do nothing
+    // }else{
+    //     // add a bias to make 中心对称
+    //     pBezier_AdaptVersion->output = -pBezier_AdaptVersion->output + pBezier_AdaptVersion->points[0].y;
+    // }
+
+    // 自适应律的增益相对于速度误差也是非线性的，直接复用 bezier curve mapping
+    // if((*CTRL).timebase > d_sim.user.bezier_seconds_load_disturbance)
+    {
+        pBezier_AdaptVersion->nonlinear_fake_disturbance_estimate += pBezier_AdaptVersion->adapt_gain * r->Out;
+        // pBezier_AdaptVersion->nonlinear_fake_disturbance_estimate += 0.01 * (pBezier_AdaptVersion->output - r->Out);
+        // pBezier_AdaptVersion->nonlinear_fake_disturbance_estimate += -pBezier_AdaptVersion->adapt_gain * r->Err;
+    }
+
+    return pBezier_AdaptVersion->output;
 }
 
 void bezier_controller_run_in_main(){
@@ -368,14 +434,16 @@ void bezier_controller_run_in_main(){
         if ((*CTRL).timebase > CL_TS){
             (*CTRL).i->cmd_varOmega = d_sim.user.bezier_rpm_maximum_effective_speed_error * RPM_2_MECH_RAD_PER_SEC;
         }
-        if ((*CTRL).timebase > d_sim.user.bezier_seconds_step_command){
-            (*CTRL).i->cmd_varOmega = -d_sim.user.bezier_rpm_maximum_effective_speed_error * RPM_2_MECH_RAD_PER_SEC;
-        }
-        if ((*CTRL).timebase > d_sim.user.bezier_seconds_load_disturbance){
+        // if ((*CTRL).timebase > d_sim.user.bezier_seconds_step_command){
+        //     (*CTRL).i->cmd_varOmega = -d_sim.user.bezier_rpm_maximum_effective_speed_error * RPM_2_MECH_RAD_PER_SEC;
+        // }
+        // if ((*CTRL).timebase > d_sim.user.bezier_seconds_load_disturbance){
+        if ((*CTRL).timebase > 0.05){
             ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);
             //CTRL_2.i->cmd_iDQ[1] = 0.3;
         }
-        if ((*CTRL).timebase > d_sim.user.bezier_seconds_load_disturbance+0.1){
+        // if ((*CTRL).timebase > d_sim.user.bezier_seconds_load_disturbance+0.1){
+        if ((*CTRL).timebase > 0.10){
             ACM.TLoad = 0.0;
         }
     #else
@@ -384,9 +452,10 @@ void bezier_controller_run_in_main(){
 
     PID_Speed->Ref = (*CTRL).i->cmd_varOmega;
     PID_Speed->Fbk = (*CTRL).i->varOmega;
-    
+
     control_output(PID_Speed, &BzController);
-    (*debug).set_iq_command = PID_Speed->Out;
+    // (*debug).set_iq_command = PID_Speed->Out;
+    (*debug).set_iq_command = control_output_adaptVersion(PID_Speed, &BzController_AdaptVersion);
     (*debug).set_id_command = 0;
     // printf("Ref: %f, Fbk: %f, Out: %f\n", PID_Speed->Ref, PID_Speed->Fbk, PID_Speed->Out);
     return;

@@ -130,7 +130,7 @@ REAL lut_hc_voltage[29] = {3.92009, 3.96505, 4.00084, 4.02508, 4.04373, 4.05894,
 
 REAL lookup_compensation_voltage_indexed(REAL current_value)
 {
-    REAL abs_current_value = fabs(current_value);
+    REAL abs_current_value = fabsf(current_value);
 
     if (abs_current_value < LUT_I_TURNING_LC){
         REAL float_index = abs_current_value * LUT_STEPSIZE_SMALL_INVERSE;
@@ -284,7 +284,7 @@ void get_distorted_voltage_via_LUT(REAL ual, REAL ube, REAL ial, REAL ibe, REAL 
 /* Chen 2021 Linear Approximation of U-I Curve */
 REAL trapezoidal_voltage_by_phase_current(REAL current, REAL V_plateau, REAL I_plateau, REAL oneOnver_I_plateau)
 {
-    REAL abs_current = fabs(current);
+    REAL abs_current = fabsf(current);
     if (abs_current < I_plateau)
     {
         return current * V_plateau * oneOnver_I_plateau;
@@ -446,7 +446,7 @@ void Modified_ParkSul_Compensation(void)
     INV.I17_plus_I19_LPF = lpf1_inverter(INV.I17_plus_I19, INV.I17_plus_I19_LPF);
 
     // The adjusting of theta_t via 6th harmonic magnitude
-    INV.theta_trapezoidal += CL_TS * INV.gamma_theta_trapezoidal // *fabs((*CTRL).i->cmd_speed_rpm)
+    INV.theta_trapezoidal += CL_TS * INV.gamma_theta_trapezoidal // *fabsf((*CTRL).i->cmd_speed_rpm)
                              * (INV.I5_plus_I7_LPF + 0 * INV.I11_plus_I13_LPF + 0 * INV.I17_plus_I19_LPF);
     // 两种方法选其一：第一种可用于sensorless系统。
     if (FALSE)
@@ -512,7 +512,7 @@ void Modified_ParkSul_Compensation(void)
 #elif __INVERTER_NONLINEARITY == 1 // [ModelSul96]
     REAL TM = _Toff - _Ton - _Tdead + _Tcomp; // Sul1996
     REAL Udist = (_Udc * TM * CL_TS_INVERSE - _Vce0 - _Vd0) / 6.0;
-    INV.Vsat = 3 * fabs(Udist); // 4 = 2*sign(ia) - sign(ib) - sign(ic) when ia is positive and ib/ic is negative
+    INV.Vsat = 3 * fabsf(Udist); // 4 = 2*sign(ia) - sign(ib) - sign(ic) when ia is positive and ib/ic is negative
                                 // but Vsat is phase voltage distortion maximum, so we need to add a zero sequence voltage of Udist*(sign(ia) + sign(ib) + sign(ic)),
                                 // so, it is 3 * |Udist| as Vsat.
     static int bool_printed = FALSE;
@@ -615,7 +615,7 @@ void Online_PAA_Based_Compensation(void)
     // if((*CTRL).timebase>35){
     //     INV.gamma_I_plateau = 0.0;
     // }
-    INV.sig_a3 -= CL_TS * INV.gamma_a3 // *fabs((*CTRL).i->cmd_speed_rpm)
+    INV.sig_a3 -= CL_TS * INV.gamma_a3 // *fabsf((*CTRL).i->cmd_speed_rpm)
                   * (INV.w6 * INV.I5_plus_I7_LPF + INV.w12 * INV.I11_plus_I13_LPF + INV.w18 * INV.I17_plus_I19_LPF);
 
     // (*CTRL).s->Motor_or_Generator = sign((*CTRL).i->omg_elec * (*CTRL).i->cmd_iDQ[1]);
@@ -650,7 +650,7 @@ void Online_PAA_Based_Compensation(void)
     //     INV.gamma_I_plateau = 0.0;
     // }
     // INV.I_plateau += CL_TS * 0 * INV.gamma_I_plateau \
-    //                         // *fabs((*CTRL).i->cmd_speed_rpm)
+    //                         // *fabsf((*CTRL).i->cmd_speed_rpm)
     //                         *(    1*INV.I5_plus_I7_LPF
     //                             + 0*INV.I11_plus_I13_LPF
     //                             + 0*INV.I17_plus_I19_LPF
@@ -704,7 +704,7 @@ void Online_PAA_Based_Compensation(void)
 //     #define LUT_I_TURNING_HC 4.241972621463768
 //     #define V_PLATEAU 7.43925517763064
 // REAL lookup_compensation_voltage_indexed(REAL current_value){
-//     REAL abs_current_value = fabs(current_value);
+//     REAL abs_current_value = fabsf(current_value);
 
 //     if(abs_current_value < LUT_I_TURNING_LC){
 //         REAL float_index = abs_current_value * LUT_STEPSIZE_SMALL_INVERSE;
@@ -755,7 +755,7 @@ void Online_PAA_Based_Compensation(void)
 //     #define LUT_I_TURNING_HC 4.241972621463768
 //     #define V_PLATEAU 7.43925517763064
 // REAL lookup_compensation_voltage_indexed(REAL current_value){
-//     REAL abs_current_value = fabs(current_value);
+//     REAL abs_current_value = fabsf(current_value);
 
 //     if(abs_current_value < LUT_I_TURNING_LC){
 //         REAL float_index = abs_current_value * LUT_STEPSIZE_SMALL_INVERSE;
@@ -1136,7 +1136,7 @@ REAL marino_speed_freq = 4;
 void controller_marino2005_with_commands(){
 
     /// 0. 参数时变
-    // if (fabs((*CTRL).timebase-2.0)<CL_TS){
+    // if (fabsf((*CTRL).timebase-2.0)<CL_TS){
     //     printf("[Runtime] Rotor resistance of the simulated IM has changed!\n");
     //     ACM.alpha = 0.5*INIT_RREQ / IM_MAGNETIZING_INDUCTANCE;
     //     ACM.rreq = ACM.alpha*ACM.Lmu;
@@ -2377,8 +2377,8 @@ void flux_observer(){
         REAL emf[2];
         emf[0] = US(0) - (*CTRL).motor->R*IS(0) + 0*OFFSET_VOLTAGE_ALPHA;
         emf[1] = US(1) - (*CTRL).motor->R*IS(1) + 0*OFFSET_VOLTAGE_BETA ;
-        fx[0] = - LAMBDA * fabs(OMEGA_SYN) * x[0] + emf[0] + LAMBDA * sign(OMEGA_SYN) * emf[1];
-        fx[1] = - LAMBDA * fabs(OMEGA_SYN) * x[1] + emf[1] + LAMBDA * sign(OMEGA_SYN) *-emf[0];
+        fx[0] = - LAMBDA * fabsf(OMEGA_SYN) * x[0] + emf[0] + LAMBDA * sign(OMEGA_SYN) * emf[1];
+        fx[1] = - LAMBDA * fabsf(OMEGA_SYN) * x[1] + emf[1] + LAMBDA * sign(OMEGA_SYN) *-emf[0];
     }
     void VM_Harnefors2003_SCVM(){
         #define LSIGMA (*CTRL).motor->Lq
@@ -2467,8 +2467,8 @@ void flux_observer(){
         //     REAL emf[2];
         //     emf[0] = US(0) - (*CTRL).motor->R*IS(0) + 0*OFFSET_VOLTAGE_ALPHA;
         //     emf[1] = US(1) - (*CTRL).motor->R*IS(1) + 0*OFFSET_VOLTAGE_BETA ;
-        //     fx[0] = - LAMBDA * fabs(OMEGA_SYN) * x[0] + emf[0] + LAMBDA * sign(OMEGA_SYN) * emf[1];
-        //     fx[1] = - LAMBDA * fabs(OMEGA_SYN) * x[1] + emf[1] + LAMBDA * sign(OMEGA_SYN) *-emf[0];
+        //     fx[0] = - LAMBDA * fabsf(OMEGA_SYN) * x[0] + emf[0] + LAMBDA * sign(OMEGA_SYN) * emf[1];
+        //     fx[1] = - LAMBDA * fabsf(OMEGA_SYN) * x[1] + emf[1] + LAMBDA * sign(OMEGA_SYN) *-emf[0];
         // }
         // void stableFME(){
             //FE.fme.psi_DQ2[0] += CL_TS * (-(*CTRL).motor->alpha*FE.fme.psi_DQ2[0] + (*CTRL).motor->Rreq*(*CTRL).i->iDQ[0]);
