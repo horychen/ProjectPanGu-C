@@ -1,13 +1,13 @@
 #include <All_Definition.h>
 st_axis Axis;
-//int digital_virtual_button = 0;
+int digital_virtual_button = 0;
 REAL target_position_cnt = 50000;
 REAL KP = 0.000005;
 REAL error_pos;
 
-Uint32 position_elec_SCI_knee_fromCPU2; // TODO: �� elec ȫ����Ϊ count
-Uint32 position_elec_SCI_hip_fromCPU2; // TODO: �� elec ȫ����Ϊ count
-Uint32 position_elec_SCI_fromCPU2; // TODO: �� elec ȫ����Ϊ count
+Uint32 position_elec_SCI_knee_fromCPU2; // TODO: 閿熸枻鎷? elec 鍏ㄩ敓鏂ゆ嫹閿熸枻鎷蜂负 count
+Uint32 position_elec_SCI_hip_fromCPU2; // TODO: 閿熸枻鎷? elec 鍏ㄩ敓鏂ゆ嫹閿熸枻鎷蜂负 count
+Uint32 position_elec_SCI_fromCPU2; // TODO: 閿熸枻鎷? elec 鍏ㄩ敓鏂ゆ嫹閿熸枻鎷蜂负 count
 Uint32 position_elec_CAN_ID0x01_fromCPU2;
 Uint32 position_elec_CAN_ID0x03_fromCPU2;
 Uint32 position_elec_CAN_fromCPU2;
@@ -23,6 +23,8 @@ int16 ExtendSecond = 2;
 Uint32 jitterTestInitialPos;
 Uint32 jitterTestPosCmd;
 
+
+
 REAL LEG_BOUCING_SPEED = 400;
 int bool_use_SCI_encoder = TRUE;
 
@@ -31,10 +33,10 @@ REAL rad_four_bar_map_motor_encoder_angle=0;
 int32 cnt_four_bar_map_motor_encoder_angle=0;
 
 #if FALSE // LOOK Up TABLE: input is CAN encoder read, and output is 485 encoder read.
-    // �������ݵ�������֪
+    // 閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鎹风?夋嫹閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷风煡
     #define LUT_LENGTH 1949
 
-    // ���ڴ洢���ݵĽṹ��
+    // 閿熸枻鎷烽敓鑺傚瓨鍌ㄩ敓鏂ゆ嫹閿熸嵎鐨勭粨鏋勯敓鏂ゆ嫹
     typedef struct {
         REAL input[LUT_LENGTH];
         REAL output[LUT_LENGTH];
@@ -141,25 +143,36 @@ int32 cnt_four_bar_map_motor_encoder_angle=0;
 #ifdef _MMDv1 // mmlab drive version 1
 
 // DC BUS
-    #define OFFSET_VDC_BUS_IPM1   4.17834394   // -1.01456189
+    #define OFFSET_VDC_BUS_IPM1  4.17834394   // -1.01456189
     #define SCALE_VDC_BUS_IPM1   0.15848980    // 0.17604031
 
-//Lem 1��������ɫ���ֱ���adc b7 b8 b9
-    #define OFFSET_LEM_B7   2027 //2023.89473684 // ADCB7
-    #define OFFSET_LEM_B8   2043 //2042.33333333 // ADCB8
-    #define OFFSET_LEM_B9   2048 //2043.43859649 // ADCB9
-    // ������������ָ����Ϊ��������LEM�ϵļ�ͷ����������ͬ����SCALEΪ��������LEM�ϵļ�ͷ���������෴����SCALEΪ������
+//Lem 2閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹鑹查敓鏂ゆ嫹閿熻?楁唻鎷烽敓鏂ゆ嫹adc b7 b8 b9
+    #define OFFSET_LEM_B7   2000 //2023.89473684 // ADCB7
+    #define OFFSET_LEM_B8   2035 //2042.33333333 // ADCB8
+    #define OFFSET_LEM_B9   2040 //2043.43859649 // ADCB9
+    // 閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹鎸囬敓鏂ゆ嫹閿熸枻鎷蜂负閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹LEM閿熻緝鐨勭》鎷峰ご閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷峰悓閿熸枻鎷烽敓鏂ゆ嫹SCALE涓洪敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷稬EM閿熻緝鐨勭》鎷峰ご閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹閿熸磥鍙嶉敓鏂ゆ嫹閿熸枻鎷稴CALE涓洪敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹
     #define SCALE_LEM_B7   0.03076297 // ADCB7
     #define SCALE_LEM_B8   0.03038256 // ADCB8
     #define SCALE_LEM_B9   0.03039058 // ADCB9
 
-//Lem 2��������ɫ���ֱ���adc a1 a2 a3
-    #define OFFSET_LEM_A1   2020 //2029.57894737 // ADCA1
-    #define OFFSET_LEM_A2   2043 //2043.08771930 // ADCA2
-    #define OFFSET_LEM_A3   2044 //2042.98245614 // ADCA3
+//Lem 1閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹鑹查敓鏂ゆ嫹閿熻?楁唻鎷烽敓鏂ゆ嫹adc a1 a2 a3
+    #define OFFSET_LEM_A1   2770  //2920 //更换了一个LEM，值变大了好多 //2020 //2029.57894737 // ADCA1
+    #define OFFSET_LEM_A2   2034  //2043 //2043.08771930 // ADCA2
+    #define OFFSET_LEM_A3   2031  //2044 //2042.98245614 // ADCA3
     #define SCALE_LEM_A1   0.03080704 // ADCA1
     #define SCALE_LEM_A2   0.03060669 // ADCA2
     #define SCALE_LEM_A3   0.03045988 // ADCA3
+
+    // Displacement sensor
+    #define OFFSET_PLACE_X1    6094999  //4461341  //样机x轴位置1
+    #define OFFSET_PLACE_Y1    6094999  //4639271  //样机y轴位置1
+
+    #define OFFSET_PLACE_X2    6094999  //4561234  //样机x轴位置2
+    #define OFFSET_PLACE_Y2    6094999  //4513212  //样机y轴位置2
+
+    #define SCALE_PLACE_X      4.2894311E-5
+    #define SCALE_PLACE_Y      4.3412197E-5
+
 
 #else
     scale and offset...
@@ -204,6 +217,17 @@ void init_experiment_AD_gain_and_offset(){
     CTRL.enc->OffsetCountBetweenIndexAndUPhaseAxis = OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
     CTRL.enc->theta_d_offset = CTRL.enc->OffsetCountBetweenIndexAndUPhaseAxis * CNT_2_ELEC_RAD;
 }
+void init_experiment_PLACE_gain_and_offset(){
+    Axis.place_offset[0] = OFFSET_PLACE_X1;
+    Axis.place_offset[1] = OFFSET_PLACE_Y1;
+    Axis.place_scale[0] = SCALE_PLACE_X;
+    Axis.place_scale[1] = SCALE_PLACE_Y;
+    /* 下面是针对4路位移传感器的定义 */
+    Axis.place_offset[2] = OFFSET_PLACE_X2;
+    Axis.place_offset[3] = OFFSET_PLACE_Y2;
+    Axis.place_scale[2] = SCALE_PLACE_X;
+    Axis.place_scale[3] = SCALE_PLACE_Y;
+}
 void main(void){
 
     // CYM Codes
@@ -224,12 +248,16 @@ void main(void){
     Axis.pAdcaResultRegs = &AdcaResultRegs;
     Axis.pAdcbResultRegs = &AdcbResultRegs;
     Axis.pAdccResultRegs = &AdccResultRegs;
+<<<<<<< HEAD
     Axis.use_first_set_three_phase = 1; //1→使用第一套逆变器；2→使用第二套逆变器；-1→同时使用第一和第二套逆变器，且逆变器二控制转矩磁场、逆变器一控制悬浮磁场。
+=======
+    Axis.use_first_set_three_phase = 2; // 1; // -1;
+>>>>>>> 4a3813d3edf918a7057c21cd593b515704d85641
     Axis.Set_current_loop = FALSE;
     Axis.Set_x_suspension_current_loop = FALSE;
     Axis.Set_y_suspension_current_loop = FALSE;
-    Axis.Set_manual_rpm = 50.0;
-    Axis.Set_manual_current_iq = 1.0;
+    Axis.Set_manual_rpm = 0.0;
+    Axis.Set_manual_current_iq = 0.0;
     Axis.Set_manual_current_id = 0.0; // id = -1 A is the magic number to get more torque! cjh 2024-02-29
     Axis.Select_exp_operation = 0; //200; //202; //200; //101;
     Axis.pFLAG_INVERTER_NONLINEARITY_COMPENSATION = &G.FLAG_INVERTER_NONLINEARITY_COMPENSATION; //??
@@ -241,7 +269,11 @@ void main(void){
     Axis.angle_shift_for_second_inverter = ANGLE_SHIFT_FOR_SECOND_INVERTER;
     Axis.OverwriteSpeedOutLimitDuringInit = 6; // 10; // A // What does number 6 mean?
     Axis.FLAG_ENABLE_PWM_OUTPUT = FALSE;
+<<<<<<< HEAD
     Axis.channels_preset = 1; // 9; // 101; // What does it mean?
+=======
+    Axis.channels_preset = 5; // 9; // 101;
+>>>>>>> 4a3813d3edf918a7057c21cd593b515704d85641
 
     ENC.sum_qepPosCnt = 0;
     ENC.cursor = 0;
@@ -265,12 +297,12 @@ void main(void){
     #endif
     #ifdef _STANDALONE
     #ifdef _FLASH
-        // ������Ҫ���߶ϵ����ϵ�����ʱ�������
+        // 閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷疯?侀敓鏂ゆ嫹閿熺??鏂?纰夋嫹閿熸枻鎷烽敓杈冪?夋嫹閿熸枻鎷烽敓鏂ゆ嫹鏃堕敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹閿燂拷
         //  Send boot command to allow the CPU02 application to begin execution
         IPCBootCPU2(C1C2_BROM_BOOTMODE_BOOT_FROM_FLASH);
     #else
         //  Send boot command to allow the CPU02 application to begin execution
-        // ��仰�Ҳ�֪��ʲô���壬���ܻ��ǲ�Ҫ�ȽϺá�
+        // 閿熸枻鎷锋禒甯?鎷蜂篃閿熻?楊亷鎷烽敓缁炶?佽揪鎷烽敓鏂ゆ嫹婢诡剨鎷烽敓鏂ゆ嫹鑺戦敓鏂ゆ嫹閬ｉ敓鎻?顏庢嫹鍐夎櫨璋╅敓锟?
         //IPCBootCPU2(C1C2_BROM_BOOTMODE_BOOT_FROM_RAM);
     #endif
     #endif
@@ -284,7 +316,7 @@ void main(void){
     // 4.3 Assign peripherals to CPU02
     /* SPI and SCI */
     #if NUMBER_OF_DSP_CORES == 1
-        // ͬ������������
+        // 鍚岄敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷?
         InitHighSpeedSpiGpio();
         //InitSpiaGpio();
         //InitSpicGpio();
@@ -293,8 +325,8 @@ void main(void){
         InitSciGpio();
         InitSci();
     #elif NUMBER_OF_DSP_CORES == 2
-        /* ˫������*/
-        // ��ʼ��SPI��������DACоƬMAX5307ͨѶ��
+        /* 鍙岄敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹*/
+        // 閿熸枻鎷峰?嬮敓鏂ゆ嫹SPI閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹DAC鑺?鐗嘙AX5307閫氳??閿熸枻鎷?
         EALLOW;
         DevCfgRegs.CPUSEL6.bit.SPI_A = 1; // assign spi-a to cpu2
         DevCfgRegs.CPUSEL6.bit.SPI_C = 1; // assign spi-c to cpu2
@@ -311,7 +343,7 @@ void main(void){
         ClkCfgRegs.LOSPCP.all = 0x0001; //LSPCLK=100MHz
         EDIS;
 
-        // ͬ������������
+        // 鍚岄敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷?
         InitHighSpeedSpiGpio();
         //InitSpicGpio();
         //InitSpiaGpio();
@@ -375,11 +407,11 @@ void main(void){
 //        // =========TEST BOARD PIN============
 //        // =========NOT FOR EUREKA===========
 
-        // �첽����������
+        // 閿熷眾姝ラ敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹
         //InitSci(); // this is moved to CPU02
 
-        // �ڴ�֮ǰ���Ѿ���GPIO�������Ȩ��ת��CPU2�ˡ�
-        // �����ٰѲ��ֹ����ڴ�Ȩ�޸�CPU2��ͬʱ����CPU2������Լ������д����ˡ�
+        // 閿熻妭杈炬嫹涔嬪墠閿熸枻鎷烽敓绐栨拝鎷烽敓鏂ゆ嫹GPIO閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓楗侯煉鎷烽敓闃额亷鎷烽敓绱篜U2閿熷壙鈽呮嫹
+        // 閿熸枻鎷烽敓鏂ゆ嫹閿熷姭鎶婅?ф嫹閿熻?楃櫢鎷烽敓鏂ゆ嫹閿熻妭杈炬嫹鏉冮敓鐫?闈╂嫹CPU2閿熸枻鎷峰悓鏃堕敓鏂ゆ嫹閿熸枻鎷稢PU2閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷风害閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷峰啓閿熸枻鎷烽敓鏂ゆ嫹鎭曢敓锟?
         while( !(MemCfgRegs.GSxMSEL.bit.MSEL_GS0))
         {
             EALLOW;
@@ -392,11 +424,22 @@ void main(void){
     // 4.4 Initialize algorithms
     init_experiment();
     init_experiment_AD_gain_and_offset();
+    init_experiment_PLACE_gain_and_offset();
+
+    // 4.5 Use GPIO0, GPIO1 and reuse mode is 6 (I2C)
+    /*This part is corresponding to the Seeed's Github, of which address is attached below:
+     https://github.com/Seeed-Studio/Seeed_LDC1612/blob/master/Seeed_LDC1612.cpp
+     This part is corresponding to sensor.single_channel_config from Seeed-LDC1612 */
+    GPIO_SetupPinMux(0, GPIO_MUX_CPU1, 6);
+    GPIO_SetupPinMux(1, GPIO_MUX_CPU1, 6);
+    I2CA_Init();
+    Single_channel_config(0); // 0 for CHANNEL_0
+
 
     // 5. Handle Interrupts
     /* Re-map PIE Vector Table to user defined ISR functions. */
         EALLOW; // This is needed to write to EALLOW protected registers
-        PieVectTable.EPWM1_INT = &SYSTEM_PROGRAM;     //&MainISR;      // PWM���ж� 10kKHz
+        PieVectTable.EPWM1_INT = &SYSTEM_PROGRAM;     //&MainISR;      // PWM閿熸枻鎷烽敓鍙?璁规嫹 10kKHz
         #if USE_ECAP_CEVT2_INTERRUPT == 1 && ENABLE_ECAP
         PieVectTable.ECAP1_INT = &ecap1_isr;
         PieVectTable.ECAP2_INT = &ecap2_isr;
@@ -499,6 +542,9 @@ void main(void){
 
     // 7. Main loop
     while(1){
+        I2CA_ReadData_Channel(0);
+        DELAY_US(300);              //延迟 300 毫秒？
+        I2CA_ReadData_Channel(1);
 
         if (Motor_mode_START==1){
             Axis.FLAG_ENABLE_PWM_OUTPUT = 1;
@@ -625,7 +671,7 @@ void voltage_commands_to_pwm(){
 
         // SVPWM of the suspension 3-phase
         //CTRL.svgen2.Ualpha = CTRL.O->uab_cmd_to_inverter[0+2];
-        //CTRL.svgen2.Ubeta  = CTRL.O->uab_cmd_to_inverter[1+2]; // uab_cmd�ĵ�����͵�һ����������svgen2�ڶ��������������
+        //CTRL.svgen2.Ubeta  = CTRL.O->uab_cmd_to_inverter[1+2]; // uab_cmd閿熶茎纰夋嫹閿熸枻鎷烽敓鏂ゆ嫹鍋烽敓鎻?浼欐嫹閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹閿熺氮vgen2閿熻妭璁规嫹閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹閿燂拷
         CTRL.svgen2.Ualpha = CTRL.O->uab_cmd_to_inverter[0];
         CTRL.svgen2.Ubeta  = CTRL.O->uab_cmd_to_inverter[1];
 
@@ -636,8 +682,13 @@ void voltage_commands_to_pwm(){
 
     }else if(Axis.use_first_set_three_phase==-1){
 
+<<<<<<< HEAD
         // SVPWM of the motor 3-phase
         CTRL.svgen2.Ualpha = CTRL.O->uab_cmd_to_inverter[0]; // uab_cmd�ĵ�����͵�һ����������svgen2�ڶ��������������
+=======
+        // SVPWM of the motor 3-phase 閿熻妭璁规嫹閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓闃额亷鎷烽敓锟?
+        CTRL.svgen2.Ualpha = CTRL.O->uab_cmd_to_inverter[0]; // uab_cmd閿熶茎纰夋嫹閿熸枻鎷烽敓鏂ゆ嫹鍋烽敓鎻?浼欐嫹閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹閿熺氮vgen2閿熻妭璁规嫹閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹閿燂拷
+>>>>>>> 4a3813d3edf918a7057c21cd593b515704d85641
         CTRL.svgen2.Ubeta  = CTRL.O->uab_cmd_to_inverter[1];
 
         // SVPWM of the suspension 3-phase
@@ -696,7 +747,7 @@ void voltage_measurement_based_on_eCAP(){
         CAP.uab0[1] = CTRL.S->sinT*CAP.dq[0] + CTRL.S->cosT*CAP.dq[1];
     }
 
-    // ��ѹ����
+    // 閿熸枻鎷峰帇閿熸枻鎷烽敓鏂ゆ嫹
     if(G.flag_use_ecap_voltage==2 || G.flag_use_ecap_voltage==1){
         /*Use original ecap measured voltage*/
         US_P(0) = US_C(0);
@@ -720,10 +771,10 @@ void voltage_measurement_based_on_eCAP(){
 
     }else if(G.flag_use_ecap_voltage==0){
         /*Use command voltage for feedback*/
-        US_P(0) = CTRL.O->uab_cmd[0]; // ��׺_P��ʾ��һ���ĵ�ѹ��P = Previous
-        US_P(1) = CTRL.O->uab_cmd[1]; // ��׺_C��ʾ��ǰ���ĵ�ѹ��C = Current
-        US_C(0) = CTRL.O->uab_cmd[0]; // ��׺_P��ʾ��һ���ĵ�ѹ��P = Previous
-        US_C(1) = CTRL.O->uab_cmd[1]; // ��׺_C��ʾ��ǰ���ĵ�ѹ��C = Current
+        US_P(0) = CTRL.O->uab_cmd[0]; // 閿熸枻鎷风紑_P閿熸枻鎷风ず閿熸枻鎷蜂竴閿熸枻鎷烽敓渚ョ?夋嫹鍘嬮敓鏂ゆ嫹P = Previous
+        US_P(1) = CTRL.O->uab_cmd[1]; // 閿熸枻鎷风紑_C閿熸枻鎷风ず閿熸枻鎷峰墠閿熸枻鎷烽敓渚ョ?夋嫹鍘嬮敓鏂ゆ嫹C = Current
+        US_C(0) = CTRL.O->uab_cmd[0]; // 閿熸枻鎷风紑_P閿熸枻鎷风ず閿熸枻鎷蜂竴閿熸枻鎷烽敓渚ョ?夋嫹鍘嬮敓鏂ゆ嫹P = Previous
+        US_C(1) = CTRL.O->uab_cmd[1]; // 閿熸枻鎷风紑_C閿熸枻鎷风ず閿熸枻鎷峰墠閿熸枻鎷烽敓渚ョ?夋嫹鍘嬮敓鏂ゆ嫹C = Current
     }
 
     // (for watch only) Mismatch between ecap measurement and command to inverter
@@ -735,7 +786,7 @@ void voltage_measurement_based_on_eCAP(){
 
 //extern long long sci_pos;
 
-//����ȫ�ֱ���
+//閿熸枻鎷烽敓鏂ゆ嫹鍏ㄩ敓琛楁唻鎷烽敓鏂ゆ嫹
 #if PC_SIMULATION==FALSE
 REAL CpuTimer_Delta = 0;
 Uint32 CpuTimer_Before = 0;
@@ -770,7 +821,7 @@ void measurement(){
             cnt_four_bar_map_motor_encoder_angle = deg_four_bar_map_motor_encoder_angle * 23301.68888888889;
 
 
-            //��η���Ҫ��ʱ��Ĵ������ǰ�棬�۲�CpuTimer_Delta��ȡֵ���������˶��ٸ� 1/200e6 �롣
+            //閿熸枻鎷风晱閿熸枻鎷烽敓鎻?顏庢嫹閿熺粸鎲嬫嫹閿熶茎杈炬嫹閿熸枻鎷烽敓鏂ゆ嫹閿熻?掑府鎷峰Λ顒婃嫹閯勯敓绱簆uTimer_Delta閿熸枻鎷峰彇鍊奸敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鍓胯?规嫹閿熷姭闈╂嫹 1/200e6 閿熻??銆?
             #if PC_SIMULATION==FALSE
             CpuTimer_After = CpuTimer1.RegsAddr->TIM.all; // get count
             CpuTimer_Delta = (REAL)CpuTimer_Before - (REAL)CpuTimer_After;
@@ -784,9 +835,9 @@ void measurement(){
 
 
             CTRL.enc->encoder_abs_cnt_previous = CTRL.enc->encoder_abs_cnt;
-            // ���a���x���Ƿ��ģ������@߅ƫ��ҲҪ��һ�£��ĳ�ֵؓ��
-            // ���a���x���Ƿ��ģ������@߅ƫ��ҲҪ��һ�£��ĳ�ֵؓ��
-            // ���a���x���Ƿ��ģ������@߅ƫ��ҲҪ��һ�£��ĳ�ֵؓ��
+            // 閿熸枻鎷烽敓绲橀敓鏂ゆ嫹閿熺蛋閿熸枻鎷烽敓瑙掑嚖鎷烽敓渚ワ綇鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓绱烽倞鍋忛敓鏂ゆ嫹涔熻?侀敓鏂ゆ嫹涓�閿熼摪锝忔嫹閿熶茎绛规嫹璨犲�奸敓鏂ゆ嫹
+            // 閿熸枻鎷烽敓绲橀敓鏂ゆ嫹閿熺蛋閿熸枻鎷烽敓瑙掑嚖鎷烽敓渚ワ綇鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓绱烽倞鍋忛敓鏂ゆ嫹涔熻?侀敓鏂ゆ嫹涓�閿熼摪锝忔嫹閿熶茎绛规嫹璨犲�奸敓鏂ゆ嫹
+            // 閿熸枻鎷烽敓绲橀敓鏂ゆ嫹閿熺蛋閿熸枻鎷烽敓瑙掑嚖鎷烽敓渚ワ綇鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓绱烽倞鍋忛敓鏂ゆ嫹涔熻?侀敓鏂ゆ嫹涓�閿熼摪锝忔嫹閿熶茎绛规嫹璨犲�奸敓鏂ゆ嫹
             if(bool_use_SCI_encoder){
                 // MD1 is 17bit, use SCI485hip port
                 CTRL.enc->encoder_abs_cnt = + ( (int32)position_elec_SCI_fromCPU2 - CTRL.enc->OffsetCountBetweenIndexAndUPhaseAxis );
@@ -816,8 +867,8 @@ void measurement(){
                        ENC.encoder_incremental_cnt -= (int32) SYSTEM_QEP_QPOSMAX_PLUS_1;
 
             // ENC.rpm_raw =  ENC.encoder_incremental_cnt  * SYSTEM_QEP_REV_PER_PULSE / CpuTimer_Delta * 1200e7; // 200e6 * 60 ;
-//            ENC.rpm_raw =  ENC.encoder_incremental_cnt  * SYSTEM_QEP_REV_PER_PULSE * 1052.6 * 60; // 200e6 * 60 ʱ���Ǳ仯�ģ�������1msҲ������0.9ms��
-            ENC.rpm_raw =  ENC.encoder_incremental_cnt  * SYSTEM_QEP_REV_PER_PULSE * 1e4 * 60; // 1e4ָ����EPWM1_ISR�жϵ�Ƶ�ʣ�10kHz
+//            ENC.rpm_raw =  ENC.encoder_incremental_cnt  * SYSTEM_QEP_REV_PER_PULSE * 1052.6 * 60; // 200e6 * 60 鏃堕敓鏂ゆ嫹閿熻?掑彉鍖栭敓渚ワ綇鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹1ms涔熼敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹0.9ms閿熸枻鎷?
+            ENC.rpm_raw =  ENC.encoder_incremental_cnt  * SYSTEM_QEP_REV_PER_PULSE * 1e4 * 60; // 1e4鎸囬敓鏂ゆ嫹閿熸枻鎷稥PWM1_ISR閿熷彨鏂?纰夋嫹棰戦敓缁烇綇鎷?10kHz
 
             ENC.sum_qepPosCnt            -= ENC.MA_qepPosCnt[ENC.cursor];
             ENC.sum_qepPosCnt            += ENC.rpm_raw;//ENC.encoder_incremental_cnt;
@@ -833,7 +884,7 @@ void measurement(){
 
             CTRL.enc->omg_elec = ENC.rpm * RPM_2_ELEC_RAD_PER_SEC;
 
-            //��η���Ҫ��ʱ��Ĵ���ǰ��
+            //閿熸枻鎷风晱閿熸枻鎷烽敓鎻?顏庢嫹閿熺粸鎲嬫嫹閿熶茎杈炬嫹閿熸枻鎷峰墠閿熸枻鎷?
             #if PC_SIMULATION==FALSE
             EALLOW;
             CpuTimer1.RegsAddr->TCR.bit.TRB = 1; // reset cpu timer to period value
@@ -848,21 +899,21 @@ void measurement(){
         }
     #endif
 
-    // ת��λ�ú�ת�ٽӿ� �Լ� ת��λ�ú�ת�ٲ���
+    // 杞?閿熸枻鎷蜂綅閿熺煫鐚存嫹杞?閿熷姭鎺ュ尅鎷? 閿熺殕纭锋嫹 杞?閿熸枻鎷蜂綅閿熺煫鐚存嫹杞?閿熷姭璇ф嫹閿熸枻鎷?
     //    int32 QPOSCNT;
     //    if(ENCODER_TYPE == INCREMENTAL_ENCODER_QEP){
     //        QPOSCNT = EQep1Regs.QPOSCNT;
     //    }
-    //    // 20240123 �Ȳ��������
+    //    // 20240123 閿熼ズ璇ф嫹閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓锟?
     //    if(ENCODER_TYPE == ABSOLUTE_ENCODER_SCI){
-    //        QPOSCNT =  - position_elec_SCI_fromCPU2; // TODO: ��������ʸ����ת��ʱ�򣬵���ı����������ڼ�С������ȡ�����š�
+    //        QPOSCNT =  - position_elec_SCI_fromCPU2; // TODO: 閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹鐭㈤敓鏂ゆ嫹閿熸枻鎷疯浆閿熸枻鎷锋椂閿熸触锛岀?夋嫹閿熸枻鎷疯皨閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷疯?╅敓鍙?鈽呮嫹閿熸枻鎷烽敓鏂ゆ嫹閿熼ズ鈽呮嫹閿熸枻鎷烽敓鏂ゆ嫹鎷ч敓锟?
     //        //QPOSCNT = position_elec_SCI_fromCPU2;
     //    }
-    //    // ʹ��can_ID0x01������
+    //    // 浣块敓鏂ゆ嫹can_ID0x01閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷?
     //    if(ENCODER_TYPE == ABSOLUTE_ENCODER_CAN_ID0x01){
     //        QPOSCNT = position_elec_CAN_ID0x01_fromCPU2;
     //    }
-    //    // ʹ��can_ID0x03������
+    //    // 浣块敓鏂ゆ嫹can_ID0x03閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷?
     //    if(ENCODER_TYPE == ABSOLUTE_ENCODER_CAN_ID0x03){
     //        QPOSCNT = position_elec_CAN_ID0x03_fromCPU2;
     //    }
@@ -889,7 +940,7 @@ void measurement(){
     Axis.iuvw[1]=((REAL)(AdcaResultRegs.ADCRESULT2 ) - Axis.adc_offset[2]) * Axis.adc_scale[2]; //
     Axis.iuvw[2]=((REAL)(AdcaResultRegs.ADCRESULT3 ) - Axis.adc_offset[3]) * Axis.adc_scale[3]; //
 
-    // LEM2 ���� �¹� �ձ�
+    // LEM2 閿熸枻鎷烽敓鏂ゆ嫹 閿熼摪鐧告嫹 閿熺Ц鎲嬫嫹
     Axis.iuvw[3]=((REAL)(AdcbResultRegs.ADCRESULT7 ) - Axis.adc_offset[4]) * Axis.adc_scale[4]; //
     Axis.iuvw[4]=((REAL)(AdcbResultRegs.ADCRESULT8 ) - Axis.adc_offset[5]) * Axis.adc_scale[5]; //
     Axis.iuvw[5]=((REAL)(AdcbResultRegs.ADCRESULT9 ) - Axis.adc_offset[6]) * Axis.adc_scale[6]; //
@@ -907,18 +958,25 @@ void measurement(){
     //    Axis.iuvw[1]=((REAL)(AdcaResultRegs.ADCRESULT2 ) - Axis.adc_offset[2]) * Axis.adc_scale[2]; //
     //    Axis.iuvw[2]=((REAL)(AdcaResultRegs.ADCRESULT3 ) - Axis.adc_offset[3]) * Axis.adc_scale[3]; //
 
+    /* Displacement sensor */
+    Axis.place_sensor[0] = (raw_value_zero - Axis.place_offset[0])*Axis.place_scale[0];
+    Axis.place_sensor[1] = (raw_value_one  - Axis.place_offset[1])*Axis.place_scale[1];
+//    Axis.place_sensor[2] = (raw_value_two  - Axis.place_offset[2])*Axis.place_scale[2];
+//    Axis.place_sensor[3] = (raw_value_three - Axis.place_offset[3])*Axis.place_scale[3];
+    if (Axis.place_sensor[0] > 0){
+            // Axis.xx
+    }
 
-
-    // �ߵ�ѹ����������ռ�ձȺ�ĸ�ߵ�ѹ��
+    // 閿熺??纰夋嫹鍘嬮敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹鍗犻敓绉告瘮鐚存嫹姣嶉敓绔?纰夋嫹鍘嬮敓鏂ゆ嫹
     //voltage_measurement_based_on_eCAP();
 
-    // Vdc����ʵʱ���µ������޷�
+    // Vdc閿熸枻鎷烽敓鏂ゆ嫹瀹炴椂閿熸枻鎷烽敓閾扮?夋嫹閿熸枻鎷烽敓鏂ゆ嫹閿熺潾鍑ゆ嫹
     pid1_iM.OutLimit = Axis.vdc * 0.5773672;
     pid1_iT.OutLimit = Axis.vdc * 0.5773672;
     pid2_ix.OutLimit = Axis.vdc * 0.5773672;
     pid2_iy.OutLimit = Axis.vdc * 0.5773672;
 
-    // �����ӿ�
+    // 閿熸枻鎷烽敓鏂ゆ嫹閿熸帴鍖℃嫹
     if(USE_3_CURRENT_SENSORS){
         Axis.iabg[0] = UVW2A_AI(Axis.iuvw[0], Axis.iuvw[1], Axis.iuvw[2]);
         Axis.iabg[1] = UVW2B_AI(Axis.iuvw[0], Axis.iuvw[1], Axis.iuvw[2]);
@@ -936,27 +994,45 @@ void measurement(){
     }
 
     if(Axis.use_first_set_three_phase==1){
+<<<<<<< HEAD
         //只用第一套三相
+=======
+        // 鍙?閿熺煫纰夋嫹涓�閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷?
+>>>>>>> 4a3813d3edf918a7057c21cd593b515704d85641
         IS_C(0)        = Axis.iabg[0];
         IS_C(1)        = Axis.iabg[1];
         CTRL.I->iab[0] = Axis.iabg[0];
         CTRL.I->iab[1] = Axis.iabg[1];
 
+<<<<<<< HEAD
         US_C(0) = CTRL.O->uab_cmd[0]; // 后缀__P表示上一步的电压， P = Previous
         US_C(1) = CTRL.O->uab_cmd[1]; // 后缀__C表示当前步的电压， C = Current
+=======
+        US_C(0) = CTRL.O->uab_cmd[0]; // 閿熸枻鎷风紑_P閿熸枻鎷风ず閿熸枻鎷蜂竴閿熸枻鎷烽敓渚ョ?夋嫹鍘嬮敓鏂ゆ嫹P = Previous
+        US_C(1) = CTRL.O->uab_cmd[1]; // 閿熸枻鎷风紑_C閿熸枻鎷风ず閿熸枻鎷峰墠閿熸枻鎷烽敓渚ョ?夋嫹鍘嬮敓鏂ゆ嫹C = Current
+>>>>>>> 4a3813d3edf918a7057c21cd593b515704d85641
 
         US_P(0) = US_C(0);
         US_P(1) = US_C(1);
 
     }else if(Axis.use_first_set_three_phase==2){
+<<<<<<< HEAD
         // 只用第二套三相
+=======
+        // 鍙?閿熺煫绗?璁规嫹閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷?
+>>>>>>> 4a3813d3edf918a7057c21cd593b515704d85641
         IS_C(0)        = Axis.iabg[3];
         IS_C(1)        = Axis.iabg[4];
         CTRL.I->iab[0] = Axis.iabg[3];
         CTRL.I->iab[1] = Axis.iabg[4];
 
+<<<<<<< HEAD
         US_C(0) = CTRL.O->uab_cmd[0+2]; // 后缀__P表示上一步的电压，P = Previous
         US_C(1) = CTRL.O->uab_cmd[1+2]; // 后缀__C表示当前步的电压，C = Current
+=======
+        US_C(0) = CTRL.O->uab_cmd[0+2]; // 閿熸枻鎷风紑_P閿熸枻鎷风ず閿熸枻鎷蜂竴閿熸枻鎷烽敓渚ョ?夋嫹鍘嬮敓鏂ゆ嫹P = Previous
+        US_C(1) = CTRL.O->uab_cmd[1+2]; // 閿熸枻鎷风紑_C閿熸枻鎷风ず閿熸枻鎷峰墠閿熸枻鎷烽敓渚ョ?夋嫹鍘嬮敓鏂ゆ嫹C = Current
+>>>>>>> 4a3813d3edf918a7057c21cd593b515704d85641
 
         US_P(0) = US_C(0);
         US_P(1) = US_C(1);
@@ -964,20 +1040,24 @@ void measurement(){
     }else if(Axis.use_first_set_three_phase==-1){
         IS_C(0)        = Axis.iabg[3];
         IS_C(1)        = Axis.iabg[4];
+<<<<<<< HEAD
         CTRL.I->iab[0] = Axis.iabg[3]; // 第二套逆变器控制转矩
+=======
+        CTRL.I->iab[0] = Axis.iabg[3]; // 閿熻妭璁规嫹閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓闃额亷鎷烽敓锟?
+>>>>>>> 4a3813d3edf918a7057c21cd593b515704d85641
         CTRL.I->iab[1] = Axis.iabg[4];
         CTRL.I->iab[0+2] = Axis.iabg[0];
         CTRL.I->iab[1+2] = Axis.iabg[1];
     }
 
 
-    //    ���������γɱ������������ù���״̬���С�
+    //    閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹閿熻娇鎴愭唻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹閿熺煫鐧告嫹閿熸枻鎷风姸鎬侀敓鏂ゆ嫹閿熷彨鈽呮嫹
     //    if(fabs(G.Current_W)>8 || fabs(G.Current_V)>8){
     //        DSP_PWM_DISABLE
     //        DSP_2PWM_DISABLE
     //    }
 
-    // ��������ADC��ƮУ׼ // TODO �ĳ���ADC Raw ResultsУ׼��
+    // 閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹ADC閿熸枻鎷烽?樻牎鍑? // TODO 閿熶茎绛规嫹閿熸枻鎷稟DC Raw Results鏍″噯閿熸枻鎷?
 //    if(Axis.AD_offset_flag2==FALSE)
 //    {
 //        Axis.offset_counter += 1;
@@ -998,8 +1078,8 @@ void measurement(){
 //            Axis.offset_counter = 0;
 //        }
 //
-//        // ���������ƫ�ü�⣨������ϵ����ֿ��ؾ��ǿ��ģ�������Ĭ��ֵ
-//        /* 427-1401����ӿ����ź��˲������췢���ڸ��ϵ��ʱ��XCUBE-II��ǰ�����ж�����ֿ����Ǵ򿪵ģ�Ȼ��ű�ɹرա�*/
+//        // 閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹閿熺嫛顐?鎷风湁閿熻В锛堥敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹绯婚敓鏂ゆ嫹閿熸枻鎷锋寶閿熸枻鎷烽紣閿熸枻鎷峰己閿熸枻鎷锋ā閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓渚ヮ剨鎷烽敓琛楋拷
+//        /* 427-1401閿熸枻鎷烽敓鏂ゆ嫹娑岄敓鏂ゆ嫹閿熸枻鎷疯棔閿熸枻鎷风灛閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷锋梿顫?鎷烽敓鏂ゆ嫹璇熼敓鏂ゆ嫹绯婚敓鏂ゆ嫹鏃堕敓鏂ゆ嫹XCUBE-II閿熸枻鎷峰墠閿熸枻鎷烽敓鏂ゆ嫹閿熷彨璁规嫹閿熸枻锛岄敓鏂ゆ嫹閿熻?楀尅鎷烽敓鏂ゆ嫹閿熻?掓墦寮�鐨勶綇鎷风劧閿熸枻鎷风枱閿熺即鍏抽棴鈽呮嫹*/
 //        if(Axis.FLAG_ENABLE_PWM_OUTPUT && Axis.offset_counter>100){
 //            Axis.iuvw_offset_online[0] = 0.0;
 //            Axis.iuvw_offset_online[1] = 0.0;
@@ -1010,7 +1090,7 @@ void measurement(){
 //            Axis.AD_offset_flag2 = TRUE;
 //        }
 //
-//        // �ϵ��ʱ�򣬵��������ת����ʱ���ݵ����ж��Ƿ�Ҫ�������ƫ�ò�����
+//        // 閿熻緝纰夋嫹閿熺粸鎲嬫嫹棰嶎儛閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹杞?閿熸枻鎷烽敓鏂ゆ嫹鏃堕敓鏂ゆ嫹閿熸嵎纰夋嫹閿熸枻鎷烽敓鍙?璁规嫹閿熻?掑嚖鎷疯?侀敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹閿熺嫛顐?鎷疯矊閿熸枻鎷烽敓鏂ゆ嫹閿燂拷
 //        if( fabs(Axis.iuvw[0])>0.05 || fabs(Axis.iuvw[1])>0.05 || fabs(Axis.iuvw[2])>0.05 || \
 //            fabs(Axis.iuvw[3])>0.05 || fabs(Axis.iuvw[4])>0.05 || fabs(Axis.iuvw[5])>0.05){
 //            Axis.iuvw_offset_online[0] = 0.0;
@@ -1031,7 +1111,7 @@ void PanGuMainISR(void){
         write_DAC_buffer();
     #endif
 
-// �����װ壬��ƴ���
+// 閿熸枻鎷烽敓鏂ゆ嫹閿熼樁鏉匡紝閿熸枻鎷锋嫾閿熸枻鎷烽敓锟?
 //    static long int ii = 0;
 //    if(++ii%5000 == 0){
 //        //        EPwm1Regs.CMPA.bit.CMPA = CTRL.svgen1.Ta*50000000*CL_TS;
@@ -1062,7 +1142,7 @@ void PanGuMainISR(void){
         do_enhanced_capture();
     #endif
 
-    // ����������DSP�е�ADC������
+    // 閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷稤SP閿熷彨纰夋嫹ADC閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷?
     // DELAY_US(2); // wait for adc conversion TODO: check adc eoc flag?
     measurement();
 
@@ -1078,15 +1158,17 @@ void PanGuMainISR(void){
 
             init_experiment();
             init_experiment_AD_gain_and_offset();
+            init_experiment_PLACE_gain_and_offset();
+
             //G.Select_exp_operation = 3; // fixed
             init_experiment_overwrite();
 
-            FE.htz.rs_est = 3.8; // ͨ�����ڵ���ֵ��Ч����Vdc=80Vʱ��������ѹ��������תʵ��Ч�����ڻ�ã�
+            FE.htz.rs_est = 3.8; // 閫氶敓鏂ゆ嫹閿熸枻鎷烽敓鑺傜?夋嫹閿熸枻鎷峰�奸敓鏂ゆ嫹鏁堥敓鏂ゆ嫹閿熸枻鎷稸dc=80V鏃堕敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷峰帇閿熸枻鎷风澘顭掓嫹閿熸枻鎷烽敓鏂ゆ嫹閿熼樁顎╃?夋嫹閿熷彨褝鎷烽敓鏂ゆ嫹閿熸枻鎷疯?ㄩ敓鐭?锝忔嫹
 
-            // ������ƴ������̣��������ˣ���
-            //FE.htz.rs_est = 4.2; // Ohm ͨ�����ڵ���ֵ��Ч����Vdc=120Vʱ��������ѹ��������תʵ��Ч�����ڻ�ã�
+            // 閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷锋嫾閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷疯箣閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹鑰嶉敓鏂ゆ嫹閿燂拷
+            //FE.htz.rs_est = 4.2; // Ohm 閫氶敓鏂ゆ嫹閿熸枻鎷烽敓鑺傜?夋嫹閿熸枻鎷峰�奸敓鏂ゆ嫹鏁堥敓鏂ゆ嫹閿熸枻鎷稸dc=120V鏃堕敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷峰帇閿熸枻鎷风澘顭掓嫹閿熸枻鎷烽敓鏂ゆ嫹閿熼樁顎╃?夋嫹閿熷彨褝鎷烽敓鏂ゆ嫹閿熸枻鎷疯?ㄩ敓鐭?锝忔嫹
 
-            //CTRL.motor->Lmu_inv = 1.55; // H^-1 ʹ��ʵ��alpha-beta����������ͼΪԲ���Ҳ��ᷢ��ƫ��ת��
+            //CTRL.motor->Lmu_inv = 1.55; // H^-1 浣块敓鏂ゆ嫹瀹為敓鏂ゆ嫹alpha-beta閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷峰浘涓哄渾閿熸枻鎷烽敓鎻?璇ф嫹閿熺粨鍙戦敓鏂ゆ嫹鍋忛敓鏂ゆ嫹杞?閿熸枻鎷?
             //CTRL.I->m0 = 2.5; // Wb
             // load motor is iq=-10 A
 
@@ -1094,14 +1176,14 @@ void PanGuMainISR(void){
                 //CTRL.g->overwrite_vdc = 80;
 //                CTRL.g->overwrite_vdc = 120;
                 //CTRL.g->overwrite_vdc = 200;
-                //����ʵ��
+                //閿熸枻鎷烽敓鏂ゆ嫹瀹為敓鏂ゆ嫹
                 CTRL.g->overwrite_vdc = 28;
 //                FE.htz.rs_est=4.45;
 //                marino.gamma_inv=150000;
 //                marino.lambda_inv=2000;
-//                marino.xAlpha=6.25; // ʹ������ת�ٵĲ�ͷ���ٱ��
+//                marino.xAlpha=6.25; // 浣块敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹杞?閿熷姭鐨勮?ф嫹澶撮敓鏂ゆ嫹閿熷姭鎲嬫嫹閿燂拷
 //                imife_realtime_gain_off=0.01;
-//                CTRL.motor->Js_inv=30; // ʹ�ø���ת�ع���ֵ��ɳ������������Ҳ������Ҳ��ǹ������*���ٶ��γɵĹ��Ը��أ�
+//                CTRL.motor->Js_inv=30; // 浣块敓鐭?闈╂嫹閿熸枻鎷疯浆閿熸埅鐧告嫹閿熸枻鎷峰�奸敓鏂ゆ嫹娌欓敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷蜂篃閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷蜂篃閿熸枻鎷锋灙閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷?*閿熸枻鎷烽敓鍔?璁规嫹閿熻娇鎴愮殑鐧告嫹閿熺殕闈╂嫹閿熸埅锝忔嫹
             }
             CTRL.g->flag_overwite_vdc = 0;
 
@@ -1120,7 +1202,7 @@ void PanGuMainISR(void){
         if (FE.htz.u_offset[0] > 0.1){
             FE.htz.u_offset[0] = 0;
         }
-        // DSP�п�������ʱ��
+        // DSP閿熷彨鍖℃嫹閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷锋椂閿熸枻鎷?
         timebase_counter += 1;
         CTRL.timebase = CL_TS * timebase_counter; //CTRL.timebase += CL_TS; // 2048 = float/REAL max
 
@@ -1128,7 +1210,7 @@ void PanGuMainISR(void){
             target_position_cnt = position_elec_CAN_ID0x01_fromCPU2 * 64;
         }
 
-        // ����ָ����������������ѹ��
+        // 閿熸枻鎷烽敓鏂ゆ嫹鎸囬敓绛嬶紝閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓绐栫櫢鎷烽敓锟?
         #if ENABLE_COMMISSIONING == FALSE
             //CTRL.S->Motor_or_Gnerator = sign(CTRL.I->idq_cmd[1]) == sign(ENC.rpm); // sign(CTRL.I->idq_cmd[1]) != sign(CTRL.I->cmd_speed_rpm))
             runtime_command_and_tuning(Axis.Select_exp_operation);
@@ -1139,8 +1221,8 @@ void PanGuMainISR(void){
 //
 //            if(positionLoopENABLE == 1)
 //            {
-//                // λ�û�
-//                // �����Ͷ̻���Ҫѡ�̵ġ�
+//                // 浣嶉敓鐭?浼欐嫹
+//                // 閿熸枻鎷烽敓鏂ゆ嫹閿熼叺鐭?浼欐嫹閿熸枻鎷疯?侀�夐敓鏁欑殑鈽呮嫹
 //                error_pos = target_position_cnt - (REAL)CTRL.enc->encoder_abs_cnt;
 //                if (error_pos > (SYSTEM_QEP_QPOSMAX_PLUS_1*0.5))
 //                {
@@ -1194,7 +1276,7 @@ void PanGuMainISR(void){
             EPwm5Regs.CMPA.bit.CMPA = CTRL.svgen2.Tb*50000000*CL_TS;
             EPwm6Regs.CMPA.bit.CMPA = CTRL.svgen2.Tc*50000000*CL_TS;
 
-            // 20240119 test���۲�4��5��6ͨ����IPM�����ѹ�Ƿ�����
+            // 20240119 test閿熸枻鎷烽敓妗旇?ф嫹4閿熸枻鎷?5閿熸枻鎷?6閫氶敓鏂ゆ嫹閿熸枻鎷稩PM閿熸枻鎷烽敓鏂ゆ嫹閿熺獤鐧告嫹娆犻敓鏂ゆ嫹閿熸枻鎷烽敓锟?
 //            EPwm4Regs.CMPA.bit.CMPA = CTRL.svgen1.Ta*50000000*CL_TS;
 //            EPwm5Regs.CMPA.bit.CMPA = CTRL.svgen1.Tb*50000000*CL_TS;
 //            EPwm6Regs.CMPA.bit.CMPA = CTRL.svgen1.Tc*50000000*CL_TS;
@@ -1228,7 +1310,7 @@ __interrupt void EPWM1ISR(void){
     PieCtrlRegs.PIEIER4.all &= 0x7;        // Set group priority by adjusting PIEIER4 to allow INT4.1, 4.2, 4.3 to interrupt current ISR
 
     /* Step 3. [eCAP] Enable interrupts */
-    PieCtrlRegs.PIEACK.all = 0xFFFF;      // Enable PIE interrupts by writing all 1��s to the PIEACK register
+    PieCtrlRegs.PIEACK.all = 0xFFFF;      // Enable PIE interrupts by writing all 1閿熸枻鎷穝 to the PIEACK register
     asm("       NOP");                    // Wait at least one cycle
     EINT;                                 // Enable global interrupts by clearing INTM
 #endif
@@ -1253,7 +1335,7 @@ __interrupt void EPWM1ISR(void){
 #endif
 
 /*
-//����ȫ�ֱ���
+//閿熸枻鎷烽敓鏂ゆ嫹鍏ㄩ敓琛楁唻鎷烽敓鏂ゆ嫹
 #if PC_SIMULATION==FALSE
 REAL CpuTimer_Delta = 0;
 Uint32 CpuTimer_Before = 0;
@@ -1261,7 +1343,7 @@ Uint32 CpuTimer_After = 0;
 #endif
 
 
-//��η���Ҫ��ʱ��Ĵ���ǰ��
+//閿熸枻鎷风晱閿熸枻鎷烽敓鎻?顏庢嫹閿熺粸鎲嬫嫹閿熶茎杈炬嫹閿熸枻鎷峰墠閿熸枻鎷?
 #if PC_SIMULATION==FALSE
 EALLOW;
 CpuTimer1.RegsAddr->TCR.bit.TRB = 1; // reset cpu timer to period value
@@ -1270,7 +1352,7 @@ CpuTimer_Before = CpuTimer1.RegsAddr->TIM.all; // get count
 EDIS;
 #endif
 
-//��η���Ҫ��ʱ��Ĵ������ǰ�棬�۲�CpuTimer_Delta��ȡֵ���������˶��ٸ� 1/200e6 �롣
+//閿熸枻鎷风晱閿熸枻鎷烽敓鎻?顏庢嫹閿熺粸鎲嬫嫹閿熶茎杈炬嫹閿熸枻鎷烽敓鏂ゆ嫹閿熻?掑府鎷峰Λ顒婃嫹閯勯敓绱簆uTimer_Delta閿熸枻鎷峰彇鍊奸敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鍓胯?规嫹閿熷姭闈╂嫹 1/200e6 閿熻??銆?
 #if PC_SIMULATION==FALSE
 CpuTimer_After = CpuTimer1.RegsAddr->TIM.all; // get count
 CpuTimer_Delta = (REAL)CpuTimer_Before - (REAL)CpuTimer_After;
