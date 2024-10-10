@@ -38,7 +38,7 @@ void pass(void);
 void fail(void);
 
 #define I2C_SLAVE_ADDR        0x2B // I2C Address selection pin: when ADDR=L, I2C address = 0X2A,
-                                                              // when ADDR=H, I2C address = 0x2B. (current disp. sensor design uses this address)
+                                                              // when ADDR=H, I2C address = 0x2B.
 #define I2C_NUMBYTES         2     // 16 bits
 
 // After transmitting the address of LDC1612(0X2B), it is needed to be transmitting the address of channel registers
@@ -107,7 +107,7 @@ void I2CA_Init(void)
    // Initialize I2C
    I2caRegs.I2CSAR.all = I2C_SLAVE_ADDR;      // Slave address - EEPROM control code
    // Configured secondary device address. This address must be the same as the address of the slave device connected to the I2C bus.
-   // When the ADDR pin is set low, the device I2C address is 0x2B; when the ADDR pin is set high, the I2C address  is 0x2B
+   // When the ADDR pin is set low, the device I2C address is 0x2A; when the ADDR pin is set high, the I2C address  is 0x2B
 
    I2caRegs.I2CPSC.all = 8;            // Prescaler - need 7-12 MHz on module clk
 
@@ -157,7 +157,7 @@ int I2cRead16bitData(Uint16 SlaveRegAddr){
     }
 
     // FRAME 1
-    I2caRegs.I2CSAR.all = 0x2B; //  I2cMsgIn1.SlaveAddress;
+    I2caRegs.I2CSAR.all = I2C_SLAVE_ADDR; //  I2cMsgIn1.SlaveAddress;
 
 
      // Check if bus busy
@@ -182,7 +182,7 @@ int I2cRead16bitData(Uint16 SlaveRegAddr){
      while(I2caRegs.I2CSTR.bit.ARDY == 0);
 
      // FRAME 3 is SLAVE ADDR
-     I2caRegs.I2CSAR.all = 0x2B; //  I2cMsgIn1.SlaveAddress;
+     I2caRegs.I2CSAR.all = I2C_SLAVE_ADDR; //  I2cMsgIn1.SlaveAddress;
      I2caRegs.I2CCNT = 2; // MSB + LSB of the MSB of the DATA
      I2caRegs.I2CMDR.all = 0x2C20; // TRX=0, with stop
      /* I2C_MSGSTAT_RECEIVE_WITHSTOP */
@@ -208,7 +208,7 @@ int I2cWrite16bitData(Uint16 ConfigRegAddr, Uint16 value){
 
 
     // FRAME 1
-    I2caRegs.I2CSAR.all = 0x2B; //  I2cMsgIn1.SlaveAddress;
+    I2caRegs.I2CSAR.all = I2C_SLAVE_ADDR; //  I2cMsgIn1.SlaveAddress;
 
 
      // Check if bus busy
@@ -236,12 +236,12 @@ int I2cWrite16bitData(Uint16 ConfigRegAddr, Uint16 value){
      I2caRegs.I2CDXR.all = data[1];
 
      // FRAME 3 is SLAVE ADDR
-//     I2caRegs.I2CSAR.all = 0x2B; //  I2cMsgIn1.SlaveAddress;
+//     I2caRegs.I2CSAR.all = I2C_SLAVE_ADDR; //  I2cMsgIn1.SlaveAddress;
 
 //     I2caRegs.I2CCNT = 2; // MSB + LSB of the MSB of the DATA
 
-     // Check the status of the receive FIFO
-     // According to Seeed, write MSB first.
+//      Check the status of the receive FIFO
+//      According to Seeed, write MSB first.
 //     while(I2caRegs.I2CFFTX.bit.TXFFST == 0);
 //     data[0] = I2caRegs.I2CDXR.all; // MSB of the sensor data MSB/LSB
 //     while(I2caRegs.I2CFFTX.bit.TXFFST == 0);
