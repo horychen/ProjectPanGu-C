@@ -1,7 +1,7 @@
 /*
  * SCI_232.c
  *
- *  Created on: 2021Äê5ÔÂ15ÈÕ
+ *  Created on: 2021ï¿½ï¿½5ï¿½ï¿½15ï¿½ï¿½
  *      Author: yuanx
  */
 #include <All_Definition.h>
@@ -74,18 +74,18 @@ void sci_poll(int16 ch){
         if(set_current_flag){
             switch(ch){
                 case ' ': set_current_flag = FALSE; break;
-                case '+': G.sendCurrentCommandFlag = TRUE; pid1_spd.OutLimit += 0.1; break;
-                case '-': G.sendCurrentCommandFlag = TRUE; pid1_spd.OutLimit -= 0.1; break;
-                case '1': G.sendCurrentCommandFlag = TRUE; pid1_spd.OutLimit  = 0.1; break;
-                case '2': G.sendCurrentCommandFlag = TRUE; pid1_spd.OutLimit  =   2; break;
-                case '3': G.sendCurrentCommandFlag = TRUE; pid1_spd.OutLimit  =   3; break;
-                case '4': G.sendCurrentCommandFlag = TRUE; pid1_spd.OutLimit  =   4; break;
-                case '5': G.sendCurrentCommandFlag = TRUE; pid1_spd.OutLimit  =   5; break;
-                case '6': G.sendCurrentCommandFlag = TRUE; pid1_spd.OutLimit  =  -5; break;
-                case '7': G.sendCurrentCommandFlag = TRUE; pid1_spd.OutLimit  =  -4; break;
-                case '8': G.sendCurrentCommandFlag = TRUE; pid1_spd.OutLimit  =  -3; break;
-                case '9': G.sendCurrentCommandFlag = TRUE; pid1_spd.OutLimit  =  -2; break;
-                case '0': G.sendCurrentCommandFlag = TRUE; pid1_spd.OutLimit  =  -1; break;
+                case '+': G.sendCurrentCommandFlag = TRUE; PID_Speed->OutLimit += 0.1; break;
+                case '-': G.sendCurrentCommandFlag = TRUE; PID_Speed->OutLimit -= 0.1; break;
+                case '1': G.sendCurrentCommandFlag = TRUE; PID_Speed->OutLimit  = 0.1; break;
+                case '2': G.sendCurrentCommandFlag = TRUE; PID_Speed->OutLimit  =   2; break;
+                case '3': G.sendCurrentCommandFlag = TRUE; PID_Speed->OutLimit  =   3; break;
+                case '4': G.sendCurrentCommandFlag = TRUE; PID_Speed->OutLimit  =   4; break;
+                case '5': G.sendCurrentCommandFlag = TRUE; PID_Speed->OutLimit  =   5; break;
+                case '6': G.sendCurrentCommandFlag = TRUE; PID_Speed->OutLimit  =  -5; break;
+                case '7': G.sendCurrentCommandFlag = TRUE; PID_Speed->OutLimit  =  -4; break;
+                case '8': G.sendCurrentCommandFlag = TRUE; PID_Speed->OutLimit  =  -3; break;
+                case '9': G.sendCurrentCommandFlag = TRUE; PID_Speed->OutLimit  =  -2; break;
+                case '0': G.sendCurrentCommandFlag = TRUE; PID_Speed->OutLimit  =  -1; break;
               default : break;
             }
         }
@@ -96,34 +96,34 @@ void sci_poll(int16 ch){
         {
             /* Default mode is to change speed. */
             case '1':
-                G.sendSpeedCommandFlag = TRUE; Axis.Select_exp_operation = -500;
+                G.sendSpeedCommandFlag = TRUE; // (*Axis).Select_exp_operation = -500;
                 break;
             case '2':
-                G.sendSpeedCommandFlag = TRUE; Axis.Select_exp_operation = -300;
+                G.sendSpeedCommandFlag = TRUE; // (*Axis).Select_exp_operation = -300;
                 break;
             case '3':
-                G.sendSpeedCommandFlag = TRUE; Axis.Select_exp_operation = 50;
+                G.sendSpeedCommandFlag = TRUE; // (*Axis).Select_exp_operation = 50;
                 break;
             case '4':
-                G.sendSpeedCommandFlag = TRUE; Axis.Select_exp_operation = 100;
+                G.sendSpeedCommandFlag = TRUE; // (*Axis).Select_exp_operation = 100;
                 break;
             case '5':
-                G.sendSpeedCommandFlag = TRUE; Axis.Select_exp_operation = 300;
+                G.sendSpeedCommandFlag = TRUE; // (*Axis).Select_exp_operation = 300;
                 break;
             case '6':
-                G.sendSpeedCommandFlag = TRUE; Axis.Select_exp_operation = 500;
+                G.sendSpeedCommandFlag = TRUE; // (*Axis).Select_exp_operation = 500;
                 break;
             case '7':
-                G.sendSpeedCommandFlag = TRUE; Axis.Select_exp_operation = 800;
+                G.sendSpeedCommandFlag = TRUE; // (*Axis).Select_exp_operation = 800;
                 break;
             case '8':
-                G.sendSpeedCommandFlag = TRUE; Axis.Select_exp_operation = 1500;
+                G.sendSpeedCommandFlag = TRUE; // (*Axis).Select_exp_operation = 1500;
                 break;
             case '9':
-                G.sendSpeedCommandFlag = TRUE; Axis.Select_exp_operation = 2000;
+                G.sendSpeedCommandFlag = TRUE; // (*Axis).Select_exp_operation = 2000;
                 break;
             case '0':
-                G.sendSpeedCommandFlag = TRUE; Axis.Select_exp_operation = 0;
+                G.sendSpeedCommandFlag = TRUE; // (*Axis).Select_exp_operation = 0;
                 break;
             case '-':
                 reverse_speed_flag = TRUE; // not used

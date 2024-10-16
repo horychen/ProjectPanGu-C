@@ -1,8 +1,6 @@
 #include "ACMSim.h"
 
-#if MACHINE_TYPE == PM_SYNCHRONOUS_MACHINE
-
-
+#if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
 /********************************************/
 /* 4rd-order ESO 
  ********************************************/
@@ -19,103 +17,103 @@ void rhf_dynamics_ESO(REAL t, REAL *x, REAL *fx){
     /* Know Signals */
     REAL iq = AB2T(IS(0), IS(1), AFE_USED.cosT, AFE_USED.sinT); // Option 1
     // REAL iq = AB2T(IS(0), IS(1), cos(xPos), sin(xPos)); // Option 2
-    esoaf.xTem = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * MOTOR.KActive * iq;
+    OBSV.esoaf.xTem = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * MOTOR.KActive * iq;
 
     /* 未测试，如果用iq给定会不会好一点？？ 计算量还少*/
     /* 未测试，如果用iq给定会不会好一点？？ 计算量还少*/
     /* 未测试，如果用iq给定会不会好一点？？ 计算量还少*/
-    // esoaf.xTem = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * MOTOR.KActive * CTRL->I.idq_cmd[1];
+    // OBSV.esoaf.xTem = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * MOTOR.KActive * CTRL->I.cmd_iDQ[1];
 
     /* Output Error = sine of angle error */
-    esoaf.output_error_sine = sin(AFE_USED.theta_d - xPos);
-    esoaf.output_error = AFE_USED.theta_d - xPos;
+    OBSV.esoaf.output_error_sine = sin(AFE_USED.theta_d - xPos);
+    OBSV.esoaf.output_error = AFE_USED.theta_d - xPos;
     // you should check for sudden change in angle error.
-    if(fabs(esoaf.output_error)>M_PI){
-        esoaf.output_error -= sign(esoaf.output_error) * 2*M_PI;
+    if(fabsf(OBSV.esoaf.output_error)>M_PI){
+        OBSV.esoaf.output_error -= sign(OBSV.esoaf.output_error) * 2*M_PI;
     }
 
     /* Extended State Observer */
     // xPos
-    fx[0] = + esoaf.ell[0]*esoaf.output_error_sine + xOmg;
+    fx[0] = + OBSV.esoaf.ell[0]*OBSV.esoaf.output_error_sine + xOmg;
     // xOmg
-    fx[1] = + esoaf.ell[1]*esoaf.output_error_sine + (esoaf.bool_ramp_load_torque>=0) * (esoaf.xTem - xTL) * (MOTOR.Js_inv*MOTOR.npp);
+    fx[1] = + OBSV.esoaf.ell[1]*OBSV.esoaf.output_error_sine + (OBSV.esoaf.bool_ramp_load_torque>=0) * (OBSV.esoaf.xTem - xTL) * (MOTOR.Js_inv*MOTOR.npp);
     // xTL
-    fx[2] = - esoaf.ell[2]*esoaf.output_error_sine + xPL;
+    fx[2] = - OBSV.esoaf.ell[2]*OBSV.esoaf.output_error_sine + xPL;
     // xPL
-    fx[3] = - esoaf.ell[3]*esoaf.output_error_sine;
+    fx[3] = - OBSV.esoaf.ell[3]*OBSV.esoaf.output_error_sine;
 }
 void eso_one_parameter_tuning(REAL omega_ob){
     // Luenberger Observer Framework
-    if(esoaf.bool_ramp_load_torque == -1){
-        esoaf.ell[0] = 2*omega_ob;
-        esoaf.ell[1] = omega_ob*omega_ob;
-        esoaf.ell[2] = 0.0;
-        esoaf.ell[3] = 0.0;        
-    }else if(esoaf.bool_ramp_load_torque == FALSE){
-        esoaf.ell[0] =                            3*omega_ob;
-        esoaf.ell[1] =                            3*omega_ob*omega_ob;
-        esoaf.ell[2] = (MOTOR.Js*MOTOR.npp_inv) * 1*omega_ob*omega_ob*omega_ob;
-        esoaf.ell[3] = 0.0;
+    if(OBSV.esoaf.bool_ramp_load_torque == -1){
+        OBSV.esoaf.ell[0] = 2*omega_ob;
+        OBSV.esoaf.ell[1] = omega_ob*omega_ob;
+        OBSV.esoaf.ell[2] = 0.0;
+        OBSV.esoaf.ell[3] = 0.0;        
+    }else if(OBSV.esoaf.bool_ramp_load_torque == FALSE){
+        OBSV.esoaf.ell[0] =                            3*omega_ob;
+        OBSV.esoaf.ell[1] =                            3*omega_ob*omega_ob;
+        OBSV.esoaf.ell[2] = (MOTOR.Js*MOTOR.npp_inv) * 1*omega_ob*omega_ob*omega_ob;
+        OBSV.esoaf.ell[3] = 0.0;
     }else{
-        // TODO: double check?
-        esoaf.ell[0] =                            4*omega_ob;
-        esoaf.ell[1] =                            6*omega_ob*omega_ob;
-        esoaf.ell[2] = (MOTOR.Js*MOTOR.npp_inv) * 4*omega_ob*omega_ob*omega_ob;
-        esoaf.ell[3] = (MOTOR.Js*MOTOR.npp_inv) * 1*omega_ob*omega_ob*omega_ob*omega_ob;
+        // TODO: REAL check?
+        OBSV.esoaf.ell[0] =                            4*omega_ob;
+        OBSV.esoaf.ell[1] =                            6*omega_ob*omega_ob;
+        OBSV.esoaf.ell[2] = (MOTOR.Js*MOTOR.npp_inv) * 4*omega_ob*omega_ob*omega_ob;
+        OBSV.esoaf.ell[3] = (MOTOR.Js*MOTOR.npp_inv) * 1*omega_ob*omega_ob*omega_ob*omega_ob;
     }
 
     // Natural Observer Framework
-    // if(esoaf.bool_ramp_load_torque == FALSE){
+    // if(OBSV.esoaf.bool_ramp_load_torque == FALSE){
     //     // D, P, I, II?
-    //     esoaf.ell[0] = (MOTOR.Js*MOTOR.npp_inv) * 3*omega_ob;
-    //     esoaf.ell[1] = (MOTOR.Js*MOTOR.npp_inv) * 3*omega_ob*omega_ob;
-    //     esoaf.ell[2] = (MOTOR.Js*MOTOR.npp_inv) * 1*omega_ob*omega_ob*omega_ob;
-    //     esoaf.ell[3] = 0.0;
+    //     OBSV.esoaf.ell[0] = (MOTOR.Js*MOTOR.npp_inv) * 3*omega_ob;
+    //     OBSV.esoaf.ell[1] = (MOTOR.Js*MOTOR.npp_inv) * 3*omega_ob*omega_ob;
+    //     OBSV.esoaf.ell[2] = (MOTOR.Js*MOTOR.npp_inv) * 1*omega_ob*omega_ob*omega_ob;
+    //     OBSV.esoaf.ell[3] = 0.0;
     // }else{
-    //     esoaf.ell[0] = (MOTOR.Js*MOTOR.npp_inv) * 4*omega_ob;
-    //     esoaf.ell[1] = (MOTOR.Js*MOTOR.npp_inv) * 6*omega_ob*omega_ob;
-    //     esoaf.ell[2] = (MOTOR.Js*MOTOR.npp_inv) * 4*omega_ob*omega_ob*omega_ob;
-    //     esoaf.ell[3] = (MOTOR.Js*MOTOR.npp_inv) * 1*omega_ob*omega_ob*omega_ob*omega_ob;
+    //     OBSV.esoaf.ell[0] = (MOTOR.Js*MOTOR.npp_inv) * 4*omega_ob;
+    //     OBSV.esoaf.ell[1] = (MOTOR.Js*MOTOR.npp_inv) * 6*omega_ob*omega_ob;
+    //     OBSV.esoaf.ell[2] = (MOTOR.Js*MOTOR.npp_inv) * 4*omega_ob*omega_ob*omega_ob;
+    //     OBSV.esoaf.ell[3] = (MOTOR.Js*MOTOR.npp_inv) * 1*omega_ob*omega_ob*omega_ob*omega_ob;
     // }
 
     #if PC_SIMULATION
-    printf("ESO OPT: %g, %g, %g, %g", esoaf.ell[0], esoaf.ell[1], esoaf.ell[2], esoaf.ell[3]);
+    printf("ESO OPT: %g, %g, %g, %g", OBSV.esoaf.ell[0], OBSV.esoaf.ell[1], OBSV.esoaf.ell[2], OBSV.esoaf.ell[3]);
     #endif
 }
 void Main_esoaf_chen2021(){
 
     /* OBSERVATION */
 
-    if(esoaf.set_omega_ob != esoaf.omega_ob){
-        esoaf.omega_ob = esoaf.set_omega_ob;
-        eso_one_parameter_tuning(esoaf.omega_ob);
+    if(OBSV.esoaf.set_omega_ob != OBSV.esoaf.omega_ob){
+        OBSV.esoaf.omega_ob = OBSV.esoaf.set_omega_ob;
+        eso_one_parameter_tuning(OBSV.esoaf.omega_ob);
     }
 
-    general_4states_rk4_solver(&rhf_dynamics_ESO, CTRL.timebase, esoaf.x, CL_TS);
-    while(esoaf.x[0]>M_PI){
-        esoaf.x[0] -= 2*M_PI;
+    general_4states_rk4_solver(&rhf_dynamics_ESO, (*CTRL).timebase, OBSV.esoaf.x, CL_TS);
+    if(OBSV.esoaf.x[0]>M_PI){
+        OBSV.esoaf.x[0] -= 2*M_PI;
     }
-    while(esoaf.x[0]<-M_PI){
-        esoaf.x[0] += 2*M_PI;
+    if(OBSV.esoaf.x[0]<-M_PI){
+        OBSV.esoaf.x[0] += 2*M_PI;
     }
-    esoaf.xPos = esoaf.x[0];
-    esoaf.xOmg = esoaf.x[1];
-    esoaf.xTL  = esoaf.x[2];
-    esoaf.xPL  = esoaf.x[3]; // rotatum
+    OBSV.esoaf.xPos = OBSV.esoaf.x[0];
+    OBSV.esoaf.xOmg = OBSV.esoaf.x[1];
+    OBSV.esoaf.xTL  = OBSV.esoaf.x[2];
+    OBSV.esoaf.xPL  = OBSV.esoaf.x[3]; // rotatum
 
     /* Post-observer calculations */
 }
 void init_esoaf(){
 
-    esoaf.ell[0] = 0.0;
-    esoaf.ell[1] = 0.0;
-    esoaf.ell[2] = 0.0;
-    esoaf.ell[3] = 0.0;
-    esoaf.set_omega_ob = ESOAF_OMEGA_OBSERVER;
-    esoaf.bool_ramp_load_torque = -1;
+    OBSV.esoaf.ell[0] = 0.0;
+    OBSV.esoaf.ell[1] = 0.0;
+    OBSV.esoaf.ell[2] = 0.0;
+    OBSV.esoaf.ell[3] = 0.0;
+    OBSV.esoaf.set_omega_ob = ESOAF_OMEGA_OBSERVER;
+    OBSV.esoaf.bool_ramp_load_torque = -1;
 
-    esoaf.omega_ob = esoaf.set_omega_ob;
-    eso_one_parameter_tuning(esoaf.omega_ob);
+    OBSV.esoaf.omega_ob = OBSV.esoaf.set_omega_ob;
+    eso_one_parameter_tuning(OBSV.esoaf.omega_ob);
 }
 #endif
 
@@ -136,10 +134,10 @@ void rhf_NSO_Dynamics(REAL t, REAL *x, REAL *fx){
     iDQ_now[0]  = AB2M(IS(0), IS(1), AFE_USED.cosT, AFE_USED.sinT);
     iDQ_now[1]  = AB2T(IS(0), IS(1), AFE_USED.cosT, AFE_USED.sinT);
     REAL uQ_now = AB2T(US(0), US(1), AFE_USED.cosT, AFE_USED.sinT);
-    nsoaf.q_axis_voltage = uQ_now;
+    OBSV.nsoaf.q_axis_voltage = uQ_now;
 
     /* Output Error = \tilde i_q (scalar) */
-    nsoaf.output_error = iDQ_now[1] - xIq;
+    OBSV.nsoaf.output_error = iDQ_now[1] - xIq;
     #ifdef NSOAF_SPMSM
 
         /* Filter (TODO: 不能把欧拉法放到龙贝格法里面来啊！) */
@@ -147,31 +145,31 @@ void rhf_NSO_Dynamics(REAL t, REAL *x, REAL *fx){
         uQ_now_filtered = _lpf(uQ_now, uQ_now_filtered, 30); // 越大滤越狠
         // uQ_now_filtered = uQ_now;
 
-        nsoaf.active_power_real  = + fabs(uQ_now_filtered) * iDQ_now[1];
-        nsoaf.active_power_est   = + fabs(uQ_now_filtered) * xIq;
-        nsoaf.active_power_error = + fabs(uQ_now_filtered) * nsoaf.output_error; 
+        OBSV.nsoaf.active_power_real  = + fabsf(uQ_now_filtered) * iDQ_now[1];
+        OBSV.nsoaf.active_power_est   = + fabsf(uQ_now_filtered) * xIq;
+        OBSV.nsoaf.active_power_error = + fabsf(uQ_now_filtered) * OBSV.nsoaf.output_error; 
     #endif
     #ifdef NSOAF_IPMSM
-        nsoaf.active_power_real  = + iDQ_now[1];
-        nsoaf.active_power_est   = + xIq;
-        nsoaf.active_power_error = + nsoaf.output_error; /*妈耶……结果不要把uQ拿进来就完美了……*/
+        OBSV.nsoaf.active_power_real  = + iDQ_now[1];
+        OBSV.nsoaf.active_power_est   = + xIq;
+        OBSV.nsoaf.active_power_error = + OBSV.nsoaf.output_error; /*妈耶……结果不要把uQ拿进来就完美了……*/
     #endif
 
     /* State Observer */
     // xIq
-    fx[0] = MOTOR.Lq_inv * (uQ_now - MOTOR.R * xIq - xOmg*(MOTOR.KE + MOTOR.Ld*iDQ_now[0])) - nsoaf.KD*nsoaf.active_power_error;
+    fx[0] = MOTOR.Lq_inv * (uQ_now - MOTOR.R * xIq - xOmg*(MOTOR.KE + MOTOR.Ld*iDQ_now[0])) - OBSV.nsoaf.KD*OBSV.nsoaf.active_power_error;
     // xOmg
     // REAL KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * iDQ_now[0];
-    nsoaf.xTem = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * MOTOR.KActive * xIq;
+    OBSV.nsoaf.xTem = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * MOTOR.KActive * xIq;
     // xTL = ACM.TLoad; // DEBUG
-    fx[1] = MOTOR.Js_inv * MOTOR.npp * (nsoaf.xTem - xTL - nsoaf.KP*nsoaf.active_power_error);
+    fx[1] = MOTOR.Js_inv * MOTOR.npp * (OBSV.nsoaf.xTem - xTL - OBSV.nsoaf.KP*OBSV.nsoaf.active_power_error);
     /* Parameter Adaptation */
     // xTL
-    fx[2] = nsoaf.KI * nsoaf.active_power_error;
+    fx[2] = OBSV.nsoaf.KI * OBSV.nsoaf.active_power_error;
 }
 void nso_one_parameter_tuning(REAL omega_ob){
     if(omega_ob<170){
-        nsoaf.set_omega_ob = 170;
+        OBSV.nsoaf.set_omega_ob = 170;
         return;
     }
 
@@ -179,20 +177,20 @@ void nso_one_parameter_tuning(REAL omega_ob){
     REAL one_over__npp_divided_by_Js__times__Lq_id_plus_KActive = 1.0 \
         / ( MOTOR.npp 
             * MOTOR.Js_inv * LQ_INV
-            * (MOTOR.Lq*CTRL.I->idq_cmd[0] + MOTOR.KActive)
+            * (MOTOR.Lq*(*CTRL).i->cmd_iDQ[0] + MOTOR.KActive)
           );
-    REAL uq_inv = 1.0 / CTRL.O->udq_cmd[1];
+    REAL uq_inv = 1.0 / (*CTRL).o->cmd_uDQ[1];
     #if TUNING_IGNORE_UQ
         uq_inv = 1.0; // this is 1.#INF when init
     #endif
 
-    // nsoaf.KD = 3*omega_ob                                     * one_over__npp_divided_by_Js__times__Lq_id_plus_KActive                                 * uq_inv;
-    // nsoaf.KP = ( (3*omega_ob*omega_ob - MOTOR.R*LQ_INV) * one_over__npp_divided_by_Js__times__Lq_id_plus_KActive - 1.5*MOTOR.npp*MOTOR.KActive ) * uq_inv;
-    // nsoaf.KI = omega_ob*omega_ob*omega_ob                     * one_over__npp_divided_by_Js__times__Lq_id_plus_KActive                                 * uq_inv;
+    // OBSV.nsoaf.KD = 3*omega_ob                                     * one_over__npp_divided_by_Js__times__Lq_id_plus_KActive                                 * uq_inv;
+    // OBSV.nsoaf.KP = ( (3*omega_ob*omega_ob - MOTOR.R*LQ_INV) * one_over__npp_divided_by_Js__times__Lq_id_plus_KActive - 1.5*MOTOR.npp*MOTOR.KActive ) * uq_inv;
+    // OBSV.nsoaf.KI = omega_ob*omega_ob*omega_ob                     * one_over__npp_divided_by_Js__times__Lq_id_plus_KActive                                 * uq_inv;
 
-    nsoaf.KD = (  3*omega_ob - MOTOR.R*LQ_INV) * one_over__npp_divided_by_Js__times__Lq_id_plus_KActive                                 * uq_inv;
-    nsoaf.KP = ( (3*omega_ob*omega_ob)         * one_over__npp_divided_by_Js__times__Lq_id_plus_KActive - 1.5*MOTOR.npp*MOTOR.KActive ) * uq_inv;
-    nsoaf.KI = omega_ob*omega_ob*omega_ob      * one_over__npp_divided_by_Js__times__Lq_id_plus_KActive                                 * uq_inv;
+    OBSV.nsoaf.KD = (  3*omega_ob - MOTOR.R*LQ_INV) * one_over__npp_divided_by_Js__times__Lq_id_plus_KActive                                 * uq_inv;
+    OBSV.nsoaf.KP = ( (3*omega_ob*omega_ob)         * one_over__npp_divided_by_Js__times__Lq_id_plus_KActive - 1.5*MOTOR.npp*MOTOR.KActive ) * uq_inv;
+    OBSV.nsoaf.KI = omega_ob*omega_ob*omega_ob      * one_over__npp_divided_by_Js__times__Lq_id_plus_KActive                                 * uq_inv;
 
     #if PC_SIMULATION
     #if TUNING_IGNORE_UQ
@@ -202,7 +200,7 @@ void nso_one_parameter_tuning(REAL omega_ob){
     printf("\tomega_ob=%g\n", omega_ob);
     printf("\t1.5*MOTOR.npp*MOTOR.KActive=%g\n", 1.5*MOTOR.npp*MOTOR.KActive);
     printf("\tone_over__npp_divided_by_Js__times__Lq_id_plus_KActive=%g\n", one_over__npp_divided_by_Js__times__Lq_id_plus_KActive);
-    printf("\tKD=%g\n\tKP=%g\n\tKI=%g\n", nsoaf.KD, nsoaf.KP, nsoaf.KI);
+    printf("\tKD=%g\n\tKP=%g\n\tKI=%g\n", OBSV.nsoaf.KD, OBSV.nsoaf.KP, OBSV.nsoaf.KI);
     #endif
 }
 void Main_nsoaf_chen2020(){
@@ -210,33 +208,37 @@ void Main_nsoaf_chen2020(){
     /* OBSERVATION */
 
     // TODO: when id changes, the gain should also change.
-    if(nsoaf.set_omega_ob != nsoaf.omega_ob){
-        nsoaf.omega_ob = nsoaf.set_omega_ob;
-        nso_one_parameter_tuning(nsoaf.omega_ob);
-        // afe_one_parameter_tuning(nsoaf.omega_ob);
+    if(OBSV.nsoaf.set_omega_ob != OBSV.nsoaf.omega_ob){
+        OBSV.nsoaf.omega_ob = OBSV.nsoaf.set_omega_ob;
+        nso_one_parameter_tuning(OBSV.nsoaf.omega_ob);
+        // afe_one_parameter_tuning(OBSV.nsoaf.omega_ob);
     }
 
     /* Unpack States */
-    nsoaf.xIq      = nsoaf.xBest[0];
-    nsoaf.xOmg     = nsoaf.xBest[1];
-    nsoaf.xTL      = nsoaf.xBest[2];
+    OBSV.nsoaf.xIq      = OBSV.nsoaf.xBest[0];
+    OBSV.nsoaf.xOmg     = OBSV.nsoaf.xBest[1];
+    OBSV.nsoaf.xTL      = OBSV.nsoaf.xBest[2];
 
     /* Know Signals */
-    #define MOTOR (*CTRL.motor)
+    #define MOTOR (*(*CTRL).motor)
     REAL iDQ_now[2];
     iDQ_now[0]  = AB2M(IS_C(0), IS_C(1), AFE_USED.cosT, AFE_USED.sinT);
     iDQ_now[1]  = AB2T(IS_C(0), IS_C(1), AFE_USED.cosT, AFE_USED.sinT);
     REAL uQ_now = AB2T(US_C(0), US_C(1), AFE_USED.cosT, AFE_USED.sinT);
-    nsoaf.q_axis_voltage = uQ_now;
+    OBSV.nsoaf.q_axis_voltage = uQ_now;
 
     /* Output Error = \tilde i_q (scalar) */
-    nsoaf.output_error = iDQ_now[1] - nsoaf.xIq;
-    nsoaf.active_power_real  = + fabs(uQ_now) * iDQ_now[1];
-    nsoaf.active_power_est   = + fabs(uQ_now) * nsoaf.xIq;
-    nsoaf.active_power_error = + fabs(uQ_now) * nsoaf.output_error;
+    // OBSV.nsoaf.output_error = iDQ_now[1] - OBSV.nsoaf.xIq;
+    // OBSV.nsoaf.active_power_real  = + fabsf(uQ_now) * iDQ_now[1];
+    // OBSV.nsoaf.active_power_est   = + fabsf(uQ_now) * OBSV.nsoaf.xIq;
+    // OBSV.nsoaf.active_power_error = + fabsf(uQ_now) * OBSV.nsoaf.output_error;
+
+    OBSV.nsoaf.active_power_real  = + 1 * iDQ_now[1];
+    OBSV.nsoaf.active_power_est   = + 1 * OBSV.nsoaf.xIq;
+    OBSV.nsoaf.active_power_error = + 1 * OBSV.nsoaf.output_error;
 
     REAL KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * iDQ_now[0];
-    nsoaf.xTem = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * KActive * nsoaf.xIq;
+    OBSV.nsoaf.xTem = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * KActive * OBSV.nsoaf.xIq;
 
 
 
@@ -246,57 +248,57 @@ void Main_nsoaf_chen2020(){
     */
     /* 放弃 MPO 或者说 DBO 的原因是目标函数（输出误差varepsilon）为零并不对应最优点 */
         // REAL fx[NS];
-        // REAL iQ_C = AB2T(IS_C(0), IS_C(1), nsoaf.cosT, nsoaf.sinT);
+        // REAL iQ_C = AB2T(IS_C(0), IS_C(1), OBSV.nsoaf.cosT, OBSV.nsoaf.sinT);
 
         // REAL best_xTL;
 
         // 直接解算令输出误差为零的转速值（欧拉法ode1）
-        // nsoaf.solved_xOmg = ((uQ_now - MOTOR.R * xIq       ) - (iQ_C - xIq)*MOTOR.Lq*CL_TS_INVERSE) / (MOTOR.KE + MOTOR.Ld*iDQ_now[0]);
-        // nsoaf.solved_xOmg = ((uQ_now - MOTOR.R * iDQ_now[1]) - (iQ_C - xIq)*MOTOR.Lq*CL_TS_INVERSE) / (MOTOR.KE + MOTOR.Ld*iDQ_now[0]);
+        // OBSV.nsoaf.solved_xOmg = ((uQ_now - MOTOR.R * xIq       ) - (iQ_C - xIq)*MOTOR.Lq*CL_TS_INVERSE) / (MOTOR.KE + MOTOR.Ld*iDQ_now[0]);
+        // OBSV.nsoaf.solved_xOmg = ((uQ_now - MOTOR.R * iDQ_now[1]) - (iQ_C - xIq)*MOTOR.Lq*CL_TS_INVERSE) / (MOTOR.KE + MOTOR.Ld*iDQ_now[0]);
 
-        // REAL iQ_C = AB2T(IS_C(0), IS_C(1), nsoaf.cosT, nsoaf.sinT);
+        // REAL iQ_C = AB2T(IS_C(0), IS_C(1), OBSV.nsoaf.cosT, OBSV.nsoaf.sinT);
         // REAL best_output_error = 99999;
         // int  best_index = 0;
         // int j;
         // for(j=0; j<10; ++j){
-        //     nsoaf.KP = (j+1) * 0.2 * NSOAF_TL_P*0;
-        //     nsoaf.KI = (j+1) * 0.2 * NSOAF_TL_I;
-        //     nsoaf.KD = (j+1) * 0.2 * NSOAF_TL_D;
-        //     general_3_states_rk4_solver(&rhf_NSO_Dynamics, CTRL.timebase, (nsoaf.x+j*NS), CL_TS);
-        //     nsoaf.output_error = iQ_C - *(nsoaf.x+j*NS);
-        //     if(fabs(nsoaf.output_error) < fabs(best_output_error)){
-        //         best_output_error = nsoaf.output_error;
+        //     OBSV.nsoaf.KP = (j+1) * 0.2 * NSOAF_TL_P*0;
+        //     OBSV.nsoaf.KI = (j+1) * 0.2 * NSOAF_TL_I;
+        //     OBSV.nsoaf.KD = (j+1) * 0.2 * NSOAF_TL_D;
+        //     general_3_states_rk4_solver(&rhf_NSO_Dynamics, (*CTRL).timebase, (OBSV.nsoaf.x+j*NS), CL_TS);
+        //     OBSV.nsoaf.output_error = iQ_C - *(OBSV.nsoaf.x+j*NS);
+        //     if(fabsf(OBSV.nsoaf.output_error) < fabsf(best_output_error)){
+        //         best_output_error = OBSV.nsoaf.output_error;
         //         best_index = j;
         //     }
         // }
-        // nsoaf.xBest[0] = nsoaf.x[best_index*NS+0];
-        // nsoaf.xBest[1] = nsoaf.x[best_index*NS+1];
-        // nsoaf.xBest[2] = nsoaf.x[best_index*NS+2];
+        // OBSV.nsoaf.xBest[0] = OBSV.nsoaf.x[best_index*NS+0];
+        // OBSV.nsoaf.xBest[1] = OBSV.nsoaf.x[best_index*NS+1];
+        // OBSV.nsoaf.xBest[2] = OBSV.nsoaf.x[best_index*NS+2];
 
         // DEBUG
-        // nsoaf.xBest[1] = ACM.omg_elec;
+        // OBSV.nsoaf.xBest[1] = ACM.omg_elec;
 
-    general_3states_rk4_solver(&rhf_NSO_Dynamics, CTRL.timebase, nsoaf.xBest, CL_TS);
+    general_3states_rk4_solver(&rhf_NSO_Dynamics, (*CTRL).timebase, OBSV.nsoaf.xBest, CL_TS);
 
 
     /* Unpack x (for the best) */
-    // nsoaf.xIq      = nsoaf.xBest[0];
-    // nsoaf.xOmg     = nsoaf.xBest[1];
-    // nsoaf.xTL      = nsoaf.xBest[2];
+    // OBSV.nsoaf.xIq      = OBSV.nsoaf.xBest[0];
+    // OBSV.nsoaf.xOmg     = OBSV.nsoaf.xBest[1];
+    // OBSV.nsoaf.xTL      = OBSV.nsoaf.xBest[2];
     /* Post-observer calculations */
     /* Selecting Signals From Block Diagram */
-    nsoaf.LoadTorquePI = nsoaf.xTL + nsoaf.KP*nsoaf.active_power_error;
+    OBSV.nsoaf.LoadTorquePI = OBSV.nsoaf.xTL + OBSV.nsoaf.KP*OBSV.nsoaf.active_power_error;
 }
 void init_nsoaf(){
 
-    nsoaf.KP = NSOAF_TL_P;
-    nsoaf.KI = NSOAF_TL_I;
-    nsoaf.KD = NSOAF_TL_D;
-    nsoaf.set_omega_ob = NSOAF_OMEGA_OBSERVER;
+    OBSV.nsoaf.KP = NSOAF_TL_P;
+    OBSV.nsoaf.KI = NSOAF_TL_I;
+    OBSV.nsoaf.KD = NSOAF_TL_D;
+    OBSV.nsoaf.set_omega_ob = NSOAF_OMEGA_OBSERVER;
 
-    MOTOR.KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * CTRL.I->idq[0];
-    nsoaf.omega_ob = nsoaf.set_omega_ob;
-    nso_one_parameter_tuning(nsoaf.omega_ob);
+    MOTOR.KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * (*CTRL).i->iDQ[0];
+    OBSV.nsoaf.omega_ob = OBSV.nsoaf.set_omega_ob;
+    nso_one_parameter_tuning(OBSV.nsoaf.omega_ob);
 }
 #endif
 
@@ -318,38 +320,38 @@ void rhf_func_hgoeemf(REAL *increment_n, REAL *xPsi, REAL *xEemf,
     REAL f[NS];
 
     // DEBUG
-    // xOmg = CTRL.I->omg_elec;
+    // xOmg = (*CTRL).i->omg_elec;
 
     // dependent parameters
     // MOTOR.Ld
     // MOTOR.DeltaL
     // MOTOR.R
-    #define MOTOR (*CTRL.motor)
+    #define MOTOR (*(*CTRL).motor)
 
     /* Output Error of xPsi */
-    hgo4eemf.output_error[0] = MOTOR.Ld*IS(0) - xPsi[0];
-    hgo4eemf.output_error[1] = MOTOR.Ld*IS(1) - xPsi[1];
+    OBSV.hgo4eemf.output_error[0] = MOTOR.Ld*IS(0) - xPsi[0];
+    OBSV.hgo4eemf.output_error[1] = MOTOR.Ld*IS(1) - xPsi[1];
 
     /* Parameter Adaptation */
     // xOmg (recall xPhi is the filtered regreesor for speed)
-    f[4] = hgo4eemf.vartheta*hgo4eemf.xGammaOmg * (xPhi[0]*hgo4eemf.output_error[0] + xPhi[1]*hgo4eemf.output_error[1]);
+    f[4] = OBSV.hgo4eemf.vartheta*OBSV.hgo4eemf.xGammaOmg * (xPhi[0]*OBSV.hgo4eemf.output_error[0] + xPhi[1]*OBSV.hgo4eemf.output_error[1]);
     // xGammaOmg
-    f[5] = - hgo4eemf.vartheta * xGammaOmg * (xPhi[0]*xPhi[0]+xPhi[1]*xPhi[1]) * xGammaOmg + hgo4eemf.vartheta*xGammaOmg;
+    f[5] = - OBSV.hgo4eemf.vartheta * xGammaOmg * (xPhi[0]*xPhi[0]+xPhi[1]*xPhi[1]) * xGammaOmg + OBSV.hgo4eemf.vartheta*xGammaOmg;
 
     /* Auxiliary States */
     // xPhi
-    f[6] = hgo4eemf.vartheta * (-2*xPhi[0] + xPhi[2]) + MOTOR.DeltaL*-IS(1);
-    f[7] = hgo4eemf.vartheta * (-2*xPhi[1] + xPhi[3]) + MOTOR.DeltaL* IS(0);
-    f[8] = hgo4eemf.vartheta * (  -xPhi[0] ) + hgo4eemf.vartheta_inv*-xEemf[1];
-    f[9] = hgo4eemf.vartheta * (  -xPhi[1] ) + hgo4eemf.vartheta_inv* xEemf[0];
+    f[6] = OBSV.hgo4eemf.vartheta * (-2*xPhi[0] + xPhi[2]) + MOTOR.DeltaL*-IS(1);
+    f[7] = OBSV.hgo4eemf.vartheta * (-2*xPhi[1] + xPhi[3]) + MOTOR.DeltaL* IS(0);
+    f[8] = OBSV.hgo4eemf.vartheta * (  -xPhi[0] ) + OBSV.hgo4eemf.vartheta_inv*-xEemf[1];
+    f[9] = OBSV.hgo4eemf.vartheta * (  -xPhi[1] ) + OBSV.hgo4eemf.vartheta_inv* xEemf[0];
 
     /* State Observer */
     // xPsi = Ld * i
-    f[0] = xEemf[0] + US(0) - MOTOR.R*IS(0) + MOTOR.DeltaL*xOmg*-IS(1) + 2*hgo4eemf.vartheta*hgo4eemf.output_error[0] + xPhi[0]*f[4];
-    f[1] = xEemf[1] + US(1) - MOTOR.R*IS(1) + MOTOR.DeltaL*xOmg* IS(0) + 2*hgo4eemf.vartheta*hgo4eemf.output_error[1] + xPhi[1]*f[4];
+    f[0] = xEemf[0] + US(0) - MOTOR.R*IS(0) + MOTOR.DeltaL*xOmg*-IS(1) + 2*OBSV.hgo4eemf.vartheta*OBSV.hgo4eemf.output_error[0] + xPhi[0]*f[4];
+    f[1] = xEemf[1] + US(1) - MOTOR.R*IS(1) + MOTOR.DeltaL*xOmg* IS(0) + 2*OBSV.hgo4eemf.vartheta*OBSV.hgo4eemf.output_error[1] + xPhi[1]*f[4];
     // xEemf
-    f[2] = xOmg*-xEemf[1] + hgo4eemf.vartheta * (hgo4eemf.vartheta * hgo4eemf.output_error[0]                         + xPhi[2]*f[4]);
-    f[3] = xOmg* xEemf[0] + hgo4eemf.vartheta * (hgo4eemf.vartheta * hgo4eemf.output_error[1]                         + xPhi[3]*f[4]);
+    f[2] = xOmg*-xEemf[1] + OBSV.hgo4eemf.vartheta * (OBSV.hgo4eemf.vartheta * OBSV.hgo4eemf.output_error[0]                         + xPhi[2]*f[4]);
+    f[3] = xOmg* xEemf[0] + OBSV.hgo4eemf.vartheta * (OBSV.hgo4eemf.vartheta * OBSV.hgo4eemf.output_error[1]                         + xPhi[3]*f[4]);
 
     increment_n[ 0] = ( f[ 0] )*hs;
     increment_n[ 1] = ( f[ 1] )*hs;
@@ -381,19 +383,19 @@ void hgo4eemf_dedicated_rk4_solver(REAL hs){
     US(1) = US_P(1);
     IS(0) = IS_P(0);
     IS(1) = IS_P(1);
-    rhf_func_hgoeemf( increment_1, hgo4eemf.xPsi, hgo4eemf.xEemf, 
-                      hgo4eemf.xOmg, hgo4eemf.xGammaOmg,
-                      hgo4eemf.xPhi, hs); 
-    x_temp[0]  = hgo4eemf.xPsi[0]        + increment_1[0]*0.5;
-    x_temp[1]  = hgo4eemf.xPsi[1]        + increment_1[1]*0.5;
-    x_temp[2]  = hgo4eemf.xEemf[0]       + increment_1[2]*0.5;
-    x_temp[3]  = hgo4eemf.xEemf[1]       + increment_1[3]*0.5;
-    x_temp[4]  = hgo4eemf.xOmg           + increment_1[4]*0.5;
-    x_temp[5]  = hgo4eemf.xGammaOmg      + increment_1[5]*0.5;
-    x_temp[6]  = hgo4eemf.xPhi[0]        + increment_1[6]*0.5;
-    x_temp[7]  = hgo4eemf.xPhi[1]        + increment_1[7]*0.5;
-    x_temp[8]  = hgo4eemf.xPhi[2]        + increment_1[8]*0.5;
-    x_temp[9]  = hgo4eemf.xPhi[3]        + increment_1[9]*0.5;
+    rhf_func_hgoeemf( increment_1, OBSV.hgo4eemf.xPsi, OBSV.hgo4eemf.xEemf, 
+                      OBSV.hgo4eemf.xOmg, OBSV.hgo4eemf.xGammaOmg,
+                      OBSV.hgo4eemf.xPhi, hs); 
+    x_temp[0]  = OBSV.hgo4eemf.xPsi[0]        + increment_1[0]*0.5;
+    x_temp[1]  = OBSV.hgo4eemf.xPsi[1]        + increment_1[1]*0.5;
+    x_temp[2]  = OBSV.hgo4eemf.xEemf[0]       + increment_1[2]*0.5;
+    x_temp[3]  = OBSV.hgo4eemf.xEemf[1]       + increment_1[3]*0.5;
+    x_temp[4]  = OBSV.hgo4eemf.xOmg           + increment_1[4]*0.5;
+    x_temp[5]  = OBSV.hgo4eemf.xGammaOmg      + increment_1[5]*0.5;
+    x_temp[6]  = OBSV.hgo4eemf.xPhi[0]        + increment_1[6]*0.5;
+    x_temp[7]  = OBSV.hgo4eemf.xPhi[1]        + increment_1[7]*0.5;
+    x_temp[8]  = OBSV.hgo4eemf.xPhi[2]        + increment_1[8]*0.5;
+    x_temp[9]  = OBSV.hgo4eemf.xPhi[3]        + increment_1[9]*0.5;
 
     // time instant t+hs/2
     IS(0) = 0.5*(IS_P(0)+IS_C(0));
@@ -401,31 +403,31 @@ void hgo4eemf_dedicated_rk4_solver(REAL hs){
     rhf_func_hgoeemf( increment_2, p_x_temp+0, p_x_temp+2, 
                     *(p_x_temp+4), *(p_x_temp+5),
                       p_x_temp+6, hs );
-    x_temp[0]  = hgo4eemf.xPsi[0]        + increment_2[0]*0.5;
-    x_temp[1]  = hgo4eemf.xPsi[1]        + increment_2[1]*0.5;
-    x_temp[2]  = hgo4eemf.xEemf[0]       + increment_2[2]*0.5;
-    x_temp[3]  = hgo4eemf.xEemf[1]       + increment_2[3]*0.5;
-    x_temp[4]  = hgo4eemf.xOmg           + increment_2[4]*0.5;
-    x_temp[5]  = hgo4eemf.xGammaOmg      + increment_2[5]*0.5;
-    x_temp[6]  = hgo4eemf.xPhi[0]        + increment_2[6]*0.5;
-    x_temp[7]  = hgo4eemf.xPhi[1]        + increment_2[7]*0.5;
-    x_temp[8]  = hgo4eemf.xPhi[2]        + increment_2[8]*0.5;
-    x_temp[9]  = hgo4eemf.xPhi[3]        + increment_2[9]*0.5;
+    x_temp[0]  = OBSV.hgo4eemf.xPsi[0]        + increment_2[0]*0.5;
+    x_temp[1]  = OBSV.hgo4eemf.xPsi[1]        + increment_2[1]*0.5;
+    x_temp[2]  = OBSV.hgo4eemf.xEemf[0]       + increment_2[2]*0.5;
+    x_temp[3]  = OBSV.hgo4eemf.xEemf[1]       + increment_2[3]*0.5;
+    x_temp[4]  = OBSV.hgo4eemf.xOmg           + increment_2[4]*0.5;
+    x_temp[5]  = OBSV.hgo4eemf.xGammaOmg      + increment_2[5]*0.5;
+    x_temp[6]  = OBSV.hgo4eemf.xPhi[0]        + increment_2[6]*0.5;
+    x_temp[7]  = OBSV.hgo4eemf.xPhi[1]        + increment_2[7]*0.5;
+    x_temp[8]  = OBSV.hgo4eemf.xPhi[2]        + increment_2[8]*0.5;
+    x_temp[9]  = OBSV.hgo4eemf.xPhi[3]        + increment_2[9]*0.5;
 
     // time instant t+hs/2
     rhf_func_hgoeemf( increment_3, p_x_temp+0, p_x_temp+2, 
                     *(p_x_temp+4), *(p_x_temp+5),
                       p_x_temp+6, hs );
-    x_temp[0]  = hgo4eemf.xPsi[0]        + increment_3[0];
-    x_temp[1]  = hgo4eemf.xPsi[1]        + increment_3[1];
-    x_temp[2]  = hgo4eemf.xEemf[0]       + increment_3[2];
-    x_temp[3]  = hgo4eemf.xEemf[1]       + increment_3[3];
-    x_temp[4]  = hgo4eemf.xOmg           + increment_3[4];
-    x_temp[5]  = hgo4eemf.xGammaOmg      + increment_3[5];
-    x_temp[6]  = hgo4eemf.xPhi[0]        + increment_3[6];
-    x_temp[7]  = hgo4eemf.xPhi[1]        + increment_3[7];
-    x_temp[8]  = hgo4eemf.xPhi[2]        + increment_3[8];
-    x_temp[9]  = hgo4eemf.xPhi[3]        + increment_3[9];
+    x_temp[0]  = OBSV.hgo4eemf.xPsi[0]        + increment_3[0];
+    x_temp[1]  = OBSV.hgo4eemf.xPsi[1]        + increment_3[1];
+    x_temp[2]  = OBSV.hgo4eemf.xEemf[0]       + increment_3[2];
+    x_temp[3]  = OBSV.hgo4eemf.xEemf[1]       + increment_3[3];
+    x_temp[4]  = OBSV.hgo4eemf.xOmg           + increment_3[4];
+    x_temp[5]  = OBSV.hgo4eemf.xGammaOmg      + increment_3[5];
+    x_temp[6]  = OBSV.hgo4eemf.xPhi[0]        + increment_3[6];
+    x_temp[7]  = OBSV.hgo4eemf.xPhi[1]        + increment_3[7];
+    x_temp[8]  = OBSV.hgo4eemf.xPhi[2]        + increment_3[8];
+    x_temp[9]  = OBSV.hgo4eemf.xPhi[3]        + increment_3[9];
 
     // time instant t+hs
     IS(0) = IS_C(0);
@@ -435,21 +437,21 @@ void hgo4eemf_dedicated_rk4_solver(REAL hs){
                       p_x_temp+6, hs );
     // \+=[^\n]*1\[(\d+)\][^\n]*2\[(\d+)\][^\n]*3\[(\d+)\][^\n]*4\[(\d+)\][^\n]*/ ([\d]+)
     // +=   (increment_1[$5] + 2*(increment_2[$5] + increment_3[$5]) + increment_4[$5])*0.166666666666667; // $5
-    hgo4eemf.xPsi[0]         +=   (increment_1[0] + 2*(increment_2[0] + increment_3[0]) + increment_4[0])*0.166666666666667; // 0
-    hgo4eemf.xPsi[1]         +=   (increment_1[1] + 2*(increment_2[1] + increment_3[1]) + increment_4[1])*0.166666666666667; // 1
-    hgo4eemf.xEemf[0]        +=   (increment_1[2] + 2*(increment_2[2] + increment_3[2]) + increment_4[2])*0.166666666666667; // 2
-    hgo4eemf.xEemf[1]        +=   (increment_1[3] + 2*(increment_2[3] + increment_3[3]) + increment_4[3])*0.166666666666667; // 3
-    hgo4eemf.xOmg            +=   (increment_1[4] + 2*(increment_2[4] + increment_3[4]) + increment_4[4])*0.166666666666667; // 4
-    hgo4eemf.xGammaOmg       +=   (increment_1[5] + 2*(increment_2[5] + increment_3[5]) + increment_4[5])*0.166666666666667; // 5
-    hgo4eemf.xPhi[0]         +=   (increment_1[6] + 2*(increment_2[6] + increment_3[6]) + increment_4[6])*0.166666666666667; // 6
-    hgo4eemf.xPhi[1]         +=   (increment_1[7] + 2*(increment_2[7] + increment_3[7]) + increment_4[7])*0.166666666666667; // 7
-    hgo4eemf.xPhi[2]         +=   (increment_1[8] + 2*(increment_2[8] + increment_3[8]) + increment_4[8])*0.166666666666667; // 8
-    hgo4eemf.xPhi[3]         +=   (increment_1[9] + 2*(increment_2[9] + increment_3[9]) + increment_4[9])*0.166666666666667; // 9
+    OBSV.hgo4eemf.xPsi[0]         +=   (increment_1[0] + 2*(increment_2[0] + increment_3[0]) + increment_4[0])*0.166666666666667; // 0
+    OBSV.hgo4eemf.xPsi[1]         +=   (increment_1[1] + 2*(increment_2[1] + increment_3[1]) + increment_4[1])*0.166666666666667; // 1
+    OBSV.hgo4eemf.xEemf[0]        +=   (increment_1[2] + 2*(increment_2[2] + increment_3[2]) + increment_4[2])*0.166666666666667; // 2
+    OBSV.hgo4eemf.xEemf[1]        +=   (increment_1[3] + 2*(increment_2[3] + increment_3[3]) + increment_4[3])*0.166666666666667; // 3
+    OBSV.hgo4eemf.xOmg            +=   (increment_1[4] + 2*(increment_2[4] + increment_3[4]) + increment_4[4])*0.166666666666667; // 4
+    OBSV.hgo4eemf.xGammaOmg       +=   (increment_1[5] + 2*(increment_2[5] + increment_3[5]) + increment_4[5])*0.166666666666667; // 5
+    OBSV.hgo4eemf.xPhi[0]         +=   (increment_1[6] + 2*(increment_2[6] + increment_3[6]) + increment_4[6])*0.166666666666667; // 6
+    OBSV.hgo4eemf.xPhi[1]         +=   (increment_1[7] + 2*(increment_2[7] + increment_3[7]) + increment_4[7])*0.166666666666667; // 7
+    OBSV.hgo4eemf.xPhi[2]         +=   (increment_1[8] + 2*(increment_2[8] + increment_3[8]) + increment_4[8])*0.166666666666667; // 8
+    OBSV.hgo4eemf.xPhi[3]         +=   (increment_1[9] + 2*(increment_2[9] + increment_3[9]) + increment_4[9])*0.166666666666667; // 9
 
     /* Post-Observer */
-    hgo4eemf.theta_d = atan2( 
-                             - hgo4eemf.xEemf[0]*(sign(hgo4eemf.xOmg)), 
-                               hgo4eemf.xEemf[1]*(sign(hgo4eemf.xOmg))
+    OBSV.hgo4eemf.theta_d = atan2( 
+                             - OBSV.hgo4eemf.xEemf[0]*(sign(OBSV.hgo4eemf.xOmg)), 
+                               OBSV.hgo4eemf.xEemf[1]*(sign(OBSV.hgo4eemf.xOmg))
                            );
 }
 /* Main Observer */
@@ -459,15 +461,15 @@ void Main_cjh_eemfhgo_farza09(){
     hgo4eemf_dedicated_rk4_solver(1*CL_TS);
 }
 void init_hgo4eemf(){
-    hgo4eemf.vartheta  = FARZA09_HGO_EEMF_VARTHETA;
-    if(hgo4eemf.vartheta==0.0){
+    OBSV.hgo4eemf.vartheta  = FARZA09_HGO_EEMF_VARTHETA;
+    if(OBSV.hgo4eemf.vartheta==0.0){
         #if PC_SIMULATION
             printf("varthteta cannot be zero\n");
         #endif
     }else{
-        hgo4eemf.vartheta_inv = 1.0 / hgo4eemf.vartheta;
+        OBSV.hgo4eemf.vartheta_inv = 1.0 / OBSV.hgo4eemf.vartheta;
     }
-    hgo4eemf.xGammaOmg = FARZA09_HGO_EEMF_GAMMA_OMEGA_INITIAL_VALUE;
+    OBSV.hgo4eemf.xGammaOmg = FARZA09_HGO_EEMF_GAMMA_OMEGA_INITIAL_VALUE;
 }
 #undef NS
 #endif
@@ -491,48 +493,48 @@ void rhf_func_eemfaod(REAL *increment_n, REAL *xPsi, REAL *xChi, REAL xOmg,
     // hs: step size of numerical integral
 
     // DEBUG
-    // xOmg = CTRL.I->omg_elec;
+    // xOmg = (*CTRL).i->omg_elec;
 
     // dependent parameters
-    #define MOTOR (*CTRL.motor)
+    #define MOTOR (*(*CTRL).motor)
     // MOTOR.Ld
     // MOTOR.DeltaL
     // MOTOR.R
-    // cjheemf.k1
-    // cjheemf.k2
-    // cjheemf.gamma_omg
+    // OBSV.cjheemf.k1
+    // OBSV.cjheemf.k2
+    // OBSV.cjheemf.gamma_omg
 
-    cjheemf.output_error[0] = MOTOR.Ld*IS(0) - xPsi[0];
-    cjheemf.output_error[1] = MOTOR.Ld*IS(1) - xPsi[1];
-    cjheemf.effective_output_error[0] = cjheemf.output_error[0] + xEta[0] - xUpsilon[0]*xOmg;
-    cjheemf.effective_output_error[1] = cjheemf.output_error[1] + xEta[1] - xUpsilon[1]*xOmg;
+    OBSV.cjheemf.output_error[0] = MOTOR.Ld*IS(0) - xPsi[0];
+    OBSV.cjheemf.output_error[1] = MOTOR.Ld*IS(1) - xPsi[1];
+    OBSV.cjheemf.effective_output_error[0] = OBSV.cjheemf.output_error[0] + xEta[0] - xUpsilon[0]*xOmg;
+    OBSV.cjheemf.effective_output_error[1] = OBSV.cjheemf.output_error[1] + xEta[1] - xUpsilon[1]*xOmg;
 
     // f = \dot x = the time derivative
     REAL f[NS];
     REAL TwoLdMinusLq = MOTOR.DeltaL + MOTOR.Ld;
     // xPsi
-    f[0] = US(0) - MOTOR.R* IS(0) + xChi[0] + TwoLdMinusLq*xOmg*-IS(1) + cjheemf.k1*cjheemf.output_error[0];
-    f[1] = US(1) - MOTOR.R* IS(1) + xChi[1] + TwoLdMinusLq*xOmg* IS(0) + cjheemf.k1*cjheemf.output_error[1];
+    f[0] = US(0) - MOTOR.R* IS(0) + xChi[0] + TwoLdMinusLq*xOmg*-IS(1) + OBSV.cjheemf.k1*OBSV.cjheemf.output_error[0];
+    f[1] = US(1) - MOTOR.R* IS(1) + xChi[1] + TwoLdMinusLq*xOmg* IS(0) + OBSV.cjheemf.k1*OBSV.cjheemf.output_error[1];
     // xChi
-    f[2] = xOmg*xOmg * MOTOR.DeltaL*IS(0) - xOmg*-US(1) + xOmg*MOTOR.R*-IS(1) + cjheemf.k2*cjheemf.output_error[0];
-    f[3] = xOmg*xOmg * MOTOR.DeltaL*IS(1) - xOmg* US(0) + xOmg*MOTOR.R* IS(0) + cjheemf.k2*cjheemf.output_error[1];
+    f[2] = xOmg*xOmg * MOTOR.DeltaL*IS(0) - xOmg*-US(1) + xOmg*MOTOR.R*-IS(1) + OBSV.cjheemf.k2*OBSV.cjheemf.output_error[0];
+    f[3] = xOmg*xOmg * MOTOR.DeltaL*IS(1) - xOmg* US(0) + xOmg*MOTOR.R* IS(0) + OBSV.cjheemf.k2*OBSV.cjheemf.output_error[1];
     // xOmg (recall xUpsilon is the filtered regreesor for speed)
-    f[4] = cjheemf.gamma_omg * (xUpsilon[0]*cjheemf.effective_output_error[0] + xUpsilon[1]*cjheemf.effective_output_error[1]);
-    // f[4] = cjheemf.gamma_omg * (xUpsilon[0]*-cjheemf.effective_output_error[1] + xUpsilon[1]*cjheemf.effective_output_error[0]);
+    f[4] = OBSV.cjheemf.gamma_omg * (xUpsilon[0]*OBSV.cjheemf.effective_output_error[0] + xUpsilon[1]*OBSV.cjheemf.effective_output_error[1]);
+    // f[4] = OBSV.cjheemf.gamma_omg * (xUpsilon[0]*-OBSV.cjheemf.effective_output_error[1] + xUpsilon[1]*OBSV.cjheemf.effective_output_error[0]);
 
     /* Auxiliary States*/
     // xEta 
-    f[5] = - cjheemf.k1*xEta[0] + xVarsigma[0] + xOmg*TwoLdMinusLq*-IS(1);
-    f[6] = - cjheemf.k1*xEta[1] + xVarsigma[1] + xOmg*TwoLdMinusLq* IS(0);
+    f[5] = - OBSV.cjheemf.k1*xEta[0] + xVarsigma[0] + xOmg*TwoLdMinusLq*-IS(1);
+    f[6] = - OBSV.cjheemf.k1*xEta[1] + xVarsigma[1] + xOmg*TwoLdMinusLq* IS(0);
     // varsigma
-    f[7] = - cjheemf.k2*xVarsigma[0] + xOmg*((xOmg+xOmg)*MOTOR.DeltaL*IS(0) +US(1) + MOTOR.R*-IS(1));
-    f[8] = - cjheemf.k2*xVarsigma[1] + xOmg*((xOmg+xOmg)*MOTOR.DeltaL*IS(1) -US(0) + MOTOR.R* IS(0));
+    f[7] = - OBSV.cjheemf.k2*xVarsigma[0] + xOmg*((xOmg+xOmg)*MOTOR.DeltaL*IS(0) +US(1) + MOTOR.R*-IS(1));
+    f[8] = - OBSV.cjheemf.k2*xVarsigma[1] + xOmg*((xOmg+xOmg)*MOTOR.DeltaL*IS(1) -US(0) + MOTOR.R* IS(0));
     //  xUpsilon
-    f[9]  = - cjheemf.k1*xUpsilon[0] + xZeta[0] + TwoLdMinusLq*-IS(1);
-    f[10] = - cjheemf.k1*xUpsilon[1] + xZeta[1] + TwoLdMinusLq* IS(0);
+    f[9]  = - OBSV.cjheemf.k1*xUpsilon[0] + xZeta[0] + TwoLdMinusLq*-IS(1);
+    f[10] = - OBSV.cjheemf.k1*xUpsilon[1] + xZeta[1] + TwoLdMinusLq* IS(0);
     // zeta
-    f[11] = - cjheemf.k2*xZeta[0] + ((xOmg+xOmg)*MOTOR.DeltaL*IS(0) +US(1) + MOTOR.R*-IS(1));
-    f[12] = - cjheemf.k2*xZeta[1] + ((xOmg+xOmg)*MOTOR.DeltaL*IS(1) -US(0) + MOTOR.R* IS(0));
+    f[11] = - OBSV.cjheemf.k2*xZeta[0] + ((xOmg+xOmg)*MOTOR.DeltaL*IS(0) +US(1) + MOTOR.R*-IS(1));
+    f[12] = - OBSV.cjheemf.k2*xZeta[1] + ((xOmg+xOmg)*MOTOR.DeltaL*IS(1) -US(0) + MOTOR.R* IS(0));
 
     increment_n[ 0] = ( f[ 0] )*hs;
     increment_n[ 1] = ( f[ 1] )*hs;
@@ -567,25 +569,25 @@ void eemf_ao_dedicated_rk4_solver(REAL hs){
     US(1) = US_P(1);
     IS(0) = IS_P(0);
     IS(1) = IS_P(1);
-    rhf_func_eemfaod( increment_1, cjheemf.xPsi, cjheemf.xChi, cjheemf.xOmg,
-                      cjheemf.xEta,
-                      cjheemf.xVarsigma,
-                      cjheemf.xUpsilon,
-                      cjheemf.xZeta,
+    rhf_func_eemfaod( increment_1, OBSV.cjheemf.xPsi, OBSV.cjheemf.xChi, OBSV.cjheemf.xOmg,
+                      OBSV.cjheemf.xEta,
+                      OBSV.cjheemf.xVarsigma,
+                      OBSV.cjheemf.xUpsilon,
+                      OBSV.cjheemf.xZeta,
                       hs); 
-    x_temp[ 0]  = cjheemf.xPsi[0]        + increment_1[ 0]*0.5;
-    x_temp[ 1]  = cjheemf.xPsi[1]        + increment_1[ 1]*0.5;
-    x_temp[ 2]  = cjheemf.xChi[0]        + increment_1[ 2]*0.5;
-    x_temp[ 3]  = cjheemf.xChi[1]        + increment_1[ 3]*0.5;
-    x_temp[ 4]  = cjheemf.xOmg           + increment_1[ 4]*0.5;
-    x_temp[ 5]  = cjheemf.xEta[0]        + increment_1[ 5]*0.5;
-    x_temp[ 6]  = cjheemf.xEta[1]        + increment_1[ 6]*0.5;
-    x_temp[ 7]  = cjheemf.xVarsigma[0]   + increment_1[ 7]*0.5;
-    x_temp[ 8]  = cjheemf.xVarsigma[1]   + increment_1[ 8]*0.5;
-    x_temp[ 9]  = cjheemf.xUpsilon[0]    + increment_1[ 9]*0.5;
-    x_temp[10]  = cjheemf.xUpsilon[1]    + increment_1[10]*0.5;
-    x_temp[11]  = cjheemf.xZeta[0]       + increment_1[11]*0.5;
-    x_temp[12]  = cjheemf.xZeta[1]       + increment_1[12]*0.5;
+    x_temp[ 0]  = OBSV.cjheemf.xPsi[0]        + increment_1[ 0]*0.5;
+    x_temp[ 1]  = OBSV.cjheemf.xPsi[1]        + increment_1[ 1]*0.5;
+    x_temp[ 2]  = OBSV.cjheemf.xChi[0]        + increment_1[ 2]*0.5;
+    x_temp[ 3]  = OBSV.cjheemf.xChi[1]        + increment_1[ 3]*0.5;
+    x_temp[ 4]  = OBSV.cjheemf.xOmg           + increment_1[ 4]*0.5;
+    x_temp[ 5]  = OBSV.cjheemf.xEta[0]        + increment_1[ 5]*0.5;
+    x_temp[ 6]  = OBSV.cjheemf.xEta[1]        + increment_1[ 6]*0.5;
+    x_temp[ 7]  = OBSV.cjheemf.xVarsigma[0]   + increment_1[ 7]*0.5;
+    x_temp[ 8]  = OBSV.cjheemf.xVarsigma[1]   + increment_1[ 8]*0.5;
+    x_temp[ 9]  = OBSV.cjheemf.xUpsilon[0]    + increment_1[ 9]*0.5;
+    x_temp[10]  = OBSV.cjheemf.xUpsilon[1]    + increment_1[10]*0.5;
+    x_temp[11]  = OBSV.cjheemf.xZeta[0]       + increment_1[11]*0.5;
+    x_temp[12]  = OBSV.cjheemf.xZeta[1]       + increment_1[12]*0.5;
 
     // time instant t+hs/2
     IS(0) = 0.5*(IS_P(0)+IS_C(0));
@@ -596,19 +598,19 @@ void eemf_ao_dedicated_rk4_solver(REAL hs){
                       p_x_temp+9, 
                       p_x_temp+11, 
                       hs );
-    x_temp[ 0]  = cjheemf.xPsi[0]        + increment_2[ 0]*0.5;
-    x_temp[ 1]  = cjheemf.xPsi[1]        + increment_2[ 1]*0.5;
-    x_temp[ 2]  = cjheemf.xChi[0]        + increment_2[ 2]*0.5;
-    x_temp[ 3]  = cjheemf.xChi[1]        + increment_2[ 3]*0.5;
-    x_temp[ 4]  = cjheemf.xOmg           + increment_2[ 4]*0.5;
-    x_temp[ 5]  = cjheemf.xEta[0]        + increment_2[ 5]*0.5;
-    x_temp[ 6]  = cjheemf.xEta[1]        + increment_2[ 6]*0.5;
-    x_temp[ 7]  = cjheemf.xVarsigma[0]   + increment_2[ 7]*0.5;
-    x_temp[ 8]  = cjheemf.xVarsigma[1]   + increment_2[ 8]*0.5;
-    x_temp[ 9]  = cjheemf.xUpsilon[0]    + increment_2[ 9]*0.5;
-    x_temp[10]  = cjheemf.xUpsilon[1]    + increment_2[10]*0.5;
-    x_temp[11]  = cjheemf.xZeta[0]       + increment_2[11]*0.5;
-    x_temp[12]  = cjheemf.xZeta[1]       + increment_2[12]*0.5;
+    x_temp[ 0]  = OBSV.cjheemf.xPsi[0]        + increment_2[ 0]*0.5;
+    x_temp[ 1]  = OBSV.cjheemf.xPsi[1]        + increment_2[ 1]*0.5;
+    x_temp[ 2]  = OBSV.cjheemf.xChi[0]        + increment_2[ 2]*0.5;
+    x_temp[ 3]  = OBSV.cjheemf.xChi[1]        + increment_2[ 3]*0.5;
+    x_temp[ 4]  = OBSV.cjheemf.xOmg           + increment_2[ 4]*0.5;
+    x_temp[ 5]  = OBSV.cjheemf.xEta[0]        + increment_2[ 5]*0.5;
+    x_temp[ 6]  = OBSV.cjheemf.xEta[1]        + increment_2[ 6]*0.5;
+    x_temp[ 7]  = OBSV.cjheemf.xVarsigma[0]   + increment_2[ 7]*0.5;
+    x_temp[ 8]  = OBSV.cjheemf.xVarsigma[1]   + increment_2[ 8]*0.5;
+    x_temp[ 9]  = OBSV.cjheemf.xUpsilon[0]    + increment_2[ 9]*0.5;
+    x_temp[10]  = OBSV.cjheemf.xUpsilon[1]    + increment_2[10]*0.5;
+    x_temp[11]  = OBSV.cjheemf.xZeta[0]       + increment_2[11]*0.5;
+    x_temp[12]  = OBSV.cjheemf.xZeta[1]       + increment_2[12]*0.5;
 
     // time instant t+hs/2
     rhf_func_eemfaod( increment_3, p_x_temp+0, p_x_temp+2, *(p_x_temp+4), 
@@ -617,19 +619,19 @@ void eemf_ao_dedicated_rk4_solver(REAL hs){
                       p_x_temp+9, 
                       p_x_temp+11, 
                       hs );
-    x_temp[ 0]  = cjheemf.xPsi[0]        + increment_3[ 0];
-    x_temp[ 1]  = cjheemf.xPsi[1]        + increment_3[ 1];
-    x_temp[ 2]  = cjheemf.xChi[0]        + increment_3[ 2];
-    x_temp[ 3]  = cjheemf.xChi[1]        + increment_3[ 3];
-    x_temp[ 4]  = cjheemf.xOmg           + increment_3[ 4];
-    x_temp[ 5]  = cjheemf.xEta[0]        + increment_3[ 5];
-    x_temp[ 6]  = cjheemf.xEta[1]        + increment_3[ 6];
-    x_temp[ 7]  = cjheemf.xVarsigma[0]   + increment_3[ 7];
-    x_temp[ 8]  = cjheemf.xVarsigma[1]   + increment_3[ 8];
-    x_temp[ 9]  = cjheemf.xUpsilon[0]    + increment_3[ 9];
-    x_temp[10]  = cjheemf.xUpsilon[1]    + increment_3[10];
-    x_temp[11]  = cjheemf.xZeta[0]       + increment_3[11];
-    x_temp[12]  = cjheemf.xZeta[1]       + increment_3[12];
+    x_temp[ 0]  = OBSV.cjheemf.xPsi[0]        + increment_3[ 0];
+    x_temp[ 1]  = OBSV.cjheemf.xPsi[1]        + increment_3[ 1];
+    x_temp[ 2]  = OBSV.cjheemf.xChi[0]        + increment_3[ 2];
+    x_temp[ 3]  = OBSV.cjheemf.xChi[1]        + increment_3[ 3];
+    x_temp[ 4]  = OBSV.cjheemf.xOmg           + increment_3[ 4];
+    x_temp[ 5]  = OBSV.cjheemf.xEta[0]        + increment_3[ 5];
+    x_temp[ 6]  = OBSV.cjheemf.xEta[1]        + increment_3[ 6];
+    x_temp[ 7]  = OBSV.cjheemf.xVarsigma[0]   + increment_3[ 7];
+    x_temp[ 8]  = OBSV.cjheemf.xVarsigma[1]   + increment_3[ 8];
+    x_temp[ 9]  = OBSV.cjheemf.xUpsilon[0]    + increment_3[ 9];
+    x_temp[10]  = OBSV.cjheemf.xUpsilon[1]    + increment_3[10];
+    x_temp[11]  = OBSV.cjheemf.xZeta[0]       + increment_3[11];
+    x_temp[12]  = OBSV.cjheemf.xZeta[1]       + increment_3[12];
 
     // time instant t+hs
     IS(0) = IS_C(0);
@@ -642,29 +644,29 @@ void eemf_ao_dedicated_rk4_solver(REAL hs){
                       hs );
     // \+=[^\n]*1\[(\d+)\][^\n]*2\[(\d+)\][^\n]*3\[(\d+)\][^\n]*4\[(\d+)\][^\n]*/ ([\d]+)
     // +=   (increment_1[$5] + 2*(increment_2[$5] + increment_3[$5]) + increment_4[$5])*0.166666666666667; // $5
-    cjheemf.xPsi[0]        +=   (increment_1[0] + 2*(increment_2[0] + increment_3[0]) + increment_4[0])*0.166666666666667; // 0
-    cjheemf.xPsi[1]        +=   (increment_1[1] + 2*(increment_2[1] + increment_3[1]) + increment_4[1])*0.166666666666667; // 1
-    cjheemf.xChi[0]        +=   (increment_1[2] + 2*(increment_2[2] + increment_3[2]) + increment_4[2])*0.166666666666667; // 2
-    cjheemf.xChi[1]        +=   (increment_1[3] + 2*(increment_2[3] + increment_3[3]) + increment_4[3])*0.166666666666667; // 3
-    cjheemf.xOmg           +=   (increment_1[4] + 2*(increment_2[4] + increment_3[4]) + increment_4[4])*0.166666666666667; // 4
-    // if(CTRL.timebase>1.6){
-    //     printf("%g\n", cjheemf.xOmg);;
+    OBSV.cjheemf.xPsi[0]        +=   (increment_1[0] + 2*(increment_2[0] + increment_3[0]) + increment_4[0])*0.166666666666667; // 0
+    OBSV.cjheemf.xPsi[1]        +=   (increment_1[1] + 2*(increment_2[1] + increment_3[1]) + increment_4[1])*0.166666666666667; // 1
+    OBSV.cjheemf.xChi[0]        +=   (increment_1[2] + 2*(increment_2[2] + increment_3[2]) + increment_4[2])*0.166666666666667; // 2
+    OBSV.cjheemf.xChi[1]        +=   (increment_1[3] + 2*(increment_2[3] + increment_3[3]) + increment_4[3])*0.166666666666667; // 3
+    OBSV.cjheemf.xOmg           +=   (increment_1[4] + 2*(increment_2[4] + increment_3[4]) + increment_4[4])*0.166666666666667; // 4
+    // if((*CTRL).timebase>1.6){
+    //     printf("%g\n", OBSV.cjheemf.xOmg);;
     // }
-    cjheemf.xEta[0]        +=   (increment_1[5] + 2*(increment_2[5] + increment_3[5]) + increment_4[5])*0.166666666666667; // 5
-    cjheemf.xEta[1]        +=   (increment_1[6] + 2*(increment_2[6] + increment_3[6]) + increment_4[6])*0.166666666666667; // 6
-    cjheemf.xVarsigma[0]   +=   (increment_1[7] + 2*(increment_2[7] + increment_3[7]) + increment_4[7])*0.166666666666667; // 7
-    cjheemf.xVarsigma[1]   +=   (increment_1[8] + 2*(increment_2[8] + increment_3[8]) + increment_4[8])*0.166666666666667; // 8
-    cjheemf.xUpsilon[0]    +=   (increment_1[9] + 2*(increment_2[9] + increment_3[9]) + increment_4[9])*0.166666666666667; // 9
-    cjheemf.xUpsilon[1]    +=   (increment_1[10] + 2*(increment_2[10] + increment_3[10]) + increment_4[10])*0.166666666666667; // 10
-    cjheemf.xZeta[0]       +=   (increment_1[11] + 2*(increment_2[11] + increment_3[11]) + increment_4[11])*0.166666666666667; // 11
-    cjheemf.xZeta[1]       +=   (increment_1[12] + 2*(increment_2[12] + increment_3[12]) + increment_4[12])*0.166666666666667; // 12
+    OBSV.cjheemf.xEta[0]        +=   (increment_1[5] + 2*(increment_2[5] + increment_3[5]) + increment_4[5])*0.166666666666667; // 5
+    OBSV.cjheemf.xEta[1]        +=   (increment_1[6] + 2*(increment_2[6] + increment_3[6]) + increment_4[6])*0.166666666666667; // 6
+    OBSV.cjheemf.xVarsigma[0]   +=   (increment_1[7] + 2*(increment_2[7] + increment_3[7]) + increment_4[7])*0.166666666666667; // 7
+    OBSV.cjheemf.xVarsigma[1]   +=   (increment_1[8] + 2*(increment_2[8] + increment_3[8]) + increment_4[8])*0.166666666666667; // 8
+    OBSV.cjheemf.xUpsilon[0]    +=   (increment_1[9] + 2*(increment_2[9] + increment_3[9]) + increment_4[9])*0.166666666666667; // 9
+    OBSV.cjheemf.xUpsilon[1]    +=   (increment_1[10] + 2*(increment_2[10] + increment_3[10]) + increment_4[10])*0.166666666666667; // 10
+    OBSV.cjheemf.xZeta[0]       +=   (increment_1[11] + 2*(increment_2[11] + increment_3[11]) + increment_4[11])*0.166666666666667; // 11
+    OBSV.cjheemf.xZeta[1]       +=   (increment_1[12] + 2*(increment_2[12] + increment_3[12]) + increment_4[12])*0.166666666666667; // 12
 
 
-    cjheemf.xEemf[0] = - CTRL.motor->Ld * cjheemf.xOmg *-IS_C(1) - cjheemf.xChi[0]; 
-    cjheemf.xEemf[1] = - CTRL.motor->Ld * cjheemf.xOmg * IS_C(0) - cjheemf.xChi[1]; 
-    cjheemf.theta_d = atan2( 
-                             - cjheemf.xEemf[0]*(sign(cjheemf.xOmg)), 
-                               cjheemf.xEemf[1]*(sign(cjheemf.xOmg))
+    OBSV.cjheemf.xEemf[0] = - (*CTRL).motor->Ld * OBSV.cjheemf.xOmg *-IS_C(1) - OBSV.cjheemf.xChi[0]; 
+    OBSV.cjheemf.xEemf[1] = - (*CTRL).motor->Ld * OBSV.cjheemf.xOmg * IS_C(0) - OBSV.cjheemf.xChi[1]; 
+    OBSV.cjheemf.theta_d = atan2( 
+                             - OBSV.cjheemf.xEemf[0]*(sign(OBSV.cjheemf.xOmg)), 
+                               OBSV.cjheemf.xEemf[1]*(sign(OBSV.cjheemf.xOmg))
                            );
 }
 /* Main Observer */
@@ -674,9 +676,9 @@ void Main_cjh_eemfao(){
     eemf_ao_dedicated_rk4_solver(1*CL_TS);
 }
 void init_cjheemf(){
-    cjheemf.k1        = CJH_EEMF_K1;
-    cjheemf.k2        = CJH_EEMF_K2;
-    cjheemf.gamma_omg = CJH_EEMF_GAMMA_OMEGA;
+    OBSV.cjheemf.k1        = CJH_EEMF_K1;
+    OBSV.cjheemf.k2        = CJH_EEMF_K2;
+    OBSV.cjheemf.gamma_omg = CJH_EEMF_GAMMA_OMEGA;
 }
 #undef NS
 #endif
@@ -687,22 +689,22 @@ void init_cjheemf(){
  ********************************************/
 #if PC_SIMULATION || SELECT_ALGORITHM == ALG_Harnefors_2006
 void init_harnefors(){
-    // harnefors.theta_d = 0.0;
-    // harnefors.omg_elec = 0.0;
+    // OBSV.harnefors.theta_d = 0.0;
+    // OBSV.harnefors.omg_elec = 0.0;
 
-    harnefors.svf_p0 = SVF_POLE_0_VALUE;
-    harnefors.xSVF_curr[0] = 0.0;
-    harnefors.xSVF_curr[1] = 0.0;
-    harnefors.xSVF_prev[0] = 0.0;
-    harnefors.xSVF_prev[1] = 0.0;
-    harnefors.is_dq[0] = 0.0;
-    harnefors.is_dq[1] = 0.0;
-    harnefors.is_dq_curr[0] = 0.0;
-    harnefors.is_dq_curr[1] = 0.0;
-    harnefors.is_dq_prev[0] = 0.0;
-    harnefors.is_dq_prev[1] = 0.0;
-    harnefors.pis_dq[0] = 0.0;
-    harnefors.pis_dq[1] = 0.0;    
+    OBSV.harnefors.svf_p0 = SVF_POLE_0_VALUE;
+    OBSV.harnefors.xSVF_curr[0] = 0.0;
+    OBSV.harnefors.xSVF_curr[1] = 0.0;
+    OBSV.harnefors.xSVF_prev[0] = 0.0;
+    OBSV.harnefors.xSVF_prev[1] = 0.0;
+    OBSV.harnefors.is_dq[0] = 0.0;
+    OBSV.harnefors.is_dq[1] = 0.0;
+    OBSV.harnefors.is_dq_curr[0] = 0.0;
+    OBSV.harnefors.is_dq_curr[1] = 0.0;
+    OBSV.harnefors.is_dq_prev[0] = 0.0;
+    OBSV.harnefors.is_dq_prev[1] = 0.0;
+    OBSV.harnefors.pis_dq[0] = 0.0;
+    OBSV.harnefors.pis_dq[1] = 0.0;    
 }
 void state_variable_filter(REAL hs){
     // output += SVF_POLE_0 * (input - last_output) * hs;
@@ -767,24 +769,24 @@ void Main_harnefors_scvm(){
         #define CJH_TUNING_B  1  // low voltage servo motor (<48 Vdc)
         #define CJH_TUNING_C 0.2 // [0.2， 0.5]
     // 可调参数壹
-    REAL lambda_s = CJH_TUNING_C * LAMBDA * sign(harnefors.omg_elec);
+    REAL lambda_s = CJH_TUNING_C * LAMBDA * sign(OBSV.harnefors.omg_elec);
     // 可调参数贰
-    REAL alpha_bw_lpf = CJH_TUNING_A*0.1*(1500*RPM_2_ELEC_RAD_PER_SEC) + CJH_TUNING_B*2*LAMBDA*fabs(harnefors.omg_elec);
+    REAL alpha_bw_lpf = CJH_TUNING_A*0.1*(1500*RPM_2_ELEC_RAD_PER_SEC) + CJH_TUNING_B*2*LAMBDA*fabsf(OBSV.harnefors.omg_elec);
 
 
     // 一阶差分计算DQ电流的导数
     static REAL last_id = 0.0;
     static REAL last_iq = 0.0;
-    // #define D_AXIS_CURRENT CTRL.id_cmd
-    // #define Q_AXIS_CURRENT CTRL.iq_cmd
-    // harnefors.deriv_id = (CTRL.id_cmd - last_id) * CL_TS_INVERSE;
-    // harnefors.deriv_iq = (CTRL.iq_cmd - last_iq) * CL_TS_INVERSE;
-    // last_id = CTRL.id_cmd;
-    // last_iq = CTRL.iq_cmd;
-    #define D_AXIS_CURRENT CTRL.I->idq[0]
-    #define Q_AXIS_CURRENT CTRL.I->idq[1]
-    harnefors.deriv_id = (D_AXIS_CURRENT - last_id) * CL_TS_INVERSE;
-    harnefors.deriv_iq = (Q_AXIS_CURRENT - last_iq) * CL_TS_INVERSE;
+    // #define D_AXIS_CURRENT (*CTRL).id_cmd
+    // #define Q_AXIS_CURRENT (*CTRL).iq_cmd
+    // OBSV.harnefors.deriv_id = ((*CTRL).id_cmd - last_id) * CL_TS_INVERSE;
+    // OBSV.harnefors.deriv_iq = ((*CTRL).iq_cmd - last_iq) * CL_TS_INVERSE;
+    // last_id = (*CTRL).id_cmd;
+    // last_iq = (*CTRL).iq_cmd;
+    #define D_AXIS_CURRENT (*CTRL).i->iDQ[0]
+    #define Q_AXIS_CURRENT (*CTRL).i->iDQ[1]
+    OBSV.harnefors.deriv_id = (D_AXIS_CURRENT - last_id) * CL_TS_INVERSE;
+    OBSV.harnefors.deriv_iq = (Q_AXIS_CURRENT - last_iq) * CL_TS_INVERSE;
     last_id = D_AXIS_CURRENT;
     last_iq = Q_AXIS_CURRENT;
 
@@ -799,29 +801,29 @@ void Main_harnefors_scvm(){
     #define DERIV_ID PIDQ(0)
     #define DERIV_IQ PIDQ(1)
 
-    #define UD_CMD CTRL.O->udq_cmd[0]
-    #define UQ_CMD CTRL.O->udq_cmd[1]
-    #define MOTOR  (*CTRL.motor)
+    #define UD_CMD (*CTRL).o->cmd_uDQ[0]
+    #define UQ_CMD (*CTRL).o->cmd_uDQ[1]
+    #define MOTOR  (*(*CTRL).motor)
 
     // // 计算反电势（考虑dq电流导数）
     // #define BOOL_COMPENSATE_PIDQ 1
-    // REAL d_axis_emf = UD_CMD - MOTOR.R*D_AXIS_CURRENT + harnefors.omg_elec*MOTOR.Lq*Q_AXIS_CURRENT - BOOL_COMPENSATE_PIDQ*MOTOR.Ld*DERIV_ID; // eemf
-    // REAL q_axis_emf = UQ_CMD - MOTOR.R*Q_AXIS_CURRENT - harnefors.omg_elec*MOTOR.Ld*D_AXIS_CURRENT - BOOL_COMPENSATE_PIDQ*MOTOR.Lq*DERIV_IQ; // eemf
+    // REAL d_axis_emf = UD_CMD - MOTOR.R*D_AXIS_CURRENT + OBSV.harnefors.omg_elec*MOTOR.Lq*Q_AXIS_CURRENT - BOOL_COMPENSATE_PIDQ*MOTOR.Ld*DERIV_ID; // eemf
+    // REAL q_axis_emf = UQ_CMD - MOTOR.R*Q_AXIS_CURRENT - OBSV.harnefors.omg_elec*MOTOR.Ld*D_AXIS_CURRENT - BOOL_COMPENSATE_PIDQ*MOTOR.Lq*DERIV_IQ; // eemf
 
     // 计算反电势（忽略dq电流导数）
     #define BOOL_COMPENSATE_PIDQ 0
-    REAL d_axis_emf = UD_CMD - MOTOR.R*D_AXIS_CURRENT + harnefors.omg_elec*MOTOR.Lq*Q_AXIS_CURRENT - BOOL_COMPENSATE_PIDQ*MOTOR.Ld*DERIV_ID; // eemf
-    REAL q_axis_emf = UQ_CMD - MOTOR.R*Q_AXIS_CURRENT - harnefors.omg_elec*MOTOR.Ld*D_AXIS_CURRENT - BOOL_COMPENSATE_PIDQ*MOTOR.Lq*DERIV_IQ; // eemf
+    REAL d_axis_emf = UD_CMD - MOTOR.R*D_AXIS_CURRENT + OBSV.harnefors.omg_elec*MOTOR.Lq*Q_AXIS_CURRENT - BOOL_COMPENSATE_PIDQ*MOTOR.Ld*DERIV_ID; // eemf
+    REAL q_axis_emf = UQ_CMD - MOTOR.R*Q_AXIS_CURRENT - OBSV.harnefors.omg_elec*MOTOR.Ld*D_AXIS_CURRENT - BOOL_COMPENSATE_PIDQ*MOTOR.Lq*DERIV_IQ; // eemf
 
     // 数值积分获得转速和转子位置
         // Note it is bad habit to write numerical integration explictly like this. The states on the right may be accencidentally modified on the run.
     #define KE_MISMATCH 1.0 // 0.7
-    harnefors.theta_d  += CL_TS * harnefors.omg_elec;
-    harnefors.omg_elec += CL_TS * alpha_bw_lpf * ( (q_axis_emf - lambda_s*d_axis_emf)/(MOTOR.KE*KE_MISMATCH+(MOTOR.Ld-MOTOR.Lq)*D_AXIS_CURRENT) - harnefors.omg_elec );
+    OBSV.harnefors.theta_d  += CL_TS * OBSV.harnefors.omg_elec;
+    OBSV.harnefors.omg_elec += CL_TS * alpha_bw_lpf * ( (q_axis_emf - lambda_s*d_axis_emf)/(MOTOR.KE*KE_MISMATCH+(MOTOR.Ld-MOTOR.Lq)*D_AXIS_CURRENT) - OBSV.harnefors.omg_elec );
 
     // 转子位置周期限幅
-    while(harnefors.theta_d>M_PI) harnefors.theta_d-=2*M_PI;
-    while(harnefors.theta_d<-M_PI) harnefors.theta_d+=2*M_PI;
+    if(OBSV.harnefors.theta_d>M_PI) OBSV.harnefors.theta_d-=2*M_PI;
+    if(OBSV.harnefors.theta_d<-M_PI) OBSV.harnefors.theta_d+=2*M_PI;
 }
 #endif
 
@@ -849,7 +851,7 @@ void rhf_QiaoXia2013_Dynamics(REAL t, REAL *x, REAL *fx){
     REAL xOmg  = x[4];
 
     /* Know Signals */
-    // #define MOTOR (*CTRL.motor)
+    // #define MOTOR (*(*CTRL).motor)
 
     /* Output Error = \tilde i_q (scalar) */
     qiaoxia.output_error[0] = IS(0) - xIa;
@@ -866,7 +868,7 @@ void rhf_QiaoXia2013_Dynamics(REAL t, REAL *x, REAL *fx){
     fx[0] = MOTOR.Lq_inv * (US(0) - MOTOR.R * xIa + qiaoxia.xEmf_raw[0]);
     fx[1] = MOTOR.Lq_inv * (US(1) - MOTOR.R * xIb + qiaoxia.xEmf_raw[1]);
     // xEmf
-    #define OMG_USED xOmg //CTRL.I->omg_elec // 
+    #define OMG_USED xOmg //(*CTRL).i->omg_elec // 
     fx[2] = -OMG_USED*xEmfb + qiaoxia.mras_gain * (qiaoxia.xEmf_raw[0] - xEmfa);
     fx[3] =  OMG_USED*xEmfa + qiaoxia.mras_gain * (qiaoxia.xEmf_raw[1] - xEmfb);
     // xOmg
@@ -875,10 +877,10 @@ void rhf_QiaoXia2013_Dynamics(REAL t, REAL *x, REAL *fx){
 void Main_QiaoXia2013_emfSMO(){
 
     /* Time-varying gains */
-    qiaoxia.smo_gain = QIAO_XIA_SMO_GAIN * fabs(CTRL.I->cmd_omg_elec) * MOTOR.KE;
+    qiaoxia.smo_gain = QIAO_XIA_SMO_GAIN * fabsf((*CTRL).i->cmd_varOmega*MOTOR.npp) * MOTOR.KE;
     // qiaoxia.smo_gain = QIAO_XIA_SMO_GAIN * 70 * MOTOR.KE;
 
-    general_5states_rk4_solver(&rhf_QiaoXia2013_Dynamics, CTRL.timebase, qiaoxia.x, CL_TS);
+    general_5states_rk4_solver(&rhf_QiaoXia2013_Dynamics, (*CTRL).timebase, qiaoxia.x, CL_TS);
 
     /* Unpack x (for the best) */
     qiaoxia.xIab[0] = qiaoxia.x[0];
@@ -886,8 +888,8 @@ void Main_QiaoXia2013_emfSMO(){
     qiaoxia.xEmf[0] = qiaoxia.x[2];
     qiaoxia.xEmf[1] = qiaoxia.x[3];
     qiaoxia.xOmg    = qiaoxia.x[4];
-    // REAL temp = -atan2( qiaoxia.xEmf[0]*-sign(CTRL.I->cmd_speed_rpm),   // qiaoxia.xOmg
-    //                     qiaoxia.xEmf[1]*-sign(CTRL.I->cmd_speed_rpm) ); // qiaoxia.xOmg
+    // REAL temp = -atan2( qiaoxia.xEmf[0]*-sign((*CTRL).i->cmd_varOmega*MECH_RAD_PER_SEC_2_RPM),   // qiaoxia.xOmg
+    //                     qiaoxia.xEmf[1]*-sign((*CTRL).i->cmd_varOmega*MECH_RAD_PER_SEC_2_RPM) ); // qiaoxia.xOmg
     REAL temp = -atan2( qiaoxia.xEmf[0]*sign(-qiaoxia.xOmg),   // qiaoxia.xOmg
                         qiaoxia.xEmf[1]*sign(-qiaoxia.xOmg) ); // qiaoxia.xOmg
     // REAL temp = -atan2( qiaoxia.xEmf[0],   // qiaoxia.xOmg
@@ -917,20 +919,20 @@ void Main_QiaoXia2013_emfSMO(){
 #if PC_SIMULATION || SELECT_ALGORITHM == ALG_Chi_Xu
 void init_ChiXu2009(){
     /*实验中Chi.Xu的状态x在调参过程中经常变成+inf，所以这里初始化一下。*/
-    chixu.x[0] = 0.0;
-    chixu.x[1] = 0.0;
-    chixu.x[2] = 0.0;
-    chixu.x[3] = 0.0;
+    OBSV.chixu.x[0] = 0.0;
+    OBSV.chixu.x[1] = 0.0;
+    OBSV.chixu.x[2] = 0.0;
+    OBSV.chixu.x[3] = 0.0;
 
-    chixu.smo_gain      = 400.0; // CHI_XU_USE_CONSTANT_SMO_GAIN
-    chixu.sigmoid_coeff = CHI_XU_SIGMOID_COEFF;   // 17
-    chixu.PLL_KP        = CHI_XU_SPEED_PLL_KP;
-    chixu.PLL_KI        = CHI_XU_SPEED_PLL_KI;
-    chixu.ell4xZeq      = -0.5; // -0.5 for low speed and 1.0 for high speed
-    chixu.omega_lpf_4_xZeq_const_part = CHI_XU_LPF_4_ZEQ;
-    chixu.omega_lpf_4_xZeq = chixu.omega_lpf_4_xZeq_const_part;
+    OBSV.chixu.smo_gain      = 400.0; // CHI_XU_USE_CONSTANT_SMO_GAIN
+    OBSV.chixu.sigmoid_coeff = CHI_XU_SIGMOID_COEFF;   // 17
+    OBSV.chixu.PLL_KP        = CHI_XU_SPEED_PLL_KP;
+    OBSV.chixu.PLL_KI        = CHI_XU_SPEED_PLL_KI;
+    OBSV.chixu.ell4xZeq      = -0.5; // -0.5 for low speed and 1.0 for high speed
+    OBSV.chixu.omega_lpf_4_xZeq_const_part = CHI_XU_LPF_4_ZEQ;
+    OBSV.chixu.omega_lpf_4_xZeq = OBSV.chixu.omega_lpf_4_xZeq_const_part;
 
-    chixu.smo_gain_scale = CHI_XU_SMO_GAIN_SCALE;
+    OBSV.chixu.smo_gain_scale = CHI_XU_SMO_GAIN_SCALE;
 }
 REAL get_theta_d_from_xZeq(REAL xZeq_a, REAL xZeq_b){
     REAL temp = -atan2( xZeq_a, xZeq_b) + M_PI*0.5;
@@ -950,40 +952,40 @@ void rhf_ChiXu2009_Dynamics(REAL t, REAL *x, REAL *fx){
     #define xTheta_d x[5]
 
     /* Know Signals */
-    // #define MOTOR (*CTRL.motor)
+    // #define MOTOR (*(*CTRL).motor)
 
     /* Output Error = \tilde i_q (scalar) */
-    chixu.output_error[0] = IS(0) - xIab(0);
-    chixu.output_error[1] = IS(1) - xIab(1);
+    OBSV.chixu.output_error[0] = IS(0) - xIab(0);
+    OBSV.chixu.output_error[1] = IS(1) - xIab(1);
 
     /* Sliding Mode Switching Term*/
     // TODO: need to change sigmoid to saturation function 
-    chixu.xEmf_raw[0] = chixu.smo_gain * sm_sigmoid(chixu.output_error[0], chixu.sigmoid_coeff);
-    chixu.xEmf_raw[1] = chixu.smo_gain * sm_sigmoid(chixu.output_error[1], chixu.sigmoid_coeff);
+    OBSV.chixu.xEmf_raw[0] = OBSV.chixu.smo_gain * sm_sigmoid(OBSV.chixu.output_error[0], OBSV.chixu.sigmoid_coeff);
+    OBSV.chixu.xEmf_raw[1] = OBSV.chixu.smo_gain * sm_sigmoid(OBSV.chixu.output_error[1], OBSV.chixu.sigmoid_coeff);
 
     // xZeq
-    fx[2] = chixu.omega_lpf_4_xZeq * (chixu.xEmf_raw[0] - xZeq(0));
-    fx[3] = chixu.omega_lpf_4_xZeq * (chixu.xEmf_raw[1] - xZeq(1));
+    fx[2] = OBSV.chixu.omega_lpf_4_xZeq * (OBSV.chixu.xEmf_raw[0] - xZeq(0));
+    fx[3] = OBSV.chixu.omega_lpf_4_xZeq * (OBSV.chixu.xEmf_raw[1] - xZeq(1));
 
     //
-    chixu.theta_d = get_theta_d_from_xZeq(chixu.xZeq[0], chixu.xZeq[1]);
+    OBSV.chixu.theta_d = get_theta_d_from_xZeq(OBSV.chixu.xZeq[0], OBSV.chixu.xZeq[1]);
 
     /* State Observer */
     // xIab
-    fx[0] = MOTOR.Lq_inv * (US(0) - MOTOR.R * xIab(0) + chixu.ell4xZeq * xZeq(0) + chixu.xEmf_raw[0]);
-    fx[1] = MOTOR.Lq_inv * (US(1) - MOTOR.R * xIab(1) + chixu.ell4xZeq * xZeq(1) + chixu.xEmf_raw[1]);
+    fx[0] = MOTOR.Lq_inv * (US(0) - MOTOR.R * xIab(0) + OBSV.chixu.ell4xZeq * xZeq(0) + OBSV.chixu.xEmf_raw[0]);
+    fx[1] = MOTOR.Lq_inv * (US(1) - MOTOR.R * xIab(1) + OBSV.chixu.ell4xZeq * xZeq(1) + OBSV.chixu.xEmf_raw[1]);
 
     // PLL for xOmg
     if(TRUE){
         // xOmg
-        fx[4] = (chixu.PLL_KI        * sin(chixu.theta_d - xTheta_d));
+        fx[4] = (OBSV.chixu.PLL_KI        * sin(OBSV.chixu.theta_d - xTheta_d));
         // xTheta_d
-        fx[5] = (xOmg + chixu.PLL_KP * sin(chixu.theta_d - xTheta_d));
+        fx[5] = (xOmg + OBSV.chixu.PLL_KP * sin(OBSV.chixu.theta_d - xTheta_d));
     }else{
         // xOmg
-        fx[4] = (chixu.PLL_KI        * difference_between_two_angles(chixu.theta_d, xTheta_d));
+        fx[4] = (OBSV.chixu.PLL_KI        * difference_between_two_angles(OBSV.chixu.theta_d, xTheta_d));
         // xTheta_d
-        fx[5] = (xOmg + chixu.PLL_KP * difference_between_two_angles(chixu.theta_d, xTheta_d));
+        fx[5] = (xOmg + OBSV.chixu.PLL_KP * difference_between_two_angles(OBSV.chixu.theta_d, xTheta_d));
     }
 
 
@@ -994,24 +996,24 @@ void rhf_ChiXu2009_Dynamics(REAL t, REAL *x, REAL *fx){
 }
 void Main_ChiXu2009_emfSMO(){
 
-    // #define OMEGA_SYNC_USED CTRL.I->cmd_omg_elec
-    // #define OMEGA_SYNC_USED CTRL.I->omg_elec
-    #define OMEGA_SYNC_USED chixu.xOmg
+    // #define OMEGA_SYNC_USED (*CTRL).i->cmd_varOmega*MOTOR.npp
+    // #define OMEGA_SYNC_USED (*CTRL).i->omg_elec
+    #define OMEGA_SYNC_USED OBSV.chixu.xOmg
 
     #if CHI_XU_USE_CONSTANT_SMO_GAIN == FALSE
         /* Time-varying gains */
-        chixu.smo_gain = chixu.smo_gain_scale * fabs(OMEGA_SYNC_USED) * MOTOR.KE; // 根据Qiao.Xia 2013的稳定性证明增益要比反电势大。
-        if(fabs(OMEGA_SYNC_USED)<5){ // [rad/s]
+        OBSV.chixu.smo_gain = OBSV.chixu.smo_gain_scale * fabsf(OMEGA_SYNC_USED) * MOTOR.KE; // 根据Qiao.Xia 2013的稳定性证明增益要比反电势大。
+        if(fabsf(OMEGA_SYNC_USED)<5){ // [rad/s]
             // 转速太低以后，就不要再减小滑模增益了
-            chixu.smo_gain = chixu.smo_gain_scale * 5 * MOTOR.KE;
+            OBSV.chixu.smo_gain = OBSV.chixu.smo_gain_scale * 5 * MOTOR.KE;
         }
     #endif
 
     /* ell for xZeq */
-    if(fabs(CTRL.I->cmd_speed_rpm)>180){
-        chixu.ell4xZeq = 1.0;
+    if(fabsf((*CTRL).i->cmd_varOmega*MECH_RAD_PER_SEC_2_RPM)>180){
+        OBSV.chixu.ell4xZeq = 1.0;
     }else{
-        chixu.ell4xZeq = -0.5;
+        OBSV.chixu.ell4xZeq = -0.5;
     }
 
     /* For the sake of simplicity, a first-order LPF is used in (3).
@@ -1019,29 +1021,29 @@ void Main_ChiXu2009_emfSMO(){
         properly according to the fundamental frequency of phase
         currents of PMSM */
     #if CHI_XU_USE_CONSTANT_LPF_POLE == FALSE
-        chixu.omega_lpf_4_xZeq = 0.05*fabs(OMEGA_SYNC_USED) + chixu.omega_lpf_4_xZeq_const_part;
+        OBSV.chixu.omega_lpf_4_xZeq = 0.05*fabsf(OMEGA_SYNC_USED) + OBSV.chixu.omega_lpf_4_xZeq_const_part;
     #endif
 
-    general_6states_rk4_solver(&rhf_ChiXu2009_Dynamics, CTRL.timebase, chixu.x, CL_TS);
+    general_6states_rk4_solver(&rhf_ChiXu2009_Dynamics, (*CTRL).timebase, OBSV.chixu.x, CL_TS);
 
     /* Unpack x (for the best) */
-    chixu.xIab[0]  = chixu.x[0];
-    chixu.xIab[1]  = chixu.x[1];
-    chixu.xZeq[0]  = chixu.x[2];
-    chixu.xZeq[1]  = chixu.x[3];
-    chixu.xOmg     = chixu.x[4];
-    if(chixu.x[5]>M_PI){
-        chixu.x[5] -= 2*M_PI;
-    }else if(chixu.x[5]<-M_PI){
-        chixu.x[5] += 2*M_PI;
+    OBSV.chixu.xIab[0]  = OBSV.chixu.x[0];
+    OBSV.chixu.xIab[1]  = OBSV.chixu.x[1];
+    OBSV.chixu.xZeq[0]  = OBSV.chixu.x[2];
+    OBSV.chixu.xZeq[1]  = OBSV.chixu.x[3];
+    OBSV.chixu.xOmg     = OBSV.chixu.x[4];
+    if(OBSV.chixu.x[5]>M_PI){
+        OBSV.chixu.x[5] -= 2*M_PI;
+    }else if(OBSV.chixu.x[5]<-M_PI){
+        OBSV.chixu.x[5] += 2*M_PI;
     }
-    chixu.xTheta_d = chixu.x[5];
+    OBSV.chixu.xTheta_d = OBSV.chixu.x[5];
     if(FALSE){
         // use xZeq
-        chixu.theta_d = get_theta_d_from_xZeq(chixu.xZeq[0], chixu.xZeq[1]);
+        OBSV.chixu.theta_d = get_theta_d_from_xZeq(OBSV.chixu.xZeq[0], OBSV.chixu.xZeq[1]);
     }else{
         // use PLL output
-        chixu.theta_d = chixu.xTheta_d; 
+        OBSV.chixu.theta_d = OBSV.chixu.xTheta_d; 
     }
 
     /* Post-observer calculations */
@@ -1082,7 +1084,7 @@ void rhf_parksul2014_Dynamics(REAL t, REAL *x, REAL *fx){
 
     /* Know Signals */
     parksul.omega_f = x[8]; // In addition, it is evident in Fig. 3 that all the integrations in the proposed observer are stopped when ω f is zero, which coincides with the natural property of stator flux at standstill.
-    // parksul.omega_f = CTRL.I->omg_elec;
+    // parksul.omega_f = (*CTRL).i->omg_elec;
 
     /* Pre-calculation */
     parksul.internal_error[0] = xPsi1(0) - xHatPsi1(0);
@@ -1153,8 +1155,8 @@ void rhf_parksul2014_Dynamics(REAL t, REAL *x, REAL *fx){
 
     /* State: disturbance/offset estimated by an integrator */
     // xHatPsi1
-    fx[2] = -parksul.omega_f * (xPsi1(1)-xD(1)) + 2*fabs(parksul.omega_f)*parksul.internal_error[0];
-    fx[3] = +parksul.omega_f * (xPsi1(0)-xD(0)) + 2*fabs(parksul.omega_f)*parksul.internal_error[1];
+    fx[2] = -parksul.omega_f * (xPsi1(1)-xD(1)) + 2*fabsf(parksul.omega_f)*parksul.internal_error[0];
+    fx[3] = +parksul.omega_f * (xPsi1(0)-xD(0)) + 2*fabsf(parksul.omega_f)*parksul.internal_error[1];
     // xD
     fx[4] = -parksul.omega_f * parksul.internal_error[1];
     fx[5] = +parksul.omega_f * parksul.internal_error[0];
@@ -1178,8 +1180,8 @@ void rhf_parksul2014_Dynamics(REAL t, REAL *x, REAL *fx){
 void Main_parksul2014_FADO(){
 
     /* Time-varying gains */
-    if(fabs(parksul.xOmg)        *MOTOR.npp_inv*ONE_OVER_2PI<1.5){ // [Hz]
-    // if(fabs(CTRL.I->cmd_omg_elec)*MOTOR.npp_inv*ONE_OVER_2PI<1.5){ // [Hz]
+    if(fabsf(parksul.xOmg)        *MOTOR.npp_inv*ONE_OVER_2PI<1.5){ // [Hz]
+    // if(fabsf((*CTRL).i->cmd_varOmega*MOTOR.npp)*MOTOR.npp_inv*ONE_OVER_2PI<1.5){ // [Hz]
         parksul.k_df = 0.0;
         parksul.k_af = 2*M_PI*100;
         parksul.limiter_Flag = TRUE;
@@ -1195,7 +1197,7 @@ void Main_parksul2014_FADO(){
     parksul.CM_KP = 0.0; //200.0;  // overwrite KP as zero
     parksul.CM_KI = 0.0; //0.0;  // overwrite KI as zero
 
-    general_10states_rk4_solver(&rhf_parksul2014_Dynamics, CTRL.timebase, parksul.x, CL_TS);
+    general_10states_rk4_solver(&rhf_parksul2014_Dynamics, (*CTRL).timebase, parksul.x, CL_TS);
 
     /* Unpack x (for the best) */
     if(parksul.x[7]>M_PI){
@@ -1241,21 +1243,21 @@ void Main_parksul2014_FADO(){
 
 /* DOB Stationary Voltage that is valid for SPMSM only */
 // void stationary_voltage_DOB(){
-//     // CTRL.I->iab[0]
-//     // CTRL.I->iab[1]
+//     // (*CTRL).i->iab[0]
+//     // (*CTRL).i->iab[1]
 
-//     CTRL.inv->iab_lpf[0] = _lpf(CTRL.I->iab[0], CTRL.inv->iab_lpf[0], CTRL.inv->filter_pole);
-//     CTRL.inv->iab_lpf[1] = _lpf(CTRL.I->iab[1], CTRL.inv->iab_lpf[1], CTRL.inv->filter_pole);
+//     (*CTRL).inv->iab_lpf[0] = _lpf((*CTRL).i->iab[0], (*CTRL).inv->iab_lpf[0], (*CTRL).inv->filter_pole);
+//     (*CTRL).inv->iab_lpf[1] = _lpf((*CTRL).i->iab[1], (*CTRL).inv->iab_lpf[1], (*CTRL).inv->filter_pole);
 
-//     CTRL.inv->iab_hpf[0] = CTRL.I->iab[0] - CTRL.inv->iab_lpf[0];
-//     CTRL.inv->iab_hpf[1] = CTRL.I->iab[1] - CTRL.inv->iab_lpf[1];
+//     (*CTRL).inv->iab_hpf[0] = (*CTRL).i->iab[0] - (*CTRL).inv->iab_lpf[0];
+//     (*CTRL).inv->iab_hpf[1] = (*CTRL).i->iab[1] - (*CTRL).inv->iab_lpf[1];
 
-//     CTRL.inv->uab_DOB[0] = - CTRL.motor->R * CTRL.inv->iab_lpf[0] - CTRL.motor->Ld * CTRL.inv->iab_lpf[0];
-//     CTRL.inv->uab_DOB[1] = - CTRL.motor->R * CTRL.inv->iab_lpf[1] - CTRL.motor->Ld * CTRL.inv->iab_lpf[1];
+//     (*CTRL).inv->uab_DOB[0] = - (*CTRL).motor->R * (*CTRL).inv->iab_lpf[0] - (*CTRL).motor->Ld * (*CTRL).inv->iab_lpf[0];
+//     (*CTRL).inv->uab_DOB[1] = - (*CTRL).motor->R * (*CTRL).inv->iab_lpf[1] - (*CTRL).motor->Ld * (*CTRL).inv->iab_lpf[1];
 
 //     // add back emf
-//     // CTRL.inv->uab_DOB[0] += CTRL.I->omg_elec * CTRL.motor->KE * -sin(CTRL.I->theta_d_elec);
-//     // CTRL.inv->uab_DOB[1] += CTRL.I->omg_elec * CTRL.motor->KE *  cos(CTRL.I->theta_d_elec);
+//     // (*CTRL).inv->uab_DOB[0] += (*CTRL).i->omg_elec * (*CTRL).motor->KE * -sin((*CTRL).i->theta_d_elec);
+//     // (*CTRL).inv->uab_DOB[1] += (*CTRL).i->omg_elec * (*CTRL).motor->KE *  cos((*CTRL).i->theta_d_elec);
 // }
 
 
@@ -1267,47 +1269,48 @@ void Main_parksul2014_FADO(){
 void init_rk4(){
     int i;
     for(i=0; i<2; ++i){
-        rk4.us[i] = 0;
-        rk4.is[i] = 0;
-        // rk4.us_curr[i] = 0;
-        rk4.is_curr[i] = 0;
-        rk4.us_prev[i] = 0;
-        rk4.is_prev[i] = 0;
-        rk4.is_lpf[i]  = 0;
-        rk4.is_hpf[i]  = 0;
-        rk4.is_bpf[i]  = 0;
+        OBSV.rk4.us[i] = 0;
+        OBSV.rk4.is[i] = 0;
+        // OBSV.rk4.us_curr[i] = 0;
+        OBSV.rk4.is_curr[i] = 0;
+        OBSV.rk4.us_prev[i] = 0;
+        OBSV.rk4.is_prev[i] = 0;
+        OBSV.rk4.is_lpf[i]  = 0;
+        OBSV.rk4.is_hpf[i]  = 0;
+        OBSV.rk4.is_bpf[i]  = 0;
 
-        rk4.current_lpf_register[i] = 0;
-        rk4.current_hpf_register[i] = 0;
-        rk4.current_bpf_register1[i] = 0;
-        rk4.current_bpf_register2[i] = 0;
+        OBSV.rk4.current_lpf_register[i] = 0;
+        OBSV.rk4.current_hpf_register[i] = 0;
+        OBSV.rk4.current_bpf_register1[i] = 0;
+        OBSV.rk4.current_bpf_register2[i] = 0;
     }
 }
 void pmsm_observers(){
     // stationary_voltage_DOB();
 
-    CTRL.motor->KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * CTRL.I->idq_cmd[0];
+    (*CTRL).motor->KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * (*CTRL).i->cmd_iDQ[0];
 
     #if PC_SIMULATION
-        /* Cascaded Flux Estimator */
+        // /* Cascaded Flux Estimator */
         simulation_test_flux_estimators();
-        // nsoaf.theta_d = AFE_USED.theta_d;
+        // OBSV.nsoaf.theta_d = FE.AFEOE.theta_d ;
 
-        /* Speed and Position Estimator */
-        Main_harnefors_scvm();
-        // cjh_eemfao();
-        // cjh_eemfhgo_farza09();
+        // /* Speed and Position Estimator */
+        // Main_harnefors_scvm();
+        // // cjh_eemfao();
+        // // cjh_eemfhgo_farza09();
         Main_nsoaf_chen2020();
-        Main_esoaf_chen2021();
-        // Main_QiaoXia2013_emfSMO();
-        Main_ChiXu2009_emfSMO();
-        Main_parksul2014_FADO();
+        // Main_esoaf_chen2021();
+        // // Main_QiaoXia2013_emfSMO();
+        // Main_ChiXu2009_emfSMO();
+        // Main_parksul2014_FADO();
     #else
         /* 资源有限 */
         #if SELECT_ALGORITHM == ALG_NSOAF
             // MainFE_HuWu_1998(); // use algorithm 2
             Main_the_active_flux_estimator();
-            Main_VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
+            Main_VM_ClosedLoopFluxEstimatorForPMSM();
+            //Main_VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
             Main_nsoaf_chen2020();
         #elif SELECT_ALGORITHM == ALG_ESOAF
             Main_the_active_flux_estimator();
@@ -1328,18 +1331,18 @@ void pmsm_observers(){
         #endif
     #endif
 
-    G.omg_elec = ELECTRICAL_SPEED_FEEDBACK;
-    G.theta_d  = ELECTRICAL_POSITION_FEEDBACK;
+    G.omg_elec = PMSM_ELECTRICAL_SPEED_FEEDBACK;
+    G.theta_d  = PMSM_ELECTRICAL_POSITION_FEEDBACK;
 
     // if(G.Select_algorithm == 1){
-    //     G.omg_elec = nsoaf.xOmg;
+    //     G.omg_elec = OBSV.nsoaf.xOmg;
     //     G.theta_d  = AFE_USED.theta_d;
     // }else if(G.Select_algorithm == 2){
     //     G.omg_elec = parksul.xOmg;
     //     G.theta_d  = parksul.theta_d;
     // }else if(G.Select_algorithm == 3){
-    //     G.omg_elec = chixu.xOmg;
-    //     G.theta_d  = chixu.theta_d;
+    //     G.omg_elec = OBSV.chixu.xOmg;
+    //     G.theta_d  = OBSV.chixu.theta_d;
     // }else if(G.Select_algorithm == 4){
     //     G.omg_elec = qiaoxia.xOmg;
     //     G.theta_d  = qiaoxia.theta_d;
@@ -1365,7 +1368,7 @@ void init_pmsm_observers(){
         init_nsoaf();
         init_esoaf();
         init_hgo4eemf();
-        init_cjheemf(); // cjheemf 结构体初始化
+        init_cjheemf(); // OBSV.cjheemf 结构体初始化
         init_harnefors(); // harnefors结构体初始化
         init_QiaoXia2013();
         init_ChiXu2009();
@@ -1379,7 +1382,7 @@ void init_pmsm_observers(){
         #elif SELECT_ALGORITHM == ALG_Farza_2009
             init_hgo4eemf();
         #elif SELECT_ALGORITHM == ALG_CJH_EEMF
-            init_cjheemf(); // cjheemf 结构体初始化
+            init_cjheemf(); // OBSV.cjheemf 结构体初始化
         #elif SELECT_ALGORITHM == ALG_Harnefors_2006
             init_harnefors(); // harnefors结构体初始化
         #elif SELECT_ALGORITHM == ALG_Qiao_Xia

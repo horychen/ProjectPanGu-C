@@ -31,8 +31,11 @@ void PWM_1ch_UpDwnCnt_CNF(int16 n, Uint16 carrier_period, int16 db_cnt) {
     (*ePWM[n]).TBPHS.bit.TBPHS = 0;
     (*ePWM[n]).TBCTR = 0;
     (*ePWM[n]).TBCTL.bit.CTRMODE   = TB_COUNT_UPDOWN;
+    // (*ePWM[n]).TBCTL.bit.HSPCLKDIV = 0b111;
+    // (*ePWM[n]).TBCTL.bit.CLKDIV    = 0b111;
     (*ePWM[n]).TBCTL.bit.HSPCLKDIV = TB_DIV1;
     (*ePWM[n]).TBCTL.bit.CLKDIV    = TB_DIV1;
+
 
     // TBCLK = EPWMCLK / (HSPCLKDIV * CLKDIV) = 100 MHz / (1*1)
     //    TBCLK Time-base clock.

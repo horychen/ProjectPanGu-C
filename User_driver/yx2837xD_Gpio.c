@@ -494,8 +494,8 @@ void Gpio_initialize(void)
     #endif
 
     // DI-1 (Digital Input)
-	GPIO_SetupPinOptions(26, GPIO_INPUT, GPIO_SYNC);//
-	GPIO_SetupPinMux(26,0,0);//
+	GPIO_SetupPinOptions(75, GPIO_INPUT, GPIO_SYNC);//
+	GPIO_SetupPinMux(75,0,0);//
 
 //	// DSP_ENPWM
 //	GPIO_SetupPinOptions(105, GPIO_OUTPUT, GPIO_SYNC);//

@@ -41,10 +41,8 @@ extern "C" {
 
 cregister volatile unsigned int IFR;
 cregister volatile unsigned int IER;
-
 __cregister volatile unsigned int IFR;
 __cregister volatile unsigned int IER;
-
 
 
 #define  EINT   __asm(" clrc INTM")
