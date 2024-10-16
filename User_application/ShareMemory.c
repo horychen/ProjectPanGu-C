@@ -116,6 +116,12 @@ void write_DAC_buffer(){
         (*Axis4DAC).dac_watch[46] = Axis_1.iuvw[1]*0.2;
         (*Axis4DAC).dac_watch[47] = Axis_1.iuvw[2]*0.2;
 
+        /* Sensor Coil */
+        (*Axis4DAC).dac_watch[48] = Axis.place_sensor[0];
+        (*Axis4DAC).dac_watch[49] = Axis.place_sensor[1];
+        (*Axis4DAC).dac_watch[50] = Axis.place_sensor[2];
+        (*Axis4DAC).dac_watch[51] = Axis.place_sensor[3];
+
 
 //        #if WHO_IS_USER == USER_WB
 //            (*Axis4DAC).dac_watch[0] = 0;

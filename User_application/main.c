@@ -94,6 +94,17 @@ void main(void){
     }
     axisCnt = 1;
 
+    // 4.5 Use GPIO0, GPIO1 and reuse mode is 6 (I2C)
+    /*This part is corresponding to the Seeed's Github, of which address is attached below:
+     https://github.com/Seeed-Studio/Seeed_LDC1612/blob/master/Seeed_LDC1612.cpp
+     This part is corresponding to sensor.single_channel_config from Seeed-LDC1612 */
+    GPIO_SetupPinMux(0, GPIO_MUX_CPU1, 6);
+    GPIO_SetupPinMux(1, GPIO_MUX_CPU1, 6);
+    // GPIO_SetupPinMux(2, GPIO_MUX_CPU1, 6);
+    // GPIO_SetupPinMux(3, GPIO_MUX_CPU1, 6);
+    I2CA_Init();
+    Single_channel_config(0); // 0 for CHANNEL_0
+
     // 5. Handle Interrupts
     handle_interrupts();
 
@@ -132,6 +143,16 @@ void main_loop(){
             }
 
         #endif
+
+        // Sensor Coil
+        I2CA_ReadData_Channel(0);
+        DELAY_US(30);           
+        I2CA_ReadData_Channel(1);
+        DELAY_US(30);           
+        I2CA_ReadData_Channel(2);
+        DELAY_US(300);           
+        I2CA_ReadData_Channel(3);
+        DELAY_US(300);
 
         //        mainWhileLoopCounter1++;
         //        mainWhileLoopCounter2=2992;
@@ -178,6 +199,9 @@ void main_measurement(){
     #endif
     CTRL->i->varOmega     = CTRL->enc->varOmega;
     CTRL->i->theta_d_elec = CTRL->enc->theta_d_elec;
+
+    // measure place between machine shaft and Sensor Coil
+    measurement_sensor_coil();
 
     // measure current
     if (axisCnt == 0) measurement_current_axisCnt0();
@@ -292,6 +316,7 @@ void DISABLE_PWM_OUTPUT(){
         init_experiment();
         // init_experiment_AD_gain_and_offset();
         // init_experiment_overwrite();
+        // init_experiment_PLACE_gain_and_offset();
 
         // TODO: use a function for this purpose!
         // 清空积分缓存
@@ -747,6 +772,7 @@ void axis_basic_setup(int axisCnt){
     // allocate_CTRL(CTRL); // This operation is moved into init_CTRL hence i think this code should not be here 20240929 WB
     init_experiment();
     init_experiment_AD_gain_and_offset();
+    init_experiment_PLACE_gain_and_offset();
 
     // Axis->use_first_set_three_phase = 1; // -1;
     //    Axis->Set_current_loop = FALSE;
@@ -845,6 +871,17 @@ void init_experiment_AD_gain_and_offset()
     #endif
 }
 
+void init_experiment_PLACE_gain_and_offset(){
+    Axis.place_offset[0] = OFFSET_PLACE_RIGHT;
+    Axis.place_offset[1] = OFFSET_PLACE_DOWN;
+    Axis.place_scale[0]  = SCALE_PLACE_X;
+    Axis.place_scale[1]  = SCALE_PLACE_Y;
+    /* These is prepared for LDC1614 with 4 channels. */
+    Axis.place_offset[2] = OFFSET_PLACE_LEFT;
+    Axis.place_offset[3] = OFFSET_PLACE_UP;
+    Axis.place_scale[2]  = SCALE_PLACE_X;
+    Axis.place_scale[3]  = SCALE_PLACE_Y;
+}
 
 /* compute CLA task vectors */
 void compute_CLA_task_vectors(){
@@ -1315,7 +1352,17 @@ void measurement_current_axisCnt1()
     }
 }
 
-
+void measurement_sensor_coil()
+{
+    Axis.place_sensor[0] = (raw_value_rdlu[0] - Axis.place_offset[0])*Axis.place_scale[0];
+    Axis.place_sensor[1] = (raw_value_rdlu[1] - Axis.place_offset[1])*Axis.place_scale[1];
+    // These is prepared for the LDC1614 with 4 channels.
+    Axis.place_sensor[2] = (raw_value_rdlu[2] - Axis.place_offset[2])*Axis.place_scale[2];
+    Axis.place_sensor[3] = (raw_value_rdlu[3] - Axis.place_offset[3])*Axis.place_scale[3];
+    if (Axis.place_sensor[0] > 0){
+            // Axis.xx
+    }
+}
 
 
 

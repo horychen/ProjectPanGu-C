@@ -150,6 +150,16 @@
     #define SCALE_LEM_A2 0.030334
     #define SCALE_LEM_A3 0.02983
 
+    // Sensor Coil
+    #define OFFSET_PLACE_RIGHT    4461341  
+    #define OFFSET_PLACE_DOWN     4639271  
+
+    #define OFFSET_PLACE_LEFT     4561234  
+    #define OFFSET_PLACE_UP       4513212  
+
+    #define SCALE_PLACE_X         4.2894311E-5
+    #define SCALE_PLACE_Y         4.3412197E-5
+
 #endif
 
 #ifdef _LEG_GROUP // _LEG_GROUP // mmlab drive version 1 (陈艺铭、朱俊磊、胡瑀等)
