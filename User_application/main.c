@@ -871,16 +871,17 @@ void init_experiment_AD_gain_and_offset()
     #endif
 }
 
+/* initialize Sensor Coil */
 void init_experiment_PLACE_gain_and_offset(){
-    Axis.place_offset[0] = OFFSET_PLACE_RIGHT;
-    Axis.place_offset[1] = OFFSET_PLACE_DOWN;
-    Axis.place_scale[0]  = SCALE_PLACE_X;
-    Axis.place_scale[1]  = SCALE_PLACE_Y;
+    Axis->place_offset[0] = OFFSET_PLACE_RIGHT;
+    Axis->place_offset[1] = OFFSET_PLACE_DOWN;
+    Axis->place_scale[0]  = SCALE_PLACE_X;
+    Axis->place_scale[1]  = SCALE_PLACE_Y;
     /* These is prepared for LDC1614 with 4 channels. */
-    Axis.place_offset[2] = OFFSET_PLACE_LEFT;
-    Axis.place_offset[3] = OFFSET_PLACE_UP;
-    Axis.place_scale[2]  = SCALE_PLACE_X;
-    Axis.place_scale[3]  = SCALE_PLACE_Y;
+    Axis->place_offset[2] = OFFSET_PLACE_LEFT;
+    Axis->place_offset[3] = OFFSET_PLACE_UP;
+    Axis->place_scale[2]  = SCALE_PLACE_X;
+    Axis->place_scale[3]  = SCALE_PLACE_Y;
 }
 
 /* compute CLA task vectors */
@@ -1354,13 +1355,13 @@ void measurement_current_axisCnt1()
 
 void measurement_sensor_coil()
 {
-    Axis.place_sensor[0] = (raw_value_rdlu[0] - Axis.place_offset[0])*Axis.place_scale[0];
-    Axis.place_sensor[1] = (raw_value_rdlu[1] - Axis.place_offset[1])*Axis.place_scale[1];
+    Axis->place_sensor[0] = (raw_value_rdlu[0] - Axis->place_offset[0])*Axis->place_scale[0];
+    Axis->place_sensor[1] = (raw_value_rdlu[1] - Axis->place_offset[1])*Axis->place_scale[1];
     // These is prepared for the LDC1614 with 4 channels.
-    Axis.place_sensor[2] = (raw_value_rdlu[2] - Axis.place_offset[2])*Axis.place_scale[2];
-    Axis.place_sensor[3] = (raw_value_rdlu[3] - Axis.place_offset[3])*Axis.place_scale[3];
-    if (Axis.place_sensor[0] > 0){
-            // Axis.xx
+    Axis->place_sensor[2] = (raw_value_rdlu[2] - Axis->place_offset[2])*Axis->place_scale[2];
+    Axis->place_sensor[3] = (raw_value_rdlu[3] - Axis->place_offset[3])*Axis->place_scale[3];
+    if (Axis->place_sensor[0] > 0){
+            // Axis->xx
     }
 }
 

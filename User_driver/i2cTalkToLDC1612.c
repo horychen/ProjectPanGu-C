@@ -77,7 +77,8 @@ Uint32 result_one;
 Uint32 raw_result;
 Uint32 channel0DataResult;
 Uint32 channel1DataResult;
-uint32 raw_value_rdlu[4];
+uint32_t raw_value_rdlu[4];
+//uint32 raw_value_rdlu[4];
 // Uint32 raw_value_zero;
 // Uint32 raw_value_one;
 // Uint32 raw_value_two;
@@ -156,7 +157,7 @@ int I2cRead16bitData(Uint16 SlaveRegAddr){
     }
 
     // FRAME 1
-    I2caRegs.I2CSAR.all = I2C_SLAVE_ADDR  //  I2cMsgIn1.SlaveAddress;
+    I2caRegs.I2CSAR.all = I2C_SLAVE_ADDR;  //  I2cMsgIn1.SlaveAddress;
 
 
      // Check if bus busy
@@ -181,7 +182,7 @@ int I2cRead16bitData(Uint16 SlaveRegAddr){
     while(I2caRegs.I2CSTR.bit.ARDY == 0);
 
     // FRAME 3 is SLAVE ADDR
-    I2caRegs.I2CSAR.all = I2C_SLAVE_ADDR  //  I2cMsgIn1.SlaveAddress;
+    I2caRegs.I2CSAR.all = I2C_SLAVE_ADDR;  //  I2cMsgIn1.SlaveAddress;
     I2caRegs.I2CCNT = 2; // MSB + LSB of the MSB of the DATA
     I2caRegs.I2CMDR.all = 0x2C20; // TRX=0, with stop
     /* I2C_MSGSTAT_RECEIVE_WITHSTOP */
@@ -207,7 +208,7 @@ int I2cWrite16bitData(Uint16 ConfigRegAddr, Uint16 value){
 
 
     // FRAME 1
-    I2caRegs.I2CSAR.all = I2C_SLAVE_ADDR  //  I2cMsgIn1.SlaveAddress;
+    I2caRegs.I2CSAR.all = I2C_SLAVE_ADDR;  //  I2cMsgIn1.SlaveAddress;
 
 
      // Check if bus busy
@@ -235,7 +236,7 @@ int I2cWrite16bitData(Uint16 ConfigRegAddr, Uint16 value){
      I2caRegs.I2CDXR.all = data[1];
 
      // FRAME 3 is SLAVE ADDR
-     I2caRegs.I2CSAR.all = I2C_SLAVE_ADDR  //  I2cMsgIn1.SlaveAddress;
+     I2caRegs.I2CSAR.all = I2C_SLAVE_ADDR;  //  I2cMsgIn1.SlaveAddress;
 
 
 //     I2caRegs.I2CCNT = 2; // MSB + LSB of the MSB of the DATA
