@@ -144,16 +144,17 @@ void main_loop(){
 
         #endif
 
-        // Sensor Coil
-        I2CA_ReadData_Channel(0);
-        DELAY_US(30);           
-        I2CA_ReadData_Channel(1);
-        DELAY_US(30);           
-        I2CA_ReadData_Channel(2);
-        DELAY_US(300);           
-        I2CA_ReadData_Channel(3);
-        DELAY_US(300);
-
+        #if WHO_IS_USER == USER_QIAN
+            // Sensor Coil
+            I2CA_ReadData_Channel(0);
+            DELAY_US(30);
+            I2CA_ReadData_Channel(1);
+            DELAY_US(30);
+            I2CA_ReadData_Channel(2);
+            DELAY_US(300);
+            I2CA_ReadData_Channel(3);
+            DELAY_US(300);
+        #endif
         //        mainWhileLoopCounter1++;
         //        mainWhileLoopCounter2=2992;
         //        if (Motor_mode_START==1){
@@ -201,6 +202,7 @@ void main_measurement(){
     CTRL->i->theta_d_elec = CTRL->enc->theta_d_elec;
 
     // measure place between machine shaft and Sensor Coil
+    // if (sensor_coil_enable == 1) 
     measurement_sensor_coil();
 
     // measure current
@@ -1353,8 +1355,7 @@ void measurement_current_axisCnt1()
     }
 }
 
-void measurement_sensor_coil()
-{
+void measurement_sensor_coil(){
     Axis->place_sensor[0] = (raw_value_rdlu[0] - Axis->place_offset[0])*Axis->place_scale[0];
     Axis->place_sensor[1] = (raw_value_rdlu[1] - Axis->place_offset[1])*Axis->place_scale[1];
     // These is prepared for the LDC1614 with 4 channels.

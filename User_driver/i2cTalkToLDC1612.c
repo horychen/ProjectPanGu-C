@@ -26,6 +26,7 @@ int Parse_result_data(Uint16 channel, Uint32 raw_result, Uint32* result);
 Uint32 Set_ERROR_CONFIG(Uint16 value);
 void Read_sensor_infomation();
 Uint32 reset_sensor();
+// int sensor_coil_enable = FALSE;
 
 
 __interrupt void i2c_int1a_isr(void);
