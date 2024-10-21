@@ -105,6 +105,7 @@ void main(void){
     I2CA_Init();
     Single_channel_config(0); // 0 for CHANNEL_0
 
+
     // 5. Handle Interrupts
     handle_interrupts();
 
