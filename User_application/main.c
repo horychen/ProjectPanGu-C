@@ -145,7 +145,7 @@ void main_loop(){
 
         #endif
 
-        #if WHO_IS_USER == USER_QIAN
+//         #if WHO_IS_USER == USER_QIAN
             // Sensor Coil
             I2CA_ReadData_Channel(0);
             DELAY_US(30);
@@ -155,7 +155,7 @@ void main_loop(){
             DELAY_US(300);
             I2CA_ReadData_Channel(3);
             DELAY_US(300);
-        #endif
+//         #endif
         //        mainWhileLoopCounter1++;
         //        mainWhileLoopCounter2=2992;
         //        if (Motor_mode_START==1){

@@ -22,6 +22,7 @@ void measurement_position_count_axisCnt1();
 void measurement_enc();
 void measurement_current_axisCnt0();
 void measurement_current_axisCnt1();
+void measurement_sensor_coil();
 
 void control_two_motor_position();
 void control_single_motor_position();
