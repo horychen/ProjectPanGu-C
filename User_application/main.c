@@ -1,9 +1,11 @@
 #include "All_Definition.h"
 st_axis Axis_1, *Axis;
-extern bool run_enable_from_PC;
+void init_experiment_AD_gain_and_offset();
 
-#if NUMBER_OF_AXES == 2 // ====为了同时运行两台电机，增加的另一份控制结构体
+#if NUMBER_OF_AXES == 4 // ====为了同时运行两台电机，增加的另一份控制结构体
     st_axis Axis_2;
+    st_axis Axis_3;
+    st_axis Axis_4;
     #define get_Axis_CTRL_pointers \
         if (axisCnt == 0)          \
         {                          \
@@ -11,11 +13,23 @@ extern bool run_enable_from_PC;
             CTRL  = &CTRL_1;       \
             debug = &debug_1;      \
         }                          \
-        if (axisCnt == 1)          \
+        if (axisCnt == 2)          \
         {                          \
             Axis  = &Axis_2;       \
             CTRL  = &CTRL_2;       \
             debug = &debug_2;      \
+        }                          \
+        if (axisCnt == 3)          \
+        {                          \
+            Axis  = &Axis_3;       \
+            CTRL  = &CTRL_3;       \
+            debug = &debug_3;      \
+        }                          \
+        if (axisCnt == 4)          \
+        {                          \
+            Axis  = &Axis_3;       \
+            CTRL  = &CTRL_3;       \
+            debug = &debug_3;      \
         }                           
 #endif
 void main(void){
@@ -85,7 +99,7 @@ void main(void){
     init_d_sim();      // do this only once here
     init_debug();      // do this only once here
     init_experiment(); // 控制器结构体初始化（同实验）
-    get_bezier_points(); // for testing Cury the leg trajectgory tracking 
+    //get_bezier_points(); // for testing Cury the leg trajectgory tracking
     for (axisCnt = 0; axisCnt < NUMBER_OF_AXES; axisCnt++){
         get_Axis_CTRL_pointers
         // (*debug).bool_initilized = FALSE;
@@ -317,7 +331,7 @@ void DISABLE_PWM_OUTPUT(){
         G.flag_experimental_initialized = TRUE;
 
         init_experiment();
-        // init_experiment_AD_gain_and_offset();
+        init_experiment_AD_gain_and_offset();
         // init_experiment_overwrite();
         // init_experiment_PLACE_gain_and_offset();
 
@@ -460,8 +474,8 @@ void ENABLE_PWM_OUTPUT(int positionLoopType){
 
     //(*CTRL).o->cmd_uAB_to_inverter[0]
 
-    // operation mode为5的时候，执行下面测试逆变器输出电压的代码
-    if (pwm_test_mode == XCUBE_TaTbTc_DEBUG_MODE){
+    // pwm_test_mode 为 5 的时候，执行下面测试逆变器输出电压的代码
+    if (pwm_test_mode == 5){
         if (axisCnt == 0){
             EPwm1Regs.CMPA.bit.CMPA = (*CTRL).svgen1.Ta * 50000000 * CL_TS; // 0-5000，5000表示0%的占空比
             EPwm2Regs.CMPA.bit.CMPA = (*CTRL).svgen1.Tb * 50000000 * CL_TS;
@@ -775,7 +789,7 @@ void axis_basic_setup(int axisCnt){
     // allocate_CTRL(CTRL); // This operation is moved into init_CTRL hence i think this code should not be here 20240929 WB
     init_experiment();
     init_experiment_AD_gain_and_offset();
-    init_experiment_PLACE_gain_and_offset();
+    //init_experiment_PLACE_gain_and_offset();
 
     // Axis->use_first_set_three_phase = 1; // -1;
     //    Axis->Set_current_loop = FALSE;
@@ -875,17 +889,17 @@ void init_experiment_AD_gain_and_offset()
 }
 
 /* initialize Sensor Coil */
-void init_experiment_PLACE_gain_and_offset(){
-    Axis->place_offset[0] = OFFSET_PLACE_RIGHT;
-    Axis->place_offset[1] = OFFSET_PLACE_DOWN;
-    Axis->place_scale[0]  = SCALE_PLACE_X;
-    Axis->place_scale[1]  = SCALE_PLACE_Y;
-    /* These is prepared for LDC1614 with 4 channels. */
-    Axis->place_offset[2] = OFFSET_PLACE_LEFT;
-    Axis->place_offset[3] = OFFSET_PLACE_UP;
-    Axis->place_scale[2]  = SCALE_PLACE_X;
-    Axis->place_scale[3]  = SCALE_PLACE_Y;
-}
+//void init_experiment_PLACE_gain_and_offset(){
+//    Axis->place_offset[0] = OFFSET_PLACE_RIGHT;
+//    Axis->place_offset[1] = OFFSET_PLACE_DOWN;
+//    Axis->place_scale[0]  = SCALE_PLACE_X;
+//    Axis->place_scale[1]  = SCALE_PLACE_Y;
+//    /* These is prepared for LDC1614 with 4 channels. */
+//    Axis->place_offset[2] = OFFSET_PLACE_LEFT;
+//    Axis->place_offset[3] = OFFSET_PLACE_UP;
+//    Axis->place_scale[2]  = SCALE_PLACE_X;
+//    Axis->place_scale[3]  = SCALE_PLACE_Y;
+//}
 
 /* compute CLA task vectors */
 void compute_CLA_task_vectors(){
@@ -1392,10 +1406,11 @@ void read_count_from_cpu02_dsp_cores_2()
         IPCRtoLFlagAcknowledge(IPC_FLAG10);
 
         // CAN encoder convert to motor built-in encoder
-        deg_four_bar_map_motor_encoder_angle = get_motorpos(position_count_CAN_ID0x03_fromCPU2 * 0.00274658203125); // 1/131072.0*360.0
-        // deg_four_bar_map_motor_encoder_angle = lookup(position_count_CAN_ID0x03_fromCPU2 * 0.00274658203125, &ZJL_table);
-        rad_four_bar_map_motor_encoder_angle = deg_four_bar_map_motor_encoder_angle * 0.017453292519943295;
-        cnt_four_bar_map_motor_encoder_angle = deg_four_bar_map_motor_encoder_angle * 23301.68888888889;
+        //        deg_four_bar_map_motor_encoder_angle = get_motorpos(position_count_CAN_ID0x03_fromCPU2 * 0.00274658203125); // 1/131072.0*360.0
+                // deg_four_bar_map_motor_encoder_angle = lookup(position_count_CAN_ID0x03_fromCPU2 * 0.00274658203125, &ZJL_table);
+
+        //        rad_four_bar_map_motor_encoder_angle = deg_four_bar_map_motor_encoder_angle * 0.017453292519943295;
+        //        cnt_four_bar_map_motor_encoder_angle = deg_four_bar_map_motor_encoder_angle * 23301.68888888889;
 
 
 

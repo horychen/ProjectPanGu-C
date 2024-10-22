@@ -13,8 +13,14 @@ ST_D_SIM d_sim;
 int axisCnt = 0;
 int use_first_set_three_phase = 1;
 struct ControllerForExperiment CTRL_1;
+struct ControllerForExperiment CTRL_2;
+struct ControllerForExperiment CTRL_3;
+struct ControllerForExperiment CTRL_4;
 struct ControllerForExperiment *CTRL;
 struct DebugExperiment debug_1;
+struct DebugExperiment debug_2;
+struct DebugExperiment debug_3;
+struct DebugExperiment debug_4;
 struct DebugExperiment *debug = &debug_1;
 REAL one_over_six = 1.0/6.0;
 // 定义内存空间（结构体）
@@ -151,7 +157,6 @@ void allocate_CTRL(struct ControllerForExperiment *p){
     #endif
 }
 void init_debug(){
-    debug = &debug_1;
     (*debug).error = 0;
     (*debug).who_is_user = d_sim.user.who_is_user;
     if(d_sim.init.Rreq>0){
@@ -181,8 +186,8 @@ void init_debug(){
     (*debug).Overwrite_theta_d           = 0.0;
 
     (*debug).set_id_command              = 0.0;
-    (*debug).set_iq_command              = 1.0;
-    (*debug).set_rpm_speed_command       = 200.0;
+    (*debug).set_iq_command              = 0.0;
+    (*debug).set_rpm_speed_command       = d_sim.user.set_rpm_speed_command;
     (*debug).set_deg_position_command    = 0.0;
     (*debug).vvvf_voltage = 3.0;
     (*debug).vvvf_frequency = 5.0;
@@ -331,7 +336,6 @@ void init_experiment(){
 
     #if WHO_IS_USER == USER_BEZIER
         set_points(&BzController);
-        set_points(&BzController_AdaptVersion);
     #endif
 
     #if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
@@ -392,7 +396,7 @@ void _pseudoEncoder(){
     /* 断开编码器，开环控制电流矢量选择、跳跃，逆闭着眼 */
     (*CTRL).i->cmd_iDQ[0] = (*debug).set_id_command;
     (*CTRL).i->cmd_iDQ[1] = (*debug).set_iq_command;
-    if (fabsf((*debug).Overwrite_Current_Frequency) > 0)
+    if (fabs((*debug).Overwrite_Current_Frequency) > 0)
     {
         (*debug).Overwrite_theta_d += CL_TS * (*debug).Overwrite_Current_Frequency * 2 * M_PI;
         if ((*debug).Overwrite_theta_d > M_PI)  (*debug).Overwrite_theta_d -= 2 * M_PI;
@@ -542,31 +546,48 @@ void _user_commands(){
                 (*CTRL).i->cmd_varOmega = (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
             }
             if ((*CTRL).timebase > 0.2){
-                (*CTRL).i->cmd_varOmega = - (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
+                (*CTRL).i->cmd_varOmega =  (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
             }
             if ((*CTRL).timebase > 0.4){
                 #if PC_SIMULATION
                     ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.8);
                 #endif
             }
+
+            if ((*CTRL).timebase > 10){
+                (*CTRL).i->cmd_varOmega = 0.0;
+            }
+            if ((*CTRL).timebase > 15){
+                (*CTRL).i->cmd_varOmega = (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
+            }
+
         #elif WHO_IS_USER == USER_YZZ
             (*CTRL).i->cmd_varOmega = 0.0;
             if ((*CTRL).timebase > CL_TS){
-                (*CTRL).i->cmd_varOmega = - (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
-            }
-            if ((*CTRL).timebase > 1){
-                (*CTRL).i->cmd_varOmega = + (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
-            }
-            if ((*CTRL).timebase > 2){
+                (*CTRL).i->cmd_varOmega = (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
                 #if PC_SIMULATION
-                    ACM.TLoad = (0.7 * 1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);
+                    ACM.TLoad = (0.5 * 1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);
                 #endif
             }
-            if ((*CTRL).timebase > 3){
-                #if PC_SIMULATION
-                    ACM.TLoad = (0.3 * 1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);
-                #endif
-            }
+
+            // if ((*CTRL).timebase > 1){
+            //     (*CTRL).i->cmd_varOmega = + (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
+            // }
+            // if ((*CTRL).timebase > 2){
+            //     #if PC_SIMULATION
+            //         ACM.TLoad = (0.7 * 1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);
+            //     #endif
+            // }
+            // if ((*CTRL).timebase > 3){
+            //     #if PC_SIMULATION
+            //         ACM.TLoad = (0.3 * 1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);
+            //     #endif
+            // }
+            // if ((*CTRL).timebase > CL_TS){
+            //     #if PC_SIMULATION
+            //         (*CTRL).i->cmd_varOmega = 0.5 * (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC * sin((*CTRL).timebase * 30) + 2 * (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
+            //     #endif
+            // }
         #endif
     #endif
 }
@@ -623,7 +644,7 @@ int main_switch(long mode_select){
         break;
     case MODE_SELECT_INDIRECT_FOC:   // 32
         _user_commands();         // 用户指令
-        #if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
+        #if (WHO_IS_USER == USER_CJH)
             controller_IFOC();
         #endif
         break;
@@ -656,9 +677,7 @@ int main_switch(long mode_select){
                 if( ((*CTRL).timebase - last_time > interval_time) && (i < NUMBER_OF_HIT_WALL_VAR_RATIO) ){
                     PID_iD->OutLimit = d_sim.CL.LIMIT_DC_BUS_UTILIZATION * d_sim.init.Vdc * wubo_HW.Vdc_limit_ratio[i];
                     PID_iQ->OutLimit = d_sim.CL.LIMIT_DC_BUS_UTILIZATION * d_sim.init.Vdc * wubo_HW.Vdc_limit_ratio[i];
-                    #if PC_SIMULATION
                     printf("Vdc limit is %f\n", PID_iD->OutLimit);
-                    #endif
                     last_time = (*CTRL).timebase; // here right????????
                     i = i + 1;
                 }
@@ -683,12 +702,24 @@ int main_switch(long mode_select){
         #endif
 
         #if WHO_IS_USER == USER_YZZ
-        // _user_commands();
-        // pmsm_observers();
+        _user_commands();
+        pmsm_observers();
         // observer_PMSMife();
-        controller_PMSMife_with_commands();
+        // controller_PMSMife_with_commands();
         #endif
 
+        
+        // observer();
+        // FOC_with_vecocity_control(FE.AFEOE.theta_d,
+        //     OBSV.nsoaf.xOmg * MOTOR.npp_inv,
+        //     (*CTRL).i->cmd_varOmega,
+        //     (*CTRL).i->cmd_iDQ,
+        //     (*CTRL).i->iAB);
+        FOC_with_vecocity_control((*CTRL).i->theta_d_elec, 
+            (*CTRL).i->varOmega, 
+            (*CTRL).i->cmd_varOmega, 
+            (*CTRL).i->cmd_iDQ, 
+            (*CTRL).i->iAB);
         break;
     case MODE_SELECT_TESTING_SENSORLESS : //42
         break;
@@ -754,7 +785,7 @@ int main_switch(long mode_select){
     void _user_time_varying_parameters(){
         // ACM;
         /// 0. 参数时变
-        // if (fabsf((*CTRL).timebase-2.0)<CL_TS){
+        // if (fabs((*CTRL).timebase-2.0)<CL_TS){
         //     printf("[Runtime] Rotor resistance of the simulated IM has changed!\n");
         //     ACM.alpha = 0.5*IM_ROTOR_RESISTANCE / IM_MAGNETIZING_INDUCTANCE;
         //     ACM.rreq = ACM.alpha*ACM.Lmu;

@@ -102,7 +102,7 @@ REAL difference_between_two_angles(REAL first, REAL second)
         second += 2 * M_PI;
     }
 
-    if (fabsf(first - second) < M_PI){
+    if (fabs(first - second) < M_PI){
         return first - second;
     }else{
         if (first > second){
@@ -215,7 +215,7 @@ REAL angle_diff(REAL a, REAL b) {
     } else {
         d2 = (2 * M_PI + a) - b; // d2 是正的
     }
-    if (fabsf(d1) < fabsf(d2)) {
+    if (fabs(d1) < fabs(d2)) {
         return d1;
     } else {
         return d2;

@@ -5,14 +5,14 @@
 
 /* User Application: Motor Drives */
     #include "ACMSim.h"
-    #include "ACMConfig.h"
-    #include "Experiment.h"
+    //#include "ACMConfig.h"
+    //#include "Experiment.h"
     #include "Device_define.h" // 和具体硬件（腿组，电机组，感应电机组）相关的配置参数在这
     //#include "math.h"
 //    #include "IQmathLib.h"
 
 /* User Application: Cury the leg */
-    #include "AppCury.h"
+    //#include "AppCury.h"
 
 
 /* CLA header files */
@@ -162,6 +162,8 @@ typedef struct{
 
 extern st_axis Axis_1;
 extern st_axis Axis_2;
+extern st_axis Axis_3;
+extern st_axis Axis_4;
 extern st_axis *Axis;
 extern REAL wubo_debug_tools[10];
 

@@ -29,7 +29,7 @@ extern Uint32 CpuTimer_After;
 #if PC_SIMULATION == FALSE
 
     /* SYSTEM Configuration */
-    #define NUMBER_OF_AXES 2
+    #define NUMBER_OF_AXES 4
     #define NUMBER_OF_DSP_CORES 2  // 1 or 2
 
     /* ePWM CONFIGURATION */
@@ -59,17 +59,17 @@ extern Uint32 CpuTimer_After;
 
 
 // Everthing that is configurable is in here
-#include "ACMConfig.h"
-#include "shared_flux_estimator.h"
-#include "pmsm_observer.h"
-#include "pmsm_comm.h"
+//#include "ACMConfig.h"
+//#include "shared_flux_estimator.h"
+//#include "pmsm_observer.h"
+//#include "pmsm_comm.h"
 #include "pi_math.h"
 
 /* User Function */
-#include "simuser_wb.h"
-#include "simuser_cjh.h"
-#include "simuser_yzz.h"
-#include "simuser_bezier.h"
+//#include "simuser_wb.h"
+//#include "simuser_cjh.h"
+//#include "simuser_yzz.h"
+//#include "simuser_bezier.h"
 
 
 #define CURRENT_LOOP_KI_TIMES_TEN FALSE
