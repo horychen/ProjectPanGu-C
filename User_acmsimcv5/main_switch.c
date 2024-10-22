@@ -58,7 +58,7 @@ st_pid_regulator _PID_Position_1 = st_pid_regulator_DEFAULTS;
     #pragma DATA_SECTION(_PID_Position_1   ,"MYGLOBALS_1");
     #pragma DATA_SECTION(_PID_Speed_1   ,"MYGLOBALS_1");
 
-    #if NUMBER_OF_AXES == 2
+    #if NUMBER_OF_AXES == 2 || NUMBER_OF_AXES == 4
         // extern and pragma should come in pair?
         #pragma DATA_SECTION(CTRL_2     ,"MYGLOBALS_2");
         // #pragma DATA_SECTION(debug_2      ,"MYGLOBALS_1");
@@ -94,7 +94,6 @@ st_pid_regulator _PID_Position_1 = st_pid_regulator_DEFAULTS;
         st_pid_regulator _PID_iQ_2       = st_pid_regulator_DEFAULTS;
         st_pid_regulator _PID_Speed_2    = st_pid_regulator_DEFAULTS;
         st_pid_regulator _PID_Position_2 = st_pid_regulator_DEFAULTS;
-
         // st_PIDController _PID_iX_2 = {
         //                     SUSPENSION_PID_KP, SUSPENSION_PID_KI, SUSPENSION_PID_KD,
         //                     SUSPENSION_PID_TAU,
@@ -106,6 +105,89 @@ st_pid_regulator _PID_Position_1 = st_pid_regulator_DEFAULTS;
         //                     SUSPENSION_PID_OUT_LIMIT,
         //                     SUSPENSION_PID_INT_LIMIT, CL_TS };
     #endif
+    #if NUMBER_OF_AXES == 4
+            // extern and pragma should come in pair?
+            #pragma DATA_SECTION(CTRL_3     ,"MYGLOBALS_3");
+            // #pragma DATA_SECTION(debug_3      ,"MYGLOBALS_1");
+            #pragma DATA_SECTION(t_motor_3    ,"MYGLOBALS_3");
+            #pragma DATA_SECTION(t_enc_3      ,"MYGLOBALS_3");
+            #pragma DATA_SECTION(t_psd_3      ,"MYGLOBALS_3");
+            #pragma DATA_SECTION(t_I_3        ,"MYGLOBALS_3");
+            #pragma DATA_SECTION(t_S_3        ,"MYGLOBALS_3");
+            #pragma DATA_SECTION(t_O_3        ,"MYGLOBALS_3");
+            #pragma DATA_SECTION(t_inv_3      ,"MYGLOBALS_3");
+            #pragma DATA_SECTION(t_cap_3      ,"MYGLOBALS_3");
+            #pragma DATA_SECTION(t_g_3        ,"MYGLOBALS_3");
+            // #pragma DATA_SECTION(_PID_iX_3    ,"MYGLOBALS_3");
+            // #pragma DATA_SECTION(_PID_iY_3    ,"MYGLOBALS_3");
+            #pragma DATA_SECTION(_PID_iD_3    ,"MYGLOBALS_3");
+            #pragma DATA_SECTION(_PID_iQ_3    ,"MYGLOBALS_3");
+            #pragma DATA_SECTION(_PID_Position_3   ,"MYGLOBALS_3");
+            #pragma DATA_SECTION(_PID_Speed_3   ,"MYGLOBALS_3");
+            struct ControllerForExperiment CTRL_3;
+            struct DebugExperiment debug_3;
+
+            st_motor_parameters     t_motor_3={0};
+            st_enc                  t_enc_3={0};
+            st_psd                  t_psd_3={0};
+            st_controller_inputs    t_I_3={0};
+            st_controller_states    t_S_3={0};
+            st_controller_outputs   t_O_3={0};
+            st_InverterNonlinearity t_inv_3={0}; // Because of the sv_count bug, I cannot declare t_inv in this .c file. // extern st_InverterNonlinearity t_inv;
+            st_capture              t_cap_3={0};
+            st_global_variables     t_g_3={0};
+
+            st_pid_regulator _PID_iD_3       = st_pid_regulator_DEFAULTS;
+            st_pid_regulator _PID_iQ_3       = st_pid_regulator_DEFAULTS;
+            st_pid_regulator _PID_Speed_3    = st_pid_regulator_DEFAULTS;
+            st_pid_regulator _PID_Position_3 = st_pid_regulator_DEFAULTS;
+        
+        // st_PIDController _PID_iX_2 = {
+        //                     SUSPENSION_PID_KP, SUSPENSION_PID_KI, SUSPENSION_PID_KD,
+        //                     SUSPENSION_PID_TAU,
+        //                     SUSPENSION_PID_OUT_LIMIT,
+        //                     SUSPENSION_PID_INT_LIMIT, CL_TS };
+        // st_PIDController _PID_iY_2 = {
+        //                     SUSPENSION_PID_KP, SUSPENSION_PID_KI, SUSPENSION_PID_KD,
+        //                     SUSPENSION_PID_TAU,
+        //                     SUSPENSION_PID_OUT_LIMIT,
+        //                     SUSPENSION_PID_INT_LIMIT, CL_TS };
+            #pragma DATA_SECTION(CTRL_4     ,"MYGLOBALS_4");
+            // #pragma DATA_SECTION(debug_4      ,"MYGLOBALS_1");
+            #pragma DATA_SECTION(t_motor_4    ,"MYGLOBALS_4");
+            #pragma DATA_SECTION(t_enc_4      ,"MYGLOBALS_4");
+            #pragma DATA_SECTION(t_psd_4      ,"MYGLOBALS_4");
+            #pragma DATA_SECTION(t_I_4        ,"MYGLOBALS_4");
+            #pragma DATA_SECTION(t_S_4        ,"MYGLOBALS_4");
+            #pragma DATA_SECTION(t_O_4        ,"MYGLOBALS_4");
+            #pragma DATA_SECTION(t_inv_4      ,"MYGLOBALS_4");
+            #pragma DATA_SECTION(t_cap_4      ,"MYGLOBALS_4");
+            #pragma DATA_SECTION(t_g_4        ,"MYGLOBALS_4");
+            // #pragma DATA_SECTION(_PID_iX_4    ,"MYGLOBALS_4");
+            // #pragma DATA_SECTION(_PID_iY_4    ,"MYGLOBALS_4");
+            #pragma DATA_SECTION(_PID_iD_4    ,"MYGLOBALS_4");
+            #pragma DATA_SECTION(_PID_iQ_4    ,"MYGLOBALS_4");
+            #pragma DATA_SECTION(_PID_Position_4   ,"MYGLOBALS_4");
+            #pragma DATA_SECTION(_PID_Speed_4   ,"MYGLOBALS_4");
+            struct ControllerForExperiment CTRL_4;
+            struct DebugExperiment debug_4;
+
+            st_motor_parameters     t_motor_4={0};
+            st_enc                  t_enc_4={0};
+            st_psd                  t_psd_4={0};
+            st_controller_inputs    t_I_4={0};
+            st_controller_states    t_S_4={0};
+            st_controller_outputs   t_O_4={0};
+            st_InverterNonlinearity t_inv_4={0}; // Because of the sv_count bug, I cannot declare t_inv in this .c file. // extern st_InverterNonlinearity t_inv;
+            st_capture              t_cap_4={0};
+            st_global_variables     t_g_4={0};
+
+            st_pid_regulator _PID_iD_4       = st_pid_regulator_DEFAULTS;
+            st_pid_regulator _PID_iQ_4       = st_pid_regulator_DEFAULTS;
+            st_pid_regulator _PID_Speed_4    = st_pid_regulator_DEFAULTS;
+            st_pid_regulator _PID_Position_4 = st_pid_regulator_DEFAULTS;
+    #endif
+
 #endif
 
 /* 初始化顶级结构体指针，指向定义好的内存空间 */

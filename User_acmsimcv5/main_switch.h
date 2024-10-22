@@ -179,6 +179,8 @@ struct DebugExperiment{
 extern int use_first_set_three_phase;
 extern struct DebugExperiment debug_1;
 extern struct DebugExperiment debug_2;
+extern struct DebugExperiment debug_3;
+extern struct DebugExperiment debug_4;
 extern struct DebugExperiment *debug;
 /* USER: Macros */
 
@@ -517,6 +519,8 @@ struct ControllerForExperiment{
 extern int axisCnt;
 extern struct ControllerForExperiment CTRL_1;
 extern struct ControllerForExperiment CTRL_2;
+extern struct ControllerForExperiment CTRL_3;
+extern struct ControllerForExperiment CTRL_4;
 extern struct ControllerForExperiment *CTRL;
 #define MOTOR   (*(*CTRL).motor)
 #define ENC     (*(*CTRL).enc)
