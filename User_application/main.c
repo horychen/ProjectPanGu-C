@@ -1,7 +1,7 @@
 #include "All_Definition.h"
 st_axis Axis_1, *Axis;
 void init_experiment_AD_gain_and_offset();
-
+extern bool run_enable_from_PC;
 #if NUMBER_OF_AXES == 4 // ====为了同时运行两台电机，增加的另一份控制结构体
     st_axis Axis_2;
     st_axis Axis_3;
