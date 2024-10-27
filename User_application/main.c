@@ -203,9 +203,10 @@ void main_measurement(){
     CTRL->i->theta_d_elec = CTRL->enc->theta_d_elec;
 
     // measure place between machine shaft and Sensor Coil
-    // if (sensor_coil_enable == 1) 
-    measurement_sensor_coil();
-
+    // if (sensor_coil_enable == 1)
+    #if WHO_IS_USER == USER_QIAN
+        measurement_sensor_coil();
+    #endif
     // measure current
     if (axisCnt == 0) measurement_current_axisCnt0();
     if (axisCnt == 1) measurement_current_axisCnt1();
@@ -323,18 +324,21 @@ void DISABLE_PWM_OUTPUT(){
 
         // TODO: use a function for this purpose!
         // 清空积分缓存
+        PID_Speed->Out = 0;
         PID_Speed->OutPrev = 0;
         PID_Speed->Fbk = 0;
         PID_Speed->Err = 0;
         PID_Speed->ErrPrev = 0;
         PID_Speed->I_Term = 0;
 
+        PID_iD->Out = 0;
         PID_iD->OutPrev = 0;
         PID_iD->Fbk = 0;
         PID_iD->Err = 0;
         PID_iD->ErrPrev = 0;
         PID_iD->I_Term = 0;
         
+        PID_iQ->Out = 0;
         PID_iQ->OutPrev = 0;
         PID_iQ->Fbk = 0;
         PID_iQ->Err = 0;
@@ -787,8 +791,9 @@ void axis_basic_setup(int axisCnt){
     // allocate_CTRL(CTRL); // This operation is moved into init_CTRL hence i think this code should not be here 20240929 WB
     init_experiment();
     init_experiment_AD_gain_and_offset();
-    init_experiment_PLACE_gain_and_offset();
-
+    #if WHO_IS_USER == USER_QIAN
+        init_experiment_PLACE_gain_and_offset();
+    #endif
     // Axis->use_first_set_three_phase = 1; // -1;
     //    Axis->Set_current_loop = FALSE;
     //    Axis->Set_x_suspension_current_loop = FALSE;
@@ -886,6 +891,7 @@ void init_experiment_AD_gain_and_offset()
     #endif
 }
 
+#if WHO_IS_USER == USER_QIAN
 /* initialize Sensor Coil */
 void init_experiment_PLACE_gain_and_offset(){
     Axis->place_offset[0] = OFFSET_PLACE_RIGHT;
@@ -898,6 +904,7 @@ void init_experiment_PLACE_gain_and_offset(){
     Axis->place_scale[2]  = SCALE_PLACE_X;
     Axis->place_scale[3]  = SCALE_PLACE_Y;
 }
+#endif
 
 /* compute CLA task vectors */
 void compute_CLA_task_vectors(){
@@ -1364,11 +1371,13 @@ void measurement_current_axisCnt1()
     else
     {
         REAL phase_V_current = -Axis->iuvw[3] - Axis->iuvw[5];
-        Axis->iabg[0] = UV2A_AI(Axis->iuvw[3], phase_V_current);
+        Axis->iabg[0] = UV2A_AI(Axis->iuvw[3], phase_V_`current);
         Axis->iabg[1] = UV2B_AI(Axis->iuvw[3], phase_V_current);
     }
 }
 
+
+#if WHO_IS_USER == USER_QIAN
 void measurement_sensor_coil(){
     Axis->place_sensor[0] = (raw_value_rdlu[0] - Axis->place_offset[0])*Axis->place_scale[0];
     Axis->place_sensor[1] = (raw_value_rdlu[1] - Axis->place_offset[1])*Axis->place_scale[1];
@@ -1379,13 +1388,7 @@ void measurement_sensor_coil(){
             // Axis->xx
     }
 }
-
-
-
-
-
-
-
+#endif
 
 void read_count_from_cpu02_dsp_cores_2()
 {
@@ -1409,10 +1412,6 @@ void read_count_from_cpu02_dsp_cores_2()
         // deg_four_bar_map_motor_encoder_angle = lookup(position_count_CAN_ID0x03_fromCPU2 * 0.00274658203125, &ZJL_table);
         rad_four_bar_map_motor_encoder_angle = deg_four_bar_map_motor_encoder_angle * 0.017453292519943295;
         cnt_four_bar_map_motor_encoder_angle = deg_four_bar_map_motor_encoder_angle * 23301.68888888889;
-
-
-
-
     }
     else
     {
