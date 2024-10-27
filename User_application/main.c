@@ -41,7 +41,7 @@ void main(void){
             //  Send boot command to allow the CPU02 application to begin execution
             // seriesly i dont know what does this sentences mean, do no change it might as well
             // i dont know what does sentence
-            // IPCBootCPU2(C1C2_BROM_BOOTMODE_BOOT_FROM_RAM);
+//             IPCBootCPU2(C1C2_BROM_BOOTMODE_BOOT_FROM_RAM);
         #endif
     #endif
     
@@ -324,11 +324,23 @@ void DISABLE_PWM_OUTPUT(){
         // TODO: use a function for this purpose!
         // 清空积分缓存
         PID_Speed->OutPrev = 0;
-        PID_iD->OutPrev = 0;
-        PID_iQ->OutPrev = 0;
+        PID_Speed->Fbk = 0;
+        PID_Speed->Err = 0;
+        PID_Speed->ErrPrev = 0;
+        PID_Speed->I_Term = 0;
 
+        PID_iD->OutPrev = 0;
+        PID_iD->Fbk = 0;
+        PID_iD->Err = 0;
+        PID_iD->ErrPrev = 0;
+        PID_iD->I_Term = 0;
+        
+        PID_iQ->OutPrev = 0;
+        PID_iQ->Fbk = 0;
+        PID_iQ->Err = 0;
+        PID_iQ->ErrPrev = 0;
+        PID_iQ->I_Term = 0;
         // 清空速度InnerLoop缓存
-//        PID_Speed->KFB_Term_Prev = 0;
         #if WHO_IS_USER == USER_WB
             SIL_Controller.KFB_Term = 0;
         #endif
@@ -1023,6 +1035,7 @@ REAL enable_vvvf = FALSE;
 
 REAL wubo_debug_USE_DEATIME_PRECOMP = 0;
 
+/* PWM signal to Inverter Voltage Output SWPWM */
 void voltage_commands_to_pwm()
 {
     if (axisCnt == 0){
