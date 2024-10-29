@@ -108,9 +108,11 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
     Axis.dac_watch[44] = AFE_USED.theta_d *0.1;
     Axis.dac_watch[45] = Axis.used_theta_d_elec *0.1;
 
-    /*Displacement Sensor*/
-    Axis.dac_watch[46] = Axis.place_sensor[0];
-    Axis.dac_watch[47] = Axis.place_sensor[1];
+    /* Sensor Coil */
+    Axis.dac_watch[48] = Axis.place_sensor[0];
+    Axis.dac_watch[49] = Axis.place_sensor[1];
+    Axis.dac_watch[50] = Axis.place_sensor[2];
+    Axis.dac_watch[51] = Axis.place_sensor[3];
 
 
     if(Axis.channels_preset==1){Axis.channels_preset=0;
@@ -161,6 +163,15 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
             Axis.channels[5] = 22; // feedback speed
             Axis.channels[6] = 23; //
             Axis.channels[7] = 24;
+    }else if(Axis.channels_preset==6){Axis.channels_preset=0;
+                Axis.channels[0] = 0;
+                Axis.channels[1] = 1;
+                Axis.channels[2] = 2;
+                Axis.channels[3] = 3;
+                Axis.channels[4] = 4;
+                Axis.channels[5] = 5;
+                Axis.channels[6] = 48; //Axis.place_sensor[0]
+                Axis.channels[7] = 49; //Axis.place_sensor[1]
     }
 
     // ��ͨ��DAC��������޸�Axis.channels������ȷ�����������ЩAxis.dac_watch�����еı�����

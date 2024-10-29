@@ -19,6 +19,7 @@
 void init_experiment_AD_gain_and_offset();
 void init_experiment_overwrite();
 void runtime_command_and_tuning();
+void init_experiment_PLACE_gain_and_offset();
 
 /* NSOAF */
 

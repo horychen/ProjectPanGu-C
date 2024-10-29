@@ -143,8 +143,8 @@ int32 cnt_four_bar_map_motor_encoder_angle=0;
 #ifdef _MMDv1 // mmlab drive version 1
 
 // DC BUS
-    #define OFFSET_VDC_BUS_IPM1  4.17834394   // -1.01456189
-    #define SCALE_VDC_BUS_IPM1   0.15848980    // 0.17604031
+    #define OFFSET_VDC_BUS_IPM1  11.0 // 4.17834394   // -1.01456189
+    #define SCALE_VDC_BUS_IPM1   0.169014007 // 0.15848980    // 0.17604031
 
 //Lem 2閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹鑹查敓鏂ゆ嫹閿熻?楁唻鎷烽敓鏂ゆ嫹adc b7 b8 b9
     #define OFFSET_LEM_B7   2000 //2023.89473684 // ADCB7
@@ -163,15 +163,15 @@ int32 cnt_four_bar_map_motor_encoder_angle=0;
     #define SCALE_LEM_A2   0.03060669 // ADCA2
     #define SCALE_LEM_A3   0.03045988 // ADCA3
 
-    // Displacement sensor
-    #define OFFSET_PLACE_X1    6094999  //4461341  //样机x轴位置1
-    #define OFFSET_PLACE_Y1    6094999  //4639271  //样机y轴位置1
+    // Displacement Sensor Coil
+    #define OFFSET_PLACE_RIGHT    6145730  //4461341
+    #define OFFSET_PLACE_DOWN     6145730  //4639271
 
-    #define OFFSET_PLACE_X2    6094999  //4561234  //样机x轴位置2
-    #define OFFSET_PLACE_Y2    6094999  //4513212  //样机y轴位置2
+    #define OFFSET_PLACE_LEFT     6145730  //4561234
+    #define OFFSET_PLACE_UP       6145730  //4513212
 
-    #define SCALE_PLACE_X      4.2894311E-5
-    #define SCALE_PLACE_Y      4.3412197E-5
+    #define SCALE_PLACE_X         4.811E-6  //4.2894311E-5
+    #define SCALE_PLACE_Y         4.811E-6  //4.3412197E-5
 
 
 #else
@@ -218,15 +218,15 @@ void init_experiment_AD_gain_and_offset(){
     CTRL.enc->theta_d_offset = CTRL.enc->OffsetCountBetweenIndexAndUPhaseAxis * CNT_2_ELEC_RAD;
 }
 void init_experiment_PLACE_gain_and_offset(){
-    Axis.place_offset[0] = OFFSET_PLACE_X1;
-    Axis.place_offset[1] = OFFSET_PLACE_Y1;
-    Axis.place_scale[0] = SCALE_PLACE_X;
-    Axis.place_scale[1] = SCALE_PLACE_Y;
-    /* 下面是针对4路位移传感器的定义 */
-    Axis.place_offset[2] = OFFSET_PLACE_X2;
-    Axis.place_offset[3] = OFFSET_PLACE_Y2;
-    Axis.place_scale[2] = SCALE_PLACE_X;
-    Axis.place_scale[3] = SCALE_PLACE_Y;
+    Axis.place_offset[0] = OFFSET_PLACE_RIGHT;
+    Axis.place_offset[1] = OFFSET_PLACE_DOWN;
+    Axis.place_scale[0]  = SCALE_PLACE_X;
+    Axis.place_scale[1]  = SCALE_PLACE_Y;
+    /* These is prepared for LDC1614 with 4 channels. */
+    Axis.place_offset[2] = OFFSET_PLACE_LEFT;
+    Axis.place_offset[3] = OFFSET_PLACE_UP;
+    Axis.place_scale[2]  = SCALE_PLACE_X;
+    Axis.place_scale[3]  = SCALE_PLACE_Y;
 }
 void main(void){
 
@@ -248,11 +248,9 @@ void main(void){
     Axis.pAdcaResultRegs = &AdcaResultRegs;
     Axis.pAdcbResultRegs = &AdcbResultRegs;
     Axis.pAdccResultRegs = &AdccResultRegs;
-<<<<<<< HEAD
+
     Axis.use_first_set_three_phase = 1; //1→使用第一套逆变器；2→使用第二套逆变器；-1→同时使用第一和第二套逆变器，且逆变器二控制转矩磁场、逆变器一控制悬浮磁场。
-=======
     Axis.use_first_set_three_phase = 2; // 1; // -1;
->>>>>>> 4a3813d3edf918a7057c21cd593b515704d85641
     Axis.Set_current_loop = FALSE;
     Axis.Set_x_suspension_current_loop = FALSE;
     Axis.Set_y_suspension_current_loop = FALSE;
@@ -269,11 +267,8 @@ void main(void){
     Axis.angle_shift_for_second_inverter = ANGLE_SHIFT_FOR_SECOND_INVERTER;
     Axis.OverwriteSpeedOutLimitDuringInit = 6; // 10; // A // What does number 6 mean?
     Axis.FLAG_ENABLE_PWM_OUTPUT = FALSE;
-<<<<<<< HEAD
     Axis.channels_preset = 1; // 9; // 101; // What does it mean?
-=======
     Axis.channels_preset = 5; // 9; // 101;
->>>>>>> 4a3813d3edf918a7057c21cd593b515704d85641
 
     ENC.sum_qepPosCnt = 0;
     ENC.cursor = 0;
@@ -682,13 +677,10 @@ void voltage_commands_to_pwm(){
 
     }else if(Axis.use_first_set_three_phase==-1){
 
-<<<<<<< HEAD
         // SVPWM of the motor 3-phase
         CTRL.svgen2.Ualpha = CTRL.O->uab_cmd_to_inverter[0]; // uab_cmd�ĵ�����͵�һ����������svgen2�ڶ��������������
-=======
         // SVPWM of the motor 3-phase 閿熻妭璁规嫹閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓闃额亷鎷烽敓锟?
         CTRL.svgen2.Ualpha = CTRL.O->uab_cmd_to_inverter[0]; // uab_cmd閿熶茎纰夋嫹閿熸枻鎷烽敓鏂ゆ嫹鍋烽敓鎻?浼欐嫹閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹閿熺氮vgen2閿熻妭璁规嫹閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹閿燂拷
->>>>>>> 4a3813d3edf918a7057c21cd593b515704d85641
         CTRL.svgen2.Ubeta  = CTRL.O->uab_cmd_to_inverter[1];
 
         // SVPWM of the suspension 3-phase
@@ -939,6 +931,7 @@ void measurement(){
     Axis.iuvw[0]=((REAL)(AdcaResultRegs.ADCRESULT1 ) - Axis.adc_offset[1]) * Axis.adc_scale[1]; //
     Axis.iuvw[1]=((REAL)(AdcaResultRegs.ADCRESULT2 ) - Axis.adc_offset[2]) * Axis.adc_scale[2]; //
     Axis.iuvw[2]=((REAL)(AdcaResultRegs.ADCRESULT3 ) - Axis.adc_offset[3]) * Axis.adc_scale[3]; //
+//    Axis.iuvw[0]=1-Axis.iuvw[1]-Axis.iuvw[2];  //It is error, because iu + iv + iw is not must equal to "1".
 
     // LEM2 閿熸枻鎷烽敓鏂ゆ嫹 閿熼摪鐧告嫹 閿熺Ц鎲嬫嫹
     Axis.iuvw[3]=((REAL)(AdcbResultRegs.ADCRESULT7 ) - Axis.adc_offset[4]) * Axis.adc_scale[4]; //
@@ -958,11 +951,12 @@ void measurement(){
     //    Axis.iuvw[1]=((REAL)(AdcaResultRegs.ADCRESULT2 ) - Axis.adc_offset[2]) * Axis.adc_scale[2]; //
     //    Axis.iuvw[2]=((REAL)(AdcaResultRegs.ADCRESULT3 ) - Axis.adc_offset[3]) * Axis.adc_scale[3]; //
 
-    /* Displacement sensor */
-    Axis.place_sensor[0] = (raw_value_zero - Axis.place_offset[0])*Axis.place_scale[0];
-    Axis.place_sensor[1] = (raw_value_one  - Axis.place_offset[1])*Axis.place_scale[1];
-//    Axis.place_sensor[2] = (raw_value_two  - Axis.place_offset[2])*Axis.place_scale[2];
-//    Axis.place_sensor[3] = (raw_value_three - Axis.place_offset[3])*Axis.place_scale[3];
+    /* Displacement Sensor Coil */
+    Axis.place_sensor[0] = (raw_value_rdlu[0] - Axis.place_offset[0])*Axis.place_scale[0];
+    Axis.place_sensor[1] = (raw_value_rdlu[1] - Axis.place_offset[1])*Axis.place_scale[1];
+    // These is prepared for the LDC1614 with 4 channels.
+    Axis.place_sensor[2] = (raw_value_rdlu[2] - Axis.place_offset[2])*Axis.place_scale[2];
+    Axis.place_sensor[3] = (raw_value_rdlu[3] - Axis.place_offset[3])*Axis.place_scale[3];
     if (Axis.place_sensor[0] > 0){
             // Axis.xx
     }
@@ -994,45 +988,32 @@ void measurement(){
     }
 
     if(Axis.use_first_set_three_phase==1){
-<<<<<<< HEAD
         //只用第一套三相
-=======
-        // 鍙?閿熺煫纰夋嫹涓�閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷?
->>>>>>> 4a3813d3edf918a7057c21cd593b515704d85641
         IS_C(0)        = Axis.iabg[0];
         IS_C(1)        = Axis.iabg[1];
         CTRL.I->iab[0] = Axis.iabg[0];
         CTRL.I->iab[1] = Axis.iabg[1];
 
-<<<<<<< HEAD
         US_C(0) = CTRL.O->uab_cmd[0]; // 后缀__P表示上一步的电压， P = Previous
         US_C(1) = CTRL.O->uab_cmd[1]; // 后缀__C表示当前步的电压， C = Current
-=======
         US_C(0) = CTRL.O->uab_cmd[0]; // 閿熸枻鎷风紑_P閿熸枻鎷风ず閿熸枻鎷蜂竴閿熸枻鎷烽敓渚ョ?夋嫹鍘嬮敓鏂ゆ嫹P = Previous
         US_C(1) = CTRL.O->uab_cmd[1]; // 閿熸枻鎷风紑_C閿熸枻鎷风ず閿熸枻鎷峰墠閿熸枻鎷烽敓渚ョ?夋嫹鍘嬮敓鏂ゆ嫹C = Current
->>>>>>> 4a3813d3edf918a7057c21cd593b515704d85641
 
         US_P(0) = US_C(0);
         US_P(1) = US_C(1);
 
     }else if(Axis.use_first_set_three_phase==2){
-<<<<<<< HEAD
         // 只用第二套三相
-=======
         // 鍙?閿熺煫绗?璁规嫹閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷?
->>>>>>> 4a3813d3edf918a7057c21cd593b515704d85641
         IS_C(0)        = Axis.iabg[3];
         IS_C(1)        = Axis.iabg[4];
         CTRL.I->iab[0] = Axis.iabg[3];
         CTRL.I->iab[1] = Axis.iabg[4];
 
-<<<<<<< HEAD
         US_C(0) = CTRL.O->uab_cmd[0+2]; // 后缀__P表示上一步的电压，P = Previous
         US_C(1) = CTRL.O->uab_cmd[1+2]; // 后缀__C表示当前步的电压，C = Current
-=======
         US_C(0) = CTRL.O->uab_cmd[0+2]; // 閿熸枻鎷风紑_P閿熸枻鎷风ず閿熸枻鎷蜂竴閿熸枻鎷烽敓渚ョ?夋嫹鍘嬮敓鏂ゆ嫹P = Previous
         US_C(1) = CTRL.O->uab_cmd[1+2]; // 閿熸枻鎷风紑_C閿熸枻鎷风ず閿熸枻鎷峰墠閿熸枻鎷烽敓渚ョ?夋嫹鍘嬮敓鏂ゆ嫹C = Current
->>>>>>> 4a3813d3edf918a7057c21cd593b515704d85641
 
         US_P(0) = US_C(0);
         US_P(1) = US_C(1);
@@ -1040,11 +1021,8 @@ void measurement(){
     }else if(Axis.use_first_set_three_phase==-1){
         IS_C(0)        = Axis.iabg[3];
         IS_C(1)        = Axis.iabg[4];
-<<<<<<< HEAD
         CTRL.I->iab[0] = Axis.iabg[3]; // 第二套逆变器控制转矩
-=======
         CTRL.I->iab[0] = Axis.iabg[3]; // 閿熻妭璁规嫹閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓闃额亷鎷烽敓锟?
->>>>>>> 4a3813d3edf918a7057c21cd593b515704d85641
         CTRL.I->iab[1] = Axis.iabg[4];
         CTRL.I->iab[0+2] = Axis.iabg[0];
         CTRL.I->iab[1+2] = Axis.iabg[1];
