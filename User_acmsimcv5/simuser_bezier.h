@@ -55,8 +55,11 @@ typedef struct
         REAL nonlinear_fake_disturbance_estimate;
         REAL output;
         REAL error;
+        REAL error_previous;
+        int flag_integral_saturated;
     } BezierController;
-    extern BezierController BzController, BzController_AdaptVersion;
+    extern BezierController BezierVL, BezierVL_AdaptVersion; // Velocity
+    extern BezierController BezierCL, BezierCL_AdaptVersion; // Current
 #endif
 
 int Comb(const int n, const int m);
@@ -79,8 +82,10 @@ REAL find_t_for_given_x(const REAL x, const BezierController *pBezier);
 REAL find_y_for_given_x(const REAL x, const BezierController *pBezier);
 
 void set_points(BezierController *pBezier);
+void set_points_cl(BezierController *pBezier);
 
-void control_output(st_pid_regulator *r, BezierController *BzController);
+void control_output             (st_pid_regulator *r, BezierController *BzController);
+REAL control_output_adaptVersion(st_pid_regulator *r, BezierController *BzController);
 
 // 这个被移到自动生成的 super_config.c 里面去了！不要在这里用！
 // #if PC_SIMULATION == FALSE

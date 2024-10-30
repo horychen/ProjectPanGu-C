@@ -3,15 +3,21 @@
 
 #if WHO_IS_USER == USER_YZZ
 
+	#define CORRECTION_4_SHARED_FLUX_EST d_sim.init.KE
+    #define U_MOTOR_KE                   d_sim.init.KE
+    #define IM_FLUX_COMMAND_DC_PART     d_sim.init.KE // 1.3593784874408608
+    #define IM_FLUX_COMMAND_SINE_PART   0.0
+    void rk4_init();
 /* User */
 #include "super_config.h"
 #include "main_switch.h"
+
 
 /* Algorithms */
 
     /* Select [Shared Flux Estimator] */
     // #define AFE_USED FE.clfe4PMSM
-    #define AFE_USED FE.no_sat
+    #define AFE_USED FE.htz
     // #define AFE_USED FE.huwu
     // #define AFE_USED FE.htz // this is for ESO speed estimation
     // #define AFE_USED FE.picorr // this is for ESO speed estimation
@@ -33,9 +39,6 @@
         /* Holtz 2002 */
         // #define HOLTZ_2002_GAIN_OFFSET 20
 
-#if /* PM Motor Observer */ MACHINE_TYPE % 10 == 2
-
-#elif /* Induction Motor Observer */ MACHINE_TYPE % 10 == 1
     // Marino05 调参 /// default: (17143), (2700.0), (1000), (1), (0)
     #define GAMMA_INV_xTL 17142.85714285714
     #define LAMBDA_INV_xOmg 10000 // 2700.0 is too large, leading to unstable flux amplitude contorl
@@ -79,7 +82,6 @@
         #define IM_ELECTRICAL_SPEED_FEEDBACK    marino.xOmg // (*CTRL).i->omg_elec
         #define IM_ELECTRICAL_POSITION_FEEDBACK marino.xRho // (*CTRL).i->theta_d_elec
 	// #endif
-#endif
 
 
 /* from share flux estimator */ 
@@ -116,8 +118,12 @@
     #define AFE_36_TOP_BUTT_EXACT_COMPENSATION 0
     #define AFE_37_NO_SATURATION_BASED 1
     #define AFE_38_OUTPUT_ERROR_CLOSED_LOOP 1
-    #define AFE_39_SATURATION_TIME_WITHOUT_LIMITING 1
+    #define AFE_39_SATURATION_TIME_WITHOUT_LIMITING 0
     #define AFE_40_JO_CHOI_METHOD 0
+    #define AFE_41_LascuAndreescus2006 1
+    #define ALG_AKT_SPEED_EST_AND_RS_ID 1
+    #define ALG_Awaya_InertiaId 1
+    #define ALG_qaxis_inductance_identification 1
 
     typedef void (*pointer_flux_estimator_dynamics)(REAL t, REAL *x, REAL *fx);
     void general_2states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REAL *x, REAL hs);
@@ -640,17 +646,23 @@
         void VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
         void Main_No_Saturation_Based();
         void Main_VM_ClosedLoopFluxEstimatorForPMSM();
-        void Main_Saturation_time_Without_Limiting();
+        void VM_LascuAndreescus2006();
+        void SpeedEstimationFromtheVMBasedFluxEstimation();
+        void RS_Identificaiton();
+        // void Main_Saturation_time_Without_Limiting();
     void init_afe();
     void init_FE();
     void init_FE_htz(); // Holtz 2003
     void init_No_Saturation_Based(); // No Saturation Based
     void init_ClosedLoopFluxEstimatorForPMSM(); // Closed Loop Flux Estimator For PMSM
     void init_Saturation_time_Without_Limiting();
+        // observer declaration 
+    void init_LascuAndreescus2006();
+    void init_ake_Speed_Est_and_RS_ID();
     #endif
 
     #endif
-
+    /* share flux estimator end */ 
 
     /* from pmsm observer */ 
 
@@ -664,7 +676,7 @@
             #define SELF_COMM_INVERTER FALSE
             #define TUNING_CURRENT_SCALE_FACTOR_INIT FALSE2
         #else
-            #define ENABLE_COMMISSIONING FALSE /*Experiment*/
+            #define ENABLE_COMMISSIONING TRUE /*Experiment*/
             #define SELF_COMM_INVERTER FALSE
             #define TUNING_CURRENT_SCALE_FACTOR_INIT FALSE
             /*As we use (*CTRL).o->iab_cmd for look up, now dead-time compensation during ENABLE_COMMISSIONING is not active*/
@@ -679,8 +691,6 @@
             #define ALG_Farza_2009 6
             #define ALG_Harnefors_2006 7
             #define ALG_ESOAF 10
-
-
         // #define SELECT_ALGORITHM ALG_ESOAF
         #define SELECT_ALGORITHM ALG_NSOAF
         // #define SELECT_ALGORITHM ALG_Chi_Xu
@@ -1023,7 +1033,84 @@
     #endif
     };
     extern struct ObserverForExperiment OBSV;
+    #if ALG_AKT_SPEED_EST_AND_RS_ID
+        struct Akatsu_Variables{
+            REAL emf_lpf[2];
+            REAL is_hpf[2];
+            REAL is_hpf_temp[2];
+            REAL ireq_lpf[2];
+            REAL ireq_cal[4];
+            REAL psi_cmd[2];
+            REAL psi_cmd_lpf[2];
+            REAL psi_cal[4];
+                REAL psi_stator[2];
+                REAL emf_stator[2];
+                REAL field_speed_est;
+                REAL field_speed_est_lpf;
+                REAL omg_est;
+                REAL omg_est_lpf;
+            REAL the_u;
+            REAL the_y;
+            REAL the_u_lpf;
+            REAL the_y_hpf;
+            REAL the_y_hpf_temp;
+            REAL the_error;
+            // REAL delta_rreq;
+            // REAL the_gain_P;
+            REAL rs_cal;
+                REAL rs_direct_cal;
+                REAL voltage_drop[2];
+                REAL voltage_drop_mod;
+                REAL current_mod;
+                long int count_rs;
+            REAL indicator_rs;
+            REAL the_error_sumup;
+            REAL squared_fluxMod;
+            REAL squared_fluxMod_lpf;
+            REAL pseudo_iMreq_lpf;
+            REAL the_u_sumup;
+            REAL the_u_offset;
+            // REAL zero_freq_operation_on;
 
+            REAL sta_state[2];
+            REAL lambda1;
+            REAL lambda2;
+            REAL the_y_lpf;
+            REAL xTem;
+            REAL gamma_res_transient;
+            REAL GAIN_RS;
+            REAL omg_ctrl_err;
+            REAL omg_fb;
+            REAL gamma_res_transient_shape;
+        };
+        extern struct Akatsu_Variables akt;
+    #endif
+    #if ALG_Awaya_InertiaId
+        struct Awaya_Variables{
+        REAL awaya_lambda;
+        REAL q0;
+        REAL q1_dot;
+        REAL q1;
+        REAL tau_est;
+        REAL tau_est_lpf;
+        REAL sum_A;
+        REAL sum_B;
+        REAL est_Js_variation;
+        REAL est_Js;
+    };
+    extern struct Awaya_Variables awy;
+    #endif
+    #if ALG_qaxis_inductance_identification
+        struct Qaxis_InductanceId{
+        REAL GAINforID;
+        REAL Lq;
+        REAL Lq_est;
+        REAL omega_elec;
+        REAL omega_elec_est_from_Lq;
+        REAL omega_elec_err;
+    };
+    extern struct Qaxis_InductanceId q_inductanceid;
+    #endif
     #if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
 
         void init_QiaoXia2013();
@@ -1033,7 +1120,8 @@
         void init_hgo4eemf();
         void init_cjheemf();
         void init_harnefors();
-
+        // controller declaration
+        void controller_IFOC();
 
         /* Call all pmsm observers at one place here */
         void pmsm_observers();
@@ -1053,8 +1141,6 @@
     #endif
 
     #endif
-
-
 
 
 #endif

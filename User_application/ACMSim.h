@@ -100,13 +100,6 @@ REAL _lpf(REAL x, REAL y_tminus1, REAL time_const_inv);
 extern REAL one_over_six;
 REAL difference_between_two_angles(REAL first, REAL second);
 
-
-
-
-
-
-
-
 /* Encoder QEP TODO: should read from excel */
 #define ABSOLUTE_ENCODER_SCI_SHANK 1
 #define ABSOLUTE_ENCODER_SCI_HIP  2
@@ -143,8 +136,8 @@ REAL difference_between_two_angles(REAL first, REAL second);
 #define CNT_2_ELEC_RAD (SYSTEM_QEP_REV_PER_PULSE * 2 * M_PI * d_sim.init.npp)
 #define SYSTEM_QEP_QPOSMAX (9999)
 #define SYSTEM_QEP_QPOSMAX_PLUS_1 (10000)
-#define OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS 2353 // cjh tuned with id_cmd = 4A @2024-10-05
-#define positive_current_QPOSCNT_counting_down (-1) // 正向旋转的电流导致增量式编码器QEP读数减少 则填 -1，否则默认为 1。
+#define OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS 4351 // wb tuned with id=3A 20241027 // 2353 // cjh tuned with id_cmd = 4A @2024-10-05
+#define positive_current_QPOSCNT_counting_down (1) // 正向旋转的电流导致增量式编码器QEP读数减少 则填 -1，否则默认为 1。
 #elif (ENCODER_TYPE == ABSOLUTE_ENCODER_SCI_SHANK) || (ENCODER_TYPE == ABSOLUTE_ENCODER_SCI_HIP)
 #define SYSTEM_QEP_PULSES_PER_REV (8388608)
 #define SYSTEM_QEP_REV_PER_PULSE (1.1920929e-7)
