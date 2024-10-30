@@ -152,7 +152,9 @@ void commissioning(){
     (*CTRL).i->iDQ[0] = AB2M((*CTRL).i->iAB[0], (*CTRL).i->iAB[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
     (*CTRL).i->iDQ[1] = AB2T((*CTRL).i->iAB[0], (*CTRL).i->iAB[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
     // 参数自整定
-    StepByStepCommissioning();
+    #if WHO_IS_USER == USER_WB
+        StepByStepCommissioning_NEW_WB();
+    #endif
     _user_inverter_voltage_command(0);
 }
 
@@ -1254,7 +1256,7 @@ void StepByStepCommissioning_NEW_WB(){
     /* End *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/      
 }
 
-
+#if USING_OLD_COMM
 void StepByStepCommissioning_OLD(){
     /* Start *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 
@@ -1318,5 +1320,6 @@ void StepByStepCommissioning_OLD(){
 
     /* End *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/      
 }
+#endif
 
 #endif

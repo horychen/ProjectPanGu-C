@@ -612,28 +612,28 @@ void _user_commands(){
         #if WHO_IS_USER == USER_WB
             ACM.TLoad = 0;
             /* Speed Ref Given */
-            (*CTRL).i->cmd_varOmega = 0.0;
-            if ((*CTRL).timebase > CL_TS){
-                (*CTRL).i->cmd_varOmega = (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
-            }
-            if ((*CTRL).timebase > 0.2){
-                (*CTRL).i->cmd_varOmega = - (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
-            }
-            if ((*CTRL).timebase > 0.4){
-                #if PC_SIMULATION
-                    ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.8);
-                #endif
-            }if ((*CTRL).timebase > 0.6){
-                #if PC_SIMULATION
-                    ACM.TLoad = 0; // human does not give a torque
-                #endif
-                (*CTRL).i->cmd_varOmega = 500 * RPM_2_MECH_RAD_PER_SEC;
-            }if ((*CTRL).timebase > 0.8){
-                #if PC_SIMULATION
-                    ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.8);
-                #endif
-                (*CTRL).i->cmd_varOmega =  500 * RPM_2_MECH_RAD_PER_SEC;
-            }
+            // (*CTRL).i->cmd_varOmega = 0.0;
+            // if ((*CTRL).timebase > CL_TS){
+            //     (*CTRL).i->cmd_varOmega = (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
+            // }
+            // if ((*CTRL).timebase > 0.2){
+            //     (*CTRL).i->cmd_varOmega = - (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
+            // }
+            // if ((*CTRL).timebase > 0.4){
+            //     #if PC_SIMULATION
+            //         ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.8);
+            //     #endif
+            // }if ((*CTRL).timebase > 0.6){
+            //     #if PC_SIMULATION
+            //         ACM.TLoad = 0; // human does not give a torque
+            //     #endif
+            //     (*CTRL).i->cmd_varOmega = 500 * RPM_2_MECH_RAD_PER_SEC;
+            // }if ((*CTRL).timebase > 0.8){
+            //     #if PC_SIMULATION
+            //         ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.8);
+            //     #endif
+            //     (*CTRL).i->cmd_varOmega =  500 * RPM_2_MECH_RAD_PER_SEC;
+            // }
             // (*CTRL).i->cmd_varOmega = wubo_Signal_Generator(GENERATE_SPEED_SINE) * RPM_2_MECH_RAD_PER_SEC;
             // (*CTRL).i->cmd_varOmega = wubo_Signal_Generator(GENERATE_SPEED_SAUARE_WAVE_WITH_INV) * RPM_2_MECH_RAD_PER_SEC;
         #elif WHO_IS_USER == USER_CJH || WHO_IS_USER == USER_XM
@@ -825,31 +825,15 @@ int main_switch(long mode_select){
         break;
     case MODE_SELECT_FOC_HARNEFORS_1998: // 36
         #if WHO_IS_USER == USER_WB
-            ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.5);
+            #if PC_SIMULATION
+                ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.5);
+            #endif
             (*CTRL).i->cmd_iDQ[0] = (*debug).set_id_command;
             (*CTRL).i->cmd_iDQ[1] = (*debug).set_iq_command;
             _user_wubo_FOC((*CTRL).i->theta_d_elec, (*CTRL).i->iAB);
         #endif
         break;
     case MODE_SELECT_VELOCITY_LOOP: // 4
-        #if WHO_IS_USER == USER_WB
-            INNER_LOOP_SENSITIVITY_ANALYSIS(debug);
-            if ( d_sim.user.bool_apply_HitWall_analysis == TRUE){
-                (*debug).set_rpm_speed_command = d_sim.user.HitWall_high_RPM_command;
-                static REAL last_time = 0.0;
-                static int i = 0.0;
-                REAL interval_time = d_sim.user.HitWall_time_interval;
-                if( ((*CTRL).timebase - last_time > interval_time) && (i < NUMBER_OF_HIT_WALL_VAR_RATIO) ){
-                    PID_iD->OutLimit = d_sim.CL.LIMIT_DC_BUS_UTILIZATION * d_sim.init.Vdc * wubo_HW.Vdc_limit_ratio[i];
-                    PID_iQ->OutLimit = d_sim.CL.LIMIT_DC_BUS_UTILIZATION * d_sim.init.Vdc * wubo_HW.Vdc_limit_ratio[i];
-                    #if PC_SIMULATION
-                        printf("Vdc limit is %f\n", PID_iD->OutLimit);
-                    #endif
-                    last_time = (*CTRL).timebase; // here right????????
-                    i = i + 1;
-                }
-            }
-        #endif
         _user_commands();         // User commands
         FOC_with_vecocity_control((*CTRL).i->theta_d_elec,
             (*CTRL).i->varOmega,
@@ -891,6 +875,30 @@ int main_switch(long mode_select){
     case MODE_SELECT_TESTING_SENSORLESS : //42
         break;
     case MODE_SELECT_VELOCITY_LOOP_WC_TUNER: // 43
+        #if WHO_IS_USER == USER_WB
+            INNER_LOOP_SENSITIVITY_ANALYSIS(debug);
+            if ( d_sim.user.bool_apply_HitWall_analysis == TRUE){
+                (*debug).set_rpm_speed_command = d_sim.user.HitWall_high_RPM_command;
+                static REAL last_time = 0.0;
+                static int i = 0.0;
+                REAL interval_time = d_sim.user.HitWall_time_interval;
+                if( ((*CTRL).timebase - last_time > interval_time) && (i < NUMBER_OF_HIT_WALL_VAR_RATIO) ){
+                    PID_iD->OutLimit = d_sim.CL.LIMIT_DC_BUS_UTILIZATION * d_sim.init.Vdc * wubo_HW.Vdc_limit_ratio[i];
+                    PID_iQ->OutLimit = d_sim.CL.LIMIT_DC_BUS_UTILIZATION * d_sim.init.Vdc * wubo_HW.Vdc_limit_ratio[i];
+                    #if PC_SIMULATION
+                        printf("Vdc limit is %f\n", PID_iD->OutLimit);
+                    #endif
+                    last_time = (*CTRL).timebase; // here right????????
+                    i = i + 1;
+                }
+            }
+        #endif
+        _user_commands();         // User commands
+        FOC_with_vecocity_control((*CTRL).i->theta_d_elec,
+            (*CTRL).i->varOmega,
+            (*CTRL).i->cmd_varOmega, 
+            (*CTRL).i->cmd_iDQ, 
+            (*CTRL).i->iAB);
         break;
     case MODE_SELECT_Marino2005: //44
     #if (WHO_IS_USER == USER_CJH)
@@ -927,7 +935,7 @@ int main_switch(long mode_select){
         break;
     case MODE_SELECT_COMMISSIONING: // 9
         // #if ENABLE_COMMISSIONING == TRUE
-        #if WHO_IS_USER == USER_WB
+        #if ENABLE_COMMISSIONING && WHO_IS_USER == USER_WB
             commissioning();
         #endif
         // #endif

@@ -58,7 +58,10 @@ void COMM_inertiaId(REAL id_fb, REAL iq_fb, REAL cosPark, REAL sinPark, REAL omg
 void COMM_end(REAL id_fb, REAL iq_fb);
 
 // Main Procedure
+#define USING_OLD_COMM FALSE
 void StepByStepCommissioning();
+void StepByStepCommissioning_NEW_WB();
+void StepbyStepCommissioning_OLD();
 
 #endif
 #endif

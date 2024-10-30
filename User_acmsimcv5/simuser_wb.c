@@ -7,6 +7,9 @@ wubo_Parameter_mismatch wubo_ParaMis;
 wubo_Hit_Wall wubo_HW;
 SpeedInnerLoop SIL_Controller;
 Harnefors_1998_BackCals Harnefors_1998_BackCals_Variable;
+
+
+
     /* Calculation for Vdc utilization BUT this is not beauty it makes CHAOS!!!!*/
     #if PC_SIMULATION
         #define DC_BUS_VOLTAGE_INVERSE_WUBO (1.732 / d_sim.init.Vdc)
@@ -375,23 +378,20 @@ void _user_wubo_FOC(REAL theta_d_elec, REAL iAB[2]){
             decoupled_q_axis_voltage = pi_iq.Out;
         }
     #else
-
         REAL Harnefors_coupling_term;
-
         REAL decoupled_d_axis_voltage;
         PID_iD->Fbk = (*CTRL).i->iDQ[0];
         PID_iD->Ref = (*CTRL).i->cmd_iDQ[0];
-
-        /* iD calc from Harnefors 1998 */
-        if (d_sim.user.bool_enable_Harnefors_back_calculation == TRUE){
-            if (d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation == TRUE){
-                Harnefors_coupling_term = - PID_iQ->Fbk * MOTOR.Lq * (*CTRL).i->varOmega * MOTOR.npp;
-            }else{
-                Harnefors_coupling_term = 0.0;
-            }
-            _user_Harnefors_back_calc_PI_antiWindup(PID_iD, &Harnefors_1998_BackCals_Variable, Harnefors_1998_BackCals_Variable.K_INVERSE_iD, Harnefors_coupling_term);
-            decoupled_d_axis_voltage = PID_iD->Out;
-        } else {
+        // /* iD calc from Harnefors 1998 */
+        // if (d_sim.user.bool_enable_Harnefors_back_calculation == TRUE){
+        //     if (d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation == TRUE){
+        //         Harnefors_coupling_term = - PID_iQ->Fbk * MOTOR.Lq * (*CTRL).i->varOmega * MOTOR.npp;
+        //     }else{
+        //         Harnefors_coupling_term = 0.0;
+        //     }
+        //     _user_Harnefors_back_calc_PI_antiWindup(PID_iD, &Harnefors_1998_BackCals_Variable, Harnefors_1998_BackCals_Variable.K_INVERSE_iD, Harnefors_coupling_term);
+        //     decoupled_d_axis_voltage = PID_iD->Out;
+        // } else {
         /* iD calc from TI */
             PID_iD->calc(PID_iD);
             if(d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation == TRUE){
@@ -402,7 +402,7 @@ void _user_wubo_FOC(REAL theta_d_elec, REAL iAB[2]){
             /* 对补偿后的dq轴电压进行限幅度 */
             if (decoupled_d_axis_voltage > PID_iD->OutLimit) decoupled_d_axis_voltage = PID_iD->OutLimit;
             else if (decoupled_d_axis_voltage < -PID_iD->OutLimit) decoupled_d_axis_voltage = -PID_iD->OutLimit;
-        }
+        // }
 
 
         /* iQ calc */
@@ -410,17 +410,17 @@ void _user_wubo_FOC(REAL theta_d_elec, REAL iAB[2]){
         PID_iQ->Fbk = (*CTRL).i->iDQ[1];
         PID_iQ->Ref = (*CTRL).i->cmd_iDQ[1];
 
-        /* iD calc from Harnefors 1998 */
-        if (d_sim.user.bool_enable_Harnefors_back_calculation == TRUE){
-            if (d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation == TRUE){
-                Harnefors_coupling_term = (MOTOR.KActive + PID_iD->Fbk * MOTOR.Ld) * (*CTRL).i->varOmega * MOTOR.npp;
-            }else{
-                Harnefors_coupling_term = 0.0;
-            }
-            _user_Harnefors_back_calc_PI_antiWindup(PID_iQ, &Harnefors_1998_BackCals_Variable, Harnefors_1998_BackCals_Variable.K_INVERSE_iQ, Harnefors_coupling_term);
-            decoupled_q_axis_voltage = PID_iQ->Out;
-        } else {
-        /* iD calc from TI */
+        // /* iQ calc from Harnefors 1998 */
+        // if (d_sim.user.bool_enable_Harnefors_back_calculation == TRUE){
+        //     if (d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation == TRUE){
+        //         Harnefors_coupling_term = (MOTOR.KActive + PID_iD->Fbk * MOTOR.Ld) * (*CTRL).i->varOmega * MOTOR.npp;
+        //     }else{
+        //         Harnefors_coupling_term = 0.0;
+        //     }
+        //     _user_Harnefors_back_calc_PI_antiWindup(PID_iQ, &Harnefors_1998_BackCals_Variable, Harnefors_1998_BackCals_Variable.K_INVERSE_iQ, Harnefors_coupling_term);
+        //     decoupled_q_axis_voltage = PID_iQ->Out;
+        // } else {
+        /* iQ calc from TI */
             PID_iQ->calc(PID_iQ);
             if(d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation == TRUE){
                 decoupled_q_axis_voltage = PID_iQ->Out + (MOTOR.KActive + PID_iD->Fbk * MOTOR.Ld) * (*CTRL).i->varOmega * MOTOR.npp;
@@ -429,8 +429,47 @@ void _user_wubo_FOC(REAL theta_d_elec, REAL iAB[2]){
             }
             if (decoupled_q_axis_voltage > PID_iQ->OutLimit) decoupled_q_axis_voltage = PID_iQ->OutLimit;
             else if (decoupled_q_axis_voltage < -PID_iQ->OutLimit) decoupled_q_axis_voltage = -PID_iQ->OutLimit;
-        }
+        // }
     #endif
+
+
+    /* Harnefors 1998 Back Calc */
+    if(d_sim.user.bool_enable_Harnefors_back_calculation == TRUE){
+        REAL Harnefors_iD_coupling_term;
+        REAL Harnefors_iQ_coupling_term;
+        if (d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation == TRUE){
+                Harnefors_iD_coupling_term = - PID_iQ->Fbk * MOTOR.Lq * (*CTRL).i->varOmega * MOTOR.npp;
+                Harnefors_iQ_coupling_term = (MOTOR.KActive + PID_iD->Fbk * MOTOR.Ld) * (*CTRL).i->varOmega * MOTOR.npp;
+            }else{
+                Harnefors_iD_coupling_term = 0.0;
+                Harnefors_iQ_coupling_term = 0.0;
+            }
+        // Compute ideal Voltage
+        PID_iD->Fbk = (*CTRL).i->iDQ[0];
+        PID_iD->Ref = (*CTRL).i->cmd_iDQ[0];
+        PID_iD->Err = PID_iD->Ref - PID_iD->Fbk;
+        
+        PID_iQ->Fbk = (*CTRL).i->iDQ[1];
+        PID_iQ->Ref = (*CTRL).i->cmd_iDQ[1];
+        PID_iQ->Err = PID_iQ->Ref - PID_iQ->Fbk;
+        
+        /* Warning: First Step xd and xq didnt work cuz xd=xq=0 (initilization) */
+        PID_iD->Out = PID_iD->Kp * PID_iD->Err - Harnefors_iD_coupling_term + HARNEFORS_1998_VAR.I_Term_prev_iD;
+        PID_iQ->Out = PID_iQ->Kp * PID_iQ->Err + Harnefors_iQ_coupling_term + HARNEFORS_1998_VAR.I_Term_prev_iQ;
+
+        // Limit Voltage
+        REAL uabs = sqrtf( PID_iD->Out * PID_iD->Out + PID_iQ->Out * PID_iQ->Out );
+        if( uabs > HARNEFORS_UMAX ){
+            PID_iD->Out = PID_iD->Out * HARNEFORS_UMAX / uabs;
+            PID_iQ->Out = PID_iQ->Out * HARNEFORS_UMAX / uabs;
+        }
+
+        // Back Calculation
+        HARNEFORS_1998_VAR.I_Term_prev_iD += HARNEFORS_1998_VAR.K_INVERSE_iD * ( PID_iD->Out - HARNEFORS_1998_VAR.I_Term_prev_iD + Harnefors_iD_coupling_term);
+        HARNEFORS_1998_VAR.I_Term_prev_iQ += HARNEFORS_1998_VAR.K_INVERSE_iQ * ( PID_iQ->Out - HARNEFORS_1998_VAR.I_Term_prev_iQ - Harnefors_iQ_coupling_term);
+    }
+    decoupled_d_axis_voltage = PID_iD->Out;
+    decoupled_q_axis_voltage = PID_iQ->Out;
 
 
 
@@ -487,6 +526,8 @@ void _user_wubo_SpeedInnerLoop_controller(st_pid_regulator *r, SpeedInnerLoop *r
 void _init_Harnerfors_1998_BackCalc(){
     Harnefors_1998_BackCals_Variable.Err_bar = 0.0;
     Harnefors_1998_BackCals_Variable.I_Term_prev = 0.0;
+    Harnefors_1998_BackCals_Variable.I_Term_prev_iD = 0.0;
+    Harnefors_1998_BackCals_Variable.I_Term_prev_iQ = 0.0;
     Harnefors_1998_BackCals_Variable.K_INVERSE_iD = 1 / (PID_iD->Kp + PID_iD->Ki_CODE);
     Harnefors_1998_BackCals_Variable.K_INVERSE_iQ = 1 / (PID_iQ->Kp + PID_iQ->Ki_CODE);
 }
@@ -494,7 +535,6 @@ void _user_Harnefors_back_calc_PI_antiWindup(st_pid_regulator *r, Harnefors_1998
     r->Err = r->Ref - r->Fbk;
     r->P_Term =  r->Kp * r->Err;
     r->I_Term = H->I_Term_prev + r->Ki_CODE * r->Err;
-    
 
     // Calculate u^{\bar}
     r->Out = r->P_Term + r->I_Term + coupling_term;

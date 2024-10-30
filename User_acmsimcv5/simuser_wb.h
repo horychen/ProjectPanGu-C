@@ -38,10 +38,18 @@
     typedef struct {
         REAL Err_bar;
         REAL I_Term_prev;
+        REAL I_Term_prev_iD;
+        REAL I_Term_prev_iQ;
         REAL K_INVERSE_iD;
         REAL K_INVERSE_iQ;
     } Harnefors_1998_BackCals;
     extern Harnefors_1998_BackCals Harnefors_1998_BackCals_Variable;
+    #define HARNEFORS_1998_VAR Harnefors_1998_BackCals_Variable
+    #if PC_SIMULATION
+        #define HARNEFORS_UMAX d_sim.init.Vdc * 0.5773
+    #else
+        #define HARNEFORS_UMAX Axis->vdc * 0.5773
+    #endif
     void _init_Harnerfors_1998_BackCalc();
     void _user_Harnefors_back_calc_PI_antiWindup(st_pid_regulator *r, Harnefors_1998_BackCals *H, REAL K_inverse, REAL coupling_term);
     void _user_wubo_FOC(REAL theta_d_elec, REAL iAB[2]);
