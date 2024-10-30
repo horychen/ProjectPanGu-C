@@ -109,8 +109,8 @@ void write_DAC_buffer(){
         /* Bezier */
         (*Axis4DAC).dac_watch[40] = (*CTRL).i->cmd_varOmega * MECH_RAD_PER_SEC_2_RPM * 0.002;
         (*Axis4DAC).dac_watch[41] = (*CTRL).i->varOmega     * MECH_RAD_PER_SEC_2_RPM * 0.002;
-        (*Axis4DAC).dac_watch[42] = (*CTRL).i->cmd_iDQ[1] * 0.2;
-        (*Axis4DAC).dac_watch[43] = (*CTRL).i->iDQ[1]     * 0.2;
+        (*Axis4DAC).dac_watch[42] = (*CTRL).i->cmd_iDQ[1] * 0.1; // range is 1/0.1 A
+        (*Axis4DAC).dac_watch[43] = (*CTRL).i->iDQ[1]     * 0.1;
         (*Axis4DAC).dac_watch[44] = (*CTRL).o->dc_bus_utilization_ratio;
         (*Axis4DAC).dac_watch[45] = Axis_1.iuvw[0]*0.2;
         (*Axis4DAC).dac_watch[46] = Axis_1.iuvw[1]*0.2;

@@ -15,6 +15,7 @@
     void _init_wubo_Hit_Wall();
 
 
+
     /* Inner Loop Controller */
     typedef struct {
         REAL KFB;
@@ -33,6 +34,21 @@
     /* Dead Predict Current Controller */
     void DPCC();
 
+    /* Harnefors 1998 back calculations*/
+    typedef struct {
+        REAL Err_bar;
+        REAL I_Term_prev;
+        REAL K_INVERSE_iD;
+        REAL K_INVERSE_iQ;
+    } Harnefors_1998_BackCals;
+    extern Harnefors_1998_BackCals Harnefors_1998_BackCals_Variable;
+    void _init_Harnerfors_1998_BackCalc();
+    void _user_Harnefors_back_calc_PI_antiWindup(st_pid_regulator *r, Harnefors_1998_BackCals *H, REAL K_inverse, REAL coupling_term);
+    void _user_wubo_FOC(REAL theta_d_elec, REAL iAB[2]);
+
+    /* Position Loop Controller */
+    void _user_wubo_get_SpeedFeedForward_for_PositionLoop(REAL Theta);
+    void _user_wubo_PositionLoop_controller(REAL Theta, REAL Speed_FeedForward);
 
     /* For Sweeping & Signal Generator */
     void _user_wubo_Sweeping_Command();

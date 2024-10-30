@@ -137,9 +137,10 @@ void main_loop(){
                 CTRL = &CTRL_1;
                 PID_Speed->Ref = (*CTRL).i->cmd_varOmega;
                 PID_Speed->Fbk = (*CTRL).i->varOmega;
-                control_output(PID_Speed, &BzController);
-                (*debug).set_iq_command = PID_Speed->Out;
-                // (*debug).set_iq_command = control_output_adaptVersion(PID_Speed, &BzController_AdaptVersion);
+                PID_Speed->OutLimit = BezierVL.points[BezierVL.order].y;
+                control_output(PID_Speed, &BezierVL);
+                // (*debug).set_iq_command = PID_Speed->Out;
+                (*debug).set_iq_command = control_output_adaptVersion(PID_Speed, &BezierVL_AdaptVersion);
                 (*debug).set_id_command = 0;
             }
 
@@ -147,14 +148,14 @@ void main_loop(){
 
 //         #if WHO_IS_USER == USER_QIAN
             // Sensor Coil
-            I2CA_ReadData_Channel(0);
-            DELAY_US(30);
-            I2CA_ReadData_Channel(1);
-            DELAY_US(30);
-            I2CA_ReadData_Channel(2);
-            DELAY_US(300);
-            I2CA_ReadData_Channel(3);
-            DELAY_US(300);
+//            I2CA_ReadData_Channel(0);
+//            DELAY_US(30);
+//            I2CA_ReadData_Channel(1);
+//            DELAY_US(30);
+//            I2CA_ReadData_Channel(2);
+//            DELAY_US(300);
+//            I2CA_ReadData_Channel(3);
+//            DELAY_US(300);
 //         #endif
         //        mainWhileLoopCounter1++;
         //        mainWhileLoopCounter2=2992;
@@ -351,6 +352,13 @@ void DISABLE_PWM_OUTPUT(){
         // PID_iX->OutPrev = 0;
         // PID_iy->OutPrev = 0;
 
+        // Sweeping 
+        (*CTRL).timebase_counter = 0.0;
+        (*CTRL).timebase = 0.0;
+        d_sim.user.CMD_SPEED_SINE_HZ = 0.0;
+        d_sim.user.CMD_SPEED_SINE_END_TIME = CL_TS;
+        d_sim.user.CMD_SPEED_SINE_LAST_END_TIME = 0.0;
+        
         EPwm1Regs.CMPA.bit.CMPA = 2500;
         EPwm2Regs.CMPA.bit.CMPA = 2500;
         EPwm3Regs.CMPA.bit.CMPA = 2500;

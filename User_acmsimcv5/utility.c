@@ -151,6 +151,11 @@ REAL difference_between_two_angles(REAL first, REAL second)
             }else{
                 printf("!!! Other tunner is Applied to the Speed Loop Control !!!\n");
             }
+            if (d_sim.user.bool_enable_Harnefors_back_calculation == TRUE){
+                printf(">>> Harnefors Back Calculation is Applied <<<\n");
+            }else{
+                printf("!!! Harnefors Back Calculation is NOT Applied !!!\n");
+            }
             if CURRENT_LOOP_KI_TIMES_TEN
                 printf(">>> Current Loop Ki is 10 times larger <<<\n");
             else
