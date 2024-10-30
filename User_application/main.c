@@ -340,9 +340,12 @@ void DISABLE_PWM_OUTPUT(){
         PID_iQ->Err = 0;
         PID_iQ->ErrPrev = 0;
         PID_iQ->I_Term = 0;
-        // 清空速度InnerLoop缓存
+        // 清空速度InnerLoop缓存 & Harnefors Var
         #if WHO_IS_USER == USER_WB
             SIL_Controller.KFB_Term = 0;
+            Harnefors_1998_BackCals_Variable.I_Term_prev = 0.0;
+            Harnefors_1998_BackCals_Variable.I_Term_prev_iD = 0.0;
+            Harnefors_1998_BackCals_Variable.I_Term_prev_iQ = 0.0;
         #endif
         // PID_iX->OutPrev = 0;
         // PID_iy->OutPrev = 0;
