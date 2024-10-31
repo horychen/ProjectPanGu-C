@@ -333,6 +333,7 @@ void set_points(BezierController *pBezier){
         return;
     }
 }
+#if 0
 void set_points_cl(BezierController *pBezier){
     #define ARGS_PATH_BEZIER_CL "../acmsimc_bezier_points/bezier_cl.txt"
 
@@ -384,7 +385,7 @@ void set_points_cl(BezierController *pBezier){
         return;
     }
 }
-
+#endif
 
 /**
  * @brief Calculates the control output using Bezier curve interpolation
@@ -528,11 +529,11 @@ void bezier_controller_run_in_main(){
             ACM.TLoad = 0.0;
         }
 
-        overwrite_sweeping_frequency();
-
     #else
         CTRL = &CTRL_1;
     #endif
+
+    overwrite_sweeping_frequency();
 
     PID_Speed->Ref = (*CTRL).i->cmd_varOmega;
     PID_Speed->Fbk = (*CTRL).i->varOmega;

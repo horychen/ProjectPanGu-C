@@ -628,8 +628,8 @@ void _init_wubo_ParaMis() {
     wubo_ParaMis.total_exp_time = 0.0;
 }
 void _wubo_ParaMis_asTime(){
+    // One cycle time = the Time emy-c runs once
     REAL total_sim_time_to_one_cycle = CL_TS * d_sim.sim.NUMBER_OF_STEPS;
-    // REAL total_sim_time_to_one_cycle = 0.5;
     REAL period_time = total_sim_time_to_one_cycle * TOTAL_PARAMETER_MISMATCH_PERIOD_INV; // the number of the time period equals to Marco
     
     /* The cycle should be only seen at the Real EXP*/

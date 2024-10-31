@@ -134,6 +134,9 @@ void main_loop(){
             //            }
 
             if(d_sim.user.bezier_NUMBER_OF_STEPS<8000){
+
+                overwrite_sweeping_frequency();
+
                 CTRL = &CTRL_1;
                 PID_Speed->Ref = (*CTRL).i->cmd_varOmega;
                 PID_Speed->Fbk = (*CTRL).i->varOmega;

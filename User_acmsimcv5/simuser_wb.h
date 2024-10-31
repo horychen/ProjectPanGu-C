@@ -102,14 +102,20 @@
     #define Js_PARAMETER_MISMATCH_MODE 4
     #define KE_PARAMETER_MISMATCH_MODE 5
     typedef struct {
+        // Five mismatch parameters
         REAL percent_Ld;
         REAL percent_Lq;
         REAL percent_Rs;
         REAL percent_Js;
         REAL percent_KE;
+        // The maximum and minimum percentage of the mismatch
         REAL percent_max;
         REAL percent_min;
+        // percent_Para is initialized by the max and min in user.yaml file 
+        // I want to assign THIS value to above percent_Ld, percent_Lq, percent_Rs, percent_Js, percent_KE
+        // But this is not simple enough cuz it use so much FLASH to store percent_Para[]
         REAL percent_Para[(int)TOTAL_PARAMETER_MISMATCH_PERIOD];
+        
         REAL total_exp_time; // Record the total time of the experiment
     } wubo_Parameter_mismatch;
     extern wubo_Parameter_mismatch wubo_ParaMis;

@@ -876,6 +876,11 @@ int main_switch(long mode_select){
         break;
     case MODE_SELECT_VELOCITY_LOOP_WC_TUNER: // 43
         #if WHO_IS_USER == USER_WB
+        
+
+
+
+
             INNER_LOOP_SENSITIVITY_ANALYSIS(debug);
             if ( d_sim.user.bool_apply_HitWall_analysis == TRUE){
                 (*debug).set_rpm_speed_command = d_sim.user.HitWall_high_RPM_command;
