@@ -35,10 +35,10 @@
 #define MODE_SELECT_VELOCITY_SWEEPING_FREQ   46
 #define MODE_SELECT_POSITION_LOOP            5
 #define MODE_SELECT_COMMISSIONING            9
-#define MODE_SELECT_UDQ_GIVEN_TEST           30
+#define MODE_SELECT_NYQUIST_PLOTTING         91
+#define MODE_SELECT_UDQ_GIVEN_TEST           98
 #define MODE_SELECT_GENERATOR                8
 #define MODE_SELECT_NB_MODE                  99
-
 
 typedef struct {
     float32 Ref;

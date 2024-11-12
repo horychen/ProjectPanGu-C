@@ -127,7 +127,23 @@ void main(void){
 }
 
 void main_loop(){
+
+
     while (1){
+#if PC_SIMULATION == FALSE
+    CpuTimer_After = CpuTimer1.RegsAddr->TIM.all; // get count
+    CpuTimer_Delta = (REAL)CpuTimer_Before - (REAL)CpuTimer_After;
+    // EALLOW;
+    // CpuTimer1.RegsAddr->TCR.bit.TSS = 1; // stop (not needed because of the line TRB=1)
+    // EDIS;
+#endif
+#if PC_SIMULATION == FALSE
+            EALLOW;
+            CpuTimer1.RegsAddr->TCR.bit.TRB = 1;           // reset cpu timer to period value
+            CpuTimer1.RegsAddr->TCR.bit.TSS = 0;           // start/restart
+            CpuTimer_Before = CpuTimer1.RegsAddr->TIM.all; // get count
+            EDIS;
+    #endif
         #if WHO_IS_USER == USER_BEZIER
             //            if(d_sim.user.bezier_NUMBER_OF_STEPS<8000){
             //                bezier_controller_run_in_main();
@@ -182,7 +198,10 @@ void main_loop(){
         #if NUMBER_OF_DSP_CORES == 1
             single_core_dac();
         #endif
+
     }
+
+    
 }
 
 
@@ -582,24 +601,12 @@ __interrupt void EPWM1ISR(void){
 
 
         // 这段放需要测时间的代码前面
-        #if PC_SIMULATION == FALSE
-                EALLOW;
-                CpuTimer1.RegsAddr->TCR.bit.TRB = 1;           // reset cpu timer to period value
-                CpuTimer1.RegsAddr->TCR.bit.TSS = 0;           // start/restart
-                CpuTimer_Before = CpuTimer1.RegsAddr->TIM.all; // get count
-                EDIS;
-        #endif
+        
 
         PanGuMainISR();
 
         // 这段放需要测时间的代码后面，观察CpuTimer_Delta的取值，代表经过了多少个 1/200e6 秒。
-        #if PC_SIMULATION == FALSE
-        CpuTimer_After = CpuTimer1.RegsAddr->TIM.all; // get count
-        CpuTimer_Delta = (REAL)CpuTimer_Before - (REAL)CpuTimer_After;
-        // EALLOW;
-        // CpuTimer1.RegsAddr->TCR.bit.TSS = 1; // stop (not needed because of the line TRB=1)
-        // EDIS;
-        #endif
+        
 
     }else if (use_first_set_three_phase == 2){
         axisCnt = 1;
@@ -827,7 +834,7 @@ void axis_basic_setup(int axisCnt){
     //
     //    Axis->FLAG_ENABLE_PWM_OUTPUT = FALSE;
 
-    Axis->channels_preset = 5; // 9; // 101;
+    Axis->channels_preset = 2; // 9; // 101;
     #if WHO_IS_USER == USER_BEZIER
         Axis->channels_preset = 5; // 9; // 101;
     #endif

@@ -194,12 +194,12 @@ void write_DAC_buffer(){
             /* iD current and iQ current info */
             (*Axis4DAC).channels[0] = 25; // PID_iD->Ref
             (*Axis4DAC).channels[1] = 26; // PID_iD->Fbk
-            (*Axis4DAC).channels[2] = 27; // PID_iD->Err
-            (*Axis4DAC).channels[3] = 28; // PID_iD->Out
-            (*Axis4DAC).channels[4] = 29;
-            (*Axis4DAC).channels[5] = 30;
-            (*Axis4DAC).channels[6] = 31;
-            (*Axis4DAC).channels[7] = 32;
+            (*Axis4DAC).channels[2] = 29; // PID_iQ->Ref
+            (*Axis4DAC).channels[3] = 30; // PID_iQ->Fbk
+            (*Axis4DAC).channels[4] = 44; // DC bus utilization
+            (*Axis4DAC).channels[5] = 45; // iU
+            (*Axis4DAC).channels[6] = 46; // iV
+            (*Axis4DAC).channels[7] = 47; // iW
         }else if((*Axis4DAC).channels_preset==3){(*Axis4DAC).channels_preset=0;
             /* DAC offset tune */
             (*Axis4DAC).channels[0] = 29; // 

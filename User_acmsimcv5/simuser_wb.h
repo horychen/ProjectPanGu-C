@@ -66,6 +66,7 @@
     #define GENERATE_Q_CURRENT_SINE 2
     #define GENERATE_SPEED_SINE     3
     #define GENERATE_SPEED_SAUARE_WAVE_WITH_INV 4
+    #define GENERATE_NYQUIST_SIGNAL 91
     typedef struct {
         REAL idq_amp[2];  // Unit : A
         REAL idq_freq[2]; // Unit : Hz

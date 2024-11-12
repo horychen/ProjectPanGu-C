@@ -181,8 +181,8 @@ void init_debug(){
     (*debug).Overwrite_theta_d           = 0.0;
 
     
-    (*debug).set_id_command              = 0.0;
-    (*debug).set_iq_command              = 1.0;
+    (*debug).set_id_command              = 3.0;
+    (*debug).set_iq_command              = 0.0;
     (*debug).set_rpm_speed_command       = d_sim.user.set_rpm_speed_command;
     (*debug).set_deg_position_command    = 0.0;
     (*debug).vvvf_voltage = 3.0;
@@ -709,12 +709,12 @@ void _user_commands(){
 
 void overwrite_sweeping_frequency(){
 
-    // ACM.TLoad = 0; // 强制将负载设置为0
+    // ACM.TLoad = 0; // 强制将负载设置为0    
     if(d_sim.user.bool_apply_sweeping_frequency_excitation){
         if ((*CTRL).timebase > d_sim.user.CMD_SPEED_SINE_END_TIME){
             d_sim.user.CMD_SPEED_SINE_HZ += d_sim.user.CMD_SPEED_SINE_STEP_SIZE;
             d_sim.user.CMD_SPEED_SINE_LAST_END_TIME = d_sim.user.CMD_SPEED_SINE_END_TIME;
-            d_sim.user.CMD_SPEED_SINE_END_TIME += 1.0/d_sim.user.CMD_SPEED_SINE_HZ;
+            d_sim.user.CMD_SPEED_SINE_END_TIME += 1.0 / d_sim.user.CMD_SPEED_SINE_HZ;
         }
         if (d_sim.user.CMD_SPEED_SINE_HZ > d_sim.user.CMD_SPEED_SINE_HZ_CEILING){
             (*CTRL).i->cmd_varOmega = 0.0; // 到达扫频的频率上限，速度归零
@@ -876,11 +876,6 @@ int main_switch(long mode_select){
         break;
     case MODE_SELECT_VELOCITY_LOOP_WC_TUNER: // 43
         #if WHO_IS_USER == USER_WB
-        
-
-
-
-
             INNER_LOOP_SENSITIVITY_ANALYSIS(debug);
             if ( d_sim.user.bool_apply_HitWall_analysis == TRUE){
                 (*debug).set_rpm_speed_command = d_sim.user.HitWall_high_RPM_command;
@@ -953,7 +948,39 @@ int main_switch(long mode_select){
         // ACM.Ld = 0.017;
         // ACM.Lq = 0.015;
         break;
-    case MODE_SELECT_UDQ_GIVEN_TEST: // 30
+    case MODE_SELECT_NYQUIST_PLOTTING: //91
+        #if WHO_IS_USER == USER_WB && PC_SIMULATION == TRUE
+            d_sim.user.flag_Nyquist_one_cycle_DONE = FALSE;
+            if ((*CTRL).timebase > d_sim.user.CMD_SPEED_SINE_END_TIME){
+                d_sim.user.flag_Nyquist_one_cycle_DONE = TRUE; // 用来清空Nyquist_sum_sin和sum_cos，以进行下一次计算
+                d_sim.user.CMD_SPEED_SINE_HZ += d_sim.user.CMD_SPEED_SINE_STEP_SIZE;
+                d_sim.user.CMD_SPEED_SINE_LAST_END_TIME = d_sim.user.CMD_SPEED_SINE_END_TIME;
+                d_sim.user.CMD_SPEED_SINE_END_TIME += d_sim.user.Nyquist_plot_num_cycles / d_sim.user.CMD_SPEED_SINE_HZ;
+            }
+            if (d_sim.user.CMD_SPEED_SINE_HZ > d_sim.user.Nyquist_Freq_Ceiling){
+                (*CTRL).i->cmd_iDQ[0] = 0.0; // 到达扫频的频率上限，速度归零
+            }else{
+                // 这里的信号其实可以是任意形式的，不一定是正弦波
+                (*CTRL).i->cmd_iDQ[0] = d_sim.user.Nyquist_Input_Current_Amp * sinf ( 2 * M_PI * d_sim.user.CMD_SPEED_SINE_HZ * ( (*CTRL).timebase - d_sim.user.CMD_SPEED_SINE_LAST_END_TIME ) );
+                _onlyFOC( (*CTRL).i->theta_d_elec, (*CTRL).i->iAB );
+
+                if ( d_sim.user.flag_Nyquist_one_cycle_DONE == TRUE){
+                    d_sim.user.Nyquist_Amp   = 2 / d_sim.user.Nyquist_one_cycle_count * sqrtf( d_sim.user.Nyquist_sum_sin * d_sim.user.Nyquist_sum_sin + d_sim.user.Nyquist_sum_cos * d_sim.user.Nyquist_sum_cos );
+                    d_sim.user.Nyquist_Phase = atan2f( d_sim.user.Nyquist_sum_sin, d_sim.user.Nyquist_sum_cos );
+                    printf("Nyquist_Amp: %f, Nyquist_Phase: %f\n", d_sim.user.Nyquist_Amp, d_sim.user.Nyquist_Phase);
+                    d_sim.user.Nyquist_sum_sin = 0.0;
+                    d_sim.user.Nyquist_sum_cos = 0.0;
+                }
+                // 利用同频cos()和sin()提取谐波信号的实部和虚部，假设系统为线性定常系统
+                // A=sum( va*cos ) B=sum( va*sin )
+                // a1=2A/N a2=2B/N mag=sqrt(a1^2+a2^2) deg=tan(a2/a1)
+                d_sim.user.Nyquist_sum_sin += PID_iD->Ref * sinf( 2 * M_PI * d_sim.user.CMD_SPEED_SINE_HZ * ( (*CTRL).timebase - d_sim.user.CMD_SPEED_SINE_LAST_END_TIME ) );
+                d_sim.user.Nyquist_sum_cos += PID_iD->Ref * cosf( 2 * M_PI * d_sim.user.CMD_SPEED_SINE_HZ * ( (*CTRL).timebase - d_sim.user.CMD_SPEED_SINE_LAST_END_TIME ) );
+                d_sim.user.Nyquist_one_cycle_count++;
+            }
+        #endif
+        break;
+    case MODE_SELECT_UDQ_GIVEN_TEST: // 98
         #if WHO_IS_USER == USER_WB
             UDQ_GIVEN_TEST();
         #endif
