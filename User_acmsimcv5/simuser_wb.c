@@ -389,6 +389,7 @@ void _user_wubo_FOC(REAL theta_d_elec, REAL iAB[2]){
 
         /* Harnefors 1998 Back Calc */
         if(d_sim.user.bool_enable_Harnefors_back_calculation == TRUE){
+            d_sim.user.Check_Harnerfors_1998_On = 1;
             REAL Harnefors_iD_coupling_term;
             REAL Harnefors_iQ_coupling_term;
             if (d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation == TRUE){
@@ -425,18 +426,19 @@ void _user_wubo_FOC(REAL theta_d_elec, REAL iAB[2]){
             #if PC_SIMULAION
                 printf('imhere!\n');
             #endif
-                /* iD calc from TI */
+            d_sim.user.Check_Harnerfors_1998_On = -1;
+            /* iD calc from TI */
                 PID_iD->calc(PID_iD);
                 if(d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation == TRUE){
                     decoupled_d_axis_voltage = PID_iD->Out - PID_iQ->Fbk * MOTOR.Lq * (*CTRL).i->varOmega * MOTOR.npp;
                 }else{
                     decoupled_d_axis_voltage = PID_iD->Out;
                 }
-                if (decoupled_d_axis_voltage > PID_iD->OutLimit) decoupled_d_axis_voltage = PID_iD->OutLimit;
-                else if (decoupled_d_axis_voltage < -PID_iD->OutLimit) decoupled_d_axis_voltage = -PID_iD->OutLimit;
-                
-                /* iQ calc from TI */
-                PID_iQ->calc(PID_iQ);
+            /* 对补偿后的dq轴电压进行限幅度 */
+            if (decoupled_d_axis_voltage > PID_iD->OutLimit) decoupled_d_axis_voltage = PID_iD->OutLimit;
+            else if (decoupled_d_axis_voltage < -PID_iD->OutLimit) decoupled_d_axis_voltage = -PID_iD->OutLimit;
+            /* iQ calc from TI */
+            PID_iQ->calc(PID_iQ);
                 if(d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation == TRUE){
                     decoupled_q_axis_voltage = PID_iQ->Out + (MOTOR.KActive + PID_iD->Fbk * MOTOR.Ld) * (*CTRL).i->varOmega * MOTOR.npp;
                 }else{
@@ -670,9 +672,9 @@ void _wubo_ParaMis_asTime(){
 /* SIGNAL GENERATOR */
 void _init_wubo_SignalGE(){
     wubo_SG.idq_amp[0]       = 1.0;
-    wubo_SG.idq_freq[0]      = 800;
-    wubo_SG.idq_amp[1]       = 0.0;
-    wubo_SG.idq_freq[1]      = 800;
+    wubo_SG.idq_freq[0]      = 241.915513;
+    wubo_SG.idq_amp[1]       = 1.0;
+    wubo_SG.idq_freq[1]      = 241.915513;
 
     wubo_SG.speed_amp        = 100;
     wubo_SG.speed_freq       = 80;

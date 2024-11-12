@@ -181,7 +181,7 @@ void init_debug(){
     (*debug).Overwrite_theta_d           = 0.0;
 
     
-    (*debug).set_id_command              = 3.0;
+    (*debug).set_id_command              = 1.0;
     (*debug).set_iq_command              = 0.0;
     (*debug).set_rpm_speed_command       = d_sim.user.set_rpm_speed_command;
     (*debug).set_deg_position_command    = 0.0;

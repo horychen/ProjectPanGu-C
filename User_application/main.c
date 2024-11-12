@@ -834,7 +834,7 @@ void axis_basic_setup(int axisCnt){
     //
     //    Axis->FLAG_ENABLE_PWM_OUTPUT = FALSE;
 
-    Axis->channels_preset = 2; // 9; // 101;
+    Axis->channels_preset = 5; // 9; // 101;
     #if WHO_IS_USER == USER_BEZIER
         Axis->channels_preset = 5; // 9; // 101;
     #endif
