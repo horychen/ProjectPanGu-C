@@ -875,7 +875,7 @@ int main_switch(long mode_select){
     case MODE_SELECT_TESTING_SENSORLESS : //42
         break;
     case MODE_SELECT_VELOCITY_LOOP_WC_TUNER: // 43
-        #if WHO_IS_USER == USER_WB
+        #if WHO_IS_USER == USER_WB && PC_SIMULATION == TRUE
             INNER_LOOP_SENSITIVITY_ANALYSIS(debug);
             if ( d_sim.user.bool_apply_HitWall_analysis == TRUE){
                 (*debug).set_rpm_speed_command = d_sim.user.HitWall_high_RPM_command;
@@ -1003,17 +1003,26 @@ int main_switch(long mode_select){
 /* Other only simulation codes */
 #if PC_SIMULATION
     void _user_time_varying_parameters(){
+
+
+        // ACM.R  = d_sim.init.R * 1.5;
+        // ACM.Ld = d_sim.init.Ld * 0.4; 
+        // ACM.Lq = d_sim.init.Lq * 0.4;
+        
         // 0. 参数时变
         // if (fabsf((*CTRL).timebase-0.025)<CL_TS){
         //     printf("[Runtime] Rotor inertia of the simulated machine has changed! Js=%g\n", ACM.Js);
-        //     ACM.Js     = 10 * d_sim.init.Js; // kg.m^2
-        //     ACM.Js_inv = 1.0 / ACM.Js;
+            // ACM.Js     = 3 * d_sim.init.Js; // kg.m^2
+            // ACM.Js_inv = 1.0 / ACM.Js;
         // }
         // if (fabsf((*CTRL).timebase-0.035)<CL_TS){
         //     printf("[Runtime] Rotor inertia of the simulated machine has changed! Js=%g\n", ACM.Js);
         //     ACM.Js     = 0.1 * d_sim.init.Js; // kg.m^2
         //     ACM.Js_inv = 1.0 / ACM.Js;
         // }
+        ///
+        // Changing KE should go to the init_Machine to change the initial value of KE if u are running at a PMSM Ld = Lq
+        ///
     }
     REAL _user_load_model(){
         static REAL Tload = 0.0;

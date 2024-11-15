@@ -347,6 +347,7 @@ void DISABLE_PWM_OUTPUT(){
 
         // TODO: use a function for this purpose!
         // 清空积分缓存
+        PID_Speed->Ref = 0;
         PID_Speed->Out = 0;
         PID_Speed->OutPrev = 0;
         PID_Speed->Fbk = 0;
@@ -354,6 +355,7 @@ void DISABLE_PWM_OUTPUT(){
         PID_Speed->ErrPrev = 0;
         PID_Speed->I_Term = 0;
 
+        PID_iD->Ref = 0;
         PID_iD->Out = 0;
         PID_iD->OutPrev = 0;
         PID_iD->Fbk = 0;
@@ -361,6 +363,7 @@ void DISABLE_PWM_OUTPUT(){
         PID_iD->ErrPrev = 0;
         PID_iD->I_Term = 0;
         
+        PID_iQ->Ref = 0;
         PID_iQ->Out = 0;
         PID_iQ->OutPrev = 0;
         PID_iQ->Fbk = 0;
@@ -834,7 +837,7 @@ void axis_basic_setup(int axisCnt){
     //
     //    Axis->FLAG_ENABLE_PWM_OUTPUT = FALSE;
 
-    Axis->channels_preset = 5; // 9; // 101;
+    Axis->channels_preset = 6; // 9; // 101;
     #if WHO_IS_USER == USER_BEZIER
         Axis->channels_preset = 5; // 9; // 101;
     #endif

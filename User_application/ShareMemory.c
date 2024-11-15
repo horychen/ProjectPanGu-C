@@ -112,9 +112,9 @@ void write_DAC_buffer(){
         (*Axis4DAC).dac_watch[42] = (*CTRL).i->cmd_iDQ[1] * 0.1; // range is 1/0.1 A
         (*Axis4DAC).dac_watch[43] = (*CTRL).i->iDQ[1]     * 0.1;
         (*Axis4DAC).dac_watch[44] = (*CTRL).o->dc_bus_utilization_ratio;
-        (*Axis4DAC).dac_watch[45] = Axis_1.iuvw[0]*0.2;
-        (*Axis4DAC).dac_watch[46] = Axis_1.iuvw[1]*0.2;
-        (*Axis4DAC).dac_watch[47] = Axis_1.iuvw[2]*0.2;
+        (*Axis4DAC).dac_watch[45] = Axis_1.iuvw[0]*0.1;
+        (*Axis4DAC).dac_watch[46] = Axis_1.iuvw[1]*0.1;
+        (*Axis4DAC).dac_watch[47] = Axis_1.iuvw[2]*0.1;
 
         /* Sensor Coil */
         (*Axis4DAC).dac_watch[48] = Axis->place_sensor[0];
@@ -230,6 +230,16 @@ void write_DAC_buffer(){
             (*Axis4DAC).channels[5] = 45;
             (*Axis4DAC).channels[6] = 46;
             (*Axis4DAC).channels[7] = 47;
+        }else if((*Axis4DAC).channels_preset==6){(*Axis4DAC).channels_preset=0;
+            /* Bezier */
+            (*Axis4DAC).channels[0] = 40;
+            (*Axis4DAC).channels[1] = 41;
+            (*Axis4DAC).channels[2] = 42;
+            (*Axis4DAC).channels[3] = 43;
+            (*Axis4DAC).channels[4] = 44;
+            (*Axis4DAC).channels[5] = 23; // Speed Err
+            (*Axis4DAC).channels[6] = 27; // iQ Err
+            (*Axis4DAC).channels[7] = 31; // iD Err
         }
         if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
             // 锟斤拷通锟斤拷DAC锟斤拷锟斤拷锟斤拷锟斤拷薷锟�(*Axis4DAC).channels锟斤拷锟斤拷锟斤拷确锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟叫�(*Axis4DAC).dac_watch锟斤拷锟斤拷锟叫的憋拷锟斤拷锟斤拷
