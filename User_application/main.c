@@ -340,6 +340,7 @@ void DISABLE_PWM_OUTPUT(){
     if (!G.flag_experimental_initialized){
         G.flag_experimental_initialized = TRUE;
 
+        /* wubo: init_CTRL will clear timebase but when the timecounter is running all the time hence it will give value to timebase whenever DSP is on or off, finally timebase seems like not been cleared*/
         init_experiment();
         // init_experiment_AD_gain_and_offset();
         // init_experiment_overwrite();
@@ -381,8 +382,7 @@ void DISABLE_PWM_OUTPUT(){
         // PID_iy->OutPrev = 0;
 
         // Sweeping 
-        (*CTRL).timebase_counter = 0.0;
-        (*CTRL).timebase = 0.0;
+        d_sim.user.timebase_for_Sweeping = 0.0;
         d_sim.user.CMD_SPEED_SINE_HZ = 0.0;
         d_sim.user.CMD_SPEED_SINE_END_TIME = CL_TS;
         d_sim.user.CMD_SPEED_SINE_LAST_END_TIME = 0.0;
@@ -407,8 +407,6 @@ void DISABLE_PWM_OUTPUT(){
 
         /* WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING*/
         #if WHO_IS_USER == USER_WB
-            (*CTRL).timebase_counter = 0;
-            (*CTRL).timebase = 0.0;
             (*debug).CMD_CURRENT_SINE_AMPERE      = d_sim.user.CMD_CURRENT_SINE_AMPERE;
             (*debug).CMD_SPEED_SINE_RPM           = d_sim.user.CMD_SPEED_SINE_RPM;
             (*debug).CMD_SPEED_SINE_HZ            = d_sim.user.CMD_SPEED_SINE_HZ;

@@ -205,6 +205,7 @@ REAL difference_between_two_angles(REAL first, REAL second)
             printf("\tSIL_Controller.KFB = %f\n",SIL_Controller.KFB);
             printf("\td_sim.user.zeta = %.3f\n", (REAL)d_sim.user.zeta);
             printf("\td_sim.user.omega_n = %.3f\n", (REAL)d_sim.user.omega_n);
+            printf("\td_sim.user.max_CLBW_PER_min_CLBW = %.3f\n", (REAL)d_sim.user.max_CLBW_PER_min_CLBW);
         #endif
 }
 #endif

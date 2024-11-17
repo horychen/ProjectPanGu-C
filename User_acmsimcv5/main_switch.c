@@ -708,27 +708,29 @@ void _user_commands(){
 
 
 void overwrite_sweeping_frequency(){
-
     // ACM.TLoad = 0; // 强制将负载设置为0    
     if(d_sim.user.bool_apply_sweeping_frequency_excitation){
-        if ((*CTRL).timebase > d_sim.user.CMD_SPEED_SINE_END_TIME){
+        d_sim.user.timebase_for_Sweeping += CL_TS; // Separate the timebase with the DSP timebase !!!
+        if ( d_sim.user.timebase_for_Sweeping  > d_sim.user.CMD_SPEED_SINE_END_TIME ){
             d_sim.user.CMD_SPEED_SINE_HZ += d_sim.user.CMD_SPEED_SINE_STEP_SIZE;
             d_sim.user.CMD_SPEED_SINE_LAST_END_TIME = d_sim.user.CMD_SPEED_SINE_END_TIME;
             d_sim.user.CMD_SPEED_SINE_END_TIME += 1.0 / d_sim.user.CMD_SPEED_SINE_HZ;
         }
         if (d_sim.user.CMD_SPEED_SINE_HZ > d_sim.user.CMD_SPEED_SINE_HZ_CEILING){
             (*CTRL).i->cmd_varOmega = 0.0; // 到达扫频的频率上限，速度归零
+            (*CTRL).i->cmd_iDQ[0] = 0.0;
+            (*CTRL).i->cmd_iDQ[1] = 0.0;
         }else{
             if (d_sim.user.bool_sweeping_frequency_for_speed_loop == TRUE){
                 (*CTRL).i->cmd_varOmega = RPM_2_MECH_RAD_PER_SEC * d_sim.user.CMD_SPEED_SINE_RPM \
-                    *sin(2*M_PI*d_sim.user.CMD_SPEED_SINE_HZ*((*CTRL).timebase - d_sim.user.CMD_SPEED_SINE_LAST_END_TIME));
+                    *sin(2*M_PI*d_sim.user.CMD_SPEED_SINE_HZ*(d_sim.user.timebase_for_Sweeping  - d_sim.user.CMD_SPEED_SINE_LAST_END_TIME));
             }else{
                 if (d_sim.user.bool_sweeping_frequency_for_current_loop_iD == TRUE){
-                    (*CTRL).i->cmd_iDQ[0] = d_sim.user.CMD_CURRENT_SINE_AMPERE * sin(2* M_PI *d_sim.user.CMD_SPEED_SINE_HZ*((*CTRL).timebase - d_sim.user.CMD_SPEED_SINE_LAST_END_TIME));
+                    (*CTRL).i->cmd_iDQ[0] = d_sim.user.CMD_CURRENT_SINE_AMPERE * sin(2* M_PI *d_sim.user.CMD_SPEED_SINE_HZ*(d_sim.user.timebase_for_Sweeping  - d_sim.user.CMD_SPEED_SINE_LAST_END_TIME));
                     (*CTRL).i->cmd_iDQ[1] = 0.0;
                 } else {
                     (*CTRL).i->cmd_iDQ[0] = 0.0;
-                    (*CTRL).i->cmd_iDQ[1] = d_sim.user.CMD_CURRENT_SINE_AMPERE * sin(2* M_PI *d_sim.user.CMD_SPEED_SINE_HZ*((*CTRL).timebase - d_sim.user.CMD_SPEED_SINE_LAST_END_TIME));
+                    (*CTRL).i->cmd_iDQ[1] = d_sim.user.CMD_CURRENT_SINE_AMPERE * sin(2* M_PI *d_sim.user.CMD_SPEED_SINE_HZ*(d_sim.user.timebase_for_Sweeping  - d_sim.user.CMD_SPEED_SINE_LAST_END_TIME));
                 }
             }
         }
@@ -910,7 +912,7 @@ int main_switch(long mode_select){
     case MODE_SELECT_VELOCITY_SWEEPING_FREQ: // 46
         /* make sure only wubo can run this code */
         #if WHO_IS_USER == USER_WB
-            _user_wubo_Sweeping_Command();
+            overwrite_sweeping_frequency();
             if ( d_sim.user.bool_sweeping_frequency_for_speed_loop == TRUE ){
                 FOC_with_vecocity_control((*CTRL).i->theta_d_elec,
                             (*CTRL).i->varOmega,
@@ -1005,14 +1007,14 @@ int main_switch(long mode_select){
     void _user_time_varying_parameters(){
 
 
-        // ACM.R  = d_sim.init.R * 1.5;
-        // ACM.Ld = d_sim.init.Ld * 0.4; 
-        // ACM.Lq = d_sim.init.Lq * 0.4;
+        // ACM.R  = d_sim.init.R  * 2.5;
+        // ACM.Ld = d_sim.init.Ld * 2.5; 
+        // ACM.Lq = d_sim.init.Lq * 2.5;
         
         // 0. 参数时变
         // if (fabsf((*CTRL).timebase-0.025)<CL_TS){
         //     printf("[Runtime] Rotor inertia of the simulated machine has changed! Js=%g\n", ACM.Js);
-            // ACM.Js     = 3 * d_sim.init.Js; // kg.m^2
+            // ACM.Js     = 5 * d_sim.init.Js; // kg.m^2
             // ACM.Js_inv = 1.0 / ACM.Js;
         // }
         // if (fabsf((*CTRL).timebase-0.035)<CL_TS){

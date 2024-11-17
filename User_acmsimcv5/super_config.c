@@ -15,22 +15,22 @@ void init_d_sim() {
 
     d_sim.sim.INVERTER_NONLINEARITY = 0;
     d_sim.sim.CLTS = 0.0001;
-    d_sim.sim.NUMBER_OF_STEPS = 100000;
+    d_sim.sim.NUMBER_OF_STEPS = 50000;
     d_sim.sim.MACHINE_SIMULATIONs_PER_SAMPLING_PERIOD = 1;
 
-    d_sim.FOC.delta = 9.2;
-    d_sim.FOC.CLBW_HZ = 372.42;
+    d_sim.FOC.delta = 5;
+    d_sim.FOC.CLBW_HZ = 600;
     d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation = FALSE;
     d_sim.FOC.VL_EXE_PER_CL_EXE = 1;
 
-    d_sim.CL.SERIES_KP_D_AXIS = 6.495795228949103;
+    d_sim.CL.SERIES_KP_D_AXIS = 10.465273447638317;
     d_sim.CL.SERIES_KI_D_AXIS = 708.8288904899135;
-    d_sim.CL.SERIES_KP_Q_AXIS = 6.495795228949103;
+    d_sim.CL.SERIES_KP_Q_AXIS = 10.465273447638317;
     d_sim.CL.SERIES_KI_Q_AXIS = 708.8288904899135;
     d_sim.CL.LIMIT_DC_BUS_UTILIZATION = 0.95;
 
-    d_sim.VL.SERIES_KP = 0.4031479997691052;
-    d_sim.VL.SERIES_KI = 27.64631228851396;
+    d_sim.VL.SERIES_KP = 1.1950899300389133;
+    d_sim.VL.SERIES_KI = 150.79644737231007;
     d_sim.VL.LIMIT_OVERLOAD_FACTOR = 0.95;
 
     d_sim.user.verbose = TRUE;
@@ -40,24 +40,25 @@ void init_d_sim() {
     d_sim.user.INVERTER_NONLINEARITY_COMPENSATION_METHOD = 0;
     d_sim.user.Select_exp_operation = 0;
     d_sim.user.set_rpm_speed_command = 200;
-    d_sim.user.zeta = 1.0;
+    d_sim.user.zeta = 2.0;
     d_sim.user.omega_n = 600;
-    d_sim.user.max_CLBW_PER_min_CLBW = 0.95;
+    d_sim.user.max_CLBW_PER_min_CLBW = 0.5;
     d_sim.user.VL_FEEDBACK_KFB = 0;
     d_sim.user.bool_Null_D_Control = TRUE;
-    d_sim.user.bool_apply_WC_tunner_for_speed_loop = TRUE;
-    d_sim.user.bool_enable_Harnefors_back_calculation = TRUE;
+    d_sim.user.bool_apply_WC_tunner_for_speed_loop = FALSE;
+    d_sim.user.bool_enable_Harnefors_back_calculation = FALSE;
     d_sim.user.Check_Harnerfors_1998_On = 0;
-    d_sim.user.bool_apply_sweeping_frequency_excitation = TRUE;
-    d_sim.user.bool_sweeping_frequency_for_speed_loop = TRUE;
+    d_sim.user.bool_apply_sweeping_frequency_excitation = FALSE;
+    d_sim.user.bool_sweeping_frequency_for_speed_loop = FALSE;
     d_sim.user.bool_sweeping_frequency_for_current_loop_iD = FALSE;
     d_sim.user.CMD_CURRENT_SINE_AMPERE = 1.0;
-    d_sim.user.CMD_SPEED_SINE_RPM = 80;
-    d_sim.user.CMD_SPEED_SINE_HZ = 0;
+    d_sim.user.CMD_SPEED_SINE_RPM = 100;
+    d_sim.user.CMD_SPEED_SINE_HZ = 2;
     d_sim.user.CMD_SPEED_SINE_STEP_SIZE = 1;
     d_sim.user.CMD_SPEED_SINE_LAST_END_TIME = 0.0;
     d_sim.user.CMD_SPEED_SINE_END_TIME = 0.0;
-    d_sim.user.CMD_SPEED_SINE_HZ_CEILING = 1000;
+    d_sim.user.CMD_SPEED_SINE_HZ_CEILING = 200;
+    d_sim.user.timebase_for_Sweeping = 0.0;
     d_sim.user.bool_Parameter_Mismatch_test = FALSE;
     d_sim.user.ParaMis_percent_max = 4;
     d_sim.user.ParaMis_percent_min = 0.4;

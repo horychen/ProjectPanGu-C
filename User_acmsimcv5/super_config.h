@@ -25,8 +25,8 @@ typedef struct {
 } ST_sim;
 
 typedef struct {
-    REAL delta;
-    REAL CLBW_HZ;
+    long delta;
+    long CLBW_HZ;
     BOOL bool_apply_decoupling_voltages_to_current_regulation;
     long VL_EXE_PER_CL_EXE;
 } ST_FOC;
@@ -71,6 +71,7 @@ typedef struct {
     REAL CMD_SPEED_SINE_LAST_END_TIME;
     REAL CMD_SPEED_SINE_END_TIME;
     long CMD_SPEED_SINE_HZ_CEILING;
+    REAL timebase_for_Sweeping;
     BOOL bool_Parameter_Mismatch_test;
     long ParaMis_percent_max;
     REAL ParaMis_percent_min;

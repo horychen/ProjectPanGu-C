@@ -51,6 +51,9 @@
 
 #ifdef _MOTOR_GROUP // mmlab drive version 2 （吴波、严政章、杨子恺等）
 
+    // Basic Setup for Load Sweeping Board
+    #define BOOL_LOAD_SWEEPING_ON FALSE
+
     // Abs encoder comm. via 485 tamagawa protocol
     #define PIN_485_SCIB_WE_SCICTX_UART3pin7 31
     #define PIN_485_SCIA_WE_SCICRX_UART3pin8 37
@@ -73,8 +76,13 @@
     #define MUX_SCI_RXDC 5
 
     // DC BUS
-    #define OFFSET_VDC_BUS_IPM1 8
-    #define SCALE_VDC_BUS_IPM1 0.17690418
+    #if BOOL_LOAD_SWEEPING_ON == FALSE
+        #define OFFSET_VDC_BUS_IPM1 8
+        #define SCALE_VDC_BUS_IPM1 0.17690418
+    #else if BOOL_LOAD_SWEEPING_ON
+        #define OFFSET_VDC_BUS_IPM1 8
+        #define SCALE_VDC_BUS_IPM1 0.15384615
+    #endif
 
     //ADC UVW to PIN config
     #define PIN_ADCA_U 0
@@ -87,12 +95,21 @@
 
     // Lem 2的三个蓝色块块分别是adc a1 a2 a3
     // In fact A is the first inverter in MOTOR_GROUP
-    #define OFFSET_LEM_A1 2035.0 // WuBo tuned in 20241027 //2010  // 2034  // 2029.57894737 // ADCA1
-    #define OFFSET_LEM_A2 2048.0 // WuBo tuned in 20241027 //2038   // 2049  // 2043.08771930 // ADCA2
-    #define OFFSET_LEM_A3 2057.0 // WuBo tuned in 20241027 //2029   // 2050  // 2042.98245614 // ADCA3
-    #define SCALE_LEM_A1 0.0305   // 0.03080704 // ADCA1
-    #define SCALE_LEM_A2 0.030334 // 0.03060669 // ADCA2
-    #define SCALE_LEM_A3 0.02983  // 0.03045988 // ADCA3
+    #if BOOL_LOAD_SWEEPING_ON == FALSE
+        #define OFFSET_LEM_A1 2035.0 // WuBo tuned in 20241027 //2010  // 2034  // 2029.57894737 // ADCA1
+        #define OFFSET_LEM_A2 2048.0 // WuBo tuned in 20241027 //2038   // 2049  // 2043.08771930 // ADCA2
+        #define OFFSET_LEM_A3 2057.0 // WuBo tuned in 20241027 //2029   // 2050  // 2042.98245614 // ADCA3
+        #define SCALE_LEM_A1 0.0305   // 0.03080704 // ADCA1
+        #define SCALE_LEM_A2 0.030334 // 0.03060669 // ADCA2
+        #define SCALE_LEM_A3 0.02983  // 0.03045988 // ADCA3
+    #else if BOOL_LOAD_SWEEPING_ON
+        #define OFFSET_LEM_A1 2035.0 // WuBo tuned in 20241117 //2010  // 2034  // 2029.57894737 // ADCA1
+        #define OFFSET_LEM_A2 2045.0 // WuBo tuned in 20241117 //2038   // 2049  // 2043.08771930 // ADCA2
+        #define OFFSET_LEM_A3 2040.0 // WuBo tuned in 20241117 //2029   // 2050  // 2042.98245614 // ADCA3
+        #define SCALE_LEM_A1 0.030769   // 0.03080704 // ADCA1
+        #define SCALE_LEM_A2 0.029947 // 0.03060669 // ADCA2
+        #define SCALE_LEM_A3 0.030761  // 0.03045988 // ADCA3
+    #endif
 
     // Lem 1的三个蓝色块块分别是adc b7 b8 b9 // 令逆变器输出端指向电机为正方向，若LEM上的箭头与正方向相同，则SCALE为正数，若LEM上的箭头与正方向相反，则SCALE为负数，
     // B is the second inverter in MOTOR_GROUP
@@ -102,7 +119,6 @@
     #define SCALE_LEM_B7 0.03076297 // ADCB7
     #define SCALE_LEM_B8 0.03038256 // ADCB8
     #define SCALE_LEM_B9 0.03039058 // ADCB9
-
 
 
 #endif
