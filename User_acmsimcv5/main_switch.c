@@ -429,7 +429,7 @@ void tustin_PI(st_pid_regulator *r){
 }
 REAL _veclocityController(REAL cmd_varOmega, REAL varOmega){
     /* 想清楚你的速度控制器到底要不要主动降频！ */
-    if ((*CTRL).s->the_vc_count++ >= SPEED_LOOP_CEILING){
+    if ((*CTRL).s->the_vc_count++ >= d_sim.FOC.VL_EXE_PER_CL_EXE){
         (*CTRL).s->the_vc_count = 1;
         PID_Speed->Ref = cmd_varOmega;
         PID_Speed->Fbk = varOmega;
@@ -437,7 +437,8 @@ REAL _veclocityController(REAL cmd_varOmega, REAL varOmega){
         #if WHO_IS_USER == USER_BEZIER
             control_output(PID_Speed, &BezierVL);
         #elif WHO_IS_USER == USER_WB
-            _user_wubo_SpeedInnerLoop_controller(PID_Speed, &SIL_Controller);
+            if(d_sim.user.bool_apply_WC_tunner_for_speed_loop) _user_wubo_SpeedInnerLoop_controller(PID_Speed, &SIL_Controller);
+            else PID_Speed->calc(PID_Speed);
         #else
             PID_Speed->calc(PID_Speed);
         #endif
@@ -451,8 +452,11 @@ void FOC_with_vecocity_control(REAL theta_d_elec, REAL varOmega, REAL cmd_varOme
 
     /* FOC */
     #if WHO_IS_USER == USER_WB
-
-        _user_wubo_FOC( (*CTRL).i->theta_d_elec, iAB );
+        if (d_sim.user.bool_enable_Harnefors_back_calculation) _user_wubo_FOC( (*CTRL).i->theta_d_elec, iAB );
+        else {
+            d_sim.user.Check_Harnerfors_1998_On = -1;
+            _onlyFOC( (*CTRL).i->theta_d_elec, iAB );
+        }
     #else
         _onlyFOC( (*CTRL).i->theta_d_elec, iAB );
     #endif
@@ -738,6 +742,13 @@ void overwrite_sweeping_frequency(){
     }
 }
 
+void _user_Check_ThreeDB_Point( REAL Fbk, REAL Ref){
+    d_sim.user.Mark_Sweeping_Freq_ThreeDB_Point = 0;
+    if( Fbk < (0.707 * Ref) ){
+        d_sim.user.Mark_Sweeping_Freq_ThreeDB_Point = 1;
+    }
+}
+
 
 void _user_inverter_voltage_command(int bool_use_cmd_iAB){
     (*CTRL).o->cmd_uAB_to_inverter[0] = (*CTRL).o->cmd_uAB[0];
@@ -918,15 +929,30 @@ int main_switch(long mode_select){
     case MODE_SELECT_VELOCITY_SWEEPING_FREQ: // 46
         /* make sure only wubo can run this code */
         #if WHO_IS_USER == USER_WB
-                overwrite_sweeping_frequency();
+            overwrite_sweeping_frequency();
             if ( d_sim.user.bool_sweeping_frequency_for_speed_loop == TRUE ){
+                _user_Check_ThreeDB_Point( (*CTRL).i->varOmega*ELEC_RAD_PER_SEC_2_RPM, d_sim.user.CMD_SPEED_SINE_RPM );
                 FOC_with_vecocity_control((*CTRL).i->theta_d_elec,
                             (*CTRL).i->varOmega,
                             (*CTRL).i->cmd_varOmega,
                             (*CTRL).i->cmd_iDQ,
                             (*CTRL).i->iAB);
             }else {//* sweeping for current loop especially for iD currents
-                _onlyFOC((*CTRL).i->theta_d_elec, (*CTRL).i->iAB);
+                if (d_sim.user.bool_enable_Harnefors_back_calculation == TRUE){
+                    if (d_sim.user.bool_sweeping_frequency_for_current_loop_iD == TRUE){
+                        _user_Check_ThreeDB_Point( (*CTRL).i->cmd_iDQ[0], d_sim.user.CMD_CURRENT_SINE_AMPERE );
+                    }else{
+                        _user_Check_ThreeDB_Point( (*CTRL).i->cmd_iDQ[1], d_sim.user.CMD_CURRENT_SINE_AMPERE );
+                    }
+                    _user_wubo_FOC( (*CTRL).i->theta_d_elec, (*CTRL).i->iAB );
+                }else{
+                    if (d_sim.user.bool_sweeping_frequency_for_current_loop_iD == TRUE){
+                        _user_Check_ThreeDB_Point( (*CTRL).i->cmd_iDQ[0], d_sim.user.CMD_CURRENT_SINE_AMPERE );
+                    }else{
+                        _user_Check_ThreeDB_Point( (*CTRL).i->cmd_iDQ[1], d_sim.user.CMD_CURRENT_SINE_AMPERE );
+                    }
+                    _onlyFOC((*CTRL).i->theta_d_elec, (*CTRL).i->iAB);
+                }
             }
         #endif
         break;
@@ -1013,13 +1039,13 @@ int main_switch(long mode_select){
     void _user_time_varying_parameters(){
         
         // ACM.R  = d_sim.init.R  * 2.5;
-        // ACM.Ld = d_sim.init.Ld * 2.5; 
-        // ACM.Lq = d_sim.init.Lq * 2.5;
+        // ACM.Ld = d_sim.init.Ld * 0.25;
+        // ACM.Lq = d_sim.init.Lq * 0.25;
         
         // 0. 参数时变
         // if (fabsf((*CTRL).timebase-0.025)<CL_TS){
         //     printf("[Runtime] Rotor inertia of the simulated machine has changed! Js=%g\n", ACM.Js);
-            // ACM.Js     =  2.5 * d_sim.init.Js; // kg.m^2 0.41500000000000004
+            // ACM.Js     = 0.1 * d_sim.init.Js; // kg.m^2 0.41500000000000004
             // ACM.Js_inv = 1.0 / ACM.Js;
         // }
         // if (fabsf((*CTRL).timebase-0.035)<CL_TS){

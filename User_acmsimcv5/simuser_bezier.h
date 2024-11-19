@@ -9,8 +9,6 @@
 #include <stdlib.h>
 #include "super_config.h"
 
-
-
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
 typedef struct
@@ -99,8 +97,27 @@ REAL control_output_adaptVersion(st_pid_regulator *r, BezierController *BzContro
 
 #if PC_SIMULATION==FALSE
 // This is for motor "SD80AEA07530-SC3"
-#define SIM_2_EXP_DEFINE_BEZIER_POINTS_X REAL x_tmp[5] = {0.0, 134.953333544083534, 114.653601011858251, 394.65682389208496, 500.0};
-#define SIM_2_EXP_DEFINE_BEZIER_POINTS_Y REAL y_tmp[5] = {0.0, 5.8824462733076706, 5.9997244773288245, 5.9998449554367372, 6.0};
+// #define SIM_2_EXP_DEFINE_BEZIER_POINTS_X REAL x_tmp[5] = {0.0, 250.0, 400.0, 450.0, 500.0};
+// #define SIM_2_EXP_DEFINE_BEZIER_POINTS_Y REAL y_tmp[5] = {0.0, 1.0,   3.0,   5.5,   6.0};
+
+// Bezier 无积分，收敛很慢，看来凹函数的iq-err图像是个shit
+// 0.0,0.0
+// 250.0,1.0
+// 400.0,3.0
+// 450.0,5.5
+// 500.0,6.0
+// #define SIM_2_EXP_DEFINE_BEZIER_POINTS_X REAL x_tmp[5] = {0.0, 250.0, 400.0, 450.0, 500.0};
+// #define SIM_2_EXP_DEFINE_BEZIER_POINTS_Y REAL y_tmp[5] = {0.0, 1.0,   3.0,   5.5,   6.0};
+
+
+// 0.0,0.0
+// 10.0,5.5
+// 200.0,5.6
+// 250.0,5.7
+// 500.0,6.0
+#define SIM_2_EXP_DEFINE_BEZIER_POINTS_X REAL x_tmp[5] = {0.0, 10.0, 200.0, 250.0, 500.0};
+#define SIM_2_EXP_DEFINE_BEZIER_POINTS_Y REAL y_tmp[5] = {0.0, 5.5,   5.6,   5.7,   6.0};
+
 #endif
 #endif
 #endif

@@ -62,6 +62,7 @@
     void _user_wubo_Sweeping_Command();
     void _init_wubo_SignalGE();
     REAL wubo_Signal_Generator(int signal_mode);
+    void _user_wubo_Check_ThreeDB_Point( REAL varOmega, REAL cmd_varOmega);
     #define GENERATE_D_CURRENT_SINE 1
     #define GENERATE_Q_CURRENT_SINE 2
     #define GENERATE_SPEED_SINE     3

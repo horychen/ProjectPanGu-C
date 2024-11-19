@@ -700,43 +700,53 @@ REAL wubo_Signal_Generator(int signal_mode){
     return wubo_SG.signal_out;
 }
 
-void _user_wubo_Sweeping_Command(){
-    // #if PC_SIMULATION //* 先让扫频只在simulation中跑
-        // ACM.TLoad = 0; // 强制将负载设置为0
-        if ((*CTRL).timebase > (*debug).CMD_SPEED_SINE_END_TIME){
-            // next frequency
-            (*debug).CMD_SPEED_SINE_HZ += (*debug).CMD_SPEED_SINE_STEP_SIZE;
-            // next end time
-            (*debug).CMD_SPEED_SINE_LAST_END_TIME = (*debug).CMD_SPEED_SINE_END_TIME;
-            (*debug).CMD_SPEED_SINE_END_TIME += 1.0/(*debug).CMD_SPEED_SINE_HZ; // 1.0 Duration for each frequency
-            // WUBO：这里扫频的思路是每隔一个frequency的时间，扫频信号提升1个Hz，例如1Hz的信号走1s，1/2Hz的信号走0.5s，1/3Hz的信号走0.33s，
-            // 依次类推，所以单单从图上看时间是不能直接看出 Bandwidth到底是多少，但是可以用级数求和直接表示？
-        }
-        if ((*debug).CMD_SPEED_SINE_HZ > (*debug).CMD_SPEED_SINE_HZ_CEILING){
-            (*CTRL).i->cmd_varOmega = 0.0; // 到达扫频的频率上限，速度归零
-            (*debug).set_id_command = 0.0;
-        }else{
-            if ((*debug).bool_sweeping_frequency_for_speed_loop == TRUE){
-                (*CTRL).i->cmd_varOmega = RPM_2_MECH_RAD_PER_SEC * (*debug).CMD_SPEED_SINE_RPM * sin(2* M_PI *(*debug).CMD_SPEED_SINE_HZ*((*CTRL).timebase - (*debug).CMD_SPEED_SINE_LAST_END_TIME));
-            }else{
-                // 让电机转起来，然后在d轴上电流扫频？
-                //* 所以让电机转起来的原因是？？？
-                // (*debug).bool_Null_D_Control = FALSE; //确保Null iD不开启
-                // if (FALSE)
-                //     (*CTRL).i->cmd_varOmega = (*debug).CMD_SPEED_SINE_RPM * RPM_2_MECH_RAD_PER_SEC;
-                // else
-                //     (*CTRL).i->cmd_varOmega = 0;
-                if (d_sim.user.bool_sweeping_frequency_for_current_loop_iD == TRUE){
-                    (*CTRL).i->cmd_iDQ[0] = (*debug).CMD_CURRENT_SINE_AMPERE * sin(2* M_PI *(*debug).CMD_SPEED_SINE_HZ*((*CTRL).timebase - (*debug).CMD_SPEED_SINE_LAST_END_TIME));
-                    (*CTRL).i->cmd_iDQ[1] = 0.0;
-                } else {
-                    (*CTRL).i->cmd_iDQ[0] = 0.0;
-                    (*CTRL).i->cmd_iDQ[1] = (*debug).CMD_CURRENT_SINE_AMPERE * sin(2* M_PI *(*debug).CMD_SPEED_SINE_HZ*((*CTRL).timebase - (*debug).CMD_SPEED_SINE_LAST_END_TIME));
-                }
-            }
-        }
-    // #endif
+/* Freq Sweeping */
+
+void _user_wubo_Check_ThreeDB_Point( REAL varOmega, REAL cmd_varOmega){
+    // printf("Im here\n");
+    d_sim.user.Mark_Sweeping_Freq_ThreeDB_Point = 0;
+    if( varOmega < (0.707 * d_sim.user.CMD_SPEED_SINE_RPM * RPM_2_MECH_RAD_PER_SEC) ){
+        d_sim.user.Mark_Sweeping_Freq_ThreeDB_Point = 1;
+    }
 }
+
+// void _user_wubo_Sweeping_Command(){
+//     // #if PC_SIMULATION //* 先让扫频只在simulation中跑
+//         // ACM.TLoad = 0; // 强制将负载设置为0
+//         if ((*CTRL).timebase > (*debug).CMD_SPEED_SINE_END_TIME){
+//             // next frequency
+//             (*debug).CMD_SPEED_SINE_HZ += (*debug).CMD_SPEED_SINE_STEP_SIZE;
+//             // next end time
+//             (*debug).CMD_SPEED_SINE_LAST_END_TIME = (*debug).CMD_SPEED_SINE_END_TIME;
+//             (*debug).CMD_SPEED_SINE_END_TIME += 1.0/(*debug).CMD_SPEED_SINE_HZ; // 1.0 Duration for each frequency
+//             // WUBO：这里扫频的思路是每隔一个frequency的时间，扫频信号提升1个Hz，例如1Hz的信号走1s，1/2Hz的信号走0.5s，1/3Hz的信号走0.33s，
+//             // 依次类推，所以单单从图上看时间是不能直接看出 Bandwidth到底是多少，但是可以用级数求和直接表示？
+//         }
+//         if ((*debug).CMD_SPEED_SINE_HZ > (*debug).CMD_SPEED_SINE_HZ_CEILING){
+//             (*CTRL).i->cmd_varOmega = 0.0; // 到达扫频的频率上限，速度归零
+//             (*debug).set_id_command = 0.0;
+//         }else{
+//             if ((*debug).bool_sweeping_frequency_for_speed_loop == TRUE){
+//                 (*CTRL).i->cmd_varOmega = RPM_2_MECH_RAD_PER_SEC * (*debug).CMD_SPEED_SINE_RPM * sin(2* M_PI *(*debug).CMD_SPEED_SINE_HZ*((*CTRL).timebase - (*debug).CMD_SPEED_SINE_LAST_END_TIME));
+//             }else{
+//                 // 让电机转起来，然后在d轴上电流扫频？
+//                 //* 所以让电机转起来的原因是？？？
+//                 // (*debug).bool_Null_D_Control = FALSE; //确保Null iD不开启
+//                 // if (FALSE)
+//                 //     (*CTRL).i->cmd_varOmega = (*debug).CMD_SPEED_SINE_RPM * RPM_2_MECH_RAD_PER_SEC;
+//                 // else
+//                 //     (*CTRL).i->cmd_varOmega = 0;
+//                 if (d_sim.user.bool_sweeping_frequency_for_current_loop_iD == TRUE){
+//                     (*CTRL).i->cmd_iDQ[0] = (*debug).CMD_CURRENT_SINE_AMPERE * sin(2* M_PI *(*debug).CMD_SPEED_SINE_HZ*((*CTRL).timebase - (*debug).CMD_SPEED_SINE_LAST_END_TIME));
+//                     (*CTRL).i->cmd_iDQ[1] = 0.0;
+//                 } else {
+//                     (*CTRL).i->cmd_iDQ[0] = 0.0;
+//                     (*CTRL).i->cmd_iDQ[1] = (*debug).CMD_CURRENT_SINE_AMPERE * sin(2* M_PI *(*debug).CMD_SPEED_SINE_HZ*((*CTRL).timebase - (*debug).CMD_SPEED_SINE_LAST_END_TIME));
+//                 }
+//             }
+//         }
+//     // #endif
+// }
 
 /* HIT WALL  */
 void _init_wubo_Hit_Wall(){

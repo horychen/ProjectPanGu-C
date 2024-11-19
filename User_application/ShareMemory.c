@@ -100,8 +100,8 @@ void write_DAC_buffer(){
         (*Axis4DAC).dac_watch[32] = PID_iQ->Out * 0.1;
 
         /* UDQ given test */
-        (*Axis4DAC).dac_watch[33] = (*CTRL).o->cmd_uDQ[0] * 0.2;
-        (*Axis4DAC).dac_watch[34] = (*CTRL).o->cmd_uDQ[1] * 0.2;
+        (*Axis4DAC).dac_watch[33] = (*CTRL).o->cmd_uDQ[0] * 0.02;
+        (*Axis4DAC).dac_watch[34] = (*CTRL).o->cmd_uDQ[1] * 0.02;
         (*Axis4DAC).dac_watch[35] = (*CTRL).i->iDQ[0] * 0.5;
         (*Axis4DAC).dac_watch[36] = (*CTRL).i->iDQ[1] * 0.5;
         (*Axis4DAC).dac_watch[37] = (*CTRL).i->iAB[0] * 0.5;
@@ -122,6 +122,15 @@ void write_DAC_buffer(){
         (*Axis4DAC).dac_watch[50] = Axis->place_sensor[2];
         (*Axis4DAC).dac_watch[51] = Axis->place_sensor[3];
 
+        /* Marker */
+        (*Axis4DAC).dac_watch[52] = d_sim.user.Mark_Sweeping_Freq_ThreeDB_Point;
+        (*Axis4DAC).dac_watch[53] = (*CTRL).s->Speed->I_Term * 0.1;
+        (*Axis4DAC).dac_watch[54] = (*CTRL).s->iD->I_Term * 0.02;
+        (*Axis4DAC).dac_watch[55] = (*CTRL).s->iQ->I_Term * 0.02;
+
+//        these two are equivalent
+//        *(*CTRL).s->Speed
+//        *CTRL->s->Speed
 
 //        #if WHO_IS_USER == USER_WB
 //            (*Axis4DAC).dac_watch[0] = 0;
@@ -231,16 +240,36 @@ void write_DAC_buffer(){
             (*Axis4DAC).channels[6] = 46;
             (*Axis4DAC).channels[7] = 47;
         }else if((*Axis4DAC).channels_preset==6){(*Axis4DAC).channels_preset=0;
-            /* Load Sweeping */
-            (*Axis4DAC).channels[0] = 29; // PID_iQ->Ref
-            (*Axis4DAC).channels[1] = 30; // PID_iQ->Fbk
-            (*Axis4DAC).channels[2] = 2; // 0
-            (*Axis4DAC).channels[3] = 3; // 0
+            /* Load Sweeping or Current Loop Sweeping */
+            (*Axis4DAC).channels[0] = 25; // PID_iD->Ref
+            (*Axis4DAC).channels[1] = 26; // PID_iD->Fbk
+            (*Axis4DAC).channels[2] = 29; // PID_iQ->Ref
+            (*Axis4DAC).channels[3] = 30; // PID_iQ->Fbk
             (*Axis4DAC).channels[4] = 44; // DC bus utilization
-            (*Axis4DAC).channels[5] = 45; // iU
-            (*Axis4DAC).channels[6] = 46; // iW
+            (*Axis4DAC).channels[5] = 52; // iU
+            (*Axis4DAC).channels[6] = 53; // iW
             (*Axis4DAC).channels[7] = 47; // iV
-        }
+        }else if((*Axis4DAC).channels_preset==7){(*Axis4DAC).channels_preset=0;
+            /* Sweeping with Marker */
+            (*Axis4DAC).channels[0] = 40;
+            (*Axis4DAC).channels[1] = 41;
+            (*Axis4DAC).channels[2] = 42;
+            (*Axis4DAC).channels[3] = 43;
+            (*Axis4DAC).channels[4] = 44;
+            (*Axis4DAC).channels[5] = 52; // -3db marker
+            (*Axis4DAC).channels[6] = 52; // -3db marker
+            (*Axis4DAC).channels[7] = 52; // -3db marker
+        }else if((*Axis4DAC).channels_preset==8){(*Axis4DAC).channels_preset=0;
+        /* Sweeping with Marker */
+        (*Axis4DAC).channels[0] = 21; // PID_Speed->Ref
+        (*Axis4DAC).channels[1] = 22; // PID_Speed->Fbk
+        (*Axis4DAC).channels[2] = 29; // PID_iQ->Ref
+        (*Axis4DAC).channels[3] = 30; // PID_iQ->Fbk
+        (*Axis4DAC).channels[4] = 53; // (*CTRL).s->Speed->I_Term;
+        (*Axis4DAC).channels[5] = 54; //(*CTRL).s->iD->I_Term;
+        (*Axis4DAC).channels[6] = 55;  // (*CTRL).s->iQ->I_Term;
+        (*Axis4DAC).channels[7] = 52; // -3db marker
+    }
         if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
             // 锟斤拷通锟斤拷DAC锟斤拷锟斤拷锟斤拷锟斤拷薷锟�(*Axis4DAC).channels锟斤拷锟斤拷锟斤拷确锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟叫�(*Axis4DAC).dac_watch锟斤拷锟斤拷锟叫的憋拷锟斤拷锟斤拷
 

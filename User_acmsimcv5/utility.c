@@ -149,7 +149,7 @@ REAL difference_between_two_angles(REAL first, REAL second)
             if ( (*debug).bool_apply_WC_tunner_for_speed_loop == TRUE ){
                 printf(">>> Wc_Tuner is Applied to the Speed Loop Control <<<\n");
             }else{
-                printf("!!! Other tunner is Applied to the Speed Loop Control !!!\n");
+                printf("!!! TI tunner is Applied to the Speed Loop Control !!!\n");
             }
             if (d_sim.user.bool_enable_Harnefors_back_calculation == TRUE){
                 printf(">>> Harnefors Back Calculation is Applied <<<\n");
@@ -160,6 +160,8 @@ REAL difference_between_two_angles(REAL first, REAL second)
                 printf(">>> Current Loop Ki is 10 times larger <<<\n");
             else
                 printf("!!! Current Loop Ki is NOT 10 times larger !!!\n");
+            printf(">>> Speed Loop is 1/%d of the Current Loop <<<\n", d_sim.FOC.VL_EXE_PER_CL_EXE);
+            printf(">>> Max CLBW is %fHz and Min CLBW is %fHz\n", 2*d_sim.user.zeta*d_sim.user.omega_n/2/M_PI, 4*d_sim.user.zeta*d_sim.user.omega_n/2/M_PI);
         #endif
 
         if(d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation == TRUE){
