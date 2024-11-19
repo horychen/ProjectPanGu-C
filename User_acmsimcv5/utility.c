@@ -178,6 +178,14 @@ REAL difference_between_two_angles(REAL first, REAL second)
             printf("!!! Inverter Nonlinearity Compensation is NOT Applied !!!\n");
         }
 
+        #if WHO_IS_USER == USER_BEZIER
+            if (d_sim.user.BOOL_BEZIER_ADAPTIVE_GAIN == TRUE){
+                printf(">>> Bezier AdaptVersion is Applied <<<\n");
+            }else{
+                printf("!!! Bezier AdaptVersion is NOT Applied !!!\n");
+            }
+        #endif
+
         printf("\t[utility.c] Rreq = %f Ohm\n", (ACM.Rreq));
         printf("\t[utility.c] NUMBER_OF_STEPS = %d\t", (int)d_sim.sim.NUMBER_OF_STEPS);
         printf("MACHINE_SIMULATIONs_PER_SAMPLING_PERIOD = %ld\n", d_sim.sim.MACHINE_SIMULATIONs_PER_SAMPLING_PERIOD);

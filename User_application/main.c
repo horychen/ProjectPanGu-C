@@ -127,44 +127,46 @@ void main(void){
 }
 
 void main_loop(){
-
-
     while (1){
-#if PC_SIMULATION == FALSE
-    CpuTimer_After = CpuTimer1.RegsAddr->TIM.all; // get count
-    CpuTimer_Delta = (REAL)CpuTimer_Before - (REAL)CpuTimer_After;
-    // EALLOW;
-    // CpuTimer1.RegsAddr->TCR.bit.TSS = 1; // stop (not needed because of the line TRB=1)
-    // EDIS;
-#endif
-#if PC_SIMULATION == FALSE
+        #if PC_SIMULATION == FALSE
+            CpuTimer_After = CpuTimer1.RegsAddr->TIM.all; // get count
+            CpuTimer_Delta = (REAL)CpuTimer_Before - (REAL)CpuTimer_After;
+            // EALLOW;
+            // CpuTimer1.RegsAddr->TCR.bit.TSS = 1; // stop (not needed because of the line TRB=1)
+            // EDIS;
+        #endif
+        // Below should be place at the first
+        // Here is to measurea the whole time of the Bezier Controller
+        #if PC_SIMULATION == FALSE
             EALLOW;
             CpuTimer1.RegsAddr->TCR.bit.TRB = 1;           // reset cpu timer to period value
             CpuTimer1.RegsAddr->TCR.bit.TSS = 0;           // start/restart
             CpuTimer_Before = CpuTimer1.RegsAddr->TIM.all; // get count
             EDIS;
-    #endif
+        #endif
         #if WHO_IS_USER == USER_BEZIER
             //            if(d_sim.user.bezier_NUMBER_OF_STEPS<8000){
             //                bezier_controller_run_in_main();
             //            }
-
             if(d_sim.user.bezier_NUMBER_OF_STEPS<8000){
-
-                overwrite_sweeping_frequency();
-
+                // When the button is on, then give a Sweeping Ref
+                if (Axis_1.FLAG_ENABLE_PWM_OUTPUT){
+                    overwrite_sweeping_frequency();
+                }
+                // _user_commands();         // 用户指令
                 CTRL = &CTRL_1;
                 PID_Speed->Ref = (*CTRL).i->cmd_varOmega;
                 PID_Speed->Fbk = (*CTRL).i->varOmega;
                 PID_Speed->OutLimit = BezierVL.points[BezierVL.order].y;
                 control_output(PID_Speed, &BezierVL);
-                // (*debug).set_iq_command = PID_Speed->Out;
-                (*debug).set_iq_command = control_output_adaptVersion(PID_Speed, &BezierVL_AdaptVersion);
+                if (d_sim.user.BOOL_BEZIER_ADAPTIVE_GAIN == FALSE){
+                    (*debug).set_iq_command = PID_Speed->Out;
+                }else{
+                    (*debug).set_iq_command = control_output_adaptVersion(PID_Speed, &BezierVL_AdaptVersion);
+                }
                 (*debug).set_id_command = 0;
             }
-
         #endif
-
 //         #if WHO_IS_USER == USER_QIAN
             // Sensor Coil
 //            I2CA_ReadData_Channel(0);
@@ -194,14 +196,10 @@ void main_loop(){
         //        mainWhileLoopCounter3 += 1;
         //        Axis_1.ID += 1;
         //        mainWhileLoopCounter2 += 1;
-
         #if NUMBER_OF_DSP_CORES == 1
             single_core_dac();
         #endif
-
     }
-
-    
 }
 
 
@@ -835,7 +833,7 @@ void axis_basic_setup(int axisCnt){
     //
     //    Axis->FLAG_ENABLE_PWM_OUTPUT = FALSE;
 
-    Axis->channels_preset = 6; // 9; // 101;
+    Axis->channels_preset = 5; // 9; // 101;
     #if WHO_IS_USER == USER_BEZIER
         Axis->channels_preset = 5; // 9; // 101;
     #endif

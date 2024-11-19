@@ -509,10 +509,13 @@ REAL control_output_adaptVersion(st_pid_regulator *r, BezierController *pBAV){
 void bezier_controller_run_in_main(){
     #if PC_SIMULATION
         if ((*CTRL).timebase > CL_TS){
-            (*CTRL).i->cmd_varOmega =  500 * RPM_2_MECH_RAD_PER_SEC;
+            // (*CTRL).i->cmd_varOmega =  500 * RPM_2_MECH_RAD_PER_SEC;
+            (*CTRL).i->cmd_varOmega =  150 * RPM_2_MECH_RAD_PER_SEC;
+
         }
-        if ((*CTRL).timebase > 0.01){
-            (*CTRL).i->cmd_varOmega = 2100 * RPM_2_MECH_RAD_PER_SEC;
+        if ((*CTRL).timebase > 0.02){
+            // (*CTRL).i->cmd_varOmega = 2100 * RPM_2_MECH_RAD_PER_SEC;
+            (*CTRL).i->cmd_varOmega =  400 * RPM_2_MECH_RAD_PER_SEC;
         }
 
         // if ((*CTRL).timebase > d_sim.user.bezier_seconds_step_command){
@@ -528,7 +531,6 @@ void bezier_controller_run_in_main(){
         if ((*CTRL).timebase > 0.05){
             ACM.TLoad = 0.0;
         }
-
     #else
         CTRL = &CTRL_1;
     #endif
@@ -540,8 +542,11 @@ void bezier_controller_run_in_main(){
     PID_Speed->OutLimit = BezierVL.points[BezierVL.order].y;
 
     control_output(PID_Speed, &BezierVL);
-    // (*debug).set_iq_command = PID_Speed->Out;
-    (*debug).set_iq_command = control_output_adaptVersion(PID_Speed, &BezierVL_AdaptVersion);
+    if (d_sim.user.BOOL_BEZIER_ADAPTIVE_GAIN == FALSE){
+        (*debug).set_iq_command = PID_Speed->Out;
+    }else{
+        (*debug).set_iq_command = control_output_adaptVersion(PID_Speed, &BezierVL_AdaptVersion);
+    }
     (*debug).set_id_command = 0;
     // printf("Ref: %f, Fbk: %f, Out: %f\n", PID_Speed->Ref, PID_Speed->Fbk, PID_Speed->Out);
     return;

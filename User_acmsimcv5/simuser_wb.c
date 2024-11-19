@@ -84,7 +84,7 @@ REAL inverter_current_point[NUMBER_OF_COMPENSATION_POINTS] = {0.85, 0.216, 0.03,
 REAL inverter_voltage_point[NUMBER_OF_COMPENSATION_POINTS] = {4.06, 3.67 , 1.83, 0, -2.36 , -3.58, -4.066};  // Unit:V
 
 void wubo_inverter_Compensation(REAL iAB[2]){
-    if ((*debug).INVERTER_NONLINEARITY_COMPENSATION_INIT == 0){
+    if ( d_sim.user.INVERTER_NONLINEARITY_COMPENSATION_METHOD == FALSE ){
         // No Compensation
         (*CTRL).o->cmd_uAB_to_inverter[0] = (*CTRL).o->cmd_uAB[0];
         (*CTRL).o->cmd_uAB_to_inverter[1] = (*CTRL).o->cmd_uAB[1];
@@ -378,8 +378,6 @@ void _user_wubo_FOC(REAL theta_d_elec, REAL iAB[2]){
             decoupled_q_axis_voltage = pi_iq.Out;
         }
     #else
-        REAL Harnefors_coupling_term;
-        
         REAL decoupled_d_axis_voltage;
         PID_iD->Fbk = (*CTRL).i->iDQ[0];
         PID_iD->Ref = (*CTRL).i->cmd_iDQ[0];
@@ -388,79 +386,52 @@ void _user_wubo_FOC(REAL theta_d_elec, REAL iAB[2]){
         PID_iQ->Ref = (*CTRL).i->cmd_iDQ[1];
 
         /* Harnefors 1998 Back Calc */
-        if(d_sim.user.bool_enable_Harnefors_back_calculation == TRUE){
-            d_sim.user.Check_Harnerfors_1998_On = 1;
-            REAL Harnefors_iD_coupling_term;
-            REAL Harnefors_iQ_coupling_term;
-            if (d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation == TRUE){
-                    Harnefors_iD_coupling_term = - PID_iQ->Fbk * MOTOR.Lq * (*CTRL).i->varOmega * MOTOR.npp;
-                    Harnefors_iQ_coupling_term = (MOTOR.KActive + PID_iD->Fbk * MOTOR.Ld) * (*CTRL).i->varOmega * MOTOR.npp;
-                }else{
-                    Harnefors_iD_coupling_term = 0.0;
-                    Harnefors_iQ_coupling_term = 0.0;
-                }
-            // Compute ideal Voltage
-            PID_iD->Fbk = (*CTRL).i->iDQ[0];
-            PID_iD->Ref = (*CTRL).i->cmd_iDQ[0];
-            PID_iD->Err = PID_iD->Ref - PID_iD->Fbk;
-
-            PID_iQ->Fbk = (*CTRL).i->iDQ[1];
-            PID_iQ->Ref = (*CTRL).i->cmd_iDQ[1];
-            PID_iQ->Err = PID_iQ->Ref - PID_iQ->Fbk;
-
-            /* Warning: First Step xd and xq didnt work cuz xd=xq=0 (initilization) */
-            PID_iD->Out = PID_iD->Kp * PID_iD->Err - Harnefors_iD_coupling_term + HARNEFORS_1998_VAR.I_Term_prev_iD;
-            PID_iQ->Out = PID_iQ->Kp * PID_iQ->Err + Harnefors_iQ_coupling_term + HARNEFORS_1998_VAR.I_Term_prev_iQ;
-
-            // Limit Voltage
-            REAL uabs = sqrtf( PID_iD->Out * PID_iD->Out + PID_iQ->Out * PID_iQ->Out );
-            if( uabs > HARNEFORS_UMAX ){
-                PID_iD->Out = PID_iD->Out * HARNEFORS_UMAX / uabs;
-                PID_iQ->Out = PID_iQ->Out * HARNEFORS_UMAX / uabs;
-            }
-
-            // Back Calculation
-            HARNEFORS_1998_VAR.I_Term_prev_iD += HARNEFORS_1998_VAR.K_INVERSE_iD * ( PID_iD->Out - HARNEFORS_1998_VAR.I_Term_prev_iD + Harnefors_iD_coupling_term);
-            HARNEFORS_1998_VAR.I_Term_prev_iQ += HARNEFORS_1998_VAR.K_INVERSE_iQ * ( PID_iQ->Out - HARNEFORS_1998_VAR.I_Term_prev_iQ - Harnefors_iQ_coupling_term);
-        } else {
-            #if PC_SIMULAION
-                printf('imhere!\n');
-            #endif
+        if ( d_sim.user.bool_enable_Harnefors_back_calculation == FALSE ){
             d_sim.user.Check_Harnerfors_1998_On = -1;
-            /* iD calc from TI */
-                PID_iD->calc(PID_iD);
-                if(d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation == TRUE){
-                    decoupled_d_axis_voltage = PID_iD->Out - PID_iQ->Fbk * MOTOR.Lq * (*CTRL).i->varOmega * MOTOR.npp;
-                }else{
-                    decoupled_d_axis_voltage = PID_iD->Out;
-                }
-            /* 对补偿后的dq轴电压进行限幅度 */
-            if (decoupled_d_axis_voltage > PID_iD->OutLimit) decoupled_d_axis_voltage = PID_iD->OutLimit;
-            else if (decoupled_d_axis_voltage < -PID_iD->OutLimit) decoupled_d_axis_voltage = -PID_iD->OutLimit;
-            /* iQ calc from TI */
-            PID_iQ->calc(PID_iQ);
-                if(d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation == TRUE){
-                    decoupled_q_axis_voltage = PID_iQ->Out + (MOTOR.KActive + PID_iD->Fbk * MOTOR.Ld) * (*CTRL).i->varOmega * MOTOR.npp;
-                }else{
-                    decoupled_q_axis_voltage = PID_iQ->Out;
-                }
-                if (decoupled_q_axis_voltage > PID_iQ->OutLimit) decoupled_q_axis_voltage = PID_iQ->OutLimit;
-                else if (decoupled_q_axis_voltage < -PID_iQ->OutLimit) decoupled_q_axis_voltage = -PID_iQ->OutLimit;
+        }else{
+            d_sim.user.Check_Harnerfors_1998_On = 1;
         }
+        REAL Harnefors_iD_coupling_term;
+        REAL Harnefors_iQ_coupling_term;
+        if (d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation == TRUE){
+                Harnefors_iD_coupling_term = - PID_iQ->Fbk * MOTOR.Lq * (*CTRL).i->varOmega * MOTOR.npp;
+                Harnefors_iQ_coupling_term = (MOTOR.KActive + PID_iD->Fbk * MOTOR.Ld) * (*CTRL).i->varOmega * MOTOR.npp;
+            }else{
+                Harnefors_iD_coupling_term = 0.0;
+                Harnefors_iQ_coupling_term = 0.0;
+            }
+        // Compute ideal Voltage
+        PID_iD->Fbk = (*CTRL).i->iDQ[0];
+        PID_iD->Ref = (*CTRL).i->cmd_iDQ[0];
+        PID_iD->Err = PID_iD->Ref - PID_iD->Fbk;
+
+        PID_iQ->Fbk = (*CTRL).i->iDQ[1];
+        PID_iQ->Ref = (*CTRL).i->cmd_iDQ[1];
+        PID_iQ->Err = PID_iQ->Ref - PID_iQ->Fbk;
+
+        /* Warning: First Step xd and xq didnt work cuz xd=xq=0 (initilization) */
+        PID_iD->Out = PID_iD->Kp * PID_iD->Err - Harnefors_iD_coupling_term + HARNEFORS_1998_VAR.I_Term_prev_iD;
+        PID_iQ->Out = PID_iQ->Kp * PID_iQ->Err + Harnefors_iQ_coupling_term + HARNEFORS_1998_VAR.I_Term_prev_iQ;
+
+        // Limit Voltage
+        REAL uabs = sqrtf( PID_iD->Out * PID_iD->Out + PID_iQ->Out * PID_iQ->Out );
+        if( uabs > HARNEFORS_UMAX ){
+            PID_iD->Out = PID_iD->Out * HARNEFORS_UMAX / uabs;
+            PID_iQ->Out = PID_iQ->Out * HARNEFORS_UMAX / uabs;
+        }
+
+        // Back Calculation
+        HARNEFORS_1998_VAR.I_Term_prev_iD += HARNEFORS_1998_VAR.K_INVERSE_iD * ( PID_iD->Out - HARNEFORS_1998_VAR.I_Term_prev_iD + Harnefors_iD_coupling_term);
+        HARNEFORS_1998_VAR.I_Term_prev_iQ += HARNEFORS_1998_VAR.K_INVERSE_iQ * ( PID_iQ->Out - HARNEFORS_1998_VAR.I_Term_prev_iQ - Harnefors_iQ_coupling_term);
     #endif
 
     decoupled_d_axis_voltage = PID_iD->Out;
     decoupled_q_axis_voltage = PID_iQ->Out;
 
-
-
     (*CTRL).o->cmd_uDQ[0] = decoupled_d_axis_voltage;
     (*CTRL).o->cmd_uDQ[1] = decoupled_q_axis_voltage;
 
     /* 7. 反帕克变换 */
-    // See D:\Users\horyc\Downloads\Documents\2003 TIA Bae SK Sul A compensation method for time delay of.pdf
-    // (*CTRL).s->cosT_compensated_1p5omegaTs = cosf(used_theta_d_elec + 1.5omg_elec*CL_TS);
-    // (*CTRL).s->sinT_compensated_1p5omegaTs = sinf(used_theta_d_elec + 1.5omg_elec*CL_TS);
     (*CTRL).s->cosT_compensated_1p5omegaTs = (*CTRL).s->cosT;
     (*CTRL).s->sinT_compensated_1p5omegaTs = (*CTRL).s->sinT;
     (*CTRL).o->cmd_uAB[0] = MT2A((*CTRL).o->cmd_uDQ[0], (*CTRL).o->cmd_uDQ[1], (*CTRL).s->cosT_compensated_1p5omegaTs, (*CTRL).s->sinT_compensated_1p5omegaTs);

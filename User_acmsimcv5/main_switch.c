@@ -203,7 +203,7 @@ void init_debug(){
     (*debug).LIMIT_OVERLOAD_FACTOR                                = d_sim.VL.LIMIT_OVERLOAD_FACTOR;
     (*debug).Select_exp_operation                                 = d_sim.user.Select_exp_operation;
     (*debug).bool_apply_decoupling_voltages_to_current_regulation = d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation;
-    (*debug).INVERTER_NONLINEARITY_COMPENSATION_INIT = d_sim.user.INVERTER_NONLINEARITY_COMPENSATION_METHOD;
+    (*debug).INVERTER_NONLINEARITY_COMPENSATION_INIT              = d_sim.user.INVERTER_NONLINEARITY_COMPENSATION_METHOD;
 
     #if WHO_IS_USER == USER_YZZ
         (*debug).SENSORLESS_CONTROL      = 0;
@@ -451,6 +451,7 @@ void FOC_with_vecocity_control(REAL theta_d_elec, REAL varOmega, REAL cmd_varOme
 
     /* FOC */
     #if WHO_IS_USER == USER_WB
+
         _user_wubo_FOC( (*CTRL).i->theta_d_elec, iAB );
     #else
         _onlyFOC( (*CTRL).i->theta_d_elec, iAB );
@@ -785,7 +786,12 @@ int main_switch(long mode_select){
             // ACM.TLoad = 1.0 * sin((*CTRL).i->cmd_varOmega * d_sim.init.npp * CTRL->timebase);
         #endif
         #if WHO_IS_USER == USER_WB
-            _user_wubo_FOC( (*CTRL).i->theta_d_elec, (*CTRL).i->iAB );
+            if ( d_sim.user.bool_enable_Harnefors_back_calculation == TRUE ){
+                _user_wubo_FOC( (*CTRL).i->theta_d_elec, (*CTRL).i->iAB );
+            }
+            else{
+                _onlyFOC((*CTRL).i->theta_d_elec, (*CTRL).i->iAB);
+            }
         #else
             _onlyFOC((*CTRL).i->theta_d_elec, (*CTRL).i->iAB);
         #endif
@@ -912,7 +918,7 @@ int main_switch(long mode_select){
     case MODE_SELECT_VELOCITY_SWEEPING_FREQ: // 46
         /* make sure only wubo can run this code */
         #if WHO_IS_USER == USER_WB
-            overwrite_sweeping_frequency();
+                overwrite_sweeping_frequency();
             if ( d_sim.user.bool_sweeping_frequency_for_speed_loop == TRUE ){
                 FOC_with_vecocity_control((*CTRL).i->theta_d_elec,
                             (*CTRL).i->varOmega,
@@ -1005,8 +1011,7 @@ int main_switch(long mode_select){
 /* Other only simulation codes */
 #if PC_SIMULATION
     void _user_time_varying_parameters(){
-
-
+        
         // ACM.R  = d_sim.init.R  * 2.5;
         // ACM.Ld = d_sim.init.Ld * 2.5; 
         // ACM.Lq = d_sim.init.Lq * 2.5;
@@ -1014,7 +1019,7 @@ int main_switch(long mode_select){
         // 0. 参数时变
         // if (fabsf((*CTRL).timebase-0.025)<CL_TS){
         //     printf("[Runtime] Rotor inertia of the simulated machine has changed! Js=%g\n", ACM.Js);
-            // ACM.Js     = 5 * d_sim.init.Js; // kg.m^2
+            // ACM.Js     =  2.5 * d_sim.init.Js; // kg.m^2 0.41500000000000004
             // ACM.Js_inv = 1.0 / ACM.Js;
         // }
         // if (fabsf((*CTRL).timebase-0.035)<CL_TS){
