@@ -1,6 +1,9 @@
 #include "ACMSim.h"
 #if WHO_IS_USER == USER_CJH
-
+	#define CORRECTION_4_SHARED_FLUX_EST d_sim.init.KE
+    #define U_MOTOR_KE                   d_sim.init.KE
+    #define IM_FLUX_COMMAND_DC_PART     d_sim.init.KE // 1.3593784874408608
+    #define IM_FLUX_COMMAND_SINE_PART   0.0
 /* 逆变器非线性 */
 
 /* 拟合法 */

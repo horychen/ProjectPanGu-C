@@ -12,6 +12,21 @@ void _user_pmsm_observer(void){
         (*CTRL).i->theta_d_elec = CTRL->motor->npp_inv * PMSM_ELECTRICAL_POSITION_FEEDBACK; // OBSV.harnefors.theta_d;
     }
 }
+
+void rk4_init(){
+    OBSV.rk4.us[0] = 0.0;
+    OBSV.rk4.us[1] = 0.0;
+    OBSV.rk4.is[0] = 0.0;
+    OBSV.rk4.is[1] = 0.0;
+    OBSV.rk4.us_curr[0] = 0.0;
+    OBSV.rk4.us_curr[1] = 0.0;
+    OBSV.rk4.is_curr[0] = 0.0;
+    OBSV.rk4.is_curr[1] = 0.0;
+    OBSV.rk4.us_prev[0] = 0.0;
+    OBSV.rk4.us_prev[1] = 0.0;
+    OBSV.rk4.is_prev[0] = 0.0;
+    OBSV.rk4.is_prev[1] = 0.0;
+}
 #endif
 
 
@@ -19,8 +34,11 @@ void _user_pmsm_observer(void){
 #if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
     struct ObserverForExperiment OBSV;
     struct SharedFluxEstimatorForExperiment FE;
-    struct Marino2005 marino={0};
-    struct Variables_SimulatedVM                         simvm      ={0};
+    struct Akatsu_Variables akt;
+    struct Awaya_Variables awy;
+    struct Qaxis_InductanceId q_inductanceid;
+    // struct Marino2005 marino={0};
+    // struct Variables_SimulatedVM                         simvm      ={0};
     // struct Variables_Ohtani1992                          ohtani     ={0};
     // struct Variables_HuWu1998                            huwu       ={0};
     // struct Variables_HoltzQuan2002                       holtz02    ={0};
@@ -892,17 +910,16 @@ void _user_pmsm_observer(void){
         }
 
         void rhf_No_Saturation_Based_Dynamics(REAL t, REAL *x, REAL *fx){
-                REAL emf[2];
-                emf[0] = US(0) - FE.no_sat.rs_est*IS(0) + OFFSET_VOLTAGE_ALPHA \
+                FE.no_sat.emf_stator[0] = US(0) - (*CTRL).motor->R * IS(0) + OFFSET_VOLTAGE_ALPHA \
                     /*P*/- VM_NOSAT_PI_CORRECTION_GAIN_P * FE.no_sat.psi_com[0] \
                     /*I*/- x[2];
-                emf[1] = US(1) - FE.no_sat.rs_est*IS(1) + OFFSET_VOLTAGE_BETA  \
+                FE.no_sat.emf_stator[1] = US(1) - (*CTRL).motor->R * IS(1) + OFFSET_VOLTAGE_BETA  \
                     /*P*/- VM_NOSAT_PI_CORRECTION_GAIN_P * FE.no_sat.psi_com[1] \
                     /*I*/- x[3];
                 FE.no_sat.u_offset[0] = x[2];
                 FE.no_sat.u_offset[1] = x[3];
-                fx[0] = emf[0];
-                fx[1] = emf[1];
+                fx[0] = FE.no_sat.emf_stator[0];
+                fx[1] = FE.no_sat.emf_stator[1];
                 fx[2] = VM_NOSAT_PI_CORRECTION_GAIN_I * FE.no_sat.psi_com[0];
                 fx[3] = VM_NOSAT_PI_CORRECTION_GAIN_I * FE.no_sat.psi_com[1];
         }
@@ -1470,7 +1487,67 @@ void _user_pmsm_observer(void){
         void init_joChoi(){
         }
     #endif
+    #if AFE_41_LascuAndreescus2006
+        /* 3. Lascu and Andreescus 2006 TODO 非常好奇Lascu的方法会怎样！和我们的xRho校正项对比！ */
+    void init_LascuAndreescus2006(){
+        int ind;
+        FE.lascu.x[0] = d_sim.init.KE;
+        FE.lascu.x[1] = 0;
+        FE.lascu.x[2] = 0;
+        FE.lascu.x[3] = 0;
+        for (ind=0;ind<2;++ind) {
+        FE.lascu.psi_1[ind] = (ind == 0) ? d_sim.init.KE : 0;
+        FE.lascu.psi_2[ind] = (ind == 0) ? d_sim.init.KE : 0;
+        FE.lascu.correction_integral_term[ind] = 0;
+        FE.lascu.u_offset[ind] = 0;
+    }
+    }
+    void rhf_LascuAndreescus2006_Dynamics(REAL t, REAL *x, REAL *fx){
+        REAL rotor_flux[2];
+        rotor_flux[0] = x[0]-(*CTRL).motor->Lq*IS(0);
+        rotor_flux[1] = x[1]-(*CTRL).motor->Lq*IS(1);
 
+        REAL ampl     = sqrt(rotor_flux[0]*rotor_flux[0] + rotor_flux[1]*rotor_flux[1]);
+        REAL ampl_inv = 0;
+        if(ampl!=0){
+           ampl_inv = 1.0/ampl;
+        }
+        REAL rotor_flux_error[2]={0,0};
+        rotor_flux_error[0] = ( (*CTRL).i->cmd_psi - ampl ) * rotor_flux[0] * ampl_inv;
+        rotor_flux_error[1] = ( (*CTRL).i->cmd_psi - ampl ) * rotor_flux[1] * ampl_inv;
+
+        REAL emf[2];
+        emf[0] = US(0) - (*CTRL).motor->R*IS(0) + 1*OFFSET_VOLTAGE_ALPHA \
+            /*P*/+ 1*VM_PROPOSED_PI_CORRECTION_GAIN_P * rotor_flux_error[0] \
+            /*I*/+ 1*x[2];
+        emf[1] = US(1) - (*CTRL).motor->R*IS(1) + 1*OFFSET_VOLTAGE_BETA  \
+            /*P*/+ 1*VM_PROPOSED_PI_CORRECTION_GAIN_P * rotor_flux_error[1] \
+            /*I*/+ 1*x[3];
+        fx[0] = emf[0];
+        fx[1] = emf[1];
+        fx[2] = VM_PROPOSED_PI_CORRECTION_GAIN_I * rotor_flux_error[0];
+        fx[3] = VM_PROPOSED_PI_CORRECTION_GAIN_I * rotor_flux_error[1];
+    }
+    void VM_LascuAndreescus2006(){
+        /* Proposed VM based Flux Command Error Feedback Correction in Controller Frame (xRho), implemented in AB frame + ODE4 */
+        // stator flux and integral states update
+        general_4states_rk4_solver(&rhf_LascuAndreescus2006_Dynamics, (*CTRL).timebase, FE.lascu.x, CL_TS);
+        // Unpack x
+        FE.lascu.psi_1[0]                    = FE.lascu.x[0];
+        FE.lascu.psi_1[1]                    = FE.lascu.x[1];
+        FE.lascu.correction_integral_term[0] = FE.lascu.x[2];
+        FE.lascu.correction_integral_term[1] = FE.lascu.x[3];
+        FE.lascu.u_offset[0] = FE.lascu.correction_integral_term[0];
+        FE.lascu.u_offset[1] = FE.lascu.correction_integral_term[1];
+        // rotor flux updates
+        FE.lascu.psi_2[0] = FE.lascu.psi_1[0] - (*CTRL).motor->Lq * IS_C(0);
+        FE.lascu.psi_2[1] = FE.lascu.psi_1[1] - (*CTRL).motor->Lq * IS_C(1);
+        FE.lascu.psi_2_ampl = sqrt(FE.lascu.psi_2[0]*FE.lascu.psi_2[0]+FE.lascu.psi_2[1]*FE.lascu.psi_2[1]);
+        FE.lascu.theta_d = atan2(FE.lascu.psi_2[1], FE.lascu.psi_2[0]);
+        FE.lascu.theta_e = angle_diff(FE.lascu.theta_d, (*CTRL).i->theta_d_elec) * ONE_OVER_2PI * 360;
+    }
+
+    #endif
 
     void simulation_test_flux_estimators(){
         // MainFE_HUWU_1998();
@@ -1479,7 +1556,7 @@ void _user_pmsm_observer(void){
         Main_VM_ClosedLoopFluxEstimatorForPMSM();
         Main_the_active_flux_estimator();
         VM_LascuAndreescus2006();
-        Main_Saturation_time_Without_Limiting();
+        // Main_Saturation_time_Without_Limiting();
         // VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
     }
 
@@ -1490,11 +1567,11 @@ void _user_pmsm_observer(void){
         init_No_Saturation_Based();
         init_FE_htz();
         init_LascuAndreescus2006();
-        init_Saturation_time_Without_Limiting();
+        // init_Saturation_time_Without_Limiting();
     }
 
     #endif
-
+/*share flux estimator end*/
 
 
 /* from pmsm observer */ 
@@ -2759,9 +2836,198 @@ void Main_parksul2014_FADO(){
 //     // (*CTRL).inv->uab_DOB[1] += (*CTRL).i->omg_elec * (*CTRL).motor->KE *  cos((*CTRL).i->theta_d_elec);
 // }
 
+#if ALG_AKT_SPEED_EST_AND_RS_ID
+    void init_ake_Speed_Est_and_RS_ID(){
+        double f_plus = 2e4;
+        akt.lambda1 = 1.5 * sqrt(f_plus);
+        akt.lambda2 = 1.1 * f_plus;
+        printf("STA for Akatsu00: %g, %g\n", akt.lambda1, akt.lambda2);
+        akt.sta_state[0] = 0;
+        akt.sta_state[1] = 0;
+        akt.the_y_lpf = 0.0;
 
+        akt.emf_lpf[0] = 0;
+        akt.emf_lpf[1] = 0;
+        akt.is_hpf[0] = 0;
+        akt.is_hpf[1] = 0;
+        akt.is_hpf_temp[0] = 0;
+        akt.is_hpf_temp[1] = 0;
+        akt.ireq_lpf[0] = 0;
+        akt.ireq_lpf[1] = 0;
+        akt.ireq_cal[0] = 0;
+        akt.ireq_cal[1] = 0;
+        akt.ireq_cal[2] = 0;
+        akt.ireq_cal[3] = 0;
+        akt.psi_cmd[0] = 0;
+        akt.psi_cmd[1] = 0;
+        akt.psi_cmd_lpf[0] = 0;
+        akt.psi_cmd_lpf[1] = 0;
+        akt.psi_cal[0] = 0;
+        akt.psi_cal[1] = 0;
+        akt.psi_cal[2] = 0;
+        akt.psi_cal[3] = 0;
+            akt.psi_stator[0] = 0;
+            akt.emf_stator[1] = 0;
+            akt.field_speed_est = 0;
+            akt.field_speed_est_lpf = 0;
+            akt.omg_est = 0;
+        akt.the_u = 0.0;
+        akt.the_y = 0.0;
+        akt.the_u_lpf = 0.0;
+        akt.the_y_hpf = 0.0;
+        akt.the_y_hpf_temp = 0.0;
+        akt.the_error = 0.0;
+        // akt.delta_rreq = 0;
+        // akt.the_gain_P = ; // 仿真就快一点
+        // akt.the_gain_P = TS*P1*5;
+        // akt.the_gain_P = TS*P1*1;
+        akt.rs_cal = 1.04 * 1.0;
+            akt.rs_direct_cal = 3.04;
+            akt.voltage_drop[0] = 0;
+            akt.voltage_drop[1] = 0;
+            akt.voltage_drop_mod = 0;
+            akt.current_mod = 0;
+            akt.count_rs = 0;
+        akt.indicator_rs = 0.0;
+        akt.the_error_sumup = 0.0;
+        akt.squared_fluxMod = 0.1;
+        akt.squared_fluxMod_lpf = 0.1;
+        akt.pseudo_iMreq_lpf = 0.0;
+        akt.the_u_sumup = 0.0;
+        akt.the_u_offset = 0.0;
+        akt.gamma_res_transient = 0.0;
+        akt.GAIN_RS = 5;
+        akt.omg_ctrl_err = 0;
+        akt.gamma_res_transient = 0;
+        akt.gamma_res_transient_shape = 500;
+        // akt.zero_freq_operation_on = false;
+    }
+    
+    void SpeedEstimationFromtheVMBasedFluxEstimation(){
+        // akt.emf_stator[0] = US_C(0)-akt.rs_cal * IS_C(0);
+        // akt.emf_stator[1] = US_C(1)-akt.rs_cal * IS_C(1);
+        // akt.psi_stator[0] = akt.psi_cal[0] + (*CTRL).motor->Lq * IS_C(0);
+        // akt.psi_stator[1] = akt.psi_cal[1] + (*CTRL).motor->Lq * IS_C(1);
+        #if AFE_37_NO_SATURATION_BASED ||AFE_35_SATURATION_TIME_DIFFERENCE  
+            akt.emf_stator[0] = AFE_USED.emf_stator[0];
+            akt.emf_stator[1] = AFE_USED.emf_stator[1];
+            akt.psi_stator[0] = AFE_USED.psi_1[0];
+            akt.psi_stator[1] = AFE_USED.psi_1[1];
+        #endif
+        REAL temp;
+        temp = (akt.psi_stator[0]*akt.psi_stator[0]+akt.psi_stator[1]*akt.psi_stator[1]);
+        if(temp>0.001){
+            akt.field_speed_est = - (akt.psi_stator[0]*-akt.emf_stator[1] + akt.psi_stator[1]*akt.emf_stator[0]) / temp;
+        }
+        akt.field_speed_est_lpf = _lpf(akt.field_speed_est, akt.field_speed_est_lpf, 15); // TAU_OFF = 5 from experiment
+        akt.omg_est_lpf = akt.field_speed_est_lpf; // 只需对同步速LPF，这样滑差的快速变化可以体现在转速中！
+    }
+    void RS_Identificaiton(){
+        akt.omg_fb = akt.omg_est_lpf * ELEC_RAD_PER_SEC_2_RPM;
+        akt.omg_ctrl_err = akt.omg_fb - (*CTRL).i->cmd_varOmega * MECH_RAD_PER_SEC_2_RPM;
+        akt.gamma_res_transient = exp(-akt.omg_ctrl_err*akt.omg_ctrl_err*akt.gamma_res_transient_shape);
+        akt.xTem = (*CTRL).motor->npp * (IS_C(1) * AFE_USED.psi_2[0] - IS_C(0) * AFE_USED.psi_2[1]);
+        akt.voltage_drop_mod = IS_C(0)*US_C(0) + IS_C(1)*US_C(1) - (*CTRL).motor->npp_inv*akt.field_speed_est_lpf* akt.xTem; // akt.field_speed_est or CTRL.omega_syn, 0.5 = 1/im.npp
+        akt.current_mod      = (IS_C(0)*IS_C(0) + IS_C(1)*IS_C(1));    
+        if(++akt.count_rs < 0.2* 4000 *1){
+            akt.the_u += 2.5e-4 * akt.gamma_res_transient * akt.current_mod;
+            akt.the_y += 2.5e-4 * akt.gamma_res_transient * akt.voltage_drop_mod;
+            // the_u += TS * akt.current_mod;
+            // the_y += TS * akt.voltage_drop_mod;
+        }else{
+            // if(ob.timebase>5)
+            // if(akt.zero_freq_operation_on==false)
+            akt.rs_cal += akt.GAIN_RS*akt.the_u/(1+akt.the_u*akt.the_u*akt.GAIN_RS) * (akt.the_y - akt.rs_cal*akt.the_u);
+            akt.count_rs = 0; // printf("%d\n", akt.count_rs); // 800 is correct
+            akt.the_u = 0.0;
+            akt.the_y = 0.0;
+        }
+    }
+#endif
+#if ALG_Awaya_InertiaId
+    void init_InertiaId(){
+        awy.awaya_lambda = 31.4*1;
+        awy.q0 = 0.0;
+        awy.q1_dot = 0.0;
+        awy.q1 = 0.0;
+        awy.tau_est = 0.0;
+        awy.tau_est_lpf = 0.0;
+        awy.sum_A = 0.0;
+        awy.sum_B = 0.0;
+        awy.est_Js_variation = 0.0;
+        awy.est_Js = 0.0;
+    }
+    void Awaya_InertiaId(){
 
+        #define NORMINAL_INERTIA ((*CTRL).motor->Js)
+        #define SPEED_SIGNAL (akt.omg_est_lpf)
+        // #define SPEED_SIGNAL (CTRL.omg_fb)
 
+        // Inertia Observer 2 Awaya1992 
+        static double t = 0.0;
+        t += CL_TS;
+
+        // awy.q0 += TS * awy.awaya_lambda*( -awy.q0 + im.npp*awaya_fluxMod*CTRL.iTs_cmd);
+        // awy.q0 += TS * awy.awaya_lambda*( -awy.q0 + im.npp*awaya_fluxMod*CTRL.iTs); // <- awy.used this 
+        // awy.q0 += TS * awy.awaya_lambda*( -awy.q0 + CTRL.torque_cmd);
+        // awy.q0 += TS * awy.awaya_lambda*( -awy.q0 + IM.Tem);
+        #if AFE_37_NO_SATURATION_BASED || AFE_35_SATURATION_TIME_DIFFERENCE  
+            akt.psi_cal[0] = AFE_USED.psi_2[0];
+            akt.psi_cal[1] = AFE_USED.psi_2[1];
+        #endif
+        // awy.q0 += TS * awy.awaya_lambda*( -awy.q0 + im.npp*(IS_C(0)*-htz.psi_2[1]+IS_C(1)*htz.psi_2[0]));
+        awy.q0 += CL_TS * awy.awaya_lambda*( -awy.q0 + CLARKE_TRANS_TORQUE_GAIN * (*CTRL).motor->npp*(IS_C(0)*-akt.psi_cal[1]+IS_C(1)*akt.psi_cal[0]));
+
+        awy.q1_dot   = awy.awaya_lambda*( -awy.q1 + SPEED_SIGNAL * (*CTRL).motor->npp_inv);
+        awy.q1 += CL_TS * awy.q1_dot;
+        awy.tau_est = -(NORMINAL_INERTIA)*awy.q1_dot + awy.q0;
+        awy.tau_est_lpf = _lpf(awy.tau_est, awy.tau_est_lpf, 5); // 5 from experiment
+
+        awy.sum_A += CL_TS * (awy.tau_est*awy.q1_dot);
+        awy.sum_B += CL_TS * (awy.q1_dot*awy.q1_dot);
+        if(t >= 2){      
+            if(awy.sum_B<0.0001){
+                awy.sum_B = 0.0001;
+            }
+            awy.est_Js_variation = + awy.sum_A / awy.sum_B;
+            awy.est_Js = NORMINAL_INERTIA + awy.est_Js_variation;
+            // printf("%g: %g, %g, %g, %g\n", CTRL.timebase, awy.est_Js, awy.est_Js_variation, awy.sum_A, awy.sum_B);
+            // printf("%g: %g, %g, %g, %g\n", ob.timebase, (NORMINAL_INERTIA+awy.est_Js_variation), awy.est_Js_variation, awy.sum_A, awy.sum_B);
+            t = 0.0;
+            awy.sum_A = 0.0;
+            awy.sum_B = 0.0;
+        }
+        // awy.est_Js = NORMINAL_INERTIA+awy.est_Js_variation;
+        if(awy.est_Js>0.02){
+            awy.est_Js = 0.02;
+        }else if(awy.est_Js<0.0001){
+            awy.est_Js = 0.0001;
+        }
+    }
+#endif
+#if ALG_qaxis_inductance_identification
+    void init_qaxis_inductance_identification(){
+        q_inductanceid.omega_elec = 0;
+        q_inductanceid.omega_elec_est_from_Lq = 0;
+        q_inductanceid.omega_elec_err = 0;
+        q_inductanceid.Lq = 0;
+        q_inductanceid.Lq_est = 0;
+        q_inductanceid.GAINforID = 0.0002;
+    }
+    void qaxis_inductance_identification(){
+        #if ALG_AKT_SPEED_EST_AND_RS_ID
+            q_inductanceid.omega_elec = akt.omg_est_lpf;
+        #endif
+        #if SELECT_ALGORITHM == ALG_NSOAF
+            q_inductanceid.omega_elec_est_from_Lq = OBSV.nsoaf.xOmg;
+        #endif
+        q_inductanceid.omega_elec_err = q_inductanceid.omega_elec_est_from_Lq - q_inductanceid.omega_elec;
+        q_inductanceid.Lq = -1 * ((*CTRL).o->cmd_uDQ[0] - (*CTRL).i->iDQ[0] * MOTOR.R)/((*CTRL).i->iDQ[1] * q_inductanceid.omega_elec);
+        q_inductanceid.Lq_est = -1 * ((*CTRL).o->cmd_uDQ[0] - (*CTRL).i->iDQ[0] * MOTOR.R)/((*CTRL).i->iDQ[1] * q_inductanceid.omega_elec)\
+        + q_inductanceid.GAINforID * q_inductanceid.omega_elec_err;
+
+        }
+#endif
 /********************************************/
 /* COMMON *
  ********************************************/
@@ -2799,6 +3065,10 @@ void pmsm_observers(){
         // // cjh_eemfao();
         // // cjh_eemfhgo_farza09();
         Main_nsoaf_chen2020();
+        SpeedEstimationFromtheVMBasedFluxEstimation();
+        RS_Identificaiton();
+        // Awaya_InertiaId();
+        qaxis_inductance_identification();
         // Main_esoaf_chen2021();
         // // Main_QiaoXia2013_emfSMO();
         // Main_ChiXu2009_emfSMO();
@@ -2859,8 +3129,9 @@ void init_pmsm_observers(){
 
     // FE
     init_FE();
-
-
+    init_ake_Speed_Est_and_RS_ID();
+    // init_InertiaId();
+    init_qaxis_inductance_identification();
     #if PC_SIMULATION
         // OBSV
         init_nsoaf();

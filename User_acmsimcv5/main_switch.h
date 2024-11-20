@@ -15,6 +15,7 @@
 #define USER_WB2    970308
 #define USER_GEN    240828
 #define USER_QIAN   2022231110
+#define USER_CURY   201314
 
 #define MODE_SELECT_PWM_DIRECT         1
 #define MODE_SELECT_VOLTAGE_OPEN_LOOP  11
@@ -24,18 +25,20 @@
 #define MODE_SELECT_INDIRECT_FOC             32
 #define MODE_SELECT_ID_SWEEPING_FREQ         33
 #define MODE_SELECT_IQ_SWEEPING_FREQ         34
+#define MODE_SELECT_FOC_HARNEFORS_1998       36
 #define MODE_SELECT_VELOCITY_LOOP            4
 #define MODE_SELECT_VELOCITY_LOOP_SENSORLESS 41
 #define MODE_SELECT_TESTING_SENSORLESS       42
 #define MODE_SELECT_VELOCITY_LOOP_WC_TUNER   43 // 这个模式被弃用了，现在于USER_WB中实现WC Tuner
 #define MODE_SELECT_Marino2005               44
-#define MODE_SELECT_VELOCITY_SWEEPING_FREQ   45
+#define MODE_SELECT_VELOCITY_LOOP_HARNEFORS_1998   45
+#define MODE_SELECT_VELOCITY_SWEEPING_FREQ   46
 #define MODE_SELECT_POSITION_LOOP            5
 #define MODE_SELECT_COMMISSIONING            9
-#define MODE_SELECT_UDQ_GIVEN_TEST           30
+#define MODE_SELECT_NYQUIST_PLOTTING         91
+#define MODE_SELECT_UDQ_GIVEN_TEST           98
 #define MODE_SELECT_GENERATOR                8
 #define MODE_SELECT_NB_MODE                  99
-
 
 typedef struct {
     float32 Ref;
@@ -61,6 +64,7 @@ typedef st_pid_regulator *st_pid_regulator_handle;
 // void ACMSIMC_PIDTuner();
 void PID_calc(st_pid_regulator_handle); // pid_regulator中定义了默认的离散PID，因为吴波在速度环加入了innerLoop，他的离散PID和默认的有些许区别
 void incremental_PI(st_pid_regulator *r);
+void tustin_PI(st_pid_regulator *r);
 #define st_pid_regulator_DEFAULTS { \
     /*Reference*/ 0.0, \
     /*Feedback*/ 0.0, \
@@ -80,6 +84,7 @@ void incremental_PI(st_pid_regulator *r);
     /*Previous Feedback*/  0.0, \
     (void (*)(Uint32)) incremental_PI \
 }
+    // (void (*)(Uint32)) tustin_PI \
 
 extern st_pid_regulator PID_iD;
 extern st_pid_regulator PID_iQ;
@@ -540,7 +545,13 @@ extern struct ControllerForExperiment *CTRL;
 void commissioning();
 void allocate_CTRL(struct ControllerForExperiment *p);
 
+void overwrite_sweeping_frequency();
+
 // 速度观测器
 REAL PostionSpeedMeasurement_MovingAvergage(int32 QPOSCNT, st_enc *p_enc);
+
+/* Commission */
+#define ENABLE_COMMISSIONING FALSE
+#define EXCITE_BETA_AXIS_AND_MEASURE_PHASE_B FALSE
 
 #endif

@@ -1,6 +1,6 @@
 // https://stackoverflow.com/questions/1591361/understanding-typedefs-for-function-pointers-in-c
 #include "ACMSim.h"
-#if ENABLE_COMMISSIONING
+#if ENABLE_COMMISSIONING && WHO_IS_USER == USER_WB
 /* The most accurate initial position detection method is actually proposed in my 2017 TDDA paper that make use of the fact that large d-axis current do not any create torque. */
 
 /* Initial Position Detection needs position update rate is at 1/CL_TS. */
@@ -152,7 +152,9 @@ void commissioning(){
     (*CTRL).i->iDQ[0] = AB2M((*CTRL).i->iAB[0], (*CTRL).i->iAB[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
     (*CTRL).i->iDQ[1] = AB2T((*CTRL).i->iAB[0], (*CTRL).i->iAB[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
     // 参数自整定
-    StepByStepCommissioning();
+    #if WHO_IS_USER == USER_WB
+        StepByStepCommissioning_NEW_WB();
+    #endif
     _user_inverter_voltage_command(0);
 }
 
@@ -207,8 +209,13 @@ void init_COMM(){
     COMM.number_of_repeats_Js = 0.0;
 
     // global status vairbale
-    COMM.bool_comm_status = 5;
+    #if WHO_IS_USER == USER_WB
+        COMM.bool_comm_status = d_sim.user.COMM_bool_comm_status;
+    #else
+        COMM.bool_comm_status = 1;
+    #endif
 
+    
     COMM.counterEntered = 0;
     COMM.i = 0;
 }
@@ -353,7 +360,7 @@ void COMM_resistanceId(REAL id_fb, REAL iq_fb){
         UD_OUTPUT = 0.0;
         UQ_OUTPUT = REGULATOR->Out;
     #else
-        UD_OUTPUT = REGULATOR.Out;
+        UD_OUTPUT = REGULATOR->Out;
         UQ_OUTPUT = 0.0;
     #endif
 
@@ -416,7 +423,7 @@ void COMM_resistanceId(REAL id_fb, REAL iq_fb){
                     }
                 #endif
                 #if EXCITE_BETA_AXIS_AND_MEASURE_PHASE_B
-                    COMM.last_voltage_command = UQ_OUTPUT;    
+                    COMM.last_voltage_command = UQ_OUTPUT;
                 #else
                     COMM.last_voltage_command = UD_OUTPUT;
                 #endif
@@ -442,7 +449,6 @@ void COMM_resistanceId_v2(REAL id_fb, REAL iq_fb){
         COMM_PI_tuning(d_sim.init.Ld, d_sim.init.R, 2*3.1415926*CL_TS_INVERSE * 0.025, 20, d_sim.init.Js, d_sim.init.KE, d_sim.init.npp);
      // COMM_PI_tuning(7e-3, 0.8, 2*3.1415926*CL_TS_INVERSE * 0.025, 20, MOTOR_SHAFT_INERTIA, MOTOR_BACK_EMF_CONSTANT, MOTOR_NUMBER_OF_POLE_PAIRS);
     }
-
     // number of stairs (positive or negative current)
     #define NOS_II (29)
     #define NOS    (COMM_IV_SIZE_R1/2-1-NOS_II) // 200/2-30 = 70
@@ -497,11 +503,11 @@ void COMM_resistanceId_v2(REAL id_fb, REAL iq_fb){
         (*CTRL).i->cmd_iDQ[0] = 0.0;
         (*CTRL).i->cmd_iDQ[1] = REGULATOR->Ref;
     #else
-        UD_OUTPUT = REGULATOR.Out;
+        UD_OUTPUT = REGULATOR->Out;
         UQ_OUTPUT = 0.0;
 
         // for ParkSul2012
-        (*CTRL).i->cmd_iDQ[0] = REGULATOR.Ref;
+        (*CTRL).i->cmd_iDQ[0] = REGULATOR->Ref;
         (*CTRL).i->cmd_iDQ[1] = 0.0;
     #endif
     // collect steady state data
@@ -708,13 +714,13 @@ void COMM_inductanceId_ver2(REAL id_fb, REAL iq_fb){
         #if EXCITE_BETA_AXIS_AND_MEASURE_PHASE_B
             UQ_OUTPUT = REGULATOR->Out + COMM_FAST_SWITCH_VOLTAGE_CHANGE;
         #else
-            UD_OUTPUT = REGULATOR.Out + COMM_FAST_SWITCH_VOLTAGE_CHANGE;
+            UD_OUTPUT = REGULATOR->Out + COMM_FAST_SWITCH_VOLTAGE_CHANGE;
         #endif
     }else{
         #if EXCITE_BETA_AXIS_AND_MEASURE_PHASE_B
             UQ_OUTPUT = REGULATOR->Out - COMM_FAST_SWITCH_VOLTAGE_CHANGE;
         #else
-            UD_OUTPUT = REGULATOR.Out - COMM_FAST_SWITCH_VOLTAGE_CHANGE;
+            UD_OUTPUT = REGULATOR->Out - COMM_FAST_SWITCH_VOLTAGE_CHANGE;
         #endif
         if(COMM.counterEntered == COMM_FAST_SWITCH_MOD*2){
             COMM.counterEntered = 0;
@@ -1194,9 +1200,64 @@ void COMM_end(REAL id_fb, REAL iq_fb){
 }
 
 
+void StepByStepCommissioning_NEW_WB(){
+    /* Start *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 
+    // 使用测量得到的电流、转速、位置等信息，生成电压指令(*CTRL).ual，(*CTRL).ube
+    // commissioning();
+    if(COMM.bool_comm_status == 0){
+        // 初始化
+        init_COMM();
+    }else if(COMM.bool_comm_status == 1){
+        // 电阻辨识
+        if(G.flag_do_inverter_characteristics){
+            COMM_resistanceId_v2( (*CTRL).i->iAB[0], (*CTRL).i->iAB[1] ); // v2 is intended only for better inverter nonlinearity identification considering the rotor movement issue (starting from negative maximal current value to force align)
+        }else{
+            COMM_resistanceId( (*CTRL).i->iAB[0], (*CTRL).i->iAB[1] );
+        }
+    }else if(COMM.bool_comm_status == 2){
+        // 电感辨识（阶跃）
+        COMM_inductanceId( (*CTRL).i->iAB[0], (*CTRL).i->iAB[1] );
+        // 电感辨识（方波）
+        // COMM_inductanceId_ver2( (*CTRL).i->iAB[0], (*CTRL).i->iAB[1] );
 
-void StepByStepCommissioning(){
+    }else if(COMM.bool_comm_status == 3){
+        // 电感辨识（正弦）
+        COMM_inductanceId_ver3( (*CTRL).i->iAB[0], (*CTRL).i->iAB[1] );
+        // 更新电流PI
+    }else if(COMM.bool_comm_status == 4){
+        // 永磁体磁链辨识
+        (*CTRL).s->cosT = cos((*CTRL).i->theta_d_elec);
+        (*CTRL).s->sinT = sin((*CTRL).i->theta_d_elec);
+        COMM_PMFluxId(  AB2M( (*CTRL).i->iAB[0], (*CTRL).i->iAB[1] , (*CTRL).s->cosT, (*CTRL).s->sinT), 
+                        AB2T( (*CTRL).i->iAB[0], (*CTRL).i->iAB[1] , (*CTRL).s->cosT, (*CTRL).s->sinT), 
+                         (*CTRL).i->varOmega);
+        // 更新转速PI
+    }else if(COMM.bool_comm_status == 5){
+        // 惯量辨识
+        // (*CTRL).i->omg_elec     = EXP.omg_elec;
+        // (*CTRL).i->theta_d_elec = EXP.theta_d;
+        // (*CTRL).i->omg_elec     = local_omg_elec;
+        // (*CTRL).i->theta_d_elec = local_theta_d;
+        (*CTRL).s->cosT = cos((*CTRL).i->theta_d_elec);
+        (*CTRL).s->sinT = sin((*CTRL).i->theta_d_elec);
+        (*CTRL).i->iDQ[0] = AB2M( (*CTRL).i->iAB[0], (*CTRL).i->iAB[1] , (*CTRL).s->cosT, (*CTRL).s->sinT), 
+        (*CTRL).i->iDQ[1] = AB2T( (*CTRL).i->iAB[0], (*CTRL).i->iAB[1] , (*CTRL).s->cosT, (*CTRL).s->sinT), 
+        COMM_inertiaId( (*CTRL).i->iDQ[0], 
+                        (*CTRL).i->iDQ[1], 
+                        (*CTRL).s->cosT, 
+                        (*CTRL).s->sinT, 
+                        (*CTRL).i->varOmega * (*CTRL).motor->npp);
+    }else{
+        COMM_end( (*CTRL).i->iAB[0], (*CTRL).i->iAB[1] );
+        COMM.bool_comm_status = -1;
+    }
+
+    /* End *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/      
+}
+
+#if USING_OLD_COMM
+void StepByStepCommissioning_OLD(){
     /* Start *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/
 
     // 使用测量得到的电流、转速、位置等信息，生成电压指令(*CTRL).ual，(*CTRL).ube
@@ -1259,4 +1320,6 @@ void StepByStepCommissioning(){
 
     /* End *~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*/      
 }
+#endif
+
 #endif

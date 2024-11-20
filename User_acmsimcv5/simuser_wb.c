@@ -6,6 +6,18 @@ wubo_SignalGenerator wubo_SG;
 wubo_Parameter_mismatch wubo_ParaMis;
 wubo_Hit_Wall wubo_HW;
 SpeedInnerLoop SIL_Controller;
+Harnefors_1998_BackCals Harnefors_1998_BackCals_Variable;
+
+
+
+    /* Calculation for Vdc utilization BUT this is not beauty it makes CHAOS!!!!*/
+    #if PC_SIMULATION
+        #define DC_BUS_VOLTAGE_INVERSE_WUBO (1.732 / d_sim.init.Vdc)
+    #else
+        #include "All_Definition.h"
+        extern st_axis *Axis;
+        #define DC_BUS_VOLTAGE_INVERSE_WUBO (1.732 / Axis->vdc)
+    #endif
 
 
 REAL global_id_ampl[NUMBER_OF_FREQUENCY_LEVEL] = {1, 1, 1};
@@ -315,12 +327,153 @@ void _user_wubo_TI_Tuner_Online(){
     
     PID_Speed->Ki_CODE = Series_Speed_KI * Series_Speed_KP * VL_TS;
 
+    // make sure KFB is zero 
+    SIL_Controller.KFB = 0;
+
     // see when codes run here
     extern REAL wubo_debug_tools[10];
     wubo_debug_tools[4] = 99;
 }
 
 /* User Controller */
+void _user_wubo_FOC(REAL theta_d_elec, REAL iAB[2]){
+    // 帕克变换
+    (*CTRL).s->cosT = cos(theta_d_elec);
+    (*CTRL).s->sinT = sin(theta_d_elec);
+    (*CTRL).i->iDQ[0] = AB2M(iAB[0], iAB[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
+    (*CTRL).i->iDQ[1] = AB2T(iAB[0], iAB[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
+    /* 更新依赖于dq轴电流的物理量 */
+    REAL Tem     = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * (MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * (*CTRL).i->iDQ[0]) * (*CTRL).i->iDQ[1];     // 转矩 For luenberger position observer for HFSI
+    REAL cmd_Tem = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * (MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * (*CTRL).i->cmd_iDQ[0]) * (*CTRL).i->cmd_iDQ[1];
+    MOTOR.KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * (*CTRL).i->iDQ[0];
+
+    #if USE_LAOMING_PI
+        /* New Sytle from Lao Ming */
+        pi_id.Kp = PID_iD->Kp;
+        pi_id.Ki = d_sim.CL.SERIES_KI_D_AXIS * CL_TS;
+        pi_id.Umax = PID_iD->OutLimit;
+        pi_id.Umin = -PID_iD->OutLimit;
+        // printf("id max is %f\n", pi_id.Umax);
+        
+        pi_iq.Kp = PID_iQ->Kp;
+        pi_iq.Ki = d_sim.CL.SERIES_KI_Q_AXIS * CL_TS;
+        pi_iq.Umax = PID_iQ->OutLimit;
+        pi_iq.Umin = -PID_iQ->OutLimit;
+        
+        pi_id.Fbk = (*CTRL).i->iDQ[0];
+        pi_id.Ref = (*CTRL).i->cmd_iDQ[0];
+        pi_id.Out = PI_MACRO(pi_id);
+
+        pi_iq.Fbk = (*CTRL).i->iDQ[1];
+        pi_iq.Ref = (*CTRL).i->cmd_iDQ[1];
+        pi_iq.Out = PI_MACRO(pi_iq);
+
+        REAL decoupled_d_axis_voltage;
+        REAL decoupled_q_axis_voltage;
+        if(d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation == TRUE){
+            decoupled_d_axis_voltage = pi_id.Out - pi_iq.Fbk * MOTOR.Lq * (*CTRL).i->varOmega * MOTOR.npp;
+            decoupled_q_axis_voltage = pi_iq.Out + (MOTOR.KActive + pi_id.Fbk * MOTOR.Ld) * (*CTRL).i->varOmega * MOTOR.npp;
+        }else{
+            decoupled_d_axis_voltage = pi_id.Out;
+            decoupled_q_axis_voltage = pi_iq.Out;
+        }
+    #else
+        REAL Harnefors_coupling_term;
+        
+        REAL decoupled_d_axis_voltage;
+        PID_iD->Fbk = (*CTRL).i->iDQ[0];
+        PID_iD->Ref = (*CTRL).i->cmd_iDQ[0];
+        REAL decoupled_q_axis_voltage;
+        PID_iQ->Fbk = (*CTRL).i->iDQ[1];
+        PID_iQ->Ref = (*CTRL).i->cmd_iDQ[1];
+
+        /* Harnefors 1998 Back Calc */
+        if(d_sim.user.bool_enable_Harnefors_back_calculation == TRUE){
+            REAL Harnefors_iD_coupling_term;
+            REAL Harnefors_iQ_coupling_term;
+            if (d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation == TRUE){
+                    Harnefors_iD_coupling_term = - PID_iQ->Fbk * MOTOR.Lq * (*CTRL).i->varOmega * MOTOR.npp;
+                    Harnefors_iQ_coupling_term = (MOTOR.KActive + PID_iD->Fbk * MOTOR.Ld) * (*CTRL).i->varOmega * MOTOR.npp;
+                }else{
+                    Harnefors_iD_coupling_term = 0.0;
+                    Harnefors_iQ_coupling_term = 0.0;
+                }
+            // Compute ideal Voltage
+            PID_iD->Fbk = (*CTRL).i->iDQ[0];
+            PID_iD->Ref = (*CTRL).i->cmd_iDQ[0];
+            PID_iD->Err = PID_iD->Ref - PID_iD->Fbk;
+
+            PID_iQ->Fbk = (*CTRL).i->iDQ[1];
+            PID_iQ->Ref = (*CTRL).i->cmd_iDQ[1];
+            PID_iQ->Err = PID_iQ->Ref - PID_iQ->Fbk;
+
+            /* Warning: First Step xd and xq didnt work cuz xd=xq=0 (initilization) */
+            PID_iD->Out = PID_iD->Kp * PID_iD->Err - Harnefors_iD_coupling_term + HARNEFORS_1998_VAR.I_Term_prev_iD;
+            PID_iQ->Out = PID_iQ->Kp * PID_iQ->Err + Harnefors_iQ_coupling_term + HARNEFORS_1998_VAR.I_Term_prev_iQ;
+
+            // Limit Voltage
+            REAL uabs = sqrtf( PID_iD->Out * PID_iD->Out + PID_iQ->Out * PID_iQ->Out );
+            if( uabs > HARNEFORS_UMAX ){
+                PID_iD->Out = PID_iD->Out * HARNEFORS_UMAX / uabs;
+                PID_iQ->Out = PID_iQ->Out * HARNEFORS_UMAX / uabs;
+            }
+
+            // Back Calculation
+            HARNEFORS_1998_VAR.I_Term_prev_iD += HARNEFORS_1998_VAR.K_INVERSE_iD * ( PID_iD->Out - HARNEFORS_1998_VAR.I_Term_prev_iD + Harnefors_iD_coupling_term);
+            HARNEFORS_1998_VAR.I_Term_prev_iQ += HARNEFORS_1998_VAR.K_INVERSE_iQ * ( PID_iQ->Out - HARNEFORS_1998_VAR.I_Term_prev_iQ - Harnefors_iQ_coupling_term);
+        } else {
+            #if PC_SIMULAION
+                printf('imhere!\n');
+            #endif
+            /* iD calc from TI */
+                PID_iD->calc(PID_iD);
+                if(d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation == TRUE){
+                    decoupled_d_axis_voltage = PID_iD->Out - PID_iQ->Fbk * MOTOR.Lq * (*CTRL).i->varOmega * MOTOR.npp;
+                }else{
+                    decoupled_d_axis_voltage = PID_iD->Out;
+                }
+            /* 对补偿后的dq轴电压进行限幅度 */
+            if (decoupled_d_axis_voltage > PID_iD->OutLimit) decoupled_d_axis_voltage = PID_iD->OutLimit;
+            else if (decoupled_d_axis_voltage < -PID_iD->OutLimit) decoupled_d_axis_voltage = -PID_iD->OutLimit;
+            /* iQ calc from TI */
+            PID_iQ->calc(PID_iQ);
+                if(d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation == TRUE){
+                    decoupled_q_axis_voltage = PID_iQ->Out + (MOTOR.KActive + PID_iD->Fbk * MOTOR.Ld) * (*CTRL).i->varOmega * MOTOR.npp;
+                }else{
+                    decoupled_q_axis_voltage = PID_iQ->Out;
+                }
+                if (decoupled_q_axis_voltage > PID_iQ->OutLimit) decoupled_q_axis_voltage = PID_iQ->OutLimit;
+                else if (decoupled_q_axis_voltage < -PID_iQ->OutLimit) decoupled_q_axis_voltage = -PID_iQ->OutLimit;
+        }
+    #endif
+
+    decoupled_d_axis_voltage = PID_iD->Out;
+    decoupled_q_axis_voltage = PID_iQ->Out;
+
+
+
+    (*CTRL).o->cmd_uDQ[0] = decoupled_d_axis_voltage;
+    (*CTRL).o->cmd_uDQ[1] = decoupled_q_axis_voltage;
+
+    /* 7. 反帕克变换 */
+    // See D:\Users\horyc\Downloads\Documents\2003 TIA Bae SK Sul A compensation method for time delay of.pdf
+    // (*CTRL).s->cosT_compensated_1p5omegaTs = cosf(used_theta_d_elec + 1.5omg_elec*CL_TS);
+    // (*CTRL).s->sinT_compensated_1p5omegaTs = sinf(used_theta_d_elec + 1.5omg_elec*CL_TS);
+    (*CTRL).s->cosT_compensated_1p5omegaTs = (*CTRL).s->cosT;
+    (*CTRL).s->sinT_compensated_1p5omegaTs = (*CTRL).s->sinT;
+    (*CTRL).o->cmd_uAB[0] = MT2A((*CTRL).o->cmd_uDQ[0], (*CTRL).o->cmd_uDQ[1], (*CTRL).s->cosT_compensated_1p5omegaTs, (*CTRL).s->sinT_compensated_1p5omegaTs);
+    (*CTRL).o->cmd_uAB[1] = MT2B((*CTRL).o->cmd_uDQ[0], (*CTRL).o->cmd_uDQ[1], (*CTRL).s->cosT_compensated_1p5omegaTs, (*CTRL).s->sinT_compensated_1p5omegaTs);
+    (*CTRL).o->cmd_uAB_to_inverter[0] = (*CTRL).o->cmd_uAB[0];
+    (*CTRL).o->cmd_uAB_to_inverter[1] = (*CTRL).o->cmd_uAB[1];
+    (*CTRL).o->dc_bus_utilization_ratio = DC_BUS_VOLTAGE_INVERSE_WUBO * sqrtf( (*CTRL).o->cmd_uAB_to_inverter[0]
+                                                        * (*CTRL).o->cmd_uAB_to_inverter[0]
+                                                        + (*CTRL).o->cmd_uAB_to_inverter[1]
+                                                        * (*CTRL).o->cmd_uAB_to_inverter[1] );
+    /// 8. 补偿逆变器非线性
+    #if WHO_IS_USER == USER_WB
+        wubo_inverter_Compensation( (*CTRL).i->iAB );
+    #endif
+}
 void _user_wubo_SpeedInnerLoop_controller(st_pid_regulator *r, SpeedInnerLoop *r_IL){
         //* 存储控制器的各项输出
         r->P_Term += r->Kp * ( r->Err - r->ErrPrev );
@@ -338,7 +491,7 @@ void _user_wubo_SpeedInnerLoop_controller(st_pid_regulator *r, SpeedInnerLoop *r
         else if(r->Out < -r->OutLimit + r_IL->KFB_Term)
             r->Out = -r->OutLimit + r_IL->KFB_Term;
 
-        r->ErrPrev = r->Err; 
+        r->ErrPrev = r->Err;
         r->OutPrev = r->Out;
 
         r->Out = r->Out - r_IL->KFB_Term;
@@ -348,10 +501,88 @@ void _user_wubo_SpeedInnerLoop_controller(st_pid_regulator *r, SpeedInnerLoop *r
             r->Out = -r->OutLimit;
 }
 
+/* Codes for Harnefors 1998 back calculation */
+void _init_Harnerfors_1998_BackCalc(){
+    Harnefors_1998_BackCals_Variable.Err_bar = 0.0;
+    Harnefors_1998_BackCals_Variable.I_Term_prev = 0.0;
+    Harnefors_1998_BackCals_Variable.I_Term_prev_iD = 0.0;
+    Harnefors_1998_BackCals_Variable.I_Term_prev_iQ = 0.0;
+    Harnefors_1998_BackCals_Variable.K_INVERSE_iD = 1 / (PID_iD->Kp + PID_iD->Ki_CODE);
+    Harnefors_1998_BackCals_Variable.K_INVERSE_iQ = 1 / (PID_iQ->Kp + PID_iQ->Ki_CODE);
+}
+void _user_Harnefors_back_calc_PI_antiWindup(st_pid_regulator *r, Harnefors_1998_BackCals *H, REAL K_inverse, REAL coupling_term){
+    r->Err = r->Ref - r->Fbk;
+    r->P_Term =  r->Kp * r->Err;
+    r->I_Term = H->I_Term_prev + r->Ki_CODE * r->Err;
+
+    // Calculate u^{\bar}
+    r->Out = r->P_Term + r->I_Term + coupling_term;
+    if(r->Out > r->OutLimit) r->Out = r->OutLimit;
+    else if(r->Out < -r->OutLimit) r->Out = -r->OutLimit;
+
+    // Back calculation    
+    H->Err_bar = (r->Out - r->I_Term - coupling_term) * K_inverse;
+    r->I_Term = (r->I_Term - r->Ki_CODE * r->Err) + H->Err_bar * r->Ki_CODE;
+    H->I_Term_prev = r->I_Term;
+
+    // Output
+    r->Out = r->P_Term + r->I_Term + coupling_term;
+}
+
 /* DPCC */
 void DPCC(REAL cmd_idq[2], REAL idq[2]){
     (*CTRL).o->cmd_uDQ[0] = 0.0;
     (*CTRL).o->cmd_uDQ[1] = 0.0;
+}
+
+/* Position Loop */
+void _user_wubo_get_SpeedFeedForward_for_PositionLoop(REAL Theta){
+
+}
+
+void _user_wubo_PositionLoop_controller(REAL Theta, REAL cmd_Theta){
+    // Calculation of the position feedforward
+    PID_Position->Ref = cmd_Theta;
+    d_sim.user.Position_Loop_Ref_prev = PID_Position->Ref;
+
+    PID_Position->Fbk = Theta;
+
+    PID_Position->Err = PID_Position->Ref - PID_Position->Fbk;
+    //* The detail info plz go to Bilibili Horychen's Channel Search Position Loop
+    //* But I DO NOT understand this method yet
+    // 位置环
+    // 长弧和短弧，要选短的
+    #if PC_SIMULATION == FALSE
+        if (PID_Position->Err > (CAN_QMAX * 0.5)){
+            PID_Position->Err -= CAN_QMAX;
+        }
+        if (PID_Position->Err < -(CAN_QMAX * 0.5)){
+            PID_Position->Err += CAN_QMAX;
+        }
+    #endif
+    
+    //* Do Postion Control
+    PID_Position->Out = PID_Position->Kp * PID_Position->Err;
+    if( PID_Position->Out > PID_Position->OutLimit ){
+        PID_Position->Out = PID_Position->OutLimit;
+    }
+    if( PID_Position->Out < -PID_Position->OutLimit ){
+        PID_Position->Out = -PID_Position->OutLimit;
+    }
+
+    // Position Diff Feedforward and Compensation of Output
+    if ( d_sim.user.bool_use_position_feedforward_by_PosDiff == TRUE ){
+        
+    }
+    
+
+    // PID_Position->calc(PID_Position);
+    (*CTRL).i->cmd_varOmega = PID_Position->Out;
+    FOC_with_vecocity_control( (*CTRL).i->theta_d_elec, 
+            (*CTRL).i->varOmega,
+            (*CTRL).i->cmd_varOmega,
+            (*CTRL).i->cmd_iDQ,
+            (*CTRL).i->iAB );
 }
 
 /* Auto MISMATCH the Parameter with CTRL.timebase */
@@ -376,8 +607,8 @@ void _init_wubo_ParaMis() {
     wubo_ParaMis.total_exp_time = 0.0;
 }
 void _wubo_ParaMis_asTime(){
+    // One cycle time = the Time emy-c runs once
     REAL total_sim_time_to_one_cycle = CL_TS * d_sim.sim.NUMBER_OF_STEPS;
-    // REAL total_sim_time_to_one_cycle = 0.5;
     REAL period_time = total_sim_time_to_one_cycle * TOTAL_PARAMETER_MISMATCH_PERIOD_INV; // the number of the time period equals to Marco
     
     /* The cycle should be only seen at the Real EXP*/
@@ -439,9 +670,9 @@ void _wubo_ParaMis_asTime(){
 /* SIGNAL GENERATOR */
 void _init_wubo_SignalGE(){
     wubo_SG.idq_amp[0]       = 1.0;
-    wubo_SG.idq_freq[0]      = 500.0;
-    wubo_SG.idq_amp[1]       = 0.0;
-    wubo_SG.idq_freq[1]      = 500.0;
+    wubo_SG.idq_freq[0]      = 241.915513;
+    wubo_SG.idq_amp[1]       = 1.0;
+    wubo_SG.idq_freq[1]      = 241.915513;
 
     wubo_SG.speed_amp        = 100;
     wubo_SG.speed_freq       = 80;
@@ -454,15 +685,23 @@ void _init_wubo_SignalGE(){
 
 REAL wubo_Signal_Generator(int signal_mode){
     REAL signal_series = 0;
+    REAL temp_freq_multiply_T = 0;
     switch (signal_mode){
     case GENERATE_D_CURRENT_SINE:
-        wubo_SG.signal_out = wubo_SG.idq_amp[0] * sin(2 * M_PI * wubo_SG.idq_freq[0] * (*CTRL).timebase);
+        //TODO: Reason to do this:
+        temp_freq_multiply_T = wubo_SG.idq_freq[0] * (*CTRL).timebase;
+        temp_freq_multiply_T -= (long)temp_freq_multiply_T;
+        wubo_SG.signal_out = wubo_SG.idq_amp[0] * sin(2 * M_PI * temp_freq_multiply_T);
         break;
     case GENERATE_Q_CURRENT_SINE:
-        wubo_SG.signal_out = wubo_SG.idq_amp[1] * sin(2 * M_PI * wubo_SG.idq_freq[1] * (*CTRL).timebase);
+        temp_freq_multiply_T = wubo_SG.idq_freq[1] * (*CTRL).timebase;
+        temp_freq_multiply_T -= (long)temp_freq_multiply_T;
+        wubo_SG.signal_out = wubo_SG.idq_amp[1] * sin(2 * M_PI * temp_freq_multiply_T);
         break;
     case GENERATE_SPEED_SINE:
-        wubo_SG.signal_out = wubo_SG.speed_amp * sin(2 * M_PI * wubo_SG.speed_freq * (*CTRL).timebase);
+        temp_freq_multiply_T = wubo_SG.idq_freq[1] * (*CTRL).timebase;
+        temp_freq_multiply_T -= (long)temp_freq_multiply_T;
+        wubo_SG.signal_out = wubo_SG.speed_amp * sin(2 * M_PI * temp_freq_multiply_T);
         break;
     case GENERATE_SPEED_SAUARE_WAVE_WITH_INV:
         if (wubo_SG.squareWave_total_time + 4 * wubo_SG.squareWave_quarter_cycle < (*CTRL).timebase) {
@@ -479,6 +718,8 @@ REAL wubo_Signal_Generator(int signal_mode){
                 wubo_SG.signal_out = 0;
             }
             break;
+    case GENERATE_NYQUIST_SIGNAL:
+        break;
     default:
         wubo_SG.signal_out = 0.0;
         break;

@@ -55,8 +55,11 @@ typedef struct
         REAL nonlinear_fake_disturbance_estimate;
         REAL output;
         REAL error;
+        REAL error_previous;
+        int flag_integral_saturated;
     } BezierController;
-    extern BezierController BzController, BzController_AdaptVersion;
+    extern BezierController BezierVL, BezierVL_AdaptVersion; // Velocity
+    extern BezierController BezierCL, BezierCL_AdaptVersion; // Current
 #endif
 
 int Comb(const int n, const int m);
@@ -79,8 +82,10 @@ REAL find_t_for_given_x(const REAL x, const BezierController *pBezier);
 REAL find_y_for_given_x(const REAL x, const BezierController *pBezier);
 
 void set_points(BezierController *pBezier);
+void set_points_cl(BezierController *pBezier);
 
-void control_output(st_pid_regulator *r, BezierController *BzController);
+void control_output             (st_pid_regulator *r, BezierController *BzController);
+REAL control_output_adaptVersion(st_pid_regulator *r, BezierController *BzController);
 
 // 这个被移到自动生成的 super_config.c 里面去了！不要在这里用！
 // #if PC_SIMULATION == FALSE
@@ -94,8 +99,8 @@ void control_output(st_pid_regulator *r, BezierController *BzController);
 
 #if PC_SIMULATION==FALSE
 // This is for motor "SD80AEA07530-SC3"
-#define SIM_2_EXP_DEFINE_BEZIER_POINTS_X REAL x_tmp[5] = {0, 61.33338012398923, 466.9198662219713, 397.8828941559809, 500.0};
-#define SIM_2_EXP_DEFINE_BEZIER_POINTS_Y REAL y_tmp[5] = {0, 0.46487592300789826, 1.1582593910107133, 0.4368603820530907, 3};
+#define SIM_2_EXP_DEFINE_BEZIER_POINTS_X REAL x_tmp[5] = {0.0, 134.953333544083534, 114.653601011858251, 394.65682389208496, 500.0};
+#define SIM_2_EXP_DEFINE_BEZIER_POINTS_Y REAL y_tmp[5] = {0.0, 5.8824462733076706, 5.9997244773288245, 5.9998449554367372, 6.0};
 #endif
 #endif
 #endif

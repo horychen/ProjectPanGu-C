@@ -157,7 +157,7 @@
 
     #define OFFSET_PLACE_LEFT     6033004  //4561234
     #define OFFSET_PLACE_UP       6033004  //4513212
-
+    //X:right and left; Y:down and up.
     #define SCALE_PLACE_X         4.8114889989487935e-06  //4.2894311E-5
     #define SCALE_PLACE_Y         4.8114889989487935e-06  //4.3412197E-5
 #endif

@@ -69,8 +69,8 @@ typedef float32 REAL;
 #define RPM_2_ELEC_RAD_PER_SEC ((2 * M_PI * (*CTRL).motor->npp) * ONE_OVER_60)
 #define RPM_2_MECH_RAD_PER_SEC ((2 * M_PI * ONE_OVER_60))
 // #define RPM_2_ELEC_RAD_PER_SEC ( (2*M_PI*(*CTRL).motor->npp)/60.0 )
-#define M_PI_OVER_180 0.017453292519943295
 // New convention
+#define M_PI_OVER_180 0.017453292519943295
 #define CONST_PI_OVER_180 (0.0174533)
 #define CONST_180_OVER_PI (57.2958)
 #define CONST_1_OVER_SQRT3 (0.57735)
@@ -108,7 +108,7 @@ extern REAL one_over_six;
 #define SPEED_LOOP_CEILING (d_sim.FOC.VL_EXE_PER_CL_EXE)
     // #define TS_UPSAMPLING_FREQ_EXE (CL_TS / MACHINE_TS)
     // #define TS_UPSAMPLING_FREQ_EXE_INVERSE (1.0/TS_UPSAMPLING_FREQ_EXE)
-    #define MACHINE_TS         (CL_TS*d_sim.sim.MACHINE_SIMULATIONs_PER_SAMPLING_PERIOD)
+    #define MACHINE_TS         (CL_TS/d_sim.sim.MACHINE_SIMULATIONs_PER_SAMPLING_PERIOD)
     #define MACHINE_TS_INVERSE (1.0/MACHINE_TS)
 
 // #define LOAD_INERTIA    0.0

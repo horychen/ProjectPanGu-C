@@ -1,7 +1,7 @@
 #ifndef PMSM_COMMISSIONING_H
 #define PMSM_COMMISSIONING_H
 
-#if ENABLE_COMMISSIONING
+#if ENABLE_COMMISSIONING || WHO_IS_USER == USER_WB
 
 #define COMM_IV_SIZE_R1 200 // 300
 #define COMM_IV_SIZE_L1 30
@@ -58,7 +58,10 @@ void COMM_inertiaId(REAL id_fb, REAL iq_fb, REAL cosPark, REAL sinPark, REAL omg
 void COMM_end(REAL id_fb, REAL iq_fb);
 
 // Main Procedure
+#define USING_OLD_COMM FALSE
 void StepByStepCommissioning();
+void StepByStepCommissioning_NEW_WB();
+void StepbyStepCommissioning_OLD();
 
 #endif
 #endif

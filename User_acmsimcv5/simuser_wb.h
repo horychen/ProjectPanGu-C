@@ -15,6 +15,7 @@
     void _init_wubo_Hit_Wall();
 
 
+
     /* Inner Loop Controller */
     typedef struct {
         REAL KFB;
@@ -33,6 +34,29 @@
     /* Dead Predict Current Controller */
     void DPCC();
 
+    /* Harnefors 1998 back calculations*/
+    typedef struct {
+        REAL Err_bar;
+        REAL I_Term_prev;
+        REAL I_Term_prev_iD;
+        REAL I_Term_prev_iQ;
+        REAL K_INVERSE_iD;
+        REAL K_INVERSE_iQ;
+    } Harnefors_1998_BackCals;
+    extern Harnefors_1998_BackCals Harnefors_1998_BackCals_Variable;
+    #define HARNEFORS_1998_VAR Harnefors_1998_BackCals_Variable
+    #if PC_SIMULATION
+        #define HARNEFORS_UMAX d_sim.init.Vdc * 0.5773
+    #else
+        #define HARNEFORS_UMAX Axis->vdc * 0.5773
+    #endif
+    void _init_Harnerfors_1998_BackCalc();
+    void _user_Harnefors_back_calc_PI_antiWindup(st_pid_regulator *r, Harnefors_1998_BackCals *H, REAL K_inverse, REAL coupling_term);
+    void _user_wubo_FOC(REAL theta_d_elec, REAL iAB[2]);
+
+    /* Position Loop Controller */
+    void _user_wubo_get_SpeedFeedForward_for_PositionLoop(REAL Theta);
+    void _user_wubo_PositionLoop_controller(REAL Theta, REAL Speed_FeedForward);
 
     /* For Sweeping & Signal Generator */
     void _user_wubo_Sweeping_Command();
@@ -42,6 +66,7 @@
     #define GENERATE_Q_CURRENT_SINE 2
     #define GENERATE_SPEED_SINE     3
     #define GENERATE_SPEED_SAUARE_WAVE_WITH_INV 4
+    #define GENERATE_NYQUIST_SIGNAL 91
     typedef struct {
         REAL idq_amp[2];  // Unit : A
         REAL idq_freq[2]; // Unit : Hz
@@ -78,14 +103,20 @@
     #define Js_PARAMETER_MISMATCH_MODE 4
     #define KE_PARAMETER_MISMATCH_MODE 5
     typedef struct {
+        // Five mismatch parameters
         REAL percent_Ld;
         REAL percent_Lq;
         REAL percent_Rs;
         REAL percent_Js;
         REAL percent_KE;
+        // The maximum and minimum percentage of the mismatch
         REAL percent_max;
         REAL percent_min;
+        // percent_Para is initialized by the max and min in user.yaml file 
+        // I want to assign THIS value to above percent_Ld, percent_Lq, percent_Rs, percent_Js, percent_KE
+        // But this is not simple enough cuz it use so much FLASH to store percent_Para[]
         REAL percent_Para[(int)TOTAL_PARAMETER_MISMATCH_PERIOD];
+        
         REAL total_exp_time; // Record the total time of the experiment
     } wubo_Parameter_mismatch;
     extern wubo_Parameter_mismatch wubo_ParaMis;
