@@ -238,7 +238,7 @@ void write_DAC_buffer(){
             (*Axis4DAC).channels[4] = 44;
             (*Axis4DAC).channels[5] = 45;
             (*Axis4DAC).channels[6] = 46;
-            (*Axis4DAC).channels[7] = 47;
+            (*Axis4DAC).channels[7] = 23; // PID->Speed->Err
         }else if((*Axis4DAC).channels_preset==6){(*Axis4DAC).channels_preset=0;
             /* Load Sweeping or Current Loop Sweeping */
             (*Axis4DAC).channels[0] = 25; // PID_iD->Ref
@@ -260,16 +260,16 @@ void write_DAC_buffer(){
             (*Axis4DAC).channels[6] = 52; // -3db marker
             (*Axis4DAC).channels[7] = 52; // -3db marker
         }else if((*Axis4DAC).channels_preset==8){(*Axis4DAC).channels_preset=0;
-        /* Sweeping with Marker */
-        (*Axis4DAC).channels[0] = 21; // PID_Speed->Ref
-        (*Axis4DAC).channels[1] = 22; // PID_Speed->Fbk
-        (*Axis4DAC).channels[2] = 29; // PID_iQ->Ref
-        (*Axis4DAC).channels[3] = 30; // PID_iQ->Fbk
-        (*Axis4DAC).channels[4] = 53; // (*CTRL).s->Speed->I_Term;
-        (*Axis4DAC).channels[5] = 54; //(*CTRL).s->iD->I_Term;
-        (*Axis4DAC).channels[6] = 55;  // (*CTRL).s->iQ->I_Term;
-        (*Axis4DAC).channels[7] = 52; // -3db marker
-    }
+            /* Sweeping with Marker */
+            (*Axis4DAC).channels[0] = 40; // PID_Speed->Ref
+            (*Axis4DAC).channels[1] = 41; // PID_Speed->Fbk
+            (*Axis4DAC).channels[2] = 29; // PID_iQ->Ref
+            (*Axis4DAC).channels[3] = 30; // PID_iQ->Fbk
+            (*Axis4DAC).channels[4] = 44; // DC bus utilization
+            (*Axis4DAC).channels[5] = 52; // -3db marker
+            (*Axis4DAC).channels[6] = 52; // -3db marker
+            (*Axis4DAC).channels[7] = 23; // PID_Speed->Err
+        }
         if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
             // 锟斤拷通锟斤拷DAC锟斤拷锟斤拷锟斤拷锟斤拷薷锟�(*Axis4DAC).channels锟斤拷锟斤拷锟斤拷确锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟叫�(*Axis4DAC).dac_watch锟斤拷锟斤拷锟叫的憋拷锟斤拷锟斤拷
 

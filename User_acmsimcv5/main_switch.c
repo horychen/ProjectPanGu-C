@@ -189,7 +189,8 @@ void init_debug(){
     (*debug).vvvf_frequency = 5.0;
 
     //* due to user WB's habit, make all cmd to zero to make it clear
-    #if PC_SIMULATION == FALSE && WHO_IS_USER == USER_WB
+    // #if PC_SIMULATION == FALSE && WHO_IS_USER == USER_WB
+    #if PC_SIMULATION == FALSE
         (*debug).set_id_command              = 0.0;
         (*debug).set_iq_command              = 0.0;
         (*debug).set_rpm_speed_command       = 0.0;
@@ -301,7 +302,7 @@ void init_CTRL(){
     #endif
 
     PID_Speed->Kp = d_sim.VL.SERIES_KP;
-    PID_Speed->Ki_CODE = d_sim.VL.SERIES_KI      * d_sim.VL.SERIES_KP        * VL_TS;
+    PID_Speed->Ki_CODE = d_sim.VL.SERIES_KI      * d_sim.VL.SERIES_KP        * VL_TS            *( (int)!d_sim.user.Set_SpeedLoop_KI_as_Zero );
     PID_Speed->OutLimit = d_sim.VL.LIMIT_OVERLOAD_FACTOR * d_sim.init.IN;
     PID_iD->Kp  = d_sim.CL.SERIES_KP_D_AXIS;
     PID_iQ->Kp  = d_sim.CL.SERIES_KP_Q_AXIS;
@@ -442,7 +443,7 @@ REAL _veclocityController(REAL cmd_varOmega, REAL varOmega){
         #else
             PID_Speed->calc(PID_Speed);
         #endif
-    }
+    }   
     return PID_Speed->Out;
 }
 void FOC_with_vecocity_control(REAL theta_d_elec, REAL varOmega, REAL cmd_varOmega, REAL cmd_iDQ[2], REAL iAB[2]){
@@ -545,7 +546,9 @@ void _onlyFOC(REAL theta_d_elec, REAL iAB[2]){
             decoupled_q_axis_voltage = PID_iQ->Out + (MOTOR.KActive + PID_iD->Fbk * MOTOR.Ld) * (*CTRL).i->varOmega * MOTOR.npp;
         }else{
             decoupled_d_axis_voltage = PID_iD->Out;
-            decoupled_q_axis_voltage = PID_iQ->Out;
+            decoupled_q_axis_voltage = PID_iQ->Out + MOTOR.KActive * (*CTRL).i->varOmega * MOTOR.npp;
+            // decoupled_d_axis_voltage = PID_iD->Out;
+            // decoupled_q_axis_voltage = PID_iQ->Out;
         }
     #endif
 
@@ -713,7 +716,9 @@ void _user_commands(){
 
 
 void overwrite_sweeping_frequency(){
-    // ACM.TLoad = 0; // 强制将负载设置为0    
+    // #if PC_SIMULATION
+    //     ACM.TLoad = 0; // 强制将负载设置为0    
+    // #endif
     if(d_sim.user.bool_apply_sweeping_frequency_excitation){
         d_sim.user.timebase_for_Sweeping += CL_TS; // Separate the timebase with the DSP timebase !!!
         if ( d_sim.user.timebase_for_Sweeping  > d_sim.user.CMD_SPEED_SINE_END_TIME ){
@@ -764,7 +769,7 @@ void _user_inverter_voltage_command(int bool_use_cmd_iAB){
     }
 }
 /* MAIN SWITCH as per MODE_SELECT */
-int main_switch(long mode_select){
+int  main_switch(long mode_select){
     static long mode_select_last = 0;
     static int mode_initialized = FALSE;
     if(mode_select != mode_select_last) mode_initialized = FALSE;
@@ -796,6 +801,7 @@ int main_switch(long mode_select){
         #if PC_SIMULATION
             // ACM.TLoad = 1.0 * sin((*CTRL).i->cmd_varOmega * d_sim.init.npp * CTRL->timebase);
         #endif
+
         #if WHO_IS_USER == USER_WB
             if ( d_sim.user.bool_enable_Harnefors_back_calculation == TRUE ){
                 _user_wubo_FOC( (*CTRL).i->theta_d_elec, (*CTRL).i->iAB );
@@ -806,6 +812,22 @@ int main_switch(long mode_select){
         #else
             _onlyFOC((*CTRL).i->theta_d_elec, (*CTRL).i->iAB);
         #endif
+
+        #if WHO_IS_USER == USER_BEZIER
+            if (d_sim.user.bezier_Give_Sweeping_Ref_in_Interrupt){
+                #if PC_SIMULATION
+                    printf("Bezier Sweeping Ref is given at the Interruput!\n");
+                #endif
+                if (d_sim.user.bool_apply_sweeping_frequency_excitation == TRUE){
+                    overwrite_sweeping_frequency();
+                }else{
+                    _user_commands();
+                }
+                /* Mark -3db points */
+                _user_Check_ThreeDB_Point( (*CTRL).i->varOmega*MECH_RAD_PER_SEC_2_RPM, d_sim.user.CMD_SPEED_SINE_RPM );
+            }
+        #endif
+
         break;
     case MODE_SELECT_FOC_SENSORLESS: //31
         //TODO:
@@ -856,9 +878,10 @@ int main_switch(long mode_select){
         _user_commands();         // User commands
         FOC_with_vecocity_control((*CTRL).i->theta_d_elec,
             (*CTRL).i->varOmega,
-            (*CTRL).i->cmd_varOmega, 
-            (*CTRL).i->cmd_iDQ, 
+            (*CTRL).i->cmd_varOmega,
+            (*CTRL).i->cmd_iDQ,
             (*CTRL).i->iAB);
+
         break;
     case MODE_SELECT_VELOCITY_LOOP_SENSORLESS : //41
 
@@ -926,35 +949,33 @@ int main_switch(long mode_select){
         break;
     case MODE_SELECT_VELOCITY_LOOP_HARNEFORS_1998: //45
         break;
-    case MODE_SELECT_VELOCITY_SWEEPING_FREQ: // 46
-        /* make sure only wubo can run this code */
-        #if WHO_IS_USER == USER_WB
+    case MODE_SELECT_SWEEPING_FREQ_FOR_VELOCITY_AND_CURRENT: // 46
             overwrite_sweeping_frequency();
             if ( d_sim.user.bool_sweeping_frequency_for_speed_loop == TRUE ){
-                _user_Check_ThreeDB_Point( (*CTRL).i->varOmega*ELEC_RAD_PER_SEC_2_RPM, d_sim.user.CMD_SPEED_SINE_RPM );
+                REAL motor_speed_RPM = (*CTRL).i->varOmega * MECH_RAD_PER_SEC_2_RPM;
+                _user_Check_ThreeDB_Point( motor_speed_RPM, d_sim.user.CMD_SPEED_SINE_RPM );
                 FOC_with_vecocity_control((*CTRL).i->theta_d_elec,
                             (*CTRL).i->varOmega,
                             (*CTRL).i->cmd_varOmega,
                             (*CTRL).i->cmd_iDQ,
                             (*CTRL).i->iAB);
             }else {//* sweeping for current loop especially for iD currents
-                if (d_sim.user.bool_enable_Harnefors_back_calculation == TRUE){
-                    if (d_sim.user.bool_sweeping_frequency_for_current_loop_iD == TRUE){
-                        _user_Check_ThreeDB_Point( (*CTRL).i->cmd_iDQ[0], d_sim.user.CMD_CURRENT_SINE_AMPERE );
-                    }else{
-                        _user_Check_ThreeDB_Point( (*CTRL).i->cmd_iDQ[1], d_sim.user.CMD_CURRENT_SINE_AMPERE );
-                    }
-                    _user_wubo_FOC( (*CTRL).i->theta_d_elec, (*CTRL).i->iAB );
+                if (d_sim.user.bool_sweeping_frequency_for_current_loop_iD == TRUE){
+                    _user_Check_ThreeDB_Point( (*CTRL).i->cmd_iDQ[0], d_sim.user.CMD_CURRENT_SINE_AMPERE );
                 }else{
-                    if (d_sim.user.bool_sweeping_frequency_for_current_loop_iD == TRUE){
-                        _user_Check_ThreeDB_Point( (*CTRL).i->cmd_iDQ[0], d_sim.user.CMD_CURRENT_SINE_AMPERE );
-                    }else{
-                        _user_Check_ThreeDB_Point( (*CTRL).i->cmd_iDQ[1], d_sim.user.CMD_CURRENT_SINE_AMPERE );
-                    }
-                    _onlyFOC((*CTRL).i->theta_d_elec, (*CTRL).i->iAB);
+                    _user_Check_ThreeDB_Point( (*CTRL).i->cmd_iDQ[1], d_sim.user.CMD_CURRENT_SINE_AMPERE );
                 }
+                #if WHO_IS_USER == USER_WB
+                    if (d_sim.user.bool_enable_Harnefors_back_calculation){
+                        _user_wubo_FOC( (*CTRL).i->theta_d_elec, (*CTRL).i->iAB );
+                    }else{
+                        d_sim.user.Check_Harnerfors_1998_On = -1;
+                        _onlyFOC( (*CTRL).i->theta_d_elec, (*CTRL).i->iAB );
+                    }
+                #else
+                    _onlyFOC((*CTRL).i->theta_d_elec, (*CTRL).i->iAB);
+                #endif
             }
-        #endif
         break;
     case MODE_SELECT_POSITION_LOOP: // 5
         #if WHO_IS_USER == USER_WB

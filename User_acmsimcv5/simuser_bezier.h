@@ -115,8 +115,54 @@ REAL control_output_adaptVersion(st_pid_regulator *r, BezierController *BzContro
 // 200.0,5.6
 // 250.0,5.7
 // 500.0,6.0
-#define SIM_2_EXP_DEFINE_BEZIER_POINTS_X REAL x_tmp[5] = {0.0, 10.0, 200.0, 250.0, 500.0};
-#define SIM_2_EXP_DEFINE_BEZIER_POINTS_Y REAL y_tmp[5] = {0.0, 5.5,   5.6,   5.7,   6.0};
+// #define SIM_2_EXP_DEFINE_BEZIER_POINTS_X REAL x_tmp[5] = {0.0, 10.0, 200.0, 250.0, 500.0};
+// #define SIM_2_EXP_DEFINE_BEZIER_POINTS_Y REAL y_tmp[5] = {0.0, 5.5,   5.6,   5.7,   6.0};
+
+// Soft Bezier 20241120 EXP5
+// 0.0,0.0
+// 300.0,5.4
+// 400.0,5.5
+// 450.0,5.9
+// 500.0,6.0
+// #define SIM_2_EXP_DEFINE_BEZIER_POINTS_X REAL x_tmp[5] = {0.0, 300, 400, 450, 500.0};
+// #define SIM_2_EXP_DEFINE_BEZIER_POINTS_Y REAL y_tmp[5] = {0.0, 5.4, 5.5, 5.9, 6.0};
+
+// A bit harder Bezier 20241120 EXP6
+// 0.0,0.0
+// 150.0,5.4
+// 200.0,5.5
+// 225.0,5.9
+// 500.0,6.0
+// #define SIM_2_EXP_DEFINE_BEZIER_POINTS_X REAL x_tmp[5] = {0.0, 150, 200, 225, 500.0};
+// #define SIM_2_EXP_DEFINE_BEZIER_POINTS_Y REAL y_tmp[5] = {0.0, 5.4, 5.5, 5.9, 6.0};
+
+// More Harder 20241120 EXP7
+// 0.0,0.0
+// 125.0,5.4
+// 175.0,5.5
+// 200.0,5.9
+// 500.0,6.0
+// #define SIM_2_EXP_DEFINE_BEZIER_POINTS_X REAL x_tmp[5] = {0.0, 125, 175, 200, 500.0};
+// #define SIM_2_EXP_DEFINE_BEZIER_POINTS_Y REAL y_tmp[5] = {0.0, 5.4, 5.5, 5.9, 6.0};
+
+// Bezier 20241120 EXP8
+// 0.0,0.0
+// 100.0,5.4
+// 150.0,5.5
+// 175.0,5.9
+// 500.0,6.0
+// #define SIM_2_EXP_DEFINE_BEZIER_POINTS_X REAL x_tmp[5] = {0.0, 100, 150, 175, 500.0};
+// #define SIM_2_EXP_DEFINE_BEZIER_POINTS_Y REAL y_tmp[5] = {0.0, 5.4, 5.5, 5.9, 6.0};
+
+// A bit harder Bezier with Load Sweeping 20241120 EXP9
+// 0.0,0.0
+// 150.0,5.4
+// 200.0,5.5
+// 225.0,5.9
+// 500.0,6.0
+#define SIM_2_EXP_DEFINE_BEZIER_POINTS_X REAL x_tmp[5] = {0.0, 150, 200, 225, 500.0};
+#define SIM_2_EXP_DEFINE_BEZIER_POINTS_Y REAL y_tmp[5] = {0.0, 5.4, 5.5, 5.9, 6.0};
+
 
 #endif
 #endif

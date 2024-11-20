@@ -32,7 +32,7 @@
 #define MODE_SELECT_VELOCITY_LOOP_WC_TUNER   43 // 这个模式被弃用了，现在于USER_WB中实现WC Tuner
 #define MODE_SELECT_Marino2005               44
 #define MODE_SELECT_VELOCITY_LOOP_HARNEFORS_1998   45
-#define MODE_SELECT_VELOCITY_SWEEPING_FREQ   46
+#define MODE_SELECT_SWEEPING_FREQ_FOR_VELOCITY_AND_CURRENT   46
 #define MODE_SELECT_POSITION_LOOP            5
 #define MODE_SELECT_COMMISSIONING            9
 #define MODE_SELECT_NYQUIST_PLOTTING         91
@@ -325,8 +325,8 @@ typedef struct {
 
 
 // TODO: Need confirm parameters @Jiahao Chen
-#define MA_SEQUENCE_LENGTH            4 // 40 for Yaojie large Lq motor  // Note MA_SEQUENCE_LENGTH * CL_TS = window of moving average in seconds
-#define MA_SEQUENCE_LENGTH_INVERSE    0.25 // 0.025                        // 20 MA gives speed resolution of 3 rpm for 2500 ppr encoder
+#define MA_SEQUENCE_LENGTH            20   // 40 for Yaojie large Lq motor  // Note MA_SEQUENCE_LENGTH * CL_TS = window of moving average in seconds
+#define MA_SEQUENCE_LENGTH_INVERSE    0.05 // 0.025                        // 20 MA gives speed resolution of 3 rpm for 2500 ppr encoder
 // #define MA_SEQUENCE_LENGTH         20 // 20 * CL_TS = window of moving average in seconds
 // #define MA_SEQUENCE_LENGTH_INVERSE 0.05 // 20 MA gives speed resolution of 3 rpm for 2500 ppr encoder
 // #define MA_SEQUENCE_LENGTH         80

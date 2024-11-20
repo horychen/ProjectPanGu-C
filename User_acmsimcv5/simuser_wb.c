@@ -703,7 +703,6 @@ REAL wubo_Signal_Generator(int signal_mode){
 /* Freq Sweeping */
 
 void _user_wubo_Check_ThreeDB_Point( REAL varOmega, REAL cmd_varOmega){
-    // printf("Im here\n");
     d_sim.user.Mark_Sweeping_Freq_ThreeDB_Point = 0;
     if( varOmega < (0.707 * d_sim.user.CMD_SPEED_SINE_RPM * RPM_2_MECH_RAD_PER_SEC) ){
         d_sim.user.Mark_Sweeping_Freq_ThreeDB_Point = 1;

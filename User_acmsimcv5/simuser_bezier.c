@@ -507,39 +507,42 @@ REAL control_output_adaptVersion(st_pid_regulator *r, BezierController *pBAV){
 }
 
 void bezier_controller_run_in_main(){
-    #if PC_SIMULATION
-        // ACM.TLoad = 1.0 + 100 * VISCOUS_COEFF * (*CTRL).i->varOmega;
-        if ((*CTRL).timebase > CL_TS){
-            // (*CTRL).i->cmd_varOmega =  500 * RPM_2_MECH_RAD_PER_SEC;
-            (*CTRL).i->cmd_varOmega =  400 * RPM_2_MECH_RAD_PER_SEC;
 
-        }
-        if ((*CTRL).timebase > 0.02){
-            // (*CTRL).i->cmd_varOmega = 2100 * RPM_2_MECH_RAD_PER_SEC;
-            (*CTRL).i->cmd_varOmega =  0 * RPM_2_MECH_RAD_PER_SEC;
-        }
+    //TODO: These cmd should be placed at some function!!!
+    // #if PC_SIMULATION
+    //     // ACM.TLoad = 1.0 + 100 * VISCOUS_COEFF * (*CTRL).i->varOmega;
+    //     if ((*CTRL).timebase > CL_TS){
+    //         // (*CTRL).i->cmd_varOmega =  500 * RPM_2_MECH_RAD_PER_SEC;
+    //         (*CTRL).i->cmd_varOmega =  400 * RPM_2_MECH_RAD_PER_SEC;
 
-        // if ((*CTRL).timebase > d_sim.user.bezier_seconds_step_command){
-        //     (*CTRL).i->cmd_varOmega = - 500 * RPM_2_MECH_RAD_PER_SEC;
-        // }
-        // if ((*CTRL).timebase > d_sim.user.bezier_seconds_load_disturbance){
-        if ((*CTRL).timebase > 0.03){
-            // ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);
-            // ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * 3.0 * 0.95) * sin(50*2*M_PI*CTRL->timebase);
-            //CTRL_2.i->cmd_iDQ[1] = 0.3;
-        }
-        // if ((*CTRL).timebase > d_sim.user.bezier_seconds_load_disturbance+0.1){
-        if ((*CTRL).timebase > 0.05){
-            ACM.TLoad = 0.0;
-        }
-    #else
-        CTRL = &CTRL_1;
-    #endif
+    //     }
+    //     if ((*CTRL).timebase > 0.02){
+    //         // (*CTRL).i->cmd_varOmega = 2100 * RPM_2_MECH_RAD_PER_SEC;
+    //         (*CTRL).i->cmd_varOmega =  0 * RPM_2_MECH_RAD_PER_SEC;
+    //     }
 
-    overwrite_sweeping_frequency();
+    //     // if ((*CTRL).timebase > d_sim.user.bezier_seconds_step_command){
+    //     //     (*CTRL).i->cmd_varOmega = - 500 * RPM_2_MECH_RAD_PER_SEC;
+    //     // }
+    //     // if ((*CTRL).timebase > d_sim.user.bezier_seconds_load_disturbance){
+    //     if ((*CTRL).timebase > 0.03){
+    //         // ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);
+    //         // ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * 3.0 * 0.95) * sin(50*2*M_PI*CTRL->timebase);
+    //         //CTRL_2.i->cmd_iDQ[1] = 0.3;
+    //     }
+    //     // if ((*CTRL).timebase > d_sim.user.bezier_seconds_load_disturbance+0.1){
+    //     if ((*CTRL).timebase > 0.05){
+    //         ACM.TLoad = 0.0;
+    //     }
+    // #else
+    //     CTRL = &CTRL_1;
+    // #endif
 
-    /* Mark -3db points */
-    _user_Check_ThreeDB_Point( (*CTRL).i->varOmega*ELEC_RAD_PER_SEC_2_RPM, d_sim.user.CMD_SPEED_SINE_RPM );
+    if (!d_sim.user.bezier_Give_Sweeping_Ref_in_Interrupt){
+        overwrite_sweeping_frequency();
+        /* Mark -3db points */
+        _user_Check_ThreeDB_Point( (*CTRL).i->varOmega*MECH_RAD_PER_SEC_2_RPM, d_sim.user.CMD_SPEED_SINE_RPM );
+    }
 
     PID_Speed->Ref = (*CTRL).i->cmd_varOmega;
     PID_Speed->Fbk = (*CTRL).i->varOmega;

@@ -25,7 +25,7 @@ void main(void){
     DINT;               // 3.1 Clear all interrupts and initialize PIE vector table.
     InitPieCtrl();      // 3.2 Initialize the PIE control registers to their default state. The default state is all PIE interrupts disabled and flags are cleared.
     IER = 0x0000;       // 3.3 Disable CPU __interrupts,
-    IFR = 0x0000;       // 3.4 and clear all CPU __interrupt flags.a
+    IFR = 0x0000;       // 3.4 and clear all CPU __interrupt flags.
     InitPieVectTable(); // 3.5 Initialize the PIE vector table with pointers to the shell Interrupt Service Routines (ISR). At end, ENPIE = 1.
     InitCpuTimers();     // for Slessinv TIE.R1 for measuring the execution time
     ConfigCpuTimer(&CpuTimer1, 200, 1000000); // 200MHz, INTERRUPT_period = 1e6 us
@@ -149,11 +149,16 @@ void main_loop(){
             //                bezier_controller_run_in_main();
             //            }
             if(d_sim.user.bezier_NUMBER_OF_STEPS<8000){
+
                 // When the button is on, then give a Sweeping Ref
-                if (Axis_1.FLAG_ENABLE_PWM_OUTPUT){
-                    overwrite_sweeping_frequency();
-                }
-                // _user_commands();         // 用户指令
+                // if (Axis_1.FLAG_ENABLE_PWM_OUTPUT){
+                //     overwrite_sweeping_frequency();
+                //     _user_Check_ThreeDB_Point( (*CTRL).i->varOmega*MECH_RAD_PER_SEC_2_RPM, d_sim.user.CMD_SPEED_SINE_RPM );
+                //     // _user_commands();         // 用户指令
+                // }
+
+
+                
                 CTRL = &CTRL_1;
                 PID_Speed->Ref = (*CTRL).i->cmd_varOmega;
                 PID_Speed->Fbk = (*CTRL).i->varOmega;
@@ -835,7 +840,7 @@ void axis_basic_setup(int axisCnt){
 
     Axis->channels_preset = 8; // 9; // 101;
     #if WHO_IS_USER == USER_BEZIER
-        Axis->channels_preset = 7; // 9; // 101;
+        Axis->channels_preset = 8; // 9; // 101;
     #endif
 
     Axis->pCTRL->enc->sum_qepPosCnt = 0;
