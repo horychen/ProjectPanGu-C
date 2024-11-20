@@ -41,7 +41,7 @@ void main(void){
             //  Send boot command to allow the CPU02 application to begin execution
             // seriesly i dont know what does this sentences mean, do no change it might as well
             // i dont know what does sentence
-            // IPCBootCPU2(C1C2_BROM_BOOTMODE_BOOT_FROM_RAM);
+//             IPCBootCPU2(C1C2_BROM_BOOTMODE_BOOT_FROM_RAM);
         #endif
     #endif
     
@@ -128,33 +128,55 @@ void main(void){
 
 void main_loop(){
     while (1){
+        #if PC_SIMULATION == FALSE
+            CpuTimer_After = CpuTimer1.RegsAddr->TIM.all; // get count
+            CpuTimer_Delta = (REAL)CpuTimer_Before - (REAL)CpuTimer_After;
+            // EALLOW;
+            // CpuTimer1.RegsAddr->TCR.bit.TSS = 1; // stop (not needed because of the line TRB=1)
+            // EDIS;
+        #endif
+        // Below should be place at the first
+        // Here is to measurea the whole time of the Bezier Controller
+        #if PC_SIMULATION == FALSE
+            EALLOW;
+            CpuTimer1.RegsAddr->TCR.bit.TRB = 1;           // reset cpu timer to period value
+            CpuTimer1.RegsAddr->TCR.bit.TSS = 0;           // start/restart
+            CpuTimer_Before = CpuTimer1.RegsAddr->TIM.all; // get count
+            EDIS;
+        #endif
         #if WHO_IS_USER == USER_BEZIER
             //            if(d_sim.user.bezier_NUMBER_OF_STEPS<8000){
             //                bezier_controller_run_in_main();
             //            }
-
             if(d_sim.user.bezier_NUMBER_OF_STEPS<8000){
+                // When the button is on, then give a Sweeping Ref
+                if (Axis_1.FLAG_ENABLE_PWM_OUTPUT){
+                    overwrite_sweeping_frequency();
+                }
+                // _user_commands();         // 用户指令
                 CTRL = &CTRL_1;
                 PID_Speed->Ref = (*CTRL).i->cmd_varOmega;
                 PID_Speed->Fbk = (*CTRL).i->varOmega;
-                control_output(PID_Speed, &BzController);
-                (*debug).set_iq_command = PID_Speed->Out;
-                // (*debug).set_iq_command = control_output_adaptVersion(PID_Speed, &BzController_AdaptVersion);
+                PID_Speed->OutLimit = BezierVL.points[BezierVL.order].y;
+                control_output(PID_Speed, &BezierVL);
+                if (d_sim.user.BOOL_BEZIER_ADAPTIVE_GAIN == FALSE){
+                    (*debug).set_iq_command = PID_Speed->Out;
+                }else{
+                    (*debug).set_iq_command = control_output_adaptVersion(PID_Speed, &BezierVL_AdaptVersion);
+                }
                 (*debug).set_id_command = 0;
             }
-
         #endif
-
 //         #if WHO_IS_USER == USER_QIAN
             // Sensor Coil
-            I2CA_ReadData_Channel(0);
-            DELAY_US(30);
-            I2CA_ReadData_Channel(1);
-            DELAY_US(30);
-            I2CA_ReadData_Channel(2);
-            DELAY_US(300);
-            I2CA_ReadData_Channel(3);
-            DELAY_US(300);
+//            I2CA_ReadData_Channel(0);
+//            DELAY_US(30);
+//            I2CA_ReadData_Channel(1);
+//            DELAY_US(30);
+//            I2CA_ReadData_Channel(2);
+//            DELAY_US(300);
+//            I2CA_ReadData_Channel(3);
+//            DELAY_US(300);
 //         #endif
         //        mainWhileLoopCounter1++;
         //        mainWhileLoopCounter2=2992;
@@ -174,7 +196,6 @@ void main_loop(){
         //        mainWhileLoopCounter3 += 1;
         //        Axis_1.ID += 1;
         //        mainWhileLoopCounter2 += 1;
-
         #if NUMBER_OF_DSP_CORES == 1
             single_core_dac();
         #endif
@@ -203,9 +224,10 @@ void main_measurement(){
     CTRL->i->theta_d_elec = CTRL->enc->theta_d_elec;
 
     // measure place between machine shaft and Sensor Coil
-    // if (sensor_coil_enable == 1) 
-    measurement_sensor_coil();
-
+    // if (sensor_coil_enable == 1)
+    #if WHO_IS_USER == USER_QIAN
+        measurement_sensor_coil();
+    #endif
     // measure current
     if (axisCnt == 0) measurement_current_axisCnt0();
     if (axisCnt == 1) measurement_current_axisCnt1();
@@ -319,6 +341,7 @@ void DISABLE_PWM_OUTPUT(){
     if (!G.flag_experimental_initialized){
         G.flag_experimental_initialized = TRUE;
 
+        /* wubo: init_CTRL will clear timebase but when the timecounter is running all the time hence it will give value to timebase whenever DSP is on or off, finally timebase seems like not been cleared*/
         init_experiment();
         // init_experiment_AD_gain_and_offset();
         // init_experiment_overwrite();
@@ -326,18 +349,45 @@ void DISABLE_PWM_OUTPUT(){
 
         // TODO: use a function for this purpose!
         // 清空积分缓存
+        PID_Speed->Ref = 0;
+        PID_Speed->Out = 0;
         PID_Speed->OutPrev = 0;
-        PID_iD->OutPrev = 0;
-        PID_iQ->OutPrev = 0;
+        PID_Speed->Fbk = 0;
+        PID_Speed->Err = 0;
+        PID_Speed->ErrPrev = 0;
+        PID_Speed->I_Term = 0;
 
-        // 清空速度InnerLoop缓存
-//        PID_Speed->KFB_Term_Prev = 0;
+        PID_iD->Ref = 0;
+        PID_iD->Out = 0;
+        PID_iD->OutPrev = 0;
+        PID_iD->Fbk = 0;
+        PID_iD->Err = 0;
+        PID_iD->ErrPrev = 0;
+        PID_iD->I_Term = 0;
+        
+        PID_iQ->Ref = 0;
+        PID_iQ->Out = 0;
+        PID_iQ->OutPrev = 0;
+        PID_iQ->Fbk = 0;
+        PID_iQ->Err = 0;
+        PID_iQ->ErrPrev = 0;
+        PID_iQ->I_Term = 0;
+        // 清空速度InnerLoop缓存 & Harnefors Var
         #if WHO_IS_USER == USER_WB
             SIL_Controller.KFB_Term = 0;
+            Harnefors_1998_BackCals_Variable.I_Term_prev = 0.0;
+            Harnefors_1998_BackCals_Variable.I_Term_prev_iD = 0.0;
+            Harnefors_1998_BackCals_Variable.I_Term_prev_iQ = 0.0;
         #endif
         // PID_iX->OutPrev = 0;
         // PID_iy->OutPrev = 0;
 
+        // Sweeping 
+        d_sim.user.timebase_for_Sweeping = 0.0;
+        d_sim.user.CMD_SPEED_SINE_HZ = 0.0;
+        d_sim.user.CMD_SPEED_SINE_END_TIME = CL_TS;
+        d_sim.user.CMD_SPEED_SINE_LAST_END_TIME = 0.0;
+        
         EPwm1Regs.CMPA.bit.CMPA = 2500;
         EPwm2Regs.CMPA.bit.CMPA = 2500;
         EPwm3Regs.CMPA.bit.CMPA = 2500;
@@ -358,8 +408,6 @@ void DISABLE_PWM_OUTPUT(){
 
         /* WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING*/
         #if WHO_IS_USER == USER_WB
-            (*CTRL).timebase_counter = 0;
-            (*CTRL).timebase = 0.0;
             (*debug).CMD_CURRENT_SINE_AMPERE      = d_sim.user.CMD_CURRENT_SINE_AMPERE;
             (*debug).CMD_SPEED_SINE_RPM           = d_sim.user.CMD_SPEED_SINE_RPM;
             (*debug).CMD_SPEED_SINE_HZ            = d_sim.user.CMD_SPEED_SINE_HZ;
@@ -555,24 +603,12 @@ __interrupt void EPWM1ISR(void){
 
 
         // 这段放需要测时间的代码前面
-        #if PC_SIMULATION == FALSE
-                EALLOW;
-                CpuTimer1.RegsAddr->TCR.bit.TRB = 1;           // reset cpu timer to period value
-                CpuTimer1.RegsAddr->TCR.bit.TSS = 0;           // start/restart
-                CpuTimer_Before = CpuTimer1.RegsAddr->TIM.all; // get count
-                EDIS;
-        #endif
+        
 
         PanGuMainISR();
 
         // 这段放需要测时间的代码后面，观察CpuTimer_Delta的取值，代表经过了多少个 1/200e6 秒。
-        #if PC_SIMULATION == FALSE
-        CpuTimer_After = CpuTimer1.RegsAddr->TIM.all; // get count
-        CpuTimer_Delta = (REAL)CpuTimer_Before - (REAL)CpuTimer_After;
-        // EALLOW;
-        // CpuTimer1.RegsAddr->TCR.bit.TSS = 1; // stop (not needed because of the line TRB=1)
-        // EDIS;
-        #endif
+        
 
     }else if (use_first_set_three_phase == 2){
         axisCnt = 1;
@@ -745,8 +781,9 @@ void axis_basic_setup(int axisCnt){
     // allocate_CTRL(CTRL); // This operation is moved into init_CTRL hence i think this code should not be here 20240929 WB
     init_experiment();
     init_experiment_AD_gain_and_offset();
-    init_experiment_PLACE_gain_and_offset();
-
+    #if WHO_IS_USER == USER_QIAN
+        init_experiment_PLACE_gain_and_offset();
+    #endif
     // Axis->use_first_set_three_phase = 1; // -1;
     //    Axis->Set_current_loop = FALSE;
     //    Axis->Set_x_suspension_current_loop = FALSE;
@@ -844,6 +881,7 @@ void init_experiment_AD_gain_and_offset()
     #endif
 }
 
+#if WHO_IS_USER == USER_QIAN
 /* initialize Sensor Coil */
 void init_experiment_PLACE_gain_and_offset(){
     Axis->place_offset[0] = OFFSET_PLACE_RIGHT;
@@ -856,6 +894,7 @@ void init_experiment_PLACE_gain_and_offset(){
     Axis->place_scale[2]  = SCALE_PLACE_X;
     Axis->place_scale[3]  = SCALE_PLACE_Y;
 }
+#endif
 
 /* compute CLA task vectors */
 void compute_CLA_task_vectors(){
@@ -993,6 +1032,7 @@ REAL enable_vvvf = FALSE;
 
 REAL wubo_debug_USE_DEATIME_PRECOMP = 0;
 
+/* PWM signal to Inverter Voltage Output SWPWM */
 void voltage_commands_to_pwm()
 {
     if (axisCnt == 0){
@@ -1321,11 +1361,13 @@ void measurement_current_axisCnt1()
     else
     {
         REAL phase_V_current = -Axis->iuvw[3] - Axis->iuvw[5];
-        Axis->iabg[0] = UV2A_AI(Axis->iuvw[3], phase_V_current);
+        Axis->iabg[0] = UV2A_AI(Axis->iuvw[3], phase_V_`current);
         Axis->iabg[1] = UV2B_AI(Axis->iuvw[3], phase_V_current);
     }
 }
 
+
+#if WHO_IS_USER == USER_QIAN
 void measurement_sensor_coil(){
     Axis->place_sensor[0] = (raw_value_rdlu[0] - Axis->place_offset[0])*Axis->place_scale[0];
     Axis->place_sensor[1] = (raw_value_rdlu[1] - Axis->place_offset[1])*Axis->place_scale[1];
@@ -1336,13 +1378,7 @@ void measurement_sensor_coil(){
             // Axis->xx
     }
 }
-
-
-
-
-
-
-
+#endif
 
 void read_count_from_cpu02_dsp_cores_2()
 {
@@ -1366,10 +1402,6 @@ void read_count_from_cpu02_dsp_cores_2()
         // deg_four_bar_map_motor_encoder_angle = lookup(position_count_CAN_ID0x03_fromCPU2 * 0.00274658203125, &ZJL_table);
         rad_four_bar_map_motor_encoder_angle = deg_four_bar_map_motor_encoder_angle * 0.017453292519943295;
         cnt_four_bar_map_motor_encoder_angle = deg_four_bar_map_motor_encoder_angle * 23301.68888888889;
-
-
-
-
     }
     else
     {

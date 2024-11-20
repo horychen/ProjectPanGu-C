@@ -181,8 +181,7 @@ void init_debug(){
     (*debug).Overwrite_theta_d           = 0.0;
 
     
-    (*debug).set_id_command              = 0.0;
-    (*debug).set_iq_command              = 1.0;
+
     (*debug).set_rpm_speed_command       = d_sim.user.set_rpm_speed_command;
     (*debug).set_deg_position_command    = 0.0;
     (*debug).vvvf_voltage = 3.0;
@@ -203,7 +202,7 @@ void init_debug(){
     (*debug).LIMIT_OVERLOAD_FACTOR                                = d_sim.VL.LIMIT_OVERLOAD_FACTOR;
     (*debug).Select_exp_operation                                 = d_sim.user.Select_exp_operation;
     (*debug).bool_apply_decoupling_voltages_to_current_regulation = d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation;
-    (*debug).INVERTER_NONLINEARITY_COMPENSATION_INIT = d_sim.user.INVERTER_NONLINEARITY_COMPENSATION_METHOD;
+    (*debug).INVERTER_NONLINEARITY_COMPENSATION_INIT              = d_sim.user.INVERTER_NONLINEARITY_COMPENSATION_METHOD;
 
     #if WHO_IS_USER == USER_YZZ
         (*debug).SENSORLESS_CONTROL      = 0;
@@ -451,6 +450,7 @@ void FOC_with_vecocity_control(REAL theta_d_elec, REAL varOmega, REAL cmd_varOme
 
     /* FOC */
     #if WHO_IS_USER == USER_WB
+
         _user_wubo_FOC( (*CTRL).i->theta_d_elec, iAB );
     #else
         _onlyFOC( (*CTRL).i->theta_d_elec, iAB );
@@ -709,26 +709,25 @@ void _user_commands(){
 
 void overwrite_sweeping_frequency(){
 
-    // ACM.TLoad = 0; // 强制将负载设置为0    
-    if(d_sim.user.bool_apply_sweeping_frequency_excitation){
-        if ((*CTRL).timebase > d_sim.user.CMD_SPEED_SINE_END_TIME){
             d_sim.user.CMD_SPEED_SINE_HZ += d_sim.user.CMD_SPEED_SINE_STEP_SIZE;
             d_sim.user.CMD_SPEED_SINE_LAST_END_TIME = d_sim.user.CMD_SPEED_SINE_END_TIME;
             d_sim.user.CMD_SPEED_SINE_END_TIME += 1.0 / d_sim.user.CMD_SPEED_SINE_HZ;
         }
         if (d_sim.user.CMD_SPEED_SINE_HZ > d_sim.user.CMD_SPEED_SINE_HZ_CEILING){
             (*CTRL).i->cmd_varOmega = 0.0; // 到达扫频的频率上限，速度归零
+            (*CTRL).i->cmd_iDQ[0] = 0.0;
+            (*CTRL).i->cmd_iDQ[1] = 0.0;
         }else{
             if (d_sim.user.bool_sweeping_frequency_for_speed_loop == TRUE){
                 (*CTRL).i->cmd_varOmega = RPM_2_MECH_RAD_PER_SEC * d_sim.user.CMD_SPEED_SINE_RPM \
-                    *sin(2*M_PI*d_sim.user.CMD_SPEED_SINE_HZ*((*CTRL).timebase - d_sim.user.CMD_SPEED_SINE_LAST_END_TIME));
+                    *sin(2*M_PI*d_sim.user.CMD_SPEED_SINE_HZ*(d_sim.user.timebase_for_Sweeping  - d_sim.user.CMD_SPEED_SINE_LAST_END_TIME));
             }else{
                 if (d_sim.user.bool_sweeping_frequency_for_current_loop_iD == TRUE){
-                    (*CTRL).i->cmd_iDQ[0] = d_sim.user.CMD_CURRENT_SINE_AMPERE * sin(2* M_PI *d_sim.user.CMD_SPEED_SINE_HZ*((*CTRL).timebase - d_sim.user.CMD_SPEED_SINE_LAST_END_TIME));
+                    (*CTRL).i->cmd_iDQ[0] = d_sim.user.CMD_CURRENT_SINE_AMPERE * sin(2* M_PI *d_sim.user.CMD_SPEED_SINE_HZ*(d_sim.user.timebase_for_Sweeping  - d_sim.user.CMD_SPEED_SINE_LAST_END_TIME));
                     (*CTRL).i->cmd_iDQ[1] = 0.0;
                 } else {
                     (*CTRL).i->cmd_iDQ[0] = 0.0;
-                    (*CTRL).i->cmd_iDQ[1] = d_sim.user.CMD_CURRENT_SINE_AMPERE * sin(2* M_PI *d_sim.user.CMD_SPEED_SINE_HZ*((*CTRL).timebase - d_sim.user.CMD_SPEED_SINE_LAST_END_TIME));
+                    (*CTRL).i->cmd_iDQ[1] = d_sim.user.CMD_CURRENT_SINE_AMPERE * sin(2* M_PI *d_sim.user.CMD_SPEED_SINE_HZ*(d_sim.user.timebase_for_Sweeping  - d_sim.user.CMD_SPEED_SINE_LAST_END_TIME));
                 }
             }
         }
@@ -783,7 +782,12 @@ int main_switch(long mode_select){
             // ACM.TLoad = 1.0 * sin((*CTRL).i->cmd_varOmega * d_sim.init.npp * CTRL->timebase);
         #endif
         #if WHO_IS_USER == USER_WB
-            _user_wubo_FOC( (*CTRL).i->theta_d_elec, (*CTRL).i->iAB );
+            if ( d_sim.user.bool_enable_Harnefors_back_calculation == TRUE ){
+                _user_wubo_FOC( (*CTRL).i->theta_d_elec, (*CTRL).i->iAB );
+            }
+            else{
+                _onlyFOC((*CTRL).i->theta_d_elec, (*CTRL).i->iAB);
+            }
         #else
             _onlyFOC((*CTRL).i->theta_d_elec, (*CTRL).i->iAB);
         #endif
@@ -875,7 +879,7 @@ int main_switch(long mode_select){
     case MODE_SELECT_TESTING_SENSORLESS : //42
         break;
     case MODE_SELECT_VELOCITY_LOOP_WC_TUNER: // 43
-        #if WHO_IS_USER == USER_WB
+        #if WHO_IS_USER == USER_WB && PC_SIMULATION == TRUE
             INNER_LOOP_SENSITIVITY_ANALYSIS(debug);
             if ( d_sim.user.bool_apply_HitWall_analysis == TRUE){
                 (*debug).set_rpm_speed_command = d_sim.user.HitWall_high_RPM_command;
@@ -910,7 +914,7 @@ int main_switch(long mode_select){
     case MODE_SELECT_VELOCITY_SWEEPING_FREQ: // 46
         /* make sure only wubo can run this code */
         #if WHO_IS_USER == USER_WB
-            _user_wubo_Sweeping_Command();
+
             if ( d_sim.user.bool_sweeping_frequency_for_speed_loop == TRUE ){
                 FOC_with_vecocity_control((*CTRL).i->theta_d_elec,
                             (*CTRL).i->varOmega,
@@ -1003,17 +1007,25 @@ int main_switch(long mode_select){
 /* Other only simulation codes */
 #if PC_SIMULATION
     void _user_time_varying_parameters(){
+        
+        // ACM.R  = d_sim.init.R  * 2.5;
+        // ACM.Ld = d_sim.init.Ld * 2.5; 
+        // ACM.Lq = d_sim.init.Lq * 2.5;
+        
         // 0. 参数时变
         // if (fabsf((*CTRL).timebase-0.025)<CL_TS){
         //     printf("[Runtime] Rotor inertia of the simulated machine has changed! Js=%g\n", ACM.Js);
-        //     ACM.Js     = 10 * d_sim.init.Js; // kg.m^2
-        //     ACM.Js_inv = 1.0 / ACM.Js;
+            // ACM.Js     =  2.5 * d_sim.init.Js; // kg.m^2 0.41500000000000004
+            // ACM.Js_inv = 1.0 / ACM.Js;
         // }
         // if (fabsf((*CTRL).timebase-0.035)<CL_TS){
         //     printf("[Runtime] Rotor inertia of the simulated machine has changed! Js=%g\n", ACM.Js);
         //     ACM.Js     = 0.1 * d_sim.init.Js; // kg.m^2
         //     ACM.Js_inv = 1.0 / ACM.Js;
         // }
+        ///
+        // Changing KE should go to the init_Machine to change the initial value of KE if u are running at a PMSM Ld = Lq
+        ///
     }
     REAL _user_load_model(){
         static REAL Tload = 0.0;

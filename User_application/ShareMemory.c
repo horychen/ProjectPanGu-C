@@ -109,12 +109,12 @@ void write_DAC_buffer(){
         /* Bezier */
         (*Axis4DAC).dac_watch[40] = (*CTRL).i->cmd_varOmega * MECH_RAD_PER_SEC_2_RPM * 0.002;
         (*Axis4DAC).dac_watch[41] = (*CTRL).i->varOmega     * MECH_RAD_PER_SEC_2_RPM * 0.002;
-        (*Axis4DAC).dac_watch[42] = (*CTRL).i->cmd_iDQ[1] * 0.2;
-        (*Axis4DAC).dac_watch[43] = (*CTRL).i->iDQ[1]     * 0.2;
+        (*Axis4DAC).dac_watch[42] = (*CTRL).i->cmd_iDQ[1] * 0.1; // range is 1/0.1 A
+        (*Axis4DAC).dac_watch[43] = (*CTRL).i->iDQ[1]     * 0.1;
         (*Axis4DAC).dac_watch[44] = (*CTRL).o->dc_bus_utilization_ratio;
-        (*Axis4DAC).dac_watch[45] = Axis_1.iuvw[0]*0.2;
-        (*Axis4DAC).dac_watch[46] = Axis_1.iuvw[1]*0.2;
-        (*Axis4DAC).dac_watch[47] = Axis_1.iuvw[2]*0.2;
+        (*Axis4DAC).dac_watch[45] = Axis_1.iuvw[0]*0.1;
+        (*Axis4DAC).dac_watch[46] = Axis_1.iuvw[1]*0.1;
+        (*Axis4DAC).dac_watch[47] = Axis_1.iuvw[2]*0.1;
 
         /* Sensor Coil */
         (*Axis4DAC).dac_watch[48] = Axis->place_sensor[0];
@@ -194,22 +194,22 @@ void write_DAC_buffer(){
             /* iD current and iQ current info */
             (*Axis4DAC).channels[0] = 25; // PID_iD->Ref
             (*Axis4DAC).channels[1] = 26; // PID_iD->Fbk
-            (*Axis4DAC).channels[2] = 27; // PID_iD->Err
-            (*Axis4DAC).channels[3] = 28; // PID_iD->Out
-            (*Axis4DAC).channels[4] = 29;
-            (*Axis4DAC).channels[5] = 30;
-            (*Axis4DAC).channels[6] = 31;
-            (*Axis4DAC).channels[7] = 32;
+            (*Axis4DAC).channels[2] = 29; // PID_iQ->Ref
+            (*Axis4DAC).channels[3] = 30; // PID_iQ->Fbk
+            (*Axis4DAC).channels[4] = 44; // DC bus utilization
+            (*Axis4DAC).channels[5] = 45; // iU
+            (*Axis4DAC).channels[6] = 46; // iV
+            (*Axis4DAC).channels[7] = 47; // iW
         }else if((*Axis4DAC).channels_preset==3){(*Axis4DAC).channels_preset=0;
             /* DAC offset tune */
-            (*Axis4DAC).channels[0] = 29; // 
-            (*Axis4DAC).channels[1] = 30; // 
+            (*Axis4DAC).channels[0] = 29; // PID_iQ->Ref
+            (*Axis4DAC).channels[1] = 30; // PID_iQ->Fbk
             (*Axis4DAC).channels[2] = 2; // 0
             (*Axis4DAC).channels[3] = 3; // 0
-            (*Axis4DAC).channels[4] = 4; // 0
-            (*Axis4DAC).channels[5] = 5; // 0
-            (*Axis4DAC).channels[6] = 6; // 0
-            (*Axis4DAC).channels[7] = 7; // 0
+            (*Axis4DAC).channels[4] = 44; // DC bus utilization
+            (*Axis4DAC).channels[5] = 45; // iU
+            (*Axis4DAC).channels[6] = 46; // iW
+            (*Axis4DAC).channels[7] = 47; // iV
         }else if((*Axis4DAC).channels_preset==4){(*Axis4DAC).channels_preset=0;
             /* uDQ given test */
             (*Axis4DAC).channels[0] = 33; // 0
@@ -230,6 +230,16 @@ void write_DAC_buffer(){
             (*Axis4DAC).channels[5] = 45;
             (*Axis4DAC).channels[6] = 46;
             (*Axis4DAC).channels[7] = 47;
+        }else if((*Axis4DAC).channels_preset==6){(*Axis4DAC).channels_preset=0;
+            /* Load Sweeping */
+            (*Axis4DAC).channels[0] = 29; // PID_iQ->Ref
+            (*Axis4DAC).channels[1] = 30; // PID_iQ->Fbk
+            (*Axis4DAC).channels[2] = 2; // 0
+            (*Axis4DAC).channels[3] = 3; // 0
+            (*Axis4DAC).channels[4] = 44; // DC bus utilization
+            (*Axis4DAC).channels[5] = 45; // iU
+            (*Axis4DAC).channels[6] = 46; // iW
+            (*Axis4DAC).channels[7] = 47; // iV
         }
         if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
             // 锟斤拷通锟斤拷DAC锟斤拷锟斤拷锟斤拷锟斤拷薷锟�(*Axis4DAC).channels锟斤拷锟斤拷锟斤拷确锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟叫�(*Axis4DAC).dac_watch锟斤拷锟斤拷锟叫的憋拷锟斤拷锟斤拷
@@ -295,7 +305,10 @@ void write_DAC_buffer(){
                 (*Axis4DAC).dac_offset[5] =-0.0045;
                 (*Axis4DAC).dac_offset[6] = 0.002;
                 (*Axis4DAC).dac_offset[7] =-0.001;
-
+                #if Load_Sweeping_DAC
+                    (*Axis4DAC).dac_offset[0] = 0.0;
+                    (*Axis4DAC).dac_offset[1] = 0.0;
+                #endif
                 Write.dac_buffer[0] = (*Axis4DAC).dac_offset[0];
                 Write.dac_buffer[1] = (*Axis4DAC).dac_offset[1];
                 Write.dac_buffer[2] = (*Axis4DAC).dac_offset[2];
@@ -304,9 +317,6 @@ void write_DAC_buffer(){
                 Write.dac_buffer[5] = (*Axis4DAC).dac_offset[5];
                 Write.dac_buffer[6] = (*Axis4DAC).dac_offset[6];
                 Write.dac_buffer[7] = (*Axis4DAC).dac_offset[7];
-
-
-
             }
             IPCLtoRFlagSet(IPC_FLAG7);
         }
