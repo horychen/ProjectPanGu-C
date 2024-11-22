@@ -651,7 +651,7 @@ void _user_commands(){
                 (*CTRL).i->cmd_varOmega =  500 * RPM_2_MECH_RAD_PER_SEC;
             }
             if ((*CTRL).timebase > 0.01){
-                (*CTRL).i->cmd_varOmega = 2100 * RPM_2_MECH_RAD_PER_SEC;
+                (*CTRL).i->cmd_varOmega = -500 * RPM_2_MECH_RAD_PER_SEC;
             }
             if ((*CTRL).timebase > 0.03){
                 ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * 3.0 * 0.95);
@@ -748,10 +748,20 @@ void overwrite_sweeping_frequency(){
 }
 
 void _user_Check_ThreeDB_Point( REAL Fbk, REAL Ref){
-    d_sim.user.Mark_Sweeping_Freq_ThreeDB_Point = 0;
-    if( Fbk < (0.707 * Ref) ){
+    if( Fbk < 0.707 * Ref ){
         d_sim.user.Mark_Sweeping_Freq_ThreeDB_Point = 1;
     }
+    if( Fbk >= 0.707 * Ref && d_sim.user.Mark_Sweeping_Freq_ThreeDB_Point == 1 ){
+        d_sim.user.Mark_Sweeping_Freq_ThreeDB_Point = 0;
+        d_sim.user.Mark_Counter += 1;
+    }
+    #if PC_SIMULATION
+        static int flag_print_only_once = FALSE;
+        if (d_sim.user.bool_apply_sweeping_frequency_excitation && ( (*CTRL).timebase > 5.000 ) && ( flag_print_only_once == FALSE ) ){
+            printf("VLBW is %fHz\n", d_sim.user.Mark_Counter);
+            flag_print_only_once = TRUE;
+        }
+    #endif
 }
 
 
@@ -815,9 +825,9 @@ int  main_switch(long mode_select){
 
         #if WHO_IS_USER == USER_BEZIER
             if (d_sim.user.bezier_Give_Sweeping_Ref_in_Interrupt){
-                #if PC_SIMULATION
-                    printf("Bezier Sweeping Ref is given at the Interruput!\n");
-                #endif
+                // #if PC_SIMULATION
+                //     printf("Bezier Sweeping Ref is given at the Interruput!\n");
+                // #endif
                 if (d_sim.user.bool_apply_sweeping_frequency_excitation == TRUE){
                     overwrite_sweeping_frequency();
                 }else{
@@ -1091,25 +1101,25 @@ int  main_switch(long mode_select){
         return Tload;
     }
     void Generator(){
-    REAL speed_cmd = 12000 * RPM_2_MECH_RAD_PER_SEC;
-    ACM.TLoad = - 1.5 * (speed_cmd - ACM.varOmega);
+        REAL speed_cmd = 12000 * RPM_2_MECH_RAD_PER_SEC;
+        ACM.TLoad = - 1.5 * (speed_cmd - ACM.varOmega);
 
-    ACM.uDQ[0] =  150 * cos( 0.2*M_PI*0.5);
-    ACM.uDQ[1] =  150 * sin( 0.2*M_PI*0.5);
-    printf("ACM.omega_syn * ACM.KA * 1.732: %g\n", ACM.omega_syn * ACM.KA * 1.732);
-    printf("P: %g\n", ACM.Tem * ACM.varOmega * MECH_RAD_PER_SEC_2_RPM);
-    ACM.uAB[0] = MT2A(ACM.uDQ[0], ACM.uDQ[1], ACM.cosT, ACM.sinT);
-    ACM.uAB[1] = MT2B(ACM.uDQ[0], ACM.uDQ[1], ACM.cosT, ACM.sinT);
-    ACM.current_theta = atan2(ACM.iAB[1], ACM.iAB[0]) - M_PI;
-    ACM.voltage_theta = atan2(ACM.uAB[1], ACM.uAB[0]);
-    ACM.powerfactor = (angle_diff(ACM.voltage_theta, ACM.current_theta) ) * ONE_OVER_2PI * 360;
-    CTRL->s->cosT = cos(angle_diff(ACM.voltage_theta, ACM.current_theta) );
-    // if(sqrtf(ACM.iAB[1] * ACM.uAB[1] + ACM.iAB[0] * ACM.uAB[0])>0)
-        // CTRL->s->cosT = ACM.TLoad * ACM.varOmega / sqrtf(ACM.iAB[1] * ACM.uAB[1] + ACM.iAB[0] * ACM.uAB[0]);
-        //CTRL->s->cosT = sqrtf(ACM.iAB[1] * ACM.iAB[1] + ACM.iAB[0] * ACM.iAB[0]) * ACM.KA * ACM.omega_syn
-        // CTRL->s->cosT = ACM.Tem * ACM.varOmega / (
-        //         sqrtf((ACM.iAB[1] * ACM.iAB[1]) +  (ACM.iAB[0] *ACM.iAB[0])) * sqrtf((ACM.uAB[1] * ACM.uAB[1]) +  (ACM.uAB[0] *ACM.uAB[0]))
-        //     );
-    printf("power factor: %g\n", CTRL->s->cosT);
-}
+        ACM.uDQ[0] =  150 * cos( 0.2*M_PI*0.5);
+        ACM.uDQ[1] =  150 * sin( 0.2*M_PI*0.5);
+        printf("ACM.omega_syn * ACM.KA * 1.732: %g\n", ACM.omega_syn * ACM.KA * 1.732);
+        printf("P: %g\n", ACM.Tem * ACM.varOmega * MECH_RAD_PER_SEC_2_RPM);
+        ACM.uAB[0] = MT2A(ACM.uDQ[0], ACM.uDQ[1], ACM.cosT, ACM.sinT);
+        ACM.uAB[1] = MT2B(ACM.uDQ[0], ACM.uDQ[1], ACM.cosT, ACM.sinT);
+        ACM.current_theta = atan2(ACM.iAB[1], ACM.iAB[0]) - M_PI;
+        ACM.voltage_theta = atan2(ACM.uAB[1], ACM.uAB[0]);
+        ACM.powerfactor = (angle_diff(ACM.voltage_theta, ACM.current_theta) ) * ONE_OVER_2PI * 360;
+        CTRL->s->cosT = cos(angle_diff(ACM.voltage_theta, ACM.current_theta) );
+        // if(sqrtf(ACM.iAB[1] * ACM.uAB[1] + ACM.iAB[0] * ACM.uAB[0])>0)
+            // CTRL->s->cosT = ACM.TLoad * ACM.varOmega / sqrtf(ACM.iAB[1] * ACM.uAB[1] + ACM.iAB[0] * ACM.uAB[0]);
+            //CTRL->s->cosT = sqrtf(ACM.iAB[1] * ACM.iAB[1] + ACM.iAB[0] * ACM.iAB[0]) * ACM.KA * ACM.omega_syn
+            // CTRL->s->cosT = ACM.Tem * ACM.varOmega / (
+            //         sqrtf((ACM.iAB[1] * ACM.iAB[1]) +  (ACM.iAB[0] *ACM.iAB[0])) * sqrtf((ACM.uAB[1] * ACM.uAB[1]) +  (ACM.uAB[0] *ACM.uAB[0]))
+            //     );
+        printf("power factor: %g\n", CTRL->s->cosT);
+    }
 #endif

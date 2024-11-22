@@ -128,6 +128,9 @@ void write_DAC_buffer(){
         (*Axis4DAC).dac_watch[54] = (*CTRL).s->iD->I_Term * 0.02;
         (*Axis4DAC).dac_watch[55] = (*CTRL).s->iQ->I_Term * 0.02;
 
+        /* Miscellaneous */
+        (*Axis4DAC).dac_watch[56] = CpuTimer_Delta * 1e-5; // 1 / 1e-5 = 100000 = 10W
+
 //        these two are equivalent
 //        *(*CTRL).s->Speed
 //        *CTRL->s->Speed
@@ -267,7 +270,7 @@ void write_DAC_buffer(){
             (*Axis4DAC).channels[3] = 30; // PID_iQ->Fbk
             (*Axis4DAC).channels[4] = 44; // DC bus utilization
             (*Axis4DAC).channels[5] = 52; // -3db marker
-            (*Axis4DAC).channels[6] = 52; // -3db marker
+            (*Axis4DAC).channels[6] = 56; // CpuTimer_Delta
             (*Axis4DAC).channels[7] = 23; // PID_Speed->Err
         }
         if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){

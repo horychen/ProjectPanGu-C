@@ -66,6 +66,7 @@ typedef struct {
     long CMD_SPEED_SINE_HZ_CEILING;
     REAL timebase_for_Sweeping;
     REAL Mark_Sweeping_Freq_ThreeDB_Point;
+    REAL Mark_Counter;
     BOOL Set_SpeedLoop_KI_as_Zero;
     long VL_FEEDBACK_KFB;
 } ST_user;

@@ -44,7 +44,7 @@ void main(void){
 //             IPCBootCPU2(C1C2_BROM_BOOTMODE_BOOT_FROM_RAM);
         #endif
     #endif
-    
+
     // 4.2 Initialize peripherals
     ePWM_initialize();
     ADC_initialize();
@@ -149,16 +149,12 @@ void main_loop(){
             //                bezier_controller_run_in_main();
             //            }
             if(d_sim.user.bezier_NUMBER_OF_STEPS<8000){
-
                 // When the button is on, then give a Sweeping Ref
-                // if (Axis_1.FLAG_ENABLE_PWM_OUTPUT){
-                //     overwrite_sweeping_frequency();
-                //     _user_Check_ThreeDB_Point( (*CTRL).i->varOmega*MECH_RAD_PER_SEC_2_RPM, d_sim.user.CMD_SPEED_SINE_RPM );
-                //     // _user_commands();         // 用户指令
-                // }
-
-
-                
+                if (Axis_1.FLAG_ENABLE_PWM_OUTPUT && d_sim.user.bezier_Give_Sweeping_Ref_in_Interrupt){
+                    overwrite_sweeping_frequency();
+                    _user_Check_ThreeDB_Point( (*CTRL).i->varOmega*MECH_RAD_PER_SEC_2_RPM, d_sim.user.CMD_SPEED_SINE_RPM );
+                    // _user_commands();         // 用户指令
+                }
                 CTRL = &CTRL_1;
                 PID_Speed->Ref = (*CTRL).i->cmd_varOmega;
                 PID_Speed->Fbk = (*CTRL).i->varOmega;
@@ -385,10 +381,11 @@ void DISABLE_PWM_OUTPUT(){
         // PID_iy->OutPrev = 0;
 
         // Sweeping 
-        d_sim.user.timebase_for_Sweeping = 0.0;
-        d_sim.user.CMD_SPEED_SINE_HZ = 0.0;
-        d_sim.user.CMD_SPEED_SINE_END_TIME = CL_TS;
+        d_sim.user.timebase_for_Sweeping        = 0.0;
+        d_sim.user.CMD_SPEED_SINE_HZ            = 0.0;
+        d_sim.user.CMD_SPEED_SINE_END_TIME      = CL_TS;
         d_sim.user.CMD_SPEED_SINE_LAST_END_TIME = 0.0;
+        // d_sim.user.Mark_Counter                 = 0.0; // clear the MARK !!!!! clear ti manually !!
         
         EPwm1Regs.CMPA.bit.CMPA = 2500;
         EPwm2Regs.CMPA.bit.CMPA = 2500;

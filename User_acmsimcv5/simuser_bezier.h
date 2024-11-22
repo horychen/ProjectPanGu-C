@@ -91,11 +91,6 @@ REAL control_output_adaptVersion(st_pid_regulator *r, BezierController *BzContro
 //     #define SIM_2_EXP_DEFINE_BEZIER_POINTS_Y REAL y_tmp[5] = {0, 3.565958912210109, 8.017249903070724, 1.328682531561319, 13.66303157657558};
 // #endif
 
-/* 这一行以下是自动覆盖的范围，不要在这里之后加任何新的代码！ */
-/* 这一行以下是自动覆盖的范围，不要在这里之后加任何新的代码！ */
-/* 这一行以下是自动覆盖的范围，不要在这里之后加任何新的代码！ */
-
-#if PC_SIMULATION==FALSE
 // This is for motor "SD80AEA07530-SC3"
 // #define SIM_2_EXP_DEFINE_BEZIER_POINTS_X REAL x_tmp[5] = {0.0, 250.0, 400.0, 450.0, 500.0};
 // #define SIM_2_EXP_DEFINE_BEZIER_POINTS_Y REAL y_tmp[5] = {0.0, 1.0,   3.0,   5.5,   6.0};
@@ -160,10 +155,39 @@ REAL control_output_adaptVersion(st_pid_regulator *r, BezierController *BzContro
 // 200.0,5.5
 // 225.0,5.9
 // 500.0,6.0
-#define SIM_2_EXP_DEFINE_BEZIER_POINTS_X REAL x_tmp[5] = {0.0, 150, 200, 225, 500.0};
+
+// Back for 20241122 EXP11
+// #define SIM_2_EXP_DEFINE_BEZIER_POINTS_X REAL x_tmp[5] = {0.0, 0.02543128727977649, 5.107788138291363e-05, 0.00019410324110032026, 500.0};
+// #define SIM_2_EXP_DEFINE_BEZIER_POINTS_Y REAL y_tmp[5] = {0.0, 5.9989125203393803, 5.9999978447660345, 5.9998860450788736, 6.0};
+
+// Bezier 20241122 EXP13
+// 0.0,0.0
+// 100.0,5.4
+// 150.0,5.5
+// 175.0,5.9
+// 500.0,6.0
+// #define SIM_2_EXP_DEFINE_BEZIER_POINTS_X REAL x_tmp[5] = {0.0, 100, 150, 175, 500.0};
+// #define SIM_2_EXP_DEFINE_BEZIER_POINTS_Y REAL y_tmp[5] = {0.0, 5.4, 5.5, 5.9, 6.0};
+
+// Bezier 20241122 EXP14 Not good
+
+// Bezier 20241122 EXP15
+// 0.0,0.0
+// 50.0,5.4
+// 100.0,5.5
+// 110.0,5.9
+// 500.0,6.0
+// #define SIM_2_EXP_DEFINE_BEZIER_POINTS_X REAL x_tmp[5] = {0.0, 50, 100, 110, 500.0};
+// #define SIM_2_EXP_DEFINE_BEZIER_POINTS_Y REAL y_tmp[5] = {0.0, 5.4, 5.5, 5.9, 6.0};
+
+
+/* 这一行以下是自动覆盖的范围，不要在这里之后加任何新的代码！ */
+/* 这一行以下是自动覆盖的范围，不要在这里之后加任何新的代码！ */
+/* 这一行以下是自动覆盖的范围，不要在这里之后加任何新的代码！ */
+#if PC_SIMULATION==FALSE
+// This is for motor "SD80AEA07530-SC3"
+#define SIM_2_EXP_DEFINE_BEZIER_POINTS_X REAL x_tmp[5] = {0.0, 50, 100, 110, 500.0};
 #define SIM_2_EXP_DEFINE_BEZIER_POINTS_Y REAL y_tmp[5] = {0.0, 5.4, 5.5, 5.9, 6.0};
-
-
 #endif
 #endif
 #endif

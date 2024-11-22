@@ -21,7 +21,7 @@ void init_d_sim() {
     d_sim.FOC.delta = 10;
     d_sim.FOC.CLBW_HZ = 800;
     d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation = TRUE;
-    d_sim.FOC.VL_EXE_PER_CL_EXE = 1;
+    d_sim.FOC.VL_EXE_PER_CL_EXE = 4;
 
     d_sim.CL.SERIES_KP_D_AXIS = 13.953697930184426;
     d_sim.CL.SERIES_KI_D_AXIS = 708.8288904899135;
@@ -45,7 +45,7 @@ void init_d_sim() {
     d_sim.user.bool_sweeping_frequency_for_speed_loop = TRUE;
     d_sim.user.bool_sweeping_frequency_for_current_loop_iD = FALSE;
     d_sim.user.CMD_CURRENT_SINE_AMPERE = 1;
-    d_sim.user.CMD_SPEED_SINE_RPM = 100;
+    d_sim.user.CMD_SPEED_SINE_RPM = 400;
     d_sim.user.CMD_SPEED_SINE_HZ = 1;
     d_sim.user.CMD_SPEED_SINE_STEP_SIZE = 1;
     d_sim.user.CMD_SPEED_SINE_LAST_END_TIME = 0.0;
@@ -53,6 +53,7 @@ void init_d_sim() {
     d_sim.user.CMD_SPEED_SINE_HZ_CEILING = 400;
     d_sim.user.timebase_for_Sweeping = 0.0;
     d_sim.user.Mark_Sweeping_Freq_ThreeDB_Point = 0.0;
+    d_sim.user.Mark_Counter = 0.0;
     d_sim.user.Set_SpeedLoop_KI_as_Zero = FALSE;
     d_sim.user.VL_FEEDBACK_KFB = 0;
 
