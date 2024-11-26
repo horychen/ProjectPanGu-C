@@ -99,7 +99,7 @@ void write_DAC_buffer(){
         (*Axis4DAC).dac_watch[31] = PID_iQ->Err * 0.1;
         (*Axis4DAC).dac_watch[32] = PID_iQ->Out * 0.1;
 
-        /* UDQ given test */
+        /* UDQ */
         (*Axis4DAC).dac_watch[33] = (*CTRL).o->cmd_uDQ[0] * 0.02;
         (*Axis4DAC).dac_watch[34] = (*CTRL).o->cmd_uDQ[1] * 0.02;
         (*Axis4DAC).dac_watch[35] = (*CTRL).i->iDQ[0] * 0.5;
@@ -130,6 +130,14 @@ void write_DAC_buffer(){
 
         /* Miscellaneous */
         (*Axis4DAC).dac_watch[56] = CpuTimer_Delta * 1e-5; // 1 / 1e-5 = 100000 = 10W
+
+        /* Motor Speed ESO */
+        (*Axis4DAC).dac_watch[60] = OBSV.esoaf.xOmg * ELEC_RAD_PER_SEC_2_RPM * 0.002;
+        (*Axis4DAC).dac_watch[61] = OBSV.esoaf.xPos * 0.1; // -pi to pi
+
+        /* From Sensor */
+        (*Axis4DAC).dac_watch[70] = (*CTRL).enc->varOmega * MECH_RAD_PER_SEC_2_RPM * 0.002;
+
 
 //        these two are equivalent
 //        *(*CTRL).s->Speed
@@ -271,6 +279,28 @@ void write_DAC_buffer(){
             (*Axis4DAC).channels[4] = 44; // DC bus utilization
             (*Axis4DAC).channels[5] = 52; // -3db marker
             (*Axis4DAC).channels[6] = 56; // CpuTimer_Delta
+            (*Axis4DAC).channels[7] = 23; // PID_Speed->Err
+        }else if((*Axis4DAC).channels_preset==9){(*Axis4DAC).channels_preset=0;
+            /* With SPEED ESO */
+            (*Axis4DAC).channels[0] = 40; // PID_Speed->Ref
+            (*Axis4DAC).channels[1] = 70; // (*Axis4DAC).dac_watch[70] = (*CTRL).enc->varOmega * MECH_RAD_PER_SEC_2_RPM;
+            (*Axis4DAC).channels[2] = 29; // PID_iQ->Ref
+            (*Axis4DAC).channels[3] = 30; // PID_iQ->Fbk
+            (*Axis4DAC).channels[4] = 44; // DC bus utilization
+            (*Axis4DAC).channels[5] = 60; // OBSV.esoaf.xOmg * ELEC_RAD_PER_SEC_2_RPM * 0.002;
+            (*Axis4DAC).channels[6] = 52; // -3db marker
+            (*Axis4DAC).channels[7] = 23; // PID_Speed->Err
+        }else if((*Axis4DAC).channels_preset==10){(*Axis4DAC).channels_preset=0;
+            /* WCtuner Debug */
+            (*Axis4DAC).channels[0] = 40; // PID_Speed->Ref
+            (*Axis4DAC).channels[1] = 70; // (*Axis4DAC).dac_watch[70] = (*CTRL).enc->varOmega * MECH_RAD_PER_SEC_2_RPM;
+            (*Axis4DAC).channels[2] = 29; // PID_iQ->Ref
+            (*Axis4DAC).channels[3] = 30; // PID_iQ->Fbk
+            // (*Axis4DAC).channels[4] = 44; // DC bus utilization
+            (*Axis4DAC).channels[4] = 34; //         (*Axis4DAC).dac_watch[34] = (*CTRL).o->cmd_uDQ[1];
+            (*Axis4DAC).channels[5] = 60; // OBSV.esoaf.xOmg * ELEC_RAD_PER_SEC_2_RPM * 0.002;
+            // (*Axis4DAC).channels[6] = 52; // -3db marker
+            (*Axis4DAC).channels[6] = 44; // DC bus utilization
             (*Axis4DAC).channels[7] = 23; // PID_Speed->Err
         }
         if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){

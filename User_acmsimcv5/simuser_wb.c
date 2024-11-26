@@ -248,8 +248,10 @@ REAL _init_WC_Tuner_Part2(REAL zeta, REAL omega_n, REAL max_CLBW_PER_min_CLBW){
     PID_Speed->Ki_CODE = Series_Speed_KI * Series_Speed_KP * VL_TS;
     SIL_Controller.KFB = Series_Speed_KFB;
 
-    SIL_Controller.FOC_CLBW = FOC_CLBW;
     SIL_Controller.FOC_VLBW = FOC_VLBW;
+    SIL_Controller.FOC_VLBW_Hz = FOC_VLBW * ONE_OVER_2PI;
+    SIL_Controller.FOC_CLBW = FOC_CLBW;
+    SIL_Controller.FOC_CLBW_Hz = FOC_CLBW * ONE_OVER_2PI;
 
     return  K0;
 }
@@ -260,9 +262,9 @@ void _init_WC_Tuner(){
     K0 = _init_WC_Tuner_Part2(d_sim.user.zeta, d_sim.user.omega_n, d_sim.user.max_CLBW_PER_min_CLBW);
     #if PC_SIMULATION == TRUE
         printf("FOC_VLBW = %f rad/s\n", SIL_Controller.FOC_VLBW);
-        printf("FOC_VLBW = %f Hz\n", SIL_Controller.FOC_VLBW * ONE_OVER_2PI);
+        printf("FOC_VLBW = %f Hz\n", SIL_Controller.FOC_VLBW_Hz);
         printf("FOC_CLBW = %f rad/s\n", SIL_Controller.FOC_CLBW);
-        printf("FOC_CLBW = %f Hz\n", SIL_Controller.FOC_CLBW * ONE_OVER_2PI);
+        printf("FOC_CLBW = %f Hz\n", SIL_Controller.FOC_CLBW_Hz);
         printf("K0       = %f\n",       K0);
         if (SIL_Controller.FOC_CLBW - 4 * K0 * SIL_Controller.KFB < 0){
             printf("can not do zero-pole cancellation\n");

@@ -16,6 +16,7 @@ struct ControllerForExperiment CTRL_1;
 struct ControllerForExperiment *CTRL;
 struct DebugExperiment debug_1;
 struct DebugExperiment *debug = &debug_1;
+struct ObserverForExperiment OBSV;
 REAL one_over_six = 1.0/6.0;
 // 定义内存空间（结构体）
 st_motor_parameters     t_motor_1={0};
@@ -349,6 +350,10 @@ void init_experiment(){
     overwrite_d_sim(); // overwrite d_sim with user's algorithm
     init_CTRL(); // 控制器结构体初始化
 
+    //OBSV
+    init_rk4();
+    //ESO
+    init_esoaf();
     #if WHO_IS_USER == USER_BEZIER
         set_points(&BezierVL);
         set_points(&BezierVL_AdaptVersion);
@@ -619,45 +624,48 @@ void _user_commands(){
     #if PC_SIMULATION == TRUE
         #if WHO_IS_USER == USER_WB
             ACM.TLoad = 0;
-            /* Speed Ref Given */
-            // (*CTRL).i->cmd_varOmega = 0.0;
-            // if ((*CTRL).timebase > CL_TS){
-            //     (*CTRL).i->cmd_varOmega = (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
+            if ( (*CTRL).timebase > 0.04 ){
+                ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.5);
+            }
+            if( (*CTRL).timebase >  0.10 ){
+                ACM.TLoad = 0;
+                (*CTRL).i->cmd_varOmega = 400 * RPM_2_MECH_RAD_PER_SEC;
+            }
+        #elif WHO_IS_USER == USER_BEZIER
+            if ((*CTRL).timebase > CL_TS){
+            (*CTRL).i->cmd_varOmega =  -400 * RPM_2_MECH_RAD_PER_SEC;
+            }
+            if ((*CTRL).timebase > 0.02){
+                // (*CTRL).i->cmd_varOmega = 2100 * RPM_2_MECH_RAD_PER_SEC;
+                (*CTRL).i->cmd_varOmega =  400 * RPM_2_MECH_RAD_PER_SEC;
+            }
+            // if ((*CTRL).timebase > d_sim.user.bezier_seconds_step_command){
+            //     (*CTRL).i->cmd_varOmega = - 500 * RPM_2_MECH_RAD_PER_SEC;
             // }
-            // if ((*CTRL).timebase > 0.2){
-            //     (*CTRL).i->cmd_varOmega = - (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
-            // }
-            // if ((*CTRL).timebase > 0.4){
-            //     #if PC_SIMULATION
-            //         ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.8);
-            //     #endif
-            // }if ((*CTRL).timebase > 0.6){
-            //     #if PC_SIMULATION
-            //         ACM.TLoad = 0; // human does not give a torque
-            //     #endif
-            //     (*CTRL).i->cmd_varOmega = 500 * RPM_2_MECH_RAD_PER_SEC;
-            // }if ((*CTRL).timebase > 0.8){
-            //     #if PC_SIMULATION
-            //         ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.8);
-            //     #endif
-            //     (*CTRL).i->cmd_varOmega =  500 * RPM_2_MECH_RAD_PER_SEC;
-            // }
-            // (*CTRL).i->cmd_varOmega = wubo_Signal_Generator(GENERATE_SPEED_SINE) * RPM_2_MECH_RAD_PER_SEC;
-            // (*CTRL).i->cmd_varOmega = wubo_Signal_Generator(GENERATE_SPEED_SAUARE_WAVE_WITH_INV) * RPM_2_MECH_RAD_PER_SEC;
+            // if ((*CTRL).timebase > d_sim.user.bezier_seconds_load_disturbance){
+            if ((*CTRL).timebase > 0.03){
+                // ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);
+                ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * 3.0 * 0.95) * sin(50*2*M_PI*CTRL->timebase);
+                //CTRL_2.i->cmd_iDQ[1] = 0.3;
+            }
+            // if ((*CTRL).timebase > d_sim.user.bezier_seconds_load_disturbance+0.1){
+            if ((*CTRL).timebase > 0.05){
+                ACM.TLoad = 0.0;
+            }
         #elif WHO_IS_USER == USER_CJH || WHO_IS_USER == USER_XM
             (*CTRL).i->cmd_varOmega = 0.0;
 
             if ((*CTRL).timebase > CL_TS){
-                (*CTRL).i->cmd_varOmega =  500 * RPM_2_MECH_RAD_PER_SEC;
+                (*CTRL).i->cmd_varOmega =  400 * RPM_2_MECH_RAD_PER_SEC;
             }
-            if ((*CTRL).timebase > 0.01){
-                (*CTRL).i->cmd_varOmega = -500 * RPM_2_MECH_RAD_PER_SEC;
+            if ((*CTRL).timebase > 2.1){
+                (*CTRL).i->cmd_varOmega = -400 * RPM_2_MECH_RAD_PER_SEC;
             }
-            if ((*CTRL).timebase > 0.03){
+            if ((*CTRL).timebase > 2.3){
                 ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * 3.0 * 0.95);
                 // ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * 3.0 * 0.95) * sin(50*2*M_PI*CTRL->timebase);
             }
-            if ((*CTRL).timebase > 0.05){
+            if ((*CTRL).timebase > 2.5){
                 ACM.TLoad = 0.0;
             }
 
@@ -832,9 +840,12 @@ int  main_switch(long mode_select){
                     overwrite_sweeping_frequency();
                 }else{
                     _user_commands();
-                }
+                } //TODO: add spd ref here?????
                 /* Mark -3db points */
                 _user_Check_ThreeDB_Point( (*CTRL).i->varOmega*MECH_RAD_PER_SEC_2_RPM, d_sim.user.CMD_SPEED_SINE_RPM );
+            }
+            if (d_sim.user.bool_ESO_SPEED_ON == TRUE){
+                Main_esoaf_chen2021();
             }
         #endif
 
@@ -945,11 +956,18 @@ int  main_switch(long mode_select){
                 }
             }
         #endif
+        // Runing Speed ESO
+        if (d_sim.user.bool_ESO_SPEED_ON = TRUE){
+            Main_esoaf_chen2021();
+        }
+        if (d_sim.user.bool_apply_ESO_SPEED_for_SPEED_FBK == TRUE){
+            (*CTRL).i->varOmega = OBSV.esoaf.xOmg * MOTOR.npp_inv;
+        }
         _user_commands();         // User commands
         FOC_with_vecocity_control((*CTRL).i->theta_d_elec,
             (*CTRL).i->varOmega,
-            (*CTRL).i->cmd_varOmega, 
-            (*CTRL).i->cmd_iDQ, 
+            (*CTRL).i->cmd_varOmega,
+            (*CTRL).i->cmd_iDQ,
             (*CTRL).i->iAB);
         break;
     case MODE_SELECT_Marino2005: //44
@@ -962,8 +980,20 @@ int  main_switch(long mode_select){
     case MODE_SELECT_SWEEPING_FREQ_FOR_VELOCITY_AND_CURRENT: // 46
             overwrite_sweeping_frequency();
             if ( d_sim.user.bool_sweeping_frequency_for_speed_loop == TRUE ){
+                
+                // Runing Speed ESO
+                if (d_sim.user.bool_ESO_SPEED_ON = TRUE){
+                    Main_esoaf_chen2021();
+                }
+                if (d_sim.user.bool_apply_ESO_SPEED_for_SPEED_FBK == TRUE){
+                    (*CTRL).i->varOmega = OBSV.esoaf.xOmg * MOTOR.npp_inv;
+                }
+                
+                // Get -3DB counter!
                 REAL motor_speed_RPM = (*CTRL).i->varOmega * MECH_RAD_PER_SEC_2_RPM;
                 _user_Check_ThreeDB_Point( motor_speed_RPM, d_sim.user.CMD_SPEED_SINE_RPM );
+
+                // Run Speed Closed Loop
                 FOC_with_vecocity_control((*CTRL).i->theta_d_elec,
                             (*CTRL).i->varOmega,
                             (*CTRL).i->cmd_varOmega,
@@ -986,6 +1016,15 @@ int  main_switch(long mode_select){
                     _onlyFOC((*CTRL).i->theta_d_elec, (*CTRL).i->iAB);
                 #endif
             }
+        break;
+    case MODE_SELECT_VELOCITY_LOOP_USING_ESO_FOR_SPEED: // 47
+        _user_commands();         // User commands
+        Main_esoaf_chen2021();
+        FOC_with_vecocity_control((*CTRL).i->theta_d_elec,
+            OBSV.esoaf.xOmg * MOTOR.npp_inv,
+            (*CTRL).i->cmd_varOmega,
+            (*CTRL).i->cmd_iDQ,
+            (*CTRL).i->iAB);
         break;
     case MODE_SELECT_POSITION_LOOP: // 5
         #if WHO_IS_USER == USER_WB
@@ -1123,3 +1162,169 @@ int  main_switch(long mode_select){
         printf("power factor: %g\n", CTRL->s->cosT);
     }
 #endif
+
+/* Motor Speed ESO */
+//OBSV
+#define CJH_STYLE_RK4_OBSERVER_RAW_CODE                                  \
+        US(0) = US_P(0);                                                     \
+        US(1) = US_P(1);                                                     \
+        IS(0) = IS_P(0);                                                     \
+        IS(1) = IS_P(1);                                                     \
+        (*fp)(t, x, fx);                                                     \
+        for(i=0;i<NS;++i){                                                   \
+            k1[i] = fx[i] * hs;                                              \
+            xk[i] = x[i] + k1[i]*0.5;                                        \
+        }                                                                    \
+                                                                            \
+        IS(0) = 0.5*(IS_P(0)+IS_C(0));                                       \
+        IS(1) = 0.5*(IS_P(1)+IS_C(1));                                       \
+        US(0) = 0.5*(US_P(0)+US_C(0));                                       \
+        US(1) = 0.5*(US_P(1)+US_C(1));                                       \
+        (*fp)(t, xk, fx);                                                    \
+        for(i=0;i<NS;++i){                                                   \
+            k2[i] = fx[i] * hs;                                              \
+            xk[i] = x[i] + k2[i]*0.5;                                        \
+        }                                                                    \
+                                                                            \
+        (*fp)(t, xk, fx);                                                    \
+        for(i=0;i<NS;++i){                                                   \
+            k3[i] = fx[i] * hs;                                              \
+            xk[i] = x[i] + k3[i];                                            \
+        }                                                                    \
+                                                                            \
+        IS(0) = IS_C(0);                                                     \
+        IS(1) = IS_C(1);                                                     \
+        US(0) = US_C(0);                                                     \
+        US(1) = US_C(1);                                                     \
+        (*fp)(t, xk, fx);                                                    \
+        for(i=0;i<NS;++i){                                                   \
+            k4[i] = fx[i] * hs;                                              \
+            x[i] = x[i] + (k1[i] + 2*(k2[i] + k3[i]) + k4[i])*one_over_six;  \
+        }
+
+void general_4states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REAL *x, REAL hs){
+        #define NS 4
+        REAL k1[NS], k2[NS], k3[NS], k4[NS], xk[NS];
+        REAL fx[NS];
+        int i;
+        CJH_STYLE_RK4_OBSERVER_RAW_CODE
+        #undef NS
+    }
+
+void init_rk4(){
+    int i;
+    for(i=0; i<2; ++i){
+        OBSV.rk4.us[i] = 0;
+        OBSV.rk4.is[i] = 0;
+        // OBSV.rk4.us_curr[i] = 0;
+        OBSV.rk4.is_curr[i] = 0;
+        OBSV.rk4.us_prev[i] = 0;
+        OBSV.rk4.is_prev[i] = 0;
+        OBSV.rk4.is_lpf[i]  = 0;
+        OBSV.rk4.is_hpf[i]  = 0;
+        OBSV.rk4.is_bpf[i]  = 0;
+
+        OBSV.rk4.current_lpf_register[i] = 0;
+        OBSV.rk4.current_hpf_register[i] = 0;
+        OBSV.rk4.current_bpf_register1[i] = 0;
+        OBSV.rk4.current_bpf_register2[i] = 0;
+    }
+}
+//ESO
+void rhf_dynamics_ESO(REAL t, REAL *x, REAL *fx){
+
+    /* Unpack States */
+    REAL xPos = x[0];
+    REAL xOmg = x[1];
+    REAL xTL  = x[2];
+    REAL xPL  = x[3];
+
+    /* Know Signals */
+    REAL iq = AB2T(IS(0), IS(1), (*CTRL).s->cosT, (*CTRL).s->sinT); // Option 1
+    // REAL iq = AB2T(IS(0), IS(1), cos(xPos), sin(xPos)); // Option 2
+    OBSV.esoaf.xTem = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * MOTOR.KActive * iq;
+
+    /* 未测试，如果用iq给定会不会好一点？？ 计算量还少*/
+    /* 未测试，如果用iq给定会不会好一点？？ 计算量还少*/
+    /* 未测试，如果用iq给定会不会好一点？？ 计算量还少*/
+    // OBSV.esoaf.xTem = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * MOTOR.KActive * CTRL->I.cmd_iDQ[1];
+
+    /* Output Error = sine of angle error */
+    // OBSV.esoaf.output_error_sine = sin(AFE_USED.theta_d - xPos);
+    // OBSV.esoaf.output_error = AFE_USED.theta_d - xPos;
+    OBSV.esoaf.output_error_sine = sin((*CTRL).i->theta_d_elec - xPos);
+    OBSV.esoaf.output_error = (*CTRL).i->theta_d_elec - xPos;
+    // you should check for sudden change in angle error.
+    if(fabsf(OBSV.esoaf.output_error)>M_PI){
+        OBSV.esoaf.output_error -= sign(OBSV.esoaf.output_error) * 2*M_PI;
+    }
+
+    /* Extended State Observer */
+    // xPos
+    fx[0] = + OBSV.esoaf.ell[0]*OBSV.esoaf.output_error_sine + xOmg;
+    // xOmg
+    fx[1] = + OBSV.esoaf.ell[1]*OBSV.esoaf.output_error_sine + (OBSV.esoaf.bool_ramp_load_torque>=0) * (OBSV.esoaf.xTem - xTL) * (MOTOR.Js_inv*MOTOR.npp);
+    // xTL
+    fx[2] = - OBSV.esoaf.ell[2]*OBSV.esoaf.output_error_sine + xPL;
+    // xPL
+    fx[3] = - OBSV.esoaf.ell[3]*OBSV.esoaf.output_error_sine;
+}
+void eso_one_parameter_tuning(REAL omega_ob){
+    // Luenberger Observer Framework
+    if(OBSV.esoaf.bool_ramp_load_torque == -1){
+        OBSV.esoaf.ell[0] = 2*omega_ob;
+        OBSV.esoaf.ell[1] = omega_ob*omega_ob;
+        OBSV.esoaf.ell[2] = 0.0;
+        OBSV.esoaf.ell[3] = 0.0;        
+    }else if(OBSV.esoaf.bool_ramp_load_torque == FALSE){
+        OBSV.esoaf.ell[0] =                            3*omega_ob;
+        OBSV.esoaf.ell[1] =                            3*omega_ob*omega_ob;
+        OBSV.esoaf.ell[2] = (MOTOR.Js*MOTOR.npp_inv) * 1*omega_ob*omega_ob*omega_ob;
+        OBSV.esoaf.ell[3] = 0.0;
+    }else{
+        // TODO: REAL check?
+        OBSV.esoaf.ell[0] =                            4*omega_ob;
+        OBSV.esoaf.ell[1] =                            6*omega_ob*omega_ob;
+        OBSV.esoaf.ell[2] = (MOTOR.Js*MOTOR.npp_inv) * 4*omega_ob*omega_ob*omega_ob;
+        OBSV.esoaf.ell[3] = (MOTOR.Js*MOTOR.npp_inv) * 1*omega_ob*omega_ob*omega_ob*omega_ob;
+    }
+
+    #if PC_SIMULATION
+    printf("ESO OPT: %g, %g, %g, %g/n", OBSV.esoaf.ell[0], OBSV.esoaf.ell[1], OBSV.esoaf.ell[2], OBSV.esoaf.ell[3]);
+    #endif
+}
+void Main_esoaf_chen2021(){
+
+    /* OBSERVATION */
+
+    if(OBSV.esoaf.set_omega_ob != OBSV.esoaf.omega_ob){
+        OBSV.esoaf.omega_ob = OBSV.esoaf.set_omega_ob;
+        eso_one_parameter_tuning(OBSV.esoaf.omega_ob);
+    }
+
+    general_4states_rk4_solver(&rhf_dynamics_ESO, (*CTRL).timebase, OBSV.esoaf.x, CL_TS);
+    if(OBSV.esoaf.x[0]>M_PI){
+        OBSV.esoaf.x[0] -= 2*M_PI;
+    }
+    if(OBSV.esoaf.x[0]<-M_PI){
+        OBSV.esoaf.x[0] += 2*M_PI;
+    }
+    OBSV.esoaf.xPos = OBSV.esoaf.x[0];
+    OBSV.esoaf.xOmg = OBSV.esoaf.x[1];
+    OBSV.esoaf.xTL  = OBSV.esoaf.x[2];
+    OBSV.esoaf.xPL  = OBSV.esoaf.x[3]; // rotatum
+
+    /* Post-observer calculations */
+}
+void init_esoaf(){
+
+    OBSV.esoaf.ell[0] = 0.0;
+    OBSV.esoaf.ell[1] = 0.0;
+    OBSV.esoaf.ell[2] = 0.0;
+    OBSV.esoaf.ell[3] = 0.0;
+    OBSV.esoaf.set_omega_ob = ESOAF_OMEGA_OBSERVER;
+    OBSV.esoaf.bool_ramp_load_torque = -1;
+
+    OBSV.esoaf.omega_ob = OBSV.esoaf.set_omega_ob;
+    eso_one_parameter_tuning(OBSV.esoaf.omega_ob);
+}

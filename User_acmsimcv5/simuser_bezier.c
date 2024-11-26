@@ -513,12 +513,12 @@ void bezier_controller_run_in_main(){
     //     // ACM.TLoad = 1.0 + 100 * VISCOUS_COEFF * (*CTRL).i->varOmega;
     //     if ((*CTRL).timebase > CL_TS){
     //         // (*CTRL).i->cmd_varOmega =  500 * RPM_2_MECH_RAD_PER_SEC;
-    //         (*CTRL).i->cmd_varOmega =  400 * RPM_2_MECH_RAD_PER_SEC;
+    //         (*CTRL).i->cmd_varOmega =  -400 * RPM_2_MECH_RAD_PER_SEC;
 
     //     }
     //     if ((*CTRL).timebase > 0.02){
     //         // (*CTRL).i->cmd_varOmega = 2100 * RPM_2_MECH_RAD_PER_SEC;
-    //         (*CTRL).i->cmd_varOmega =  0 * RPM_2_MECH_RAD_PER_SEC;
+    //         (*CTRL).i->cmd_varOmega =  400 * RPM_2_MECH_RAD_PER_SEC;
     //     }
 
     //     // if ((*CTRL).timebase > d_sim.user.bezier_seconds_step_command){
@@ -527,7 +527,7 @@ void bezier_controller_run_in_main(){
     //     // if ((*CTRL).timebase > d_sim.user.bezier_seconds_load_disturbance){
     //     if ((*CTRL).timebase > 0.03){
     //         // ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);
-    //         // ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * 3.0 * 0.95) * sin(50*2*M_PI*CTRL->timebase);
+    //         ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * 3.0 * 0.95) * sin(50*2*M_PI*CTRL->timebase);
     //         //CTRL_2.i->cmd_iDQ[1] = 0.3;
     //     }
     //     // if ((*CTRL).timebase > d_sim.user.bezier_seconds_load_disturbance+0.1){
@@ -538,14 +538,21 @@ void bezier_controller_run_in_main(){
     //     CTRL = &CTRL_1;
     // #endif
 
+    PID_Speed->Ref = (*CTRL).i->cmd_varOmega;
+
+    // Ref is given in Interrupt
     if (!d_sim.user.bezier_Give_Sweeping_Ref_in_Interrupt){
         overwrite_sweeping_frequency();
         /* Mark -3db points */
         _user_Check_ThreeDB_Point( (*CTRL).i->varOmega*MECH_RAD_PER_SEC_2_RPM, d_sim.user.CMD_SPEED_SINE_RPM );
     }
 
-    PID_Speed->Ref = (*CTRL).i->cmd_varOmega;
-    PID_Speed->Fbk = (*CTRL).i->varOmega;
+    if(d_sim.user.bool_apply_ESO_SPEED_for_SPEED_FBK == TRUE){
+        PID_Speed->Fbk = OBSV.esoaf.xOmg * MOTOR.npp_inv ;
+    }else{
+        PID_Speed->Fbk = (*CTRL).i->varOmega;
+    }
+
     PID_Speed->OutLimit = BezierVL.points[BezierVL.order].y;
     control_output(PID_Speed, &BezierVL);
     if (d_sim.user.BOOL_BEZIER_ADAPTIVE_GAIN == FALSE){

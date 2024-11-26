@@ -33,6 +33,7 @@
 #define MODE_SELECT_Marino2005               44
 #define MODE_SELECT_VELOCITY_LOOP_HARNEFORS_1998   45
 #define MODE_SELECT_SWEEPING_FREQ_FOR_VELOCITY_AND_CURRENT   46
+#define MODE_SELECT_VELOCITY_LOOP_USING_ESO_FOR_SPEED 47
 #define MODE_SELECT_POSITION_LOOP            5
 #define MODE_SELECT_COMMISSIONING            9
 #define MODE_SELECT_NYQUIST_PLOTTING         91
@@ -519,6 +520,67 @@ struct ControllerForExperiment{
     // REAL outputs[4];
 };
 
+struct ObserverForExperiment{
+        /* Common */
+        struct RK4_DATA{
+            REAL us[2];
+            REAL is[2];
+            REAL us_curr[2];
+            REAL is_curr[2];
+            REAL us_prev[2];
+            REAL is_prev[2];
+
+            REAL is_lpf[2];
+            REAL is_hpf[2];
+            REAL is_bpf[2];
+
+            REAL current_lpf_register[2];
+            REAL current_hpf_register[2];
+            REAL current_bpf_register1[2];
+            REAL current_bpf_register2[2];
+
+            // REAL omg_elec; // omg_elec = npp * omg_mech
+            // REAL theta_d;
+        } rk4;
+//ESO
+        struct Chen21_ESO_AF{
+                #define NS_CHEN_2021 4
+                REAL xPos;
+                REAL xOmg;
+                REAL xTL;
+                REAL xPL; // rotatum
+                REAL x[NS_CHEN_2021];
+                REAL ell[NS_CHEN_2021];
+
+                int bool_ramp_load_torque; // TRUE for 4th order ESO
+                REAL omega_ob; // one parameter tuning
+                REAL set_omega_ob;
+
+                REAL output_error_sine; // sin(\tilde\vartheta_d)
+                REAL output_error; // \tilde\vartheta_d, need to detect bound jumping 
+
+                REAL xTem;
+            } esoaf;
+};
+//OBSV
+extern struct ObserverForExperiment OBSV;
+#define US(X)   OBSV.rk4.us[X]
+#define IS(X)   OBSV.rk4.is[X]
+#define US_C(X) OBSV.rk4.us_curr[X] // 当前步电压是伪概念，测量的时候，没有电压传感器，所以也测量不到当前电压；就算有电压传感器，由于PWM比较寄存器没有更新，输出电压也是没有变化的。
+#define IS_C(X) OBSV.rk4.is_curr[X]
+#define US_P(X) OBSV.rk4.us_prev[X]
+#define IS_P(X) OBSV.rk4.is_prev[X]
+void init_rk4();
+typedef void (*pointer_flux_estimator_dynamics)(REAL t, REAL *x, REAL *fx);
+    void general_4states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REAL *x, REAL hs);
+
+//ESO
+#define ESOAF_OMEGA_OBSERVER 4600
+void eso_one_parameter_tuning(REAL omega_ob);
+void rhf_dynamics_ESO(REAL t, REAL *x, REAL *fx);
+void init_esoaf();
+void Main_esoaf_chen2021();
+
 extern int axisCnt;
 extern struct ControllerForExperiment CTRL_1;
 extern struct ControllerForExperiment CTRL_2;
@@ -541,6 +603,8 @@ extern struct ControllerForExperiment *CTRL;
 #define PID_Position  (CTRL->s->Position)
 // #define PID_iX  (CTRL->s->iX)
 // #define PID_iY  (CTRL->s->iY)
+
+//ESO
 
 void commissioning();
 void allocate_CTRL(struct ControllerForExperiment *p);

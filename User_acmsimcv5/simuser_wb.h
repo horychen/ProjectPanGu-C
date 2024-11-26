@@ -23,6 +23,8 @@
         REAL KFB_Term_OutLimit;
         REAL FOC_CLBW;
         REAL FOC_VLBW;
+        REAL FOC_CLBW_Hz;
+        REAL FOC_VLBW_Hz;
     } SpeedInnerLoop;
     extern SpeedInnerLoop SIL_Controller;
     void _user_wubo_WC_Tuner_Online();
@@ -46,9 +48,9 @@
     extern Harnefors_1998_BackCals Harnefors_1998_BackCals_Variable;
     #define HARNEFORS_1998_VAR Harnefors_1998_BackCals_Variable
     #if PC_SIMULATION
-        #define HARNEFORS_UMAX d_sim.init.Vdc * 0.5773
+        #define HARNEFORS_UMAX d_sim.init.Vdc * 0.5773 * d_sim.CL.LIMIT_DC_BUS_UTILIZATION
     #else
-        #define HARNEFORS_UMAX Axis->vdc * 0.5773
+        #define HARNEFORS_UMAX Axis->vdc * 0.5773 * d_sim.CL.LIMIT_DC_BUS_UTILIZATION
     #endif
     void _init_Harnerfors_1998_BackCalc();
     void _user_Harnefors_back_calc_PI_antiWindup(st_pid_regulator *r, Harnefors_1998_BackCals *H, REAL K_inverse, REAL coupling_term);

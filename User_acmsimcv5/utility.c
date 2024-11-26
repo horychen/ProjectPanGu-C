@@ -161,7 +161,7 @@ REAL difference_between_two_angles(REAL first, REAL second)
             else
                 printf("!!! Current Loop Ki is NOT 10 times larger !!!\n");
             printf(">>> Speed Loop is 1/%d of the Current Loop <<<\n", d_sim.FOC.VL_EXE_PER_CL_EXE);
-            printf(">>> Max CLBW is %fHz and Min CLBW is %fHz\n", 2*d_sim.user.zeta*d_sim.user.omega_n/2/M_PI, 4*d_sim.user.zeta*d_sim.user.omega_n/2/M_PI);
+            printf(">>> InnerLoop Max CLBW is %fHz and Min CLBW is %fHz\n", 2*d_sim.user.zeta*d_sim.user.omega_n/2/M_PI, 4*d_sim.user.zeta*d_sim.user.omega_n/2/M_PI);
         #endif
 
         if(d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation == TRUE){

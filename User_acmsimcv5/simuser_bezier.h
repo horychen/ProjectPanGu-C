@@ -169,7 +169,12 @@ REAL control_output_adaptVersion(st_pid_regulator *r, BezierController *BzContro
 // #define SIM_2_EXP_DEFINE_BEZIER_POINTS_X REAL x_tmp[5] = {0.0, 100, 150, 175, 500.0};
 // #define SIM_2_EXP_DEFINE_BEZIER_POINTS_Y REAL y_tmp[5] = {0.0, 5.4, 5.5, 5.9, 6.0};
 
-// Bezier 20241122 EXP14 Not good
+// Bezier 20241122 EXP14 Not good??????
+// 0.0,0.0
+// 0.02543128727977649,5.9989125203393803
+// 5.107788138291363e-05,5.9999978447660345
+// 0.00019410324110032026,5.9998860450788736
+// 500.0,6.0
 
 // Bezier 20241122 EXP15
 // 0.0,0.0
@@ -180,14 +185,22 @@ REAL control_output_adaptVersion(st_pid_regulator *r, BezierController *BzContro
 // #define SIM_2_EXP_DEFINE_BEZIER_POINTS_X REAL x_tmp[5] = {0.0, 50, 100, 110, 500.0};
 // #define SIM_2_EXP_DEFINE_BEZIER_POINTS_Y REAL y_tmp[5] = {0.0, 5.4, 5.5, 5.9, 6.0};
 
+// Bezier 
+// 0.0,0.0
+// 25.0254,2.99891
+// 25.1077,2.99999
+// 25.0002,2.99988
+// 500.0,6.0
+// #define SIM_2_EXP_DEFINE_BEZIER_POINTS_X REAL x_tmp[5] = {0.0, 25.0254, 25.1077, 25.0002, 500.0};
+// #define SIM_2_EXP_DEFINE_BEZIER_POINTS_Y REAL y_tmp[5] = {0.0, 2.99891, 2.99999, 2.99988, 3.0};
 
 /* 这一行以下是自动覆盖的范围，不要在这里之后加任何新的代码！ */
 /* 这一行以下是自动覆盖的范围，不要在这里之后加任何新的代码！ */
 /* 这一行以下是自动覆盖的范围，不要在这里之后加任何新的代码！ */
 #if PC_SIMULATION==FALSE
 // This is for motor "SD80AEA07530-SC3"
-#define SIM_2_EXP_DEFINE_BEZIER_POINTS_X REAL x_tmp[5] = {0.0, 50, 100, 110, 500.0};
-#define SIM_2_EXP_DEFINE_BEZIER_POINTS_Y REAL y_tmp[5] = {0.0, 5.4, 5.5, 5.9, 6.0};
+#define SIM_2_EXP_DEFINE_BEZIER_POINTS_X REAL x_tmp[5] = {0.0, 25.0254, 25.1077, 25.0002, 500.0};
+#define SIM_2_EXP_DEFINE_BEZIER_POINTS_Y REAL y_tmp[5] = {0.0, 2.99891, 2.99999, 2.99988, 3.0};
 #endif
 #endif
 #endif

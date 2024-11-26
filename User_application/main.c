@@ -156,8 +156,22 @@ void main_loop(){
                     // _user_commands();         // 用户指令
                 }
                 CTRL = &CTRL_1;
+                
                 PID_Speed->Ref = (*CTRL).i->cmd_varOmega;
-                PID_Speed->Fbk = (*CTRL).i->varOmega;
+
+                // Ref is given in Interrupt
+                if (!d_sim.user.bezier_Give_Sweeping_Ref_in_Interrupt){
+                    overwrite_sweeping_frequency();
+                    /* Mark -3db points */
+                    _user_Check_ThreeDB_Point( (*CTRL).i->varOmega*MECH_RAD_PER_SEC_2_RPM, d_sim.user.CMD_SPEED_SINE_RPM );
+                }
+            
+                if(d_sim.user.bool_apply_ESO_SPEED_for_SPEED_FBK == TRUE){
+                    PID_Speed->Fbk = OBSV.esoaf.xOmg * MOTOR.npp_inv ;
+                }else{
+                    PID_Speed->Fbk = (*CTRL).i->varOmega;
+                }
+                
                 PID_Speed->OutLimit = BezierVL.points[BezierVL.order].y;
                 control_output(PID_Speed, &BezierVL);
                 if (d_sim.user.BOOL_BEZIER_ADAPTIVE_GAIN == FALSE){
@@ -256,10 +270,9 @@ void main_measurement(){
     if (G.flag_overwite_vdc) Axis->vdc = G.overwrite_vdc;
     {
         // Vdc用于实时更新电流环限幅
-        PID_iD->OutLimit = Axis->vdc * 0.5773672 * (*debug).LIMIT_DC_BUS_UTILIZATION;
-        PID_iQ->OutLimit = Axis->vdc * 0.5773672 * (*debug).LIMIT_DC_BUS_UTILIZATION;
-        PID_Speed->OutLimit = (*debug).LIMIT_OVERLOAD_FACTOR * d_sim.init.IN;
-
+        PID_iD->OutLimit = Axis->vdc * 0.5773672 * d_sim.CL.LIMIT_DC_BUS_UTILIZATION;
+        PID_iQ->OutLimit = Axis->vdc * 0.5773672 * d_sim.CL.LIMIT_DC_BUS_UTILIZATION;
+        PID_Speed->OutLimit = d_sim.VL.LIMIT_OVERLOAD_FACTOR * d_sim.init.IN;
 
         // 电流环输出限幅2V
         // PID_iD->OutLimit = 2;
@@ -415,9 +428,6 @@ void DISABLE_PWM_OUTPUT(){
             (*debug).CMD_SPEED_SINE_END_TIME      = d_sim.user.CMD_SPEED_SINE_END_TIME;
             (*debug).CMD_SPEED_SINE_HZ_CEILING    = d_sim.user.CMD_SPEED_SINE_HZ_CEILING;
         #endif
-        /* WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING*/
-        /* WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING*/
-        /* WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING*/
         /* WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING*/
     }
 
@@ -835,7 +845,7 @@ void axis_basic_setup(int axisCnt){
     //
     //    Axis->FLAG_ENABLE_PWM_OUTPUT = FALSE;
 
-    Axis->channels_preset = 8; // 9; // 101;
+    Axis->channels_preset = 9; // 9; // 101;
     #if WHO_IS_USER == USER_BEZIER
         Axis->channels_preset = 8; // 9; // 101;
     #endif
