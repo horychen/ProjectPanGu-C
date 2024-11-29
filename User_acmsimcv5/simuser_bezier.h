@@ -23,13 +23,13 @@ typedef struct
 #define CONVERR -2
 #define EVALUEERR -3
 #define INPROGRESS 1
+#define MAX_DEGREE 4
 
 typedef REAL (*callback_type)(REAL, void *);
 typedef REAL (*solver_type)(callback_type, REAL, REAL, REAL, REAL,
                             int, void *, scipy_zeros_info *);
 
 REAL brentq(callback_type f, const REAL xa, const REAL xb, scipy_zeros_info *solver_stats, void *func_data_param);
-
 
 typedef struct
 {
@@ -38,41 +38,41 @@ typedef struct
 } Point;
 
 #if FALSE // 动态分配 points 的内存
-    typedef struct
-    {
-        Point *points;
-        int num_points;
-        int order;
-    } BezierController;
+typedef struct
+{
+    Point *points;
+    int num_points;
+    int order;
+} BezierController;
 #else
-    #define BEZIER_MEMORY_MAX 15
-    typedef struct{
-        Point points[BEZIER_MEMORY_MAX]; // 暂时先假设最大只有十个点
-        int order;
-        REAL adapt_gain;
-        REAL nonlinear_fake_disturbance_estimate;
-        REAL output;
-        REAL error;
-        REAL error_previous;
-        int flag_integral_saturated;
-    } BezierController;
-    extern BezierController BezierVL, BezierVL_AdaptVersion; // Velocity
-    extern BezierController BezierCL, BezierCL_AdaptVersion; // Current
+#define BEZIER_MEMORY_MAX 15
+typedef struct
+{
+    Point points[BEZIER_MEMORY_MAX]; // 暂时先假设最大只有十个点
+    int order;
+    REAL adapt_gain;
+    REAL nonlinear_fake_disturbance_estimate;
+    REAL output;
+    REAL error;
+    REAL error_previous;
+    int flag_integral_saturated;
+} BezierController;
+extern BezierController BezierVL, BezierVL_AdaptVersion; // Velocity
+extern BezierController BezierCL, BezierCL_AdaptVersion; // Current
 #endif
 
 int Comb(const int n, const int m);
 
-
 void bezier_controller_run_in_main();
 // Point bezier(const REAL *t, const BezierController *pBezier);
 
-//inline
+// inline
 REAL bezier_x(const REAL *t, const BezierController *pBezier);
 
-//inline
+// inline
 REAL bezier_y(const REAL *t, const BezierController *pBezier);
 
-//inline
+// inline
 REAL bezier_x_diff(REAL t, void *params);
 
 REAL find_t_for_given_x(const REAL x, const BezierController *pBezier);
@@ -82,7 +82,7 @@ REAL find_y_for_given_x(const REAL x, const BezierController *pBezier);
 void set_points(BezierController *pBezier);
 void set_points_cl(BezierController *pBezier);
 
-void control_output             (st_pid_regulator *r, BezierController *BzController);
+void control_output(st_pid_regulator *r, BezierController *BzController);
 REAL control_output_adaptVersion(st_pid_regulator *r, BezierController *BzController);
 
 // 这个被移到自动生成的 super_config.c 里面去了！不要在这里用！
@@ -103,7 +103,6 @@ REAL control_output_adaptVersion(st_pid_regulator *r, BezierController *BzContro
 // 500.0,6.0
 // #define SIM_2_EXP_DEFINE_BEZIER_POINTS_X REAL x_tmp[5] = {0.0, 250.0, 400.0, 450.0, 500.0};
 // #define SIM_2_EXP_DEFINE_BEZIER_POINTS_Y REAL y_tmp[5] = {0.0, 1.0,   3.0,   5.5,   6.0};
-
 
 // 0.0,0.0
 // 10.0,5.5
@@ -185,7 +184,7 @@ REAL control_output_adaptVersion(st_pid_regulator *r, BezierController *BzContro
 // #define SIM_2_EXP_DEFINE_BEZIER_POINTS_X REAL x_tmp[5] = {0.0, 50, 100, 110, 500.0};
 // #define SIM_2_EXP_DEFINE_BEZIER_POINTS_Y REAL y_tmp[5] = {0.0, 5.4, 5.5, 5.9, 6.0};
 
-// Bezier 
+// Bezier
 // 0.0,0.0
 // 25.0254,2.99891
 // 25.1077,2.99999
@@ -199,8 +198,8 @@ REAL control_output_adaptVersion(st_pid_regulator *r, BezierController *BzContro
 /* 这一行以下是自动覆盖的范围，不要在这里之后加任何新的代码！ */
 #if PC_SIMULATION==FALSE
 // This is for motor "SD80AEA07530-SC3"
-#define SIM_2_EXP_DEFINE_BEZIER_POINTS_X REAL x_tmp[5] = {0.0, 25.0254, 25.1077, 25.0002, 500.0};
-#define SIM_2_EXP_DEFINE_BEZIER_POINTS_Y REAL y_tmp[5] = {0.0, 2.99891, 2.99999, 2.99988, 3.0};
+#define SIM_2_EXP_DEFINE_BEZIER_POINTS_X REAL x_tmp[5] = {0.0, 7.08989660187481, 1.9631277153333737e-12, 3.618857426113038e-08, 500.0};
+#define SIM_2_EXP_DEFINE_BEZIER_POINTS_Y REAL y_tmp[5] = {0.0, 2.9999999998527027, 2.9999999986087835, 2.9999999861836724, 3.0};
 #endif
 #endif
 #endif

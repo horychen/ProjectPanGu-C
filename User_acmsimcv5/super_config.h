@@ -3,7 +3,7 @@
 #define SUPER_CONFIG_H
 #include "typedef.h"
 
-#define WHO_IS_USER 2023231051 
+#define WHO_IS_USER 224 
 
 typedef struct {
     long npp;
@@ -50,17 +50,21 @@ typedef struct {
     long who_is_user;
     long mode_select_synchronous_motor;
     long mode_select_induction_motor;
-    BOOL INVERTER_NONLINEARITY_COMPENSATION_METHOD;
-    REAL Select_exp_operation;
+    long INVERTER_NONLINEARITY_COMPENSATION_METHOD;
+    long Select_exp_operation;
     long set_rpm_speed_command;
-    REAL zeta;
-    long omega_n;
-    REAL max_CLBW_PER_min_CLBW;
-    long VL_FEEDBACK_KFB;
-    BOOL bool_Null_D_Control;
-    BOOL bool_apply_WC_tunner_for_speed_loop;
-    BOOL bool_enable_Harnefors_back_calculation;
-    REAL Check_Harnerfors_1998_On;
+    long set_iq_command;
+    long bezier_NUMBER_OF_STEPS;
+    long bezier_order;
+    long bezier_order_current;
+    REAL bezier_max_p_value;
+    REAL bezier_rpm_maximum_effective_speed_error;
+    REAL bezier_seconds_step_command;
+    REAL bezier_seconds_load_disturbance;
+    BOOL bezier_Give_Sweeping_Ref_in_Interrupt;
+    BOOL BOOL_BEZIER_ADAPTIVE_GAIN;
+    BOOL BOOL_USING_NEW_SOLVER_FOR_BEZIER;
+    BOOL BOOL_BEZIER_RUN_IN_MAIN;
     BOOL bool_apply_sweeping_frequency_excitation;
     BOOL bool_sweeping_frequency_for_speed_loop;
     BOOL bool_sweeping_frequency_for_current_loop_iD;
@@ -77,37 +81,8 @@ typedef struct {
     BOOL Set_SpeedLoop_KI_as_Zero;
     BOOL bool_ESO_SPEED_ON;
     BOOL bool_apply_ESO_SPEED_for_SPEED_FBK;
-    BOOL bool_Parameter_Mismatch_test;
-    long ParaMis_percent_max;
-    REAL ParaMis_percent_min;
-    long ParaMis_Mode_Select;
-    REAL ParaMis_OneCycleTime;
-    BOOL bool_apply_HitWall_analysis;
-    REAL HitWall_max_limit_ratio;
-    REAL HitWall_min_limit_ratio;
-    long HitWall_high_RPM_command;
-    REAL HitWall_time_interval;
-    long Position_Loop_Kp;
-    long set_deg_position_command;
-    long Position_Output_Limit;
-    long Position_cmd_sine_frequency;
-    long Position_Loop_Ref_prev;
-    long Position_Loop_Ref_Diff;
-    BOOL bool_use_position_feedforward_by_PosDiff;
-    BOOL bool_compensation_of_Pos_CTRL_output_covergence;
-    long COMM_bool_comm_status;
-    BOOL flag_Nyquist_one_cycle_DONE;
-    REAL Nyquist_plot_num_cycles;
-    REAL Nyquist_one_cycle_count;
-    REAL Nyquist_Input_Current_Amp;
-    REAL Nyquist_Input_Speed_Amp;
-    REAL Nyquist_sum_sin;
-    REAL Nyquist_sum_cos;
-    REAL Nyquist_Amp;
-    REAL Nyquist_Phase;
-    REAL Nyquist_Re;
-    REAL Nyquist_Im;
-    long Nyquist_Freq_Ceiling;
+    long CAREFUL_ESOAF_OMEGA_OBSERVER;
+    long VL_FEEDBACK_KFB;
 } ST_user;
 
 
@@ -122,9 +97,9 @@ typedef struct {
 
 
 
-#define DATA_FORMAT "%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g\n"
-#define DATA_LABELS "ACM.x[0],ACM.x[1],ACM.x[2],ACM.x[3],ACM.x[4],ACM.theta_d/M_PI*180,ACM.varOmega * MECH_RAD_PER_SEC_2_RPM,ACM.uAB[0],ACM.uAB[1],ACM.uDQ[0],ACM.uDQ[1],ACM.iAB[0],ACM.iAB[1],ACM.iDQ[0],ACM.iDQ[1],ACM.TLoad,ACM.Tem,ACM.KA,(*debug).set_rpm_speed_command,(*CTRL).s->xRho/M_PI*180,(*CTRL).i->cmd_varOmega * MECH_RAD_PER_SEC_2_RPM,(*CTRL).i->varOmega * MECH_RAD_PER_SEC_2_RPM,(*CTRL).i->cmd_varOmega,(*CTRL).i->varOmega,(*CTRL).i->cmd_iDQ[0],(*CTRL).i->cmd_iDQ[1],(*CTRL).o->cmd_uDQ[0],(*CTRL).o->cmd_uDQ[1],(*CTRL).o->dc_bus_utilization_ratio,(*CTRL).i->iDQ[0],(*CTRL).i->iDQ[1],(*CTRL).i->iAB[0],(*CTRL).i->iAB[1],(*CTRL).i->cmd_psi,(*CTRL).i->Tem,(*CTRL).i->cmd_Tem,(*debug).Overwrite_theta_d / ACM.npp,(*CTRL).timebase,OBSV.esoaf.xOmg * ELEC_RAD_PER_SEC_2_RPM,OBSV.esoaf.xPos,(*CTRL).timebase,ACM.KA,ACM.iDQ[0],ACM.iDQ[1],wubo_ParaMis.percent_Ld,wubo_ParaMis.percent_Lq,wubo_ParaMis.percent_Rs,wubo_ParaMis.percent_Js,wubo_ParaMis.percent_KE,SIL_Controller.KFB,(*CTRL).o->cmd_uAB[0],(*CTRL).o->cmd_uAB[1],(*CTRL).o->cmd_uAB_to_inverter[0],(*CTRL).o->cmd_uAB_to_inverter[1],(*CTRL).s->iD->OutLimit,(*CTRL).s->iQ->OutLimit,(*CTRL).s->Speed->Kp,(*CTRL).s->Speed->Ki_CODE,(*CTRL).o->dc_bus_utilization_ratio,(*CTRL).s->iD->Kp,(*CTRL).s->iD->Ki_CODE,(*CTRL).s->iQ->Kp,(*CTRL).s->iQ->Ki_CODE,ACM.theta_d/M_PI*180,(*CTRL).i->cmd_varTheta,(*CTRL).i->theta_d_elec * (*CTRL).motor->npp_inv,(*CTRL).i->varTheta,d_sim.user.Mark_Sweeping_Freq_ThreeDB_Point\n"
-#define DATA_DETAILS ACM.x[0],ACM.x[1],ACM.x[2],ACM.x[3],ACM.x[4],ACM.theta_d/M_PI*180,ACM.varOmega * MECH_RAD_PER_SEC_2_RPM,ACM.uAB[0],ACM.uAB[1],ACM.uDQ[0],ACM.uDQ[1],ACM.iAB[0],ACM.iAB[1],ACM.iDQ[0],ACM.iDQ[1],ACM.TLoad,ACM.Tem,ACM.KA,(*debug).set_rpm_speed_command,(*CTRL).s->xRho/M_PI*180,(*CTRL).i->cmd_varOmega * MECH_RAD_PER_SEC_2_RPM,(*CTRL).i->varOmega * MECH_RAD_PER_SEC_2_RPM,(*CTRL).i->cmd_varOmega,(*CTRL).i->varOmega,(*CTRL).i->cmd_iDQ[0],(*CTRL).i->cmd_iDQ[1],(*CTRL).o->cmd_uDQ[0],(*CTRL).o->cmd_uDQ[1],(*CTRL).o->dc_bus_utilization_ratio,(*CTRL).i->iDQ[0],(*CTRL).i->iDQ[1],(*CTRL).i->iAB[0],(*CTRL).i->iAB[1],(*CTRL).i->cmd_psi,(*CTRL).i->Tem,(*CTRL).i->cmd_Tem,(*debug).Overwrite_theta_d / ACM.npp,(*CTRL).timebase,OBSV.esoaf.xOmg * ELEC_RAD_PER_SEC_2_RPM,OBSV.esoaf.xPos,(*CTRL).timebase,ACM.KA,ACM.iDQ[0],ACM.iDQ[1],wubo_ParaMis.percent_Ld,wubo_ParaMis.percent_Lq,wubo_ParaMis.percent_Rs,wubo_ParaMis.percent_Js,wubo_ParaMis.percent_KE,SIL_Controller.KFB,(*CTRL).o->cmd_uAB[0],(*CTRL).o->cmd_uAB[1],(*CTRL).o->cmd_uAB_to_inverter[0],(*CTRL).o->cmd_uAB_to_inverter[1],(*CTRL).s->iD->OutLimit,(*CTRL).s->iQ->OutLimit,(*CTRL).s->Speed->Kp,(*CTRL).s->Speed->Ki_CODE,(*CTRL).o->dc_bus_utilization_ratio,(*CTRL).s->iD->Kp,(*CTRL).s->iD->Ki_CODE,(*CTRL).s->iQ->Kp,(*CTRL).s->iQ->Ki_CODE,ACM.theta_d/M_PI*180,(*CTRL).i->cmd_varTheta,(*CTRL).i->theta_d_elec * (*CTRL).motor->npp_inv,(*CTRL).i->varTheta,d_sim.user.Mark_Sweeping_Freq_ThreeDB_Point
+#define DATA_FORMAT "%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g\n"
+#define DATA_LABELS "ACM.x[0],ACM.x[1],ACM.x[2],ACM.x[3],ACM.x[4],ACM.theta_d/M_PI*180,ACM.varOmega * MECH_RAD_PER_SEC_2_RPM,ACM.uAB[0],ACM.uAB[1],ACM.uDQ[0],ACM.uDQ[1],ACM.iAB[0],ACM.iAB[1],ACM.iDQ[0],ACM.iDQ[1],ACM.TLoad,ACM.Tem,ACM.KA,(*debug).set_rpm_speed_command,(*CTRL).s->xRho/M_PI*180,(*CTRL).i->cmd_varOmega * MECH_RAD_PER_SEC_2_RPM,(*CTRL).i->varOmega * MECH_RAD_PER_SEC_2_RPM,(*CTRL).i->cmd_varOmega,(*CTRL).i->varOmega,(*CTRL).i->cmd_iDQ[0],(*CTRL).i->cmd_iDQ[1],(*CTRL).o->cmd_uDQ[0],(*CTRL).o->cmd_uDQ[1],(*CTRL).o->dc_bus_utilization_ratio,(*CTRL).i->iDQ[0],(*CTRL).i->iDQ[1],(*CTRL).i->iAB[0],(*CTRL).i->iAB[1],(*CTRL).i->cmd_psi,(*CTRL).i->Tem,(*CTRL).i->cmd_Tem,(*debug).Overwrite_theta_d / ACM.npp,(*CTRL).timebase,OBSV.esoaf.xOmg * ELEC_RAD_PER_SEC_2_RPM,OBSV.esoaf.xPos,ACM.KA,BezierVL_AdaptVersion.nonlinear_fake_disturbance_estimate,BezierVL_AdaptVersion.points[0].y,BezierVL_AdaptVersion.error,BezierVL_AdaptVersion.output,CTRL->s->Speed->Err*MECH_RAD_PER_SEC_2_RPM,CTRL->s->Speed->Out,ACM.TLoad / 1.5 / ACM.KA / ACM.npp,d_sim.user.Mark_Sweeping_Freq_ThreeDB_Point,d_sim.user.Mark_Counter\n"
+#define DATA_DETAILS ACM.x[0],ACM.x[1],ACM.x[2],ACM.x[3],ACM.x[4],ACM.theta_d/M_PI*180,ACM.varOmega * MECH_RAD_PER_SEC_2_RPM,ACM.uAB[0],ACM.uAB[1],ACM.uDQ[0],ACM.uDQ[1],ACM.iAB[0],ACM.iAB[1],ACM.iDQ[0],ACM.iDQ[1],ACM.TLoad,ACM.Tem,ACM.KA,(*debug).set_rpm_speed_command,(*CTRL).s->xRho/M_PI*180,(*CTRL).i->cmd_varOmega * MECH_RAD_PER_SEC_2_RPM,(*CTRL).i->varOmega * MECH_RAD_PER_SEC_2_RPM,(*CTRL).i->cmd_varOmega,(*CTRL).i->varOmega,(*CTRL).i->cmd_iDQ[0],(*CTRL).i->cmd_iDQ[1],(*CTRL).o->cmd_uDQ[0],(*CTRL).o->cmd_uDQ[1],(*CTRL).o->dc_bus_utilization_ratio,(*CTRL).i->iDQ[0],(*CTRL).i->iDQ[1],(*CTRL).i->iAB[0],(*CTRL).i->iAB[1],(*CTRL).i->cmd_psi,(*CTRL).i->Tem,(*CTRL).i->cmd_Tem,(*debug).Overwrite_theta_d / ACM.npp,(*CTRL).timebase,OBSV.esoaf.xOmg * ELEC_RAD_PER_SEC_2_RPM,OBSV.esoaf.xPos,ACM.KA,BezierVL_AdaptVersion.nonlinear_fake_disturbance_estimate,BezierVL_AdaptVersion.points[0].y,BezierVL_AdaptVersion.error,BezierVL_AdaptVersion.output,CTRL->s->Speed->Err*MECH_RAD_PER_SEC_2_RPM,CTRL->s->Speed->Out,ACM.TLoad / 1.5 / ACM.KA / ACM.npp,d_sim.user.Mark_Sweeping_Freq_ThreeDB_Point,d_sim.user.Mark_Counter
 
 
 #define DATA_FILE_NAME "../dat/SD80AEA07530-SC3-COMM-Eureka.dat"

@@ -632,24 +632,17 @@ void _user_commands(){
                 (*CTRL).i->cmd_varOmega = 400 * RPM_2_MECH_RAD_PER_SEC;
             }
         #elif WHO_IS_USER == USER_BEZIER
-            if ((*CTRL).timebase > CL_TS){
-            (*CTRL).i->cmd_varOmega =  -400 * RPM_2_MECH_RAD_PER_SEC;
+            if ((*CTRL).timebase > 0){
+                (*CTRL).i->cmd_varOmega =  100 * RPM_2_MECH_RAD_PER_SEC;
             }
             if ((*CTRL).timebase > 0.02){
-                // (*CTRL).i->cmd_varOmega = 2100 * RPM_2_MECH_RAD_PER_SEC;
-                (*CTRL).i->cmd_varOmega =  400 * RPM_2_MECH_RAD_PER_SEC;
+                (*CTRL).i->cmd_varOmega = -100 * RPM_2_MECH_RAD_PER_SEC;
             }
-            // if ((*CTRL).timebase > d_sim.user.bezier_seconds_step_command){
-            //     (*CTRL).i->cmd_varOmega = - 500 * RPM_2_MECH_RAD_PER_SEC;
-            // }
-            // if ((*CTRL).timebase > d_sim.user.bezier_seconds_load_disturbance){
-            if ((*CTRL).timebase > 0.03){
-                // ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);
-                ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * 3.0 * 0.95) * sin(50*2*M_PI*CTRL->timebase);
-                //CTRL_2.i->cmd_iDQ[1] = 0.3;
+            if ((*CTRL).timebase > 0.04){
+                ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * 3.0 *0.5);
+                // ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * 3.0 * 0.95) * sin(50*2*M_PI*CTRL->timebase);
             }
-            // if ((*CTRL).timebase > d_sim.user.bezier_seconds_load_disturbance+0.1){
-            if ((*CTRL).timebase > 0.05){
+            if ((*CTRL).timebase > 0.07){
                 ACM.TLoad = 0.0;
             }
         #elif WHO_IS_USER == USER_CJH || WHO_IS_USER == USER_XM
@@ -658,17 +651,16 @@ void _user_commands(){
             if ((*CTRL).timebase > CL_TS){
                 (*CTRL).i->cmd_varOmega =  400 * RPM_2_MECH_RAD_PER_SEC;
             }
-            if ((*CTRL).timebase > 2.1){
+            if ((*CTRL).timebase > 0.04){
                 (*CTRL).i->cmd_varOmega = -400 * RPM_2_MECH_RAD_PER_SEC;
             }
-            if ((*CTRL).timebase > 2.3){
+            if ((*CTRL).timebase > 0.07){
                 ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * 3.0 * 0.95);
                 // ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * 3.0 * 0.95) * sin(50*2*M_PI*CTRL->timebase);
             }
-            if ((*CTRL).timebase > 2.5){
+            if ((*CTRL).timebase > 0.10){
                 ACM.TLoad = 0.0;
             }
-
             // (*CTRL).i->cmd_varOmega = 0.0;
             // if ((*CTRL).timebase > CL_TS){
             //     (*CTRL).i->cmd_varOmega = (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
@@ -1322,7 +1314,7 @@ void init_esoaf(){
     OBSV.esoaf.ell[1] = 0.0;
     OBSV.esoaf.ell[2] = 0.0;
     OBSV.esoaf.ell[3] = 0.0;
-    OBSV.esoaf.set_omega_ob = ESOAF_OMEGA_OBSERVER;
+    OBSV.esoaf.set_omega_ob = d_sim.user.CAREFUL_ESOAF_OMEGA_OBSERVER;
     OBSV.esoaf.bool_ramp_load_torque = -1;
 
     OBSV.esoaf.omega_ob = OBSV.esoaf.set_omega_ob;

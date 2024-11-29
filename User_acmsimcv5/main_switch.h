@@ -575,7 +575,7 @@ typedef void (*pointer_flux_estimator_dynamics)(REAL t, REAL *x, REAL *fx);
     void general_4states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REAL *x, REAL hs);
 
 //ESO
-#define ESOAF_OMEGA_OBSERVER 4600
+#define ESOAF_OMEGA_OBSERVER 2000 //ESO的增益，为了方便写到d_sim来在线debug
 void eso_one_parameter_tuning(REAL omega_ob);
 void rhf_dynamics_ESO(REAL t, REAL *x, REAL *fx);
 void init_esoaf();

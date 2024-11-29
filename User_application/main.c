@@ -35,7 +35,7 @@ void main(void){
     #ifdef _STANDALONE
         #ifdef _FLASH
             // use this code when u need to cut off the power and reboot it offline
-            //  Send boot command to allow the CPU02 application to begin execution
+            //  Send boot command to allow the CPU02 application to begin executioz`n
             IPCBootCPU2(C1C2_BROM_BOOTMODE_BOOT_FROM_FLASH);
         #else
             //  Send boot command to allow the CPU02 application to begin execution
@@ -128,27 +128,8 @@ void main(void){
 
 void main_loop(){
     while (1){
-        #if PC_SIMULATION == FALSE
-            CpuTimer_After = CpuTimer1.RegsAddr->TIM.all; // get count
-            CpuTimer_Delta = (REAL)CpuTimer_Before - (REAL)CpuTimer_After;
-            // EALLOW;
-            // CpuTimer1.RegsAddr->TCR.bit.TSS = 1; // stop (not needed because of the line TRB=1)
-            // EDIS;
-        #endif
-        // Below should be place at the first
-        // Here is to measurea the whole time of the Bezier Controller
-        #if PC_SIMULATION == FALSE
-            EALLOW;
-            CpuTimer1.RegsAddr->TCR.bit.TRB = 1;           // reset cpu timer to period value
-            CpuTimer1.RegsAddr->TCR.bit.TSS = 0;           // start/restart
-            CpuTimer_Before = CpuTimer1.RegsAddr->TIM.all; // get count
-            EDIS;
-        #endif
         #if WHO_IS_USER == USER_BEZIER
-            //            if(d_sim.user.bezier_NUMBER_OF_STEPS<8000){
-            //                bezier_controller_run_in_main();
-            //            }
-            if(d_sim.user.bezier_NUMBER_OF_STEPS<8000){
+            if( (d_sim.user.bezier_NUMBER_OF_STEPS<8000) && (d_sim.user.BOOL_BEZIER_RUN_IN_MAIN == TRUE) ){
                 // When the button is on, then give a Sweeping Ref
                 if (Axis_1.FLAG_ENABLE_PWM_OUTPUT && d_sim.user.bezier_Give_Sweeping_Ref_in_Interrupt){
                     overwrite_sweeping_frequency();
@@ -171,7 +152,8 @@ void main_loop(){
                 }else{
                     PID_Speed->Fbk = (*CTRL).i->varOmega;
                 }
-                
+                PID_Speed->ErrPrev = PID_Speed->Err;
+                PID_Speed->Err = PID_Speed->Ref - PID_Speed->Err;
                 PID_Speed->OutLimit = BezierVL.points[BezierVL.order].y;
                 control_output(PID_Speed, &BezierVL);
                 if (d_sim.user.BOOL_BEZIER_ADAPTIVE_GAIN == FALSE){
@@ -606,18 +588,30 @@ __interrupt void EPWM1ISR(void){
         }
         axisCnt = 1; // 这里将axisCnt有什么用啊？因为axisCnt等于2你就会飞了，内存乱写
     }else if (use_first_set_three_phase == 1){
-        write_RPM_to_cpu02_dsp_cores_2();
-        axisCnt = 0;
-        get_Axis_CTRL_pointers //(axisCnt, Axis, CTRL);
 
 
         // 这段放需要测时间的代码前面
-        
+#if PC_SIMULATION == FALSE
+    EALLOW;
+    CpuTimer1.RegsAddr->TCR.bit.TRB = 1;           // reset cpu timer to period value
+    CpuTimer1.RegsAddr->TCR.bit.TSS = 0;           // start/restart
+    CpuTimer_Before = CpuTimer1.RegsAddr->TIM.all; // get count
+    EDIS;
+#endif
 
+        write_RPM_to_cpu02_dsp_cores_2();
+        axisCnt = 0;
+        get_Axis_CTRL_pointers //(axisCnt, Axis, CTRL);
         PanGuMainISR();
-
         // 这段放需要测时间的代码后面，观察CpuTimer_Delta的取值，代表经过了多少个 1/200e6 秒。
-        
+#if PC_SIMULATION == FALSE
+CpuTimer_After = CpuTimer1.RegsAddr->TIM.all; // get count
+CpuTimer_Delta = (REAL)CpuTimer_Before - (REAL)CpuTimer_After;
+// EALLOW;
+// CpuTimer1.RegsAddr->TCR.bit.TSS = 1; // stop (not needed because of the line TRB=1)
+// EDIS;
+#endif
+
 
     }else if (use_first_set_three_phase == 2){
         axisCnt = 1;
@@ -637,6 +631,7 @@ __interrupt void EPWM1ISR(void){
     /* Step 7. [ePWM] Exit EPWM1 ISR */
     EPwm1Regs.ETCLR.bit.INT = 1;
     PieCtrlRegs.PIEACK.all |= PIEACK_GROUP3;
+
 }
 
 
@@ -847,7 +842,7 @@ void axis_basic_setup(int axisCnt){
 
     Axis->channels_preset = 9; // 9; // 101;
     #if WHO_IS_USER == USER_BEZIER
-        Axis->channels_preset = 8; // 9; // 101;
+        Axis->channels_preset = 9; // 8; // 101;
     #endif
 
     Axis->pCTRL->enc->sum_qepPosCnt = 0;
