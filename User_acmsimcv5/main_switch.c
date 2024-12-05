@@ -172,7 +172,7 @@ void init_debug(){
         /* Speed Loop  */
         // (*debug).mode_select = MODE_SELECT_VELOCITY_LOOP;                         //  4
         // (*debug).mode_select = MODE_SELECT_VELOCITY_LOOP_SENSORLESS;              // 41
-        // (*debug).mode_select = MODE_SELECT_VELOCITY_LOOP_WC_TUNER;                // 43
+        // (*debug).mode_select = MODE_SELECT_V_LOOP_WC_TUNER;                // 43
         /* Position Loop  */
         // (*debug).mode_select = MODE_SELECT_POSITION_LOOP;                         //  5
         /* Commission  */
@@ -496,33 +496,33 @@ void _onlyFOC(REAL theta_d_elec, REAL iAB[2]){
 
     #if USE_LAOMING_PI
         /* New Sytle from Lao Ming */
-        pi_id.Kp = PID_iD->Kp;
-        pi_id.Ki = d_sim.CL.SERIES_KI_D_AXIS * CL_TS;
-        pi_id.Umax = PID_iD->OutLimit;
-        pi_id.Umin = -PID_iD->OutLimit;
+        texas_pi_id.Kp = PID_iD->Kp;
+        texas_pi_id.Ki = d_sim.CL.SERIES_KI_D_AXIS * CL_TS;
+        texas_pi_id.Umax = PID_iD->OutLimit;
+        texas_pi_id.Umin = -PID_iD->OutLimit;
         // printf("id max is %f\n", pi_id.Umax);
         
-        pi_iq.Kp = PID_iQ->Kp;
-        pi_iq.Ki = d_sim.CL.SERIES_KI_Q_AXIS * CL_TS;
-        pi_iq.Umax = PID_iQ->OutLimit;
-        pi_iq.Umin = -PID_iQ->OutLimit;
+        texas_pi_iq.Kp = PID_iQ->Kp;
+        texas_pi_iq.Ki = d_sim.CL.SERIES_KI_Q_AXIS * CL_TS;
+        texas_pi_iq.Umax = PID_iQ->OutLimit;
+        texas_pi_iq.Umin = -PID_iQ->OutLimit;
         
-        pi_id.Fbk = (*CTRL).i->iDQ[0];
-        pi_id.Ref = (*CTRL).i->cmd_iDQ[0];
-        pi_id.Out = PI_MACRO(pi_id);
+        texas_pi_id.Fbk = (*CTRL).i->iDQ[0];
+        texas_pi_id.Ref = (*CTRL).i->cmd_iDQ[0];
+        texas_pi_id.Out = PI_MACRO(texas_pi_id);
 
-        pi_iq.Fbk = (*CTRL).i->iDQ[1];
-        pi_iq.Ref = (*CTRL).i->cmd_iDQ[1];
-        pi_iq.Out = PI_MACRO(pi_iq);
+        texas_pi_iq.Fbk = (*CTRL).i->iDQ[1];
+        texas_pi_iq.Ref = (*CTRL).i->cmd_iDQ[1];
+        texas_pi_iq.Out = PI_MACRO(texas_pi_iq);
 
         REAL decoupled_d_axis_voltage;
         REAL decoupled_q_axis_voltage;
         if(d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation == TRUE){
-            decoupled_d_axis_voltage = pi_id.Out - pi_iq.Fbk * MOTOR.Lq * (*CTRL).i->varOmega * MOTOR.npp;
-            decoupled_q_axis_voltage = pi_iq.Out + (MOTOR.KActive + pi_id.Fbk * MOTOR.Ld) * (*CTRL).i->varOmega * MOTOR.npp;
+            decoupled_d_axis_voltage = texas_pi_id.Out - texas_pi_iq.Fbk * MOTOR.Lq * (*CTRL).i->varOmega * MOTOR.npp;
+            decoupled_q_axis_voltage = texas_pi_iq.Out + (MOTOR.KActive + texas_pi_id.Fbk * MOTOR.Ld) * (*CTRL).i->varOmega * MOTOR.npp;
         }else{
-            decoupled_d_axis_voltage = pi_id.Out;
-            decoupled_q_axis_voltage = pi_iq.Out;
+            decoupled_d_axis_voltage = texas_pi_id.Out;
+            decoupled_q_axis_voltage = texas_pi_iq.Out;
         }
     #else
         /* D-Axis Current Loop */
@@ -632,17 +632,19 @@ void _user_commands(){
                 (*CTRL).i->cmd_varOmega = 400 * RPM_2_MECH_RAD_PER_SEC;
             }
         #elif WHO_IS_USER == USER_BEZIER
-            if ((*CTRL).timebase > 0){
+            (*CTRL).i->cmd_varOmega = 0.0;
+
+            if ((*CTRL).timebase > CL_TS){
                 (*CTRL).i->cmd_varOmega =  400 * RPM_2_MECH_RAD_PER_SEC;
             }
-            if ((*CTRL).timebase > 0.02){
+            if ((*CTRL).timebase > 0.04){
                 (*CTRL).i->cmd_varOmega = -400 * RPM_2_MECH_RAD_PER_SEC;
             }
-            if ((*CTRL).timebase > 0.04){
-                ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * 3.0 *0.5);
+            if ((*CTRL).timebase > 0.07){
+                ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * 3.0 * 0.95);
                 // ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * 3.0 * 0.95) * sin(50*2*M_PI*CTRL->timebase);
             }
-            if ((*CTRL).timebase > 0.07){
+            if ((*CTRL).timebase > 0.10){
                 ACM.TLoad = 0.0;
             }
         #elif WHO_IS_USER == USER_CJH || WHO_IS_USER == USER_XM
@@ -717,10 +719,12 @@ void _user_commands(){
 
 void overwrite_sweeping_frequency(){
     //这句话应该放在最前面！
-        d_sim.user.timebase_for_Sweeping += CL_TS; // Separate the timebase with the DSP timebase !!!
+    d_sim.user.timebase_for_Sweeping += CL_TS; // Separate the timebase with the DSP timebase !!!
 
     #if PC_SIMULATION
-        ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * 3.0 * 0.5); // 强制将负载设置为0    
+        if(d_sim.user.bool_speed_sweeping_with_Load == TRUE){
+            ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * 3.0 * 0.5); // 强制将负载设置为XXX
+        }
     #endif
 
     if(d_sim.user.bool_apply_sweeping_frequency_excitation){
@@ -754,14 +758,26 @@ void overwrite_sweeping_frequency(){
                     *sin(2*M_PI*d_sim.user.CMD_SPEED_SINE_HZ*(d_sim.user.timebase_for_Sweeping  - d_sim.user.CMD_SPEED_SINE_LAST_END_TIME));
             }else{
                 if (d_sim.user.bool_sweeping_frequency_for_current_loop_iD == TRUE){
-                    (*CTRL).i->cmd_iDQ[0] = d_sim.user.CMD_CURRENT_SINE_AMPERE * sin(2* M_PI *d_sim.user.CMD_SPEED_SINE_HZ*(d_sim.user.timebase_for_Sweeping  - d_sim.user.CMD_SPEED_SINE_LAST_END_TIME));
+                    (*CTRL).i->cmd_iDQ[0] = d_sim.user.CMD_CURRENT_SINE_AMPERE\
+                     * sin(2* M_PI *d_sim.user.CMD_SPEED_SINE_HZ*(d_sim.user.timebase_for_Sweeping  - d_sim.user.CMD_SPEED_SINE_LAST_END_TIME));
                     (*CTRL).i->cmd_iDQ[1] = 0.0;
                 } else {
                     (*CTRL).i->cmd_iDQ[0] = 0.0;
-                    (*CTRL).i->cmd_iDQ[1] = d_sim.user.CMD_CURRENT_SINE_AMPERE * sin(2* M_PI *d_sim.user.CMD_SPEED_SINE_HZ*(d_sim.user.timebase_for_Sweeping  - d_sim.user.CMD_SPEED_SINE_LAST_END_TIME));
+                    (*CTRL).i->cmd_iDQ[1] = d_sim.user.CMD_CURRENT_SINE_AMPERE\
+                     * sin(2* M_PI *d_sim.user.CMD_SPEED_SINE_HZ*(d_sim.user.timebase_for_Sweeping  - d_sim.user.CMD_SPEED_SINE_LAST_END_TIME));
                 }
             }
         }
+
+        //负载扫频
+        #if PC_SIMULATION
+            if (d_sim.user.bool_sweeping_frequency_for_Rejection_Load == TRUE){
+                (*CTRL).i->cmd_varOmega = d_sim.user.set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC; // motor以恒速运作
+                REAL Load_iq_current = d_sim.user.CMD_CURRENT_SINE_AMPERE\
+                * sin(2* M_PI *d_sim.user.CMD_SPEED_SINE_HZ*(d_sim.user.timebase_for_Sweeping  - d_sim.user.CMD_SPEED_SINE_LAST_END_TIME));
+                ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * Load_iq_current);
+            }
+        #endif
     }
 }
 
@@ -948,7 +964,7 @@ int  main_switch(long mode_select){
         break;
     case MODE_SELECT_TESTING_SENSORLESS : //42
         break;
-    case MODE_SELECT_VELOCITY_LOOP_WC_TUNER: // 43
+    case MODE_SELECT_V_LOOP_WC_TUNER: // 43
         #if WHO_IS_USER == USER_WB && PC_SIMULATION == TRUE
             INNER_LOOP_SENSITIVITY_ANALYSIS(debug);
             if ( d_sim.user.bool_apply_HitWall_analysis == TRUE){
@@ -986,11 +1002,11 @@ int  main_switch(long mode_select){
         controller_marino2005_with_commands();
     #endif
         break;
-    case MODE_SELECT_VELOCITY_LOOP_HARNEFORS_1998: //45
+    case MODE_SELECT_V_LOOP_HARNEFORS_1998: //45
         break;
-    case MODE_SELECT_SWEEPING_FREQ_FOR_VELOCITY_AND_CURRENT: // 46
+    case MODE_SELECT_SWEEPING_FREQ: // 46
             overwrite_sweeping_frequency();
-            if ( d_sim.user.bool_sweeping_frequency_for_speed_loop == TRUE ){
+            if ( (d_sim.user.bool_sweeping_frequency_for_speed_loop == TRUE) || (d_sim.user.bool_sweeping_frequency_for_Rejection_Load == TRUE) ){
                 
                 // Runing Speed ESO
                 if (d_sim.user.bool_ESO_SPEED_ON = TRUE){
@@ -1028,7 +1044,7 @@ int  main_switch(long mode_select){
                 #endif
             }
         break;
-    case MODE_SELECT_VELOCITY_LOOP_USING_ESO_FOR_SPEED: // 47
+    case MODE_SELECT_V_LOOP_ESO_SPEED_REF: // 47
         _user_commands();         // User commands
         // Runing Speed ESO
         if (d_sim.user.bool_ESO_SPEED_ON = TRUE){
