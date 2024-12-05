@@ -85,6 +85,9 @@ void set_points_cl(BezierController *pBezier);
 void control_output(st_pid_regulator *r, BezierController *BzController);
 REAL control_output_adaptVersion(st_pid_regulator *r, BezierController *BzController);
 
+//print info
+void _user_Bezier_printInfo(BOOL bool_bezier_run_in_main);
+
 // 这个被移到自动生成的 super_config.c 里面去了！不要在这里用！
 // #if PC_SIMULATION == FALSE
 //     #define SIM_2_EXP_DEFINE_BEZIER_POINTS_X REAL x_tmp[5] = {0, 199.60567246573584, 423.0965698441416, 264.3887865699018, 585.9472944997638};
@@ -198,8 +201,8 @@ REAL control_output_adaptVersion(st_pid_regulator *r, BezierController *BzContro
 /* 这一行以下是自动覆盖的范围，不要在这里之后加任何新的代码！ */
 #if PC_SIMULATION==FALSE
 // This is for motor "SD80AEA07530-SC3"
-#define SIM_2_EXP_DEFINE_BEZIER_POINTS_X REAL x_tmp[5] = {0.0, 7.08989660187481, 1.9631277153333737e-12, 3.618857426113038e-08, 500.0};
-#define SIM_2_EXP_DEFINE_BEZIER_POINTS_Y REAL y_tmp[5] = {0.0, 2.9999999998527027, 2.9999999986087835, 2.9999999861836724, 3.0};
+#define SIM_2_EXP_DEFINE_BEZIER_POINTS_X REAL x_tmp[5] = {0.0, 21.52604381926351, 3.021680200570536e-05, 1.0690369859986894e-08, 500.0};
+#define SIM_2_EXP_DEFINE_BEZIER_POINTS_Y REAL y_tmp[5] = {0.0, 2.9999386790216223, 2.999991903187266, 2.999999587842419, 3.0};
 #endif
 #endif
 #endif

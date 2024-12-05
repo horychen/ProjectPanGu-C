@@ -182,16 +182,16 @@ void init_debug(){
     (*debug).Overwrite_theta_d           = 0.0;
 
     
-    (*debug).set_id_command              = 1.0;
-    (*debug).set_iq_command              = 0.0;
+    (*debug).set_id_command              = 0.0;
+    (*debug).set_iq_command              = d_sim.user.set_iq_command;
     (*debug).set_rpm_speed_command       = d_sim.user.set_rpm_speed_command;
     (*debug).set_deg_position_command    = 0.0;
     (*debug).vvvf_voltage = 3.0;
     (*debug).vvvf_frequency = 5.0;
 
     //* due to user WB's habit, make all cmd to zero to make it clear
-    // #if PC_SIMULATION == FALSE && WHO_IS_USER == USER_WB
-    #if PC_SIMULATION == FALSE
+    #if (PC_SIMULATION == FALSE) && (WHO_IS_USER == USER_WB)
+    // #if (PC_SIMULATION == FALSE)
         (*debug).set_id_command              = 0.0;
         (*debug).set_iq_command              = 0.0;
         (*debug).set_rpm_speed_command       = 0.0;
@@ -633,10 +633,10 @@ void _user_commands(){
             }
         #elif WHO_IS_USER == USER_BEZIER
             if ((*CTRL).timebase > 0){
-                (*CTRL).i->cmd_varOmega =  100 * RPM_2_MECH_RAD_PER_SEC;
+                (*CTRL).i->cmd_varOmega =  400 * RPM_2_MECH_RAD_PER_SEC;
             }
             if ((*CTRL).timebase > 0.02){
-                (*CTRL).i->cmd_varOmega = -100 * RPM_2_MECH_RAD_PER_SEC;
+                (*CTRL).i->cmd_varOmega = -400 * RPM_2_MECH_RAD_PER_SEC;
             }
             if ((*CTRL).timebase > 0.04){
                 ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * 3.0 *0.5);
@@ -716,11 +716,29 @@ void _user_commands(){
 
 
 void overwrite_sweeping_frequency(){
-    // #if PC_SIMULATION
-    //     ACM.TLoad = 0; // 强制将负载设置为0    
-    // #endif
-    if(d_sim.user.bool_apply_sweeping_frequency_excitation){
+    //这句话应该放在最前面！
         d_sim.user.timebase_for_Sweeping += CL_TS; // Separate the timebase with the DSP timebase !!!
+
+    #if PC_SIMULATION
+        ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * 3.0 * 0.5); // 强制将负载设置为0    
+    #endif
+
+    if(d_sim.user.bool_apply_sweeping_frequency_excitation){
+
+        if (d_sim.user.bool_speed_sweeping_with_Load == TRUE){
+            //前XXX秒开启恒速模式，以使得系统达到稳态
+            if ( (d_sim.user.timebase_for_Sweeping < d_sim.user.Stable_Time_for_Sweeping) && (d_sim.user.flag_clear_timebase_once == FALSE)  ){
+                // (*CTRL).i->cmd_varOmega = 0.5 * d_sim.user.CMD_SPEED_SINE_RPM * RPM_2_MECH_RAD_PER_SEC;
+                (*CTRL).i->cmd_varOmega = 0.0;
+                return;
+            }
+            if( d_sim.user.flag_clear_timebase_once == FALSE ){
+                d_sim.user.timebase_for_Sweeping = 0.0000; // Clear the time, suitable for generating the Sine Signal
+                d_sim.user.flag_clear_timebase_once = TRUE;
+            }
+        }
+
+        // 生成扫频信号
         if ( d_sim.user.timebase_for_Sweeping  > d_sim.user.CMD_SPEED_SINE_END_TIME ){
             d_sim.user.CMD_SPEED_SINE_HZ += d_sim.user.CMD_SPEED_SINE_STEP_SIZE;
             d_sim.user.CMD_SPEED_SINE_LAST_END_TIME = d_sim.user.CMD_SPEED_SINE_END_TIME;
@@ -757,7 +775,8 @@ void _user_Check_ThreeDB_Point( REAL Fbk, REAL Ref){
     }
     #if PC_SIMULATION
         static int flag_print_only_once = FALSE;
-        if (d_sim.user.bool_apply_sweeping_frequency_excitation && ( (*CTRL).timebase > 5.000 ) && ( flag_print_only_once == FALSE ) ){
+        // if (d_sim.user.bool_apply_sweeping_frequency_excitation && ( (*CTRL).timebase > 4.500 ) && ( flag_print_only_once == FALSE ) ){
+        if (d_sim.user.bool_apply_sweeping_frequency_excitation && ( d_sim.user.CMD_SPEED_SINE_HZ >= 200 ) && ( flag_print_only_once == FALSE ) ){
             printf("VLBW is %fHz\n", d_sim.user.Mark_Counter);
             flag_print_only_once = TRUE;
         }
@@ -1011,12 +1030,20 @@ int  main_switch(long mode_select){
         break;
     case MODE_SELECT_VELOCITY_LOOP_USING_ESO_FOR_SPEED: // 47
         _user_commands();         // User commands
-        Main_esoaf_chen2021();
+        // Runing Speed ESO
+        if (d_sim.user.bool_ESO_SPEED_ON = TRUE){
+            Main_esoaf_chen2021();
+        }
+        if (d_sim.user.bool_apply_ESO_SPEED_for_SPEED_FBK == TRUE){
+            (*CTRL).i->varOmega = OBSV.esoaf.xOmg * MOTOR.npp_inv;
+        }
+        
+        // Run Speed Closed Loop
         FOC_with_vecocity_control((*CTRL).i->theta_d_elec,
-            OBSV.esoaf.xOmg * MOTOR.npp_inv,
-            (*CTRL).i->cmd_varOmega,
-            (*CTRL).i->cmd_iDQ,
-            (*CTRL).i->iAB);
+                    (*CTRL).i->varOmega,
+                    (*CTRL).i->cmd_varOmega,
+                    (*CTRL).i->cmd_iDQ,
+                    (*CTRL).i->iAB);
         break;
     case MODE_SELECT_POSITION_LOOP: // 5
         #if WHO_IS_USER == USER_WB
@@ -1282,7 +1309,7 @@ void eso_one_parameter_tuning(REAL omega_ob){
     }
 
     #if PC_SIMULATION
-    printf("ESO OPT: %g, %g, %g, %g/n", OBSV.esoaf.ell[0], OBSV.esoaf.ell[1], OBSV.esoaf.ell[2], OBSV.esoaf.ell[3]);
+    printf("ESO OPT: %g, %g, %g, %g\n", OBSV.esoaf.ell[0], OBSV.esoaf.ell[1], OBSV.esoaf.ell[2], OBSV.esoaf.ell[3]);
     #endif
 }
 void Main_esoaf_chen2021(){

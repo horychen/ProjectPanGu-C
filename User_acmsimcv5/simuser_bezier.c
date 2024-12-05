@@ -590,6 +590,11 @@ void control_output(st_pid_regulator *r, BezierController *pBezier)
     r->Err = r->Ref - r->Fbk;
     pBezier->error = r->Err * MECH_RAD_PER_SEC_2_RPM;
 
+    // if( fabsf(pBezier->error) < d_sim.user.bezier_Speed_RPM_deadzone ){
+    //     r->Out = 0.0;
+    //     return;
+    // }
+
     // error 的绝对值最大只能是 pBezier->points[pBezier->order].x
     if (fabsf(pBezier->error) > pBezier->points[pBezier->order].x)
     {
@@ -599,9 +604,22 @@ void control_output(st_pid_regulator *r, BezierController *pBezier)
 
     // // bezier curve mapping
     REAL out = find_y_for_given_x(fabsf(pBezier->error), pBezier);
-
     r->OutPrev = r->Out;
     r->Out = copysignf(out, pBezier->error);
+
+    // for WUBO to see the KP
+    d_sim.user.bezier_equivalent_Kp = r->Out / (r->Err); // Check KP
+    // get avergae KP
+    #if PC_SIMULATION
+        static REAL sum_of_KP = 0.0;
+        static REAL average_of_KP = 0.0;
+        sum_of_KP += d_sim.user.bezier_equivalent_Kp;
+        if ((*CTRL).timebase > ((d_sim.sim.NUMBER_OF_STEPS-10) * CL_TS)){
+            average_of_KP = sum_of_KP / d_sim.sim.NUMBER_OF_STEPS * d_sim.FOC.VL_EXE_PER_CL_EXE;
+            printf("The average KP of bezier is %f\n", average_of_KP);
+        }
+    #endif
+
     // printf("error: %f\n", error);
     // #if PC_SIMULATION printf("error after Bezier: %lf\n", error); #endif
     // printf("out: %f\n", out);
@@ -773,6 +791,21 @@ void bezier_controller_run_in_main()
 
     // printf("Ref: %f, Fbk: %f, Out: %f\n", PID_Speed->Ref, PID_Speed->Fbk, PID_Speed->Out);
     return;
+}
+
+void _user_Bezier_printInfo(BOOL bool_bezier_run_in_main){
+    #if PC_SIMULATION
+        static int print_once = 0;
+        if(print_once == 0){
+            if (bool_bezier_run_in_main == TRUE){
+                printf(">>> Bezier is runing in main <<<\n");
+                print_once = 1;
+            }else{
+                printf("!!! Bezier is runing in the Interrupt !!!\n");
+                print_once = 1;
+            }
+        }else{}
+    #endif
 }
 
 #endif

@@ -130,7 +130,9 @@ void write_DAC_buffer(){
 
         /* Miscellaneous */
         (*Axis4DAC).dac_watch[56] = CpuTimer_Delta * 1e-5; // 1 / 1e-5 = 100000 = 10W
-
+        #if WHO_IS_USER == USER_BEZIER
+            (*Axis4DAC).dac_watch[57] = d_sim.user.bezier_equivalent_Kp * 0.05; // maximum 20
+        #endif
         /* Motor Speed ESO */
         (*Axis4DAC).dac_watch[60] = OBSV.esoaf.xOmg * ELEC_RAD_PER_SEC_2_RPM * 0.002;
         (*Axis4DAC).dac_watch[61] = OBSV.esoaf.xPos * 0.1; // -pi to pi
@@ -252,10 +254,10 @@ void write_DAC_buffer(){
             (*Axis4DAC).channels[7] = 23; // PID->Speed->Err
         }else if((*Axis4DAC).channels_preset==6){(*Axis4DAC).channels_preset=0;
             /* Load Sweeping or Current Loop Sweeping */
-            (*Axis4DAC).channels[0] = 25; // PID_iD->Ref
-            (*Axis4DAC).channels[1] = 26; // PID_iD->Fbk
-            (*Axis4DAC).channels[2] = 29; // PID_iQ->Ref
-            (*Axis4DAC).channels[3] = 30; // PID_iQ->Fbk
+            (*Axis4DAC).channels[0] = 29; // PID_iQ->Ref
+            (*Axis4DAC).channels[1] = 30; // PID_iQ->Fbk
+            (*Axis4DAC).channels[2] = 25; // PID_iD->Ref
+            (*Axis4DAC).channels[3] = 26; // PID_iD->Fbk
             (*Axis4DAC).channels[4] = 44; // DC bus utilization
             (*Axis4DAC).channels[5] = 52; // iU
             (*Axis4DAC).channels[6] = 53; // iW
@@ -289,6 +291,7 @@ void write_DAC_buffer(){
             (*Axis4DAC).channels[4] = 44; // DC bus utilization
             (*Axis4DAC).channels[5] = 60; // OBSV.esoaf.xOmg * ELEC_RAD_PER_SEC_2_RPM * 0.002;
             (*Axis4DAC).channels[6] = 52; // -3db marker
+            //(*Axis4DAC).channels[6] = 57; //        (*Axis4DAC).dac_watch[57] = d_sim.user.bezier_equivalent_Kp * 0.05; // maximum 20
             (*Axis4DAC).channels[7] = 23; // PID_Speed->Err
         }else if((*Axis4DAC).channels_preset==10){(*Axis4DAC).channels_preset=0;
             /* WCtuner Debug */
