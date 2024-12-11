@@ -17,7 +17,7 @@
 
     /* Select [Shared Flux Estimator] */
     // #define AFE_USED FE.clfe4PMSM
-    #define AFE_USED FE.htz
+    #define AFE_USED FE.Bernard
     // #define AFE_USED FE.huwu
     // #define AFE_USED FE.htz // this is for ESO speed estimation
     // #define AFE_USED FE.picorr // this is for ESO speed estimation
@@ -61,7 +61,7 @@
     #define VM_PROPOSED_PI_CORRECTION_GAIN_P 50// 
     #define VM_PROPOSED_PI_CORRECTION_GAIN_I 20//80000//2.5 //2  // (2.5)
     /* No Saturation */
-    #define VM_NOSAT_PI_CORRECTION_GAIN_P 7// 难调
+    #define VM_NOSAT_PI_CORRECTION_GAIN_P 10// 难调
     #define VM_NOSAT_PI_CORRECTION_GAIN_I 20//80000//2.5 //2  // (2.5)
     /* Saturation_time_Without_Limiting */
     #define STWL_GAIN_KP 
@@ -99,7 +99,7 @@
 #define IS_P(X) OBSV.rk4.is_prev[X]
 
     #if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
-    void init_rk4();
+    // void init_rk4();
 
     #define AFE_11_OHTANI_1992 0
     #define AFE_12_HOLTZ_QUAN_2002 0
@@ -121,11 +121,14 @@
     #define AFE_39_SATURATION_TIME_WITHOUT_LIMITING 0
     #define AFE_40_JO_CHOI_METHOD 0
     #define AFE_41_LascuAndreescus2006 1
+    #define AFE_42_BandP 1
     #define ALG_AKT_SPEED_EST_AND_RS_ID 1
     #define ALG_Awaya_InertiaId 1
     #define ALG_qaxis_inductance_identification 1
-
+    #define RS_IDENTIFICATION 0
+    #define LQ_IDENTIFICATION 0
     typedef void (*pointer_flux_estimator_dynamics)(REAL t, REAL *x, REAL *fx);
+    void general_1states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REAL *x, REAL hs);
     void general_2states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REAL *x, REAL hs);
     void general_3states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REAL *x, REAL hs);
     void general_4states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REAL *x, REAL hs);
@@ -457,6 +460,7 @@
             REAL sat_max_time_reg[2];
             REAL extra_limit;
             int flag_limit_too_low;
+            REAL u_off_saturation_time_sum[2];
 
             // REAL ireq[2];
             REAL field_speed_est;
@@ -465,6 +469,24 @@
             REAL theta_e;
         } stwl;
 
+        #endif
+        //2017 bernard and praly Robustness of rotor position observer for permanent magnet synchronous motors with unknown magnet flux, 
+        #if AFE_42_BandP
+        struct Bernard2017{
+                REAL theta_d;
+                REAL theta_e;
+                REAL psi_2_ampl;
+
+                REAL psi_1[2];
+                REAL psi_2[2];
+                REAL psi_PM;
+                REAL GAMMA;
+                REAL error_correction;
+                REAL emf_stator[2];
+                REAL x[3];
+                REAL cosT;
+                REAL sinT;
+            } Bernard;
         #endif
         struct Variables_Ohtani1992{
             // in AB frame
@@ -648,6 +670,7 @@
         void Main_VM_ClosedLoopFluxEstimatorForPMSM();
         void VM_LascuAndreescus2006();
         void SpeedEstimationFromtheVMBasedFluxEstimation();
+        void Main_Bernard2017();
         void RS_Identificaiton();
         // void Main_Saturation_time_Without_Limiting();
     void init_afe();
@@ -655,7 +678,7 @@
     void init_FE_htz(); // Holtz 2003
     void init_No_Saturation_Based(); // No Saturation Based
     void init_ClosedLoopFluxEstimatorForPMSM(); // Closed Loop Flux Estimator For PMSM
-    void init_Saturation_time_Without_Limiting();
+    // void init_Saturation_time_Without_Limiting();
         // observer declaration 
     void init_LascuAndreescus2006();
     void init_ake_Speed_Est_and_RS_ID();
@@ -669,18 +692,6 @@
     #ifndef ADD_PMSM_OBSERVER_H
     #define ADD_PMSM_OBSERVER_H
 
-        /* Commissioning */
-        #define EXCITE_BETA_AXIS_AND_MEASURE_PHASE_B TRUE
-        #if PC_SIMULATION
-            #define ENABLE_COMMISSIONING TRUE /*Simulation*/
-            #define SELF_COMM_INVERTER FALSE
-            #define TUNING_CURRENT_SCALE_FACTOR_INIT FALSE2
-        #else
-            #define ENABLE_COMMISSIONING TRUE /*Experiment*/
-            #define SELF_COMM_INVERTER FALSE
-            #define TUNING_CURRENT_SCALE_FACTOR_INIT FALSE
-            /*As we use (*CTRL).o->iab_cmd for look up, now dead-time compensation during ENABLE_COMMISSIONING is not active*/
-        #endif
     #if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
         /* Select Algorithm 2*/
             #define ALG_NSOAF 1
@@ -702,7 +713,7 @@
                 #define PMSM_ELECTRICAL_SPEED_FEEDBACK    OBSV.nsoaf.xOmg // OBSV.harnefors.omg_elec
                 #define PMSM_ELECTRICAL_POSITION_FEEDBACK AFE_USED.theta_d // OBSV.harnefors.theta_d
             #elif SELECT_ALGORITHM == ALG_ESOAF
-                #define PMSM_ELECTRICAL_SPEED_FEEDBACK    (-OBSV.esoaf.xOmg) // 薄片电机实验正iq产生负转速
+                #define PMSM_ELECTRICAL_SPEED_FEEDBACK    (-OFSR.esoaf.xOmg) // 薄片电机实验正iq产生负转速
                 #define PMSM_ELECTRICAL_POSITION_FEEDBACK AFE_USED.theta_d
             #else
                 // #define PMSM_ELECTRICAL_SPEED_FEEDBACK    G.omg_elec
@@ -769,7 +780,7 @@
             // #define NSOAF_SPMSM // use AP Error
             #define NSOAF_IPMSM // use only OE
             #define TUNING_IGNORE_UQ TRUE
-            #define NSOAF_OMEGA_OBSERVER 170 // >150 [rad/s] // cannot be too small (e.g., 145, KP will be negative),
+            #define NSOAF_OMEGA_OBSERVER 20 // >150 [rad/s] // cannot be too small (e.g., 145, KP will be negative),
                 #define NSOAF_TL_P (1) // 1 for experimental starting // 4 for 1500 rpm // 2 for 800 rpm
                 #define NSOAF_TL_I (30)
                 #define NSOAF_TL_D (0)
@@ -778,7 +789,7 @@
             // #define ESOAF_OMEGA_OBSERVER 10
             // #define ESOAF_OMEGA_OBSERVER 30 // 30 gives acceptable steady state speed ripple, 200
             // #define ESOAF_OMEGA_OBSERVER 150 // 150 gives acceptable disturbance rejection when sudden 3 A load is applied and keeps the system not stop when Vdc changes from 150 V to 300 V.
-            #define ESOAF_OMEGA_OBSERVER 200 // 200 gives acceptable disturbance rejection when load changes between 1.5 A and 3 A.
+            // #define ESOAF_OMEGA_OBSERVER 200 // 200 gives acceptable disturbance rejection when load changes between 1.5 A and 3 A.
 
         /* Farza 2009 for EMMF */
             #define FARZA09_HGO_EEMF_VARTHETA 10
@@ -796,6 +807,7 @@
     /* One Big Struct for all PMSM observers */
     struct ObserverForExperiment{
         /* Common */
+        REAL theta_d;
         struct RK4_DATA{
             REAL us[2];
             REAL is[2];
@@ -940,25 +952,25 @@
     /* Extended State Observer with active flux concept Chen2021 */
     #if PC_SIMULATION || SELECT_ALGORITHM == ALG_ESOAF
 
-        struct Chen21_ESO_AF{
-            #define NS_CHEN_2021 4
-            REAL xPos;
-            REAL xOmg;
-            REAL xTL;
-            REAL xPL; // rotatum
-            REAL x[NS_CHEN_2021];
-            REAL ell[NS_CHEN_2021];
+        // struct Chen21_ESO_AF{
+        //     #define NS_CHEN_2021 4
+        //     REAL xPos;
+        //     REAL xOmg;
+        //     REAL xTL;
+        //     REAL xPL; // rotatum
+        //     REAL x[NS_CHEN_2021];
+        //     REAL ell[NS_CHEN_2021];
 
-            int bool_ramp_load_torque; // TRUE for 4th order ESO
-            REAL omega_ob; // one parameter tuning
-            REAL set_omega_ob;
+        //     int bool_ramp_load_torque; // TRUE for 4th order ESO
+        //     REAL omega_ob; // one parameter tuning
+        //     REAL set_omega_ob;
 
-            REAL output_error_sine; // sin(\tilde\vartheta_d)
-            REAL output_error; // \tilde\vartheta_d, need to detect bound jumping 
+        //     REAL output_error_sine; // sin(\tilde\vartheta_d)
+        //     REAL output_error; // \tilde\vartheta_d, need to detect bound jumping 
 
-            REAL xTem;
-        } esoaf;
-        // #define OBSV.esoaf OBSV.OBSV.esoaf
+        //     REAL xTem;
+        // } esoaf;
+        // // #define OFSR.esoaf OBSV.OFSR.esoaf
     #endif
 
     /* Farza 2009 HGO */
@@ -1058,7 +1070,6 @@
             // REAL delta_rreq;
             // REAL the_gain_P;
             REAL rs_cal;
-                REAL rs_direct_cal;
                 REAL voltage_drop[2];
                 REAL voltage_drop_mod;
                 REAL current_mod;
@@ -1108,6 +1119,16 @@
         REAL omega_elec;
         REAL omega_elec_est_from_Lq;
         REAL omega_elec_err;
+        REAL Lq_filtered;
+        REAL Lq_filtered_est;
+        REAL bool_Lq_id_enable;
+        REAL counter_Lq_id;
+        REAL Lq_inv;
+        REAL sum_Lq;
+        REAL id_filtered;
+        REAL iq_filtered;
+        REAL omega_elec_filtered;
+        REAL uD_cmd_filtered;
     };
     extern struct Qaxis_InductanceId q_inductanceid;
     #endif
@@ -1120,6 +1141,7 @@
         void init_hgo4eemf();
         void init_cjheemf();
         void init_harnefors();
+        void init_Bernard2017();
         // controller declaration
         void controller_IFOC();
 

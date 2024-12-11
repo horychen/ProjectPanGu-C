@@ -279,7 +279,7 @@ void observer_PMSMife();
 
 //     REAL xTem;
 // };
-// extern struct Chen21_ESO_AF OBSV.esoaf;
+// extern struct Chen21_ESO_AF OFSR.esoaf;
 void Main_esoaf_chen2021();
 
 /********************************************

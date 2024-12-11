@@ -1546,8 +1546,8 @@ void controller_IFOC(){
     flux_observer(); // FLUX_FEEDBACK_ALPHA, FLUX_FEEDBACK_BETA
     // (*CTRL).i->varOmega = FE.htz.omg_est;=
 
-                    // (*CTRL).i->varOmega = OBSV.esoaf.xOmg - (OBSV.esoaf.bool_ramp_load_torque<0) * (*CTRL).s->omega_sl;
-                    // (*CTRL).i->varOmega = OBSV.esoaf.xOmg;
+                    // (*CTRL).i->varOmega = OFSR.esoaf.xOmg - (OFSR.esoaf.bool_ramp_load_torque<0) * (*CTRL).s->omega_sl;
+                    // (*CTRL).i->varOmega = OFSR.esoaf.xOmg;
 
                         //（编码器反馈）
                         // (*CTRL).i->varOmega     = qep.varOmega;

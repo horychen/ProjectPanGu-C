@@ -770,7 +770,7 @@ void bezier_controller_run_in_main()
 
     if (d_sim.user.bool_apply_ESO_SPEED_for_SPEED_FBK == TRUE)
     {
-        PID_Speed->Fbk = OBSV.esoaf.xOmg * MOTOR.npp_inv;
+        PID_Speed->Fbk = OFSR.esoaf.xOmg * MOTOR.npp_inv;
     }
     else
     {

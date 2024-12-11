@@ -52,7 +52,7 @@
 #ifdef _MOTOR_GROUP // mmlab drive version 2 （吴波、严政章、杨子恺等）
 
     // Basic Setup for Load Sweeping Board
-    #define BOOL_LOAD_SWEEPING_ON FALSE
+    #define BOOL_LOAD_SWEEPING_ON TRUE
 
     // Abs encoder comm. via 485 tamagawa protocol
     #define PIN_485_SCIB_WE_SCICTX_UART3pin7 31

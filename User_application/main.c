@@ -376,13 +376,14 @@ void DISABLE_PWM_OUTPUT(){
         // PID_iy->OutPrev = 0;
 
         // Sweeping 
-        d_sim.user.timebase_for_Sweeping        = 0.0;
-        d_sim.user.CMD_SPEED_SINE_HZ            = 0.0;
-        d_sim.user.CMD_SPEED_SINE_END_TIME      = CL_TS;
-        d_sim.user.CMD_SPEED_SINE_LAST_END_TIME = 0.0;
-        d_sim.user.flag_clear_timebase_once     = FALSE;
+        #if WHO_IS_USER == USER_WB
+            d_sim.user.timebase_for_Sweeping        = 0.0;
+            d_sim.user.CMD_SPEED_SINE_HZ            = 0.0;
+            d_sim.user.CMD_SPEED_SINE_END_TIME      = CL_TS;
+            d_sim.user.CMD_SPEED_SINE_LAST_END_TIME = 0.0;
+            d_sim.user.flag_clear_timebase_once     = FALSE;
         // d_sim.user.Mark_Counter                 = 0.0; // clear the MARK !!!!! clear ti manually !!
-        
+        #endif
         EPwm1Regs.CMPA.bit.CMPA = 2500;
         EPwm2Regs.CMPA.bit.CMPA = 2500;
         EPwm3Regs.CMPA.bit.CMPA = 2500;
@@ -844,6 +845,9 @@ void axis_basic_setup(int axisCnt){
     Axis->channels_preset = 9; // 9; // 101;
     #if WHO_IS_USER == USER_BEZIER
         Axis->channels_preset = 9; // 8; // 101;
+    #endif
+    #if WHO_IS_USER == USER_YZZ
+        Axis->channels_preset = 11;
     #endif
     #if BOOL_LOAD_SWEEPING_ON //6作为Load Sweeping使用的channel preset
         Axis->channels_preset = 6; 
