@@ -178,7 +178,7 @@ void init_debug(){
         /* Commission  */
         // (*debug).mode_select = MODE_SELECT_COMMISSIONING;                         //  9
 
-    (*debug).Overwrite_Current_Frequency = 5.0;
+    (*debug).Overwrite_Current_Frequency = 50.0;
     (*debug).Overwrite_theta_d           = 0.0;
 
     
@@ -719,7 +719,7 @@ void _user_commands(){
         // 凸极永磁采用 iD<0 获得更大的 有功磁链（aka 转矩系数）
         // (*CTRL).i->cmd_iDQ[0] = -1.0;
     }
-
+    
 
     #if PC_SIMULATION == TRUE
         #if WHO_IS_USER == USER_WB
@@ -789,26 +789,8 @@ void _user_commands(){
                 #endif
             }
 
-            if ((*CTRL).timebase > 5){
-                (*CTRL).i->cmd_varOmega = 0.5 * (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
-            }
-            // if (((*CTRL).timebase > 7) && ((*CTRL).timebase < 7.1)){
-            //     akt.rs_cal = 2 + 0.5;
-            // }
-            // if ((*CTRL).timebase > 2){
-            //     #if PC_SIMULATION
-            //         ACM.TLoad = (0.7 * 1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);
-            //     #endif
-            // }
-            // if ((*CTRL).timebase > 3){
-            //     #if PC_SIMULATION
-            //         ACM.TLoad = (0.3 * 1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);
-            //     #endif
-            // }
-            // if ((*CTRL).timebase > 0.5){
-            //     #if PC_SIMULATION
-            //         (*CTRL).i->cmd_varOmega = 0.5 * (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC * sin((*CTRL).timebase * 30) + 2 * (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
-            //     #endif
+            // if ((*CTRL).timebase > 5){
+            //     (*CTRL).i->cmd_varOmega = 0.5 * (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
             // }
         #endif
     #endif
@@ -1064,11 +1046,6 @@ int  main_switch(long mode_select){
         //     (*CTRL).i->cmd_varOmega,
         //     (*CTRL).i->cmd_iDQ,
         //     (*CTRL).i->iAB);
-        // FOC_with_vecocity_control((*CTRL).i->theta_d_elec,
-        //     OFSR.esoaf.xOmg * MOTOR.npp_inv,
-        //     (*CTRL).i->cmd_varOmega,
-        //     (*CTRL).i->cmd_iDQ,
-        //     (*CTRL).i->iAB);
         FOC_with_vecocity_control((*CTRL).i->theta_d_elec, 
             (*CTRL).i->varOmega, 
             (*CTRL).i->cmd_varOmega, 
@@ -1188,6 +1165,48 @@ int  main_switch(long mode_select){
                     (*CTRL).i->cmd_varOmega,
                     (*CTRL).i->cmd_iDQ,
                     (*CTRL).i->iAB);
+        break;
+    case MODE_SELECT_VARIABLE_PARAMETERS_VELOCITY_LOOP_SENSORLESS:
+        _user_commands();  
+        #if WHO_IS_USER == USER_YZZ
+        //for OBSV
+            US_P(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
+            US_P(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
+            US_C(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
+            US_C(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
+            IS_C(0)           = (*CTRL).i->iAB[0];
+            IS_C(1)           = (*CTRL).i->iAB[1];
+        //for OFSR
+            US_SR_P(0) = (*CTRL).o->cmd_uAB[0];
+            US_SR_P(1) = (*CTRL).o->cmd_uAB[1];
+            US_SR_C(0) = (*CTRL).o->cmd_uAB[0];
+            US_SR_C(1) = (*CTRL).o->cmd_uAB[1];
+            IS_SR_C(0) = (*CTRL).i->iAB[0];
+            IS_SR_C(1) = (*CTRL).i->iAB[1];
+        variabel_parameters_sensorless();
+        _user_commands();
+        pmsm_observers();
+        OBSV.theta_d = (*CTRL).i->theta_d_elec;
+        while(OBSV.theta_d > M_PI) OBSV.theta_d  -= 2*M_PI;
+        while(OBSV.theta_d < -M_PI) OBSV.theta_d += 2*M_PI;  // 反转！
+
+        if (d_sim.user.bool_ESO_SPEED_ON == TRUE){
+            Main_esoaf_chen2021();
+        }
+        if (d_sim.user.bool_apply_ESO_SPEED_for_SPEED_FBK == TRUE){
+            (*CTRL).i->varOmega = OFSR.esoaf.xOmg * MOTOR.npp_inv;
+        }
+        // FOC_with_vecocity_control(AFE_USED.theta_d, 
+        //     OBSV.nsoaf.xOmg * MOTOR.npp_inv,
+        //     (*CTRL).i->cmd_varOmega,
+        //     (*CTRL).i->cmd_iDQ,
+        //     (*CTRL).i->iAB);
+        FOC_with_vecocity_control((*CTRL).i->theta_d_elec, 
+            (*CTRL).i->varOmega, 
+            (*CTRL).i->cmd_varOmega, 
+            (*CTRL).i->cmd_iDQ, 
+            (*CTRL).i->iAB);
+        #endif
         break;
     case MODE_SELECT_POSITION_LOOP: // 5
         #if WHO_IS_USER == USER_WB

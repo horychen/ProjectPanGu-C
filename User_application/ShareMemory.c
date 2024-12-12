@@ -182,10 +182,17 @@ void write_DAC_buffer(){
             (*Axis4DAC).dac_watch[34] = FE.htz.sat_min_time[0]*100;
             (*Axis4DAC).dac_watch[35] = FE.htz.sat_min_time[1]*100;
             (*Axis4DAC).dac_watch[51] = AFE_USED.theta_d *0.1;
+            (*Axis4DAC).dac_watch[58] = (*CTRL).motor->KE;
+            (*Axis4DAC).dac_watch[59] = (*CTRL).motor->Lq * 100;
+            (*Axis4DAC).dac_watch[61] = (*CTRL).motor->R *0.1;
+            (*Axis4DAC).dac_watch[62] = FE.htz.theta_d*0.1;
+            (*Axis4DAC).dac_watch[63] = FE.clfe4PMSM.theta_d*0.1;
             (*Axis4DAC).dac_watch[64] = FE.no_sat.psi_2[0]*0.25;
             (*Axis4DAC).dac_watch[65] = FE.no_sat.psi_2[1]*0.25;
-            (*Axis4DAC).dac_watch[69] = FE.Bernard.theta_d*0.1;
+            (*Axis4DAC).dac_watch[66] = (*CTRL).motor->Lq;
+            (*Axis4DAC).dac_watch[67] = (*CTRL).motor->R;
             (*Axis4DAC).dac_watch[68] = OBSV.theta_d*0.1;
+            (*Axis4DAC).dac_watch[69] = FE.Bernard.theta_d*0.1;
             (*Axis4DAC).dac_watch[70] = FE.clfe4PMSM.psi_2[0] *0.25;
             (*Axis4DAC).dac_watch[71] = FE.clfe4PMSM.psi_2[1] *0.25;
             (*Axis4DAC).dac_watch[72] = FE.clfe4PMSM.theta_d * 0.1;
@@ -319,16 +326,46 @@ void write_DAC_buffer(){
             (*Axis4DAC).channels[7] = 23; // PID_Speed->Err
         }else if((*Axis4DAC).channels_preset==11){(*Axis4DAC).channels_preset=0;
             /* For Sensorless */
-            (*Axis4DAC).channels[0] = 40; // PID_Speed->Ref
+            (*Axis4DAC).channels[0] = 40; // (*CTRL).i->cmd_varOmega * MECH_RAD_PER_SEC_2_RPM * 0.002;
             (*Axis4DAC).channels[1] = 60; // OBSV.esoaf.xOmg * ELEC_RAD_PER_SEC_2_RPM * 0.002;
             (*Axis4DAC).channels[2] = 68; // OBSV.theta_d
             (*Axis4DAC).channels[3] = 79; // FE.no_sat.theta_d*0.1;
             (*Axis4DAC).channels[4] = 69; // FE.Bernard.theta_d*0.1
             (*Axis4DAC).channels[5] = 44; // DC bus utilization
             (*Axis4DAC).channels[6] = 77; // FE.Bernard.theta_e * 0.1
-            //(*Axis4DAC).channels[6] = 57; //        (*Axis4DAC).dac_watch[57] = d_sim.user.bezier_equivalent_Kp * 0.05; // maximum 20
             (*Axis4DAC).channels[7] = 78; // FE.no_sat.theta_e * 0.1;
+        }else if((*Axis4DAC).channels_preset==12){(*Axis4DAC).channels_preset=0;
+            /* For Sensorless paramters */
+            (*Axis4DAC).channels[0] = 59; // (*CTRL).motor->Lq
+            (*Axis4DAC).channels[1] = 61; // (*CTRL).motor->R
+            (*Axis4DAC).channels[2] = 68; // OBSV.theta_d
+            (*Axis4DAC).channels[3] = 79; // FE.no_sat.theta_d*0.1;
+            (*Axis4DAC).channels[4] = 69; // FE.Bernard.theta_d*0.1
+            (*Axis4DAC).channels[5] = 58; // (*CTRL).motor->KE
+            (*Axis4DAC).channels[6] = 62; // FE.htz.theta_d * 0.1
+            (*Axis4DAC).channels[7] = 63; // FE.clfe4PMSM.theta_d * 0.1;
+        }else if((*Axis4DAC).channels_preset==13){(*Axis4DAC).channels_preset=0;
+            /* For Sensorless psi2 clfe htz */
+            (*Axis4DAC).channels[0] = 12; // FE.htz.psi_2[0]
+            (*Axis4DAC).channels[1] = 13; // FE.htz.psi_2[1]
+            (*Axis4DAC).channels[2] = 62; // FE.htz.theta_d * 0.1
+            (*Axis4DAC).channels[3] = 63; // FE.clfe4PMSM.theta_d * 0.1;
+            (*Axis4DAC).channels[4] = 70; // FE.clfe4PMSM.psi_2[0]
+            (*Axis4DAC).channels[5] = 71; // FE.clfe4PMSM.psi_2[1]
+            (*Axis4DAC).channels[6] = 68; // OBSV.theta_d
+            (*Axis4DAC).channels[7] = 69; // FE.Bernard.theta_d*0.1
+        }else if((*Axis4DAC).channels_preset==14){(*Axis4DAC).channels_preset=0;
+            /* For Sensorless psi2 bernard and no sat */
+            (*Axis4DAC).channels[0] = 79; // FE.no_sat.theta_d*0.1;
+            (*Axis4DAC).channels[1] = 69; // FE.Bernard.theta_d*0.1
+            (*Axis4DAC).channels[2] = 68; // OBSV.theta_d
+            (*Axis4DAC).channels[3] = 77; // FE.Bernard.theta_e * 0.1
+            (*Axis4DAC).channels[4] = 75; // FE.Bernard.psi_2[0]
+            (*Axis4DAC).channels[5] = 76; // FE.Bernard.psi_2[1]
+            (*Axis4DAC).channels[6] = 64; // FE.no_sat.psi_2[0]
+            (*Axis4DAC).channels[7] = 65; // FE.no_sat.psi_2[1]
         }
+
         if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
             // 锟斤拷通锟斤拷DAC锟斤拷锟斤拷锟斤拷锟斤拷薷锟�(*Axis4DAC).channels锟斤拷锟斤拷锟斤拷确锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟叫�(*Axis4DAC).dac_watch锟斤拷锟斤拷锟叫的憋拷锟斤拷锟斤拷
 

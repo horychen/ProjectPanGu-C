@@ -412,6 +412,15 @@ void DISABLE_PWM_OUTPUT(){
             (*debug).CMD_SPEED_SINE_END_TIME      = d_sim.user.CMD_SPEED_SINE_END_TIME;
             (*debug).CMD_SPEED_SINE_HZ_CEILING    = d_sim.user.CMD_SPEED_SINE_HZ_CEILING;
         #endif
+        #if WHO_IS_USER == USER_YZZ
+            if(!Axis_1.FLAG_ENABLE_PWM_OUTPUT){   
+                (*CTRL).motor->KE = d_sim.init.KE;
+                (*CTRL).motor->R = d_sim.init.R;
+                (*CTRL).motor->Lq = d_sim.init.Lq; 
+                d_sim.user.Variable_Parameters_timebase = 0;
+                d_sim.user.VP_time_num_count = 0;
+            }
+        #endif
         /* WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING*/
     }
 

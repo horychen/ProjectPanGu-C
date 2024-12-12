@@ -1,7 +1,10 @@
 #include "ACMSim.h"
 
 #if WHO_IS_USER == USER_YZZ
-
+    #if PC_SIMULATION == FALSE
+        #include "All_Definition.h"
+        extern st_axis *Axis;
+    #endif
 #if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
 void _user_pmsm_observer(void){
 
@@ -163,8 +166,8 @@ void rk4_init(){
         #undef NS
     }
     #if PC_SIMULATION == TRUE
-        #define OFFSET_VOLTAGE_ALPHA 0//(1*-0.01 *((*CTRL).timebase>0.3)) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
-        #define OFFSET_VOLTAGE_BETA  0//(1*+0.01 *((*CTRL).timebase>0.3)) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
+        #define OFFSET_VOLTAGE_ALPHA (1*-0.01 *((*CTRL).timebase>0.3)) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
+        #define OFFSET_VOLTAGE_BETA  (1*+0.01 *((*CTRL).timebase>0.3)) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
     #else
         #define OFFSET_VOLTAGE_ALPHA 0
         #define OFFSET_VOLTAGE_BETA  0
@@ -602,7 +605,8 @@ void rk4_init(){
             #endif
 
             // FE.htz.psi_aster_max = (*CTRL).taao_flux_cmd + 0.05;
-            FE.htz.psi_aster_max = (*CTRL).i->cmd_psi + FE.htz.extra_limit;
+            // FE.htz.psi_aster_max = (*CTRL).i->cmd_psi + FE.htz.extra_limit;
+            FE.htz.psi_aster_max = (*CTRL).motor->KE + FE.htz.extra_limit;
             // FE.htz.psi_aster_max = (*CTRL).taao_flux_cmd;
 
             // 限幅是针对转子磁链限幅的
@@ -3094,8 +3098,49 @@ void pmsm_observers(){
     // US_P(0) = US_C(0); // 由于没有测量电压，所以当前步电压是伪概念，在这里更新是无意义的
     // US_P(1) = US_C(1); // 由于没有测量电压，所以当前步电压是伪概念，在这里更新是无意义的
     IS_P(0) = IS_C(0);
-    IS_P(1) = IS_C(1);
+    IS_P(1) = IS_C(1); 
 }
+
+void variabel_parameters_sensorless(){
+    //for Lq, R, KE
+    #if WHO_IS_USER == USER_YZZ
+    int i;
+    i = d_sim.user.Variable_Parameters_time_num/2;
+    d_sim.user.Variable_Parameters_timebase += CL_TS;
+    if (d_sim.user.Variable_Parameters_status == 1){
+        if(d_sim.user.VP_time_num_count  < d_sim.user.Variable_Parameters_time_num){
+            if ((d_sim.user.Variable_Parameters_timebase > d_sim.user.Variable_Parameters_time*d_sim.user.VP_time_num_count)&&(d_sim.user.Variable_Parameters_timebase < d_sim.user.Variable_Parameters_time*(d_sim.user.VP_time_num_count+1))){
+                (*CTRL).motor->R = d_sim.init.R * (1-0.01*d_sim.user.Variable_Parameters_percent*(d_sim.user.VP_time_num_count-i));
+            }
+            else if(d_sim.user.Variable_Parameters_timebase > d_sim.user.Variable_Parameters_time*(d_sim.user.VP_time_num_count+1))
+            {
+                d_sim.user.VP_time_num_count +=1;
+            }
+        }
+    }else if(d_sim.user.Variable_Parameters_status == 2){
+        if(d_sim.user.VP_time_num_count  < d_sim.user.Variable_Parameters_time_num){
+            if ((d_sim.user.Variable_Parameters_timebase > d_sim.user.Variable_Parameters_time*d_sim.user.VP_time_num_count)&&(d_sim.user.Variable_Parameters_timebase < d_sim.user.Variable_Parameters_time*(d_sim.user.VP_time_num_count+1))){
+                (*CTRL).motor->Lq = d_sim.init.Lq * (1-0.01*d_sim.user.Variable_Parameters_percent*(d_sim.user.VP_time_num_count-i));
+            }
+            else if(d_sim.user.Variable_Parameters_timebase > d_sim.user.Variable_Parameters_time*(d_sim.user.VP_time_num_count+1))
+            {
+                d_sim.user.VP_time_num_count +=1;
+            }
+        }
+    }else if(d_sim.user.Variable_Parameters_status == 3){
+        if(d_sim.user.VP_time_num_count  < d_sim.user.Variable_Parameters_time_num){
+            if ((d_sim.user.Variable_Parameters_timebase > d_sim.user.Variable_Parameters_time*d_sim.user.VP_time_num_count)&&(d_sim.user.Variable_Parameters_timebase < d_sim.user.Variable_Parameters_time*(d_sim.user.VP_time_num_count+1))){
+                (*CTRL).motor->KE = d_sim.init.KE * (1-0.01*d_sim.user.Variable_Parameters_percent*(d_sim.user.VP_time_num_count-i));
+            }
+            else if(d_sim.user.Variable_Parameters_timebase > d_sim.user.Variable_Parameters_time*(d_sim.user.VP_time_num_count+1))
+            {
+                d_sim.user.VP_time_num_count +=1;
+            }
+        }
+    }
+    #endif
+}
+
 void init_pmsm_observers(){
     // RK4
     // init_rk4();     // 龙格库塔法结构体初始化

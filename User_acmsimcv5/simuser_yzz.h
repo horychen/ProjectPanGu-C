@@ -1148,7 +1148,8 @@
         /* Call all pmsm observers at one place here */
         void pmsm_observers();
         void init_pmsm_observers();
-
+        // Variable parameters
+        void variabel_parameters_sensorless();
         /* Macros for using SVF in Harnefors 2006 */
         // void init_harnefors();
         // void harnefors_scvm();
