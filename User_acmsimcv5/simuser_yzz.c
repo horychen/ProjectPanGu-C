@@ -166,8 +166,8 @@ void rk4_init(){
         #undef NS
     }
     #if PC_SIMULATION == TRUE
-        #define OFFSET_VOLTAGE_ALPHA (1*-0.01 *((*CTRL).timebase>0.3)) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
-        #define OFFSET_VOLTAGE_BETA  (1*+0.01 *((*CTRL).timebase>0.3)) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
+        #define OFFSET_VOLTAGE_ALPHA 0//(1*-0.01 *((*CTRL).timebase>0.3)) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
+        #define OFFSET_VOLTAGE_BETA  0//(1*+0.01 *((*CTRL).timebase>0.3)) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
     #else
         #define OFFSET_VOLTAGE_ALPHA 0
         #define OFFSET_VOLTAGE_BETA  0
@@ -1537,7 +1537,7 @@ void rk4_init(){
         FE.Bernard.psi_2[0] = 0;
         FE.Bernard.psi_2[1] = 0;
         FE.Bernard.psi_PM = d_sim.init.KE * 0.9;
-        FE.Bernard.GAMMA = 1000;
+        FE.Bernard.GAMMA = 100000;
         FE.Bernard.error_correction = 0;
         FE.Bernard.emf_stator[0] = 0;
         FE.Bernard.emf_stator[1] = 0;
@@ -3138,6 +3138,15 @@ void variabel_parameters_sensorless(){
             }
         }
     }
+        #if PC_SIMULATION == FALSE
+            if(!Axis_1.FLAG_ENABLE_PWM_OUTPUT){   
+                (*CTRL).motor->KE = d_sim.init.KE;
+                (*CTRL).motor->R = d_sim.init.R;
+                (*CTRL).motor->Lq = d_sim.init.Lq; 
+                d_sim.user.Variable_Parameters_timebase = 0;
+                d_sim.user.VP_time_num_count = 0;
+            }
+        #endif
     #endif
 }
 

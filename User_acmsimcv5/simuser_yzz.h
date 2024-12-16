@@ -62,7 +62,7 @@
     #define VM_PROPOSED_PI_CORRECTION_GAIN_I 20//80000//2.5 //2  // (2.5)
     /* No Saturation */
     #define VM_NOSAT_PI_CORRECTION_GAIN_P 10// 难调
-    #define VM_NOSAT_PI_CORRECTION_GAIN_I 20//80000//2.5 //2  // (2.5)
+    #define VM_NOSAT_PI_CORRECTION_GAIN_I 100//80000//2.5 //2  // (2.5)
     /* Saturation_time_Without_Limiting */
     #define STWL_GAIN_KP 
     #define STWL_GAIN_KI 

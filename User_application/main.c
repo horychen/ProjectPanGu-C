@@ -321,7 +321,7 @@ void main_measurement(){
 extern REAL imife_realtime_gain_off;
 
 //REAL wubo_debug_flag_PWM = 0;
-//REAL wubo_debug_motor_enc_dirc[2] = {1.0, -1.0};
+REAL wubo_debug_motor_enc_dirc[2] = {1.0, -1.0};
 
 
 
