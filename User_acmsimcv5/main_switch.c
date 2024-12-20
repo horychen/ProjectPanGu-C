@@ -792,7 +792,7 @@ void _user_Check_ThreeDB_Point( REAL Fbk, REAL Ref){
     #if PC_SIMULATION
         static int flag_print_only_once = FALSE;
         // if (d_sim.user.bool_apply_sweeping_frequency_excitation && ( (*CTRL).timebase > 4.500 ) && ( flag_print_only_once == FALSE ) ){
-        if (d_sim.user.bool_apply_sweeping_frequency_excitation && ( d_sim.user.CMD_SPEED_SINE_HZ >= 200 ) && ( flag_print_only_once == FALSE ) ){
+        if (d_sim.user.bool_apply_sweeping_frequency_excitation && ( d_sim.user.CMD_SPEED_SINE_HZ >= 100 ) && ( flag_print_only_once == FALSE ) ){
             printf("VLBW is %fHz\n", d_sim.user.Mark_Counter);
             flag_print_only_once = TRUE;
         }

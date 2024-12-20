@@ -4,7 +4,7 @@
 
 void init_d_sim() {
     d_sim.init.npp = 4;
-    d_sim.init.IN = 2.0;
+    d_sim.init.IN = 3.0;
     d_sim.init.R = 1.967709;
     d_sim.init.Ld = 0.002776;
     d_sim.init.Lq = 0.002776;
@@ -15,7 +15,7 @@ void init_d_sim() {
 
     d_sim.sim.INVERTER_NONLINEARITY = 0;
     d_sim.sim.CLTS = 0.0001;
-    d_sim.sim.NUMBER_OF_STEPS = 10000;
+    d_sim.sim.NUMBER_OF_STEPS = 70000;
     d_sim.sim.MACHINE_SIMULATIONs_PER_SAMPLING_PERIOD = 1;
 
     d_sim.FOC.delta = 8;
@@ -34,15 +34,28 @@ void init_d_sim() {
     d_sim.VL.LIMIT_OVERLOAD_FACTOR = 1.0;
 
     d_sim.user.verbose = TRUE;
-    d_sim.user.who_is_user = 102209;
-    d_sim.user.mode_select_synchronous_motor = 47;
+    d_sim.user.who_is_user = 224;
+    d_sim.user.mode_select_synchronous_motor = 46;
     d_sim.user.mode_select_induction_motor = 32;
     d_sim.user.INVERTER_NONLINEARITY_COMPENSATION_METHOD = 0;
     d_sim.user.Select_exp_operation = 0;
     d_sim.user.set_rpm_speed_command = 400;
-    d_sim.user.set_iq_command = 1.0;
-    d_sim.user.bool_apply_sweeping_frequency_excitation = FALSE;
-    d_sim.user.bool_sweeping_frequency_for_speed_loop = FALSE;
+    d_sim.user.set_iq_command = 1;
+    d_sim.user.bezier_NUMBER_OF_STEPS = 5000;
+    d_sim.user.bezier_order = 4;
+    d_sim.user.bezier_order_current = 0;
+    d_sim.user.bezier_max_p_value = 0.0;
+    d_sim.user.bezier_rpm_maximum_effective_speed_error = 500.0;
+    d_sim.user.bezier_seconds_step_command = 0.2;
+    d_sim.user.bezier_seconds_load_disturbance = 0.4;
+    d_sim.user.bezier_Give_Sweeping_Ref_in_Interrupt = TRUE;
+    d_sim.user.BOOL_BEZIER_ADAPTIVE_GAIN = FALSE;
+    d_sim.user.BOOL_USING_NEW_SOLVER_FOR_BEZIER = TRUE;
+    d_sim.user.BOOL_BEZIER_RUN_IN_MAIN = FALSE;
+    d_sim.user.bezier_equivalent_Kp = 1.0;
+    d_sim.user.bezier_Speed_RPM_deadzone = 3;
+    d_sim.user.bool_apply_sweeping_frequency_excitation = TRUE;
+    d_sim.user.bool_sweeping_frequency_for_speed_loop = TRUE;
     d_sim.user.bool_speed_sweeping_with_Load = FALSE;
     d_sim.user.bool_sweeping_frequency_for_current_loop_iD = FALSE;
     d_sim.user.bool_sweeping_frequency_for_Rejection_Load = FALSE;
@@ -52,7 +65,7 @@ void init_d_sim() {
     d_sim.user.CMD_SPEED_SINE_STEP_SIZE = 1;
     d_sim.user.CMD_SPEED_SINE_LAST_END_TIME = 0.0;
     d_sim.user.CMD_SPEED_SINE_END_TIME = 1e-4;
-    d_sim.user.CMD_SPEED_SINE_HZ_CEILING = 400;
+    d_sim.user.CMD_SPEED_SINE_HZ_CEILING = 150;
     d_sim.user.timebase_for_Sweeping = 0.0;
     d_sim.user.Mark_Sweeping_Freq_ThreeDB_Point = 0.0;
     d_sim.user.Mark_Counter = 0.0;
