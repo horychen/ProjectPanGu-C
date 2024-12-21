@@ -178,8 +178,8 @@ void init_debug(){
         /* Commission  */
         // (*debug).mode_select = MODE_SELECT_COMMISSIONING;                         //  9
 
-    (*debug).Overwrite_Current_Frequency = 5.0;
-    (*debug).Overwrite_theta_d           = 0.0;
+    (*debug).Overwrite_Current_Frequency = 1.0;
+    (*debug).Overwrite_theta_d           = 0.0; 
 
     
     (*debug).set_id_command              = 0.0;
