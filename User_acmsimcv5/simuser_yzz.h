@@ -17,7 +17,7 @@
 
     /* Select [Shared Flux Estimator] */
     // #define AFE_USED FE.clfe4PMSM
-    #define AFE_USED FE.Bernard
+    #define AFE_USED FE.htz
     // #define AFE_USED FE.huwu
     // #define AFE_USED FE.htz // this is for ESO speed estimation
     // #define AFE_USED FE.picorr // this is for ESO speed estimation
@@ -61,8 +61,8 @@
     #define VM_PROPOSED_PI_CORRECTION_GAIN_P 50// 
     #define VM_PROPOSED_PI_CORRECTION_GAIN_I 20//80000//2.5 //2  // (2.5)
     /* No Saturation */
-    #define VM_NOSAT_PI_CORRECTION_GAIN_P 10// 难调
-    #define VM_NOSAT_PI_CORRECTION_GAIN_I 100//80000//2.5 //2  // (2.5)
+    #define VM_NOSAT_PI_CORRECTION_GAIN_P 20// 难调
+    #define VM_NOSAT_PI_CORRECTION_GAIN_I 50000//10000//1000//80000//2.5 //2  // (2.5)
     /* Saturation_time_Without_Limiting */
     #define STWL_GAIN_KP 
     #define STWL_GAIN_KI 
@@ -109,22 +109,22 @@
     #define AFE_22_STOJIC_2015 0
     #define AFE_23_SCVM_HARNEFORS_2003 0
     #define AFE_24_OE 0
-    #define AFE_25_VM_CM_FUSION 1 // See ParkSul2014Follower2020
+    #define AFE_25_VM_CM_FUSION 0 // See ParkSul2014Follower2020
     #define AFE_31_HOLT_QUAN_2003_LPF_ORIGINIAL 0
     #define AFE_32_HOLT_QUAN_2003_INTEGRATOR 0
     #define AFE_33_EXACT_OFFSET_COMPENSATION 0
     #define AFE_34_ADAPTIVE_LIMIT 0
     #define AFE_35_SATURATION_TIME_DIFFERENCE  1
     #define AFE_36_TOP_BUTT_EXACT_COMPENSATION 0
-    #define AFE_37_NO_SATURATION_BASED 1
+    #define AFE_37_NO_SATURATION_BASED 0
     #define AFE_38_OUTPUT_ERROR_CLOSED_LOOP 1
     #define AFE_39_SATURATION_TIME_WITHOUT_LIMITING 0
     #define AFE_40_JO_CHOI_METHOD 0
-    #define AFE_41_LascuAndreescus2006 1
+    #define AFE_41_LascuAndreescus2006 0
     #define AFE_42_BandP 1
-    #define ALG_AKT_SPEED_EST_AND_RS_ID 1
-    #define ALG_Awaya_InertiaId 1
-    #define ALG_qaxis_inductance_identification 1
+    #define ALG_AKT_SPEED_EST_AND_RS_ID 0
+    #define ALG_Awaya_InertiaId 0
+    #define ALG_qaxis_inductance_identification 0
     #define RS_IDENTIFICATION 0
     #define LQ_IDENTIFICATION 0
     typedef void (*pointer_flux_estimator_dynamics)(REAL t, REAL *x, REAL *fx);
@@ -368,6 +368,10 @@
                 
                 REAL ell_1;
                 REAL ell_2;
+                REAL gamma_res_transient_shape;
+                REAL gamma_res_transient[2];
+                REAL gamma_res_transient_shape_I;
+                REAL gamma_res_transient_I[2];
             } no_sat;
         #endif
         #if AFE_38_OUTPUT_ERROR_CLOSED_LOOP
@@ -663,15 +667,23 @@
     // #define htz   (FE.htz)
 
     void simulation_test_flux_estimators();
-        void Main_the_active_flux_estimator();
-        void MainFE_HuWu_1998();
+        #if AFE_25_VM_CM_FUSION
+            void Main_the_active_flux_estimator();
+        #endif
+        // void MainFE_HuWu_1998();
         void VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
-        void Main_No_Saturation_Based();
+        #if AFE_37_NO_SATURATION_BASED
+            void Main_No_Saturation_Based();
+        #endif
         void Main_VM_ClosedLoopFluxEstimatorForPMSM();
-        void VM_LascuAndreescus2006();
-        void SpeedEstimationFromtheVMBasedFluxEstimation();
+        #if AFE_13_LASCU_ANDREESCUS_2006
+            void VM_LascuAndreescus2006();
+        #endif
+        #if ALG_AKT_SPEED_EST_AND_RS_ID
+            void SpeedEstimationFromtheVMBasedFluxEstimation();
+            void RS_Identificaiton();
+        #endif
         void Main_Bernard2017();
-        void RS_Identificaiton();
         // void Main_Saturation_time_Without_Limiting();
     void init_afe();
     void init_FE();
@@ -808,6 +820,10 @@
     struct ObserverForExperiment{
         /* Common */
         REAL theta_d;
+        REAL varOmega;
+        REAL count_for_encoder;
+        REAL sum_for_encoder;
+        REAL aver_for_encoder[10];
         struct RK4_DATA{
             REAL us[2];
             REAL is[2];

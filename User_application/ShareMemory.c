@@ -187,8 +187,8 @@ void write_DAC_buffer(){
             (*Axis4DAC).dac_watch[61] = (*CTRL).motor->R *0.1;
             (*Axis4DAC).dac_watch[62] = FE.htz.theta_d*0.1;
             (*Axis4DAC).dac_watch[63] = FE.clfe4PMSM.theta_d*0.1;
-            (*Axis4DAC).dac_watch[64] = FE.no_sat.psi_2[0]*0.25;
-            (*Axis4DAC).dac_watch[65] = FE.no_sat.psi_2[1]*0.25;
+//            (*Axis4DAC).dac_watch[64] = FE.no_sat.psi_2[0]*0.25;
+//            (*Axis4DAC).dac_watch[65] = FE.no_sat.psi_2[1]*0.25;
             (*Axis4DAC).dac_watch[66] = (*CTRL).motor->Lq;
             (*Axis4DAC).dac_watch[67] = (*CTRL).motor->R;
             (*Axis4DAC).dac_watch[68] = OBSV.theta_d*0.1;
@@ -201,8 +201,8 @@ void write_DAC_buffer(){
             (*Axis4DAC).dac_watch[75] = FE.Bernard.psi_2[0]*0.25;
             (*Axis4DAC).dac_watch[76] = FE.Bernard.psi_2[1]*0.25;
             (*Axis4DAC).dac_watch[77] = FE.Bernard.theta_e * 0.1;
-            (*Axis4DAC).dac_watch[78] = FE.no_sat.theta_e * 0.1;
-            (*Axis4DAC).dac_watch[79] = FE.no_sat.theta_d*0.1;
+//            (*Axis4DAC).dac_watch[78] = FE.no_sat.theta_e * 0.1;
+//            (*Axis4DAC).dac_watch[79] = FE.no_sat.theta_d*0.1;
 
         #endif
 

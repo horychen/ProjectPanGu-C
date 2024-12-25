@@ -30,6 +30,14 @@ void rk4_init(){
     OBSV.rk4.is_prev[0] = 0.0;
     OBSV.rk4.is_prev[1] = 0.0;
     OBSV.theta_d = 0.0;
+    OBSV.varOmega = 0.0;
+    OBSV.count_for_encoder = 0;
+    OBSV.sum_for_encoder = 0;
+    int ind;
+    for (ind = 0; ind < 10; ind++)
+    {
+        OBSV.aver_for_encoder[ind] = 0;
+    }
 }
 #endif
 
@@ -38,9 +46,15 @@ void rk4_init(){
 #if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
     struct ObserverForExperiment OBSV;
     struct SharedFluxEstimatorForExperiment FE;
+    #if ALG_AKT_SPEED_EST_AND_RS_ID
     struct Akatsu_Variables akt;
+    #endif
+    #if ALG_Awaya_InertiaId
     struct Awaya_Variables awy;
+    #endif
+    #if ALG_qaxis_inductance_identification
     struct Qaxis_InductanceId q_inductanceid;
+    #endif
     // struct Marino2005 marino={0};
     // struct Variables_SimulatedVM                         simvm      ={0};
     // struct Variables_Ohtani1992                          ohtani     ={0};
@@ -166,8 +180,8 @@ void rk4_init(){
         #undef NS
     }
     #if PC_SIMULATION == TRUE
-        #define OFFSET_VOLTAGE_ALPHA 0//(1*-0.01 *((*CTRL).timebase>0.3)) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
-        #define OFFSET_VOLTAGE_BETA  0//(1*+0.01 *((*CTRL).timebase>0.3)) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
+        #define OFFSET_VOLTAGE_ALPHA (1*-0.2) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
+        #define OFFSET_VOLTAGE_BETA  (1*+0.2) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
     #else
         #define OFFSET_VOLTAGE_ALPHA 0
         #define OFFSET_VOLTAGE_BETA  0
@@ -905,7 +919,7 @@ void rk4_init(){
 
                 FE.no_sat.psi_1[0] = d_sim.init.KE;
                 FE.no_sat.psi_1[1] = 0;
-                FE.no_sat.psi_2[0] = d_sim.init.KE;
+                FE.no_sat.psi_2[0] = 0;
                 FE.no_sat.psi_2[1] = 0;
                 FE.no_sat.psi_2_prev[ind] = 0;
                 FE.no_sat.psi_com[ind] = 0; 
@@ -929,9 +943,13 @@ void rk4_init(){
                 FE.no_sat.time_neg2pos_prev[ind] = 0;
                 FE.no_sat.u_offset[ind] = 0;
 
+                FE.no_sat.gamma_res_transient[ind] = 0;
                 FE.no_sat.extra_limit = 0.0;
                 FE.no_sat.flag_limit_too_low = FALSE;
                 FE.no_sat.theta_e = 0;
+                FE.no_sat.gamma_res_transient_shape = 1000;
+                FE.no_sat.gamma_res_transient_I[ind] = 0;
+                FE.no_sat.gamma_res_transient_shape_I = 5000;
             }
             FE.no_sat.ell_1 = d_sim.init.KE;
             FE.no_sat.ell_2 = d_sim.init.KE;
@@ -955,10 +973,10 @@ void rk4_init(){
                         /*I*/- x[3];
                 #else
                     FE.no_sat.emf_stator[0] = US(0) - (*CTRL).motor->R * IS(0) + OFFSET_VOLTAGE_ALPHA \
-                        /*P*/- VM_NOSAT_PI_CORRECTION_GAIN_P * FE.no_sat.psi_com[0] \
+                        /*P*/- FE.no_sat.gamma_res_transient[0] * FE.no_sat.psi_com[0] \
                         /*I*/- x[2];
                     FE.no_sat.emf_stator[1] = US(1) - (*CTRL).motor->R * IS(1) + OFFSET_VOLTAGE_BETA  \
-                        /*P*/- VM_NOSAT_PI_CORRECTION_GAIN_P * FE.no_sat.psi_com[1] \
+                        /*P*/- FE.no_sat.gamma_res_transient[1] * FE.no_sat.psi_com[1] \
                         /*I*/- x[3];
                 #endif
                 FE.no_sat.u_offset[0] = x[2];
@@ -1053,8 +1071,10 @@ void rk4_init(){
                 }
             }   
             //psi2
-            
-
+            FE.no_sat.gamma_res_transient[0] = VM_NOSAT_PI_CORRECTION_GAIN_P*exp(- FE.no_sat.gamma_res_transient_shape * FE.no_sat.psi_com[0] * FE.no_sat.psi_com[0]);
+            FE.no_sat.gamma_res_transient[1] = VM_NOSAT_PI_CORRECTION_GAIN_P*exp(- FE.no_sat.gamma_res_transient_shape * FE.no_sat.psi_com[1] * FE.no_sat.psi_com[1]);
+            FE.no_sat.gamma_res_transient_I[0] = 80000*exp(- FE.no_sat.gamma_res_transient_shape_I * FE.no_sat.psi_com[0] * FE.no_sat.psi_com[0]);
+            FE.no_sat.gamma_res_transient_I[1] = 80000*exp(- FE.no_sat.gamma_res_transient_shape_I * FE.no_sat.psi_com[1] * FE.no_sat.psi_com[1]);
             // 积分方法：（从上面的程序来看，u_off的LPF的输入是每半周更新一次的。
                 // FE.no_sat.u_offset[0] += VM_PROPOSED_PI_CORRECTION_GAIN_I * CL_TS * FE.no_sat.psi_com[0];
                 // FE.no_sat.u_offset[1] += VM_PROPOSED_PI_CORRECTION_GAIN_I * CL_TS * FE.no_sat.psi_com[0];
@@ -1537,7 +1557,7 @@ void rk4_init(){
         FE.Bernard.psi_2[0] = 0;
         FE.Bernard.psi_2[1] = 0;
         FE.Bernard.psi_PM = d_sim.init.KE * 0.9;
-        FE.Bernard.GAMMA = 100000;
+        FE.Bernard.GAMMA = 7000;
         FE.Bernard.error_correction = 0;
         FE.Bernard.emf_stator[0] = 0;
         FE.Bernard.emf_stator[1] = 0;
@@ -1573,7 +1593,9 @@ void rk4_init(){
     #endif
     void simulation_test_flux_estimators(){
         // MainFE_HUWU_1998();
+        #if AFE_37_NO_SATURATION_BASED
         Main_No_Saturation_Based();
+        #endif
         VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
             
         // Main_the_active_flux_estimator();
@@ -1587,10 +1609,16 @@ void rk4_init(){
     void init_FE(){
         // init_FE_huwu();
         init_ClosedLoopFluxEstimatorForPMSM();
+        #if AFE_25_VM_CM_FUSION
         init_afe();
+        #endif
+        #if AFE_37_NO_SATURATION_BASED
         init_No_Saturation_Based();
+        #endif
         init_FE_htz();
+        #if AFE_13_LASCU_ANDREESCUS_2006
         init_LascuAndreescus2006();
+        #endif
         init_Bernard();
         // init_Saturation_time_Without_Limiting();
     }
@@ -3040,10 +3068,13 @@ void pmsm_observers(){
         // // cjh_eemfao();
         // // cjh_eemfhgo_farza09();
         Main_nsoaf_chen2020();
-        SpeedEstimationFromtheVMBasedFluxEstimation();
-        // Awaya_InertiaId();
-        RS_Identificaiton();
-        qaxis_inductance_identification();
+        #if ALG_AKT_SPEED_EST_AND_RS_ID
+            SpeedEstimationFromtheVMBasedFluxEstimation();
+            RS_Identificaiton();
+        #endif
+        #if ALG_qaxis_inductance_identification
+            qaxis_inductance_identification();
+        #endif
         // Main_esoaf_chen2021();
         // // Main_QiaoXia2013_emfSMO();
         // Main_ChiXu2009_emfSMO();
@@ -3052,11 +3083,17 @@ void pmsm_observers(){
         /* 资源有限 */
         #if SELECT_ALGORITHM == ALG_NSOAF
             // MainFE_HuWu_1998(); // use algorithm 2
-            Main_No_Saturation_Based();
+            #if AFE_37_NO_SATURATION_BASED
+                Main_No_Saturation_Based();
+            #endif
             VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
             Main_Bernard2017();
             Main_VM_ClosedLoopFluxEstimatorForPMSM();
             Main_nsoaf_chen2020();
+            #if ALG_AKT_SPEED_EST_AND_RS_ID
+                SpeedEstimationFromtheVMBasedFluxEstimation();
+                RS_Identificaiton();
+            #endif
         #elif SELECT_ALGORITHM == ALG_ESOAF
             Main_the_active_flux_estimator();
             Main_VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
@@ -3137,6 +3174,20 @@ void variabel_parameters_sensorless(){
                 d_sim.user.VP_time_num_count +=1;
             }
         }
+    }else if(d_sim.user.Variable_Parameters_status == 4){
+        if(d_sim.user.VP_time_num_count  < d_sim.user.Variable_Parameters_time_num){
+            if ((d_sim.user.Variable_Parameters_timebase > d_sim.user.Variable_Parameters_time*d_sim.user.VP_time_num_count)&&(d_sim.user.Variable_Parameters_timebase < d_sim.user.Variable_Parameters_time*(d_sim.user.VP_time_num_count+1))){
+                OBSV.sum_for_encoder += (*CTRL).s->iQ->Fbk;
+                OBSV.count_for_encoder +=1; 
+            }
+            else if(d_sim.user.Variable_Parameters_timebase > d_sim.user.Variable_Parameters_time*(d_sim.user.VP_time_num_count+1))
+            {
+                d_sim.user.VP_time_num_count +=1;
+                OBSV.aver_for_encoder[d_sim.user.VP_time_num_count-1] = OBSV.sum_for_encoder / OBSV.count_for_encoder;
+                OBSV.sum_for_encoder = 0;
+                OBSV.count_for_encoder = 0;
+            }
+        }
     }
         #if PC_SIMULATION == FALSE
             if(!Axis_1.FLAG_ENABLE_PWM_OUTPUT){   
@@ -3156,9 +3207,16 @@ void init_pmsm_observers(){
 
     // FE
     init_FE();
+    #if ALG_AKT_SPEED_EST_AND_RS_ID
     init_ake_Speed_Est_and_RS_ID();
-    // init_InertiaId();
+    #endif
+    #if ALG_Awaya_InertiaId
+    init_InertiaId();
+    #endif
+    #if ALG_qaxis_inductance_identification
     init_qaxis_inductance_identification();
+    #endif
+
     #if PC_SIMULATION
         // OBSV
         init_nsoaf();

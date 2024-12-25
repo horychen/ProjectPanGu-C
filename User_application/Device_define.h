@@ -78,7 +78,7 @@
     // DC BUS
     #if BOOL_LOAD_SWEEPING_ON == FALSE
         #define OFFSET_VDC_BUS_IPM1 8
-        #define SCALE_VDC_BUS_IPM1 0.17690418
+        #define SCALE_VDC_BUS_IPM1 0.17890418
     #else if BOOL_LOAD_SWEEPING_ON
         #define OFFSET_VDC_BUS_IPM1 8
         #define SCALE_VDC_BUS_IPM1 0.15384615
@@ -96,9 +96,9 @@
     // Lem 2的三个蓝色块块分别是adc a1 a2 a3
     // In fact A is the first inverter in MOTOR_GROUP
     #if BOOL_LOAD_SWEEPING_ON == FALSE
-        #define OFFSET_LEM_A1 2035.0 // WuBo tuned in 20241027 //2010  // 2034  // 2029.57894737 // ADCA1
-        #define OFFSET_LEM_A2 2048.0 // WuBo tuned in 20241027 //2038   // 2049  // 2043.08771930 // ADCA2
-        #define OFFSET_LEM_A3 2057.0 // WuBo tuned in 20241027 //2029   // 2050  // 2042.98245614 // ADCA3
+        #define OFFSET_LEM_A1 2027.0 // WuBo tuned in 20241027 //2010  // 2034  // 2029.57894737 // ADCA1
+        #define OFFSET_LEM_A2 2050.0 // WuBo tuned in 20241027 //2038   // 2049  // 2043.08771930 // ADCA2
+        #define OFFSET_LEM_A3 2046.0 // WuBo tuned in 20241027 //2029   // 2050  // 2042.98245614 // ADCA3
         #define SCALE_LEM_A1 0.0305   // 0.03080704 // ADCA1
         #define SCALE_LEM_A2 0.030334 // 0.03060669 // ADCA2
         #define SCALE_LEM_A3 0.02983  // 0.03045988 // ADCA3

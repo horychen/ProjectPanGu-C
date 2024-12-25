@@ -252,7 +252,6 @@ void init_CTRL(){
     (*CTRL).motor->npp_inv = 1.0 / (*CTRL).motor->npp;
     (*CTRL).motor->Js = d_sim.init.Js;
     (*CTRL).motor->Js_inv = 1.0 / (*CTRL).motor->Js;
-
     // /* Peripheral configurations */
 
     /* Inverter */
@@ -1041,16 +1040,48 @@ int  main_switch(long mode_select){
             (*CTRL).i->varOmega = OFSR.esoaf.xOmg * MOTOR.npp_inv;
         }
         // observer();
-        // FOC_with_vecocity_control(AFE_USED.theta_d, 
-        //     OBSV.nsoaf.xOmg * MOTOR.npp_inv,
-        //     (*CTRL).i->cmd_varOmega,
-        //     (*CTRL).i->cmd_iDQ,
-        //     (*CTRL).i->iAB);
-        FOC_with_vecocity_control((*CTRL).i->theta_d_elec, 
-            (*CTRL).i->varOmega, 
-            (*CTRL).i->cmd_varOmega, 
-            (*CTRL).i->cmd_iDQ, 
-            (*CTRL).i->iAB);
+        if (d_sim.user.sensorless_speed_observer == 0){
+            OBSV.varOmega = (*CTRL).i->varOmega;
+        }else{
+            OBSV.varOmega = OBSV.nsoaf.xOmg * MOTOR.npp_inv;
+        }
+        
+        if (d_sim.user.sensorless_only_theta_on == 1){
+            FOC_with_vecocity_control(AFE_USED.theta_d, 
+                OBSV.varOmega, 
+                (*CTRL).i->cmd_varOmega, 
+                (*CTRL).i->cmd_iDQ, 
+                (*CTRL).i->iAB);
+        }else if (d_sim.user.sensorless_only_theta_on == 0){
+            FOC_with_vecocity_control((*CTRL).i->theta_d_elec, 
+                OBSV.varOmega,
+                (*CTRL).i->cmd_varOmega,
+                (*CTRL).i->cmd_iDQ,
+                (*CTRL).i->iAB);
+        }else if (d_sim.user.sensorless_only_theta_on == 2){
+            #if AFE_37_NO_SATURATION_BASED
+            FOC_with_vecocity_control(FE.no_sat.theta_d, 
+                OBSV.varOmega,
+                (*CTRL).i->cmd_varOmega,
+                (*CTRL).i->cmd_iDQ,
+                (*CTRL).i->iAB);
+            #endif
+        }else if (d_sim.user.sensorless_only_theta_on == 3){
+            FOC_with_vecocity_control(FE.clfe4PMSM.theta_d, 
+                OBSV.varOmega,
+                (*CTRL).i->cmd_varOmega,
+                (*CTRL).i->cmd_iDQ,
+                (*CTRL).i->iAB);
+        }else if (d_sim.user.sensorless_only_theta_on == 4){
+            FOC_with_vecocity_control(FE.htz.theta_d, 
+                OBSV.varOmega,
+                (*CTRL).i->cmd_varOmega,
+                (*CTRL).i->cmd_iDQ,
+                (*CTRL).i->iAB);
+        }
+        
+        
+        
         // RK4_FOC_with_vecocity_control(AFE_USED.theta_d, 
         //     OBSV.nsoaf.xOmg * MOTOR.npp_inv, 
         //     (*CTRL).i->cmd_varOmega, 
@@ -1166,7 +1197,7 @@ int  main_switch(long mode_select){
                     (*CTRL).i->cmd_iDQ,
                     (*CTRL).i->iAB);
         break;
-    case MODE_SELECT_VARIABLE_PARAMETERS_VELOCITY_LOOP_SENSORLESS:
+    case MODE_SELECT_VARIABLE_PARAMETERS_VELOCITY_LOOP_SENSORLESS: // 48
         _user_commands();  
         #if WHO_IS_USER == USER_YZZ
         //for OBSV

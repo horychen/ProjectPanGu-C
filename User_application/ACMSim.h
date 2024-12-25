@@ -116,7 +116,7 @@ REAL difference_between_two_angles(REAL first, REAL second);
 
 #ifdef _MOTOR_GROUP
 //    #define ENCODER_TYPE ABSOLUTE_ENCODER_MD1
-    #define ENCODER_TYPE ABSOLUTE_ENCODER_SCI_SHANK
+    #define ENCODER_TYPE INCREMENTAL_ENCODER_QEP
 #endif
 
 
