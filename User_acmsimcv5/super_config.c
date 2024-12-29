@@ -15,7 +15,7 @@ void init_d_sim() {
 
     d_sim.sim.INVERTER_NONLINEARITY = 0;
     d_sim.sim.CLTS = 0.0001;
-    d_sim.sim.NUMBER_OF_STEPS = 200000;
+    d_sim.sim.NUMBER_OF_STEPS = 20000;
     d_sim.sim.MACHINE_SIMULATIONs_PER_SAMPLING_PERIOD = 1;
 
     d_sim.FOC.delta = 15;
@@ -35,17 +35,18 @@ void init_d_sim() {
 
     d_sim.user.verbose = TRUE;
     d_sim.user.who_is_user = 2023231060;
-    d_sim.user.mode_select_synchronous_motor = 41;
+    d_sim.user.mode_select_synchronous_motor = 49;
     d_sim.user.mode_select_induction_motor = 32;
     d_sim.user.INVERTER_NONLINEARITY_COMPENSATION_METHOD = 0;
     d_sim.user.Select_exp_operation = 0;
-    d_sim.user.set_rpm_speed_command = 100;
-    d_sim.user.set_iq_command = 3;
+    d_sim.user.set_rpm_speed_command = 5;
+    d_sim.user.set_iq_command = -0.5;
     d_sim.user.Set_SpeedLoop_KI_as_Zero = FALSE;
     d_sim.user.CAREFUL_ESOAF_OMEGA_OBSERVER = 3000;
     d_sim.user.bool_apply_ESO_SPEED_for_SPEED_FBK = TRUE;
     d_sim.user.bool_ESO_SPEED_ON = TRUE;
     d_sim.user.VL_FEEDBACK_KFB = 0;
+    d_sim.user.set_id_command = 0.0;
     d_sim.user.Variable_Parameters_percent = 3;
     d_sim.user.Variable_Parameters_time = 3;
     d_sim.user.Variable_Parameters_status = 4;
@@ -54,5 +55,6 @@ void init_d_sim() {
     d_sim.user.Variable_Parameters_timebase = 0.0;
     d_sim.user.sensorless_only_theta_on = 0;
     d_sim.user.sensorless_speed_observer = 0;
+    d_sim.user.SENSORLESS_CONTROL = 0;
 
 }

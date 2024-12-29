@@ -208,7 +208,7 @@ void init_debug(){
     (*debug).INVERTER_NONLINEARITY_COMPENSATION_INIT              = d_sim.user.INVERTER_NONLINEARITY_COMPENSATION_METHOD;
 
     #if WHO_IS_USER == USER_YZZ
-        (*debug).SENSORLESS_CONTROL      = 0;
+        (*debug).SENSORLESS_CONTROL      = d_sim.user.SENSORLESS_CONTROL;
         (*debug).SENSORLESS_CONTROL_HFSI = 0;
     #endif
     #if WHO_IS_USER == 2023231051
@@ -365,6 +365,7 @@ void init_experiment(){
         rk4_init(); // 
         // observer_init();
         init_pmsm_observers(); // 
+        inverterNonlinearity_Initialization();
     #endif
 
     #if WHO_IS_USER == USER_CJH
@@ -675,6 +676,10 @@ void _onlyFOC(REAL theta_d_elec, REAL iAB[2]){
     (*CTRL).o->cmd_uAB_to_inverter[0] = (*CTRL).o->cmd_uAB[0];
     (*CTRL).o->cmd_uAB_to_inverter[1] = (*CTRL).o->cmd_uAB[1];
 
+    #if WHO_IS_USER == USER_YZZ
+        yzz_inverter_Compensation_Online_PAA();
+    #endif
+
     (*CTRL).o->dc_bus_utilization_ratio = DC_BUS_VOLTAGE_INVERSE * sqrtf( (*CTRL).o->cmd_uAB_to_inverter[0]
                                                                         * (*CTRL).o->cmd_uAB_to_inverter[0]
                                                                         + (*CTRL).o->cmd_uAB_to_inverter[1]
@@ -685,7 +690,6 @@ void _onlyFOC(REAL theta_d_elec, REAL iAB[2]){
         /* wubo:  */
         wubo_inverter_Compensation( (*CTRL).i->iAB );
     #endif
-
     #if WHO_IS_USER == USER_CJH
         /* For scope only */
         #if PC_SIMULATION
@@ -950,12 +954,38 @@ int  main_switch(long mode_select){
 
         break;
     case MODE_SELECT_FOC_SENSORLESS: //31
-        //TODO:
-        (*CTRL).i->cmd_iDQ[0] = 0.0; // SWEEP_FREQ_C2C
-        (*CTRL).i->cmd_iDQ[1] = (*debug).set_iq_command;
-        #if WHO_USER == USER_YZZ
-            _RK4_PI_Controller_FOC((*CTRL).i->theta_d_elec, (*CTRL).i->iAB);
+        #if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
+            US_P(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
+            US_P(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
+            US_C(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
+            US_C(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
+            IS_C(0)           = (*CTRL).i->iAB[0];
+            IS_C(1)           = (*CTRL).i->iAB[1];
         #endif
+            US_SR_P(0) = (*CTRL).o->cmd_uAB[0];
+            US_SR_P(1) = (*CTRL).o->cmd_uAB[1];
+            US_SR_C(0) = (*CTRL).o->cmd_uAB[0];
+            US_SR_C(1) = (*CTRL).o->cmd_uAB[1];
+            IS_SR_C(0) = (*CTRL).i->iAB[0];
+            IS_SR_C(1) = (*CTRL).i->iAB[1];
+        (*CTRL).i->cmd_iDQ[0] = (*debug).set_id_command; // SWEEP_FREQ_C2C
+        (*CTRL).i->cmd_iDQ[1] = (*debug).set_iq_command;
+        
+        #if WHO_IS_USER == USER_YZZ
+        // _user_commands();
+        pmsm_observers();
+        // observer_PMSMife();
+        // controller_PMSMife_with_commands();
+            OBSV.theta_d = (*CTRL).i->theta_d_elec;
+            while(OBSV.theta_d > M_PI) OBSV.theta_d  -= 2*M_PI;
+            while(OBSV.theta_d < -M_PI) OBSV.theta_d += 2*M_PI;
+        if(d_sim.user.sensorless_only_theta_on  == 0){
+            _onlyFOC((*CTRL).i->theta_d_elec, (*CTRL).i->iAB);
+        }else if(d_sim.user.sensorless_only_theta_on  == 5){
+            _onlyFOC(FE.AFEOE.theta_d, (*CTRL).i->iAB);
+        }
+        #endif
+
         break;
     case MODE_SELECT_INDIRECT_FOC:   // 32
         _user_commands();         // 用户指令
@@ -1032,7 +1062,6 @@ int  main_switch(long mode_select){
         OBSV.theta_d = (*CTRL).i->theta_d_elec;
         while(OBSV.theta_d > M_PI) OBSV.theta_d  -= 2*M_PI;
         while(OBSV.theta_d < -M_PI) OBSV.theta_d += 2*M_PI;  // 反转！
-        #endif
         if (d_sim.user.bool_ESO_SPEED_ON == TRUE){
             Main_esoaf_chen2021();
         }
@@ -1067,31 +1096,28 @@ int  main_switch(long mode_select){
                 (*CTRL).i->iAB);
             #endif
         }else if (d_sim.user.sensorless_only_theta_on == 3){
+            #if AFE_38_OUTPUT_ERROR_CLOSED_LOOP
             FOC_with_vecocity_control(FE.clfe4PMSM.theta_d, 
                 OBSV.varOmega,
                 (*CTRL).i->cmd_varOmega,
                 (*CTRL).i->cmd_iDQ,
                 (*CTRL).i->iAB);
+            #endif
+                // printf("FE.clfe4PMSM.theta_d is %f\n", FE.clfe4PMSM.theta_d);
         }else if (d_sim.user.sensorless_only_theta_on == 4){
             FOC_with_vecocity_control(FE.htz.theta_d, 
                 OBSV.varOmega,
                 (*CTRL).i->cmd_varOmega,
                 (*CTRL).i->cmd_iDQ,
                 (*CTRL).i->iAB);
+        }else if (d_sim.user.sensorless_only_theta_on == 5){
+            FOC_with_vecocity_control(FE.AFEOE.theta_d, 
+                OBSV.varOmega,
+                (*CTRL).i->cmd_varOmega,
+                (*CTRL).i->cmd_iDQ,
+                (*CTRL).i->iAB);
         }
-        
-        
-        
-        // RK4_FOC_with_vecocity_control(AFE_USED.theta_d, 
-        //     OBSV.nsoaf.xOmg * MOTOR.npp_inv, 
-        //     (*CTRL).i->cmd_varOmega, 
-        //     (*CTRL).i->cmd_iDQ, 
-        //     (*CTRL).i->iAB);
-        // RK4_FOC_with_vecocity_control((*CTRL).i->theta_d_elec, 
-        //     (*CTRL).i->varOmega, 
-        //     (*CTRL).i->cmd_varOmega, 
-        //     (*CTRL).i->cmd_iDQ, 
-        //     (*CTRL).i->iAB);
+        #endif
         break;
     case MODE_SELECT_TESTING_SENSORLESS : //42
         break;
@@ -1239,6 +1265,87 @@ int  main_switch(long mode_select){
             (*CTRL).i->iAB);
         #endif
         break;
+    case MODE_SELECT_INVERTER_NONLINEARITY_SENSORLESS: // 49
+        #if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
+            US_P(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
+            US_P(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
+            US_C(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
+            US_C(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
+            IS_C(0)           = (*CTRL).i->iAB[0];
+            IS_C(1)           = (*CTRL).i->iAB[1];
+        #endif
+            US_SR_P(0) = (*CTRL).o->cmd_uAB[0];
+            US_SR_P(1) = (*CTRL).o->cmd_uAB[1];
+            US_SR_C(0) = (*CTRL).o->cmd_uAB[0];
+            US_SR_C(1) = (*CTRL).o->cmd_uAB[1];
+            IS_SR_C(0) = (*CTRL).i->iAB[0];
+            IS_SR_C(1) = (*CTRL).i->iAB[1];
+        #if WHO_IS_USER == USER_YZZ
+        _user_commands();
+        pmsm_observers();
+        Online_PAA_Based_Compensation();
+        // observer_PMSMife();
+        // controller_PMSMife_with_commands();
+        OBSV.theta_d = (*CTRL).i->theta_d_elec;
+        while(OBSV.theta_d > M_PI) OBSV.theta_d  -= 2*M_PI;
+        while(OBSV.theta_d < -M_PI) OBSV.theta_d += 2*M_PI;  // 反转！
+        if (d_sim.user.bool_ESO_SPEED_ON == TRUE){
+            Main_esoaf_chen2021();
+        }
+        if (d_sim.user.bool_apply_ESO_SPEED_for_SPEED_FBK == TRUE){
+            (*CTRL).i->varOmega = OFSR.esoaf.xOmg * MOTOR.npp_inv;
+        }
+        // observer();
+        if (d_sim.user.sensorless_speed_observer == 0){
+            OBSV.varOmega = (*CTRL).i->varOmega;
+        }else{
+            OBSV.varOmega = OBSV.nsoaf.xOmg * MOTOR.npp_inv;
+        }
+        
+        if (d_sim.user.sensorless_only_theta_on == 1){
+            FOC_with_vecocity_control(AFE_USED.theta_d, 
+                OBSV.varOmega, 
+                (*CTRL).i->cmd_varOmega, 
+                (*CTRL).i->cmd_iDQ, 
+                (*CTRL).i->iAB);
+        }else if (d_sim.user.sensorless_only_theta_on == 0){
+            FOC_with_vecocity_control((*CTRL).i->theta_d_elec, 
+                OBSV.varOmega,
+                (*CTRL).i->cmd_varOmega,
+                (*CTRL).i->cmd_iDQ,
+                (*CTRL).i->iAB);
+        }else if (d_sim.user.sensorless_only_theta_on == 2){
+            #if AFE_37_NO_SATURATION_BASED
+            FOC_with_vecocity_control(FE.no_sat.theta_d, 
+                OBSV.varOmega,
+                (*CTRL).i->cmd_varOmega,
+                (*CTRL).i->cmd_iDQ,
+                (*CTRL).i->iAB);
+            #endif
+        }else if (d_sim.user.sensorless_only_theta_on == 3){
+            #if AFE_38_OUTPUT_ERROR_CLOSED_LOOP
+            FOC_with_vecocity_control(FE.clfe4PMSM.theta_d, 
+                OBSV.varOmega,
+                (*CTRL).i->cmd_varOmega,
+                (*CTRL).i->cmd_iDQ,
+                (*CTRL).i->iAB);
+            #endif
+                // printf("FE.clfe4PMSM.theta_d is %f\n", FE.clfe4PMSM.theta_d);
+        }else if (d_sim.user.sensorless_only_theta_on == 4){
+            FOC_with_vecocity_control(FE.htz.theta_d, 
+                OBSV.varOmega,
+                (*CTRL).i->cmd_varOmega,
+                (*CTRL).i->cmd_iDQ,
+                (*CTRL).i->iAB);
+        }else if (d_sim.user.sensorless_only_theta_on == 5){
+            FOC_with_vecocity_control(FE.AFEOE.theta_d, 
+                OBSV.varOmega,
+                (*CTRL).i->cmd_varOmega,
+                (*CTRL).i->cmd_iDQ,
+                (*CTRL).i->iAB);
+        }
+        #endif
+        break;
     case MODE_SELECT_POSITION_LOOP: // 5
         #if WHO_IS_USER == USER_WB
             //TODO: Here need a command function for position loop !
@@ -1252,7 +1359,7 @@ int  main_switch(long mode_select){
         break;
     case MODE_SELECT_COMMISSIONING: // 9
         // #if ENABLE_COMMISSIONING == TRUE
-        #if ENABLE_COMMISSIONING && WHO_IS_USER == USER_WB
+        #if ENABLE_COMMISSIONING
             commissioning();
         #endif
         // #endif

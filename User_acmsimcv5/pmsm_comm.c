@@ -152,9 +152,7 @@ void commissioning(){
     (*CTRL).i->iDQ[0] = AB2M((*CTRL).i->iAB[0], (*CTRL).i->iAB[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
     (*CTRL).i->iDQ[1] = AB2T((*CTRL).i->iAB[0], (*CTRL).i->iAB[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
     // 参数自整定
-    #if WHO_IS_USER == USER_WB
-        StepByStepCommissioning_NEW_WB();
-    #endif
+    StepByStepCommissioning_NEW_WB();
     _user_inverter_voltage_command(0);
 }
 
@@ -212,7 +210,7 @@ void init_COMM(){
     #if WHO_IS_USER == USER_WB
         COMM.bool_comm_status = d_sim.user.COMM_bool_comm_status;
     #else
-        COMM.bool_comm_status = 1;
+        COMM.bool_comm_status = 4;
     #endif
 
     

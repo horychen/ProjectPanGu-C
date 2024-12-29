@@ -180,8 +180,8 @@ void rk4_init(){
         #undef NS
     }
     #if PC_SIMULATION == TRUE
-        #define OFFSET_VOLTAGE_ALPHA (1*-0.2) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
-        #define OFFSET_VOLTAGE_BETA  (1*+0.2) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
+        #define OFFSET_VOLTAGE_ALPHA 0//(1*-0.2) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
+        #define OFFSET_VOLTAGE_BETA  0//(1*+0.2) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
     #else
         #define OFFSET_VOLTAGE_ALPHA 0
         #define OFFSET_VOLTAGE_BETA  0
@@ -1594,32 +1594,40 @@ void rk4_init(){
     void simulation_test_flux_estimators(){
         // MainFE_HUWU_1998();
         #if AFE_37_NO_SATURATION_BASED
-        Main_No_Saturation_Based();
+            Main_No_Saturation_Based();
         #endif
         VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
             
-        // Main_the_active_flux_estimator();
+        Main_the_active_flux_estimator();
         // VM_LascuAndreescus2006();
-        Main_Bernard2017();
-        Main_VM_ClosedLoopFluxEstimatorForPMSM();
+        #if AFE_42_BandP
+            Main_Bernard2017();
+        #endif
+        #if AFE_38_OUTPUT_ERROR_CLOSED_LOOP
+            Main_VM_ClosedLoopFluxEstimatorForPMSM();
+        #endif
         // Main_Saturation_time_Without_Limiting();
         // VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
     }
 
     void init_FE(){
         // init_FE_huwu();
+        #if AFE_38_OUTPUT_ERROR_CLOSED_LOOP
         init_ClosedLoopFluxEstimatorForPMSM();
+        #endif
         #if AFE_25_VM_CM_FUSION
         init_afe();
         #endif
         #if AFE_37_NO_SATURATION_BASED
-        init_No_Saturation_Based();
+            init_No_Saturation_Based();
         #endif
         init_FE_htz();
         #if AFE_13_LASCU_ANDREESCUS_2006
-        init_LascuAndreescus2006();
+            init_LascuAndreescus2006();
         #endif
-        init_Bernard();
+        #if AFE_42_BandP
+            init_Bernard();
+        #endif
         // init_Saturation_time_Without_Limiting();
     }
 
@@ -3087,9 +3095,14 @@ void pmsm_observers(){
                 Main_No_Saturation_Based();
             #endif
             VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
-            Main_Bernard2017();
-            Main_VM_ClosedLoopFluxEstimatorForPMSM();
+            #if AFE_42_BandP
+                Main_Bernard2017();
+            #endif
+            #if AFE_38_OUTPUT_ERROR_CLOSED_LOOP
+                Main_VM_ClosedLoopFluxEstimatorForPMSM();
+            #endif
             Main_nsoaf_chen2020();
+            Main_the_active_flux_estimator();
             #if ALG_AKT_SPEED_EST_AND_RS_ID
                 SpeedEstimationFromtheVMBasedFluxEstimation();
                 RS_Identificaiton();
@@ -3250,5 +3263,253 @@ void init_pmsm_observers(){
 }
 #endif
 
+//inverter nonlinearity
+
+REAL lpf1_inverter(REAL x, REAL y_tminus1)
+{
+    // #define LPF1_RC 0.6 // 0.7, 0.8, 1.2, 3太大滤得过分了 /* 观察I5+I7_LPF的动态情况进行确定 */
+    // #define ALPHA_RC (TS/(LPF1_RC + TS)) // TODO：优化
+    // return y_tminus1 + ALPHA_RC * (x - y_tminus1); // 0.00020828993959591752
+    return y_tminus1 + 0.00020828993959591752 * (x - y_tminus1);
+}
+REAL shift2pi(REAL thetaA)
+{
+    if (thetaA > M_PI)
+    {
+        return thetaA - 2 * M_PI;
+    }
+    else if (thetaA < -M_PI)
+    {   
+        return thetaA + 2 * M_PI;
+    }
+    else
+    {
+        return thetaA;
+    }
+}
+REAL trapezoidal_voltage_by_phase_current(REAL current, REAL V_plateau, REAL I_plateau, REAL oneOnver_I_plateau)
+{
+    REAL abs_current = fabsf(current);
+    if (abs_current < I_plateau)
+    {
+        return current * V_plateau * oneOnver_I_plateau;
+    }
+    else
+    {
+        return sign(current) * V_plateau;
+    }
+}
+REAL sigmoid_online_v2(REAL x, REAL a2, REAL a3)
+{
+    return a2 / (1.0 + exp(-a3 * x)) - a2 * 0.5;
+}
+REAL sigmoid_online(REAL x, REAL Vsat, REAL a3)
+{
+
+    REAL a2 = Vsat * 2;
+    // REAL a3 = 5.22150403;
+    return a2 / (1.0 + exp(-a3 * x)) - a2 * 0.5;
+}
+REAL sig_a2 = 7.4;
+REAL sig_a3 = 35.2;
+
+void inverterNonlinearity_Initialization()
+{
+    INV.gamma_theta_trapezoidal = GAIN_THETA_TRAPEZOIDAL;
+#ifdef _XCUBE1
+    INV.Vsat = 16.0575341 / 2; // 6.67054; // 180 V SiC
+#else
+    // INV.Vsat = sig_a2*0.5; //6.74233802;
+    INV.Vsat = 7.84; // 150 V
+#endif
+
+    INV.gain_Vsat = 0 * 10;
+
+    INV.thetaA = 0;
+    INV.cos_thetaA = 1;
+    INV.sin_thetaA = 0;
+
+    // --
+    INV.u_comp[0] = 0;
+    INV.u_comp[1] = 0;
+    INV.u_comp[2] = 0;
+    INV.ual_comp = 0;
+    INV.ube_comp = 0;
+    INV.uDcomp_atA = 0;
+    INV.uQcomp_atA = 0;
+
+    INV.iD_atA = 0;
+    INV.iQ_atA = 0;
+    INV.I5_plus_I7 = 0;
+    INV.I5_plus_I7_LPF = 0.0;
+    INV.theta_trapezoidal = 11.0 * M_PI_OVER_180; // in rad
+
+#ifdef _XCUBE1
+    INV.I_plateau_Max = 2.0;
+    INV.I_plateau_Min = 0.2;
+#else
+    INV.I_plateau_Max = 1.0;
+    INV.I_plateau_Min = 0.1;
+#endif
+    INV.I_plateau = 0.7;
+    INV.V_plateau = 1.5 * sig_a2 * 0.5;
+    INV.gamma_I_plateau = 10.0;
+    INV.gamma_V_plateau = 0.0; // this is updated by the estimated disturbance to the sinusoidal flux model.
+
+#if PC_SIMULATION
+    INV.sig_a2 = 1.0 * sig_a2;
+    INV.sig_a3 = 1.5 * sig_a3; // = shape parameter
+#else
+    INV.sig_a2 = sig_a2; // = Plateau * 2
+    INV.sig_a3 = sig_a3; // = shape parameter
+#endif
+
+    INV.w6 = 1;
+    INV.w12 = 0;
+    INV.w18 = 0;
+    INV.gamma_a2 = 400;
+    INV.gamma_a3 = 125;
+}
+void Online_PAA_Based_Compensation(void)
+{
+
+    // /* 角度反馈: (*CTRL).i->theta_d_elec or ELECTRICAL_POSITION_FEEDBACK? */
+    // INV.thetaA = ELECTRICAL_POSITION_FEEDBACK;
+    // // I (current vector amplitude)
+    // INV.iD_atA = sqrt(IS_C(0)*IS_C(0) + IS_C(1)*IS_C(1));
+
+    /* 在Park2012中，a相电流被建模成了sin函数，一个sin函数的自变量角度放在正交坐标系下看就是在交轴上的，所以要-1.5*pi */
+
+    // Phase A current's fundamental component transformation
+    /* 这里使用哪个角度的关键不在于是有感的角度还是无感的角度，而是你FOC电流控制器（Park变换）用的角度是哪个？ */
+    if ((*debug).SENSORLESS_CONTROL)
+    {
+        INV.thetaA = -M_PI * 1.5 + PMSM_ELECTRICAL_POSITION_FEEDBACK + atan2((*CTRL).i->cmd_iDQ[1], (*CTRL).i->cmd_iDQ[0]); /* Q: why -pi*(1.5)? */ /* ParkSul2014 suggests to use PLL to extract thetaA from current command */
+    }
+    else
+    {
+        INV.thetaA = -M_PI * 1.5 + (*CTRL).i->theta_d_elec + atan2((*CTRL).i->cmd_iDQ[1], (*CTRL).i->cmd_iDQ[0]); /* Q: why -pi*(1.5)? */ /* ParkSul2014 suggests to use PLL to extract thetaA from current command */
+    }
+    INV.thetaA = shift2pi(INV.thetaA); /* Q: how to handle it when INV.thetaA jumps between pi and -pi? */ // 这句话绝对不能省去，否则C相的梯形波会出错。
+
+    INV.cos_thetaA = cosf(INV.thetaA);
+    INV.sin_thetaA = sinf(INV.thetaA);
+    INV.iD_atA = AB2M(IS_C(0), IS_C(1), INV.cos_thetaA, INV.sin_thetaA);
+    INV.iQ_atA = AB2T(IS_C(0), IS_C(1), INV.cos_thetaA, INV.sin_thetaA);
+
+    if (FALSE)
+    {
+        /* Use q-axis current in phase A angle (Tentative and Failed) */
+        INV.I5_plus_I7 = INV.iQ_atA * cosf(6 * INV.thetaA);
+        INV.I5_plus_I7_LPF = lpf1_inverter(INV.I5_plus_I7, INV.I5_plus_I7_LPF);
+
+        INV.I11_plus_I13 = INV.iQ_atA * cosf(12 * INV.thetaA);
+        INV.I11_plus_I13_LPF = lpf1_inverter(INV.I11_plus_I13, INV.I11_plus_I13_LPF);
+
+        INV.I17_plus_I19 = INV.iQ_atA * cosf(18 * INV.thetaA);
+        INV.I17_plus_I19_LPF = lpf1_inverter(INV.I17_plus_I19, INV.I17_plus_I19_LPF);
+    }
+    else
+    {
+        /* Use d-axis current in phase A angle */
+        INV.I5_plus_I7 = INV.iD_atA * sinf(6 * INV.thetaA);                     /* Q: Why sinf? Why not cosf? 和上面的-1.5*pi有关系吗？ */
+        INV.I5_plus_I7_LPF = lpf1_inverter(INV.I5_plus_I7, INV.I5_plus_I7_LPF); /* lpf1 for inverter */
+
+        INV.I11_plus_I13 = INV.iD_atA * sinf(12 * INV.thetaA);
+        INV.I11_plus_I13_LPF = lpf1_inverter(INV.I11_plus_I13, INV.I11_plus_I13_LPF);
+
+        INV.I17_plus_I19 = INV.iD_atA * sinf(18 * INV.thetaA);
+        INV.I17_plus_I19_LPF = lpf1_inverter(INV.I17_plus_I19, INV.I17_plus_I19_LPF);
+    }
+
+#if PC_SIMULATION
+    // INV.gamma_a2 = 0.0;
+    // INV.gamma_a3 = 0.0;
+#endif
+
+    /* Online Update Sigmoid a3 */
+    // if((*CTRL).timebase>35){
+    //     INV.gamma_I_plateau = 0.0;
+    // }
+    INV.sig_a3 -= CL_TS * INV.gamma_a3 // *fabsf((*CTRL).i->cmd_speed_rpm)
+                  * (INV.w6 * INV.I5_plus_I7_LPF + INV.w12 * INV.I11_plus_I13_LPF + INV.w18 * INV.I17_plus_I19_LPF);
+
+    // (*CTRL).s->Motor_or_Generator = sign((*CTRL).i->omg_elec * (*CTRL).i->cmd_iDQ[1]);
+    // (*CTRL).s->Motor_or_Generator = sign((*CTRL).i->cmd_omg_elec);
+
+    /* Online Update Sigmoid a2 */
+    if ((*CTRL).timebase > 2)
+    {
+        /* Sensorless: Adaptive a2 based on flux amplitude error */
+        // use linear FE
+        // INV.sig_a2 += CL_TS * -100 * AFEOE.output_error_dq[0];
+
+        // use nonlinear (saturation) FE
+        INV.sig_a2 += CL_TS * -INV.gamma_a2 * (*CTRL).s->Motor_or_Generator * (MOTOR.KActive - FE.htz.psi_2_ampl_lpf);
+
+        /* Sensored: Adaptive a2 based on position error */
+        /* To use this, you must have a large enough stator current */
+        /* 这个好像只对梯形波（电流值的函数）有效 ……*/
+        // INV.sig_a2 += CL_TS * INV.gain_Vsat * sinf(ENC.theta_d_elec - ELECTRICAL_POSITION_FEEDBACK) * (*CTRL).s->Motor_or_Generator;
+    }
+    if (INV.sig_a2 > 40)
+    {
+        INV.sig_a2 = 40;
+    }
+    else if (INV.sig_a2 < 2)
+    {
+        INV.sig_a2 = 2;
+    }
+
+    /* Chen2021: linear approximation of u-i curve */
+    // if((*CTRL).timebase>35){
+    //     INV.gamma_I_plateau = 0.0;
+    // }
+    // INV.I_plateau += CL_TS * 0 * INV.gamma_I_plateau \
+    //                         // *fabsf((*CTRL).i->cmd_speed_rpm)
+    //                         *(    1*INV.I5_plus_I7_LPF
+    //                             + 0*INV.I11_plus_I13_LPF
+    //                             + 0*INV.I17_plus_I19_LPF
+    //                          );
+    // if(INV.I_plateau > INV.I_plateau_Max){
+    //     INV.I_plateau = INV.I_plateau_Max;
+    // }else if(INV.I_plateau < INV.I_plateau_Min){
+    //     INV.I_plateau = INV.I_plateau_Min;
+    // }
+
+    /* Chen2021SlessInv 覆盖 */
+    if (INV.gamma_I_plateau != 0)
+    {
+        REAL ia_cmd = ((*CTRL).o->cmd_iAB[0]);
+        REAL ib_cmd = (-0.5 * (*CTRL).o->cmd_iAB[0] - SIN_DASH_2PI_SLASH_3 * (*CTRL).o->cmd_iAB[1]);
+        REAL ic_cmd = (-0.5 * (*CTRL).o->cmd_iAB[0] - SIN_2PI_SLASH_3 * (*CTRL).o->cmd_iAB[1]);
+        REAL oneOver_I_plateau = 1.0 / INV.I_plateau;
+        INV.u_comp[0] = trapezoidal_voltage_by_phase_current(ia_cmd, INV.V_plateau, INV.I_plateau, oneOver_I_plateau);
+        INV.u_comp[1] = trapezoidal_voltage_by_phase_current(ib_cmd, INV.V_plateau, INV.I_plateau, oneOver_I_plateau);
+        INV.u_comp[2] = trapezoidal_voltage_by_phase_current(ic_cmd, INV.V_plateau, INV.I_plateau, oneOver_I_plateau);
+
+        /* Online Sigmoid a3 覆盖 覆盖 */
+        INV.u_comp[0] = sigmoid_online_v2(ia_cmd, INV.sig_a2, INV.sig_a3);
+        INV.u_comp[1] = sigmoid_online_v2(ib_cmd, INV.sig_a2, INV.sig_a3);
+        INV.u_comp[2] = sigmoid_online_v2(ic_cmd, INV.sig_a2, INV.sig_a3);
+    }
+
+    /* 相补偿电压Clarke为静止正交坐标系电压。 */
+    // 改成恒幅值变换
+    INV.ual_comp = 0.66666666667 * (INV.u_comp[0] - 0.5 * INV.u_comp[1] - 0.5 * INV.u_comp[2]);
+    INV.ube_comp = 0.66666666667 * 0.86602540378 * (INV.u_comp[1] - INV.u_comp[2]);
+    // INV.ual_comp = SQRT_2_SLASH_3      * (INV.u_comp[0] - 0.5*INV.u_comp[1] - 0.5*INV.u_comp[2]); // sqrt(2/3.)
+    // INV.ube_comp = 0.70710678118654746 * (                    INV.u_comp[1] -     INV.u_comp[2]); // sqrt(2/3.)*sinf(2*pi/3) = sqrt(2/3.)*(sqrt(3)/2)
+
+    // 区分补偿前的电压和补偿后的电压：
+    // (*CTRL).ual, (*CTRL).ube 是补偿前的电压！
+    // (*CTRL).ual + INV.ual_comp, (*CTRL).ube + INV.ube_comp 是补偿后的电压！
+}
+void yzz_inverter_Compensation_Online_PAA()
+{
+    Online_PAA_Based_Compensation();
+    (*CTRL).o->cmd_uAB_to_inverter[0] = (*CTRL).o->cmd_uAB[0] + INV.ual_comp;
+    (*CTRL).o->cmd_uAB_to_inverter[1] = (*CTRL).o->cmd_uAB[1] + INV.ube_comp;
+}
 
 #endif

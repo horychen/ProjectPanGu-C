@@ -17,6 +17,7 @@
 
     /* Select [Shared Flux Estimator] */
     // #define AFE_USED FE.clfe4PMSM
+    
     #define AFE_USED FE.htz
     // #define AFE_USED FE.huwu
     // #define AFE_USED FE.htz // this is for ESO speed estimation
@@ -109,7 +110,7 @@
     #define AFE_22_STOJIC_2015 0
     #define AFE_23_SCVM_HARNEFORS_2003 0
     #define AFE_24_OE 0
-    #define AFE_25_VM_CM_FUSION 0 // See ParkSul2014Follower2020
+    #define AFE_25_VM_CM_FUSION 1 // See ParkSul2014Follower2020
     #define AFE_31_HOLT_QUAN_2003_LPF_ORIGINIAL 0
     #define AFE_32_HOLT_QUAN_2003_INTEGRATOR 0
     #define AFE_33_EXACT_OFFSET_COMPENSATION 0
@@ -117,11 +118,11 @@
     #define AFE_35_SATURATION_TIME_DIFFERENCE  1
     #define AFE_36_TOP_BUTT_EXACT_COMPENSATION 0
     #define AFE_37_NO_SATURATION_BASED 0
-    #define AFE_38_OUTPUT_ERROR_CLOSED_LOOP 1
+    #define AFE_38_OUTPUT_ERROR_CLOSED_LOOP 0
     #define AFE_39_SATURATION_TIME_WITHOUT_LIMITING 0
     #define AFE_40_JO_CHOI_METHOD 0
     #define AFE_41_LascuAndreescus2006 0
-    #define AFE_42_BandP 1
+    #define AFE_42_BandP 0
     #define ALG_AKT_SPEED_EST_AND_RS_ID 0
     #define ALG_Awaya_InertiaId 0
     #define ALG_qaxis_inductance_identification 0
@@ -675,7 +676,9 @@
         #if AFE_37_NO_SATURATION_BASED
             void Main_No_Saturation_Based();
         #endif
-        void Main_VM_ClosedLoopFluxEstimatorForPMSM();
+        #if AFE_38_OUTPUT_ERROR_CLOSED_LOOP
+            void Main_ClosedLoopFluxEstimatorForPMSM();
+        #endif
         #if AFE_13_LASCU_ANDREESCUS_2006
             void VM_LascuAndreescus2006();
         #endif
@@ -683,7 +686,9 @@
             void SpeedEstimationFromtheVMBasedFluxEstimation();
             void RS_Identificaiton();
         #endif
-        void Main_Bernard2017();
+        #if AFE_42_BandP
+            void Main_Bernard2017();
+        #endif
         // void Main_Saturation_time_Without_Limiting();
     void init_afe();
     void init_FE();
@@ -1181,7 +1186,14 @@
 
     #endif
 
-
+// inverter nonlinearity
+void Online_PAA_Based_Compensation(void);
+#define GAIN_THETA_TRAPEZOIDAL (20) // 20
+void inverterNonlinearity_Initialization();
+REAL u_comp_per_phase(REAL Vsat, REAL thetaA, REAL theta_trapezoidal, REAL oneOver_theta_trapezoidal);
+REAL lpf1(REAL x, REAL y_tminus1);
+REAL shift2pi(REAL thetaA);
+void yzz_inverter_Compensation_Online_PAA();
 #endif
 
 #endif
