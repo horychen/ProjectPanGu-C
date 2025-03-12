@@ -236,5 +236,7 @@
     #define SCALE_LEM_A2 0.03060669 // ADCA2
     #define SCALE_LEM_A3 0.03045988 // ADCA3
 
+    // GongWang Encoder
+
 #endif
 #endif

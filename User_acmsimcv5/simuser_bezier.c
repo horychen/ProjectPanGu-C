@@ -492,6 +492,9 @@ void set_points(BezierController *pBezier)
             REAL y_tmp[10];
             FILE *fw;
             fw = fopen(ARGS_PATH, "r");
+            // fw = fopen("../acmsimc_bezier_points/SD80AEA07530-SC3-COMM-Eureka-4-0-50-iQ.txt", "r");
+            // fw = fopen("../acmsimc_bezier_points/SD80AEA07530-SC3-COMM-Eureka-4-0-200-iQ.txt", "r");
+            // fw = fopen("../acmsimc_bezier_points/SD80AEA07530-SC3-COMM-Eureka-4-0-infity-iQ.txt", "r");
             if (fw == NULL){
                 if(d_sim.user.verbose)printf("Error opening file!\n");
                 exit(1);

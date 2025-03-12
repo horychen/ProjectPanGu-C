@@ -15,7 +15,7 @@
 #define USER_WB2    970308
 #define USER_GEN    240828
 #define USER_QIAN   2022231110
-#define USER_CURY   201314
+#define USER_CURY   369
 
 #define MODE_SELECT_PWM_DIRECT         1
 #define MODE_SELECT_VOLTAGE_OPEN_LOOP  11
@@ -29,12 +29,14 @@
 #define MODE_SELECT_VELOCITY_LOOP            4
 #define MODE_SELECT_VELOCITY_LOOP_SENSORLESS 41
 #define MODE_SELECT_TESTING_SENSORLESS       42
-#define MODE_SELECT_V_LOOP_WC_TUNER   43 // 这个模式被弃用了，现在于USER_WB中实现WC Tuner
+#define MODE_SELECT_V_LOOP_WC_TUNER   43  // 这个模式被弃用了，现在于USER_WB中实现WC Tuner
 #define MODE_SELECT_Marino2005               44
 #define MODE_SELECT_V_LOOP_HARNEFORS_1998   45
 #define MODE_SELECT_SWEEPING_FREQ   46
 #define MODE_SELECT_V_LOOP_ESO_SPEED_REF 47
 #define MODE_SELECT_POSITION_LOOP            5
+#define MODE_SELECT_CURY_POSITION_LOOP       51
+#define MODE_SELECT_POSITION_IMPEDANCE_CONTROL 52
 #define MODE_SELECT_COMMISSIONING            9
 #define MODE_SELECT_NYQUIST_PLOTTING         91
 #define MODE_SELECT_UDQ_GIVEN_TEST           98
@@ -214,6 +216,7 @@ void cmd_slow_speed_reversal(REAL timebase, REAL instant, REAL interval, REAL rp
 
 int main_switch(long mode_select);
 void FOC_with_vecocity_control(REAL theta_d_elec, REAL varOmega, REAL cmd_varOmega, REAL cmd_iDQ[2], REAL iAB[2]);
+void _user_position_loop(REAL cmd_varTheta, REAL varTheta);
 
 
 

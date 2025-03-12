@@ -2,22 +2,26 @@
 
 #if WHO_IS_USER == USER_WB
 
+
+/* Wubo's Strcture */
 wubo_SignalGenerator wubo_SG;
 wubo_Parameter_mismatch wubo_ParaMis;
 wubo_Hit_Wall wubo_HW;
 SpeedInnerLoop SIL_Controller;
 Harnefors_1998_BackCals Harnefors_1998_BackCals_Variable;
+Rohr_1991 Rohr_1991_Controller;
+Pos_IMP Pos_IMP_CTRL;
 
 
 
-    /* Calculation for Vdc utilization BUT this is not beauty it makes CHAOS!!!!*/
-    #if PC_SIMULATION
-        #define DC_BUS_VOLTAGE_INVERSE_WUBO (1.732 / d_sim.init.Vdc)
-    #else
-        #include "All_Definition.h"
-        extern st_axis *Axis;
-        #define DC_BUS_VOLTAGE_INVERSE_WUBO (1.732 / Axis->vdc)
-    #endif
+/* Calculation for Vdc utilization BUT this is not beauty it makes CHAOS!!!!*/
+#if PC_SIMULATION
+    #define DC_BUS_VOLTAGE_INVERSE_WUBO (1.732 / d_sim.init.Vdc)
+#else
+    #include "All_Definition.h"
+    extern st_axis *Axis;
+    #define DC_BUS_VOLTAGE_INVERSE_WUBO (1.732 / Axis->vdc)
+#endif
 
 
 REAL global_id_ampl[NUMBER_OF_FREQUENCY_LEVEL] = {1, 1, 1};
@@ -478,12 +482,12 @@ void _user_wubo_SpeedInnerLoop_controller(st_pid_regulator *r, SpeedInnerLoop *r
 
 /* Codes for Harnefors 1998 back calculation */
 void _init_Harnerfors_1998_BackCalc(){
-    Harnefors_1998_BackCals_Variable.Err_bar = 0.0;
-    Harnefors_1998_BackCals_Variable.I_Term_prev = 0.0;
+    Harnefors_1998_BackCals_Variable.Err_bar        = 0.0;
+    Harnefors_1998_BackCals_Variable.I_Term_prev    = 0.0;
     Harnefors_1998_BackCals_Variable.I_Term_prev_iD = 0.0;
     Harnefors_1998_BackCals_Variable.I_Term_prev_iQ = 0.0;
-    Harnefors_1998_BackCals_Variable.K_INVERSE_iD = 1 / (PID_iD->Kp + PID_iD->Ki_CODE);
-    Harnefors_1998_BackCals_Variable.K_INVERSE_iQ = 1 / (PID_iQ->Kp + PID_iQ->Ki_CODE);
+    Harnefors_1998_BackCals_Variable.K_INVERSE_iD   = 1 / (PID_iD->Kp + PID_iD->Ki_CODE);
+    Harnefors_1998_BackCals_Variable.K_INVERSE_iQ   = 1 / (PID_iQ->Kp + PID_iQ->Ki_CODE);
 }
 void _user_Harnefors_back_calc_PI_antiWindup(st_pid_regulator *r, Harnefors_1998_BackCals *H, REAL K_inverse, REAL coupling_term){
     r->Err = r->Ref - r->Fbk;
@@ -504,6 +508,104 @@ void _user_Harnefors_back_calc_PI_antiWindup(st_pid_regulator *r, Harnefors_1998
     r->Out = r->P_Term + r->I_Term + coupling_term;
 }
 
+/* 1991 Rohr Example */
+void _init_Rohr_1991(){
+    Rohr_1991_Controller.yp         = 0.0;
+    Rohr_1991_Controller.K_adapt    = 0.0;
+    Rohr_1991_Controller.KI_const   = d_sim.user.Rohr_K_integral;
+    Rohr_1991_Controller.output     = 0.0;
+    Rohr_1991_Controller.I_term     = 0.0;
+    Rohr_1991_Controller.K_range[0] = d_sim.user.Rohr_K_min;
+    Rohr_1991_Controller.K_range[1] = d_sim.user.Rohr_K_max;
+    Rohr_1991_Controller.gamma      = d_sim.user.Rohr_gamma;
+    Rohr_1991_Controller.sigma      = d_sim.user.Rohr_sigma;
+    Rohr_1991_Controller.NS         = ROHR_CONTROLLER_NUMBER_OF_STATES;
+    int i;
+    for(i=0;i<Rohr_1991_Controller.NS;++i){
+        Rohr_1991_Controller.x[i] = 0.0;
+        Rohr_1991_Controller.x_dot[i] = 0.0;
+    }
+}
+
+void rk4_wubo_style(REAL t, REAL *x, REAL hs){ // 四阶龙格库塔法 stolen from CJH :>
+    #define NS ROHR_CONTROLLER_NUMBER_OF_STATES
+
+    REAL k1[NS], k2[NS], k3[NS], k4[NS], xk[NS];
+    REAL fx[NS];
+    int i;
+    Rohr_1991_dynamics(t, x, fx); // timer.t,
+    for(i=0;i<NS;++i){        
+        k1[i] = fx[i] * hs;
+        xk[i] = x[i] + k1[i]*0.5;
+    }
+    Rohr_1991_dynamics(t, xk, fx); // timer.t+hs/2.,
+    for(i=0;i<NS;++i){        
+        k2[i] = fx[i] * hs;
+        xk[i] = x[i] + k2[i]*0.5;
+    }
+    Rohr_1991_dynamics(t, xk, fx); // timer.t+hs/2.,
+    for(i=0;i<NS;++i){        
+        k3[i] = fx[i] * hs;
+        xk[i] = x[i] + k3[i];
+    }
+    Rohr_1991_dynamics(t, xk, fx); // timer.t+hs, 
+    for(i=0;i<NS;++i){        
+        k4[i] = fx[i] * hs;
+        x[i] = x[i] + (k1[i] + 2*(k2[i] + k3[i]) + k4[i])*one_over_six;
+        // derivatives
+        // ACM.x_dot[i] = (k1[i] + 2*(k2[i] + k3[i]) + k4[i])*one_over_six / hs;
+    }
+    #undef NS
+}
+
+void Rohr_1991_dynamics(REAL t, REAL x[], REAL fx[]){
+    // K ->x[0]
+    REAL yp = Rohr_1991_Controller.yp;
+
+    if (d_sim.user.bool_apply_Rohr_1991_Controller_with_Forgetting_Factor){
+        fx[0] = yp * yp * Rohr_1991_Controller.gamma - Rohr_1991_Controller.sigma * x[0];
+    }else{
+        fx[0] = yp * yp * Rohr_1991_Controller.gamma;
+    }
+    fx[1] = Rohr_1991_Controller.KI_const * yp;
+}
+
+void _user_Rohr_1991_controller(st_pid_regulator *r, Rohr_1991 *Rohr_r, REAL y, REAL y_ref){
+    //TODO: 我这个代码结构不太好啊，Rohr_r我为什么不直接用wb文件里的变量，反而还要extern到main switch中去，这样好吗？
+    // void Rohr_1991_dynamics();
+    // 计算Error
+    Rohr_r->yp = y_ref - y;
+    // 执行RK4
+    // rk4_wubo_style( (*CTRL).timebase, Rohr_1991_Controller.x, CL_TS );
+    rk4_wubo_style( (*CTRL).timebase, Rohr_r->x, CL_TS );
+
+    Rohr_r->K_adapt = Rohr_r->x[0];
+    if (Rohr_r->K_adapt > Rohr_r->K_range[1])
+        Rohr_r->K_adapt = Rohr_r->K_range[1];
+    else if (Rohr_r->K_adapt < Rohr_r->K_range[0])
+        Rohr_r->K_adapt = Rohr_r->K_range[0];
+    
+    Rohr_r->I_term  = Rohr_r->x[1];
+    REAL KP_term = Rohr_r->K_adapt * Rohr_r->yp;
+
+    REAL I_max = WUBO_MAX( r->OutLimit - KP_term, 0.0 );
+    REAL I_min = WUBO_MIN( r->OutLimit - KP_term, 0.0 );
+
+    if (Rohr_r->I_term > I_max)
+        Rohr_r->I_term = I_max;
+    else if (Rohr_r->I_term < I_min)
+        Rohr_r->I_term = I_min;
+    
+    // 更新输出
+    Rohr_r->output = KP_term + Rohr_r->I_term;
+    if(Rohr_r->output > r->OutLimit)
+        Rohr_r->output = r->OutLimit;
+    else if(Rohr_r->output < -r->OutLimit)
+        Rohr_r->output = -r->OutLimit;
+}
+
+
+
 /* DPCC */
 void DPCC(REAL cmd_idq[2], REAL idq[2]){
     (*CTRL).o->cmd_uDQ[0] = 0.0;
@@ -511,6 +613,12 @@ void DPCC(REAL cmd_idq[2], REAL idq[2]){
 }
 
 /* Position Loop */
+void _init_Pos_IMP(){
+    Pos_IMP_CTRL.Kiq = d_sim.user.IMP_Spring_Factor;
+    Pos_IMP_CTRL.Biq = d_sim.user.IMP_Damping_Factor;
+    Pos_IMP_CTRL.Err_Pos = 0.0;
+    Pos_IMP_CTRL.Err_Vel = 0.0;
+}
 void _user_wubo_get_SpeedFeedForward_for_PositionLoop(REAL Theta){
 
 }
@@ -558,6 +666,21 @@ void _user_wubo_PositionLoop_controller(REAL Theta, REAL cmd_Theta){
             (*CTRL).i->cmd_varOmega,
             (*CTRL).i->cmd_iDQ,
             (*CTRL).i->iAB );
+}
+
+void _user_wubo_PositionLoop_IMP(){
+    Pos_IMP_CTRL.Err_Pos = (*CTRL).i->varTheta - (*CTRL).i->cmd_varTheta;
+    Pos_IMP_CTRL.Err_Vel = (*CTRL).i->varOmega - 0; // 恒值位置的导数为0
+
+    (*CTRL).i->cmd_iDQ[0] = 0;
+    (*CTRL).i->cmd_iDQ[1] = - Pos_IMP_CTRL.Kiq * Pos_IMP_CTRL.Err_Pos - Pos_IMP_CTRL.Biq * Pos_IMP_CTRL.Err_Vel;
+    
+    if ( (*CTRL).i->cmd_iDQ[1] > (d_sim.init.IN * d_sim.VL.LIMIT_OVERLOAD_FACTOR) ){
+        (*CTRL).i->cmd_iDQ[1] = d_sim.init.IN * d_sim.VL.LIMIT_OVERLOAD_FACTOR;
+    }else if( (*CTRL).i->cmd_iDQ[1] < -(d_sim.init.IN * d_sim.VL.LIMIT_OVERLOAD_FACTOR) ){
+        (*CTRL).i->cmd_iDQ[1] = -d_sim.init.IN * d_sim.VL.LIMIT_OVERLOAD_FACTOR;    
+    }
+    _onlyFOC( (*CTRL).i->theta_d_elec, (*CTRL).i->iAB );
 }
 
 /* Auto MISMATCH the Parameter with CTRL.timebase */

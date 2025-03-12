@@ -3,6 +3,8 @@
 
 #if WHO_IS_USER == USER_WB
     #include "ACMSim.h"
+    #define WUBO_MAX(a, b) ((a) > (b) ? (a) : (b))
+    #define WUBO_MIN(a, b) ((a) < (b) ? (a) : (b))
 
     /* Hit Wall Anaylsis*/
     #define NUMBER_OF_HIT_WALL_VAR_RATIO 10
@@ -56,9 +58,43 @@
     void _user_Harnefors_back_calc_PI_antiWindup(st_pid_regulator *r, Harnefors_1998_BackCals *H, REAL K_inverse, REAL coupling_term);
     void _user_wubo_FOC(REAL theta_d_elec, REAL iAB[2]);
 
+    /* 1991 Rohr Example */
+    #define ROHR_CONTROLLER_NUMBER_OF_STATES 2
+    typedef struct {
+        REAL yp;          // Regressor
+        REAL K_adapt;     // Adpatation gain
+        REAL KI_const;    // Integral gain
+        REAL output;      // Controller output (only KP term)
+        REAL I_term;      // Integral term
+        REAL K_range[2];  // Range of K
+        REAL gamma;       // scaling factor
+        REAL sigma;       // forgetting factor
+        REAL x[ROHR_CONTROLLER_NUMBER_OF_STATES]; // State variables
+        REAL x_dot[ROHR_CONTROLLER_NUMBER_OF_STATES]; // State variables
+        int NS ;         // Number of states
+    }Rohr_1991;
+    extern Rohr_1991 Rohr_1991_Controller;
+    void _init_Rohr_1991();
+    void _user_Rohr_1991_controller(st_pid_regulator *r, Rohr_1991 *Rohr_r, REAL y, REAL y_ref);
+    void rk4_wubo_style(REAL t, REAL *x, REAL hs);
+    void Rohr_1991_dynamics(REAL t, REAL x[], REAL fx[]);
+
+
+
     /* Position Loop Controller */
+    typedef struct {
+        REAL Kiq;     // spring factor K -> F=Kx
+        REAL Biq;     // damping factor B -> F=Bv
+        REAL Err_Pos; // 
+        REAL Err_Vel; // 
+    }Pos_IMP;
+    extern Pos_IMP Pos_IMP_CTRL;
     void _user_wubo_get_SpeedFeedForward_for_PositionLoop(REAL Theta);
     void _user_wubo_PositionLoop_controller(REAL Theta, REAL Speed_FeedForward);
+    void _init_Pos_IMP();
+    void _user_wubo_PositionLoop_IMP();
+
+
 
     /* For Sweeping & Signal Generator */
     void _user_wubo_Sweeping_Command();
@@ -71,13 +107,13 @@
     #define GENERATE_SPEED_SAUARE_WAVE_WITH_INV 4
     #define GENERATE_NYQUIST_SIGNAL 91
     typedef struct {
-        REAL idq_amp[2];  // Unit : A
-        REAL idq_freq[2]; // Unit : Hz
-        REAL speed_amp;   // Unit : RPM
-        REAL speed_freq;  // Unit : Hz
-        REAL squareWave_amp; // Unit : XX
-        REAL squareWave_quarter_cycle; // Unit : Second 1/4 cycle
-        REAL squareWave_total_time; // Unit : Second
+        REAL idq_amp[2];                // Unit : A
+        REAL idq_freq[2];               // Unit : Hz
+        REAL speed_amp;                 // Unit : RPM
+        REAL speed_freq;                // Unit : Hz
+        REAL squareWave_amp;            // Unit : XX
+        REAL squareWave_quarter_cycle;  // Unit : Second 1/4 cycle
+        REAL squareWave_total_time;     // Unit : Second
         REAL signal_out;
     } wubo_SignalGenerator;
     extern wubo_SignalGenerator wubo_SG;
