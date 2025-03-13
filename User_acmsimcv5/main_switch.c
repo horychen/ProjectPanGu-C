@@ -1099,8 +1099,6 @@ int  main_switch(long mode_select){
 
         // Run position loop control
         _user_position_loop((*CTRL).i->cmd_varTheta,(*CTRL).i->varTheta);
-
-
         break;
     case MODE_SELECT_CURY_POSITION_LOOP: // 51
         #if WHO_IS_USER == USER_WB
@@ -1122,7 +1120,9 @@ int  main_switch(long mode_select){
                 (*CTRL).i->iAB);
             // update the cury_controller -> the code here seems to be quite stupid 
             cury_controller.CONTROLLER_TYPE = d_sim.user.tracking_trace_Type;
+
         #endif
+        break;
     case MODE_SELECT_POSITION_IMPEDANCE_CONTROL: //52
         #if WHO_IS_USER == USER_WB
             (*CTRL).i->cmd_varTheta = M_PI * 0.8;
@@ -1137,6 +1137,7 @@ int  main_switch(long mode_select){
             }
             _user_wubo_PositionLoop_IMP();
         #endif
+        break;
     case MODE_SELECT_COMMISSIONING: // 9
         // #if ENABLE_COMMISSIONING == TRUE
         #if ENABLE_COMMISSIONING && WHO_IS_USER == USER_WB

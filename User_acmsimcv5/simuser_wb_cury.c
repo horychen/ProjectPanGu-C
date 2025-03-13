@@ -5,17 +5,6 @@
 
 #if WHO_IS_USER == USER_WB
 
-// CANSensor2Leg GongWang_CAN = {
-//         .HIP_MIN   = 0.2269,
-//         .HIP_MAX   = 0.5585,
-//         .SHANK_MIN = 0.4538,
-//         .SHANK_MAX = 1.1170,
-//         .CAN01_MIN = 48000,
-//         .CAN01_MAX = 41500,
-//         .CAN03_MIN = 58000,
-//         .CAN03_MAX = 46000
-//     };
-
 #if !PC_SIMULATION
     extern Uint32 position_count_CAN_ID0x01_fromCPU2;
     extern Uint32 position_count_CAN_ID0x03_fromCPU2;
@@ -46,27 +35,10 @@ CURYCONTROLLER cury_controller = {
         .hipBouncingIq = 1.5,
         .bool_TEMP = TRUE
     };
-// CURYCONTROLLER cury_controller;
-
-// void init_Cury_CTRL(){
-//     cury_controller.CONTROLLER_TYPE = (int)d_sim.user.tracking_trace_Type;
-//     cury_controller.IECON_HEIGHT = 0.72;
-//     cury_controller.L1 = 0.4;
-//     cury_controller.L2 = 0.39495;
-//     cury_controller.theta1 = INIT_THETA1;
-//     cury_controller.theta2 = INIT_THETA2;
-//     cury_controller.dot_theta1 = 0.0;
-//     cury_controller.dot_theta2 = 0.0;
-//     cury_controller.T = 1.5;
-//     cury_controller.T_inv = 1.0 / 1.5;
-//     cury_controller.height_limit = {0.68, 0.78};
-//     cury_controller.C = {{0.0, 0.0}, {0.1, 1.0}, {0.21, 0.93}, {1.0, 1.0}};
-//     cury_controller.order = BEZIER_ORDER;
-// }
 
 
 
-/* 线性差值 */
+/* 线性差值（偏向于公共功能的函数） */
 REAL linearInterpolate(REAL x, REAL x1, REAL x2, REAL y1, REAL y2){
     return y1 + (x - x1) / (x2 - x1) * (y2 - y1);
 }
@@ -80,8 +52,7 @@ REAL hip_shank_angle_to_can(REAL angle, int type){
     }
 }
 
-/* 获取关节角度的期望值（reference）*/
-
+/* 获取关节角度的期望值（reference generation）*/
 void calc_dot_theta_from_height(REAL height){
     REAL theta1_front, theta2_front;
     // 余弦定理！
@@ -168,10 +139,8 @@ void get_bezier_points(){
 
 REAL bezier_linear_interpoolation(REAL t){
     int i;
-    for (i = 0; i < BEZIER_TRACE_SIZE; i++)
-{
-        if (cury_controller.bezier_trace[i][0] <= t && t <= cury_controller.bezier_trace[i + 1][0])
-    {
+    for (i = 0; i < BEZIER_TRACE_SIZE; i++){
+        if (cury_controller.bezier_trace[i][0] <= t && t <= cury_controller.bezier_trace[i + 1][0]){
             REAL height = (cury_controller.bezier_trace[i][1] +
                            (cury_controller.bezier_trace[i + 1][1] - cury_controller.bezier_trace[i][1]) * (t - cury_controller.bezier_trace[i][0]) / (cury_controller.bezier_trace[i + 1][0] - cury_controller.bezier_trace[i][0])) *
                               (cury_controller.height_limit[1] - cury_controller.height_limit[0]) +
@@ -186,23 +155,19 @@ void bezier_controller(REAL t){
     REAL height, height_front, t_front;
     int period = (int)(t / cury_controller.T);
     t = t - period * cury_controller.T;
-    if (period % 2 == 0)
-{
+    if (period % 2 == 0){
         height = bezier_linear_interpoolation(t / cury_controller.T);
     }
-    else
-{
+    else{
         height = cury_controller.height_limit[1] - (cury_controller.height_limit[1] - cury_controller.height_limit[0]) * t / cury_controller.T;
     }
     t_front = t + (cury_controller.T / 1000);
     period = period + (int)(t_front / cury_controller.T);
     t_front -= (int)(t_front / cury_controller.T) * cury_controller.T;
-    if (period % 2 == 0)
-{
+    if (period % 2 == 0){
         height_front = bezier_linear_interpoolation(t_front / cury_controller.T);
     }
-    else
-{
+    else{
         height_front = cury_controller.height_limit[1] - (cury_controller.height_limit[1] - cury_controller.height_limit[0]) * t_front / cury_controller.T;
     }
     calc_theta_from_height(height);
@@ -238,7 +203,7 @@ void run_iecon_main(Uint64 t){
     }
 }
 
-/* Control */
+/* 纯控制部分 */
 void Cury_call_position_loop_controller(){
 
     // get the ref position 这里的run_iecon_main实际只是在生成轨迹，没有任何控制的部分！
@@ -345,6 +310,7 @@ void control_single_motor_position(){
                 SHANK_TYPE);
         (*CTRL).i->cmd_varTheta = PID_Position->Ref * CAN_QMAX_INV * 2 * M_PI;
     #endif
+    
     PID_Position->Err = PID_Position->Ref - PID_Position->Fbk;
     if (PID_Position->Err > (CAN_QMAX * 0.5)){
         PID_Position->Err -= CAN_QMAX;
@@ -525,12 +491,6 @@ void run_impedance_control(){
     }
 #endif
 }
-
-
-
-
-
-
 
 
 

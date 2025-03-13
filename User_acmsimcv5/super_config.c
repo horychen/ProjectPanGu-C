@@ -35,7 +35,7 @@ void init_d_sim() {
 
     d_sim.user.verbose = FALSE;
     d_sim.user.who_is_user = 2023231051;
-    d_sim.user.mode_select_synchronous_motor = 52;
+    d_sim.user.mode_select_synchronous_motor = 51;
     d_sim.user.mode_select_induction_motor = 32;
     d_sim.user.INVERTER_NONLINEARITY_COMPENSATION_METHOD = FALSE;
     d_sim.user.Select_exp_operation = 0.0;
@@ -46,7 +46,7 @@ void init_d_sim() {
     d_sim.user.max_CLBW_PER_min_CLBW = 0.9;
     d_sim.user.VL_FEEDBACK_KFB = 0;
     d_sim.user.bool_Null_D_Control = TRUE;
-    d_sim.user.bool_apply_WC_tunner_for_speed_loop = FALSE;
+    d_sim.user.bool_apply_WC_tunner_for_speed_loop = TRUE;
     d_sim.user.bool_enable_Harnefors_back_calculation = FALSE;
     d_sim.user.Check_Harnerfors_1998_On = -1.0;
     d_sim.user.bool_apply_Rohr_1991_Controller = TRUE;
@@ -74,7 +74,7 @@ void init_d_sim() {
     d_sim.user.Set_SpeedLoop_KI_as_Zero = FALSE;
     d_sim.user.Stable_Time_for_Sweeping = 1.5;
     d_sim.user.flag_clear_timebase_once = FALSE;
-    d_sim.user.bool_ESO_SPEED_ON = FALSE;
+    d_sim.user.bool_ESO_SPEED_ON = TRUE;
     d_sim.user.bool_apply_ESO_SPEED_for_SPEED_FBK = FALSE;
     d_sim.user.CAREFUL_ESOAF_OMEGA_OBSERVER = 0;
     d_sim.user.bool_Parameter_Mismatch_test = FALSE;

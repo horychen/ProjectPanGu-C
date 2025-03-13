@@ -70,6 +70,7 @@ extern Uint32 CpuTimer_After;
 #include "simuser_cjh.h"
 #include "simuser_yzz.h"
 #include "simuser_bezier.h"
+#include "simuser_wb_cury.h"
 
 
 #define CURRENT_LOOP_KI_TIMES_TEN FALSE
