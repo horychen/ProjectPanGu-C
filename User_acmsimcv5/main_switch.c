@@ -178,8 +178,8 @@ void init_debug(){
         /* Commission  */
         // (*debug).mode_select = MODE_SELECT_COMMISSIONING;                         //  9
 
-    (*debug).Overwrite_Current_Frequency = 1.0;
-    (*debug).Overwrite_theta_d           = 0.0; 
+    (*debug).Overwrite_Current_Frequency = 5.0;
+    (*debug).Overwrite_theta_d           = 0.0;
 
     
     (*debug).set_id_command              = 0.0;
@@ -628,14 +628,14 @@ void _user_commands(){
 
     #if PC_SIMULATION == TRUE
         #if WHO_IS_USER == USER_WB
-            if(0){
+            if(1){
                 if ( (*CTRL).timebase > 0.10 ){
-                    ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN * 0.8);
+                ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN * 0.03) * (int)(d_sim.user.bool_apply_external_Force_to_Position_Loop);
                 }
-                if( (*CTRL).timebase >  0.15 ){
-                    // ACM.TLoad = 0;
-                    (*CTRL).i->cmd_varOmega = -d_sim.user.set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
-                }
+                // if( (*CTRL).timebase >  0.15 ){
+                //     // ACM.TLoad = 0;
+                //     (*CTRL).i->cmd_varOmega = -d_sim.user.set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
+                // }
             }else{
                 (*CTRL).i->cmd_varOmega = 0;
                 ACM.TLoad = 0;
@@ -1020,8 +1020,7 @@ int  main_switch(long mode_select){
         controller_marino2005_with_commands();
     #endif
         break;
-    case MODE_SELECT_V_LOOP_HARNEFORS_1998: //45
-        break;
+    //* 45 功能寻求广告位中
     case MODE_SELECT_SWEEPING_FREQ: // 46
             overwrite_sweeping_frequency();
             if ( (d_sim.user.bool_sweeping_frequency_for_speed_loop == TRUE) || (d_sim.user.bool_sweeping_frequency_for_Rejection_Load == TRUE) ){

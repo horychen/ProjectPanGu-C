@@ -247,7 +247,7 @@ void main_measurement(){
     // voltage_measurement_based_on_eCAP();
 
     // measure vdc
-    Axis->vdc    =((REAL)(AdcaResultRegs.ADCRESULT0 ) - Axis->adc_offset[0]) * Axis->adc_scale[0];
+    Axis->vdc    = ((REAL)(AdcaResultRegs.ADCRESULT0 ) - Axis->adc_offset[0]) * Axis->adc_scale[0];
     // Axis->vdc = ((REAL)(AdcbResultRegs.ADCRESULT6) - Axis->adc_offset[0]) * Axis->adc_scale[0];
     if (G.flag_overwite_vdc) Axis->vdc = G.overwrite_vdc;
     {
@@ -460,6 +460,11 @@ void ENABLE_PWM_OUTPUT(int positionLoopType){
     (*CTRL).timebase_counter += 1;
     (*CTRL).timebase = CL_TS * (*CTRL).timebase_counter; //(*CTRL).timebase += CL_TS; // 2048 = float/REAL max
 
+    #if ALLOW_RUNTIME_PARAM_UPDATE && WHO_IS_USER == USER_WB
+    #endif
+
+    
+
     #if WHO_IS_USER != USER_XM
         // 根据指令，产生控制输出（电压）
                                                                 //(*CTRL).s->Motor_or_Gnerator = sign((*CTRL).i->cmd_iDQ[1]) == sign(CTRL->enc->rpm); // sign((*CTRL).i->cmd_iDQ[1]) != sign((*CTRL).i->cmd_speed_rpm))
@@ -574,10 +579,18 @@ __interrupt void EPWM1ISR(void){
     #endif
     // read from CPU02
     read_count_from_cpu02_dsp_cores_2();
+
+
+
+
+
+
+
     if(IPCRtoLFlagBusy(IPC_FLAG7) == 1){
         run_enable_from_PC = Read.run_enable;
         IPCRtoLFlagAcknowledge(IPC_FLAG7);
     }
+
     // 对每一个CTRL都需要做一次的代码
     if (use_first_set_three_phase == -1){
         for (axisCnt = 0; axisCnt < NUMBER_OF_AXES; axisCnt++){
@@ -589,31 +602,29 @@ __interrupt void EPWM1ISR(void){
         }
         axisCnt = 1; // 这里将axisCnt有什么用啊？因为axisCnt等于2你就会飞了，内存乱写
     }else if (use_first_set_three_phase == 1){
-
-
         // 这段放需要测时间的代码前面
-#if PC_SIMULATION == FALSE
-    EALLOW;
-    CpuTimer1.RegsAddr->TCR.bit.TRB = 1;           // reset cpu timer to period value
-    CpuTimer1.RegsAddr->TCR.bit.TSS = 0;           // start/restart
-    CpuTimer_Before = CpuTimer1.RegsAddr->TIM.all; // get count
-    EDIS;
-#endif
+        #if PC_SIMULATION == FALSE
+            EALLOW;
+            CpuTimer1.RegsAddr->TCR.bit.TRB = 1;           // reset cpu timer to period value
+            CpuTimer1.RegsAddr->TCR.bit.TSS = 0;           // start/restart
+            CpuTimer_Before = CpuTimer1.RegsAddr->TIM.all; // get count
+            EDIS;
+        #endif
 
         write_RPM_to_cpu02_dsp_cores_2();
         axisCnt = 0;
         get_Axis_CTRL_pointers //(axisCnt, Axis, CTRL);
         PanGuMainISR();
+
         // 这段放需要测时间的代码后面，观察CpuTimer_Delta的取值，代表经过了多少个 1/200e6 秒。
-#if PC_SIMULATION == FALSE
-CpuTimer_After = CpuTimer1.RegsAddr->TIM.all; // get count
-CpuTimer_Delta = (REAL)CpuTimer_Before - (REAL)CpuTimer_After;
-// EALLOW;
-// CpuTimer1.RegsAddr->TCR.bit.TSS = 1; // stop (not needed because of the line TRB=1)
-// EDIS;
-#endif
-
-
+        #if PC_SIMULATION == FALSE
+        CpuTimer_After = CpuTimer1.RegsAddr->TIM.all; // get count
+        CpuTimer_Delta = (REAL)CpuTimer_Before - (REAL)CpuTimer_After;
+        // EALLOW;
+        // CpuTimer1.RegsAddr->TCR.bit.TSS = 1; // stop (not needed because of the line TRB=1)
+        // EDIS;
+        #endif
+        
     }else if (use_first_set_three_phase == 2){
         axisCnt = 1;
         get_Axis_CTRL_pointers //(axisCnt, Axis, CTRL);
@@ -634,41 +645,6 @@ CpuTimer_Delta = (REAL)CpuTimer_Before - (REAL)CpuTimer_After;
     PieCtrlRegs.PIEACK.all |= PIEACK_GROUP3;
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 Uint32 position_count_SCI_shank_fromCPU2;
@@ -1246,7 +1222,8 @@ void cla_test_codes(){
 
 
 
-extern REAL wubo_debug_motor_enc_dirc[2];
+// extern REAL wubo_debug_motor_enc_dirc[2];
+//int wubo_debug_tools[10];
 
 #if ENCODER_TYPE != INCREMENTAL_ENCODER_QEP
 
@@ -1258,19 +1235,25 @@ void measurement_position_count_axisCnt0(){
     #endif
 
     #if NUMBER_OF_AXES == 2
-        position_count_SCI_fromCPU2 = position_count_SCI_shank_fromCPU2;
+        // position_count_SCI_fromCPU2 = position_count_SCI_shank_fromCPU2;
+        position_count_SCI_fromCPU2 = Axis->SCI_Position_Count_fromCPU2;
     #endif
         // 正电流导致编码器读数增大：
-        CTRL->enc->encoder_abs_cnt = wubo_debug_motor_enc_dirc[0] * (int32)position_count_SCI_fromCPU2 - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis;
-}
+        // CTRL->enc->encoder_abs_cnt = wubo_debug_motor_enc_dirc[0] * (int32)position_count_SCI_fromCPU2 - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis;
+        CTRL->enc->encoder_abs_cnt = (int32)position_count_SCI_fromCPU2 - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis;
+
+    }
 
 
 void measurement_position_count_axisCnt1(){
     #if NUMBER_OF_AXES == 2
-        position_count_SCI_fromCPU2 = position_count_SCI_hip_fromCPU2;
+        // position_count_SCI_fromCPU2 = position_count_SCI_hip_fromCPU2;
+        position_count_SCI_fromCPU2 = Axis->SCI_Position_Count_fromCPU2;
     #endif
         // 正电流导致编码器读数减小
-        CTRL->enc->encoder_abs_cnt = wubo_debug_motor_enc_dirc[1] * ( (int32)position_count_SCI_fromCPU2 - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis );
+        // CTRL->enc->encoder_abs_cnt = wubo_debug_motor_enc_dirc[1] * ( (int32)position_count_SCI_fromCPU2 - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis );
+        CTRL->enc->encoder_abs_cnt =  (-1) * ( (int32)position_count_SCI_fromCPU2 - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis );
+
         // dq变化中，d轴理论上指向永磁体的北极，
 }
 
@@ -1368,30 +1351,26 @@ void measurement_current_axisCnt0(){
     Axis->iuvw[PIN_ADCA_W] = ((REAL)(AdcaResultRegs.ADCRESULT3) - Axis->adc_offset[3]) * Axis->adc_scale[3]; //
 
     // 电流接口
-    if (USE_3_CURRENT_SENSORS)
-    {
+    if (USE_3_CURRENT_SENSORS){
         Axis->iabg[0] = UVW2A_AI(Axis->iuvw[0], Axis->iuvw[1], Axis->iuvw[2]);
         Axis->iabg[1] = UVW2B_AI(Axis->iuvw[0], Axis->iuvw[1], Axis->iuvw[2]);
         Axis->iabg[2] = UVW2G_AI(Axis->iuvw[0], Axis->iuvw[1], Axis->iuvw[2]);
     }
-    else
-    {
+    else{
         REAL phase_V_current = -Axis->iuvw[0] - Axis->iuvw[2];
         Axis->iabg[0] = UV2A_AI(Axis->iuvw[0], phase_V_current);
         Axis->iabg[1] = UV2B_AI(Axis->iuvw[0], phase_V_current);
     }
 }
 
-void measurement_current_axisCnt1()
-{
+void measurement_current_axisCnt1(){
     // LEM2
     Axis->iuvw[3] = ((REAL)(AdcbResultRegs.ADCRESULT7) - Axis->adc_offset[4]) * Axis->adc_scale[4]; //
     Axis->iuvw[4] = ((REAL)(AdcbResultRegs.ADCRESULT8) - Axis->adc_offset[5]) * Axis->adc_scale[5]; //
     Axis->iuvw[5] = ((REAL)(AdcbResultRegs.ADCRESULT9) - Axis->adc_offset[6]) * Axis->adc_scale[6]; //
 
     // 电流接口
-    if (USE_3_CURRENT_SENSORS)
-    {
+    if (USE_3_CURRENT_SENSORS){
         // Axis->iabg[0] = UVW2A_AI(Axis->iuvw[3], Axis->iuvw[4], Axis->iuvw[5]);
         // Axis->iabg[1] = UVW2B_AI(Axis->iuvw[3], Axis->iuvw[4], Axis->iuvw[5]);
         // Axis->iabg[2] = UVW2G_AI(Axis->iuvw[3], Axis->iuvw[4], Axis->iuvw[5]);
@@ -1399,8 +1378,7 @@ void measurement_current_axisCnt1()
         Axis->iabg[1] = UVW2B_AI(Axis->iuvw[PIN_ADCB_U], Axis->iuvw[PIN_ADCB_V], Axis->iuvw[PIN_ADCB_W]);
         Axis->iabg[2] = UVW2G_AI(Axis->iuvw[PIN_ADCB_U], Axis->iuvw[PIN_ADCB_V], Axis->iuvw[PIN_ADCB_W]);
     }
-    else
-    {
+    else{
         REAL phase_V_current = -Axis->iuvw[3] - Axis->iuvw[5];
         Axis->iabg[0] = UV2A_AI(Axis->iuvw[3], phase_V_`current);
         Axis->iabg[1] = UV2B_AI(Axis->iuvw[3], phase_V_current);
@@ -1421,19 +1399,22 @@ void measurement_sensor_coil(){
 }
 #endif
 
-void read_count_from_cpu02_dsp_cores_2()
-{
+void read_count_from_cpu02_dsp_cores_2(){
 #if NUMBER_OF_DSP_CORES == 2
     /* CPU02 (Remote) to CPU01 (Local)
      * The register to check is IPCSTS.
      * */
     counter_missing_position_measurement += 1;
-    if (IPCRtoLFlagBusy(IPC_FLAG10) == 1) // if flag
-    {
+    if (IPCRtoLFlagBusy(IPC_FLAG10) == 1){ // if flag
         max_counter_missing_position_measurement = counter_missing_position_measurement;
         counter_missing_position_measurement = 0;
-        position_count_SCI_shank_fromCPU2 = Read.SCI_shank_position_count;
-        position_count_SCI_hip_fromCPU2 = Read.SCI_hip_position_count;
+        Axis_1.SCI_Position_Count_fromCPU2 = Read.SCI_A_position_count;
+        Axis_2.SCI_Position_Count_fromCPU2 = Read.SCI_B_position_count;
+        // Axis_3.SCI_Position_Count_fromCPU2 = Read.SCI_C_position_count;
+        // Axis_4.SCI_Position_Count_fromCPU2 = Read.SCI_D_position_count;
+
+        // position_count_SCI_shank_fromCPU2 = Read.SCI_shank_position_count;
+        // position_count_SCI_hip_fromCPU2   = Read.SCI_hip_position_count;
         //            position_count_CAN_ID0x01_fromCPU2 = Read.CAN_position_count_ID0x01;
         //            position_count_CAN_ID0x03_fromCPU2 = Read.CAN_position_count_ID0x03;
         IPCRtoLFlagAcknowledge(IPC_FLAG10);
@@ -1444,13 +1425,11 @@ void read_count_from_cpu02_dsp_cores_2()
         rad_four_bar_map_motor_encoder_angle = deg_four_bar_map_motor_encoder_angle * 0.017453292519943295;
         cnt_four_bar_map_motor_encoder_angle = deg_four_bar_map_motor_encoder_angle * 23301.68888888889;
     }
-    else
-    {
+    else{
         CPU2_commu_error_counter++;
     }
 
-    if (IPCRtoLFlagBusy(IPC_FLAG11) == 1) // if flag
-    {
+    if (IPCRtoLFlagBusy(IPC_FLAG11) == 1){ // if flag
         max_counter_missing_position_measurement = counter_missing_position_measurement;
         counter_missing_position_measurement = 0;
         position_count_CAN_ID0x01_fromCPU2 = Read.CAN_position_count_ID0x01;

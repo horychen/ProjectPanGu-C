@@ -75,6 +75,7 @@ extern Uint32 CpuTimer_After;
 
 #define CURRENT_LOOP_KI_TIMES_TEN FALSE
 #define WUBO_ONLINE_TUNING TRUE
+#define ALLOW_RUNTIME_PARAM_UPDATE TRUE
 
 // Header for global_variabels_definition.c
 struct GlobalWatch
@@ -117,7 +118,9 @@ REAL difference_between_two_angles(REAL first, REAL second);
 
 #ifdef _MOTOR_GROUP
 //    #define ENCODER_TYPE ABSOLUTE_ENCODER_MD1
-    #define ENCODER_TYPE INCREMENTAL_ENCODER_QEP
+    // #define ENCODER_TYPE INCREMENTAL_ENCODER_QEP
+    #define ENCODER_TYPE ABSOLUTE_ENCODER_SCI_HIP // sci-A
+//    #define ENCODER_TYPE ABSOLUTE_ENCODER_SCI_SHANK // sci-B
 #endif
 
 
@@ -139,15 +142,19 @@ REAL difference_between_two_angles(REAL first, REAL second);
 #define SYSTEM_QEP_QPOSMAX_PLUS_1 (10000)
 #define OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS 2358 // wb tuned with id=3A 20241027 // 2353 // cjh tuned with id_cmd = 4A @2024-10-05 // This value need an average value due to XXX(CJH told me one day but here space is not enough to print it out)
 #define positive_current_QPOSCNT_counting_down (-1) // 正向旋转的电流导致增量式编码器QEP读数减少 则填 -1，否则默认为 1。
+
+
 #elif (ENCODER_TYPE == ABSOLUTE_ENCODER_SCI_SHANK) || (ENCODER_TYPE == ABSOLUTE_ENCODER_SCI_HIP)
+// F130-16-KV20
 #define SYSTEM_QEP_PULSES_PER_REV (8388608)
 #define SYSTEM_QEP_REV_PER_PULSE (1.1920929e-7)
 #define CNT_2_ELEC_RAD (SYSTEM_QEP_REV_PER_PULSE * 2 * M_PI * d_sim.init.npp)
 #define SYSTEM_QEP_QPOSMAX (SYSTEM_QEP_PULSES_PER_REV - 1)
 #define SYSTEM_QEP_QPOSMAX_PLUS_1 (SYSTEM_QEP_PULSES_PER_REV)
-
 #define SHANK__OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS 7365433 // 1051014 // 3494662 // ym tuned with id_cmd = 3A 2024-03-12
 #define HIP__OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS 340755    // ym tuned with id_cmd = 3A 2024-03-12
+
+
 #elif (ENCODER_TYPE == ABSOLUTE_ENCODER_CAN_ID0x01)
 #define SYSTEM_QEP_PULSES_PER_REV (131072)
 #define SYSTEM_QEP_REV_PER_PULSE (7.6293945e-6)

@@ -2,7 +2,13 @@
 #define SIMUSER_WB_H
 
 #if WHO_IS_USER == USER_WB
+    /* Debug */
+    //TODO:这个变量需要删除
+    extern int wubo_debug_tools[10];
+    
     #include "ACMSim.h"
+
+    /* WuBo Lib*/
     #define WUBO_MAX(a, b) ((a) > (b) ? (a) : (b))
     #define WUBO_MIN(a, b) ((a) < (b) ? (a) : (b))
 

@@ -11,51 +11,55 @@ void init_d_sim() {
     d_sim.init.KE = 0.01934;
     d_sim.init.Rreq = 0.0;
     d_sim.init.Js = 0.000364;
-    d_sim.init.Vdc = 48;
+    d_sim.init.Vdc = 30;
 
     d_sim.sim.INVERTER_NONLINEARITY = 0;
     d_sim.sim.CLTS = 0.0001;
-    d_sim.sim.NUMBER_OF_STEPS = 40000;
+    d_sim.sim.NUMBER_OF_STEPS = 500;
     d_sim.sim.MACHINE_SIMULATIONs_PER_SAMPLING_PERIOD = 1;
 
-    d_sim.FOC.delta = 8;
-    d_sim.FOC.CLBW_HZ = 483;
+    d_sim.FOC.delta = 10;
+    d_sim.FOC.CLBW_HZ = 800;
     d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation = TRUE;
     d_sim.FOC.VL_EXE_PER_CL_EXE = 1;
 
-    d_sim.CL.SERIES_KP_D_AXIS = 1.3808242190323217;
+    d_sim.CL.SERIES_KP_D_AXIS = 2.2870794518133697;
     d_sim.CL.SERIES_KI_D_AXIS = 262.6373626373626;
-    d_sim.CL.SERIES_KP_Q_AXIS = 1.6994759618859345;
+    d_sim.CL.SERIES_KP_Q_AXIS = 2.814867017616455;
     d_sim.CL.SERIES_KI_Q_AXIS = 213.3928571428571;
     d_sim.CL.LIMIT_DC_BUS_UTILIZATION = 0.96;
 
-    d_sim.VL.SERIES_KP = 0.18307005794186645;
-    d_sim.VL.SERIES_KI = 47.41841411512094;
+    d_sim.VL.SERIES_KP = 0.24257730244884995;
+    d_sim.VL.SERIES_KI = 50.26548245743669;
     d_sim.VL.LIMIT_OVERLOAD_FACTOR = 1.0;
 
-    d_sim.user.verbose = FALSE;
+    d_sim.user.verbose = TRUE;
     d_sim.user.who_is_user = 2023231051;
-    d_sim.user.mode_select_synchronous_motor = 51;
+    d_sim.user.mode_select_synchronous_motor = 47;
     d_sim.user.mode_select_induction_motor = 32;
     d_sim.user.INVERTER_NONLINEARITY_COMPENSATION_METHOD = FALSE;
     d_sim.user.Select_exp_operation = 0.0;
-    d_sim.user.set_rpm_speed_command = 400;
-    d_sim.user.set_iq_command = 1.0;
+    d_sim.user.set_rpm_speed_command = 50;
+    d_sim.user.set_iq_command = 2.0;
     d_sim.user.zeta = 1.0;
     d_sim.user.omega_n = 800;
     d_sim.user.max_CLBW_PER_min_CLBW = 0.9;
     d_sim.user.VL_FEEDBACK_KFB = 0;
+    d_sim.user.Current_Loop_Ki_scale = 1.0;
     d_sim.user.bool_Null_D_Control = TRUE;
     d_sim.user.bool_apply_WC_tunner_for_speed_loop = TRUE;
     d_sim.user.bool_enable_Harnefors_back_calculation = FALSE;
     d_sim.user.Check_Harnerfors_1998_On = -1.0;
-    d_sim.user.bool_apply_Rohr_1991_Controller = TRUE;
-    d_sim.user.bool_apply_Rohr_1991_Controller_with_Forgetting_Factor = TRUE;
+    d_sim.user.bool_apply_Rohr_1991_Controller = FALSE;
+    d_sim.user.bool_apply_Rohr_1991_Controller_with_Forgetting_Factor = FALSE;
     d_sim.user.Rohr_K_min = 0.0;
     d_sim.user.Rohr_K_max = 2.5;
     d_sim.user.Rohr_gamma = 1.0;
     d_sim.user.Rohr_sigma = 2.0;
     d_sim.user.Rohr_K_integral = 1000.0;
+    d_sim.user.bool_ESO_SPEED_ON = TRUE;
+    d_sim.user.bool_apply_ESO_SPEED_for_SPEED_FBK = TRUE;
+    d_sim.user.CAREFUL_ESOAF_OMEGA_OBSERVER = 5000;
     d_sim.user.bool_apply_sweeping_frequency_excitation = FALSE;
     d_sim.user.bool_sweeping_frequency_for_speed_loop = FALSE;
     d_sim.user.bool_speed_sweeping_with_Load = FALSE;
@@ -74,9 +78,6 @@ void init_d_sim() {
     d_sim.user.Set_SpeedLoop_KI_as_Zero = FALSE;
     d_sim.user.Stable_Time_for_Sweeping = 1.5;
     d_sim.user.flag_clear_timebase_once = FALSE;
-    d_sim.user.bool_ESO_SPEED_ON = TRUE;
-    d_sim.user.bool_apply_ESO_SPEED_for_SPEED_FBK = FALSE;
-    d_sim.user.CAREFUL_ESOAF_OMEGA_OBSERVER = 0;
     d_sim.user.bool_Parameter_Mismatch_test = FALSE;
     d_sim.user.ParaMis_percent_max = 4;
     d_sim.user.ParaMis_percent_min = 0.4;
@@ -97,6 +98,7 @@ void init_d_sim() {
     d_sim.user.bool_compensation_of_Pos_CTRL_output_covergence = FALSE;
     d_sim.user.IMP_Spring_Factor = 0.1092;
     d_sim.user.IMP_Damping_Factor = 0.01;
+    d_sim.user.bool_apply_external_Force_to_Position_Loop = FALSE;
     d_sim.user.positionLoopType = 2;
     d_sim.user.tracking_trace_Type = -1;
     d_sim.user.target_position_cnt_shank = 58000;

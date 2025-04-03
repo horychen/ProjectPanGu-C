@@ -11,7 +11,7 @@ SpeedInnerLoop SIL_Controller;
 Harnefors_1998_BackCals Harnefors_1998_BackCals_Variable;
 Rohr_1991 Rohr_1991_Controller;
 Pos_IMP Pos_IMP_CTRL;
-
+int wubo_debug_tools[10] = {1,0,0,0,0,0,0,0,0,0};
 
 
 /* Calculation for Vdc utilization BUT this is not beauty it makes CHAOS!!!!*/
@@ -205,12 +205,6 @@ REAL CJH_LUT_index_inverter_compensation_get_dist_voltage(REAL current_value){
         }
 }
 
-
-
-//TODO:这个变量需要删除
-/* For wubo debuger */
-REAL wubo_debug_tools[10] = {1,0,0,0,0,0,0,0,0,0};
-
 /* User Tuner */
 REAL _init_WC_Tuner_Part2(REAL zeta, REAL omega_n, REAL max_CLBW_PER_min_CLBW){
     REAL Ld  = d_sim.init.Ld * wubo_ParaMis.percent_Ld;
@@ -245,8 +239,8 @@ REAL _init_WC_Tuner_Part2(REAL zeta, REAL omega_n, REAL max_CLBW_PER_min_CLBW){
         PID_iD->Ki_CODE = Series_D_KI * Series_D_KP * CL_TS * 10;
         PID_iQ->Ki_CODE = Series_Q_KI * Series_Q_KP * CL_TS * 10;
     #else
-        PID_iD->Ki_CODE = Series_D_KI * Series_D_KP * CL_TS;
-        PID_iQ->Ki_CODE = Series_Q_KI * Series_Q_KP * CL_TS;
+        PID_iD->Ki_CODE = Series_D_KI * Series_D_KP * CL_TS * d_sim.user.Current_Loop_Ki_scale;
+        PID_iQ->Ki_CODE = Series_Q_KI * Series_Q_KP * CL_TS * d_sim.user.Current_Loop_Ki_scale;
     #endif
     
     PID_Speed->Ki_CODE = Series_Speed_KI * Series_Speed_KP * VL_TS;
@@ -260,6 +254,14 @@ REAL _init_WC_Tuner_Part2(REAL zeta, REAL omega_n, REAL max_CLBW_PER_min_CLBW){
     return  K0;
 }
 void _init_WC_Tuner(){
+    #if CURRENT_LOOP_KI_TIMES_TEN
+        PID_iD->Ki_CODE  = d_sim.CL.SERIES_KI_D_AXIS * d_sim.CL.SERIES_KP_D_AXIS * CL_TS * 10;
+        PID_iQ->Ki_CODE  = d_sim.CL.SERIES_KI_Q_AXIS * d_sim.CL.SERIES_KP_Q_AXIS * CL_TS * 10;
+    #else
+        PID_iD->Ki_CODE  = d_sim.CL.SERIES_KI_D_AXIS * d_sim.CL.SERIES_KP_D_AXIS * CL_TS * d_sim.user.Current_Loop_Ki_scale;
+        PID_iQ->Ki_CODE  = d_sim.CL.SERIES_KI_Q_AXIS * d_sim.CL.SERIES_KP_Q_AXIS * CL_TS * d_sim.user.Current_Loop_Ki_scale;
+    #endif
+    
     /* Tuned by d_sim */
     //* Due to the fact that TI tuner is running at Python at momment hence our tuner should use paramter to run the tuning process
     REAL K0 = 0.0;
@@ -282,7 +284,6 @@ void _init_WC_Tuner(){
     // >>实验<<限幅的部分我放在pangu-c的main.c中的measurement函数里面，也就是说，测量此时的Vdc，然后根据Vdc觉得限幅的大小
 
     // see when codes run here
-    extern REAL wubo_debug_tools[10];
     wubo_debug_tools[2] = 99;
 }
 void _user_wubo_WC_Tuner_Online(){
@@ -292,7 +293,6 @@ void _user_wubo_WC_Tuner_Online(){
     // >>实验<<限幅的部分我放在pangu-c的main.c中的measurement函数里面，也就是说，测量此时的Vdc，然后根据Vdc觉得限幅的大小
 
     // see when codes run here
-    extern REAL wubo_debug_tools[10];
     wubo_debug_tools[3] = 99;
 }
 void _user_wubo_TI_Tuner_Online(){
@@ -327,8 +327,8 @@ void _user_wubo_TI_Tuner_Online(){
         PID_iD->Ki_CODE = Series_D_KI * Series_D_KP * CL_TS * 10;
         PID_iQ->Ki_CODE = Series_Q_KI * Series_Q_KP * CL_TS * 10;
     #else
-        PID_iD->Ki_CODE = Series_D_KI * Series_D_KP * CL_TS;
-        PID_iQ->Ki_CODE = Series_Q_KI * Series_Q_KP * CL_TS;
+        PID_iD->Ki_CODE = Series_D_KI * Series_D_KP * CL_TS * d_sim.user.Current_Loop_Ki_scale;
+        PID_iQ->Ki_CODE = Series_Q_KI * Series_Q_KP * CL_TS * d_sim.user.Current_Loop_Ki_scale;
     #endif
     
     PID_Speed->Ki_CODE = Series_Speed_KI * Series_Speed_KP * VL_TS;
@@ -337,7 +337,6 @@ void _user_wubo_TI_Tuner_Online(){
     SIL_Controller.KFB = 0;
 
     // see when codes run here
-    extern REAL wubo_debug_tools[10];
     wubo_debug_tools[4] = 99;
 }
 

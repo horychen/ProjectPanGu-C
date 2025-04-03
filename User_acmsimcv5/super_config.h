@@ -58,6 +58,7 @@ typedef struct {
     long omega_n;
     REAL max_CLBW_PER_min_CLBW;
     long VL_FEEDBACK_KFB;
+    REAL Current_Loop_Ki_scale;
     BOOL bool_Null_D_Control;
     BOOL bool_apply_WC_tunner_for_speed_loop;
     BOOL bool_enable_Harnefors_back_calculation;
@@ -69,6 +70,9 @@ typedef struct {
     REAL Rohr_gamma;
     REAL Rohr_sigma;
     REAL Rohr_K_integral;
+    BOOL bool_ESO_SPEED_ON;
+    BOOL bool_apply_ESO_SPEED_for_SPEED_FBK;
+    long CAREFUL_ESOAF_OMEGA_OBSERVER;
     BOOL bool_apply_sweeping_frequency_excitation;
     BOOL bool_sweeping_frequency_for_speed_loop;
     BOOL bool_speed_sweeping_with_Load;
@@ -87,9 +91,6 @@ typedef struct {
     BOOL Set_SpeedLoop_KI_as_Zero;
     REAL Stable_Time_for_Sweeping;
     BOOL flag_clear_timebase_once;
-    BOOL bool_ESO_SPEED_ON;
-    BOOL bool_apply_ESO_SPEED_for_SPEED_FBK;
-    long CAREFUL_ESOAF_OMEGA_OBSERVER;
     BOOL bool_Parameter_Mismatch_test;
     long ParaMis_percent_max;
     REAL ParaMis_percent_min;
@@ -110,6 +111,7 @@ typedef struct {
     BOOL bool_compensation_of_Pos_CTRL_output_covergence;
     REAL IMP_Spring_Factor;
     REAL IMP_Damping_Factor;
+    BOOL bool_apply_external_Force_to_Position_Loop;
     long positionLoopType;
     long tracking_trace_Type;
     long target_position_cnt_shank;

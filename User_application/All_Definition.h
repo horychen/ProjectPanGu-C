@@ -146,6 +146,7 @@ typedef struct{
         REAL iabg[6];
         REAL iuvw[6];
         REAL iuvw_offset_online[6];
+        Uint32 SCI_Position_Count_fromCPU2;
     // DAC
         int DAC_MAX5307_FLAG; // for single core case
         REAL dac_offset[NO_OF_DAC_CHANNELS];
@@ -163,7 +164,6 @@ typedef struct{
 extern st_axis Axis_1;
 extern st_axis Axis_2;
 extern st_axis *Axis;
-extern REAL wubo_debug_tools[10];
 
 /* Tools that main use */
     #include "tools.h"
