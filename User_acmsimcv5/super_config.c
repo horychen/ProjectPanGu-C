@@ -11,26 +11,26 @@ void init_d_sim() {
     d_sim.init.KE = 0.01934;
     d_sim.init.Rreq = 0.0;
     d_sim.init.Js = 0.000364;
-    d_sim.init.Vdc = 30;
+    d_sim.init.Vdc = 48;
 
     d_sim.sim.INVERTER_NONLINEARITY = 0;
     d_sim.sim.CLTS = 0.0001;
-    d_sim.sim.NUMBER_OF_STEPS = 500;
+    d_sim.sim.NUMBER_OF_STEPS = 10000;
     d_sim.sim.MACHINE_SIMULATIONs_PER_SAMPLING_PERIOD = 1;
 
     d_sim.FOC.delta = 10;
-    d_sim.FOC.CLBW_HZ = 800;
+    d_sim.FOC.CLBW_HZ = 500;
     d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation = TRUE;
-    d_sim.FOC.VL_EXE_PER_CL_EXE = 1;
+    d_sim.FOC.VL_EXE_PER_CL_EXE = 3;
 
-    d_sim.CL.SERIES_KP_D_AXIS = 2.2870794518133697;
+    d_sim.CL.SERIES_KP_D_AXIS = 1.4294246573833558;
     d_sim.CL.SERIES_KI_D_AXIS = 262.6373626373626;
-    d_sim.CL.SERIES_KP_Q_AXIS = 2.814867017616455;
+    d_sim.CL.SERIES_KP_Q_AXIS = 1.7592918860102842;
     d_sim.CL.SERIES_KI_Q_AXIS = 213.3928571428571;
     d_sim.CL.LIMIT_DC_BUS_UTILIZATION = 0.96;
 
-    d_sim.VL.SERIES_KP = 0.24257730244884995;
-    d_sim.VL.SERIES_KI = 50.26548245743669;
+    d_sim.VL.SERIES_KP = 0.1516108140305312;
+    d_sim.VL.SERIES_KI = 31.415926535897928;
     d_sim.VL.LIMIT_OVERLOAD_FACTOR = 1.0;
 
     d_sim.user.verbose = TRUE;
@@ -40,7 +40,7 @@ void init_d_sim() {
     d_sim.user.INVERTER_NONLINEARITY_COMPENSATION_METHOD = FALSE;
     d_sim.user.Select_exp_operation = 0.0;
     d_sim.user.set_rpm_speed_command = 50;
-    d_sim.user.set_iq_command = 2.0;
+    d_sim.user.set_iq_command = 3.0;
     d_sim.user.zeta = 1.0;
     d_sim.user.omega_n = 800;
     d_sim.user.max_CLBW_PER_min_CLBW = 0.9;
@@ -59,7 +59,7 @@ void init_d_sim() {
     d_sim.user.Rohr_K_integral = 1000.0;
     d_sim.user.bool_ESO_SPEED_ON = TRUE;
     d_sim.user.bool_apply_ESO_SPEED_for_SPEED_FBK = TRUE;
-    d_sim.user.CAREFUL_ESOAF_OMEGA_OBSERVER = 5000;
+    d_sim.user.CAREFUL_ESOAF_OMEGA_OBSERVER = 4000;
     d_sim.user.bool_apply_sweeping_frequency_excitation = FALSE;
     d_sim.user.bool_sweeping_frequency_for_speed_loop = FALSE;
     d_sim.user.bool_speed_sweeping_with_Load = FALSE;

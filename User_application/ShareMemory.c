@@ -305,7 +305,20 @@ void write_DAC_buffer(){
             // (*Axis4DAC).channels[6] = 52; // -3db marker
             (*Axis4DAC).channels[6] = 44; // DC bus utilization
             (*Axis4DAC).channels[7] = 23; // PID_Speed->Err
-        }
+        }else if((*Axis4DAC).channels_preset==11){(*Axis4DAC).channels_preset=0;
+            /* 20240414 Debugging */
+            (*Axis4DAC).channels[0] = 40; // PID_Speed->Ref
+            (*Axis4DAC).channels[1] = 70; // (*Axis4DAC).dac_watch[70] = (*CTRL).enc->varOmega * MECH_RAD_PER_SEC_2_RPM;
+            (*Axis4DAC).channels[2] = 29; // PID_iQ->Ref
+            (*Axis4DAC).channels[3] = 30; // PID_iQ->Fbk
+            (*Axis4DAC).channels[4] = 44; // DC bus utilization
+            (*Axis4DAC).channels[5] = 33; // (*CTRL).o->cmd_uDQ[0] * 0.02;
+            (*Axis4DAC).channels[6] = 34; // (*CTRL).o->cmd_uDQ[1] * 0.02;
+            (*Axis4DAC).channels[7] = 23; // PID_Speed->Err
+        }   
+        // [33] = (*CTRL).o->cmd_uDQ[0] * 0.02;
+        // [34] = (*CTRL).o->cmd_uDQ[1] * 0.02;
+
         if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
             // 锟斤拷通锟斤拷DAC锟斤拷锟斤拷锟斤拷锟斤拷薷锟�(*Axis4DAC).channels锟斤拷锟斤拷锟斤拷确锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟叫�(*Axis4DAC).dac_watch锟斤拷锟斤拷锟叫的憋拷锟斤拷锟斤拷
 
@@ -362,14 +375,14 @@ void write_DAC_buffer(){
 
 
             if(((*Axis4DAC).dac_time)<3){
-                (*Axis4DAC).dac_offset[0] = 0.0045;
+                (*Axis4DAC).dac_offset[0] = 0.0;             // WB tuned in 20250414, before is 0.0045;
                 (*Axis4DAC).dac_offset[1] = 0.004;
-                (*Axis4DAC).dac_offset[2] = 0.0055;
-                (*Axis4DAC).dac_offset[3] = 0.0035;
-                (*Axis4DAC).dac_offset[4] = 0.003;
-                (*Axis4DAC).dac_offset[5] =-0.0045;
-                (*Axis4DAC).dac_offset[6] = 0.002;
-                (*Axis4DAC).dac_offset[7] =-0.001;
+                (*Axis4DAC).dac_offset[2] = 0.0;             // WB tuned in 20250414, before is 0.0055;
+                (*Axis4DAC).dac_offset[3] = -0.00999999978;  // WB tuned in 20250414, before is 0.0035;
+                (*Axis4DAC).dac_offset[4] = 0.0;             // WB tuned in 20250414, before is 0.003;
+                (*Axis4DAC).dac_offset[5] = 0.00100000005;   // -0.0045;
+                (*Axis4DAC).dac_offset[6] = 0.000400000019;  //  0.002;
+                (*Axis4DAC).dac_offset[7] = -0.001;
                 #if Load_Sweeping_DAC
                     (*Axis4DAC).dac_offset[0] = 0.0;
                     (*Axis4DAC).dac_offset[1] = 0.0;

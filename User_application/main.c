@@ -417,10 +417,13 @@ void DISABLE_PWM_OUTPUT(){
     /* 在不输出PWM波形的时候，也就是“开关”为OFF的时候，更新SpeedInnerLoop的参数*/
     #if WUBO_ONLINE_TUNING
         #if WHO_IS_USER == USER_WB
+        wubo_debug_tools[9] = 11;
             if ( (*debug).who_is_user == USER_WB && (*debug).bool_apply_WC_tunner_for_speed_loop == TRUE ){
                 _user_wubo_WC_Tuner_Online(); // 和_user_wubo_WC_Tuner函数区别
+                wubo_debug_tools[9] = 12;
             }else{
                 _user_wubo_TI_Tuner_Online();
+                wubo_debug_tools[9] = 13;
             }
         #else
             //TODO: Here needs a online tuning function for public use
@@ -817,7 +820,12 @@ void axis_basic_setup(int axisCnt){
     //
     //    Axis->FLAG_ENABLE_PWM_OUTPUT = FALSE;
 
-    Axis->channels_preset = 9; // 9; // 101;
+    Axis->channels_preset = 11; // 9; // 101;
+    // 9  /* With SPEED ESO */
+    // 10 /* WCtuner Debug */
+    // 11 /* 20240414 Debugging */
+
+    
     #if WHO_IS_USER == USER_BEZIER
         Axis->channels_preset = 9; // 8; // 101;
     #endif

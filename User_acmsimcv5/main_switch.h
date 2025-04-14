@@ -12,7 +12,6 @@
 #define USER_GZT    2021531030
 #define USER_WB     2023231051
 #define USER_YZZ    2023231060
-#define USER_WB2    970308
 #define USER_GEN    240828
 #define USER_QIAN   2022231110
 #define USER_CURY   369

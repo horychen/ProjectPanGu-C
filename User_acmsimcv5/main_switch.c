@@ -477,14 +477,12 @@ void _pseudoEncoder(){
     /* 断开编码器，开环控制电流矢量旋转、跳跃，逆（变器）闭着眼 */
     (*CTRL).i->cmd_iDQ[0] = (*debug).set_id_command;
     (*CTRL).i->cmd_iDQ[1] = (*debug).set_iq_command;
-    if (fabsf((*debug).Overwrite_Current_Frequency) > 0)
-    {
+    if (fabsf((*debug).Overwrite_Current_Frequency) > 0){
         (*debug).Overwrite_theta_d += CL_TS * (*debug).Overwrite_Current_Frequency * 2 * M_PI;
         if ((*debug).Overwrite_theta_d > M_PI)  (*debug).Overwrite_theta_d -= 2 * M_PI;
         if ((*debug).Overwrite_theta_d < -M_PI) (*debug).Overwrite_theta_d += 2 * M_PI;
     }
-    else
-    {
+    else{
         (*debug).Overwrite_theta_d = 0.0;
     }
     _onlyFOC((*debug).Overwrite_theta_d, (*CTRL).i->iAB);
@@ -557,9 +555,8 @@ void _onlyFOC(REAL theta_d_elec, REAL iAB[2]){
             decoupled_q_axis_voltage = PID_iQ->Out + (MOTOR.KActive + PID_iD->Fbk * MOTOR.Ld) * (*CTRL).i->varOmega * MOTOR.npp;
         }else{
             decoupled_d_axis_voltage = PID_iD->Out;
-            decoupled_q_axis_voltage = PID_iQ->Out + MOTOR.KActive * (*CTRL).i->varOmega * MOTOR.npp;
-            // decoupled_d_axis_voltage = PID_iD->Out;
-            // decoupled_q_axis_voltage = PID_iQ->Out;
+            decoupled_q_axis_voltage = PID_iQ->Out;
+            // decoupled_q_axis_voltage = PID_iQ->Out + MOTOR.KActive * (*CTRL).i->varOmega * MOTOR.npp;
         }
     #endif
 
