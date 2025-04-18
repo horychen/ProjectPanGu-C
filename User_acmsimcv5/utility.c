@@ -179,6 +179,11 @@ REAL difference_between_two_angles(REAL first, REAL second)
         }else{
             printf("!!! Inverter Nonlinearity Compensation is NOT Applied !!!\n");
         }
+        if(d_sim.user.bool_Compensation_byPosDiff == TRUE){
+            printf(">>> Position Loop Ref Compensation is Applied <<<\n");
+        }else{
+            printf("!!! Position Loop Ref Compensation is NOT Applied !!!\n");
+        }
 
         #if WHO_IS_USER == USER_BEZIER
             if (d_sim.user.BOOL_BEZIER_ADAPTIVE_GAIN == TRUE){

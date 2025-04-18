@@ -303,6 +303,7 @@ void control_single_motor_position(){
             vartheta_2_encoder += 2 * M_PI;
         }
         vartheta_2_encoder = vartheta_2_encoder  * ONE_OVER_2PI * CAN_QMAX;
+        
 
         PID_Position->Fbk = vartheta_2_encoder;
         PID_Position->Ref = hip_shank_angle_to_can(

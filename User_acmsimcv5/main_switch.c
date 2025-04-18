@@ -182,7 +182,7 @@ void init_debug(){
     (*debug).Overwrite_theta_d           = 0.0;
 
     
-    (*debug).set_id_command              = 0.0;
+    (*debug).set_id_command              = d_sim.user.set_id_command;
     (*debug).set_iq_command              = d_sim.user.set_iq_command;
     (*debug).set_rpm_speed_command       = d_sim.user.set_rpm_speed_command;
     (*debug).set_deg_position_command    = 0.0;
@@ -625,23 +625,33 @@ void _user_commands(){
 
     #if PC_SIMULATION == TRUE
         #if WHO_IS_USER == USER_WB
-            if(1){
-                if ( (*CTRL).timebase > 0.10 ){
-                ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN * 0.03) * (int)(d_sim.user.bool_apply_external_Force_to_Position_Loop);
+            if(0){
+                if ( (*CTRL).timebase > 1.0 ){
+                    ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN * 0.03) * (int)(d_sim.user.bool_apply_external_Force_to_Position_Loop);
                 }
                 // if( (*CTRL).timebase >  0.15 ){
                 //     // ACM.TLoad = 0;
                 //     (*CTRL).i->cmd_varOmega = -d_sim.user.set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
                 // }
-            }else{
+            }else if(0){
                 (*CTRL).i->cmd_varOmega = 0;
                 ACM.TLoad = 0;
                 if ( (*CTRL).timebase > 1.5 ){
-                    ACM.TLoad = -(1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN * 0.1);
+                    ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN * 0.3);
                 }
                 if ( (*CTRL).timebase > 2.5 ){
-                    ACM.TLoad = -0;
+                    ACM.TLoad = 0.0;
                 }   
+            }else{
+                if ( (*CTRL).timebase > 10.5 ){
+                    ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN * 0.3);
+                }
+                if ( (*CTRL).timebase > 10.0 ){
+                    ACM.TLoad = 0.0;
+                }
+                if ( (*CTRL).timebase > 10.5 ){
+                    (*CTRL).i->cmd_varOmega = -d_sim.user.set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
+                }
             }
         #elif WHO_IS_USER == USER_BEZIER
             (*CTRL).i->cmd_varOmega = 0.0;
@@ -1078,9 +1088,15 @@ int  main_switch(long mode_select){
         break;
     case MODE_SELECT_POSITION_LOOP: // 5
         // Generate the position command
-        (*CTRL).i->cmd_varTheta = 0.0;
+        (*CTRL).i->cmd_varTheta = (*debug).set_deg_position_command * M_PI_OVER_180;
+
         #if WHO_IS_USER == USER_WB
-            (*CTRL).i->cmd_varTheta = M_PI * 0.8;
+            if(d_sim.user.BOOL_WUBO_POS_CMD_TEST == TRUE){
+                (*CTRL).i->cmd_varTheta = 0.5 * M_PI * sinf( d_sim.user.Position_cmd_sine_frequency 
+                    * 2 * M_PI * (*CTRL).timebase ) + 0.17 * cosf( 3 * d_sim.user.Position_cmd_sine_frequency 
+                    * 2 * M_PI * (*CTRL).timebase ) + 0.1 * sinf( 7 * d_sim.user.Position_cmd_sine_frequency 
+                    * 2 * M_PI * (*CTRL).timebase );
+            }
         #endif
 
         // ESO
@@ -1094,8 +1110,27 @@ int  main_switch(long mode_select){
         #endif
 
         // Run position loop control
-        _user_position_loop((*CTRL).i->cmd_varTheta,(*CTRL).i->varTheta);
+        // if ((*CTRL).i->cmd_varTheta > M_PI){
+        //     (*CTRL).i->cmd_varTheta -= 2 * M_PI;
+        // }
+        // if ((*CTRL).i->cmd_varTheta < -M_PI){
+        //     (*CTRL).i->cmd_varTheta += 2 * M_PI;
+        // }
+        // #if PC_SIMULATION == TRUE
+        //     if ((*CTRL).i->varTheta > M_PI){
+        //         (*CTRL).i->varTheta -= 2 * M_PI;
+        //     }
+        //     if ((*CTRL).i->varTheta < -M_PI){
+        //         (*CTRL).i->varTheta += 2 * M_PI;
+        //     }
+        // #else
+        //     // Encoder获取的角度转换后为弧度
+        //     (*CTRL).i->varTheta -= 2 * M_PI;
+        // #endif
+        _user_position_loop( (*CTRL).i->cmd_varTheta, (*CTRL).i->varTheta );
+        
         break;
+    
     case MODE_SELECT_CURY_POSITION_LOOP: // 51
         #if WHO_IS_USER == USER_WB
             //TODO: 讲Cury的嵌入式代码移植到emy的架构下，并且加上新算法
@@ -1445,51 +1480,73 @@ void init_esoaf(){
 }
 
 /* 电机位置环公共代码 */
-void _user_position_loop(REAL cmd_varTheta, REAL varTheta){
-    
-    PID_Position->Ref = cmd_varTheta;
-    d_sim.user.Position_Loop_Ref_prev = PID_Position->Ref;
-    PID_Position->Fbk = varTheta;
+// ***********************************************************************************
+//   cmd_varTheta : 目标位置        单位：rad
+//   varTheta     : 当前电机位置    单位：rad
+//   ENC_MAX（暂时弃用）      : 编码器最大值  (我暂时只能理解成绝对值encoder的量程，对于增量式编码器，这个值又是什么，或者说怎么保证增量式编码器电机位置走短弧？)
+//   统一单位！ 否则仿真和实物的参数会差倍数，感觉不舒服
+// ***********************************************************************************
 
+void _user_position_loop(REAL cmd_varTheta, REAL varTheta){
+    PID_Position->Ref = cmd_varTheta;
+    PID_Position->Fbk = varTheta;
     PID_Position->Err = PID_Position->Ref - PID_Position->Fbk;
+    
     //* The detail info plz go to Bilibili Horychen's Channel Search Position Loop
-    //* But I DO NOT understand this method yet
+    //* 位置环给定和反馈到底怎么给，什么单位制
     //* 角度误差归一化到-pi~pi的期间下，只有短弧存在，长弧在这个区间是一定不存在的，所以可以推导出此时电机不可能走长弧
     // 长弧和短弧，要选短的
-    #if PC_SIMULATION == FALSE
-        if (PID_Position->Err > (CAN_QMAX * 0.5)){
-            PID_Position->Err -= CAN_QMAX;
-        }
-        if (PID_Position->Err < -(CAN_QMAX * 0.5)){
-            PID_Position->Err += CAN_QMAX;
-        }
-    #else
+    // #if PC_SIMULATION == FALSE
+    //     if (PID_Position->Err > (ENC_MAX * 0.5)){
+    //         PID_Position->Err -= ENC_MAX;
+    //     }
+    //     if (PID_Position->Err < -(ENC_MAX * 0.5)){
+    //         PID_Position->Err += ENC_MAX;
+    //     }
+    // #else
         if (PID_Position->Err > M_PI){
             PID_Position->Err -= 2 * M_PI;
         }
         if (PID_Position->Err < -M_PI){
             PID_Position->Err += 2 * M_PI;
         }
-    #endif
+    // #endif
     
     //* Do Postion Control
-    PID_Position->Out = PID_Position->Kp * PID_Position->Err;
-    if( PID_Position->Out > PID_Position->OutLimit ){
-        PID_Position->Out = PID_Position->OutLimit;
-    }
-    if( PID_Position->Out < -PID_Position->OutLimit ){
-        PID_Position->Out = -PID_Position->OutLimit;
-    }
 
-    // Position Diff Feedforward and Compensation of Output
-    if ( d_sim.user.bool_use_position_feedforward_by_PosDiff == TRUE ){
-        //TODO: compensation
+    PID_Position->Out = PID_Position->Kp * PID_Position->Err;
+    if(0){
+    // only for testing!
+        d_sim.user.Position_Loop_Ref_Diff_TEST = 0.5 * M_PI * d_sim.user.Position_cmd_sine_frequency 
+        * 2  * M_PI * cosf( d_sim.user.Position_cmd_sine_frequency * 2 * M_PI * (*CTRL).timebase ) 
+        
+        - 0.25 * 3 * d_sim.user.Position_cmd_sine_frequency 
+        * 2 * M_PI * sinf( 3 * d_sim.user.Position_cmd_sine_frequency * 2 * M_PI * (*CTRL).timebase ) 
+        
+        + 0.1 * 5 * d_sim.user.Position_cmd_sine_frequency 
+        * 2 * M_PI * cosf( 5 * d_sim.user.Position_cmd_sine_frequency * 2 * M_PI * (*CTRL).timebase );
+    }
+    if (d_sim.user.bool_Compensation_byPosDiff == TRUE){
+        d_sim.user.Position_Loop_Ref_Diff = (PID_Position->Ref - d_sim.user.Position_Loop_Ref_prev) * CL_TS_INVERSE;
+        if( d_sim.user.Position_Loop_Ref_Diff > PID_Position->OutLimit ) d_sim.user.Position_Loop_Ref_Diff = PID_Position->OutLimit;
+        if( d_sim.user.Position_Loop_Ref_Diff < -PID_Position->OutLimit ) d_sim.user.Position_Loop_Ref_Diff = -PID_Position->OutLimit;
+        (*CTRL).i->cmd_varOmega = PID_Position->Out + d_sim.user.Position_Loop_Ref_Diff;
+    }else{
+        (*CTRL).i->cmd_varOmega = PID_Position->Out;
     }
     
-    (*CTRL).i->cmd_varOmega = PID_Position->Out;
+    if( (*CTRL).i->cmd_varOmega > PID_Position->OutLimit ){
+        (*CTRL).i->cmd_varOmega = PID_Position->OutLimit;
+    }
+    if( (*CTRL).i->cmd_varOmega < -PID_Position->OutLimit ){
+        (*CTRL).i->cmd_varOmega = -PID_Position->OutLimit;
+    }
+
     FOC_with_vecocity_control( (*CTRL).i->theta_d_elec, 
             (*CTRL).i->varOmega,
             (*CTRL).i->cmd_varOmega,
             (*CTRL).i->cmd_iDQ,
             (*CTRL).i->iAB );
+
+    d_sim.user.Position_Loop_Ref_prev = PID_Position->Ref;
 }

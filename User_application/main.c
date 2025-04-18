@@ -220,6 +220,9 @@ void main_measurement(){
     CTRL->i->varOmega     = CTRL->enc->varOmega;
     CTRL->i->theta_d_elec = CTRL->enc->theta_d_elec;
 
+    /* 绝对值编码器读数, 使用弧度制度 */
+    CTRL->i->varTheta     = CTRL->enc->encoder_abs_cnt * SYSTEM_QEP_REV_PER_PULSE * M_PI * 2;
+
     // measure place between machine shaft and Sensor Coil
     // if (sensor_coil_enable == 1)
     #if WHO_IS_USER == USER_QIAN
@@ -820,10 +823,11 @@ void axis_basic_setup(int axisCnt){
     //
     //    Axis->FLAG_ENABLE_PWM_OUTPUT = FALSE;
 
-    Axis->channels_preset = 11; // 9; // 101;
+    Axis->channels_preset = 12; // 9; // 101;
     // 9  /* With SPEED ESO */
     // 10 /* WCtuner Debug */
     // 11 /* 20240414 Debugging */
+    // 12 /* 20240418 Pos Loop */
 
     
     #if WHO_IS_USER == USER_BEZIER
@@ -891,7 +895,15 @@ void init_experiment_AD_gain_and_offset()
             if(axisCnt==1){
                 Axis_2.pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = HIP__OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
             }
+        #elif (ENCODER_TYPE == ABSOLUTE_ENCODER_SCI_A) || (ENCODER_TYPE == ABSOLUTE_ENCODER_SCI_B)
+            if(axisCnt==0){
+                Axis_1.pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = ABS_ENC_SCI_A__OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
+            }
+            if(axisCnt==1){
+                Axis_2.pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = ABS_ENC_SCI_B__OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
+            }
         #endif
+        
     #else
         #if ENCODER_TYPE == INCREMENTAL_ENCODER_QEP                  /* eQEP OFFSET */
             Axis->pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;

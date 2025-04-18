@@ -119,9 +119,15 @@ REAL difference_between_two_angles(REAL first, REAL second);
 #ifdef _MOTOR_GROUP
 //    #define ENCODER_TYPE ABSOLUTE_ENCODER_MD1
     // #define ENCODER_TYPE INCREMENTAL_ENCODER_QEP
-    #define ENCODER_TYPE ABSOLUTE_ENCODER_SCI_HIP // sci-A
-//    #define ENCODER_TYPE ABSOLUTE_ENCODER_SCI_SHANK // sci-B
+    #define ENCODER_TYPE ABSOLUTE_ENCODER_SCI_A // sci-A HIP
+    #define ENCODER_TYPE ABSOLUTE_ENCODER_SCI_B // sci-B SHANK
 #endif
+
+#ifdef _LEG_GROUP
+    #define ENCODER_TYPE ABSOLUTE_ENCODER_SCI_HIP   // sci-A HIP
+    #define ENCODER_TYPE ABSOLUTE_ENCODER_SCI_SHANK // sci-B SHANK
+#endif
+
 
 
 #ifdef _INDUCTION_MOTOR_GROUP
@@ -131,6 +137,9 @@ REAL difference_between_two_angles(REAL first, REAL second);
 #ifdef _PROJECT_FORMULA_GROUP /* Careful! Formula groups' board is on the PMSM SD80 since 20240919 hence it takes incremental enc */
     #define ENCODER_TYPE INCREMENTAL_ENCODER_QEP
 #endif
+
+
+
 
 #define INIT_NPP d_sim.init.npp
 
@@ -144,6 +153,16 @@ REAL difference_between_two_angles(REAL first, REAL second);
 #define positive_current_QPOSCNT_counting_down (-1) // 正向旋转的电流导致增量式编码器QEP读数减少 则填 -1，否则默认为 1。
 
 
+#elif (ENCODER_TYPE == ABSOLUTE_ENCODER_SCI_A) || (ENCODER_TYPE ==ABSOLUTE_ENCODER_SCI_B)
+// F130-16-KV20 for TEST
+#define SYSTEM_QEP_PULSES_PER_REV (8388608)
+#define SYSTEM_QEP_REV_PER_PULSE (1.1920929e-7)
+#define CNT_2_ELEC_RAD (SYSTEM_QEP_REV_PER_PULSE * 2 * M_PI * d_sim.init.npp)
+#define SYSTEM_QEP_QPOSMAX (SYSTEM_QEP_PULSES_PER_REV - 1)
+#define SYSTEM_QEP_QPOSMAX_PLUS_1 (SYSTEM_QEP_PULSES_PER_REV)
+#define ABS_ENC_SCI_A__OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS   4106211 // WB tunned with id_cmd = 3A in 20250418
+#define ABS_ENC_SCI_B__OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS   340755  // wait for a value     
+
 #elif (ENCODER_TYPE == ABSOLUTE_ENCODER_SCI_SHANK) || (ENCODER_TYPE == ABSOLUTE_ENCODER_SCI_HIP)
 // F130-16-KV20
 #define SYSTEM_QEP_PULSES_PER_REV (8388608)
@@ -151,9 +170,8 @@ REAL difference_between_two_angles(REAL first, REAL second);
 #define CNT_2_ELEC_RAD (SYSTEM_QEP_REV_PER_PULSE * 2 * M_PI * d_sim.init.npp)
 #define SYSTEM_QEP_QPOSMAX (SYSTEM_QEP_PULSES_PER_REV - 1)
 #define SYSTEM_QEP_QPOSMAX_PLUS_1 (SYSTEM_QEP_PULSES_PER_REV)
-#define SHANK__OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS 7365433 // 1051014 // 3494662 // ym tuned with id_cmd = 3A 2024-03-12
-#define HIP__OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS 340755    // ym tuned with id_cmd = 3A 2024-03-12
-
+#define SHANK__OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS 7365433 // WB tunned with id_cmd = 3A in 20250414 // 340755 1051014 // 3494662 // ym tuned with id_cmd = 3A 2024-03-12
+#define HIP__OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS   340755  //    ym tuned with id_cmd = 3A 2024-03-12
 
 #elif (ENCODER_TYPE == ABSOLUTE_ENCODER_CAN_ID0x01)
 #define SYSTEM_QEP_PULSES_PER_REV (131072)

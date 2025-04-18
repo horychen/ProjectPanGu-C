@@ -620,4 +620,6 @@ REAL PostionSpeedMeasurement_MovingAvergage(int32 QPOSCNT, st_enc *p_enc);
 #define ENABLE_COMMISSIONING FALSE
 #define EXCITE_BETA_AXIS_AND_MEASURE_PHASE_B FALSE
 
+/* Encoder */
+
 #endif

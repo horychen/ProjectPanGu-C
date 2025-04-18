@@ -133,9 +133,19 @@ void write_DAC_buffer(){
         #if WHO_IS_USER == USER_BEZIER
             (*Axis4DAC).dac_watch[57] = d_sim.user.bezier_equivalent_Kp * 0.05; // maximum 20
         #endif
+
+        /* Position */
+        (*Axis4DAC).dac_watch[58] = (*debug).Overwrite_theta_d * 0.318;
+        (*Axis4DAC).dac_watch[59] = (*CTRL).enc->encoder_abs_cnt * SYSTEM_QEP_REV_PER_PULSE;
+        (*Axis4DAC).dac_watch[60] =  PID_Position->Ref * ONE_OVER_2PI * 2; // 范围【-Pi，+Pi】
+               //CTRL->i->varTheta * ONE_OVER_2PI;// CTRL->i->varTheta range from [0,2pi]
+        // PID_Position->Ref * ONE_OVER_2PI * 2; // 范围【-Pi，+Pi】
+        (*Axis4DAC).dac_watch[61] = PID_Position->Fbk * ONE_OVER_2PI * 2; // 范围【-Pi，+Pi】
+        (*Axis4DAC).dac_watch[62] = PID_Position->Err * ONE_OVER_2PI * 2; // 范围【-Pi，+Pi】
+
         /* Motor Speed ESO */
-        (*Axis4DAC).dac_watch[60] = OBSV.esoaf.xOmg * ELEC_RAD_PER_SEC_2_RPM * 0.002;
-        (*Axis4DAC).dac_watch[61] = OBSV.esoaf.xPos * 0.1; // -pi to pi
+        (*Axis4DAC).dac_watch[66] = OBSV.esoaf.xOmg * ELEC_RAD_PER_SEC_2_RPM * 0.002;
+        (*Axis4DAC).dac_watch[67] = OBSV.esoaf.xPos * 0.1; // -pi to pi
 
         /* From Sensor */
         (*Axis4DAC).dac_watch[70] = (*CTRL).enc->varOmega * MECH_RAD_PER_SEC_2_RPM * 0.002;
@@ -315,7 +325,17 @@ void write_DAC_buffer(){
             (*Axis4DAC).channels[5] = 33; // (*CTRL).o->cmd_uDQ[0] * 0.02;
             (*Axis4DAC).channels[6] = 34; // (*CTRL).o->cmd_uDQ[1] * 0.02;
             (*Axis4DAC).channels[7] = 23; // PID_Speed->Err
-        }   
+        }else if((*Axis4DAC).channels_preset==12){(*Axis4DAC).channels_preset=0;
+            /* 20240418 Debugging Position Loop */
+            (*Axis4DAC).channels[0] = 60; // PID_Position->Ref
+            (*Axis4DAC).channels[1] = 61; // PID_Position->Fbk
+            (*Axis4DAC).channels[2] = 62; // PID_Position->Err
+            (*Axis4DAC).channels[3] = 40; // PID_Speed->Ref
+            (*Axis4DAC).channels[4] = 70; // (*Axis4DAC).dac_watch[70] = (*CTRL).enc->varOmega * MECH_RAD_PER_SEC_2_RPM;
+            (*Axis4DAC).channels[5] = 26; // PID_iD->Fbk
+            (*Axis4DAC).channels[6] = 30; // PID_iQ->Fbk
+            (*Axis4DAC).channels[7] = 44; // DC bus utilization
+        }
         // [33] = (*CTRL).o->cmd_uDQ[0] * 0.02;
         // [34] = (*CTRL).o->cmd_uDQ[1] * 0.02;
 
