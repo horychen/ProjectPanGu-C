@@ -1,6 +1,6 @@
 // https://stackoverflow.com/questions/1591361/understanding-typedefs-for-function-pointers-in-c
 #include "ACMSim.h"
-#if ENABLE_COMMISSIONING && WHO_IS_USER == USER_WB
+#if ENABLE_COMMISSIONING
 /* The most accurate initial position detection method is actually proposed in my 2017 TDDA paper that make use of the fact that large d-axis current do not any create torque. */
 
 /* Initial Position Detection needs position update rate is at 1/CL_TS. */
@@ -151,10 +151,10 @@ void commissioning(){
     (*CTRL).s->sinT = sin((*CTRL).i->theta_d_elec); // (*CTRL).i->theta_d_elec
     (*CTRL).i->iDQ[0] = AB2M((*CTRL).i->iAB[0], (*CTRL).i->iAB[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
     (*CTRL).i->iDQ[1] = AB2T((*CTRL).i->iAB[0], (*CTRL).i->iAB[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
+    
     // 参数自整定
-    #if WHO_IS_USER == USER_WB
-        StepByStepCommissioning_NEW_WB();
-    #endif
+    StepByStepCommissioning_NEW_WB();
+    
     _user_inverter_voltage_command(0);
 }
 
@@ -1211,6 +1211,7 @@ void StepByStepCommissioning_NEW_WB(){
     }else if(COMM.bool_comm_status == 1){
         // 电阻辨识
         if(G.flag_do_inverter_characteristics){
+            // v2仿真通常需要6e5 step以上
             COMM_resistanceId_v2( (*CTRL).i->iAB[0], (*CTRL).i->iAB[1] ); // v2 is intended only for better inverter nonlinearity identification considering the rotor movement issue (starting from negative maximal current value to force align)
         }else{
             COMM_resistanceId( (*CTRL).i->iAB[0], (*CTRL).i->iAB[1] );

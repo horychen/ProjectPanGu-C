@@ -617,7 +617,7 @@ void _user_Check_ThreeDB_Point( REAL Fbk, REAL Ref);
 REAL PostionSpeedMeasurement_MovingAvergage(int32 QPOSCNT, st_enc *p_enc);
 
 /* Commission */
-#define ENABLE_COMMISSIONING FALSE
+#define ENABLE_COMMISSIONING TRUE
 #define EXCITE_BETA_AXIS_AND_MEASURE_PHASE_B FALSE
 
 /* Encoder */

@@ -54,15 +54,15 @@ typedef float32 REAL;
 #ifndef FALSE
     #define FALSE (0)
 #endif
-#define M_PI		3.14159265358979323846
-#define M_SQRT2 	1.41421356237309504880
-#define ONE_OVER_2PI 0.15915494309189535 // 1/(2*pi)
-#define ONE_OVER_60 0.01666666666666667
-#define ONE_OVER_360 0.00277777777777778
-#define TWO_PI_OVER_3 2.0943951023931953
-#define SIN_2PI_SLASH_3 0.86602540378443871       // sin(2*pi/3)
-#define SIN_DASH_2PI_SLASH_3 -0.86602540378443871 // sin(-2*pi/3)
-#define SQRT_2_SLASH_3 0.81649658092772603        // sqrt(2.0/3.0)
+#define M_PI		3.14159265358979323846               // pi
+#define M_SQRT2 	1.41421356237309504880            // sqrt(2)
+#define ONE_OVER_2PI 0.15915494309189535           // 1/(2*pi)
+#define ONE_OVER_60 0.01666666666666667            // 1/60
+#define ONE_OVER_360 0.00277777777777778           // 1/360
+#define TWO_PI_OVER_3 2.0943951023931953           // 2*pi/3
+#define SIN_2PI_SLASH_3 0.86602540378443871        // sin(2*pi/3)
+#define SIN_DASH_2PI_SLASH_3 -0.86602540378443871  // sin(-2*pi/3)
+#define SQRT_2_SLASH_3 0.81649658092772603         // sqrt(2.0/3.0)
 #define abs use_fabsf_instead_or_you_will_regret
 #define MECH_RAD_PER_SEC_2_RPM (60.0 * ONE_OVER_2PI)
 #define ELEC_RAD_PER_SEC_2_RPM (60.0 * ONE_OVER_2PI * (*CTRL).motor->npp_inv)
@@ -71,10 +71,13 @@ typedef float32 REAL;
 #define RPM_2_MECH_RAD_PER_SEC ((2 * M_PI * ONE_OVER_60))
 // #define RPM_2_ELEC_RAD_PER_SEC ( (2*M_PI*(*CTRL).motor->npp)/60.0 )
 // New convention
-#define M_PI_OVER_180 0.017453292519943295
-#define CONST_PI_OVER_180 (0.0174533)
-#define CONST_180_OVER_PI (57.2958)
-#define CONST_1_OVER_SQRT3 (0.57735)
+#define M_PI_OVER_180 0.017453292519943295   // pi/180
+#define ONE_OVER_THREE (0.3333333333333333)  // 1/3
+#define ONE_OVER_SQRT3 (0.5773502691896257)  // 1/sqrt(3)
+#define CONST_PI_OVER_180 (0.0174533)        // pi/180
+#define CONST_180_OVER_PI (57.2958)          // 180/pi
+#define CONST_1_OVER_SQRT3 (0.57735)         // 1/sqrt(3)
+
 
 
 /* Motor Control Related Utility Macros */

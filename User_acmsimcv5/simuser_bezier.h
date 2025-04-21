@@ -84,6 +84,7 @@ void set_points_cl(BezierController *pBezier);
 
 void control_output(st_pid_regulator *r, BezierController *BzController);
 REAL control_output_adaptVersion(st_pid_regulator *r, BezierController *BzController);
+void get_bezier_points();
 
 //print info
 void _user_Bezier_printInfo(BOOL bool_bezier_run_in_main);

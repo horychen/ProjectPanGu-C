@@ -85,7 +85,9 @@ void main(void){
     init_d_sim();      // do this only once here
     init_debug();      // do this only once here
     init_experiment(); // 控制器结构体初始化（同实验）
-    get_bezier_points(); // for testing Cury the leg trajectgory tracking 
+    #if WHO_IS_USER == USER_BEZIER || WHO_IS_USER == USER_WB
+        get_bezier_points(); // for testing Cury the leg trajectgory tracking 
+    #endif
     for (axisCnt = 0; axisCnt < NUMBER_OF_AXES; axisCnt++){
         get_Axis_CTRL_pointers
         // (*debug).bool_initilized = FALSE;
@@ -221,7 +223,7 @@ void main_measurement(){
     CTRL->i->theta_d_elec = CTRL->enc->theta_d_elec;
 
     /* 绝对值编码器读数, 使用弧度制度 */
-    CTRL->i->varTheta     = CTRL->enc->encoder_abs_cnt * SYSTEM_QEP_REV_PER_PULSE * M_PI * 2;
+    CTRL->i->varTheta     = CTRL->enc->encoder_abs_cnt * SYSTEM_QEP_REV_PER_PULSE * 2 * M_PI;
 
     // measure place between machine shaft and Sensor Coil
     // if (sensor_coil_enable == 1)
@@ -345,6 +347,14 @@ void DISABLE_PWM_OUTPUT(){
 
         // TODO: use a function for this purpose!
         // 清空积分缓存
+        PID_Position->Ref = 0;
+        PID_Position->Out = 0;
+        PID_Position->OutPrev = 0;
+        PID_Position->Fbk = 0;
+        PID_Position->Err = 0;
+        PID_Position->ErrPrev = 0;
+        PID_Position->I_Term = 0;
+
         PID_Speed->Ref = 0;
         PID_Speed->Out = 0;
         PID_Speed->OutPrev = 0;
@@ -597,6 +607,15 @@ __interrupt void EPWM1ISR(void){
         IPCRtoLFlagAcknowledge(IPC_FLAG7);
     }
 
+    // 这段放需要测时间的代码前面
+    #if PC_SIMULATION == FALSE
+        EALLOW;
+        CpuTimer1.RegsAddr->TCR.bit.TRB = 1;           // reset cpu timer to period value
+        CpuTimer1.RegsAddr->TCR.bit.TSS = 0;           // start/restart
+        CpuTimer_Before = CpuTimer1.RegsAddr->TIM.all; // get count
+        EDIS;
+    #endif
+
     // 对每一个CTRL都需要做一次的代码
     if (use_first_set_three_phase == -1){
         for (axisCnt = 0; axisCnt < NUMBER_OF_AXES; axisCnt++){
@@ -608,34 +627,24 @@ __interrupt void EPWM1ISR(void){
         }
         axisCnt = 1; // 这里将axisCnt有什么用啊？因为axisCnt等于2你就会飞了，内存乱写
     }else if (use_first_set_three_phase == 1){
-        // 这段放需要测时间的代码前面
-        #if PC_SIMULATION == FALSE
-            EALLOW;
-            CpuTimer1.RegsAddr->TCR.bit.TRB = 1;           // reset cpu timer to period value
-            CpuTimer1.RegsAddr->TCR.bit.TSS = 0;           // start/restart
-            CpuTimer_Before = CpuTimer1.RegsAddr->TIM.all; // get count
-            EDIS;
-        #endif
-
         write_RPM_to_cpu02_dsp_cores_2();
         axisCnt = 0;
         get_Axis_CTRL_pointers //(axisCnt, Axis, CTRL);
         PanGuMainISR();
-
-        // 这段放需要测时间的代码后面，观察CpuTimer_Delta的取值，代表经过了多少个 1/200e6 秒。
-        #if PC_SIMULATION == FALSE
-        CpuTimer_After = CpuTimer1.RegsAddr->TIM.all; // get count
-        CpuTimer_Delta = (REAL)CpuTimer_Before - (REAL)CpuTimer_After;
-        // EALLOW;
-        // CpuTimer1.RegsAddr->TCR.bit.TSS = 1; // stop (not needed because of the line TRB=1)
-        // EDIS;
-        #endif
-        
     }else if (use_first_set_three_phase == 2){
         axisCnt = 1;
         get_Axis_CTRL_pointers //(axisCnt, Axis, CTRL);
         PanGuMainISR();
     }
+
+    // 这段放需要测时间的代码后面，观察CpuTimer_Delta的取值，代表经过了多少个 1/200e6 秒。
+    #if PC_SIMULATION == FALSE
+        CpuTimer_After = CpuTimer1.RegsAddr->TIM.all; // get count
+        CpuTimer_Delta = (REAL)CpuTimer_Before - (REAL)CpuTimer_After;
+        // EALLOW;
+        // CpuTimer1.RegsAddr->TCR.bit.TSS = 1; // stop (not needed because of the line TRB=1)
+        // EDIS;
+    #endif
 
     #if USE_ECAP_CEVT2_INTERRUPT == 1
         /* Step 5. [eCAP] Disable interrupts */
@@ -823,7 +832,8 @@ void axis_basic_setup(int axisCnt){
     //
     //    Axis->FLAG_ENABLE_PWM_OUTPUT = FALSE;
 
-    Axis->channels_preset = 12; // 9; // 101;
+    Axis->channels_preset = 2; // 9; // 101;
+    // 2  /* iD current and iQ current info */
     // 9  /* With SPEED ESO */
     // 10 /* WCtuner Debug */
     // 11 /* 20240414 Debugging */

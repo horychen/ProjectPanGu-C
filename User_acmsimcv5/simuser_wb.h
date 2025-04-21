@@ -93,12 +93,13 @@
         REAL Biq;     // damping factor B -> F=Bv
         REAL Err_Pos; // 
         REAL Err_Vel; // 
+        REAL Output;
     }Pos_IMP;
     extern Pos_IMP Pos_IMP_CTRL;
     void _user_wubo_get_SpeedFeedForward_for_PositionLoop(REAL Theta);
     void _user_wubo_PositionLoop_controller(REAL Theta, REAL Speed_FeedForward);
     void _init_Pos_IMP();
-    void _user_wubo_PositionLoop_IMP();
+    void  _user_wubo_PositionLoop_IMP(REAL cmd_varTheta, REAL varTheta);
 
 
 
@@ -125,15 +126,55 @@
     extern wubo_SignalGenerator wubo_SG;
 
     /* Inverter Compensation Method */
+    #define NUMBER_OF_COMPENSATION_POINTS 7
+    extern REAL inverter_current_point[NUMBER_OF_COMPENSATION_POINTS];
+    extern REAL inverter_voltage_point[NUMBER_OF_COMPENSATION_POINTS];
     void wubo_inverter_Compensation(REAL iAB[2]);
     REAL wubo_inverter_Compensation_get_dist_voltage(REAL current);
     REAL CJH_LUT_index_inverter_compensation_get_dist_voltage(REAL current_value);
     void sul_inverter_Compensation();
 
-    /* 声明 inverter_Compensation 专用变量 */
-    #define NUMBER_OF_COMPENSATION_POINTS 7
-    extern REAL inverter_current_point[NUMBER_OF_COMPENSATION_POINTS];
-    extern REAL inverter_voltage_point[NUMBER_OF_COMPENSATION_POINTS];
+
+    /* 1996 Sul Inverter dead-time compensation */
+    // Ton:  0.75us
+    // Toff: 0.725us
+    // Td:   2us
+    // Vd:   1.95V 
+    // Vce:  1.85V
+    // Ts:   10kHz，sampling time
+    // Tcom = Td - Toff + Ton + Ts *(Vce+Vd)/Vdc
+    #if PC_SIMULATION
+        #define SUL_1996_COMPENSATION_Td 0.000002 // 200 * 1e-8 = 2us = 0.000002s
+    #else
+        #define SUL_1996_COMPENSATION_Td SYSTEM_PWM_DEADTIME_CNT * 1e-8 // 1e-8表示PWM波的频率是100MHz
+    #endif
+    #define SUL_1996_COMPENSATION_Ton  0.00000075
+    #define SUL_1996_COMPENSATION_Toff 0.000000725
+    #define SUL_1996_COMPENSATION_Vd0   1.95
+    #define SUL_1996_COMPENSATION_Vce0  1.85
+    #define SUL_1996_RCE_PLUS_RD        0.15 // 这个值和电流相关，我就给个大概。每台电机跑comm的电阻测量模式，跑出来的结果在0.2欧~0.15欧姆之间（SD80，F130，MD1）
+    typedef struct {
+        REAL Udist;
+        REAL iu;
+        REAL iv;
+        REAL iw;
+        REAL uAB_comp[2];
+        REAL Tcom;               // 补偿时间，原文中用一个PI控制器来实现补偿时间的计算
+        REAL M;                  // 原文中的time error变量
+        REAL inv_comp_degree;    // 补偿程度，范围为0到1，0-> 不补偿，1->完全补偿
+        REAL BOOL_INGORE_VCE_VD; // 原文公式31忽略了Vce和Vd，由于Vdc较大
+    } wubo_Sul_1996;
+    extern wubo_Sul_1996 wubo_Sul_1996_Var;
+    void _init_Sul_1996();
+    #define IU wubo_Sul_1996_Var.iu
+    #define IV wubo_Sul_1996_Var.iv
+    #define IW wubo_Sul_1996_Var.iw
+    #define UDIST wubo_Sul_1996_Var.Udist
+    #define UA_COMP wubo_Sul_1996_Var.uAB_comp[0]
+    #define UB_COMP wubo_Sul_1996_Var.uAB_comp[1]
+    #define INV_COMP_DEGREE wubo_Sul_1996_Var.inv_comp_degree
+
+
 
 
     /* Parameter Mismatch Test */
@@ -165,7 +206,9 @@
         REAL total_exp_time; // Record the total time of the experiment
     } wubo_Parameter_mismatch;
     extern wubo_Parameter_mismatch wubo_ParaMis;
-    
+
+
+
     /* Items */
     void NB_MODE_codes();
     void UDQ_GIVEN_TEST();

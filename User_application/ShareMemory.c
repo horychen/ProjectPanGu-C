@@ -137,11 +137,10 @@ void write_DAC_buffer(){
         /* Position */
         (*Axis4DAC).dac_watch[58] = (*debug).Overwrite_theta_d * 0.318;
         (*Axis4DAC).dac_watch[59] = (*CTRL).enc->encoder_abs_cnt * SYSTEM_QEP_REV_PER_PULSE;
-        (*Axis4DAC).dac_watch[60] =  PID_Position->Ref * ONE_OVER_2PI * 2; // 范围【-Pi，+Pi】
-               //CTRL->i->varTheta * ONE_OVER_2PI;// CTRL->i->varTheta range from [0,2pi]
-        // PID_Position->Ref * ONE_OVER_2PI * 2; // 范围【-Pi，+Pi】
-        (*Axis4DAC).dac_watch[61] = PID_Position->Fbk * ONE_OVER_2PI * 2; // 范围【-Pi，+Pi】
-        (*Axis4DAC).dac_watch[62] = PID_Position->Err * ONE_OVER_2PI * 2; // 范围【-Pi，+Pi】
+        (*Axis4DAC).dac_watch[60] =  PID_Position->Ref * ONE_OVER_2PI * 1; //
+        // CTRL->i->varTheta * ONE_OVER_2PI;// CTRL->i->varTheta range from [0,2pi]
+        (*Axis4DAC).dac_watch[61] = PID_Position->Fbk * ONE_OVER_2PI * 1; //
+        (*Axis4DAC).dac_watch[62] = PID_Position->Err * ONE_OVER_2PI * 1; //
 
         /* Motor Speed ESO */
         (*Axis4DAC).dac_watch[66] = OBSV.esoaf.xOmg * ELEC_RAD_PER_SEC_2_RPM * 0.002;
@@ -324,7 +323,7 @@ void write_DAC_buffer(){
             (*Axis4DAC).channels[4] = 44; // DC bus utilization
             (*Axis4DAC).channels[5] = 33; // (*CTRL).o->cmd_uDQ[0] * 0.02;
             (*Axis4DAC).channels[6] = 34; // (*CTRL).o->cmd_uDQ[1] * 0.02;
-            (*Axis4DAC).channels[7] = 23; // PID_Speed->Err
+            (*Axis4DAC).channels[7] = 26; // PID_iD->Fbk
         }else if((*Axis4DAC).channels_preset==12){(*Axis4DAC).channels_preset=0;
             /* 20240418 Debugging Position Loop */
             (*Axis4DAC).channels[0] = 60; // PID_Position->Ref

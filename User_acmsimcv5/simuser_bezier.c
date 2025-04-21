@@ -811,4 +811,31 @@ void _user_Bezier_printInfo(BOOL bool_bezier_run_in_main){
     #endif
 }
 
+void get_bezier_points(){
+    REAL t;
+    int i, j;
+    for (i = 0; i <= BEZIER_TRACE_SIZE; i++){
+        t = (REAL)i / BEZIER_TRACE_SIZE;
+        cury_controller.bezier_trace[i][0] = 0.0;
+        cury_controller.bezier_trace[i][1] = 0.0;
+        for (j = 0; j < cury_controller.order; j++){
+            cury_controller.bezier_trace[i][0] += cury_controller.C[j][0] * pow(1 - t, cury_controller.order - 1 - j) * pow(t, j);
+            cury_controller.bezier_trace[i][1] += cury_controller.C[j][1] * pow(1 - t, cury_controller.order - 1 - j) * pow(t, j);
+        }
+    }
+    for (i = 0; i < BEZIER_TRACE_SIZE; i++){
+        for (j = i + 1; j < BEZIER_TRACE_SIZE; j++){
+            if (cury_controller.bezier_trace[i][0] > cury_controller.bezier_trace[j][0]){
+                REAL temp[2];
+                temp[0] = cury_controller.bezier_trace[i][0];
+                temp[1] = cury_controller.bezier_trace[i][1];
+                cury_controller.bezier_trace[i][0] = cury_controller.bezier_trace[j][0];
+                cury_controller.bezier_trace[i][1] = cury_controller.bezier_trace[j][1];
+                cury_controller.bezier_trace[j][0] = temp[0];
+                cury_controller.bezier_trace[j][1] = temp[1];
+            }
+        }
+    }
+}
+
 #endif

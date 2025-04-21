@@ -25,7 +25,7 @@ typedef struct {
 } ST_sim;
 
 typedef struct {
-    long delta;
+    REAL delta;
     long CLBW_HZ;
     BOOL bool_apply_decoupling_voltages_to_current_regulation;
     long VL_EXE_PER_CL_EXE;
@@ -55,6 +55,8 @@ typedef struct {
     long set_rpm_speed_command;
     REAL set_id_command;
     REAL set_iq_command;
+    BOOL BOOL_INIT_MY_VARIABLES;
+    BOOL BOOL_1996_SUL_ON;
     REAL zeta;
     long omega_n;
     REAL max_CLBW_PER_min_CLBW;
@@ -64,6 +66,22 @@ typedef struct {
     BOOL bool_apply_WC_tunner_for_speed_loop;
     BOOL bool_enable_Harnefors_back_calculation;
     REAL Check_Harnerfors_1998_On;
+    REAL Position_Loop_Kp;
+    BOOL BOOL_WUBO_POS_CMD_TEST;
+    long set_deg_position_command;
+    long Position_cmd_sine_frequency;
+    long Position_Loop_Output_Limit;
+    REAL Position_Loop_Ref_prev;
+    REAL Position_Loop_Ref_Diff;
+    REAL Position_Loop_Ref_Diff_TEST;
+    BOOL bool_Compensation_byPosDiff;
+    REAL IMP_Spring_Factor;
+    REAL IMP_Damping_Factor;
+    BOOL bool_apply_external_Force_to_Position_Loop;
+    long positionLoopType;
+    long tracking_trace_Type;
+    long target_position_cnt_shank;
+    long target_position_cnt_hip;
     BOOL bool_apply_Rohr_1991_Controller;
     BOOL bool_apply_Rohr_1991_Controller_with_Forgetting_Factor;
     REAL Rohr_K_min;
@@ -102,22 +120,6 @@ typedef struct {
     REAL HitWall_min_limit_ratio;
     long HitWall_high_RPM_command;
     REAL HitWall_time_interval;
-    REAL Position_Loop_Kp;
-    BOOL BOOL_WUBO_POS_CMD_TEST;
-    long set_deg_position_command;
-    long Position_cmd_sine_frequency;
-    long Position_Loop_Output_Limit;
-    REAL Position_Loop_Ref_prev;
-    REAL Position_Loop_Ref_Diff;
-    REAL Position_Loop_Ref_Diff_TEST;
-    BOOL bool_Compensation_byPosDiff;
-    REAL IMP_Spring_Factor;
-    REAL IMP_Damping_Factor;
-    BOOL bool_apply_external_Force_to_Position_Loop;
-    long positionLoopType;
-    long tracking_trace_Type;
-    long target_position_cnt_shank;
-    long target_position_cnt_hip;
     long COMM_bool_comm_status;
     BOOL flag_Nyquist_one_cycle_DONE;
     REAL Nyquist_plot_num_cycles;
@@ -145,9 +147,9 @@ typedef struct {
 
 
 
-#define DATA_FORMAT "%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g\n"
-#define DATA_LABELS "ACM.x[0],ACM.x[1],ACM.x[2],ACM.x[3],ACM.x[4],ACM.theta_d/M_PI*180,ACM.varOmega * MECH_RAD_PER_SEC_2_RPM,ACM.uAB[0],ACM.uAB[1],ACM.uDQ[0],ACM.uDQ[1],ACM.iAB[0],ACM.iAB[1],ACM.iDQ[0],ACM.iDQ[1],ACM.TLoad,ACM.Tem,ACM.KA,(*debug).set_rpm_speed_command,(*CTRL).s->xRho/M_PI*180,(*CTRL).i->cmd_varOmega * MECH_RAD_PER_SEC_2_RPM,(*CTRL).i->varOmega * MECH_RAD_PER_SEC_2_RPM,(*CTRL).i->cmd_varOmega,(*CTRL).i->varOmega,(*CTRL).i->cmd_iDQ[0],(*CTRL).i->cmd_iDQ[1],(*CTRL).o->cmd_uDQ[0],(*CTRL).o->cmd_uDQ[1],(*CTRL).o->dc_bus_utilization_ratio,(*CTRL).i->iDQ[0],(*CTRL).i->iDQ[1],(*CTRL).i->iAB[0],(*CTRL).i->iAB[1],(*CTRL).i->cmd_psi,(*CTRL).i->Tem,(*CTRL).i->cmd_Tem,(*debug).Overwrite_theta_d / ACM.npp,(*CTRL).timebase,OBSV.esoaf.xOmg * ELEC_RAD_PER_SEC_2_RPM,OBSV.esoaf.xTL,OBSV.esoaf.xPos,OBSV.esoaf.output_error_sine,OBSV.esoaf.output_error,(*CTRL).timebase,ACM.KA,ACM.KE,ACM.iDQ[0],ACM.iDQ[1],ACM.theta_d,ACM.varTheta,wubo_ParaMis.percent_Ld,wubo_ParaMis.percent_Lq,wubo_ParaMis.percent_Rs,wubo_ParaMis.percent_Js,wubo_ParaMis.percent_KE,SIL_Controller.KFB,(*CTRL).o->cmd_uAB[0],(*CTRL).o->cmd_uAB[1],(*CTRL).o->cmd_uAB_to_inverter[0],(*CTRL).o->cmd_uAB_to_inverter[1],(*CTRL).s->iD->OutLimit,(*CTRL).s->iQ->OutLimit,(*CTRL).s->Speed->Kp,(*CTRL).s->Speed->Ki_CODE,(*CTRL).o->dc_bus_utilization_ratio,(*CTRL).s->iD->Kp,(*CTRL).s->iD->Ki_CODE,(*CTRL).s->iQ->Kp,(*CTRL).s->iQ->Ki_CODE,ACM.theta_d/M_PI*180,(*CTRL).i->cmd_varTheta,(*CTRL).i->theta_d_elec * (*CTRL).motor->npp_inv,(*CTRL).i->varTheta,(*CTRL).s->Position->Err,(*CTRL).s->Position->Ref,(*CTRL).s->Position->Fbk,(*CTRL).s->Position->Out,(*CTRL).s->Position->Out * MECH_RAD_PER_SEC_2_RPM,d_sim.user.Mark_Sweeping_Freq_ThreeDB_Point,d_sim.user.Mark_Counter,d_sim.user.Position_Loop_Ref_Diff * MECH_RAD_PER_SEC_2_RPM,d_sim.user.Position_Loop_Ref_Diff_TEST * MECH_RAD_PER_SEC_2_RPM,Rohr_1991_Controller.K_adapt,Rohr_1991_Controller.output,(*CTRL).i->cmd_varOmega * MECH_RAD_PER_SEC_2_RPM - ACM.varOmega * MECH_RAD_PER_SEC_2_RPM,(*CTRL).i->varTheta - (*CTRL).i->cmd_varTheta,Pos_IMP_CTRL.Err_Pos,Pos_IMP_CTRL.Err_Vel * MECH_RAD_PER_SEC_2_RPM\n"
-#define DATA_DETAILS ACM.x[0],ACM.x[1],ACM.x[2],ACM.x[3],ACM.x[4],ACM.theta_d/M_PI*180,ACM.varOmega * MECH_RAD_PER_SEC_2_RPM,ACM.uAB[0],ACM.uAB[1],ACM.uDQ[0],ACM.uDQ[1],ACM.iAB[0],ACM.iAB[1],ACM.iDQ[0],ACM.iDQ[1],ACM.TLoad,ACM.Tem,ACM.KA,(*debug).set_rpm_speed_command,(*CTRL).s->xRho/M_PI*180,(*CTRL).i->cmd_varOmega * MECH_RAD_PER_SEC_2_RPM,(*CTRL).i->varOmega * MECH_RAD_PER_SEC_2_RPM,(*CTRL).i->cmd_varOmega,(*CTRL).i->varOmega,(*CTRL).i->cmd_iDQ[0],(*CTRL).i->cmd_iDQ[1],(*CTRL).o->cmd_uDQ[0],(*CTRL).o->cmd_uDQ[1],(*CTRL).o->dc_bus_utilization_ratio,(*CTRL).i->iDQ[0],(*CTRL).i->iDQ[1],(*CTRL).i->iAB[0],(*CTRL).i->iAB[1],(*CTRL).i->cmd_psi,(*CTRL).i->Tem,(*CTRL).i->cmd_Tem,(*debug).Overwrite_theta_d / ACM.npp,(*CTRL).timebase,OBSV.esoaf.xOmg * ELEC_RAD_PER_SEC_2_RPM,OBSV.esoaf.xTL,OBSV.esoaf.xPos,OBSV.esoaf.output_error_sine,OBSV.esoaf.output_error,(*CTRL).timebase,ACM.KA,ACM.KE,ACM.iDQ[0],ACM.iDQ[1],ACM.theta_d,ACM.varTheta,wubo_ParaMis.percent_Ld,wubo_ParaMis.percent_Lq,wubo_ParaMis.percent_Rs,wubo_ParaMis.percent_Js,wubo_ParaMis.percent_KE,SIL_Controller.KFB,(*CTRL).o->cmd_uAB[0],(*CTRL).o->cmd_uAB[1],(*CTRL).o->cmd_uAB_to_inverter[0],(*CTRL).o->cmd_uAB_to_inverter[1],(*CTRL).s->iD->OutLimit,(*CTRL).s->iQ->OutLimit,(*CTRL).s->Speed->Kp,(*CTRL).s->Speed->Ki_CODE,(*CTRL).o->dc_bus_utilization_ratio,(*CTRL).s->iD->Kp,(*CTRL).s->iD->Ki_CODE,(*CTRL).s->iQ->Kp,(*CTRL).s->iQ->Ki_CODE,ACM.theta_d/M_PI*180,(*CTRL).i->cmd_varTheta,(*CTRL).i->theta_d_elec * (*CTRL).motor->npp_inv,(*CTRL).i->varTheta,(*CTRL).s->Position->Err,(*CTRL).s->Position->Ref,(*CTRL).s->Position->Fbk,(*CTRL).s->Position->Out,(*CTRL).s->Position->Out * MECH_RAD_PER_SEC_2_RPM,d_sim.user.Mark_Sweeping_Freq_ThreeDB_Point,d_sim.user.Mark_Counter,d_sim.user.Position_Loop_Ref_Diff * MECH_RAD_PER_SEC_2_RPM,d_sim.user.Position_Loop_Ref_Diff_TEST * MECH_RAD_PER_SEC_2_RPM,Rohr_1991_Controller.K_adapt,Rohr_1991_Controller.output,(*CTRL).i->cmd_varOmega * MECH_RAD_PER_SEC_2_RPM - ACM.varOmega * MECH_RAD_PER_SEC_2_RPM,(*CTRL).i->varTheta - (*CTRL).i->cmd_varTheta,Pos_IMP_CTRL.Err_Pos,Pos_IMP_CTRL.Err_Vel * MECH_RAD_PER_SEC_2_RPM
+#define DATA_FORMAT "%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g\n"
+#define DATA_LABELS "ACM.x[0],ACM.x[1],ACM.x[2],ACM.x[3],ACM.x[4],ACM.theta_d/M_PI*180,ACM.varOmega * MECH_RAD_PER_SEC_2_RPM,ACM.uAB[0],ACM.uAB[1],ACM.uDQ[0],ACM.uDQ[1],ACM.iAB[0],ACM.iAB[1],ACM.iDQ[0],ACM.iDQ[1],ACM.TLoad,ACM.Tem,ACM.KA,(*debug).set_rpm_speed_command,(*CTRL).s->xRho/M_PI*180,(*CTRL).i->cmd_varOmega * MECH_RAD_PER_SEC_2_RPM,(*CTRL).i->varOmega * MECH_RAD_PER_SEC_2_RPM,(*CTRL).i->cmd_varOmega,(*CTRL).i->varOmega,(*CTRL).i->cmd_iDQ[0],(*CTRL).i->cmd_iDQ[1],(*CTRL).o->cmd_uDQ[0],(*CTRL).o->cmd_uDQ[1],(*CTRL).o->dc_bus_utilization_ratio,(*CTRL).i->iDQ[0],(*CTRL).i->iDQ[1],(*CTRL).i->iAB[0],(*CTRL).i->iAB[1],(*CTRL).i->cmd_psi,(*CTRL).i->Tem,(*CTRL).i->cmd_Tem,(*debug).Overwrite_theta_d / ACM.npp,(*CTRL).timebase,OBSV.esoaf.xOmg * ELEC_RAD_PER_SEC_2_RPM,OBSV.esoaf.xTL,OBSV.esoaf.xPos,OBSV.esoaf.output_error_sine,OBSV.esoaf.output_error,(*CTRL).timebase,ACM.KA,ACM.KE,ACM.iDQ[0],ACM.iDQ[1],ACM.theta_d,ACM.varTheta,wubo_ParaMis.percent_Ld,wubo_ParaMis.percent_Lq,wubo_ParaMis.percent_Rs,wubo_ParaMis.percent_Js,wubo_ParaMis.percent_KE,wubo_Sul_1996_Var.uAB_comp[0],wubo_Sul_1996_Var.uAB_comp[1],wubo_Sul_1996_Var.iu,wubo_Sul_1996_Var.iu * 10,wubo_Sul_1996_Var.iv,wubo_Sul_1996_Var.iw,wubo_Sul_1996_Var.Tcom,SIL_Controller.KFB,(*CTRL).o->cmd_uAB[0],(*CTRL).o->cmd_uAB[1],(*CTRL).o->cmd_uAB_to_inverter[0],(*CTRL).o->cmd_uAB_to_inverter[1],(*CTRL).s->iD->OutLimit,(*CTRL).s->iQ->OutLimit,(*CTRL).s->Speed->Kp,(*CTRL).s->Speed->Ki_CODE,(*CTRL).o->dc_bus_utilization_ratio,(*CTRL).s->iD->Kp,(*CTRL).s->iD->Ki_CODE,(*CTRL).s->iQ->Kp,(*CTRL).s->iQ->Ki_CODE,ACM.theta_d/M_PI*180,(*CTRL).i->cmd_varTheta,(*CTRL).i->theta_d_elec * (*CTRL).motor->npp_inv,(*CTRL).i->varTheta,(*CTRL).s->Position->Err,(*CTRL).s->Position->Ref,(*CTRL).s->Position->Fbk,(*CTRL).s->Position->Out,(*CTRL).s->Position->Out * MECH_RAD_PER_SEC_2_RPM,d_sim.user.Mark_Sweeping_Freq_ThreeDB_Point,d_sim.user.Mark_Counter,d_sim.user.Position_Loop_Ref_Diff * MECH_RAD_PER_SEC_2_RPM,d_sim.user.Position_Loop_Ref_Diff_TEST * MECH_RAD_PER_SEC_2_RPM,Rohr_1991_Controller.K_adapt,Rohr_1991_Controller.output,(*CTRL).i->cmd_varOmega * MECH_RAD_PER_SEC_2_RPM - ACM.varOmega * MECH_RAD_PER_SEC_2_RPM,(*CTRL).i->varTheta - (*CTRL).i->cmd_varTheta,Pos_IMP_CTRL.Err_Pos,Pos_IMP_CTRL.Err_Vel * MECH_RAD_PER_SEC_2_RPM\n"
+#define DATA_DETAILS ACM.x[0],ACM.x[1],ACM.x[2],ACM.x[3],ACM.x[4],ACM.theta_d/M_PI*180,ACM.varOmega * MECH_RAD_PER_SEC_2_RPM,ACM.uAB[0],ACM.uAB[1],ACM.uDQ[0],ACM.uDQ[1],ACM.iAB[0],ACM.iAB[1],ACM.iDQ[0],ACM.iDQ[1],ACM.TLoad,ACM.Tem,ACM.KA,(*debug).set_rpm_speed_command,(*CTRL).s->xRho/M_PI*180,(*CTRL).i->cmd_varOmega * MECH_RAD_PER_SEC_2_RPM,(*CTRL).i->varOmega * MECH_RAD_PER_SEC_2_RPM,(*CTRL).i->cmd_varOmega,(*CTRL).i->varOmega,(*CTRL).i->cmd_iDQ[0],(*CTRL).i->cmd_iDQ[1],(*CTRL).o->cmd_uDQ[0],(*CTRL).o->cmd_uDQ[1],(*CTRL).o->dc_bus_utilization_ratio,(*CTRL).i->iDQ[0],(*CTRL).i->iDQ[1],(*CTRL).i->iAB[0],(*CTRL).i->iAB[1],(*CTRL).i->cmd_psi,(*CTRL).i->Tem,(*CTRL).i->cmd_Tem,(*debug).Overwrite_theta_d / ACM.npp,(*CTRL).timebase,OBSV.esoaf.xOmg * ELEC_RAD_PER_SEC_2_RPM,OBSV.esoaf.xTL,OBSV.esoaf.xPos,OBSV.esoaf.output_error_sine,OBSV.esoaf.output_error,(*CTRL).timebase,ACM.KA,ACM.KE,ACM.iDQ[0],ACM.iDQ[1],ACM.theta_d,ACM.varTheta,wubo_ParaMis.percent_Ld,wubo_ParaMis.percent_Lq,wubo_ParaMis.percent_Rs,wubo_ParaMis.percent_Js,wubo_ParaMis.percent_KE,wubo_Sul_1996_Var.uAB_comp[0],wubo_Sul_1996_Var.uAB_comp[1],wubo_Sul_1996_Var.iu,wubo_Sul_1996_Var.iu * 10,wubo_Sul_1996_Var.iv,wubo_Sul_1996_Var.iw,wubo_Sul_1996_Var.Tcom,SIL_Controller.KFB,(*CTRL).o->cmd_uAB[0],(*CTRL).o->cmd_uAB[1],(*CTRL).o->cmd_uAB_to_inverter[0],(*CTRL).o->cmd_uAB_to_inverter[1],(*CTRL).s->iD->OutLimit,(*CTRL).s->iQ->OutLimit,(*CTRL).s->Speed->Kp,(*CTRL).s->Speed->Ki_CODE,(*CTRL).o->dc_bus_utilization_ratio,(*CTRL).s->iD->Kp,(*CTRL).s->iD->Ki_CODE,(*CTRL).s->iQ->Kp,(*CTRL).s->iQ->Ki_CODE,ACM.theta_d/M_PI*180,(*CTRL).i->cmd_varTheta,(*CTRL).i->theta_d_elec * (*CTRL).motor->npp_inv,(*CTRL).i->varTheta,(*CTRL).s->Position->Err,(*CTRL).s->Position->Ref,(*CTRL).s->Position->Fbk,(*CTRL).s->Position->Out,(*CTRL).s->Position->Out * MECH_RAD_PER_SEC_2_RPM,d_sim.user.Mark_Sweeping_Freq_ThreeDB_Point,d_sim.user.Mark_Counter,d_sim.user.Position_Loop_Ref_Diff * MECH_RAD_PER_SEC_2_RPM,d_sim.user.Position_Loop_Ref_Diff_TEST * MECH_RAD_PER_SEC_2_RPM,Rohr_1991_Controller.K_adapt,Rohr_1991_Controller.output,(*CTRL).i->cmd_varOmega * MECH_RAD_PER_SEC_2_RPM - ACM.varOmega * MECH_RAD_PER_SEC_2_RPM,(*CTRL).i->varTheta - (*CTRL).i->cmd_varTheta,Pos_IMP_CTRL.Err_Pos,Pos_IMP_CTRL.Err_Vel * MECH_RAD_PER_SEC_2_RPM
 
 
 #define DATA_FILE_NAME "../dat/F130-16-KV20-COMM.dat"

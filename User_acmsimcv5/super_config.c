@@ -4,8 +4,8 @@
 
 void init_d_sim() {
     d_sim.init.npp = 26;
-    d_sim.init.IN = 3.0;
-    d_sim.init.R = 0.1195;
+    d_sim.init.IN = 8.0;
+    d_sim.init.R = 0.256955624;
     d_sim.init.Ld = 0.000173;
     d_sim.init.Lq = 0.00020300000000000003;
     d_sim.init.KE = 0.0193;
@@ -15,33 +15,35 @@ void init_d_sim() {
 
     d_sim.sim.INVERTER_NONLINEARITY = 0;
     d_sim.sim.CLTS = 0.0001;
-    d_sim.sim.NUMBER_OF_STEPS = 50000;
+    d_sim.sim.NUMBER_OF_STEPS = 2000;
     d_sim.sim.MACHINE_SIMULATIONs_PER_SAMPLING_PERIOD = 1;
 
-    d_sim.FOC.delta = 10;
+    d_sim.FOC.delta = 8.5;
     d_sim.FOC.CLBW_HZ = 800;
     d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation = FALSE;
     d_sim.FOC.VL_EXE_PER_CL_EXE = 1;
 
     d_sim.CL.SERIES_KP_D_AXIS = 0.8695928465136548;
-    d_sim.CL.SERIES_KI_D_AXIS = 690.7514450867052;
+    d_sim.CL.SERIES_KI_D_AXIS = 1485.2926242774565;
     d_sim.CL.SERIES_KP_Q_AXIS = 1.0203892938859649;
-    d_sim.CL.SERIES_KI_Q_AXIS = 588.6699507389161;
+    d_sim.CL.SERIES_KI_Q_AXIS = 1265.791251231527;
     d_sim.CL.LIMIT_DC_BUS_UTILIZATION = 0.96;
 
-    d_sim.VL.SERIES_KP = 0.24308005333475427;
-    d_sim.VL.SERIES_KI = 50.26548245743669;
-    d_sim.VL.LIMIT_OVERLOAD_FACTOR = 1.0;
+    d_sim.VL.SERIES_KP = 0.285976533335005;
+    d_sim.VL.SERIES_KI = 69.57160201721341;
+    d_sim.VL.LIMIT_OVERLOAD_FACTOR = 0.25;
 
     d_sim.user.verbose = TRUE;
     d_sim.user.who_is_user = 2023231051;
-    d_sim.user.mode_select_synchronous_motor = 5;
+    d_sim.user.mode_select_synchronous_motor = 4;
     d_sim.user.mode_select_induction_motor = 32;
     d_sim.user.INVERTER_NONLINEARITY_COMPENSATION_METHOD = FALSE;
     d_sim.user.Select_exp_operation = 0.0;
     d_sim.user.set_rpm_speed_command = 50;
     d_sim.user.set_id_command = 2.0;
     d_sim.user.set_iq_command = 2.0;
+    d_sim.user.BOOL_INIT_MY_VARIABLES = FALSE;
+    d_sim.user.BOOL_1996_SUL_ON = TRUE;
     d_sim.user.zeta = 1.0;
     d_sim.user.omega_n = 800;
     d_sim.user.max_CLBW_PER_min_CLBW = 0.9;
@@ -51,6 +53,22 @@ void init_d_sim() {
     d_sim.user.bool_apply_WC_tunner_for_speed_loop = FALSE;
     d_sim.user.bool_enable_Harnefors_back_calculation = FALSE;
     d_sim.user.Check_Harnerfors_1998_On = -1.0;
+    d_sim.user.Position_Loop_Kp = 10.0;
+    d_sim.user.BOOL_WUBO_POS_CMD_TEST = TRUE;
+    d_sim.user.set_deg_position_command = 180;
+    d_sim.user.Position_cmd_sine_frequency = 1;
+    d_sim.user.Position_Loop_Output_Limit = 200;
+    d_sim.user.Position_Loop_Ref_prev = 0.0;
+    d_sim.user.Position_Loop_Ref_Diff = 0.0;
+    d_sim.user.Position_Loop_Ref_Diff_TEST = 0.0;
+    d_sim.user.bool_Compensation_byPosDiff = TRUE;
+    d_sim.user.IMP_Spring_Factor = 0.5;
+    d_sim.user.IMP_Damping_Factor = 0.1;
+    d_sim.user.bool_apply_external_Force_to_Position_Loop = FALSE;
+    d_sim.user.positionLoopType = 2;
+    d_sim.user.tracking_trace_Type = -1;
+    d_sim.user.target_position_cnt_shank = 58000;
+    d_sim.user.target_position_cnt_hip = 48000;
     d_sim.user.bool_apply_Rohr_1991_Controller = FALSE;
     d_sim.user.bool_apply_Rohr_1991_Controller_with_Forgetting_Factor = FALSE;
     d_sim.user.Rohr_K_min = 0.0;
@@ -89,23 +107,7 @@ void init_d_sim() {
     d_sim.user.HitWall_min_limit_ratio = 0.1;
     d_sim.user.HitWall_high_RPM_command = 400;
     d_sim.user.HitWall_time_interval = 0.2;
-    d_sim.user.Position_Loop_Kp = 10.0;
-    d_sim.user.BOOL_WUBO_POS_CMD_TEST = TRUE;
-    d_sim.user.set_deg_position_command = 180;
-    d_sim.user.Position_cmd_sine_frequency = 1;
-    d_sim.user.Position_Loop_Output_Limit = 150;
-    d_sim.user.Position_Loop_Ref_prev = 0.0;
-    d_sim.user.Position_Loop_Ref_Diff = 0.0;
-    d_sim.user.Position_Loop_Ref_Diff_TEST = 0.0;
-    d_sim.user.bool_Compensation_byPosDiff = TRUE;
-    d_sim.user.IMP_Spring_Factor = 0.1092;
-    d_sim.user.IMP_Damping_Factor = 0.01;
-    d_sim.user.bool_apply_external_Force_to_Position_Loop = FALSE;
-    d_sim.user.positionLoopType = 2;
-    d_sim.user.tracking_trace_Type = -1;
-    d_sim.user.target_position_cnt_shank = 58000;
-    d_sim.user.target_position_cnt_hip = 48000;
-    d_sim.user.COMM_bool_comm_status = 5;
+    d_sim.user.COMM_bool_comm_status = 1;
     d_sim.user.flag_Nyquist_one_cycle_DONE = FALSE;
     d_sim.user.Nyquist_plot_num_cycles = 1.0;
     d_sim.user.Nyquist_one_cycle_count = 0.0;

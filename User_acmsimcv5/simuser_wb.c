@@ -11,6 +11,7 @@ SpeedInnerLoop SIL_Controller;
 Harnefors_1998_BackCals Harnefors_1998_BackCals_Variable;
 Rohr_1991 Rohr_1991_Controller;
 Pos_IMP Pos_IMP_CTRL;
+wubo_Sul_1996 wubo_Sul_1996_Var;
 int wubo_debug_tools[10] = {1,0,0,0,0,0,0,0,0,0};
 
 
@@ -80,6 +81,26 @@ void UDQ_GIVEN_TEST(){
     (*CTRL).o->cmd_uAB_to_inverter[1] = (*CTRL).o->cmd_uAB[1];
 }
 
+
+
+
+
+void _init_Sul_1996(){
+        wubo_Sul_1996_Var.Udist = 0;
+        wubo_Sul_1996_Var.iu    = 0;
+        wubo_Sul_1996_Var.iv    = 0;
+        wubo_Sul_1996_Var.iw    = 0;
+        wubo_Sul_1996_Var.uAB_comp[0] = 0;
+        wubo_Sul_1996_Var.uAB_comp[1] = 0;
+        wubo_Sul_1996_Var.Tcom  = 0;
+        wubo_Sul_1996_Var.M = SUL_1996_COMPENSATION_Toff 
+                            - SUL_1996_COMPENSATION_Ton
+                            - SUL_1996_COMPENSATION_Td 
+                            + 0;  // 原文中的time error变量
+        wubo_Sul_1996_Var.inv_comp_degree    = 0.3;  // 补偿程度，范围为0到1
+        wubo_Sul_1996_Var.BOOL_INGORE_VCE_VD = 0;  // 原文公式31忽略了Vce和Vd，由于Vdc较大
+}
+
 /*
 Author: Wubo
 Algorithm: Six First-Order Curve for Compensation
@@ -125,10 +146,94 @@ void wubo_inverter_Compensation(REAL iAB[2]){
         CTRL->o->cmd_uAB_to_inverter[0] = CTRL->o->cmd_uAB[0] + UVW2A_AI(dist_ua, dist_ub, dist_uc);
         CTRL->o->cmd_uAB_to_inverter[1] = CTRL->o->cmd_uAB[1] + UVW2B_AI(dist_ua, dist_ub, dist_uc);
     }
-    /*
-    With more compensation methods, we can add more else if here.
-    */
+
+    /* Inverter Compensation Dead Time 1996 Sul*/
+    // ***********************************************************************************
+    // 以下数据均来自FNC42060F的数据手册 Page 5
+    // Ton:  0.75us
+    // Toff: 0.725us
+    // Td:   2us
+    // Vd:   1.95V 
+    // Vce:  1.85V
+    // Ts:   10kHz，sampling time
+    // Tcom = Td - Toff + Ton + Ts *(Vce+Vd)/Vdc
+    // 文中所使用的是恒福值变化
+    // ***********************************************************************************
+    wubo_Sul_1996_Var.Tcom = SUL_1996_COMPENSATION_Td
+                           + SUL_1996_COMPENSATION_Ton
+                           - SUL_1996_COMPENSATION_Toff
+                           + CL_TS * (SUL_1996_COMPENSATION_Vce0 + SUL_1996_COMPENSATION_Vd0) * DC_BUS_VOLTAGE_INVERSE_WUBO * (0.5773672055);
+
+    wubo_Sul_1996_Var.M = SUL_1996_COMPENSATION_Toff 
+                        - SUL_1996_COMPENSATION_Ton
+                        - SUL_1996_COMPENSATION_Td 
+                        + 0.0;
+                        // + wubo_Sul_1996_Var.Tcom;  // 原文中的time error变量
+    
+    #if PC_SIMULATION
+        IU = AB2U_AI(iAB[0], iAB[1]);
+        IV = AB2V_AI(iAB[0], iAB[1]);
+        IW = AB2W_AI(iAB[0], iAB[1]);
+        UDIST = 0.1666666666667 * ( d_sim.init.Vdc * wubo_Sul_1996_Var.M * CL_TS_INVERSE 
+                                - SUL_1996_COMPENSATION_Vce0
+                                - SUL_1996_COMPENSATION_Vd0 );
+    #else
+        // 保证补偿程度不会飞到区间以外
+        if (wubo_Sul_1996_Var.inv_comp_degree > 1) wubo_Sul_1996_Var.inv_comp_degree = 1;
+        if (wubo_Sul_1996_Var.inv_comp_degree < 0) wubo_Sul_1996_Var.inv_comp_degree = 0;
+        // 直接从measurement函数中获取iuvw，但这样会存在一个严重的问题，怎么解决iuvw的温漂零飘
+        IU = Axis->iuvw[0];
+        IV = Axis->iuvw[1];
+        IW = Axis->iuvw[2];
+        // IU = AB2U_AI(iAB[0], iAB[1]);
+        // IV = AB2V_AI(iAB[0], iAB[1]);
+        // IW = AB2W_AI(iAB[0], iAB[1]);
+        UDIST = 0.1666666666667 * ( Axis->vdc * wubo_Sul_1996_Var.M * CL_TS_INVERSE 
+                        - SUL_1996_COMPENSATION_Vce0
+                        - SUL_1996_COMPENSATION_Vd0 );
+    #endif
+
+    REAL uU_dist;
+    REAL uV_dist;
+    REAL uW_dist;
+    uU_dist = UDIST * ( 2*sign(IU) - sign(IV) - sign(IW) ) - 0.5*(SUL_1996_RCE_PLUS_RD)*IU;
+    uV_dist = UDIST * ( 2*sign(IV) - sign(IW) - sign(IU) ) - 0.5*(SUL_1996_RCE_PLUS_RD)*IV;
+    uW_dist = UDIST * ( 2*sign(IW) - sign(IU) - sign(IV) ) - 0.5*(SUL_1996_RCE_PLUS_RD)*IW;
+
+    UA_COMP = UVW2A_AI(uU_dist, uV_dist, uW_dist);
+    UB_COMP = UVW2B_AI(uU_dist, uV_dist, uW_dist);
+
+    if (d_sim.user.BOOL_1996_SUL_ON == TRUE){
+        #if PC_SIMULATION
+            // 仿真时，相当于加上voltage distortion来仿真逆变器的非线性
+            (*CTRL).o->cmd_uAB_to_inverter[0] = (*CTRL).o->cmd_uAB[0] + INV_COMP_DEGREE * UA_COMP;
+            (*CTRL).o->cmd_uAB_to_inverter[1] = (*CTRL).o->cmd_uAB[1] + INV_COMP_DEGREE * UB_COMP;
+        #else
+            (*CTRL).o->cmd_uAB_to_inverter[0] = (*CTRL).o->cmd_uAB[0] - INV_COMP_DEGREE * UA_COMP;
+            (*CTRL).o->cmd_uAB_to_inverter[1] = (*CTRL).o->cmd_uAB[1] - INV_COMP_DEGREE * UB_COMP;
+        #endif
+    }else{
+        (*CTRL).o->cmd_uAB_to_inverter[0] = (*CTRL).o->cmd_uAB[0];
+        (*CTRL).o->cmd_uAB_to_inverter[1] = (*CTRL).o->cmd_uAB[1];
+    }
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // REAL inverter_current_point[NUMBER_OF_COMPENSATION_POINTS] = {0.85, 0.216, 0.03, 0, -0.019, -0.17, -0.86};
 // REAL inverter_voltage_point[NUMBER_OF_COMPENSATION_POINTS] = {4.06, 3.67, 1.83, 0, -2.36, -3.58, -4.066};
@@ -270,8 +375,7 @@ void _init_WC_Tuner(){
         printf("FOC_VLBW = %f rad/s\n", SIL_Controller.FOC_VLBW);
         printf("FOC_VLBW = %f Hz\n", SIL_Controller.FOC_VLBW_Hz);
         printf("FOC_CLBW = %f rad/s\n", SIL_Controller.FOC_CLBW);
-        printf("FOC_CLBW = %f Hz\n", SIL_Controller.FOC_CLBW_Hz);
-        printf("K0       = %f\n",       K0);
+          printf("K0       = %f\n",       K0);
         if (SIL_Controller.FOC_CLBW - 4 * K0 * SIL_Controller.KFB < 0){
             printf("can not do zero-pole cancellation\n");
         }else{
@@ -617,6 +721,7 @@ void _init_Pos_IMP(){
     Pos_IMP_CTRL.Biq = d_sim.user.IMP_Damping_Factor;
     Pos_IMP_CTRL.Err_Pos = 0.0;
     Pos_IMP_CTRL.Err_Vel = 0.0;
+    Pos_IMP_CTRL.Output = 0.0;
 }
 
 void _user_wubo_get_SpeedFeedForward_for_PositionLoop(REAL Theta){
@@ -625,12 +730,25 @@ void _user_wubo_get_SpeedFeedForward_for_PositionLoop(REAL Theta){
 void _user_wubo_PositionLoop_controller(REAL Theta, REAL cmd_Theta){
 }
 
-void _user_wubo_PositionLoop_IMP(){
-    Pos_IMP_CTRL.Err_Pos = (*CTRL).i->varTheta - (*CTRL).i->cmd_varTheta;
+void _user_wubo_PositionLoop_IMP(REAL cmd_varTheta, REAL varTheta){
+    PID_Position->Ref = cmd_varTheta;
+    PID_Position->Fbk = varTheta;
+    PID_Position->Err = varTheta - cmd_varTheta;
+
+    if (PID_Position->Err > M_PI){
+        PID_Position->Err -= 2 * M_PI;
+    }
+    if (PID_Position->Err < -M_PI){
+        PID_Position->Err += 2 * M_PI;
+    }
+
+    Pos_IMP_CTRL.Err_Pos = PID_Position->Err;
     Pos_IMP_CTRL.Err_Vel = (*CTRL).i->varOmega - 0; // 恒值位置的导数为0
 
+    Pos_IMP_CTRL.Output = - Pos_IMP_CTRL.Kiq * Pos_IMP_CTRL.Err_Pos - Pos_IMP_CTRL.Biq * Pos_IMP_CTRL.Err_Vel;
+
     (*CTRL).i->cmd_iDQ[0] = 0;
-    (*CTRL).i->cmd_iDQ[1] = - Pos_IMP_CTRL.Kiq * Pos_IMP_CTRL.Err_Pos - Pos_IMP_CTRL.Biq * Pos_IMP_CTRL.Err_Vel;
+    (*CTRL).i->cmd_iDQ[1] = Pos_IMP_CTRL.Output;
     
     if ( (*CTRL).i->cmd_iDQ[1] > (d_sim.init.IN * d_sim.VL.LIMIT_OVERLOAD_FACTOR) ){
         (*CTRL).i->cmd_iDQ[1] = d_sim.init.IN * d_sim.VL.LIMIT_OVERLOAD_FACTOR;
