@@ -12,8 +12,7 @@
 //    #include "IQmathLib.h"
 
 /* User Application: Cury the leg */
-    #include "AppCury.h"
-
+    #include "AppCury.h" 
 
 /* CLA header files */
     #include "DCLCLA.h"
@@ -75,10 +74,21 @@
     //    #define DSP_PWM_ENABLE         GpioDataRegs.GPDCLEAR.bit.GPIO105=1;  // ����Ч��������Ч
     //    #define DSP_2PWM_DISABLE       GpioDataRegs.GPASET.bit.GPIO27=1;
     //    #define DSP_2PWM_ENABLE        GpioDataRegs.GPACLEAR.bit.GPIO27=1;
-    #define DSP_PWM_DISABLE        GpioDataRegs.GPDSET.bit.GPIO108=1;    // ����Ч����λ�Ⲩ
-    #define DSP_PWM_ENABLE         GpioDataRegs.GPDCLEAR.bit.GPIO108=1;  // ����Ч��������Ч
-    #define DSP_2PWM_DISABLE       GpioDataRegs.GPCSET.bit.GPIO93=1;
-    #define DSP_2PWM_ENABLE        GpioDataRegs.GPCCLEAR.bit.GPIO93=1;
+    // #define DSP_PWM_DISABLE        GpioDataRegs.GPDSET.bit.GPIO108=1;    // ����Ч����λ�Ⲩ
+    // #define DSP_PWM_ENABLE         GpioDataRegs.GPDCLEAR.bit.GPIO108=1;  // ����Ч��������Ч
+    // #define DSP_2PWM_DISABLE       GpioDataRegs.GPCSET.bit.GPIO93=1;
+    // #define DSP_2PWM_ENABLE        GpioDataRegs.GPCCLEAR.bit.GPIO93=1;
+    
+    // 这里的GPDCLEAR GPCCLEAR GPACLEAR GPASET 不一样原因是？
+    #define DSP_PWM1_ENABLE        GpioDataRegs.GPDCLEAR.bit.GPIO108=1;
+    #define DSP_PWM2_ENABLE        GpioDataRegs.GPCCLEAR.bit.GPIO93=1;
+    #define DSP_PWM3_ENABLE        GpioDataRegs.GPACLEAR.bit.GPIO28=1;
+    #define DSP_PWM4_ENABLE        GpioDataRegs.GPACLEAR.bit.GPIO29=1;
+    
+    #define DSP_PWM1_DISABLE       GpioDataRegs.GPDSET.bit.GPIO108=1;
+    #define DSP_PWM2_DISABLE       GpioDataRegs.GPCSET.bit.GPIO93=1;
+    #define DSP_PWM3_DISABLE       GpioDataRegs.GPASET.bit.GPIO28=1;
+    #define DSP_PWM4_DISABLE       GpioDataRegs.GPASET.bit.GPIO29=1;
 
     #define INVERTER_FLT_FAULT     GpioDataRegs.GPDDAT.bit.GPIO104  //Inverter_error signal
 
@@ -106,6 +116,67 @@
 /* Global Variable */
 typedef struct{
     int ID;
+
+    /* Position Sensor
+    * eQEP for Incremental Encoder, eQEP:增强型正交编码器接口
+    * Abs Encoder Your know it,
+    * I2C for coil sensor for Artificial Heart
+    */
+        int if_enable_EQEP;
+        int if_enable_AbsoluteEncoder;
+        int if_enable_I2C;
+
+    /* PWM Operation Status
+    * FLAG_ENABLE_PWM_OUTPUT enable/disable ALL PWM channel; controlled by GpioDataRegs.GPCDAT.bit.GPIO75, a elec switch
+    * epwm_enable[4] enable/disable each PWM channel
+    */
+    int FLAG_ENABLE_PWM_OUTPUT;
+    int epwm_enable[4];
+
+    /* Misc
+    */
+    int USE_3_CURRENT_SENSORS;
+    int Trip_Flag;
+    int flag_overwite_vdc;
+    REAL overwrite_vdc;
+
+    /* Scale and Offset
+    * Linear Approximation is used for ADC results, like real_value = scale * digital_value + offset
+        * ADC offset and scale can be changed online
+        * Go to Device_define.h to change the scale and offset to save them
+    * OffsetCountBetweenIndexAndUPhaseAxis is the offset between encoder and U phase of motor
+        * AKA 编码器零位
+        * For FOC control, we need to align them to have the rotor position
+        * For more explaination, please refer to website:
+        * https://www.bilibili.com/video/BV17m411278e/?spm_id_from=333.1387.homepage.video_card.click&vd_source=b02e7899298289ea702c9877667b9ebf
+    * All these values should be determined again before using a new device
+    */
+    int AD_offset_flag2;
+    REAL offset_counter;
+    REAL offset_online[6];
+    // Sensor - Raw measurement
+        REAL vdc[4];
+        REAL iabg[12];
+        REAL iuvw[12];
+        REAL iuvw_offset_online[6];
+        Uint32 SCI_Position_Count_fromCPU2[4];
+    // ADC offset and scale
+        REAL adc_vdc_scale[4];
+        REAL adc_vdc_offset[4];
+        REAL adc_iuvw_scale[12];
+        REAL adc_iuvw_offset[12]; // ADC offset. U, V, W corresponds to ADCRESULT2, ADCRESULT3, ADCRESULT1. <- WHAT???
+    // Encoder offset
+        REAL OffsetCountBetweenIndexAndUPhaseAxis[4];
+    // Sensor Coil
+        REAL place_sensor[8];
+        REAL place_offset[8];
+        REAL place_scale[8];
+} st_dsp;
+extern st_dsp DSP;
+
+
+typedef struct{
+    int ID;
     struct ControllerForExperiment *pCTRL;
     struct DebugExperiment *Pdebug;
     // Commonly used for prototype motor testing
@@ -129,18 +200,20 @@ typedef struct{
         //REAL angle_shift_for_first_inverter;
         //REAL angle_shift_for_second_inverter;
         //REAL OverwriteSpeedOutLimitDuringInit;
-        int FLAG_ENABLE_PWM_OUTPUT; // ���ģʽ��־�?
-    // ADC Offset
+
+        // ADC Offset
         // Automatic Offset Removing
-        int AD_offset_flag2;
-        REAL offset_counter;
-        REAL offset_online[6];
-        // Raw
+
+        //        volatile struct ADC_RESULT_REGS *pAdcaResultRegs;
+        //        volatile struct ADC_RESULT_REGS *pAdcbResultRegs;
+        //        volatile struct ADC_RESULT_REGS *pAdccResultRegs;
+    // int FLAG_ENABLE_PWM_OUTPUT; //  电机模式标志位
+    int AD_offset_flag2;
+    REAL offset_counter;
+    REAL offset_online[6];
+    // Raw
         REAL adc_offset[12]; // ADC offset. U, V, W corresponds to ADCRESULT2, ADCRESULT3, ADCRESULT1.
         REAL adc_scale[12];
-//        volatile struct ADC_RESULT_REGS *pAdcaResultRegs;
-//        volatile struct ADC_RESULT_REGS *pAdcbResultRegs;
-//        volatile struct ADC_RESULT_REGS *pAdccResultRegs;
     // Sensor - Raw measurement
         REAL vdc;
         REAL iabg[6];
@@ -158,7 +231,7 @@ typedef struct{
     // Sensor Coil
         REAL place_sensor[8];
         REAL place_offset[8];
-        REAL place_scale[8];        
+        REAL place_scale[8];
 } st_axis;
 
 extern st_axis Axis_1;

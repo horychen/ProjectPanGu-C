@@ -101,6 +101,108 @@ st_pid_regulator _PID_Position_1 = st_pid_regulator_DEFAULTS;
         //                     SUSPENSION_PID_OUT_LIMIT,
         //                     SUSPENSION_PID_INT_LIMIT, CL_TS };
     #endif
+    #if NUMBER_OF_AXES == 4
+        // extern and pragma should come in pair?
+        #pragma DATA_SECTION(CTRL_2     ,"MYGLOBALS_2");
+        // #pragma DATA_SECTION(debug_2      ,"MYGLOBALS_1");
+        #pragma DATA_SECTION(t_motor_2    ,"MYGLOBALS_2");
+        #pragma DATA_SECTION(t_enc_2      ,"MYGLOBALS_2");
+        #pragma DATA_SECTION(t_psd_2      ,"MYGLOBALS_2");
+        #pragma DATA_SECTION(t_I_2        ,"MYGLOBALS_2");
+        #pragma DATA_SECTION(t_S_2        ,"MYGLOBALS_2");
+        #pragma DATA_SECTION(t_O_2        ,"MYGLOBALS_2");
+        #pragma DATA_SECTION(t_inv_2      ,"MYGLOBALS_2");
+        #pragma DATA_SECTION(t_cap_2      ,"MYGLOBALS_2");
+        #pragma DATA_SECTION(t_g_2        ,"MYGLOBALS_2");
+        // #pragma DATA_SECTION(_PID_iX_2    ,"MYGLOBALS_2");
+        // #pragma DATA_SECTION(_PID_iY_2    ,"MYGLOBALS_2");
+        #pragma DATA_SECTION(_PID_iD_2    ,"MYGLOBALS_2");
+        #pragma DATA_SECTION(_PID_iQ_2    ,"MYGLOBALS_2");
+        #pragma DATA_SECTION(_PID_Position_2   ,"MYGLOBALS_2");
+        #pragma DATA_SECTION(_PID_Speed_2   ,"MYGLOBALS_2");
+        struct ControllerForExperiment CTRL_2;
+        struct DebugExperiment debug_2;
+        st_motor_parameters     t_motor_2={0};
+        st_enc                  t_enc_2={0};
+        st_psd                  t_psd_2={0};
+        st_controller_inputs    t_I_2={0};
+        st_controller_states    t_S_2={0};
+        st_controller_outputs   t_O_2={0};
+        st_InverterNonlinearity t_inv_2={0}; // Because of the sv_count bug, I cannot declare t_inv in this .c file. // extern st_InverterNonlinearity t_inv;
+        st_capture              t_cap_2={0};
+        st_global_variables     t_g_2={0};
+        st_pid_regulator _PID_iD_2       = st_pid_regulator_DEFAULTS;
+        st_pid_regulator _PID_iQ_2       = st_pid_regulator_DEFAULTS;
+        st_pid_regulator _PID_Speed_2    = st_pid_regulator_DEFAULTS;
+        st_pid_regulator _PID_Position_2 = st_pid_regulator_DEFAULTS;
+
+        // CTRL_3
+        st_motor_parameters     t_motor_3={0};
+        st_enc                  t_enc_3={0};
+        st_psd                  t_psd_3={0};
+        st_controller_inputs    t_I_3={0};
+        st_controller_states    t_S_3={0};
+        st_controller_outputs   t_O_3={0};
+        st_InverterNonlinearity t_inv_3={0}; 
+        st_capture              t_cap_3={0};
+        st_global_variables     t_g_3={0};
+        st_pid_regulator _PID_iD_3       = st_pid_regulator_DEFAULTS;
+        st_pid_regulator _PID_iQ_3       = st_pid_regulator_DEFAULTS;
+        st_pid_regulator _PID_Speed_3    = st_pid_regulator_DEFAULTS;
+        st_pid_regulator _PID_Position_3 = st_pid_regulator_DEFAULTS;
+        struct ControllerForExperiment CTRL_3;
+        struct DebugExperiment debug_3;
+        ST_D_SIM d_sim_3;
+        #pragma DATA_SECTION(CTRL_3       ,"MYGLOBALS_3"); 
+        #pragma DATA_SECTION(debug_3      ,"MYGLOBALS_3");
+        #pragma DATA_SECTION(t_motor_3    ,"MYGLOBALS_3");
+        #pragma DATA_SECTION(t_enc_3      ,"MYGLOBALS_3");
+        #pragma DATA_SECTION(t_psd_3      ,"MYGLOBALS_3");
+        #pragma DATA_SECTION(t_I_3        ,"MYGLOBALS_3");
+        #pragma DATA_SECTION(t_S_3        ,"MYGLOBALS_3");
+        #pragma DATA_SECTION(t_O_3        ,"MYGLOBALS_3");
+        #pragma DATA_SECTION(t_inv_3      ,"MYGLOBALS_3");
+        #pragma DATA_SECTION(t_cap_3      ,"MYGLOBALS_3");
+        #pragma DATA_SECTION(t_g_3        ,"MYGLOBALS_3");
+        #pragma DATA_SECTION(_PID_iD_3    ,"MYGLOBALS_3");
+        #pragma DATA_SECTION(_PID_iQ_3    ,"MYGLOBALS_3");
+        #pragma DATA_SECTION(_PID_Position_3   ,"MYGLOBALS_3");
+        #pragma DATA_SECTION(_PID_Speed_3   ,"MYGLOBALS_3");
+
+        //CTRL_4
+        st_motor_parameters     t_motor_4={0};
+        st_enc                  t_enc_4={0};
+        st_psd                  t_psd_4={0};
+        st_controller_inputs    t_I_4={0};
+        st_controller_states    t_S_4={0};
+        st_controller_outputs   t_O_4={0};
+        st_InverterNonlinearity t_inv_4={0}; 
+        st_capture              t_cap_4={0};
+        st_global_variables     t_g_4={0};
+        st_pid_regulator _PID_iD_4       = st_pid_regulator_DEFAULTS;
+        st_pid_regulator _PID_iQ_4       = st_pid_regulator_DEFAULTS;
+        st_pid_regulator _PID_Speed_4    = st_pid_regulator_DEFAULTS;
+        st_pid_regulator _PID_Position_4 = st_pid_regulator_DEFAULTS;
+        struct ControllerForExperiment CTRL_4;
+        struct DebugExperiment debug_4;
+        ST_D_SIM d_sim_4;
+        #pragma DATA_SECTION(CTRL_4       ,"MYGLOBALS_4");
+        #pragma DATA_SECTION(debug_4      ,"MYGLOBALS_4");
+        #pragma DATA_SECTION(t_motor_4    ,"MYGLOBALS_4");
+        #pragma DATA_SECTION(t_enc_4      ,"MYGLOBALS_4");
+        #pragma DATA_SECTION(t_psd_4      ,"MYGLOBALS_4");
+        #pragma DATA_SECTION(t_I_4        ,"MYGLOBALS_4");
+        #pragma DATA_SECTION(t_S_4        ,"MYGLOBALS_4");
+        #pragma DATA_SECTION(t_O_4        ,"MYGLOBALS_4");
+        #pragma DATA_SECTION(t_inv_4      ,"MYGLOBALS_4");
+        #pragma DATA_SECTION(t_cap_4      ,"MYGLOBALS_4");
+        #pragma DATA_SECTION(t_g_4        ,"MYGLOBALS_4");
+        #pragma DATA_SECTION(_PID_iD_4    ,"MYGLOBALS_4");
+        #pragma DATA_SECTION(_PID_iQ_4    ,"MYGLOBALS_4");
+        #pragma DATA_SECTION(_PID_Position_4   ,"MYGLOBALS_4");
+        #pragma DATA_SECTION(_PID_Speed_4   ,"MYGLOBALS_4");
+
+    #endif
 #endif
 
 /* 初始化顶级结构体指针，指向定义好的内存空间 */
@@ -111,46 +213,77 @@ void allocate_CTRL(struct ControllerForExperiment *p){
         // p->S = calloc(1,sizeof(st_controller_states));
         // p->O = calloc(1,sizeof(st_controller_outputs));
 
-    if(axisCnt==0){
-        p->motor = &t_motor_1;
-        p->enc   = &t_enc_1;
-        p->psd   = &t_psd_1;
-        p->i     = &t_I_1;
-        p->s     = &t_S_1;
-        p->o     = &t_O_1;
-        p->inv   = &t_inv_1;
-        p->cap   = &t_cap_1;
-        p->g     = &t_g_1;
-        p->s->iD  = &_PID_iD_1;
-        p->s->iQ  = &_PID_iQ_1;
-        p->s->Speed = &_PID_Speed_1;
+    if(axisCnt == 0){
+        p->motor       = &t_motor_1;
+        p->enc         = &t_enc_1;
+        p->psd         = &t_psd_1;
+        p->i           = &t_I_1;
+        p->s           = &t_S_1;
+        p->o           = &t_O_1;
+        p->inv         = &t_inv_1;
+        p->cap         = &t_cap_1;
+        p->g           = &t_g_1;
+        p->s->iD       = &_PID_iD_1;
+        p->s->iQ       = &_PID_iQ_1;
+        p->s->Speed    = &_PID_Speed_1;
         p->s->Position = &_PID_Position_1;
-        // p->S->iX = &_PID_iX_1;
-        // p->S->iY = &_PID_iY_1;
     }
 
     #if PC_SIMULATION == FALSE
-        if(axisCnt==1){
-            #if NUMBER_OF_AXES == 2
-                p->motor = &t_motor_2;
-                p->enc   = &t_enc_2;
-                p->psd   = &t_psd_2;
-                p->i     = &t_I_2;
-                p->s     = &t_S_2;
-                p->o     = &t_O_2;
-                p->inv   = &t_inv_2;
-                p->cap   = &t_cap_2;
-                p->g     = &t_g_2;
-                p->s->iD  = &_PID_iD_2;
-                p->s->iQ  = &_PID_iQ_2;
-                p->s->Speed = &_PID_Speed_2;
+        if(axisCnt == 1){
+            #if NUMBER_OF_AXES == 4
+                p->motor       = &t_motor_2;
+                p->enc         = &t_enc_2;
+                p->psd         = &t_psd_2;
+                p->i           = &t_I_2;
+                p->s           = &t_S_2;
+                p->o           = &t_O_2;
+                p->inv         = &t_inv_2;
+                p->cap         = &t_cap_2;
+                p->g           = &t_g_2;
+                p->s->iD       = &_PID_iD_2;
+                p->s->iQ       = &_PID_iQ_2;
+                p->s->Speed    = &_PID_Speed_2;
                 p->s->Position = &_PID_Position_2;
-                // p->S->iX = &_PID_iX_2;
-                // p->S->iY = &_PID_iY_2;
+            #endif
+        }
+        if(axisCnt == 2){
+            #if NUMBER_OF_AXES == 4
+                p->motor       = &t_motor_3;
+                p->enc         = &t_enc_3;
+                p->psd         = &t_psd_3;
+                p->i           = &t_I_3;
+                p->s           = &t_S_3;
+                p->o           = &t_O_3;
+                p->inv         = &t_inv_3;
+                p->cap         = &t_cap_3;
+                p->g           = &t_g_3;
+                p->s->iD       = &_PID_iD_3;
+                p->s->iQ       = &_PID_iQ_3;
+                p->s->Speed    = &_PID_Speed_3;
+                p->s->Position = &_PID_Position_3;
+            #endif
+        }
+        if(axisCnt == 3){
+            #if NUMBER_OF_AXES == 4
+                p->motor       = &t_motor_4;
+                p->enc         = &t_enc_4;
+                p->psd         = &t_psd_4;
+                p->i           = &t_I_4;
+                p->s           = &t_S_4;
+                p->o           = &t_O_4;
+                p->inv         = &t_inv_4;
+                p->cap         = &t_cap_4;
+                p->g           = &t_g_4;
+                p->s->iD       = &_PID_iD_4;
+                p->s->iQ       = &_PID_iQ_4;
+                p->s->Speed    = &_PID_Speed_4;
+                p->s->Position = &_PID_Position_4;
             #endif
         }
     #endif
 }
+
 void init_debug(){
     debug = &debug_1;
     (*debug).error = 0;
@@ -185,7 +318,7 @@ void init_debug(){
     (*debug).set_id_command              = d_sim.user.set_id_command;
     (*debug).set_iq_command              = d_sim.user.set_iq_command;
     (*debug).set_rpm_speed_command       = d_sim.user.set_rpm_speed_command;
-    (*debug).set_deg_position_command    = 50.0;
+    (*debug).set_deg_position_command    = 0.0;
     (*debug).vvvf_voltage = 3.0;
     (*debug).vvvf_frequency = 5.0;
 
@@ -195,7 +328,7 @@ void init_debug(){
         (*debug).set_id_command              = 0.0;
         (*debug).set_iq_command              = 0.0;
         (*debug).set_rpm_speed_command       = 0.0;
-        (*debug).set_deg_position_command    = 50.0; // Unit: Degree
+        (*debug).set_deg_position_command    = 0.0; // Unit: Degree
     #endif
 
     (*debug).delta                                                = d_sim.FOC.delta;
@@ -382,13 +515,8 @@ void init_experiment(){
             _init_WC_Tuner();
         }
         _init_Harnerfors_1998_BackCalc(); // should be placed after init_wctuner, cuz it needs to use the variable from wctuner
-        if (d_sim.user.BOOL_INIT_MY_VARIABLES == FALSE){
-            // 只想初始化变量一次
-            _init_Rohr_1991(); // 1991 Rohr Example
-            _init_Sul_1996();  // Sul 1996 Inverter Dead Time Compensation  
-            _init_Pos_IMP();   // Basic Example for Impedance Control
-            d_sim.user.BOOL_INIT_MY_VARIABLES = TRUE;
-        }
+        _init_Rohr_1991(); // 1991 Rohr Example
+        _init_Pos_IMP();   // Basic Example for Impedance Control
     #endif
 }
 /* 公用的核心电机控制实现代码，不要修改！*/
@@ -591,6 +719,7 @@ void _onlyFOC(REAL theta_d_elec, REAL iAB[2]){
 
     /// 8. 补偿逆变器非线性
     #if WHO_IS_USER == USER_WB
+        /* wubo:  */
         wubo_inverter_Compensation( (*CTRL).i->iAB );
     #endif
 
@@ -647,7 +776,6 @@ void _user_commands(){
                     ACM.TLoad = 0.0;
                 }   
             }else{
-                ACM.TLoad = 1.0;
                 if ( (*CTRL).timebase > 10.5 ){
                     ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN * 0.3);
                 }
@@ -1100,8 +1228,7 @@ int  main_switch(long mode_select){
                 (*CTRL).i->cmd_varTheta = 0.5 * M_PI * sinf( d_sim.user.Position_cmd_sine_frequency 
                     * 2 * M_PI * (*CTRL).timebase ) + 0.17 * cosf( 3 * d_sim.user.Position_cmd_sine_frequency 
                     * 2 * M_PI * (*CTRL).timebase ) + 0.1 * sinf( 7 * d_sim.user.Position_cmd_sine_frequency 
-                    * 2 * M_PI * (*CTRL).timebase )
-                    +  0.5 * M_PI + 0.17 + 0.1;
+                    * 2 * M_PI * (*CTRL).timebase ) + 0.5 * M_PI + 0.17 + 0.1;
             }
         #endif
 
@@ -1116,12 +1243,29 @@ int  main_switch(long mode_select){
         #endif
 
         // Run position loop control
+        // if ((*CTRL).i->cmd_varTheta > M_PI){
+        //     (*CTRL).i->cmd_varTheta -= 2 * M_PI;
+        // }
+        // if ((*CTRL).i->cmd_varTheta < -M_PI){
+        //     (*CTRL).i->cmd_varTheta += 2 * M_PI;
+        // }
+        // #if PC_SIMULATION == TRUE
+        //     if ((*CTRL).i->varTheta > M_PI){
+        //         (*CTRL).i->varTheta -= 2 * M_PI;
+        //     }
+        //     if ((*CTRL).i->varTheta < -M_PI){
+        //         (*CTRL).i->varTheta += 2 * M_PI;
+        //     }
+        // #else
+        //     // Encoder获取的角度转换后为弧度
+        //     (*CTRL).i->varTheta -= 2 * M_PI;
+        // #endif
         _user_position_loop( (*CTRL).i->cmd_varTheta, (*CTRL).i->varTheta );
         
         break;
     
     case MODE_SELECT_CURY_POSITION_LOOP: // 51
-        #if WHO_IS_USER == USER_WB
+        #if WHO_IS_USER == USER_CURY
             //TODO: 讲Cury的嵌入式代码移植到emy的架构下，并且加上新算法
             /*
                 NO_POSITION_CONTROL 0
@@ -1145,36 +1289,25 @@ int  main_switch(long mode_select){
         break;
     case MODE_SELECT_POSITION_IMPEDANCE_CONTROL: //52
         #if WHO_IS_USER == USER_WB
-            // Generate the position command
-            #if PC_SIMULATION == TRUE
-                if ( CTRL->timebase > 0.25 ){
-                    ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN * 0.01) * (int)(d_sim.user.bool_apply_external_Force_to_Position_Loop);
-                }
+            (*CTRL).i->cmd_varTheta = M_PI * 0.8;
+            #if PC_SIMULATION
+                _user_commands();
             #endif
-            (*CTRL).i->cmd_varTheta = (*debug).set_deg_position_command * M_PI_OVER_180;
-
-            if(d_sim.user.BOOL_WUBO_POS_CMD_TEST == TRUE){
-                (*CTRL).i->cmd_varTheta = 0.5 * M_PI * sinf( d_sim.user.Position_cmd_sine_frequency 
-                    * 2 * M_PI * (*CTRL).timebase ) + 0.17 * cosf( 3 * d_sim.user.Position_cmd_sine_frequency 
-                    * 2 * M_PI * (*CTRL).timebase ) + 0.1 * sinf( 7 * d_sim.user.Position_cmd_sine_frequency 
-                    * 2 * M_PI * (*CTRL).timebase )
-                    +  0.5 * M_PI + 0.17 + 0.1;}
-
-            // ESO
             if (d_sim.user.bool_ESO_SPEED_ON == TRUE){
                 Main_esoaf_chen2021();
             }
             if (d_sim.user.bool_apply_ESO_SPEED_for_SPEED_FBK == TRUE){
                 (*CTRL).i->varOmega = OBSV.esoaf.xOmg * MOTOR.npp_inv;
             }
-
             _user_wubo_PositionLoop_IMP( (*CTRL).i->cmd_varTheta, (*CTRL).i->varTheta );
         #endif
         break;
     case MODE_SELECT_COMMISSIONING: // 9
-        #if ENABLE_COMMISSIONING
+        // #if ENABLE_COMMISSIONING == TRUE
+        #if ENABLE_COMMISSIONING && WHO_IS_USER == USER_WB
             commissioning();
         #endif
+        // #endif
         break;
     case MODE_SELECT_GENERATOR://8
         #if PC_SIMULATION == TRUE
@@ -1517,16 +1650,14 @@ void _user_position_loop(REAL cmd_varTheta, REAL varTheta){
     PID_Position->Out = PID_Position->Kp * PID_Position->Err;
     if(0){
     // only for testing!
-        # if WHO_IS_USER == USER_WB
-            d_sim.user.Position_Loop_Ref_Diff_TEST = 0.5 * M_PI * d_sim.user.Position_cmd_sine_frequency 
-            * 2  * M_PI * cosf( d_sim.user.Position_cmd_sine_frequency * 2 * M_PI * (*CTRL).timebase ) 
-            
-            - 0.25 * 3 * d_sim.user.Position_cmd_sine_frequency 
-            * 2 * M_PI * sinf( 3 * d_sim.user.Position_cmd_sine_frequency * 2 * M_PI * (*CTRL).timebase ) 
-            
-            + 0.1 * 5 * d_sim.user.Position_cmd_sine_frequency 
-            * 2 * M_PI * cosf( 5 * d_sim.user.Position_cmd_sine_frequency * 2 * M_PI * (*CTRL).timebase );
-        #endif
+        d_sim.user.Position_Loop_Ref_Diff_TEST = 0.5 * M_PI * d_sim.user.Position_cmd_sine_frequency 
+        * 2  * M_PI * cosf( d_sim.user.Position_cmd_sine_frequency * 2 * M_PI * (*CTRL).timebase ) 
+        
+        - 0.25 * 3 * d_sim.user.Position_cmd_sine_frequency 
+        * 2 * M_PI * sinf( 3 * d_sim.user.Position_cmd_sine_frequency * 2 * M_PI * (*CTRL).timebase ) 
+        
+        + 0.1 * 5 * d_sim.user.Position_cmd_sine_frequency 
+        * 2 * M_PI * cosf( 5 * d_sim.user.Position_cmd_sine_frequency * 2 * M_PI * (*CTRL).timebase );
     }
     if (d_sim.user.bool_Compensation_byPosDiff == TRUE){
         d_sim.user.Position_Loop_Ref_Diff = (PID_Position->Ref - d_sim.user.Position_Loop_Ref_prev) * CL_TS_INVERSE;
@@ -1552,4 +1683,3 @@ void _user_position_loop(REAL cmd_varTheta, REAL varTheta){
 
     d_sim.user.Position_Loop_Ref_prev = PID_Position->Ref;
 }
-

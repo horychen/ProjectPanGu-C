@@ -16,7 +16,7 @@
 #define XCUBE_TaTbTc_DEBUG_MODE    5
 #define SLESSINV_CONST_LOAD_PAA  10
 
-void init_experiment_AD_gain_and_offset();
+void init_ADC_scale_and_offset();
 void init_experiment_overwrite();
 void runtime_command_and_tuning();
 void init_experiment_PLACE_gain_and_offset();

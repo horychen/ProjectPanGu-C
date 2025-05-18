@@ -1,6 +1,7 @@
 #include "ACMSim.h"
 #include "math.h"
 #include "stdio.h"
+#include "Device_define.h"
 
 extern REAL sig_a2;
 extern REAL sig_a3;
@@ -88,8 +89,7 @@ REAL PostionSpeedMeasurement_MovingAvergage(int32 QPOSCNT, st_enc *p_enc){
 
 #endif
 
-REAL difference_between_two_angles(REAL first, REAL second)
-{
+REAL difference_between_two_angles(REAL first, REAL second){
     while (first > 2 * M_PI){
         first -= 2 * M_PI;
     }while (second > 2 * M_PI){

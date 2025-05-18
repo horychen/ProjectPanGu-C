@@ -1,0 +1,71 @@
+/* 将Bezier Controller放在mainloop中运行的代码 */
+    #if WHO_IS_USER == USER_BEZIER
+        if( (d_sim.user.bezier_NUMBER_OF_STEPS<8000) && (d_sim.user.BOOL_BEZIER_RUN_IN_MAIN == TRUE) ){
+            // When the button is on, then give a Sweeping Ref
+            if (Axis_1.FLAG_ENABLE_PWM_OUTPUT && d_sim.user.bezier_Give_Sweeping_Ref_in_Interrupt){
+                overwrite_sweeping_frequency();
+                _user_Check_ThreeDB_Point( (*CTRL).i->varOmega*MECH_RAD_PER_SEC_2_RPM, d_sim.user.CMD_SPEED_SINE_RPM );
+                // _user_commands();         // 用户指令
+            }
+            CTRL = &CTRL_1;
+            
+            PID_Speed->Ref = (*CTRL).i->cmd_varOmega;
+        
+            // Ref is given in Interrupt
+            if (!d_sim.user.bezier_Give_Sweeping_Ref_in_Interrupt){
+                overwrite_sweeping_frequency();
+                /* Mark -3db points */
+                _user_Check_ThreeDB_Point( (*CTRL).i->varOmega*MECH_RAD_PER_SEC_2_RPM, d_sim.user.CMD_SPEED_SINE_RPM );
+            }
+        
+            if(d_sim.user.bool_apply_ESO_SPEED_for_SPEED_FBK == TRUE){
+                PID_Speed->Fbk = OBSV.esoaf.xOmg * MOTOR.npp_inv ;
+            }else{
+                PID_Speed->Fbk = (*CTRL).i->varOmega;
+            }
+            PID_Speed->ErrPrev = PID_Speed->Err;
+            PID_Speed->Err = PID_Speed->Ref - PID_Speed->Err;
+            PID_Speed->OutLimit = BezierVL.points[BezierVL.order].y;
+            control_output(PID_Speed, &BezierVL);
+            if (d_sim.user.BOOL_BEZIER_ADAPTIVE_GAIN == FALSE){
+                (*debug).set_iq_command = PID_Speed->Out;
+            }else{
+                (*debug).set_iq_command = control_output_adaptVersion(PID_Speed, &BezierVL_AdaptVersion);
+            }
+            (*debug).set_id_command = 0;
+        }
+    #endif
+    //         #if WHO_IS_USER == USER_QIAN
+    // Sensor Coil
+    //            I2CA_ReadData_Channel(0);
+    //            DELAY_US(30);
+    //            I2CA_ReadData_Channel(1);
+    //            DELAY_US(30);
+    //            I2CA_ReadData_Channel(2);
+    //            DELAY_US(300);
+    //            I2CA_ReadData_Channel(3);
+    //            DELAY_US(300);
+    //         #endif
+    //        mainWhileLoopCounter1++;
+    //        mainWhileLoopCounter2=2992;
+    //        if (Motor_mode_START==1){
+    //            Axis_1.FLAG_ENABLE_PWM_OUTPUT = 1;
+    //            DSP_START_LED1
+    //            DSP_START_LED2
+    //            mainWhileLoopCounter1 = Axis_1.FLAG_ENABLE_PWM_OUTPUT +5;
+    //        }else if (Motor_mode_START==0){
+    //            Axis_1.FLAG_ENABLE_PWM_OUTPUT = 0;
+    //            DSP_STOP_LED1
+    //            DSP_STOP_LED2
+    //            mainWhileLoopCounter1 = Axis_1.FLAG_ENABLE_PWM_OUTPUT +5;
+    //        }
+    //        mainWhileLoopCounter1 = mainWhileLoopCounter2;
+    
+    //        mainWhileLoopCounter3 += 1;
+    //        Axis_1.ID += 1;
+    //        mainWhileLoopCounter2 += 1;
+
+
+
+/* XXXXXXXXXXXXXXXX */
+

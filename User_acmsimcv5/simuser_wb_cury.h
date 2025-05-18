@@ -7,7 +7,7 @@
 Cury Code Copied from Pangu-C: AppCury.h, AppCury.h, tool.c
 rearranged and modified by WuBo
 */
-#if WHO_IS_USER == USER_WB
+#if WHO_IS_USER == USER_CURY
 
     // Files needed to be put in the Device_define.h ???
     // void EUREKA_GPIO_SETUP(); 这个函数是最开始的GPIO定义，在原始代码中存在，暂时不要动

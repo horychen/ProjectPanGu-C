@@ -582,9 +582,12 @@ void rhf_dynamics_ESO(REAL t, REAL *x, REAL *fx);
 void init_esoaf();
 void Main_esoaf_chen2021();
 
+// Global CTRL
 extern int axisCnt;
 extern struct ControllerForExperiment CTRL_1;
 extern struct ControllerForExperiment CTRL_2;
+extern struct ControllerForExperiment CTRL_3;
+extern struct ControllerForExperiment CTRL_4;
 extern struct ControllerForExperiment *CTRL;
 #define MOTOR   (*(*CTRL).motor)
 #define ENC     (*(*CTRL).enc)
@@ -597,7 +600,6 @@ extern struct ControllerForExperiment *CTRL;
 #define G       (*(*CTRL).g)
     // extern st_InverterNonlinearity t_inv;
     // #define INV     t_inv
-
 #define PID_iD  (CTRL->s->iD)
 #define PID_iQ  (CTRL->s->iQ)
 #define PID_Speed  (CTRL->s->Speed)
@@ -605,11 +607,13 @@ extern struct ControllerForExperiment *CTRL;
 // #define PID_iX  (CTRL->s->iX)
 // #define PID_iY  (CTRL->s->iY)
 
-//ESO
 
+
+
+// COMM
 void commissioning();
-void allocate_CTRL(struct ControllerForExperiment *p);
 
+void allocate_CTRL(struct ControllerForExperiment *p);
 void overwrite_sweeping_frequency();
 void _user_Check_ThreeDB_Point( REAL Fbk, REAL Ref);
 

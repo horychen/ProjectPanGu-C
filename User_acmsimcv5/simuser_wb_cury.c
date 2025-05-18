@@ -3,7 +3,7 @@
 
 
 
-#if WHO_IS_USER == USER_WB
+#if WHO_IS_USER == USER_CURY
 
 #if !PC_SIMULATION
     extern Uint32 position_count_CAN_ID0x01_fromCPU2;

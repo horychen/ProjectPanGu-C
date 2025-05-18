@@ -30,8 +30,6 @@ REAL angle_error_limiter(REAL angle_error){
     return angle_error;
 }
 
-
-
 extern REAL hall_sensor_read[3];
 extern int current_pole[3];
 extern REAL hall_qep_count;

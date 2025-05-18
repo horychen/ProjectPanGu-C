@@ -2,7 +2,6 @@
 #define MAIN_TOOLS
 
 void EUREKA_GPIO_SETUP();
-void axis_basic_setup(int axisCnt);
 extern REAL iq_command_from_PC;
 #define ANGLE_SHIFT_FOR_FIRST_INVERTER 0.0  // Torque Inverter
 #define ANGLE_SHIFT_FOR_SECOND_INVERTER 0.0 // Suspension Inverter

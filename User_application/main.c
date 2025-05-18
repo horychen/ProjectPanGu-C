@@ -1,11 +1,20 @@
 #include "All_Definition.h"
 
+/* New Idea : Put your own func in routine like CPP? 
+    * user_routine应该只能被main.c调用，其余文件通通不能动他
+*/
+#include "new_user.h"
+
 // 声明全局变量
 bool run_enable_from_PC = FALSE;
 #if PC_SIMULATION == FALSE
-REAL CpuTimer_Delta = 0;
-Uint32 CpuTimer_Before = 0;
-Uint32 CpuTimer_After = 0;
+    REAL CpuTimer_Delta = 0;
+    Uint32 CpuTimer_Before = 0;
+    Uint32 CpuTimer_After = 0;
+    st_dsp DSP;
+
+    // 缓兵之计，Axis最终需要被Axes[4]取代！
+    st_axis *Axis, Axis_1, Axis_2;
 #endif
 
 void main(void){
@@ -41,7 +50,7 @@ void main(void){
     eQEP_initialize(0);
     InitECaptureContinuousMode();
 
-    init_experiment_AD_gain_and_offset();
+    init_ADC_scale_and_offset();
 
     // Hall sensor
         GPIO_SetupPinMux(68, GPIO_MUX_CPU1, 0);
@@ -143,7 +152,8 @@ void main(void){
 void main_measurement(){
 
     if(DSP.if_enable_EQEP){
-        PostionSpeedMeasurement_MovingAvergage(EQep1Regs.QPOSCNT, CTRL->enc);
+        //TODO: 吴波想要重写增量式编码器计算速度的代码！
+        // PostionSpeedMeasurement_MovingAvergage(EQep1Regs.QPOSCNT, CTRL->enc);
     }
 
     if(DSP.if_enable_AbsoluteEncoder){
@@ -157,25 +167,27 @@ void main_measurement(){
 
     // measure place between machine shaft and Sensor Coil
     if (DSP.if_enable_I2C){
-        measurement_sensor_coil();
+        // we need i2cTalkToLDC1612.c .h files to make it work
+        // for moment wubo commented below line
+        // measurement_sensor_coil();
     }
 
     // LEM1
-    DSP.iuvw[0] = ((REAL)(AdcaResultRegs.ADCRESULT1) - DSP.adc_offset[1]) * DSP.adc_scale[1]; //
-    DSP.iuvw[1] = ((REAL)(AdcaResultRegs.ADCRESULT2) - DSP.adc_offset[2]) * DSP.adc_scale[2]; //
-    DSP.iuvw[2] = ((REAL)(AdcaResultRegs.ADCRESULT3) - DSP.adc_offset[3]) * DSP.adc_scale[3]; //
+    DSP.iuvw[0] = ((REAL)(AdcaResultRegs.ADCRESULT1) - DSP.adc_iuvw_offset[1]) * DSP.adc_iuvw_scale[1]; //
+    DSP.iuvw[1] = ((REAL)(AdcaResultRegs.ADCRESULT2) - DSP.adc_iuvw_offset[2]) * DSP.adc_iuvw_scale[2]; //
+    DSP.iuvw[2] = ((REAL)(AdcaResultRegs.ADCRESULT3) - DSP.adc_iuvw_offset[3]) * DSP.adc_iuvw_scale[3]; //
     // LEM2
-    DSP.iuvw[3] = ((REAL)(AdcbResultRegs.ADCRESULT7) - DSP.adc_offset[4]) * DSP.adc_scale[4]; //
-    DSP.iuvw[4] = ((REAL)(AdcbResultRegs.ADCRESULT8) - DSP.adc_offset[5]) * DSP.adc_scale[5]; //
-    DSP.iuvw[5] = ((REAL)(AdcbResultRegs.ADCRESULT9) - DSP.adc_offset[6]) * DSP.adc_scale[6]; //
+    DSP.iuvw[3] = ((REAL)(AdcbResultRegs.ADCRESULT7) - DSP.adc_iuvw_offset[4]) * DSP.adc_iuvw_scale[4]; //
+    DSP.iuvw[4] = ((REAL)(AdcbResultRegs.ADCRESULT8) - DSP.adc_iuvw_offset[5]) * DSP.adc_iuvw_scale[5]; //
+    DSP.iuvw[5] = ((REAL)(AdcbResultRegs.ADCRESULT9) - DSP.adc_iuvw_offset[6]) * DSP.adc_iuvw_scale[6]; //
     // LEM3
     DSP.iuvw[6] = 0;
     DSP.iuvw[7] = 0;
     DSP.iuvw[8] = 0;
     // LEM4
-    DSP.iuvw[6] = 0;
-    DSP.iuvw[7] = 0;
-    DSP.iuvw[8] = 0;
+    DSP.iuvw[9] = 0;
+    DSP.iuvw[10] = 0;
+    DSP.iuvw[11] = 0;
     // 电流接口
     if (DSP.USE_3_CURRENT_SENSORS){
         DSP.iabg[0] = UVW2A_AI(DSP.iuvw[0], DSP.iuvw[1], DSP.iuvw[2]);
@@ -208,8 +220,8 @@ void main_measurement(){
 
 
     // measure vdc 四套三相逆变器可能有独立的母线电压值
-    DSP.vdc[0] = ((REAL)(AdcaResultRegs.ADCRESULT0) - DSP.adc_offset[0]) * DSP.adc_scale[0];
-    DSP.vdc[1] = ((REAL)(AdcbResultRegs.ADCRESULT6) - DSP.adc_offset[0]) * DSP.adc_scale[0];
+    DSP.vdc[0] = ((REAL)(AdcaResultRegs.ADCRESULT0) - DSP.adc_vdc_offset[0]) * DSP.adc_vdc_scale[0];
+    DSP.vdc[1] = ((REAL)(AdcbResultRegs.ADCRESULT6) - DSP.adc_vdc_offset[1]) * DSP.adc_vdc_scale[1];
     DSP.vdc[2] = 0.0;
     DSP.vdc[3] = 0.0;
     if (DSP.flag_overwite_vdc) {
@@ -220,9 +232,8 @@ void main_measurement(){
     if(fabs(DSP.iuvw[0])>8 
     || fabs(DSP.iuvw[3])>8 
     || fabs(DSP.iuvw[6])>8
-    || fabs(DSP.iuvw[9])>8
-    ){
-        DSP.trip_flag = TRUE;
+    || fabs(DSP.iuvw[9])>8){
+        DSP.Trip_Flag = TRUE;
     }
 
     // 线电压（占空比）测量（基于占空比和母线电压）
@@ -279,11 +290,11 @@ void main_measurement(){
 
 void PanGuMainISR(void){
     
-    // Measurement
+    //* Measurement
     // 采样，包括DSP中的ADC采样等 // DELAY_US(2); // wait for adc conversion TODO: check adc eoc flag?
     main_measurement(); // 电流传感器和编码器测得三相电流iuvw和角度theta，iuvw通过clark变化得到iabg，后面iabg通过park变换得到idq，idq通过dq变换得到abc
 
-    // PWM Register Update
+    //* PWM Register Update
     if (!DSP.FLAG_ENABLE_PWM_OUTPUT){
         DSP_PWM1_DISABLE
         DSP_PWM2_DISABLE
@@ -291,42 +302,42 @@ void PanGuMainISR(void){
         DSP_PWM4_DISABLE
         user_routine_disable_pwm_output(); // 用户自定义的关闭PWM输出函数
     }else{
-        user_routine_enable_pwm_output(); // 用户自定义的开启PWM输出函数
-        int pwm_test_mode = user_routine_main_switch();
+        // user_routine_enable_pwm_output();  // 用户自定义的开启PWM输出函数
+        // int pwm_test_mode = user_routine_main_switch();
 
-        /* PWM signal to Inverter Voltage Output SWPWM */
-        if (DSP.epwm_enable[0] == TRUE){
-            DSP_PWM1_ENABLE
-            EPwm1Regs.CMPA.bit.CMPA = Axes[0].svgen.Ta * SYSTEM_TBPRD; // 0-5000，5000表示0%的占空比
-            EPwm2Regs.CMPA.bit.CMPA = Axes[0].svgen.Tb * SYSTEM_TBPRD;
-            EPwm3Regs.CMPA.bit.CMPA = Axes[0].svgen.Tc * SYSTEM_TBPRD;
-        }else{
-            DSP_PWM1_DISABLE
-        }
-        if (DSP.epwm_enable[1] == TRUE){
-            DSP_PWM2_ENABLE
-            EPwm4Regs.CMPA.bit.CMPA = Axes[1].svgen.Ta * SYSTEM_TBPRD; // 0-5000，5000表示0%的占空比
-            EPwm5Regs.CMPA.bit.CMPA = Axes[1].svgen.Tb * SYSTEM_TBPRD;
-            EPwm6Regs.CMPA.bit.CMPA = Axes[1].svgen.Tc * SYSTEM_TBPRD;
-        }else{
-            DSP_PWM2_DISABLE
-        }
-        if (DSP.epwm_enable[2] == TRUE){
-            DSP_PWM3_ENABLE
-            EPwm7Regs.CMPA.bit.CMPA = Axes[2].svgen.Ta * SYSTEM_TBPRD; // 0-5000，5000表示0%的占空比
-            EPwm8Regs.CMPA.bit.CMPA = Axes[2].svgen.Tb * SYSTEM_TBPRD;
-            EPwm9Regs.CMPA.bit.CMPA = Axes[2].svgen.Tc * SYSTEM_TBPRD;
-        }else{
-            DSP_PWM3_DISABLE
-        }
-        if (DSP.epwm_enable[3] == TRUE){
-            DSP_PWM4_ENABLE
-            EPwm10Regs.CMPA.bit.CMPA = Axes[3].svgen.Ta * SYSTEM_TBPRD; // 0-5000，5000表示0%的占空比
-            EPwm11Regs.CMPA.bit.CMPA = Axes[3].svgen.Tb * SYSTEM_TBPRD;
-            EPwm12Regs.CMPA.bit.CMPA = Axes[3].svgen.Tc * SYSTEM_TBPRD;
-        }else{
-            DSP_PWM4_DISABLE
-        }
+        // /* PWM signal to Inverter Voltage Output SWPWM */
+        // if (DSP.epwm_enable[0] == TRUE){
+        //     DSP_PWM1_ENABLE
+        //     EPwm1Regs.CMPA.bit.CMPA = Axes[0].svgen.Ta * SYSTEM_TBPRD; // 0-5000，5000表示0%的占空比
+        //     EPwm2Regs.CMPA.bit.CMPA = Axes[0].svgen.Tb * SYSTEM_TBPRD;
+        //     EPwm3Regs.CMPA.bit.CMPA = Axes[0].svgen.Tc * SYSTEM_TBPRD;
+        // }else{
+        //     DSP_PWM1_DISABLE
+        // }
+        // if (DSP.epwm_enable[1] == TRUE){
+        //     DSP_PWM2_ENABLE
+        //     EPwm4Regs.CMPA.bit.CMPA = Axes[1].svgen.Ta * SYSTEM_TBPRD; // 0-5000，5000表示0%的占空比
+        //     EPwm5Regs.CMPA.bit.CMPA = Axes[1].svgen.Tb * SYSTEM_TBPRD;
+        //     EPwm6Regs.CMPA.bit.CMPA = Axes[1].svgen.Tc * SYSTEM_TBPRD;
+        // }else{
+        //     DSP_PWM2_DISABLE
+        // }
+        // if (DSP.epwm_enable[2] == TRUE){
+        //     DSP_PWM3_ENABLE
+        //     EPwm7Regs.CMPA.bit.CMPA = Axes[2].svgen.Ta * SYSTEM_TBPRD; // 0-5000，5000表示0%的占空比
+        //     EPwm8Regs.CMPA.bit.CMPA = Axes[2].svgen.Tb * SYSTEM_TBPRD;
+        //     EPwm9Regs.CMPA.bit.CMPA = Axes[2].svgen.Tc * SYSTEM_TBPRD;
+        // }else{
+        //     DSP_PWM3_DISABLE
+        // }
+        // if (DSP.epwm_enable[3] == TRUE){
+        //     DSP_PWM4_ENABLE
+        //     EPwm10Regs.CMPA.bit.CMPA = Axes[3].svgen.Ta * SYSTEM_TBPRD; // 0-5000，5000表示0%的占空比
+        //     EPwm11Regs.CMPA.bit.CMPA = Axes[3].svgen.Tb * SYSTEM_TBPRD;
+        //     EPwm12Regs.CMPA.bit.CMPA = Axes[3].svgen.Tc * SYSTEM_TBPRD;
+        // }else{
+        //     DSP_PWM4_DISABLE
+        // }
     }
 }
 Uint64 EPWM1IntCount = 0;
@@ -351,10 +362,11 @@ __interrupt void EPWM1ISR(void){
         EINT;                            // Enable global interrupts by clearing INTM
     #endif
 
-    if (DSP.trip_flag == TRUE){
+    if (DSP.Trip_Flag == TRUE){
         // TODO：报警，比如点亮LED
     }else{
-        if (GpioDataRegs.GPCDAT.bit.GPIO75 == 1) DSP.FLAG_ENABLE_PWM_OUTPUT = 1; else DSP.FLAG_ENABLE_PWM_OUTPUT = 0;
+        if (GpioDataRegs.GPCDAT.bit.GPIO75 == 1) DSP.FLAG_ENABLE_PWM_OUTPUT = 1;
+        else DSP.FLAG_ENABLE_PWM_OUTPUT = 0;
     }
 
     /* Step 4. [ePWM] Execute EPWM ISR */
@@ -362,9 +374,10 @@ __interrupt void EPWM1ISR(void){
         do_enhanced_capture();
     #endif
 
-    // 主中断函数
+    /* Step 4.1 >>> Run The Interrupt <<< */
     PanGuMainISR(); // measurement + pwm register update
 
+    /* Step 4.2 >>> Run DAC buffer to get some curves on oscilloscope <<< */
     #if NUMBER_OF_DSP_CORES == 2
         write_DAC_buffer();
     #endif
@@ -381,11 +394,17 @@ __interrupt void EPWM1ISR(void){
     /* Step 7. [ePWM] Exit EPWM1 ISR */
     EPwm1Regs.ETCLR.bit.INT = 1;
     PieCtrlRegs.PIEACK.all |= PIEACK_GROUP3;
-
 }
 
 
-void init_experiment_AD_gain_and_offset(){ 
+
+// 以下为一些公共的init函数，功能依次包含：
+// 1. 初始化电压、电流、编码器的增益和偏置（user需要自己提供值）
+// 2. 初始化SPI、SCI、CAN
+// 3. 中断设置？
+// 4. eCAP获得相电压
+
+void init_ADC_scale_and_offset(){ 
     // 母线电压*4
     DSP.adc_vdc_scale[0]  = USER_INVERTER1_SCALE_VDC_BUS_IPM;
     DSP.adc_vdc_scale[1]  = USER_INVERTER2_SCALE_VDC_BUS_IPM;
@@ -555,68 +574,68 @@ void test_ipc_tocpu02(){
     IPCLtoRFlagSet(IPC_FLAG7);
 }
 
-void voltage_measurement_based_on_eCAP()
-{
-    CAP.terminal_voltage[0] = (CAP.terminal_DutyOnRatio[0]) * DSP.vdc - DSP.vdc * 0.5; // -0.5 is due to duty ratio calculation; - vdc * 0.5 is referring to the center of dc bus capacitor.
-    CAP.terminal_voltage[1] = (CAP.terminal_DutyOnRatio[1]) * DSP.vdc - DSP.vdc * 0.5;
-    CAP.terminal_voltage[2] = (CAP.terminal_DutyOnRatio[2]) * DSP.vdc - DSP.vdc * 0.5;
+//* for DSP.vdc wubo does not know which one DSP.vdc[0] or DSP.vdc[1] to use, hence i commented this func
+// void voltage_measurement_based_on_eCAP(){
+//     CAP.terminal_voltage[0] = (CAP.terminal_DutyOnRatio[0]) * DSP.vdc - DSP.vdc * 0.5; // -0.5 is due to duty ratio calculation; - vdc * 0.5 is referring to the center of dc bus capacitor.
+//     CAP.terminal_voltage[1] = (CAP.terminal_DutyOnRatio[1]) * DSP.vdc - DSP.vdc * 0.5;
+//     CAP.terminal_voltage[2] = (CAP.terminal_DutyOnRatio[2]) * DSP.vdc - DSP.vdc * 0.5;
 
-    CAP.line_to_line_voltage[0] = CAP.terminal_voltage[0] - CAP.terminal_voltage[1];
-    CAP.line_to_line_voltage[1] = CAP.terminal_voltage[1] - CAP.terminal_voltage[2];
-    CAP.line_to_line_voltage[2] = CAP.terminal_voltage[2] - CAP.terminal_voltage[0];
+//     CAP.line_to_line_voltage[0] = CAP.terminal_voltage[0] - CAP.terminal_voltage[1];
+//     CAP.line_to_line_voltage[1] = CAP.terminal_voltage[1] - CAP.terminal_voltage[2];
+//     CAP.line_to_line_voltage[2] = CAP.terminal_voltage[2] - CAP.terminal_voltage[0];
 
-    if (CAP.flag_bad_U_capture == FALSE && CAP.flag_bad_V_capture == FALSE && CAP.flag_bad_W_capture == FALSE)
-    {
-        // Use ecap feedback
-        CAP.uab0[0] = 0.33333 * (2 * CAP.terminal_voltage[0] - CAP.terminal_voltage[1] - CAP.terminal_voltage[2]);
-        CAP.uab0[1] = 0.57735 * (CAP.terminal_voltage[1] - CAP.terminal_voltage[2]);
-        CAP.uab0[2] = 0.33333 * (CAP.terminal_voltage[0] + CAP.terminal_voltage[1] + CAP.terminal_voltage[2]);
-        CAP.dq[0] = (*CTRL).s->cosT * CAP.uab0[0] + (*CTRL).s->sinT * CAP.uab0[1];
-        CAP.dq[1] = -(*CTRL).s->sinT * CAP.uab0[0] + (*CTRL).s->cosT * CAP.uab0[1];
-    }
-    else
-    {
-        // Assume the voltage vector is rtoating at a constant speed when ecap measurement is disturbed.
-        CAP.uab0[0] = (*CTRL).s->cosT * CAP.dq[0] - (*CTRL).s->sinT * CAP.dq[1];
-        CAP.uab0[1] = (*CTRL).s->sinT * CAP.dq[0] + (*CTRL).s->cosT * CAP.dq[1];
-    }
+//     if (CAP.flag_bad_U_capture == FALSE && CAP.flag_bad_V_capture == FALSE && CAP.flag_bad_W_capture == FALSE)
+//     {
+//         // Use ecap feedback
+//         CAP.uab0[0] = 0.33333 * (2 * CAP.terminal_voltage[0] - CAP.terminal_voltage[1] - CAP.terminal_voltage[2]);
+//         CAP.uab0[1] = 0.57735 * (CAP.terminal_voltage[1] - CAP.terminal_voltage[2]);
+//         CAP.uab0[2] = 0.33333 * (CAP.terminal_voltage[0] + CAP.terminal_voltage[1] + CAP.terminal_voltage[2]);
+//         CAP.dq[0] = (*CTRL).s->cosT * CAP.uab0[0] + (*CTRL).s->sinT * CAP.uab0[1];
+//         CAP.dq[1] = -(*CTRL).s->sinT * CAP.uab0[0] + (*CTRL).s->cosT * CAP.uab0[1];
+//     }
+//     else
+//     {
+//         // Assume the voltage vector is rtoating at a constant speed when ecap measurement is disturbed.
+//         CAP.uab0[0] = (*CTRL).s->cosT * CAP.dq[0] - (*CTRL).s->sinT * CAP.dq[1];
+//         CAP.uab0[1] = (*CTRL).s->sinT * CAP.dq[0] + (*CTRL).s->cosT * CAP.dq[1];
+//     }
 
-    // 电压测量
-    if (G.flag_use_ecap_voltage == 2 || G.flag_use_ecap_voltage == 1)
-    {
-        /*Use original ecap measured voltage*/
-        US_P(0) = US_C(0);
-        US_P(1) = US_C(1);
-        US_C(0) = CAP.uab0[0];
-        US_C(1) = CAP.uab0[1];
-    }
-    //    else if(G.flag_use_ecap_voltage==3){
-    //        ecap_moving_average();
-    //    }
-    if (G.flag_use_ecap_voltage == 10)
-    {
-        /*Use lpf ecap measured voltage*/
-        CAP.dq_lpf[0] = _lpf(CAP.dq[0], CAP.dq_lpf[0], 800);
-        CAP.dq_lpf[1] = _lpf(CAP.dq[1], CAP.dq_lpf[1], 800);
-        CAP.uab0[0] = (*CTRL).s->cosT * CAP.dq_lpf[0] - (*CTRL).s->sinT * CAP.dq_lpf[1];
-        CAP.uab0[1] = (*CTRL).s->sinT * CAP.dq_lpf[0] + (*CTRL).s->cosT * CAP.dq_lpf[1];
-        US_P(0) = US_C(0);
-        US_P(1) = US_C(1);
-        US_C(0) = CAP.uab0[0];
-        US_C(1) = CAP.uab0[1];
-    }
-    else if (G.flag_use_ecap_voltage == 0)
-    {
-        /*Use command voltage for feedback*/
-        US_P(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
-        US_P(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
-        US_C(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
-        US_C(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
-    }
+//     // 电压测量
+//     if (G.flag_use_ecap_voltage == 2 || G.flag_use_ecap_voltage == 1)
+//     {
+//         /*Use original ecap measured voltage*/
+//         US_P(0) = US_C(0);
+//         US_P(1) = US_C(1);
+//         US_C(0) = CAP.uab0[0];
+//         US_C(1) = CAP.uab0[1];
+//     }
+//     //    else if(G.flag_use_ecap_voltage==3){
+//     //        ecap_moving_average();
+//     //    }
+//     if (G.flag_use_ecap_voltage == 10)
+//     {
+//         /*Use lpf ecap measured voltage*/
+//         CAP.dq_lpf[0] = _lpf(CAP.dq[0], CAP.dq_lpf[0], 800);
+//         CAP.dq_lpf[1] = _lpf(CAP.dq[1], CAP.dq_lpf[1], 800);
+//         CAP.uab0[0] = (*CTRL).s->cosT * CAP.dq_lpf[0] - (*CTRL).s->sinT * CAP.dq_lpf[1];
+//         CAP.uab0[1] = (*CTRL).s->sinT * CAP.dq_lpf[0] + (*CTRL).s->cosT * CAP.dq_lpf[1];
+//         US_P(0) = US_C(0);
+//         US_P(1) = US_C(1);
+//         US_C(0) = CAP.uab0[0];
+//         US_C(1) = CAP.uab0[1];
+//     }
+//     else if (G.flag_use_ecap_voltage == 0)
+//     {
+//         /*Use command voltage for feedback*/
+//         US_P(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
+//         US_P(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
+//         US_C(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
+//         US_C(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
+//     }
 
-    // (for watch only) Mismatch between ecap measurement and command to inverter
-    (*CTRL).o->cmd_uDQ_to_inverter[0] = (*CTRL).s->cosT * (*CTRL).o->cmd_uAB_to_inverter[0] + (*CTRL).s->sinT * (*CTRL).o->cmd_uAB_to_inverter[1];
-    (*CTRL).o->cmd_uDQ_to_inverter[1] = -(*CTRL).s->sinT * (*CTRL).o->cmd_uAB_to_inverter[0] + (*CTRL).s->cosT * (*CTRL).o->cmd_uAB_to_inverter[1];
-    CAP.dq_mismatch[0] = (*CTRL).o->cmd_uDQ_to_inverter[0] - CAP.dq[0];
-    CAP.dq_mismatch[1] = (*CTRL).o->cmd_uDQ_to_inverter[1] - CAP.dq[1];
-}
+//     // (for watch only) Mismatch between ecap measurement and command to inverter
+//     (*CTRL).o->cmd_uDQ_to_inverter[0] = (*CTRL).s->cosT * (*CTRL).o->cmd_uAB_to_inverter[0] + (*CTRL).s->sinT * (*CTRL).o->cmd_uAB_to_inverter[1];
+//     (*CTRL).o->cmd_uDQ_to_inverter[1] = -(*CTRL).s->sinT * (*CTRL).o->cmd_uAB_to_inverter[0] + (*CTRL).s->cosT * (*CTRL).o->cmd_uAB_to_inverter[1];
+//     CAP.dq_mismatch[0] = (*CTRL).o->cmd_uDQ_to_inverter[0] - CAP.dq[0];
+//     CAP.dq_mismatch[1] = (*CTRL).o->cmd_uDQ_to_inverter[1] - CAP.dq[1];
+// }
