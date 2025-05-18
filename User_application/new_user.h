@@ -28,8 +28,10 @@ void _Reset_Controller_Param();
 
 /* Functional Function */
 void user_init_axis(int axisCnt);
-void measurement_position_count_axisCnt0();
+void measurement_position_count_axisCnt0(); // 对四个电机采取不同的axisCnt函数，而不是循环——方便处理驱动4台不同电机的情况
 void measurement_position_count_axisCnt1();
+void measurement_position_count_axisCnt2();
+void measurement_position_count_axisCnt3();
 void measurement_enc();
 void write_RPM_to_cpu02_dsp_cores_2();
 

@@ -220,8 +220,8 @@ void main_measurement(){
 
 
     // measure vdc 四套三相逆变器可能有独立的母线电压值
-    DSP.vdc[0] = ((REAL)(AdcaResultRegs.ADCRESULT0) - DSP.adc_vdc_offset[0]) * DSP.adc_vdc_scale[0];
-    DSP.vdc[1] = ((REAL)(AdcbResultRegs.ADCRESULT6) - DSP.adc_vdc_offset[1]) * DSP.adc_vdc_scale[1];
+    DSP.vdc[0] = ( (REAL)(AdcaResultRegs.ADCRESULT0) - DSP.adc_vdc_offset[0] ) * DSP.adc_vdc_scale[0];
+    DSP.vdc[1] = ( (REAL)(AdcbResultRegs.ADCRESULT6) - DSP.adc_vdc_offset[1] ) * DSP.adc_vdc_scale[1];
     DSP.vdc[2] = 0.0;
     DSP.vdc[3] = 0.0;
     if (DSP.flag_overwite_vdc) {
@@ -374,13 +374,19 @@ __interrupt void EPWM1ISR(void){
         do_enhanced_capture();
     #endif
 
-    /* Step 4.1 >>> Run The Interrupt <<< */
+    /* Step 4.1 >>> Read from CPU02 by user_routine */
+    user_routine_read_from_cpu02();
+
+    /* Step 4.2 >>> Run The Interrupt <<< */
     PanGuMainISR(); // measurement + pwm register update
 
-    /* Step 4.2 >>> Run DAC buffer to get some curves on oscilloscope <<< */
+    /* Step 4.3 >>> Run DAC buffer to get some curves on oscilloscope <<< */
     #if NUMBER_OF_DSP_CORES == 2
         write_DAC_buffer();
     #endif
+
+
+
 
     #if USE_ECAP_CEVT2_INTERRUPT == 1
         /* Step 5. [eCAP] Disable interrupts */

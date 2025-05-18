@@ -169,16 +169,18 @@ void user_routine_in_main_loop(){
         #elif (ENCODER_TYPE == ABSOLUTE_ENCODER_SCI_HIP)
                 position_count_SCI_fromCPU2 = position_count_SCI_hip_fromCPU2;
         #endif
-
         #if NUMBER_OF_AXES == 2
             // position_count_SCI_fromCPU2 = position_count_SCI_shank_fromCPU2;
             position_count_SCI_fromCPU2 = Axis->SCI_Position_Count_fromCPU2;
         #endif
+        #if NUMBER_OF_AXES == 4
+
+        #endif
             // 正电流导致编码器读数增大：
             // CTRL->enc->encoder_abs_cnt = wubo_debug_motor_enc_dirc[0] * (int32)position_count_SCI_fromCPU2 - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis;
+            // CTRL_1.enc->encoder_abs_cnt = (int32)position_count_SCI_fromCPU2 - 
             CTRL->enc->encoder_abs_cnt = (int32)position_count_SCI_fromCPU2 - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis;
     }
-
 
     void measurement_position_count_axisCnt1(){
         #if NUMBER_OF_AXES == 2
@@ -188,10 +190,15 @@ void user_routine_in_main_loop(){
             // 正电流导致编码器读数减小
             // CTRL->enc->encoder_abs_cnt = wubo_debug_motor_enc_dirc[1] * ( (int32)position_count_SCI_fromCPU2 - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis );
             CTRL->enc->encoder_abs_cnt =  (-1) * ( (int32)position_count_SCI_fromCPU2 - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis );
-
             // dq变化中，d轴理论上指向永磁体的北极，
     }
 
+    void measurement_position_count_axisCnt2(){
+
+    }
+    void measurement_position_count_axisCnt3(){
+    
+    }
 
     /* 编码器位置信息转换为速度信息 */
     void measurement_enc(){
@@ -291,8 +298,11 @@ void user_routine_read_from_cpu02(){
     if (IPCRtoLFlagBusy(IPC_FLAG10) == 1){ // if flag
         max_counter_missing_position_measurement = counter_missing_position_measurement;
         counter_missing_position_measurement = 0;
-        Axis_1.SCI_Position_Count_fromCPU2 = Read.SCI_A_position_count;
-        Axis_2.SCI_Position_Count_fromCPU2 = Read.SCI_B_position_count;
+        Axes[0].SCI_Position_Count_fromCPU2 = Read.SCI_A_position_count;
+        Axes[1].SCI_Position_Count_fromCPU2 = Read.SCI_B_position_count;
+        
+        // Axis_1.SCI_Position_Count_fromCPU2 = Read.SCI_A_position_count;
+        // Axis_2.SCI_Position_Count_fromCPU2 = Read.SCI_B_position_count;
         // Axis_3.SCI_Position_Count_fromCPU2 = Read.SCI_C_position_count;
         // Axis_4.SCI_Position_Count_fromCPU2 = Read.SCI_D_position_count;
 
