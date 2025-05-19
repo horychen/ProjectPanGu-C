@@ -1,8 +1,6 @@
 #include "All_Definition.h"
 #include "new_user.h"
 
-
-
 st_axis Axes[4];
 
 extern BOOL run_enable_from_PC;
@@ -153,10 +151,10 @@ void user_routine_init_in_main(){
     axisCnt = 1;
 }
 
+// The Func run in mainLoop (not in )
 void user_routine_in_main_loop(){
     // for moment it's null
 }
-
 
 
 
@@ -372,16 +370,24 @@ void user_routine_disable_pwm_output(){
 
         /* wubo: init_CTRL will clear timebase but when the timecounter is running all the time hence it will give value to timebase whenever DSP is on or off, finally timebase seems like not been cleared*/
         init_experiment();
-        // wubo first try enum structure
-        // st_reset_mode Reset_Mode = RESET_MODE_SOFT
-        _user_ResetController(RESET_MODE_SOFT);
 
-        EPwm1Regs.CMPA.bit.CMPA = 2500;
-        EPwm2Regs.CMPA.bit.CMPA = 2500;
-        EPwm3Regs.CMPA.bit.CMPA = 2500;
-        EPwm4Regs.CMPA.bit.CMPA = 2500;
-        EPwm5Regs.CMPA.bit.CMPA = 2500;
-        EPwm6Regs.CMPA.bit.CMPA = 2500;
+        // wubo first try enum structure
+        _user_ResetController(resetMode); // 修改resetMode来修改重置操作
+
+        // 按理说，new_user中不允许出现有关DSP的操作
+        // 我想通过Axes建立CTRL和DSP变量之间的关系，DSP结构体不允许被直接操作
+
+        // 这句话存疑
+        // for (int i = 0; i < 4; i++) {
+//             memset(Axes[i].Ta, 0, sizeof(Axes[i].Ta)); // 将 Ta[0~3] 全部置为 0
+        // }
+        
+        // EPwm1Regs.CMPA.bit.CMPA = 2500;
+        // EPwm2Regs.CMPA.bit.CMPA = 2500;
+        // EPwm3Regs.CMPA.bit.CMPA = 2500;
+        // EPwm4Regs.CMPA.bit.CMPA = 2500;
+        // EPwm5Regs.CMPA.bit.CMPA = 2500;
+        // EPwm6Regs.CMPA.bit.CMPA = 2500;
 
         if ((*CTRL).g->overwrite_vdc < 5){
             (*CTRL).g->overwrite_vdc = 28;
@@ -446,9 +452,10 @@ void user_routine_init_pwm_output(){
     }
 }
 
-// 机器人直接部署的时候就写这里，因为机器人底层的控制模式可以不用修改了！
-// 区分Debug和Release版本
-void user_routine_enable_pwm_output(){
+
+
+
+REAL user_routine_enable_pwm_output(){
 
     (*CTRL).timebase_counter += 1;
     (*CTRL).timebase = CL_TS * (*CTRL).timebase_counter; //(*CTRL).timebase += CL_TS; // 2048 = float/REAL max
@@ -481,9 +488,16 @@ void user_routine_enable_pwm_output(){
         EPwm6Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen2.CMPA[2];
     #endif
 
+    return 0;
 }
 
-// 多功能直接部署的时候写这里
+// 多功能debug的时候写这里
 void user_routine_debug_switch(){
+    G.flag_experimental_initialized = TRUE; // Set this flag to TRUE to run the init in DISABLE_PWM_ENABLE once again
     // Waintg for Your Da Zuo
+}
+
+// 机器人直接部署的时候就写这里，因为机器人底层的控制模式可以不用修改了！
+void user_routine_main_switch(){
+
 }

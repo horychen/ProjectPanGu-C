@@ -79,12 +79,12 @@
     // #define DSP_2PWM_DISABLE       GpioDataRegs.GPCSET.bit.GPIO93=1;
     // #define DSP_2PWM_ENABLE        GpioDataRegs.GPCCLEAR.bit.GPIO93=1;
     
-    // 这里的GPDCLEAR GPCCLEAR GPACLEAR GPASET 不一样原因是？
+    // [WuBo]:这里的GPDCLEAR GPCCLEAR GPACLEAR GPASET 不一样原因是？
     #define DSP_PWM1_ENABLE        GpioDataRegs.GPDCLEAR.bit.GPIO108=1;
     #define DSP_PWM2_ENABLE        GpioDataRegs.GPCCLEAR.bit.GPIO93=1;
     #define DSP_PWM3_ENABLE        GpioDataRegs.GPACLEAR.bit.GPIO28=1;
     #define DSP_PWM4_ENABLE        GpioDataRegs.GPACLEAR.bit.GPIO29=1;
-    
+
     #define DSP_PWM1_DISABLE       GpioDataRegs.GPDSET.bit.GPIO108=1;
     #define DSP_PWM2_DISABLE       GpioDataRegs.GPCSET.bit.GPIO93=1;
     #define DSP_PWM3_DISABLE       GpioDataRegs.GPASET.bit.GPIO28=1;
@@ -132,6 +132,10 @@ typedef struct{
     */
     int FLAG_ENABLE_PWM_OUTPUT;
     int epwm_enable[4];
+    int flag_init_DSP_svgen;
+    REAL  svgen_Ta[4];     // Output: reference phase-a switching function
+    REAL  svgen_Tb[4];     // Output: reference phase-b switching function
+    REAL  svgen_Tc[4];     // Output: reference phase-c switching function
 
     /* Misc
     */

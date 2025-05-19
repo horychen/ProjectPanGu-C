@@ -1,9 +1,9 @@
 #include "All_Definition.h"
 
-/* New Idea : Put your own func in routine like CPP? 
+/* New Idea : Put your own func in routine like CPP?
     * user_routine应该只能被main.c调用，其余文件通通不能动他
 */
-#include "new_user.h"
+// #include "new_user.h"
 
 // 声明全局变量
 bool run_enable_from_PC = FALSE;
@@ -300,12 +300,66 @@ void PanGuMainISR(void){
         DSP_PWM2_DISABLE
         DSP_PWM3_DISABLE
         DSP_PWM4_DISABLE
+        // [WuBo] During DisablePWM, the CMPA is set to be 2500, is it right??? Why not zero, or Setting the GPIO of PWM ENABLE as zero is enough
+        // will the operation CMPA is set to be 2500 lead to a problem? I dont know
+        DSP.svgen_Ta[0] = 2500;
+        DSP.svgen_Ta[1] = 2500;
+        DSP.svgen_Ta[2] = 2500;
+        DSP.svgen_Ta[3] = 2500;
+        
+        DSP.svgen_Tb[0] = 2500;
+        DSP.svgen_Tb[1] = 2500;
+        DSP.svgen_Tb[2] = 2500;
+        DSP.svgen_Tb[3] = 2500;
+        
+        DSP.svgen_Tc[0] = 2500;
+        DSP.svgen_Tc[1] = 2500;
+        DSP.svgen_Tc[2] = 2500;
+        DSP.svgen_Tc[3] = 2500;
+
         user_routine_disable_pwm_output(); // 用户自定义的关闭PWM输出函数
     }else{
-        // user_routine_enable_pwm_output();  // 用户自定义的开启PWM输出函数
-        // int pwm_test_mode = user_routine_main_switch();
 
-        // /* PWM signal to Inverter Voltage Output SWPWM */
+        user_routine_enable_pwm_output();  // 用户自定义的开启PWM输出函数
+        int pwm_test_mode = user_routine_main_switch();
+
+        /* PWM signal to Inverter Voltage Output SWPWM */
+        /* Your Only Mission:
+        * Provide the Ta Tb Tc for the CMPA to control the Inverter
+        */
+
+        if (DSP.epwm_enable[0] == TRUE){
+            DSP_PWM1_ENABLE
+            EPwm1Regs.CMPA.bit.CMPA = DSP.svgen_Ta[0] * SYSTEM_TBPRD; // 0-5000，5000表示0%的占空比
+            EPwm2Regs.CMPA.bit.CMPA = DSP.svgen_Tb[0] * SYSTEM_TBPRD;
+            EPwm3Regs.CMPA.bit.CMPA = DSP.svgen_Tc[0] * SYSTEM_TBPRD;
+        }else{
+            DSP_PWM1_DISABLE
+        }
+        if (DSP.epwm_enable[1] == TRUE){
+            DSP_PWM2_ENABLE
+            EPwm4Regs.CMPA.bit.CMPA = DSP.svgen_Ta[1] * SYSTEM_TBPRD; // 0-5000，5000表示0%的占空比
+            EPwm5Regs.CMPA.bit.CMPA = DSP.svgen_Tb[1] * SYSTEM_TBPRD;
+            EPwm6Regs.CMPA.bit.CMPA = DSP.svgen_Tc[1] * SYSTEM_TBPRD;
+        }else{
+            DSP_PWM2_DISABLE
+        }
+        if (DSP.epwm_enable[2] == TRUE){
+            DSP_PWM3_ENABLE
+            EPwm7Regs.CMPA.bit.CMPA = DSP.svgen_Ta[2] * SYSTEM_TBPRD; // 0-5000，5000表示0%的占空比
+            EPwm8Regs.CMPA.bit.CMPA = DSP.svgen_Tb[2] * SYSTEM_TBPRD;
+            EPwm9Regs.CMPA.bit.CMPA = DSP.svgen_Tc[2] * SYSTEM_TBPRD;
+        }else{
+            DSP_PWM3_DISABLE
+        }
+        if (DSP.epwm_enable[3] == TRUE){
+            DSP_PWM4_ENABLE
+            EPwm10Regs.CMPA.bit.CMPA = DSP.svgen_Ta[3] * SYSTEM_TBPRD; // 0-5000，5000表示0%的占空比
+            EPwm11Regs.CMPA.bit.CMPA = DSP.svgen_Tb[3] * SYSTEM_TBPRD;
+            EPwm12Regs.CMPA.bit.CMPA = DSP.svgen_Tc[3] * SYSTEM_TBPRD;
+        }else{
+            DSP_PWM4_DISABLE
+        }
         // if (DSP.epwm_enable[0] == TRUE){
         //     DSP_PWM1_ENABLE
         //     EPwm1Regs.CMPA.bit.CMPA = Axes[0].svgen.Ta * SYSTEM_TBPRD; // 0-5000，5000表示0%的占空比
