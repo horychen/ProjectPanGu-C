@@ -20,7 +20,8 @@ int wubo_debug_tools[10] = {1,0,0,0,0,0,0,0,0,0};
     #define DC_BUS_VOLTAGE_INVERSE_WUBO (1.732 / d_sim.init.Vdc)
 #else
     #include "All_Definition.h"
-    extern st_axis *Axis;
+    #include "new_user.h"
+//    extern st_axis *Axis;
     #define DC_BUS_VOLTAGE_INVERSE_WUBO (1.732 / Axis->vdc)
 #endif
 

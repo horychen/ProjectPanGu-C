@@ -3,6 +3,11 @@
 
 st_axis Axes[4];
 
+//* 暂时的，为了程序不报错，之后Axis会被全部去掉！
+st_axis Axis_1 = {0};
+st_axis Axis_2 = {0};
+st_axis *Axis = {0};
+
 extern BOOL run_enable_from_PC;
 extern int axisCnt;
 extern struct ControllerForExperiment CTRL_1;
@@ -372,7 +377,11 @@ void user_routine_disable_pwm_output(){
         init_experiment();
 
         // wubo first try enum structure
+        st_reset_mode resetMode;
         _user_ResetController(resetMode); // 修改resetMode来修改重置操作
+
+
+
 
         // 按理说，new_user中不允许出现有关DSP的操作
         // 我想通过Axes建立CTRL和DSP变量之间的关系，DSP结构体不允许被直接操作
@@ -494,7 +503,15 @@ REAL user_routine_enable_pwm_output(){
 // 多功能debug的时候写这里
 void user_routine_debug_switch(){
     G.flag_experimental_initialized = TRUE; // Set this flag to TRUE to run the init in DISABLE_PWM_ENABLE once again
+    
+    // WE SHOULD USE STRCTURE ENUM TO MAKE DEBUG CLEAR !
+    int pwm_test_mode = main_switch(debug->mode_select); 
+
+
+
     // Waintg for Your Da Zuo
+
+    
 }
 
 // 机器人直接部署的时候就写这里，因为机器人底层的控制模式可以不用修改了！

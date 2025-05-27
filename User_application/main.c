@@ -2,6 +2,14 @@
 
 /* New Idea : Put your own func in routine like CPP?
     * user_routine应该只能被main.c调用，其余文件通通不能动他
+* The Function Your Should Give :
+    * user_routine_init_in_main();
+    * user_routine_in_main_loop();
+    * user_routine_read_from_cpu02();
+    * user_routine_debug_switch();
+    * user_routine_init_pwm_output();
+    * user_routine_disable_pwm_output();
+    * user_routine_enable_pwm_output(); // 返回四台逆变器的三相占空比
 */
 // #include "new_user.h"
 
@@ -13,8 +21,8 @@ bool run_enable_from_PC = FALSE;
     Uint32 CpuTimer_After = 0;
     st_dsp DSP;
 
-    // 缓兵之计，Axis最终需要被Axes[4]取代！
-    st_axis *Axis, Axis_1, Axis_2;
+    // // 缓兵之计，Axis最终需要被Axes[4]取代！
+    // st_axis *Axis, Axis_1, Axis_2;
 #endif
 
 void main(void){
@@ -321,11 +329,19 @@ void PanGuMainISR(void){
     }else{
 
         user_routine_enable_pwm_output();  // 用户自定义的开启PWM输出函数
-        int pwm_test_mode = user_routine_main_switch();
+        
+        
+        // Release 机器人整体不需要再切换电机模式
+        // int pwm_test_mode = user_routine_main_switch();
+
+        // Debug 切换电机的工作模式进行debug
+        user_routine_debug_switch();
+
+
 
         /* PWM signal to Inverter Voltage Output SWPWM */
         /* Your Only Mission:
-        * Provide the Ta Tb Tc for the CMPA to control the Inverter
+            * Provide the Ta Tb Tc for the CMPA to control the Inverter
         */
 
         if (DSP.epwm_enable[0] == TRUE){

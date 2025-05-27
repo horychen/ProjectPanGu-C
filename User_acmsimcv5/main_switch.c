@@ -5,7 +5,8 @@
     #define DC_BUS_VOLTAGE_INVERSE (1.732 / d_sim.init.Vdc)
 #else
     #include "All_Definition.h"
-    extern st_axis *Axis;
+    #include "new_user.h"
+//    extern st_axis *Axis;
     #define DC_BUS_VOLTAGE_INVERSE (1.732 / Axis->vdc)
 #endif
 /* 定义顶级结构体（指针的集合） */

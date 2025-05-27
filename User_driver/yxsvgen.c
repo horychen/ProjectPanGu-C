@@ -5,7 +5,7 @@
  *      Author: xinyuan
  */
 #include <All_Definition.h>
-
+#include "new_user.h"
 
 void SVGEN_Drive(SVGENDQ* ptrV){
 

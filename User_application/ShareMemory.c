@@ -6,6 +6,7 @@
  *///cpu2 CONNECTION
 
 #include "All_Definition.h"
+#include "new_user.h"
 
 extern REAL vvvf_voltage;
 extern REAL vvvf_frequency;
@@ -15,6 +16,9 @@ extern Uint32 position_count_SCI_hip_fromCPU2;
 extern Uint32 position_count_SCI_shank_fromCPU2;
 
 st_axis *Axis4DAC;
+
+
+
 #if NUMBER_OF_DSP_CORES == 2
 
 struct IPC_MEMORY_WRITE Write;
@@ -416,6 +420,7 @@ void write_DAC_buffer(){
             IPCLtoRFlagSet(IPC_FLAG7);
         }
     }
+}
 
 #elif NUMBER_OF_DSP_CORES == 1
 
@@ -481,5 +486,4 @@ void write_DAC_buffer(){
     //        }
     //    }
 #endif
-}
 

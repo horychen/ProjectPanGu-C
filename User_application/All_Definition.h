@@ -178,69 +178,10 @@ typedef struct{
 } st_dsp;
 extern st_dsp DSP;
 
+/* Axis definition has been moved into new_user files temporarily*/
+/* Axis definition has been moved into new_user files temporarily*/
+/* Axis definition has been moved into new_user files temporarily*/
 
-typedef struct{
-    int ID;
-    struct ControllerForExperiment *pCTRL;
-    struct DebugExperiment *Pdebug;
-    // Commonly used for prototype motor testing
-       //int use_first_set_three_phase;
-        //int Set_current_loop;
-        //int Set_x_suspension_current_loop;
-        //int Set_y_suspension_current_loop;
-        //REAL Set_manual_rpm;
-        //REAL Prev_manual_rpm;
-        //REAL rampRate_rpm;
-        //REAL Set_manual_current_id;
-        //REAL Set_manual_current_iq;
-        //REAL Set_manual_current_ix;
-        //REAL Set_manual_current_iy;
-        //int Select_exp_operation;
-        //int *pFLAG_INVERTER_NONLINEARITY_COMPENSATION;
-        //int flag_overwrite_theta_d;
-        //REAL Overwrite_Current_Frequency;
-        //REAL Overwrite_Suspension_Current_Frequency;
-        //REAL used_theta_d_elec;
-        //REAL angle_shift_for_first_inverter;
-        //REAL angle_shift_for_second_inverter;
-        //REAL OverwriteSpeedOutLimitDuringInit;
-
-        // ADC Offset
-        // Automatic Offset Removing
-
-        //        volatile struct ADC_RESULT_REGS *pAdcaResultRegs;
-        //        volatile struct ADC_RESULT_REGS *pAdcbResultRegs;
-        //        volatile struct ADC_RESULT_REGS *pAdccResultRegs;
-    // int FLAG_ENABLE_PWM_OUTPUT; //  电机模式标志位
-    int AD_offset_flag2;
-    REAL offset_counter;
-    REAL offset_online[6];
-    // Raw
-        REAL adc_offset[12]; // ADC offset. U, V, W corresponds to ADCRESULT2, ADCRESULT3, ADCRESULT1.
-        REAL adc_scale[12];
-    // Sensor - Raw measurement
-        REAL vdc;
-        REAL iabg[6];
-        REAL iuvw[6];
-        REAL iuvw_offset_online[6];
-        Uint32 SCI_Position_Count_fromCPU2;
-    // DAC
-        int DAC_MAX5307_FLAG; // for single core case
-        REAL dac_offset[NO_OF_DAC_CHANNELS];
-        REAL dac_time;
-        REAL dac_watch[80];
-        REAL dac_watch_stator_resistance;
-        int channels[NO_OF_DAC_CHANNELS];
-        int channels_preset;
-    // Sensor Coil
-        REAL place_sensor[8];
-        REAL place_offset[8];
-        REAL place_scale[8];
-} st_axis;
-
-extern st_axis Axis_1;
-extern st_axis Axis_2;
-extern st_axis *Axis;
 
 /* Tools that main use */
     #include "tools.h"
