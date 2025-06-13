@@ -12,6 +12,10 @@ Harnefors_1998_BackCals Harnefors_1998_BackCals_Variable;
 Rohr_1991 Rohr_1991_Controller;
 Pos_IMP Pos_IMP_CTRL;
 wubo_Sul_1996 wubo_Sul_1996_Var;
+Spong2006 Spong2006_Controller;
+
+
+REAL Spong2006_Gain_Scaling_Factor = 0.1;
 int wubo_debug_tools[10] = {1,0,0,0,0,0,0,0,0,0};
 
 
@@ -748,6 +752,7 @@ void _user_wubo_PositionLoop_IMP(REAL cmd_varTheta, REAL varTheta){
     Pos_IMP_CTRL.Output = - Pos_IMP_CTRL.Kiq * Pos_IMP_CTRL.Err_Pos - Pos_IMP_CTRL.Biq * Pos_IMP_CTRL.Err_Vel;
 
     (*CTRL).i->cmd_iDQ[0] = 0;
+    // CTRL->i->cmd_iDQ = 0;
     (*CTRL).i->cmd_iDQ[1] = Pos_IMP_CTRL.Output;
     
     if ( (*CTRL).i->cmd_iDQ[1] > (d_sim.init.IN * d_sim.VL.LIMIT_OVERLOAD_FACTOR) ){
@@ -757,6 +762,54 @@ void _user_wubo_PositionLoop_IMP(REAL cmd_varTheta, REAL varTheta){
     }
     _onlyFOC( (*CTRL).i->theta_d_elec, (*CTRL).i->iAB );
 }
+
+
+/* 2006 Spong Teleopration with One Pair */
+//  7.55 / 10000 * 50 / 0.75
+// 0.050333333333333334
+void _init_Spong2006(){
+    Spong2006_Controller.Kp_master        = 5.0 * Spong2006_Gain_Scaling_Factor;
+    Spong2006_Controller.Kd_master        = 0.25 * Spong2006_Controller.Kp_master * Spong2006_Gain_Scaling_Factor;
+    Spong2006_Controller.P_elpsion_master = 0.001 * Spong2006_Controller.Kd_slave * Spong2006_Gain_Scaling_Factor;
+    Spong2006_Controller.Kv_master        = 1.0 * Spong2006_Gain_Scaling_Factor;
+
+    Spong2006_Controller.Kp_slave         = 5.0 * Spong2006_Gain_Scaling_Factor;
+    Spong2006_Controller.Kd_slave        = 0.25 * Spong2006_Controller.Kp_slave * Spong2006_Gain_Scaling_Factor;
+    Spong2006_Controller.P_elpsion_slave = 0.001 * Spong2006_Controller.Kd_slave * Spong2006_Gain_Scaling_Factor;
+    Spong2006_Controller.Kv_slave        = 1.0 * Spong2006_Gain_Scaling_Factor;
+}
+
+#if !PC_SIMULATION
+    void Spong2006_Current_Controller(){
+        // CTRL_1.i->cmd_varOmega
+    //     CTRL_2.i->cmd_varOmega
+
+        // 注意编码器之间自带的零位误差？
+        PID_Position->Err = CTRL_1.i->varTheta - CTRL_2.i->varTheta    ;
+        // (CTRL_1.enc->OffsetCountBetweenIndexAndUPhaseAxis - CTRL_2.enc->OffsetCountBetweenIndexAndUPhaseAxis)*SYSTEM_QEP_REV_PER_PULSE*2*M_PI
+        if (PID_Position->Err > M_PI){
+            PID_Position->Err -= 2 * M_PI;
+        }
+        if (PID_Position->Err < -M_PI){
+            PID_Position->Err += 2 * M_PI;
+        }
+
+
+        // torque one
+        CTRL_1.i->cmd_iDQ[0] = 0.0;
+        CTRL_1.i->cmd_iDQ[1] = ( (-1) * Spong2006_Controller.Kv_master * ( CTRL_1.i->varOmega - CTRL_2.i->varOmega )
+                                    - ( (Spong2006_Controller.Kd_master + Spong2006_Controller.P_elpsion_master) * CTRL_1.i->varOmega )
+                                    - ( Spong2006_Controller.Kp_master * PID_Position->Err) ) / (1.5 * CTRL_1.motor->npp * CTRL_1.motor->KActive);
+
+        // torque two
+        CTRL_2.i->cmd_iDQ[0] = 0.0;
+        CTRL_2.i->cmd_iDQ[1] = ( (-1) * Spong2006_Controller.Kv_slave * ( CTRL_2.i->varOmega - CTRL_1.i->varOmega )
+                                    - ( (Spong2006_Controller.Kd_slave + Spong2006_Controller.P_elpsion_slave) * CTRL_2.i->varOmega )
+                                    - ( Spong2006_Controller.Kp_slave * (-1)*PID_Position->Err) ) / (1.5 * CTRL_2.motor->npp * CTRL_2.motor->KActive);
+    }
+#endif
+
+
 
 /* Auto MISMATCH the Parameter with CTRL.timebase */
 void _init_wubo_ParaMis() {

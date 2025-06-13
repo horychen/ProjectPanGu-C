@@ -219,11 +219,12 @@ void main_measurement(){
         // measure d-axis angle and then use a poor algorithm to calculate speed
         measurement_enc();
     #endif
+
+
+    /* CTRL->i接口 */
     CTRL->i->varOmega     = CTRL->enc->varOmega;
     CTRL->i->theta_d_elec = CTRL->enc->theta_d_elec;
-
-    /* 绝对值编码器读数, 使用弧度制度 */
-    CTRL->i->varTheta     = CTRL->enc->encoder_abs_cnt * SYSTEM_QEP_REV_PER_PULSE * 2 * M_PI;
+    CTRL->i->varTheta     = CTRL->enc->encoder_abs_cnt * SYSTEM_QEP_REV_PER_PULSE * 2 * M_PI; //* 绝对值编码器读数, 使用弧度制度，机械角度，用这个！！！电角度看电机角度有点麻烦！
 
     // measure place between machine shaft and Sensor Coil
     // if (sensor_coil_enable == 1)
@@ -252,8 +253,8 @@ void main_measurement(){
     // voltage_measurement_based_on_eCAP();
 
     // measure vdc
-    Axis->vdc    = ((REAL)(AdcaResultRegs.ADCRESULT0 ) - Axis->adc_offset[0]) * Axis->adc_scale[0];
-    // Axis->vdc = ((REAL)(AdcbResultRegs.ADCRESULT6) - Axis->adc_offset[0]) * Axis->adc_scale[0];
+     Axis->vdc    = ((REAL)(AdcaResultRegs.ADCRESULT0 ) - Axis->adc_offset[0]) * Axis->adc_scale[0];
+//    Axis->vdc = ((REAL)(AdcbResultRegs.ADCRESULT6) - Axis->adc_offset[0]) * Axis->adc_scale[0];
     if (G.flag_overwite_vdc) Axis->vdc = G.overwrite_vdc;
     {
         // Vdc用于实时更新电流环限幅
@@ -447,6 +448,10 @@ void DISABLE_PWM_OUTPUT(){
     GpioDataRegs.GPDCLEAR.bit.GPIO106 = 1; // TODO: What is this doing?
 }
 
+
+
+int global_tmp_pwm_test_mode;
+
 void ENABLE_PWM_OUTPUT(int positionLoopType){
     G.flag_experimental_initialized = FALSE;
     if (use_first_set_three_phase == 1){
@@ -520,12 +525,12 @@ void ENABLE_PWM_OUTPUT(int positionLoopType){
     /* MAIN SWITCH */
     /* MAIN SWITCH */
 
-    int pwm_test_mode = main_switch(debug->mode_select);
-
+//    int pwm_test_mode = main_switch(debug->mode_select);
+    global_tmp_pwm_test_mode = main_switch(debug->mode_select);
     //(*CTRL).o->cmd_uAB_to_inverter[0]
 
     // operation mode为5的时候，执行下面测试逆变器输出电压的代码
-    if (pwm_test_mode == XCUBE_TaTbTc_DEBUG_MODE){
+    if (global_tmp_pwm_test_mode == XCUBE_TaTbTc_DEBUG_MODE){
         if (axisCnt == 0){
             EPwm1Regs.CMPA.bit.CMPA = (*CTRL).svgen1.Ta * 50000000 * CL_TS; // 0-5000，5000表示0%的占空比
             EPwm2Regs.CMPA.bit.CMPA = (*CTRL).svgen1.Tb * 50000000 * CL_TS;
@@ -832,12 +837,13 @@ void axis_basic_setup(int axisCnt){
     //
     //    Axis->FLAG_ENABLE_PWM_OUTPUT = FALSE;
 
-    Axis->channels_preset = 2; // 9; // 101;
+    Axis->channels_preset = 13; // 9; // 101;
     // 2  /* iD current and iQ current info */
     // 9  /* With SPEED ESO */
     // 10 /* WCtuner Debug */
     // 11 /* 20240414 Debugging */
     // 12 /* 20240418 Pos Loop */
+    // 13 /* 20250528 Teleopration */
 
     
     #if WHO_IS_USER == USER_BEZIER
@@ -1282,7 +1288,12 @@ void measurement_position_count_axisCnt1(){
     #endif
         // 正电流导致编码器读数减小
         // CTRL->enc->encoder_abs_cnt = wubo_debug_motor_enc_dirc[1] * ( (int32)position_count_SCI_fromCPU2 - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis );
-        CTRL->enc->encoder_abs_cnt =  (-1) * ( (int32)position_count_SCI_fromCPU2 - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis );
+
+        // For Coupling(对托)
+        // CTRL->enc->encoder_abs_cnt =  (-1) * ( (int32)position_count_SCI_fromCPU2 - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis );
+        
+        // For Teleoperation
+        CTRL->enc->encoder_abs_cnt =  ( (int32)position_count_SCI_fromCPU2 - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis );
 
         // dq变化中，d轴理论上指向永磁体的北极，
 }
@@ -1293,7 +1304,6 @@ void measurement_enc(){
         // 正转电流导致编码器读数减小：
         //CTRL->enc->encoder_abs_cnt = -((int32)cnt_four_bar_map_motor_encoder_angle + CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis);
         // 正转电流导致编码器读数增大：
-
         CTRL->enc->encoder_abs_cnt = (int32)cnt_four_bar_map_motor_encoder_angle - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis;
     }
 
@@ -1395,9 +1405,9 @@ void measurement_current_axisCnt0(){
 
 void measurement_current_axisCnt1(){
     // LEM2
-    Axis->iuvw[3] = ((REAL)(AdcbResultRegs.ADCRESULT7) - Axis->adc_offset[4]) * Axis->adc_scale[4]; //
-    Axis->iuvw[4] = ((REAL)(AdcbResultRegs.ADCRESULT8) - Axis->adc_offset[5]) * Axis->adc_scale[5]; //
-    Axis->iuvw[5] = ((REAL)(AdcbResultRegs.ADCRESULT9) - Axis->adc_offset[6]) * Axis->adc_scale[6]; //
+    Axis->iuvw[PIN_ADCB_U] = ((REAL)(AdcbResultRegs.ADCRESULT7) - Axis->adc_offset[4]) * Axis->adc_scale[4]; //
+    Axis->iuvw[PIN_ADCB_V] = ((REAL)(AdcbResultRegs.ADCRESULT8) - Axis->adc_offset[5]) * Axis->adc_scale[5]; //
+    Axis->iuvw[PIN_ADCB_W] = ((REAL)(AdcbResultRegs.ADCRESULT9) - Axis->adc_offset[6]) * Axis->adc_scale[6]; //
 
     // 电流接口
     if (USE_3_CURRENT_SENSORS){

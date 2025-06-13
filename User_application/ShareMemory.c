@@ -166,8 +166,19 @@ void write_DAC_buffer(){
 //        #endif
 
 
-        #if WHO_IS_USER == USER_WB
-
+        #if WHO_IS_USER == USER_WB // for Teleoperation
+            (*Axis4DAC).dac_watch[71] = (CTRL_1.i->varTheta - M_PI) * ONE_OVER_2PI * 2; // position
+            (*Axis4DAC).dac_watch[72] = (CTRL_2.i->varTheta - M_PI) * ONE_OVER_2PI * 2; // position
+            (*Axis4DAC).dac_watch[73] = CTRL_1.enc->varOmega * MECH_RAD_PER_SEC_2_RPM * 0.002;     // Speed
+            (*Axis4DAC).dac_watch[74] = CTRL_2.enc->varOmega * MECH_RAD_PER_SEC_2_RPM * 0.002;     // Speed
+            (*Axis4DAC).dac_watch[75] = CTRL_1.i->iDQ[1] * 0.1;         // iQ
+            (*Axis4DAC).dac_watch[76] = CTRL_2.i->iDQ[1] * 0.1;         // iQ
+            (*Axis4DAC).dac_watch[77] = CTRL_1.i->cmd_iDQ[1] * 0.1;     // CMD_iQ
+            (*Axis4DAC).dac_watch[78] = CTRL_2.i->cmd_iDQ[1] * 0.1;     // CMD_iQ
+            // (*Axis4DAC).dac_watch[71] = CTRL_1.i->cmd_varOmega * MECH_RAD_PER_SEC_2_RPM * 0.002;
+            // (*Axis4DAC).dac_watch[72] = CTRL_2.i->cmd_varOmega * MECH_RAD_PER_SEC_2_RPM * 0.002;
+            // (*Axis4DAC).dac_watch[73] = CTRL_1.enc->varOmega * MECH_RAD_PER_SEC_2_RPM * 0.002;
+            // (*Axis4DAC).dac_watch[74] = CTRL_2.enc->varOmega * MECH_RAD_PER_SEC_2_RPM * 0.002;
         #endif
 
         #if WHO_IS_USER == USER_YZZ
@@ -196,6 +207,9 @@ void write_DAC_buffer(){
             (*Axis4DAC).dac_watch[68] = CTRL_1.s->iQ->Ref*0.1; /// 131072.0 ;
             (*Axis4DAC).dac_watch[69] = CTRL_1.s->iQ->Fbk*0.1; /// 131072.0 ;
         # endif
+
+
+
 
         
         // ZJL IMPEDENCE CONTROL
@@ -334,6 +348,16 @@ void write_DAC_buffer(){
             (*Axis4DAC).channels[5] = 26; // PID_iD->Fbk
             (*Axis4DAC).channels[6] = 30; // PID_iQ->Fbk
             (*Axis4DAC).channels[7] = 44; // DC bus utilization
+        }else if((*Axis4DAC).channels_preset==13){(*Axis4DAC).channels_preset=0;
+            /* 20240605 Teleoperation */
+            (*Axis4DAC).channels[0] = 71; // CTRL_1.enc->theta_d_elec; // position
+            (*Axis4DAC).channels[1] = 72; // CTRL_2.enc->theta_d_elec; // position
+            (*Axis4DAC).channels[2] = 73; // CTRL_1.enc->varOmega; // Speed
+            (*Axis4DAC).channels[3] = 74; // CTRL_2.enc->varOmega; // Speed
+            (*Axis4DAC).channels[4] = 75; // CTRL_1.i->iDQ[1]; // iQ
+            (*Axis4DAC).channels[5] = 76; // CTRL_2.i->iDQ[1]; // iQ
+            (*Axis4DAC).channels[6] = 77; // CTRL_1.i->cmd_iDQ[1] * 0.1;
+            (*Axis4DAC).channels[7] = 78; // CTRL_2.i->cmd_iDQ[1] * 0.1;
         }
         // [33] = (*CTRL).o->cmd_uDQ[0] * 0.02;
         // [34] = (*CTRL).o->cmd_uDQ[1] * 0.02;

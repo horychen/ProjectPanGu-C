@@ -99,7 +99,25 @@
     void _user_wubo_get_SpeedFeedForward_for_PositionLoop(REAL Theta);
     void _user_wubo_PositionLoop_controller(REAL Theta, REAL Speed_FeedForward);
     void _init_Pos_IMP();
-    void  _user_wubo_PositionLoop_IMP(REAL cmd_varTheta, REAL varTheta);
+    void _user_wubo_PositionLoop_IMP(REAL cmd_varTheta, REAL varTheta);
+
+
+    /* 2006 Spong Teleopration with One Pair */
+    typedef struct {
+        REAL Kp_master;
+        REAL Kv_master;
+        REAL Kd_master; // dissipation
+        REAL P_elpsion_master;
+        REAL Kp_slave;
+        REAL Kv_slave;
+        REAL Kd_slave; // dissipation
+        REAL P_elpsion_slave;
+    }Spong2006;
+    extern REAL Spong2006_Gain_Scaling_Factor;
+    extern Spong2006 Spong2006_Controller;
+    void _init_Spong2006();
+    void Spong2006_Current_Controller();
+
 
 
 
