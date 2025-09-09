@@ -100,37 +100,6 @@ st_pid_regulator _PID_Position_1 = st_pid_regulator_DEFAULTS;
         //                     SUSPENSION_PID_TAU,
         //                     SUSPENSION_PID_OUT_LIMIT,
         //                     SUSPENSION_PID_INT_LIMIT, CL_TS };
-        st_motor_parameters     t_motor_3={0};
-        st_enc                  t_enc_3={0};
-        st_psd                  t_psd_3={0};
-        st_controller_inputs    t_I_3={0};
-        st_controller_states    t_S_3={0};
-        st_controller_outputs   t_O_3={0};
-        st_InverterNonlinearity t_inv_3={0}; 
-        st_capture              t_cap_3={0};
-        st_global_variables     t_g_3={0};
-        st_pid_regulator _PID_iD_3       = st_pid_regulator_DEFAULTS;
-        st_pid_regulator _PID_iQ_3       = st_pid_regulator_DEFAULTS;
-        st_pid_regulator _PID_Speed_3    = st_pid_regulator_DEFAULTS;
-        st_pid_regulator _PID_Position_3 = st_pid_regulator_DEFAULTS;
-        struct ControllerForExperiment CTRL_3;
-        struct DebugExperiment debug_3;
-        ST_D_SIM d_sim_3;
-        #pragma DATA_SECTION(CTRL_3       ,"MYGLOBALS_3"); //
-        #pragma DATA_SECTION(debug_3      ,"MYGLOBALS_3");
-        #pragma DATA_SECTION(t_motor_3    ,"MYGLOBALS_3");
-        #pragma DATA_SECTION(t_enc_3      ,"MYGLOBALS_3");
-        #pragma DATA_SECTION(t_psd_3      ,"MYGLOBALS_3");
-        #pragma DATA_SECTION(t_I_3        ,"MYGLOBALS_3");
-        #pragma DATA_SECTION(t_S_3        ,"MYGLOBALS_3");
-        #pragma DATA_SECTION(t_O_3        ,"MYGLOBALS_3");
-        #pragma DATA_SECTION(t_inv_3      ,"MYGLOBALS_3");
-        #pragma DATA_SECTION(t_cap_3      ,"MYGLOBALS_3");
-        #pragma DATA_SECTION(t_g_3        ,"MYGLOBALS_3");
-        #pragma DATA_SECTION(_PID_iD_3    ,"MYGLOBALS_3");
-        #pragma DATA_SECTION(_PID_iQ_3    ,"MYGLOBALS_3");
-        #pragma DATA_SECTION(_PID_Position_3   ,"MYGLOBALS_3");
-        #pragma DATA_SECTION(_PID_Speed_3   ,"MYGLOBALS_3");
     #endif
 #endif
 
@@ -209,14 +178,14 @@ void init_debug(){
         /* Commission  */
         // (*debug).mode_select = MODE_SELECT_COMMISSIONING;                         //  9
 
-    (*debug).Overwrite_Current_Frequency = 5.0;
+    (*debug).Overwrite_Current_Frequency = 3.0;
     (*debug).Overwrite_theta_d           = 0.0;
 
     
     (*debug).set_id_command              = d_sim.user.set_id_command;
     (*debug).set_iq_command              = d_sim.user.set_iq_command;
     (*debug).set_rpm_speed_command       = d_sim.user.set_rpm_speed_command;
-    (*debug).set_deg_position_command    = d_sim.user.set_deg_position_command;
+    (*debug).set_deg_position_command    = 50.0;
     (*debug).vvvf_voltage = 3.0;
     (*debug).vvvf_frequency = 5.0;
 
@@ -260,11 +229,6 @@ void init_debug(){
         (*debug).CMD_SPEED_SINE_LAST_END_TIME                         = d_sim.user.CMD_SPEED_SINE_LAST_END_TIME;
         (*debug).CMD_SPEED_SINE_END_TIME                              = d_sim.user.CMD_SPEED_SINE_END_TIME;
         (*debug).CMD_SPEED_SINE_HZ_CEILING                            = d_sim.user.CMD_SPEED_SINE_HZ_CEILING;
-    #endif
-
-    // 跑1拖4，给234的debug赋值
-    #if !PC_SIMULATION
-        debug_2 = debug_1;
     #endif
 }
 void init_CTRL(){
@@ -423,7 +387,6 @@ void init_experiment(){
         if (d_sim.user.BOOL_INIT_MY_VARIABLES == FALSE){
             // 只想初始化变量一次
             _init_Pos_IMP();   // Basic Example for Impedance Control
-            _init_Spong2006(); // Setup for 2006 Spong Teleopration
             d_sim.user.BOOL_INIT_MY_VARIABLES = TRUE;
         }
     #endif
@@ -667,34 +630,37 @@ void _user_commands(){
     #if PC_SIMULATION == TRUE
         #if WHO_IS_USER == USER_WB
             if(0){
-                if ( (*CTRL).timebase > 1.0 ){
-                    ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN * 0.03) * (int)(d_sim.user.bool_apply_external_Force_to_Position_Loop);
-                }
-                // if( (*CTRL).timebase >  0.15 ){
-                //     // ACM.TLoad = 0;
-                //     (*CTRL).i->cmd_varOmega = -d_sim.user.set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
-                // }
-            }else if(0){
-                (*CTRL).i->cmd_varOmega = 0;
-                ACM.TLoad = 0;
-                if ( (*CTRL).timebase > 1.5 ){
-                    ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN * 0.3);
-                }
-                if ( (*CTRL).timebase > 2.5 ){
-                    ACM.TLoad = 0.0;
-                }   
-            }else{
-                ACM.TLoad = 1.0;
-                if ( (*CTRL).timebase > 10.5 ){
-                    ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN * 0.3);
-                }
-                if ( (*CTRL).timebase > 10.0 ){
-                    ACM.TLoad = 0.0;
-                }
-                if ( (*CTRL).timebase > 10.5 ){
-                    (*CTRL).i->cmd_varOmega = -d_sim.user.set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
+                if(0){
+                    if ( (*CTRL).timebase > 1.0 ){
+                        ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN * 0.03) * (int)(d_sim.user.bool_apply_external_Force_to_Position_Loop);
+                    }
+                    // if( (*CTRL).timebase >  0.15 ){
+                    //     // ACM.TLoad = 0;
+                    //     (*CTRL).i->cmd_varOmega = -d_sim.user.set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
+                    // }
+                }else if(0){
+                    (*CTRL).i->cmd_varOmega = 0;
+                    ACM.TLoad = 0;
+                    if ( (*CTRL).timebase > 1.5 ){
+                        ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN * 0.3);
+                    }
+                    if ( (*CTRL).timebase > 2.5 ){
+                        ACM.TLoad = 0.0;
+                    }   
+                }else{
+                    ACM.TLoad = 1.0;
+                    if ( (*CTRL).timebase > 10.5 ){
+                        ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN * 0.3);
+                    }
+                    if ( (*CTRL).timebase > 10.0 ){
+                        ACM.TLoad = 0.0;
+                    }
+                    if ( (*CTRL).timebase > 10.5 ){
+                        (*CTRL).i->cmd_varOmega = -d_sim.user.set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
+                    }
                 }
             }
+
         #elif WHO_IS_USER == USER_BEZIER
             (*CTRL).i->cmd_varOmega = 0.0;
 
@@ -869,8 +835,7 @@ void _user_Check_ThreeDB_Point( REAL Fbk, REAL Ref){
 
 
 void _user_inverter_voltage_command(int bool_use_cmd_iAB){
-    (*CTRL).o->cmd_uAB_to_inverter[0] = (*CTRL).o->cmd_uAB[0];
-    (*CTRL).o->cmd_uAB_to_inverter[1] = (*CTRL).o->cmd_uAB[1];
+    (*CTRL).o->cmd_uAB_to_inverter[0] = (*CTRL).o->cmd_uAB[0];    (*CTRL).o->cmd_uAB_to_inverter[1] = (*CTRL).o->cmd_uAB[1];
     /* We use cmd_iAB instead of iAB to look-up */
     REAL Ia, Ib;
     if (bool_use_cmd_iAB){
@@ -1188,7 +1153,7 @@ int  main_switch(long mode_select){
                     ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN * 0.01) * (int)(d_sim.user.bool_apply_external_Force_to_Position_Loop);
                 }
             #endif
-            (*CTRL).i->cmd_varTheta = (*debug).set_deg_position_command * M_PI_OVER_180; // unit : degree -> rad/s
+            (*CTRL).i->cmd_varTheta = (*debug).set_deg_position_command * M_PI_OVER_180;
 
             if(d_sim.user.BOOL_WUBO_POS_CMD_TEST == TRUE){
                 (*CTRL).i->cmd_varTheta = 0.5 * M_PI * sinf( d_sim.user.Position_cmd_sine_frequency 
@@ -1208,72 +1173,6 @@ int  main_switch(long mode_select){
             _user_wubo_PositionLoop_IMP( (*CTRL).i->cmd_varTheta, (*CTRL).i->varTheta );
         #endif
         break;
-    case MODE_SELECT_TELEOPERATION_SINGLE_PAIR: //59
-        #if WHO_IS_USER == USER_WB
-            #if !PC_SIMULATION
-                Spong2006_Current_Controller();
-            #else
-                (*CTRL).i->cmd_iDQ[0] = (*debug).set_id_command;
-                (*CTRL).i->cmd_iDQ[1] = (*debug).set_iq_command;
-            #endif
-            #if PC_SIMULATION
-                // ACM.TLoad = 1.0 * sin((*CTRL).i->cmd_varOmega * d_sim.init.npp * CTRL->timebase);
-            #endif
-            #if WHO_IS_USER == USER_WB
-                if ( d_sim.user.bool_enable_Harnefors_back_calculation == TRUE ){
-                    _user_wubo_FOC( (*CTRL).i->theta_d_elec, (*CTRL).i->iAB );
-                }
-                else{
-                    _onlyFOC((*CTRL).i->theta_d_elec, (*CTRL).i->iAB);
-                }
-            #else
-                _onlyFOC((*CTRL).i->theta_d_elec, (*CTRL).i->iAB);
-            #endif
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-            // // Generate the position command
-            // #if PC_SIMULATION == TRUE
-            //     if ( CTRL->timebase > 0.25 ){
-            //         ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN * 0.01) * (int)(d_sim.user.bool_apply_external_Force_to_Position_Loop);
-            //     }
-            // #endif
-            // (*CTRL).i->cmd_varTheta = (*debug).set_deg_position_command * M_PI_OVER_180; // unit : degree -> rad/s
-
-            // if(d_sim.user.BOOL_WUBO_POS_CMD_TEST == TRUE){
-            //     (*CTRL).i->cmd_varTheta = 0.5 * M_PI * sinf( d_sim.user.Position_cmd_sine_frequency 
-            //         * 2 * M_PI * (*CTRL).timebase ) + 0.17 * cosf( 3 * d_sim.user.Position_cmd_sine_frequency 
-            //         * 2 * M_PI * (*CTRL).timebase ) + 0.1 * sinf( 7 * d_sim.user.Position_cmd_sine_frequency 
-            //         * 2 * M_PI * (*CTRL).timebase )
-            //         +  0.5 * M_PI + 0.17 + 0.1;}
-
-            // // ESO
-            // if (d_sim.user.bool_ESO_SPEED_ON == TRUE){
-            //     Main_esoaf_chen2021();
-            // }
-            // if (d_sim.user.bool_apply_ESO_SPEED_for_SPEED_FBK == TRUE){
-            //     (*CTRL).i->varOmega = OBSV.esoaf.xOmg * MOTOR.npp_inv;
-            // }
-
-            // _user_wubo_PositionLoop_IMP( (*CTRL).i->cmd_varTheta, (*CTRL).i->varTheta );
-        #endif
-        break;
-
-
-
     case MODE_SELECT_COMMISSIONING: // 9
         #if ENABLE_COMMISSIONING
             commissioning();
@@ -1543,7 +1442,7 @@ void eso_one_parameter_tuning(REAL omega_ob){
     }
 
     #if PC_SIMULATION
-    printf("ESO OPT: %g, %g, %g, %g\n", OBSV.esoaf.ell[0], OBSV.esoaf.ell[1], OBSV.esoaf.ell[2], OBSV.esoaf.ell[3]);
+        printf("Initialized ESO ! : ESO OPT: %g, %g, %g, %g\n", OBSV.esoaf.ell[0], OBSV.esoaf.ell[1], OBSV.esoaf.ell[2], OBSV.esoaf.ell[3]);
     #endif
 }
 void Main_esoaf_chen2021(){

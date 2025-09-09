@@ -15,10 +15,10 @@ extern bool run_enable_from_PC;
         {                          \
             Axis  = &Axis_2;       \
             CTRL  = &CTRL_2;       \
-            debug = &debug_2;      \
         }                           
 #endif
 void main(void){
+            debug = &debug_2;      \
 
     InitSysCtrl();      // 1. Initialize System Control: PLL, WatchDog, enable Peripheral Clocks.
     Gpio_initialize();  // 2. Initialize GPIO and assign GPIO to peripherals.
@@ -837,7 +837,7 @@ void axis_basic_setup(int axisCnt){
     //
     //    Axis->FLAG_ENABLE_PWM_OUTPUT = FALSE;
 
-    Axis->channels_preset = 13; // 9; // 101;
+    Axis->channels_preset = 11; // 9; // 101;
     // 2  /* iD current and iQ current info */
     // 9  /* With SPEED ESO */
     // 10 /* WCtuner Debug */
@@ -898,6 +898,13 @@ void init_experiment_AD_gain_and_offset()
                 Axis->pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
             }
         #elif ENCODER_TYPE == ABSOLUTE_ENCODER_MD1
+            if(axisCnt==0){
+                Axis->pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = MOTOR1_OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
+            }
+            if(axisCnt==1){
+                Axis->pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = MOTOR2_OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
+            }
+        #elif ENCODER_TYPE == ABSOLUTE_EBCODER_SMK60S
             if(axisCnt==0){
                 Axis->pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = MOTOR1_OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
             }
@@ -1275,9 +1282,7 @@ void measurement_position_count_axisCnt0(){
         position_count_SCI_fromCPU2 = Axis->SCI_Position_Count_fromCPU2;
     #endif
         // 正电流导致编码器读数增大：
-        // CTRL->enc->encoder_abs_cnt = wubo_debug_motor_enc_dirc[0] * (int32)position_count_SCI_fromCPU2 - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis;
-        CTRL->enc->encoder_abs_cnt = (int32)position_count_SCI_fromCPU2 - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis;
-
+        CTRL->enc->encoder_abs_cnt = positive_current_QPOSCNT_counting_down * ( (int32)position_count_SCI_fromCPU2 - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis );
     }
 
 
