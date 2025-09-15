@@ -1,7 +1,7 @@
 /*
  * ShareMemory.c
  *
- *  Created on: 2021锟斤拷1锟斤拷15锟斤拷
+ *  Created on: 2021.01.15
  *      Author: JIAHAO
  *///cpu2 CONNECTION
 

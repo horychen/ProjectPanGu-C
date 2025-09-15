@@ -10,28 +10,28 @@
 
 // Prototype statements for functions found within this file.
 void   I2CA_Init(void);
-Uint32 I2CA_ReadData_Channel(Uint16 channel);
-Uint32 I2CA_ReadData_Channel0(void);
-Uint32 I2CA_ReadData_Channel1(void);
-int I2cRead16bitData(Uint16 SlaveRegAddr);
-int I2cWrite16bitData(Uint16 ConfigRegAddr, Uint16 value);
-int Single_channel_config(Uint16 channel);
-void Set_Rp(Uint16 channel, float n_kom);
-void Set_L(Uint16 channel, float n_uh);
-void Set_C(Uint16 channel, float n_pf);
-void Set_Q_factor(Uint16 channel, float q);
-Uint32 Set_FIN_FREF_DIV(Uint16 channel);
-Uint32 Set_LC_stabilize_time(Uint16 channel);
-Uint32 Set_conversion_time(Uint16 channel, Uint16 value);
-Uint32 Set_driver_current(Uint16 channel, Uint16 value);
-Uint32 Set_mux_config(Uint16 value);
-Uint32 Set_sensor_config(Uint16 value);
-void Select_channel_to_convert(Uint16 channel, Uint16* value);
-Uint32 Reset_sensor();
-int Parse_result_data(Uint16 channel, Uint32 raw_result, Uint32* result);
-Uint32 Set_ERROR_CONFIG(Uint16 value);
+uint32_t I2CA_ReadData_Channel(uint16_t channel);
+uint32_t I2CA_ReadData_Channel0(void);
+uint32_t I2CA_ReadData_Channel1(void);
+int I2cRead16bitData(uint16_t SlaveRegAddr);
+int I2cWrite16bitData(uint16_t ConfigRegAddr, uint16_t value);
+int Single_channel_config(uint16_t channel);
+void Set_Rp(uint16_t channel, float n_kom);
+void Set_L(uint16_t channel, float n_uh);
+void Set_C(uint16_t channel, float n_pf);
+void Set_Q_factor(uint16_t channel, float q);
+uint32_t Set_FIN_FREF_DIV(uint16_t channel);
+uint32_t Set_LC_stabilize_time(uint16_t channel);
+uint32_t Set_conversion_time(uint16_t channel, uint16_t value);
+uint32_t Set_driver_current(uint16_t channel, uint16_t value);
+uint32_t Set_mux_config(uint16_t value);
+uint32_t Set_sensor_config(uint16_t value);
+void Select_channel_to_convert(uint16_t channel, uint16_t* value);
+uint32_t Reset_sensor();
+int Parse_result_data(uint16_t channel, uint32_t raw_result, uint32_t* result);
+uint32_t Set_ERROR_CONFIG(uint16_t value);
 void Read_sensor_infomation();
-Uint32 reset_sensor();
+uint32_t reset_sensor();
 
 __interrupt void i2c_int1a_isr(void);
 void pass(void);
@@ -72,20 +72,20 @@ void fail(void);
 int channel_0_number = FALSE;
 int channel_1_number = FALSE;
 
-Uint16 ERROR;
+uint16_t ERROR;
 
-Uint16 dataHigh;
-Uint16 dataLow;
-Uint16 dataHigh_one;
-Uint16 dataLow_one;
-Uint32 result_zero;
-Uint32 result_one;
-Uint32 raw_result;
-Uint32 channel0DataResult;
-Uint32 channel1DataResult;
-Uint32 raw_value_zero;
-Uint32 raw_value_one;
-Uint32 result;
+uint16_t dataHigh;
+uint16_t dataLow;
+uint16_t dataHigh_one;
+uint16_t dataLow_one;
+uint32_t result_zero;
+uint32_t result_one;
+uint32_t raw_result;
+uint32_t channel0DataResult;
+uint32_t channel1DataResult;
+uint32_t raw_value_zero;
+uint32_t raw_value_one;
+uint32_t result;
 int choose_channel;
 
 float resistance[CHANNEL_NUM];
@@ -96,9 +96,9 @@ float Fsensor[CHANNEL_NUM];
 float Fref[CHANNEL_NUM];
 float inductance[CHANNEL_NUM];
 float capacitance[CHANNEL_NUM];
-Uint16 value;
-Uint16 FIN_DIV, FREF_DIV;
-Uint16 config = 0x1601;
+uint16_t value;
+uint16_t FIN_DIV, FREF_DIV;
+uint16_t config = 0x1601;
 
 void I2CA_Init(void)
 {
@@ -143,12 +143,12 @@ void I2CA_Init(void)
    return;
 }
 
-Uint16 DataBuffer;
+uint16_t DataBuffer;
 
-Uint16 data[2];
+uint16_t data[2];
 
 
-int I2cRead16bitData(Uint16 SlaveRegAddr){
+int I2cRead16bitData(uint16_t SlaveRegAddr){
 
     if (I2caRegs.I2CMDR.bit.STP == 1)
     {
@@ -201,7 +201,7 @@ int I2cRead16bitData(Uint16 SlaveRegAddr){
 }
 
 
-int I2cWrite16bitData(Uint16 ConfigRegAddr, Uint16 value){
+int I2cWrite16bitData(uint16_t ConfigRegAddr, uint16_t value){
     data[1] = value & 0x00ff;
     data[0] = value >> 8;
     while(I2caRegs.I2CMDR.bit.STP == 1);
@@ -254,22 +254,22 @@ int I2cWrite16bitData(Uint16 ConfigRegAddr, Uint16 value){
 
 
 
-Uint32 I2CA_ReadData_Channel(Uint16 channel){
+uint32_t I2CA_ReadData_Channel(uint16_t channel){
 
     if(channel == 0){
         // CHANNEL 0
 //        I2cGet16bitData(0x00, DataMSB);
         I2cRead16bitData(0x00);
-        raw_value_zero = (Uint32)DataBuffer << 16; //
+        raw_value_zero = (uint32_t)DataBuffer << 16; //
         I2cRead16bitData(0x01);
-        raw_value_zero |= (Uint32)DataBuffer;
+        raw_value_zero |= (uint32_t)DataBuffer;
 //        Parse_result_data(channel, raw_value, result);
     }else{
         // CHANNEL 1
         I2cRead16bitData(0x02);
-        raw_value_one = (Uint32)DataBuffer << 16;
+        raw_value_one = (uint32_t)DataBuffer << 16;
         I2cRead16bitData(0x03);
-        raw_value_one |= (Uint32)DataBuffer; //
+        raw_value_one |= (uint32_t)DataBuffer; //
 //       Parse_result_data(channel, raw_value, result);
     }
 
@@ -279,7 +279,7 @@ Uint32 I2CA_ReadData_Channel(Uint16 channel){
 
 // Configuration of single channel
 
-int Single_channel_config(Uint16 channel){
+int Single_channel_config(uint16_t channel){
     // The value of Rp, L, C, Q_factor can be set from TI calculator(https://webench.ti.com/wb5/LDC/#/spirals).
     switch (channel_0_number){
         case 1:
@@ -398,38 +398,38 @@ int Single_channel_config(Uint16 channel){
         /*single conversion*/
 //    Set_mux_config(0x20C);
         /*start channel 0*/
-    //Uint16 config = 0x1601; this line is on 98.
+    //uint16_t config = 0x1601; this line is on 98.
 //    Select_channel_to_convert(CHANNEL_0, &config);
     Set_sensor_config(config);
     return 0;
 }
 
 
-void Set_Rp(Uint16 channel, float n_kom) {
+void Set_Rp(uint16_t channel, float n_kom) {
     resistance[channel] = n_kom;
 }
 
 
 
-void Set_L(Uint16 channel, float n_uh) {
+void Set_L(uint16_t channel, float n_uh) {
     inductance[channel] = n_uh;
 }
 
 
-void Set_C(Uint16 channel, float n_pf) {
+void Set_C(uint16_t channel, float n_pf) {
     capacitance[channel] = n_pf;
 }
 
 
-void Set_Q_factor(Uint16 channel, float q) {
+void Set_Q_factor(uint16_t channel, float q) {
     Q_factor[channel] = q;
 }
 
 
-Uint32 Set_FIN_FREF_DIV(Uint16 channel) {
+uint32_t Set_FIN_FREF_DIV(uint16_t channel) {
     Fsensor[channel] = 1 / (2 * 3.14 * sqrt(inductance[channel] * capacitance[channel] * pow(10, -18))) * pow(10, -6);
 
-    FIN_DIV = (Uint16)(Fsensor[channel] / 8.75 + 1);
+    FIN_DIV = (uint16_t)(Fsensor[channel] / 8.75 + 1);
 
 
     if (Fsensor[channel] * 4 < 40) {
@@ -446,49 +446,49 @@ Uint32 Set_FIN_FREF_DIV(Uint16 channel) {
 }
 
 
-Uint32 Set_LC_stabilize_time(Uint16 channel){
+uint32_t Set_LC_stabilize_time(uint16_t channel){
     value = 30;
     return I2cWrite16bitData(SET_LC_STABILIZE_REG_START + channel, value);
 }
 
 
-Uint32 Set_conversion_time(Uint16 channel, Uint16 value) {
+uint32_t Set_conversion_time(uint16_t channel, uint16_t value) {
     return I2cWrite16bitData(SET_CONVERSION_TIME_REG_START + channel, value);
 }
 
 
-Uint32 Set_conversion_offset(Uint16 channel, Uint16 value) {
+uint32_t Set_conversion_offset(uint16_t channel, uint16_t value) {
     return I2cWrite16bitData(SET_CONVERSION_OFFSET_REG_START + channel, value);
 }
 
 
-Uint32 Set_driver_current(Uint16 channel, Uint16 value) {
+uint32_t Set_driver_current(uint16_t channel, uint16_t value) {
     return I2cWrite16bitData(SET_DRIVER_CURRENT_REG + channel, value);
 }
 
 
-Uint32 Set_ERROR_CONFIG(Uint16 value) {
+uint32_t Set_ERROR_CONFIG(uint16_t value) {
     return I2cWrite16bitData(ERROR_CONFIG_REG, value);
 }
 
 
-Uint32 Set_mux_config(Uint16 value) {
+uint32_t Set_mux_config(uint16_t value) {
     return I2cWrite16bitData(MUL_CONFIG_REG, value);
 }
 
 
-Uint32 Set_sensor_config(Uint16 value) {
+uint32_t Set_sensor_config(uint16_t value) {
     return I2cWrite16bitData(SENSOR_CONFIG_REG, value);
 }
 
 
-Uint32 Reset_sensor() {
+uint32_t Reset_sensor() {
     return I2cWrite16bitData(SENSOR_RESET_REG, 0x8000);
 }
 
 
 
-void Select_channel_to_convert(Uint16 channel, Uint16* value) {
+void Select_channel_to_convert(uint16_t channel, uint16_t* value) {
     switch (channel) {
         case 0: *value &= 0x3fff;
             break;
@@ -511,7 +511,7 @@ void Read_sensor_infomation() {
 }
 
 // not used
-int Parse_result_data(Uint16 channel, Uint32 raw_result, Uint32* result) {
+int Parse_result_data(uint16_t channel, uint32_t raw_result, uint32_t* result) {
     *result = raw_result & 0x0fffffff;
     if (0xfffffff == *result) {
         *result = 0;

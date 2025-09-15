@@ -1,6 +1,7 @@
 #ifndef ALL_DEFINITATION_H
 #define ALL_DEFINITATION_H
 
+#include <stdint.h>
 #include "math.h"
 //#include "IQmathLib.h"
 /* DSP system Configuration------------------------------------------------------------------*/

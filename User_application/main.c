@@ -677,24 +677,24 @@ void main(void){
         I2CA_ReadData_Channel(1);
 
 
-        //        mainWhileLoopCounter1++;
-        //        mainWhileLoopCounter2=2992;
-        //        if (Motor_mode_START==1){
-        //            Axis_1.FLAG_ENABLE_PWM_OUTPUT = 1;
-        //            DSP_START_LED1
-        //            DSP_START_LED2
-        //            mainWhileLoopCounter1 = Axis_1.FLAG_ENABLE_PWM_OUTPUT +5;
-        //        }else if (Motor_mode_START==0){
-        //            Axis_1.FLAG_ENABLE_PWM_OUTPUT = 0;
-        //            DSP_STOP_LED1
-        //            DSP_STOP_LED2
-        //            mainWhileLoopCounter1 = Axis_1.FLAG_ENABLE_PWM_OUTPUT +5;
-        //        }
-        //        mainWhileLoopCounter1 = mainWhileLoopCounter2;
+            //    mainWhileLoopCounter1++;
+            //    mainWhileLoopCounter2=2992;
+            //    if (Motor_mode_START==1){
+            //        Axis_1.FLAG_ENABLE_PWM_OUTPUT = 1;
+            //        DSP_START_LED1
+            //        DSP_START_LED2
+            //        mainWhileLoopCounter1 = Axis_1.FLAG_ENABLE_PWM_OUTPUT +5;
+            //    }else if (Motor_mode_START==0){
+            //        Axis_1.FLAG_ENABLE_PWM_OUTPUT = 0;
+            //        DSP_STOP_LED1
+            //        DSP_STOP_LED2
+            //        mainWhileLoopCounter1 = Axis_1.FLAG_ENABLE_PWM_OUTPUT +5;
+            //    }
+            //    mainWhileLoopCounter1 = mainWhileLoopCounter2;
 
-        //        mainWhileLoopCounter3 += 1;
-        //        Axis_1.ID += 1;
-        //        mainWhileLoopCounter2 += 1;
+            //    mainWhileLoopCounter3 += 1;
+            //    Axis_1.ID += 1;
+            //    mainWhileLoopCounter2 += 1;
 
         #if NUMBER_OF_DSP_CORES == 1
             single_core_dac();
