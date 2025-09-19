@@ -402,15 +402,16 @@ void main(void){
     InitECaptureContinuousMode();
 
 
-
     // use GPIO0, GPIO1 and reuse mode is 6 (I2C)
     GPIO_SetupPinMux(0, GPIO_MUX_CPU1, 6);
     GPIO_SetupPinMux(1, GPIO_MUX_CPU1, 6);
+    GPIO_SetupPinMux(2, GPIO_MUX_CPU1, 6);
+    GPIO_SetupPinMux(3, GPIO_MUX_CPU1, 6);
     I2CA_Init();
-    Single_channel_config(0); // 0 for CHANNEL_0
-                                        // This part is corresponding to the Seeed's Github, of which address is attached below:
-                                        //  https://github.com/Seeed-Studio/Seeed_LDC1612/blob/master/Seeed_LDC1612.cpp
-                                        // This part is corresponding to sensor.single_channel_config from Seeed-LDC1612
+    Multiple_channel_config(0); // 0 for CHANNEL_0
+                               // This part is corresponding to the Seeed's Github, of which address is attached below:
+                               // https://github.com/Seeed-Studio/Seeed_LDC1612/blob/master/Seeed_LDC1612.cpp
+                               // This part is corresponding to sensor.single_channel_config from Seeed-LDC1612
 
 
     // 4.3 Assign peripherals to CPU02
@@ -672,10 +673,19 @@ void main(void){
 
     // 7. Main loop
     while(1){
-        I2CA_ReadData_Channel(0);
-        DELAY_US(300);              //延迟 300 毫秒？
-        I2CA_ReadData_Channel(1);
-
+        if(type_of_LDC == 1614){
+            I2CA_ReadData_Channel(0);
+            DELAY_US(300);              //延迟 300 毫秒？
+            I2CA_ReadData_Channel(1);
+            DELAY_US(300);              
+            I2CA_ReadData_Channel(2);
+            DELAY_US(300);              
+            I2CA_ReadData_Channel(3);}
+        else if(type_of_LDC == 1612){
+            I2CA_ReadData_Channel(0);
+            DELAY_US(300);              
+            I2CA_ReadData_Channel(1);
+        }
 
             //    mainWhileLoopCounter1++;
             //    mainWhileLoopCounter2=2992;

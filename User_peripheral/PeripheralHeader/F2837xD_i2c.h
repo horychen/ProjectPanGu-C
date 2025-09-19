@@ -187,22 +187,22 @@ union I2CFFRX_REG {
 };
 
 struct I2C_REGS {
-    union   I2COAR_REG                       I2COAR;                       // I2C Own address 
-    union   I2CIER_REG                       I2CIER;                       // I2C Interrupt Enable 
-    union   I2CSTR_REG                       I2CSTR;                       // I2C Status
-    Uint16                                   I2CCLKL;                      // I2C Clock low-time divider 
-    Uint16                                   I2CCLKH;                      // I2C Clock high-time divider 
-    Uint16                                   I2CCNT;                       // I2C Data count
-    union   I2CDRR_REG                       I2CDRR;                       // I2C Data receive
-    union   I2CSAR_REG                       I2CSAR;                       // I2C Slave address
-    union   I2CDXR_REG                       I2CDXR;                       // I2C Data Transmit 
-    union   I2CMDR_REG                       I2CMDR;                       // I2C Mode 
-    union   I2CISRC_REG                      I2CISRC;                      // I2C Interrupt Source
-    union   I2CEMDR_REG                      I2CEMDR;                      // I2C Extended Mode 
-    union   I2CPSC_REG                       I2CPSC;                       // I2C Prescaler 
-    Uint16                                   rsvd1[19];                    // Reserved
-    union   I2CFFTX_REG                      I2CFFTX;                      // I2C FIFO Transmit 
-    union   I2CFFRX_REG                      I2CFFRX;                      // I2C FIFO Receive 
+    union   I2COAR_REG         I2COAR;       // I2C Own address 
+    union   I2CIER_REG         I2CIER;       // I2C Interrupt Enable 
+    union   I2CSTR_REG         I2CSTR;       // I2C Status
+    Uint16                     I2CCLKL;      // I2C Clock low-time divider 
+    Uint16                     I2CCLKH;      // I2C Clock high-time divider 
+    Uint16                     I2CCNT;       // I2C Data count
+    union   I2CDRR_REG         I2CDRR;       // I2C Data receive
+    union   I2CSAR_REG         I2CSAR;       // I2C Slave address
+    union   I2CDXR_REG         I2CDXR;       // I2C Data Transmit 
+    union   I2CMDR_REG         I2CMDR;       // I2C Mode 
+    union   I2CISRC_REG        I2CISRC;      // I2C Interrupt Source
+    union   I2CEMDR_REG        I2CEMDR;      // I2C Extended Mode 
+    union   I2CPSC_REG         I2CPSC;       // I2C Prescaler 
+    Uint16                     rsvd1[19];    // Reserved
+    union   I2CFFTX_REG        I2CFFTX;      // I2C FIFO Transmit 
+    union   I2CFFRX_REG        I2CFFRX;      // I2C FIFO Receive 
 };
 
 //---------------------------------------------------------------------------

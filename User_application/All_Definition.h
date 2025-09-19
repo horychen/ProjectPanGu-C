@@ -32,6 +32,7 @@
     #include "F2837xD_struct.h"
     #include "F2837xD_sdfm_drivers.h"
     #include "ShareMemory.h"
+    #include "i2cTalkToLDC1612.h"
     void MemCopy(Uint16 *SourceAddr, Uint16* SourceEndAddr, Uint16* DestAddr);//flash
 /* Hardware Peripherals Configuration -------------------------------------------------------*/
     void PWM_1ch_UpDwnCnt_CNF(int16 n, Uint16 period, int16 db);
