@@ -3,8 +3,8 @@
 // Revised: Rain on Septemper 2025 @ m&mlab -- LDC1614 is also supported now.
 //###########################################################################
 
-#include <All_Definition.h>
-#include "i2cTalkToLDC1612.h"  //Current we needn't use it.
+#include "All_Definition.h"
+
 
 // Note: I2C Macros used in this example can be found in the F2837xD_I2C_defines.h file
 // Prototype statements for functions found within this file.
@@ -46,7 +46,7 @@
 // Two bytes will be used for the outgoing address,
 // thus only setup 14 bytes maximum
 
-/*¶¨ÒåµÚ¼¸¸öÏßÈ¦*/
+/*ï¿½ï¿½ï¿½ï¿½Ú¼ï¿½ï¿½ï¿½ï¿½ï¿½È¦*/
 int channel_0_number = FALSE;
 int channel_1_number = FALSE;
 int channel_2_number = FALSE;

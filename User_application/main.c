@@ -103,7 +103,7 @@ void main(void){
     // GPIO_SetupPinMux(2, GPIO_MUX_CPU1, 6);
     // GPIO_SetupPinMux(3, GPIO_MUX_CPU1, 6);
     I2CA_Init();
-    Single_channel_config(0); // 0 for CHANNEL_0
+    // Multiple_channel_config(0);
 
 
     // 5. Handle Interrupts
