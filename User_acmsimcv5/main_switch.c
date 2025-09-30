@@ -16,7 +16,7 @@ struct ControllerForExperiment CTRL_1;
 struct ControllerForExperiment *CTRL;
 struct DebugExperiment debug_1;
 struct DebugExperiment *debug = &debug_1;
-struct ObserverForSpeedReconstruction OFSR;
+struct ObserverForExperiment OBSV;
 REAL one_over_six = 1.0/6.0;
 // 定义内存空间（结构体）
 st_motor_parameters     t_motor_1={0};
@@ -172,20 +172,20 @@ void init_debug(){
         /* Speed Loop  */
         // (*debug).mode_select = MODE_SELECT_VELOCITY_LOOP;                         //  4
         // (*debug).mode_select = MODE_SELECT_VELOCITY_LOOP_SENSORLESS;              // 41
-        // (*debug).mode_select = MODE_SELECT_VELOCITY_LOOP_WC_TUNER;                // 43
+        // (*debug).mode_select = MODE_SELECT_V_LOOP_WC_TUNER;                // 43
         /* Position Loop  */
         // (*debug).mode_select = MODE_SELECT_POSITION_LOOP;                         //  5
         /* Commission  */
         // (*debug).mode_select = MODE_SELECT_COMMISSIONING;                         //  9
 
-    (*debug).Overwrite_Current_Frequency = 50.0;
+    (*debug).Overwrite_Current_Frequency = 3.0;
     (*debug).Overwrite_theta_d           = 0.0;
 
     
-    (*debug).set_id_command              = 0.0;
+    (*debug).set_id_command              = d_sim.user.set_id_command;
     (*debug).set_iq_command              = d_sim.user.set_iq_command;
     (*debug).set_rpm_speed_command       = d_sim.user.set_rpm_speed_command;
-    (*debug).set_deg_position_command    = 0.0;
+    (*debug).set_deg_position_command    = 50.0;
     (*debug).vvvf_voltage = 3.0;
     (*debug).vvvf_frequency = 5.0;
 
@@ -195,7 +195,7 @@ void init_debug(){
         (*debug).set_id_command              = 0.0;
         (*debug).set_iq_command              = 0.0;
         (*debug).set_rpm_speed_command       = 0.0;
-        (*debug).set_deg_position_command    = 0.0; // Unit: Degree
+        (*debug).set_deg_position_command    = 50.0; // Unit: Degree
     #endif
 
     (*debug).delta                                                = d_sim.FOC.delta;
@@ -208,7 +208,7 @@ void init_debug(){
     (*debug).INVERTER_NONLINEARITY_COMPENSATION_INIT              = d_sim.user.INVERTER_NONLINEARITY_COMPENSATION_METHOD;
 
     #if WHO_IS_USER == USER_YZZ
-        (*debug).SENSORLESS_CONTROL      = d_sim.user.SENSORLESS_CONTROL;
+        (*debug).SENSORLESS_CONTROL      = 0;
         (*debug).SENSORLESS_CONTROL_HFSI = 0;
     #endif
     #if WHO_IS_USER == 2023231051
@@ -252,6 +252,7 @@ void init_CTRL(){
     (*CTRL).motor->npp_inv = 1.0 / (*CTRL).motor->npp;
     (*CTRL).motor->Js = d_sim.init.Js;
     (*CTRL).motor->Js_inv = 1.0 / (*CTRL).motor->Js;
+
     // /* Peripheral configurations */
 
     /* Inverter */
@@ -296,7 +297,7 @@ void init_CTRL(){
         PID_Position->Kp       = d_sim.user.Position_Loop_Kp;
         PID_Position->Ki_CODE  = 0.0;
         PID_Position->Kd       = 0.0;
-        PID_Position->OutLimit = d_sim.user.Position_Output_Limit;
+        PID_Position->OutLimit = d_sim.user.Position_Loop_Output_Limit * RPM_2_MECH_RAD_PER_SEC;
         PID_Position->Out      = 0.0;
         /* WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING*/
     #endif
@@ -349,7 +350,7 @@ void init_experiment(){
     overwrite_d_sim(); // overwrite d_sim with user's algorithm
     init_CTRL(); // 控制器结构体初始化
 
-    //OFSR
+    //OBSV
     init_rk4();
     //ESO
     init_esoaf();
@@ -365,7 +366,6 @@ void init_experiment(){
         rk4_init(); // 
         // observer_init();
         init_pmsm_observers(); // 
-        inverterNonlinearity_Initialization();
     #endif
 
     #if WHO_IS_USER == USER_CJH
@@ -382,6 +382,13 @@ void init_experiment(){
             _init_WC_Tuner();
         }
         _init_Harnerfors_1998_BackCalc(); // should be placed after init_wctuner, cuz it needs to use the variable from wctuner
+        _init_Rohr_1991(); // 1991 Rohr Example
+        _init_Sul_1996();  // Sul 1996 Inverter Dead Time Compensation
+        if (d_sim.user.BOOL_INIT_MY_VARIABLES == FALSE){
+            // 只想初始化变量一次
+            _init_Pos_IMP();   // Basic Example for Impedance Control
+            d_sim.user.BOOL_INIT_MY_VARIABLES = TRUE;
+        }
     #endif
 }
 /* 公用的核心电机控制实现代码，不要修改！*/
@@ -393,7 +400,6 @@ void incremental_PI(st_pid_regulator *r){
     r->ErrPrev = r->Err;
     r->OutPrev = r->Out;
 }
-
 void tustin_PI(st_pid_regulator *r){
     #define DYNAMIC_CLAPMING TRUE
     r->Err = r->Ref - r->Fbk;// 误差
@@ -445,6 +451,10 @@ REAL _veclocityController(REAL cmd_varOmega, REAL varOmega){
             control_output(PID_Speed, &BezierVL);
         #elif WHO_IS_USER == USER_WB
             if(d_sim.user.bool_apply_WC_tunner_for_speed_loop) _user_wubo_SpeedInnerLoop_controller(PID_Speed, &SIL_Controller);
+            else if (d_sim.user.bool_apply_Rohr_1991_Controller) {
+                _user_Rohr_1991_controller(PID_Speed, &Rohr_1991_Controller, varOmega, cmd_varOmega);
+                PID_Speed->Out = Rohr_1991_Controller.output;
+            }
             else PID_Speed->calc(PID_Speed);
         #else
             PID_Speed->calc(PID_Speed);
@@ -452,21 +462,6 @@ REAL _veclocityController(REAL cmd_varOmega, REAL varOmega){
     }   
     return PID_Speed->Out;
 }
-
-#if WHO_USER == USER_YZZ
-REAL _RK4_veclocityController(REAL cmd_varOmega, REAL varOmega){
-    /* 想清楚你的速度控制器到底要不要主动降频！ */
-    if ((*CTRL).s->the_vc_count++ >= SPEED_LOOP_CEILING){
-        (*CTRL).s->the_vc_count = 1;
-        PID_Speed->Ref = cmd_varOmega;
-        PID_Speed->Fbk = varOmega;
-        /* Here is the algorithem*/
-        General_PI_Dynamics(PID_Speed, &rhf_PI_DynamicsforSpeed);
-    }
-    return PID_Speed->Out;
-}
-#endif
-
 void FOC_with_vecocity_control(REAL theta_d_elec, REAL varOmega, REAL cmd_varOmega, REAL cmd_iDQ[2], REAL iAB[2]){
     /* Default is the Null D control */
     cmd_iDQ[0] = 0;
@@ -483,106 +478,20 @@ void FOC_with_vecocity_control(REAL theta_d_elec, REAL varOmega, REAL cmd_varOme
         _onlyFOC( (*CTRL).i->theta_d_elec, iAB );
     #endif
 }
-
-
 void _pseudoEncoder(){
     /* 断开编码器，开环控制电流矢量旋转、跳跃，逆（变器）闭着眼 */
     (*CTRL).i->cmd_iDQ[0] = (*debug).set_id_command;
     (*CTRL).i->cmd_iDQ[1] = (*debug).set_iq_command;
-    if (fabsf((*debug).Overwrite_Current_Frequency) > 0)
-    {
+    if (fabsf((*debug).Overwrite_Current_Frequency) > 0){
         (*debug).Overwrite_theta_d += CL_TS * (*debug).Overwrite_Current_Frequency * 2 * M_PI;
         if ((*debug).Overwrite_theta_d > M_PI)  (*debug).Overwrite_theta_d -= 2 * M_PI;
         if ((*debug).Overwrite_theta_d < -M_PI) (*debug).Overwrite_theta_d += 2 * M_PI;
     }
-    else
-    {
+    else{
         (*debug).Overwrite_theta_d = 0.0;
     }
     _onlyFOC((*debug).Overwrite_theta_d, (*CTRL).i->iAB);
 }
-#if WHO_USER == USER_YZZ
-
-void RK4_FOC_with_vecocity_control(REAL theta_d_elec, REAL varOmega, REAL cmd_varOmega, REAL cmd_iDQ[2], REAL iAB[2]){
-    /* Default is the Null D control */
-    cmd_iDQ[0] = 0;
-    cmd_iDQ[1] = _RK4_veclocityController(cmd_varOmega, varOmega);
-
-    /* FOC */
-    _RK4_PI_Controller_FOC((*CTRL).i->theta_d_elec, iAB);
-}
-
-void rhf_PI_DynamicsforSpeed(REAL t, REAL *x, REAL *fx){
-    fx[0] = 15 * CTRL->s->Speed->Err;
-}   
-
-void rhf_PI_DynamicsforQcurrent(REAL t, REAL *x, REAL *fx){
-    // fx[0] = CTRL->s->iQ->Ki_CODE * CTRL->s->iQ->Err;
-    fx[0] = 1500 * CTRL->s->iQ->Err;
-}   
-
-void rhf_PI_DynamicsforDcurrent(REAL t, REAL *x, REAL *fx){
-    // fx[0] = CTRL->s->iD->Ki_CODE * CTRL->s->iD->Err;
-    fx[0] = 1500 * CTRL->s->iD->Err;
-}   
-
-void General_PI_Dynamics(st_pid_regulator *r, void (*dynamic_func)(REAL, REAL *, REAL *)) {
-    r->Err = r->Ref - r->Fbk;
-    // 调用 RK4 数值积分器来计算积分项
-    general_1states_rk4_solver(dynamic_func, (*CTRL).timebase, &(r->I_Term), CL_TS);
-    // PI 控制器输出计算
-    r->Out = r->Kp * r->Err + r->I_Term;
-    // 限幅操作
-    if (r->Out > r->OutLimit) r->Out = r->OutLimit;
-    else if (r->Out < -r->OutLimit) r->Out = -r->OutLimit;
-}
-
-void _RK4_PI_Controller_FOC(REAL theta_d_elec, REAL iAB[2]){
-    (*CTRL).s->cosT = cos(theta_d_elec);
-    (*CTRL).s->sinT = sin(theta_d_elec);
-    (*CTRL).i->iDQ[0] = AB2M(iAB[0], iAB[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
-    (*CTRL).i->iDQ[1] = AB2T(iAB[0], iAB[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
-    PID_iD->Fbk = (*CTRL).i->iDQ[0];
-    PID_iD->Ref = (*CTRL).i->cmd_iDQ[0];
-    PID_iQ->Fbk = (*CTRL).i->iDQ[1];
-    PID_iQ->Ref = (*CTRL).i->cmd_iDQ[1];
-    General_PI_Dynamics(CTRL->s->iQ, &rhf_PI_DynamicsforQcurrent);
-    General_PI_Dynamics(CTRL->s->iD, &rhf_PI_DynamicsforDcurrent);
-        // 电流环前馈DQ轴解耦
-    REAL decoupled_d_axis_voltage;
-    REAL decoupled_q_axis_voltage;
-    if(d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation == TRUE){
-        decoupled_d_axis_voltage = PID_iD->Out - PID_iQ->Fbk * MOTOR.Lq * (*CTRL).i->varOmega * MOTOR.npp;
-        decoupled_q_axis_voltage = PID_iQ->Out + (MOTOR.KActive + PID_iD->Fbk * MOTOR.Ld) * (*CTRL).i->varOmega * MOTOR.npp;
-    }else{
-        decoupled_d_axis_voltage = PID_iD->Out;
-        decoupled_q_axis_voltage = PID_iQ->Out;
-    }
-    if (decoupled_d_axis_voltage > PID_iD->OutLimit) decoupled_d_axis_voltage = PID_iD->OutLimit;
-    else if (decoupled_d_axis_voltage < -PID_iD->OutLimit) decoupled_d_axis_voltage = -PID_iD->OutLimit;
-    if (decoupled_q_axis_voltage > PID_iQ->OutLimit) decoupled_q_axis_voltage = PID_iQ->OutLimit;
-    else if (decoupled_q_axis_voltage < -PID_iQ->OutLimit) decoupled_q_axis_voltage = -PID_iQ->OutLimit;
-    (*CTRL).o->cmd_uDQ[0] = decoupled_d_axis_voltage;
-    (*CTRL).o->cmd_uDQ[1] = decoupled_q_axis_voltage;
-
-    /* 7. 反帕克变换 */
-    // See D:\Users\horyc\Downloads\Documents\2003 TIA Bae SK Sul A compensation method for time delay of.pdf
-    // (*CTRL).s->cosT_compensated_1p5omegaTs = cosf(used_theta_d_elec + 1.5omg_elec*CL_TS);
-    // (*CTRL).s->sinT_compensated_1p5omegaTs = sinf(used_theta_d_elec + 1.5omg_elec*CL_TS);
-    (*CTRL).s->cosT_compensated_1p5omegaTs = (*CTRL).s->cosT;
-    (*CTRL).s->sinT_compensated_1p5omegaTs = (*CTRL).s->sinT;
-    (*CTRL).o->cmd_uAB[0] = MT2A((*CTRL).o->cmd_uDQ[0], (*CTRL).o->cmd_uDQ[1], (*CTRL).s->cosT_compensated_1p5omegaTs, (*CTRL).s->sinT_compensated_1p5omegaTs);
-    (*CTRL).o->cmd_uAB[1] = MT2B((*CTRL).o->cmd_uDQ[0], (*CTRL).o->cmd_uDQ[1], (*CTRL).s->cosT_compensated_1p5omegaTs, (*CTRL).s->sinT_compensated_1p5omegaTs);
-    (*CTRL).o->cmd_uAB_to_inverter[0] = (*CTRL).o->cmd_uAB[0];
-    (*CTRL).o->cmd_uAB_to_inverter[1] = (*CTRL).o->cmd_uAB[1];
-
-    (*CTRL).o->dc_bus_utilization_ratio = DC_BUS_VOLTAGE_INVERSE * sqrtf( (*CTRL).o->cmd_uAB_to_inverter[0]
-                                                                        * (*CTRL).o->cmd_uAB_to_inverter[0]
-                                                                        + (*CTRL).o->cmd_uAB_to_inverter[1]
-                                                                        * (*CTRL).o->cmd_uAB_to_inverter[1] );
-}
-#endif
-
 void _onlyFOC(REAL theta_d_elec, REAL iAB[2]){
     // 帕克变换
     (*CTRL).s->cosT = cos(theta_d_elec);
@@ -596,33 +505,33 @@ void _onlyFOC(REAL theta_d_elec, REAL iAB[2]){
 
     #if USE_LAOMING_PI
         /* New Sytle from Lao Ming */
-        pi_id.Kp = PID_iD->Kp;
-        pi_id.Ki = d_sim.CL.SERIES_KI_D_AXIS * CL_TS;
-        pi_id.Umax = PID_iD->OutLimit;
-        pi_id.Umin = -PID_iD->OutLimit;
+        texas_pi_id.Kp = PID_iD->Kp;
+        texas_pi_id.Ki = d_sim.CL.SERIES_KI_D_AXIS * CL_TS;
+        texas_pi_id.Umax = PID_iD->OutLimit;
+        texas_pi_id.Umin = -PID_iD->OutLimit;
         // printf("id max is %f\n", pi_id.Umax);
         
-        pi_iq.Kp = PID_iQ->Kp;
-        pi_iq.Ki = d_sim.CL.SERIES_KI_Q_AXIS * CL_TS;
-        pi_iq.Umax = PID_iQ->OutLimit;
-        pi_iq.Umin = -PID_iQ->OutLimit;
+        texas_pi_iq.Kp = PID_iQ->Kp;
+        texas_pi_iq.Ki = d_sim.CL.SERIES_KI_Q_AXIS * CL_TS;
+        texas_pi_iq.Umax = PID_iQ->OutLimit;
+        texas_pi_iq.Umin = -PID_iQ->OutLimit;
         
-        pi_id.Fbk = (*CTRL).i->iDQ[0];
-        pi_id.Ref = (*CTRL).i->cmd_iDQ[0];
-        pi_id.Out = PI_MACRO(pi_id);
+        texas_pi_id.Fbk = (*CTRL).i->iDQ[0];
+        texas_pi_id.Ref = (*CTRL).i->cmd_iDQ[0];
+        texas_pi_id.Out = PI_MACRO(texas_pi_id);
 
-        pi_iq.Fbk = (*CTRL).i->iDQ[1];
-        pi_iq.Ref = (*CTRL).i->cmd_iDQ[1];
-        pi_iq.Out = PI_MACRO(pi_iq);
+        texas_pi_iq.Fbk = (*CTRL).i->iDQ[1];
+        texas_pi_iq.Ref = (*CTRL).i->cmd_iDQ[1];
+        texas_pi_iq.Out = PI_MACRO(texas_pi_iq);
 
         REAL decoupled_d_axis_voltage;
         REAL decoupled_q_axis_voltage;
         if(d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation == TRUE){
-            decoupled_d_axis_voltage = pi_id.Out - pi_iq.Fbk * MOTOR.Lq * (*CTRL).i->varOmega * MOTOR.npp;
-            decoupled_q_axis_voltage = pi_iq.Out + (MOTOR.KActive + pi_id.Fbk * MOTOR.Ld) * (*CTRL).i->varOmega * MOTOR.npp;
+            decoupled_d_axis_voltage = texas_pi_id.Out - texas_pi_iq.Fbk * MOTOR.Lq * (*CTRL).i->varOmega * MOTOR.npp;
+            decoupled_q_axis_voltage = texas_pi_iq.Out + (MOTOR.KActive + texas_pi_id.Fbk * MOTOR.Ld) * (*CTRL).i->varOmega * MOTOR.npp;
         }else{
-            decoupled_d_axis_voltage = pi_id.Out;
-            decoupled_q_axis_voltage = pi_iq.Out;
+            decoupled_d_axis_voltage = texas_pi_id.Out;
+            decoupled_q_axis_voltage = texas_pi_iq.Out;
         }
     #else
         /* D-Axis Current Loop */
@@ -651,9 +560,8 @@ void _onlyFOC(REAL theta_d_elec, REAL iAB[2]){
             decoupled_q_axis_voltage = PID_iQ->Out + (MOTOR.KActive + PID_iD->Fbk * MOTOR.Ld) * (*CTRL).i->varOmega * MOTOR.npp;
         }else{
             decoupled_d_axis_voltage = PID_iD->Out;
-            decoupled_q_axis_voltage = PID_iQ->Out + MOTOR.KActive * (*CTRL).i->varOmega * MOTOR.npp;
-            // decoupled_d_axis_voltage = PID_iD->Out;
-            // decoupled_q_axis_voltage = PID_iQ->Out;
+            decoupled_q_axis_voltage = PID_iQ->Out;
+            // decoupled_q_axis_voltage = PID_iQ->Out + MOTOR.KActive * (*CTRL).i->varOmega * MOTOR.npp;
         }
     #endif
 
@@ -676,10 +584,6 @@ void _onlyFOC(REAL theta_d_elec, REAL iAB[2]){
     (*CTRL).o->cmd_uAB_to_inverter[0] = (*CTRL).o->cmd_uAB[0];
     (*CTRL).o->cmd_uAB_to_inverter[1] = (*CTRL).o->cmd_uAB[1];
 
-    #if WHO_IS_USER == USER_YZZ
-        yzz_inverter_Compensation_Online_PAA();
-    #endif
-
     (*CTRL).o->dc_bus_utilization_ratio = DC_BUS_VOLTAGE_INVERSE * sqrtf( (*CTRL).o->cmd_uAB_to_inverter[0]
                                                                         * (*CTRL).o->cmd_uAB_to_inverter[0]
                                                                         + (*CTRL).o->cmd_uAB_to_inverter[1]
@@ -687,9 +591,9 @@ void _onlyFOC(REAL theta_d_elec, REAL iAB[2]){
 
     /// 8. 补偿逆变器非线性
     #if WHO_IS_USER == USER_WB
-        /* wubo:  */
         wubo_inverter_Compensation( (*CTRL).i->iAB );
     #endif
+
     #if WHO_IS_USER == USER_CJH
         /* For scope only */
         #if PC_SIMULATION
@@ -722,30 +626,55 @@ void _user_commands(){
         // 凸极永磁采用 iD<0 获得更大的 有功磁链（aka 转矩系数）
         // (*CTRL).i->cmd_iDQ[0] = -1.0;
     }
-    
 
     #if PC_SIMULATION == TRUE
         #if WHO_IS_USER == USER_WB
-            ACM.TLoad = 0;
-            if ( (*CTRL).timebase > 0.04 ){
-                ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.5);
+            if(0){
+                if(0){
+                    if ( (*CTRL).timebase > 1.0 ){
+                        ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN * 0.03) * (int)(d_sim.user.bool_apply_external_Force_to_Position_Loop);
+                    }
+                    // if( (*CTRL).timebase >  0.15 ){
+                    //     // ACM.TLoad = 0;
+                    //     (*CTRL).i->cmd_varOmega = -d_sim.user.set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
+                    // }
+                }else if(0){
+                    (*CTRL).i->cmd_varOmega = 0;
+                    ACM.TLoad = 0;
+                    if ( (*CTRL).timebase > 1.5 ){
+                        ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN * 0.3);
+                    }
+                    if ( (*CTRL).timebase > 2.5 ){
+                        ACM.TLoad = 0.0;
+                    }   
+                }else{
+                    ACM.TLoad = 1.0;
+                    if ( (*CTRL).timebase > 10.5 ){
+                        ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN * 0.3);
+                    }
+                    if ( (*CTRL).timebase > 10.0 ){
+                        ACM.TLoad = 0.0;
+                    }
+                    if ( (*CTRL).timebase > 10.5 ){
+                        (*CTRL).i->cmd_varOmega = -d_sim.user.set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
+                    }
+                }
             }
-            if( (*CTRL).timebase >  0.10 ){
-                ACM.TLoad = 0;
-                (*CTRL).i->cmd_varOmega = 400 * RPM_2_MECH_RAD_PER_SEC;
-            }
+
         #elif WHO_IS_USER == USER_BEZIER
-            if ((*CTRL).timebase > 0){
+            (*CTRL).i->cmd_varOmega = 0.0;
+
+            if ((*CTRL).timebase > CL_TS){
                 (*CTRL).i->cmd_varOmega =  400 * RPM_2_MECH_RAD_PER_SEC;
             }
-            if ((*CTRL).timebase > 0.02){
+            if ((*CTRL).timebase > 0.04){
                 (*CTRL).i->cmd_varOmega = -400 * RPM_2_MECH_RAD_PER_SEC;
             }
-            if ((*CTRL).timebase > 0.04){
-                ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * 3.0 *0.5);
+            if ((*CTRL).timebase > 0.07){
+                ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * 3.0 * 0.95);
                 // ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * 3.0 * 0.95) * sin(50*2*M_PI*CTRL->timebase);
             }
-            if ((*CTRL).timebase > 0.07){
+            if ((*CTRL).timebase > 0.10){
                 ACM.TLoad = 0.0;
             }
         #elif WHO_IS_USER == USER_CJH || WHO_IS_USER == USER_XM
@@ -788,12 +717,27 @@ void _user_commands(){
             if ((*CTRL).timebase > CL_TS){
                 (*CTRL).i->cmd_varOmega = (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
                 #if PC_SIMULATION
-                    ACM.TLoad =0.3* (0.5 * 1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);
+                    ACM.TLoad = (0.5 * 1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);
                 #endif
             }
 
-            // if ((*CTRL).timebase > 5){
-            //     (*CTRL).i->cmd_varOmega = 0.5 * (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
+            // if ((*CTRL).timebase > 1){
+            //     (*CTRL).i->cmd_varOmega = + (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
+            // }
+            // if ((*CTRL).timebase > 2){
+            //     #if PC_SIMULATION
+            //         ACM.TLoad = (0.7 * 1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);
+            //     #endif
+            // }
+            // if ((*CTRL).timebase > 3){
+            //     #if PC_SIMULATION
+            //         ACM.TLoad = (0.3 * 1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);
+            //     #endif
+            // }
+            // if ((*CTRL).timebase > CL_TS){
+            //     #if PC_SIMULATION
+            //         (*CTRL).i->cmd_varOmega = 0.5 * (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC * sin((*CTRL).timebase * 30) + 2 * (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
+            //     #endif
             // }
         #endif
     #endif
@@ -802,83 +746,96 @@ void _user_commands(){
     overwrite_sweeping_frequency();
 }
 
-
 void overwrite_sweeping_frequency(){
-    #if WHO_IS_USE == USER_WB
-        //这句话应该放在最前面！
-            d_sim.user.timebase_for_Sweeping += CL_TS; // Separate the timebase with the DSP timebase !!!
+    //这句话应该放在最前面！
+    d_sim.user.timebase_for_Sweeping += CL_TS; // Separate the timebase with the DSP timebase !!!
 
-        #if PC_SIMULATION
-            ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * 3.0 * 0.5); // 强制将负载设置为0    
-        #endif
+    #if PC_SIMULATION
+        if(d_sim.user.bool_speed_sweeping_with_Load == TRUE){
+            ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN * 0.75); // 强制将负载设置为XXX
+        }
+    #endif
 
-        if(d_sim.user.bool_apply_sweeping_frequency_excitation){
+    //负载扫频
+    #if PC_SIMULATION
+        if (d_sim.user.bool_sweeping_frequency_for_Rejection_Load == TRUE){
+            (*CTRL).i->cmd_varOmega = d_sim.user.set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC; // motor以恒速运作
+            REAL Load_iq_current = d_sim.user.CMD_CURRENT_SINE_AMPERE\
+            * sin(2* M_PI *d_sim.user.CMD_SPEED_SINE_HZ*(d_sim.user.timebase_for_Sweeping  - d_sim.user.CMD_SPEED_SINE_LAST_END_TIME));
+            ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * Load_iq_current);
+        }
+    #endif
+    
+    if(d_sim.user.bool_apply_sweeping_frequency_excitation){
 
-            if (d_sim.user.bool_speed_sweeping_with_Load == TRUE){
-                //前XXX秒开启恒速模式，以使得系统达到稳态
-                if ( (d_sim.user.timebase_for_Sweeping < d_sim.user.Stable_Time_for_Sweeping) && (d_sim.user.flag_clear_timebase_once == FALSE)  ){
-                    // (*CTRL).i->cmd_varOmega = 0.5 * d_sim.user.CMD_SPEED_SINE_RPM * RPM_2_MECH_RAD_PER_SEC;
-                    (*CTRL).i->cmd_varOmega = 0.0;
-                    return;
-                }
-                if( d_sim.user.flag_clear_timebase_once == FALSE ){
-                    d_sim.user.timebase_for_Sweeping = 0.0000; // Clear the time, suitable for generating the Sine Signal
-                    d_sim.user.flag_clear_timebase_once = TRUE;
-                }
+        if (d_sim.user.bool_speed_sweeping_with_Load == TRUE){
+            //前XXX秒开启恒速模式，以使得系统达到稳态
+            if ( (d_sim.user.timebase_for_Sweeping < d_sim.user.Stable_Time_for_Sweeping) && (d_sim.user.flag_clear_timebase_once == FALSE)  ){
+                // (*CTRL).i->cmd_varOmega = 0.5 * d_sim.user.CMD_SPEED_SINE_RPM * RPM_2_MECH_RAD_PER_SEC;
+                (*CTRL).i->cmd_varOmega = 0.0;
+                return;
             }
-
-            // 生成扫频信号
-            if ( d_sim.user.timebase_for_Sweeping  > d_sim.user.CMD_SPEED_SINE_END_TIME ){
-                d_sim.user.CMD_SPEED_SINE_HZ += d_sim.user.CMD_SPEED_SINE_STEP_SIZE;
-                d_sim.user.CMD_SPEED_SINE_LAST_END_TIME = d_sim.user.CMD_SPEED_SINE_END_TIME;
-                d_sim.user.CMD_SPEED_SINE_END_TIME += 1.0 / d_sim.user.CMD_SPEED_SINE_HZ;
+            if( d_sim.user.flag_clear_timebase_once == FALSE ){
+                d_sim.user.timebase_for_Sweeping = 0.0000; // Clear the time, suitable for generating the Sine Signal
+                d_sim.user.flag_clear_timebase_once = TRUE;
             }
-            if (d_sim.user.CMD_SPEED_SINE_HZ > d_sim.user.CMD_SPEED_SINE_HZ_CEILING){
-                (*CTRL).i->cmd_varOmega = 0.0; // 到达扫频的频率上限，速度归零
-                (*CTRL).i->cmd_iDQ[0] = 0.0;
-                (*CTRL).i->cmd_iDQ[1] = 0.0;
+        }
+
+        // 生成扫频信号
+        if ( d_sim.user.timebase_for_Sweeping  > d_sim.user.CMD_SPEED_SINE_END_TIME ){
+            d_sim.user.CMD_SPEED_SINE_HZ += d_sim.user.CMD_SPEED_SINE_STEP_SIZE;
+            d_sim.user.CMD_SPEED_SINE_LAST_END_TIME = d_sim.user.CMD_SPEED_SINE_END_TIME;
+            d_sim.user.CMD_SPEED_SINE_END_TIME += 1.0 / d_sim.user.CMD_SPEED_SINE_HZ;
+        }
+        if (d_sim.user.CMD_SPEED_SINE_HZ > d_sim.user.CMD_SPEED_SINE_HZ_CEILING){
+            (*CTRL).i->cmd_varOmega = 0.0;  // 到达扫频的频率上限，速度归零
+            (*CTRL).i->cmd_iDQ[0]   = 0.0;
+            (*CTRL).i->cmd_iDQ[1]   = 0.0;
+            #if PC_SIMULATION == TRUE
+                ACM.TLoad = 0.0;
+            #endif
+        }else{
+            if (d_sim.user.bool_sweeping_frequency_for_speed_loop == TRUE){
+                (*CTRL).i->cmd_varOmega = RPM_2_MECH_RAD_PER_SEC * d_sim.user.CMD_SPEED_SINE_RPM \
+                    *sin(2*M_PI*d_sim.user.CMD_SPEED_SINE_HZ*(d_sim.user.timebase_for_Sweeping  - d_sim.user.CMD_SPEED_SINE_LAST_END_TIME));
             }else{
-                if (d_sim.user.bool_sweeping_frequency_for_speed_loop == TRUE){
-                    (*CTRL).i->cmd_varOmega = RPM_2_MECH_RAD_PER_SEC * d_sim.user.CMD_SPEED_SINE_RPM \
-                        *sin(2*M_PI*d_sim.user.CMD_SPEED_SINE_HZ*(d_sim.user.timebase_for_Sweeping  - d_sim.user.CMD_SPEED_SINE_LAST_END_TIME));
-                }else{
-                    if (d_sim.user.bool_sweeping_frequency_for_current_loop_iD == TRUE){
-                        (*CTRL).i->cmd_iDQ[0] = d_sim.user.CMD_CURRENT_SINE_AMPERE * sin(2* M_PI *d_sim.user.CMD_SPEED_SINE_HZ*(d_sim.user.timebase_for_Sweeping  - d_sim.user.CMD_SPEED_SINE_LAST_END_TIME));
-                        (*CTRL).i->cmd_iDQ[1] = 0.0;
-                    } else {
-                        (*CTRL).i->cmd_iDQ[0] = 0.0;
-                        (*CTRL).i->cmd_iDQ[1] = d_sim.user.CMD_CURRENT_SINE_AMPERE * sin(2* M_PI *d_sim.user.CMD_SPEED_SINE_HZ*(d_sim.user.timebase_for_Sweeping  - d_sim.user.CMD_SPEED_SINE_LAST_END_TIME));
-                    }
+                if (d_sim.user.bool_sweeping_frequency_for_current_loop_iD == TRUE){
+                    (*CTRL).i->cmd_iDQ[0] = d_sim.user.CMD_CURRENT_SINE_AMPERE\
+                     * sin(2* M_PI *d_sim.user.CMD_SPEED_SINE_HZ*(d_sim.user.timebase_for_Sweeping  - d_sim.user.CMD_SPEED_SINE_LAST_END_TIME));
+                    (*CTRL).i->cmd_iDQ[1] = 0.0;
+                } else {
+                    (*CTRL).i->cmd_iDQ[0] = 0.0;
+                    (*CTRL).i->cmd_iDQ[1] = d_sim.user.CMD_CURRENT_SINE_AMPERE\
+                     * sin(2* M_PI *d_sim.user.CMD_SPEED_SINE_HZ*(d_sim.user.timebase_for_Sweeping  - d_sim.user.CMD_SPEED_SINE_LAST_END_TIME));
                 }
             }
         }
-    #endif
+
+
+    }
 }
 
 void _user_Check_ThreeDB_Point( REAL Fbk, REAL Ref){
-    #if WHO_IS_USE == USER_WB
-        if( Fbk < 0.707 * Ref ){
-            d_sim.user.Mark_Sweeping_Freq_ThreeDB_Point = 1;
+    if( Fbk < 0.707 * Ref ){
+        d_sim.user.Mark_Sweeping_Freq_ThreeDB_Point = 1;
+    }
+    if( Fbk >= 0.707 * Ref && d_sim.user.Mark_Sweeping_Freq_ThreeDB_Point == 1 ){
+        d_sim.user.Mark_Sweeping_Freq_ThreeDB_Point = 0;
+        d_sim.user.Mark_Counter += 1;
+    }
+    #if PC_SIMULATION
+        static int flag_print_only_once = FALSE;
+        // if (d_sim.user.bool_apply_sweeping_frequency_excitation && ( (*CTRL).timebase > 4.500 ) && ( flag_print_only_once == FALSE ) ){
+        if (d_sim.user.bool_apply_sweeping_frequency_excitation && ( d_sim.user.CMD_SPEED_SINE_HZ >= 200 ) && ( flag_print_only_once == FALSE ) ){
+            printf("VLBW is %fHz\n", d_sim.user.Mark_Counter);
+            flag_print_only_once = TRUE;
         }
-        if( Fbk >= 0.707 * Ref && d_sim.user.Mark_Sweeping_Freq_ThreeDB_Point == 1 ){
-            d_sim.user.Mark_Sweeping_Freq_ThreeDB_Point = 0;
-            d_sim.user.Mark_Counter += 1;
-        }
-        #if PC_SIMULATION
-            static int flag_print_only_once = FALSE;
-            // if (d_sim.user.bool_apply_sweeping_frequency_excitation && ( (*CTRL).timebase > 4.500 ) && ( flag_print_only_once == FALSE ) ){
-            if (d_sim.user.bool_apply_sweeping_frequency_excitation && ( d_sim.user.CMD_SPEED_SINE_HZ >= 200 ) && ( flag_print_only_once == FALSE ) ){
-                printf("VLBW is %fHz\n", d_sim.user.Mark_Counter);
-                flag_print_only_once = TRUE;
-            }
-        #endif
     #endif
 }
 
 
 void _user_inverter_voltage_command(int bool_use_cmd_iAB){
-    (*CTRL).o->cmd_uAB_to_inverter[0] = (*CTRL).o->cmd_uAB[0];
-    (*CTRL).o->cmd_uAB_to_inverter[1] = (*CTRL).o->cmd_uAB[1];
+    (*CTRL).o->cmd_uAB_to_inverter[0] = (*CTRL).o->cmd_uAB[0];    (*CTRL).o->cmd_uAB_to_inverter[1] = (*CTRL).o->cmd_uAB[1];
     /* We use cmd_iAB instead of iAB to look-up */
     REAL Ia, Ib;
     if (bool_use_cmd_iAB){
@@ -954,38 +911,7 @@ int  main_switch(long mode_select){
 
         break;
     case MODE_SELECT_FOC_SENSORLESS: //31
-        #if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
-            US_P(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
-            US_P(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
-            US_C(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
-            US_C(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
-            IS_C(0)           = (*CTRL).i->iAB[0];
-            IS_C(1)           = (*CTRL).i->iAB[1];
-        #endif
-            US_SR_P(0) = (*CTRL).o->cmd_uAB[0];
-            US_SR_P(1) = (*CTRL).o->cmd_uAB[1];
-            US_SR_C(0) = (*CTRL).o->cmd_uAB[0];
-            US_SR_C(1) = (*CTRL).o->cmd_uAB[1];
-            IS_SR_C(0) = (*CTRL).i->iAB[0];
-            IS_SR_C(1) = (*CTRL).i->iAB[1];
-        (*CTRL).i->cmd_iDQ[0] = (*debug).set_id_command; // SWEEP_FREQ_C2C
-        (*CTRL).i->cmd_iDQ[1] = (*debug).set_iq_command;
-        
-        #if WHO_IS_USER == USER_YZZ
-        // _user_commands();
-        pmsm_observers();
-        // observer_PMSMife();
-        // controller_PMSMife_with_commands();
-            OBSV.theta_d = (*CTRL).i->theta_d_elec;
-            while(OBSV.theta_d > M_PI) OBSV.theta_d  -= 2*M_PI;
-            while(OBSV.theta_d < -M_PI) OBSV.theta_d += 2*M_PI;
-        if(d_sim.user.sensorless_only_theta_on  == 0){
-            _onlyFOC((*CTRL).i->theta_d_elec, (*CTRL).i->iAB);
-        }else if(d_sim.user.sensorless_only_theta_on  == 5){
-            _onlyFOC(FE.AFEOE.theta_d, (*CTRL).i->iAB);
-        }
-        #endif
-
+        //TODO:
         break;
     case MODE_SELECT_INDIRECT_FOC:   // 32
         _user_commands();         // 用户指令
@@ -1039,89 +965,38 @@ int  main_switch(long mode_select){
 
         break;
     case MODE_SELECT_VELOCITY_LOOP_SENSORLESS : //41
-
         #if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
             US_P(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
             US_P(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
             US_C(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
             US_C(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
-            IS_C(0)           = (*CTRL).i->iAB[0];
-            IS_C(1)           = (*CTRL).i->iAB[1];
+            IS_C(0)           = ACM.iAB[0];
+            IS_C(1)           = ACM.iAB[1];
         #endif
-            US_SR_P(0) = (*CTRL).o->cmd_uAB[0];
-            US_SR_P(1) = (*CTRL).o->cmd_uAB[1];
-            US_SR_C(0) = (*CTRL).o->cmd_uAB[0];
-            US_SR_C(1) = (*CTRL).o->cmd_uAB[1];
-            IS_SR_C(0) = (*CTRL).i->iAB[0];
-            IS_SR_C(1) = (*CTRL).i->iAB[1];
+
         #if WHO_IS_USER == USER_YZZ
         _user_commands();
         pmsm_observers();
         // observer_PMSMife();
         // controller_PMSMife_with_commands();
-        OBSV.theta_d = (*CTRL).i->theta_d_elec;
-        while(OBSV.theta_d > M_PI) OBSV.theta_d  -= 2*M_PI;
-        while(OBSV.theta_d < -M_PI) OBSV.theta_d += 2*M_PI;  // 反转！
-        if (d_sim.user.bool_ESO_SPEED_ON == TRUE){
-            Main_esoaf_chen2021();
-        }
-        if (d_sim.user.bool_apply_ESO_SPEED_for_SPEED_FBK == TRUE){
-            (*CTRL).i->varOmega = OFSR.esoaf.xOmg * MOTOR.npp_inv;
-        }
-        // observer();
-        if (d_sim.user.sensorless_speed_observer == 0){
-            OBSV.varOmega = (*CTRL).i->varOmega;
-        }else{
-            OBSV.varOmega = OBSV.nsoaf.xOmg * MOTOR.npp_inv;
-        }
-        
-        if (d_sim.user.sensorless_only_theta_on == 1){
-            FOC_with_vecocity_control(AFE_USED.theta_d, 
-                OBSV.varOmega, 
-                (*CTRL).i->cmd_varOmega, 
-                (*CTRL).i->cmd_iDQ, 
-                (*CTRL).i->iAB);
-        }else if (d_sim.user.sensorless_only_theta_on == 0){
-            FOC_with_vecocity_control((*CTRL).i->theta_d_elec, 
-                OBSV.varOmega,
-                (*CTRL).i->cmd_varOmega,
-                (*CTRL).i->cmd_iDQ,
-                (*CTRL).i->iAB);
-        }else if (d_sim.user.sensorless_only_theta_on == 2){
-            #if AFE_37_NO_SATURATION_BASED
-            FOC_with_vecocity_control(FE.no_sat.theta_d, 
-                OBSV.varOmega,
-                (*CTRL).i->cmd_varOmega,
-                (*CTRL).i->cmd_iDQ,
-                (*CTRL).i->iAB);
-            #endif
-        }else if (d_sim.user.sensorless_only_theta_on == 3){
-            #if AFE_38_OUTPUT_ERROR_CLOSED_LOOP
-            FOC_with_vecocity_control(FE.clfe4PMSM.theta_d, 
-                OBSV.varOmega,
-                (*CTRL).i->cmd_varOmega,
-                (*CTRL).i->cmd_iDQ,
-                (*CTRL).i->iAB);
-            #endif
-                // printf("FE.clfe4PMSM.theta_d is %f\n", FE.clfe4PMSM.theta_d);
-        }else if (d_sim.user.sensorless_only_theta_on == 4){
-            FOC_with_vecocity_control(FE.htz.theta_d, 
-                OBSV.varOmega,
-                (*CTRL).i->cmd_varOmega,
-                (*CTRL).i->cmd_iDQ,
-                (*CTRL).i->iAB);
-        }else if (d_sim.user.sensorless_only_theta_on == 5){
-            FOC_with_vecocity_control(FE.AFEOE.theta_d, 
-                OBSV.varOmega,
-                (*CTRL).i->cmd_varOmega,
-                (*CTRL).i->cmd_iDQ,
-                (*CTRL).i->iAB);
-        }
         #endif
+
+        
+        // observer();
+        // FOC_with_vecocity_control(FE.AFEOE.theta_d,
+        //     OBSV.nsoaf.xOmg * MOTOR.npp_inv,
+        //     (*CTRL).i->cmd_varOmega,
+        //     (*CTRL).i->cmd_iDQ,
+        //     (*CTRL).i->iAB);
+        FOC_with_vecocity_control((*CTRL).i->theta_d_elec, 
+            (*CTRL).i->varOmega, 
+            (*CTRL).i->cmd_varOmega, 
+            (*CTRL).i->cmd_iDQ, 
+            (*CTRL).i->iAB);
         break;
     case MODE_SELECT_TESTING_SENSORLESS : //42
         break;
-    case MODE_SELECT_VELOCITY_LOOP_WC_TUNER: // 43
+    case MODE_SELECT_V_LOOP_WC_TUNER: // 43
         #if WHO_IS_USER == USER_WB && PC_SIMULATION == TRUE
             INNER_LOOP_SENSITIVITY_ANALYSIS(debug);
             if ( d_sim.user.bool_apply_HitWall_analysis == TRUE){
@@ -1141,12 +1016,11 @@ int  main_switch(long mode_select){
             }
         #endif
         // Runing Speed ESO
-        #if WHO_IS_USER == USER_WB
-        if (d_sim.user.bool_ESO_SPEED_ON = TRUE){
+        if (d_sim.user.bool_ESO_SPEED_ON == TRUE){
             Main_esoaf_chen2021();
         }
         if (d_sim.user.bool_apply_ESO_SPEED_for_SPEED_FBK == TRUE){
-            (*CTRL).i->varOmega = OFSR.esoaf.xOmg * MOTOR.npp_inv;
+            (*CTRL).i->varOmega = OBSV.esoaf.xOmg * MOTOR.npp_inv;
         }
         _user_commands();         // User commands
         FOC_with_vecocity_control((*CTRL).i->theta_d_elec,
@@ -1154,68 +1028,64 @@ int  main_switch(long mode_select){
             (*CTRL).i->cmd_varOmega,
             (*CTRL).i->cmd_iDQ,
             (*CTRL).i->iAB);
-        #endif
         break;
     case MODE_SELECT_Marino2005: //44
     #if (WHO_IS_USER == USER_CJH)
         controller_marino2005_with_commands();
     #endif
         break;
-    case MODE_SELECT_VELOCITY_LOOP_HARNEFORS_1998: //45
-        break;
-    case MODE_SELECT_SWEEPING_FREQ_FOR_VELOCITY_AND_CURRENT: // 46
+    //* 45 功能寻求广告位中
+    case MODE_SELECT_SWEEPING_FREQ: // 46
             overwrite_sweeping_frequency();
-            #if WHO_IS_USER == USER_WB
-                if ( d_sim.user.bool_sweeping_frequency_for_speed_loop == TRUE ){
-                    
-                    // Runing Speed ESO
-                    if (d_sim.user.bool_ESO_SPEED_ON = TRUE){
-                        Main_esoaf_chen2021();
-                    }
-                    if (d_sim.user.bool_apply_ESO_SPEED_for_SPEED_FBK == TRUE){
-                        (*CTRL).i->varOmega = OFSR.esoaf.xOmg * MOTOR.npp_inv;
-                    }
-                    
-                    // Get -3DB counter!
-                    REAL motor_speed_RPM = (*CTRL).i->varOmega * MECH_RAD_PER_SEC_2_RPM;
-                    _user_Check_ThreeDB_Point( motor_speed_RPM, d_sim.user.CMD_SPEED_SINE_RPM );
-
-                    // Run Speed Closed Loop
-                    FOC_with_vecocity_control((*CTRL).i->theta_d_elec,
-                                (*CTRL).i->varOmega,
-                                (*CTRL).i->cmd_varOmega,
-                                (*CTRL).i->cmd_iDQ,
-                                (*CTRL).i->iAB);
-                }else {//* sweeping for current loop especially for iD currents
-                    if (d_sim.user.bool_sweeping_frequency_for_current_loop_iD == TRUE){
-                        _user_Check_ThreeDB_Point( (*CTRL).i->cmd_iDQ[0], d_sim.user.CMD_CURRENT_SINE_AMPERE );
-                    }else{
-                        _user_Check_ThreeDB_Point( (*CTRL).i->cmd_iDQ[1], d_sim.user.CMD_CURRENT_SINE_AMPERE );
-                    }
-                    #if WHO_IS_USER == USER_WB
-                        if (d_sim.user.bool_enable_Harnefors_back_calculation){
-                            _user_wubo_FOC( (*CTRL).i->theta_d_elec, (*CTRL).i->iAB );
-                        }else{
-                            d_sim.user.Check_Harnerfors_1998_On = -1;
-                            _onlyFOC( (*CTRL).i->theta_d_elec, (*CTRL).i->iAB );
-                        }
-                    #else
-                        _onlyFOC((*CTRL).i->theta_d_elec, (*CTRL).i->iAB);
-                    #endif
+            if ( (d_sim.user.bool_sweeping_frequency_for_speed_loop == TRUE) || (d_sim.user.bool_sweeping_frequency_for_Rejection_Load == TRUE) ){
+                
+                // Runing Speed ESO
+                if (d_sim.user.bool_ESO_SPEED_ON = TRUE){
+                    Main_esoaf_chen2021();
                 }
-            #endif
+                if (d_sim.user.bool_apply_ESO_SPEED_for_SPEED_FBK == TRUE){
+                    (*CTRL).i->varOmega = OBSV.esoaf.xOmg * MOTOR.npp_inv;
+                }
+                
+                // Get -3DB counter!
+                REAL motor_speed_RPM = (*CTRL).i->varOmega * MECH_RAD_PER_SEC_2_RPM;
+                _user_Check_ThreeDB_Point( motor_speed_RPM, d_sim.user.CMD_SPEED_SINE_RPM );
+
+                // Run Speed Closed Loop
+                FOC_with_vecocity_control((*CTRL).i->theta_d_elec,
+                            (*CTRL).i->varOmega,
+                            (*CTRL).i->cmd_varOmega,
+                            (*CTRL).i->cmd_iDQ,
+                            (*CTRL).i->iAB);
+            }else {//* sweeping for current loop especially for iD currents
+                if (d_sim.user.bool_sweeping_frequency_for_current_loop_iD == TRUE){
+                    _user_Check_ThreeDB_Point( (*CTRL).i->cmd_iDQ[0], d_sim.user.CMD_CURRENT_SINE_AMPERE );
+                }else{
+                    _user_Check_ThreeDB_Point( (*CTRL).i->cmd_iDQ[1], d_sim.user.CMD_CURRENT_SINE_AMPERE );
+                }
+                #if WHO_IS_USER == USER_WB
+                    if (d_sim.user.bool_enable_Harnefors_back_calculation){
+                        _user_wubo_FOC( (*CTRL).i->theta_d_elec, (*CTRL).i->iAB );
+                    }else{
+                        d_sim.user.Check_Harnerfors_1998_On = -1;
+                        _onlyFOC( (*CTRL).i->theta_d_elec, (*CTRL).i->iAB );
+                    }
+                #else
+                    _onlyFOC((*CTRL).i->theta_d_elec, (*CTRL).i->iAB);
+                #endif
+            }
         break;
-    case MODE_SELECT_VELOCITY_LOOP_USING_ESO_FOR_SPEED: // 47
+    case MODE_SELECT_V_LOOP_ESO_SPEED_REF: // 47
         _user_commands();         // User commands
         // Runing Speed ESO
-        #if WHO_IS_USER == USER_WB
-            if (d_sim.user.bool_ESO_SPEED_ON = TRUE){
-                Main_esoaf_chen2021();
-            }
-            if (d_sim.user.bool_apply_ESO_SPEED_for_SPEED_FBK == TRUE){
-                (*CTRL).i->varOmega = OFSR.esoaf.xOmg * MOTOR.npp_inv;
-            }
-        #endif
+        if (d_sim.user.bool_ESO_SPEED_ON == TRUE){
+            Main_esoaf_chen2021();
+            // printf("ESO Speed is %f\n", OBSV.esoaf.xOmg);
+        }
+        if (d_sim.user.bool_apply_ESO_SPEED_for_SPEED_FBK == TRUE){
+            (*CTRL).i->varOmega = OBSV.esoaf.xOmg * MOTOR.npp_inv;
+        }
+        
         // Run Speed Closed Loop
         FOC_with_vecocity_control((*CTRL).i->theta_d_elec,
                     (*CTRL).i->varOmega,
@@ -1223,146 +1093,90 @@ int  main_switch(long mode_select){
                     (*CTRL).i->cmd_iDQ,
                     (*CTRL).i->iAB);
         break;
-    case MODE_SELECT_VARIABLE_PARAMETERS_VELOCITY_LOOP_SENSORLESS: // 48
-        _user_commands();  
-        #if WHO_IS_USER == USER_YZZ
-        //for OBSV
-            US_P(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
-            US_P(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
-            US_C(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
-            US_C(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
-            IS_C(0)           = (*CTRL).i->iAB[0];
-            IS_C(1)           = (*CTRL).i->iAB[1];
-        //for OFSR
-            US_SR_P(0) = (*CTRL).o->cmd_uAB[0];
-            US_SR_P(1) = (*CTRL).o->cmd_uAB[1];
-            US_SR_C(0) = (*CTRL).o->cmd_uAB[0];
-            US_SR_C(1) = (*CTRL).o->cmd_uAB[1];
-            IS_SR_C(0) = (*CTRL).i->iAB[0];
-            IS_SR_C(1) = (*CTRL).i->iAB[1];
-        variabel_parameters_sensorless();
-        _user_commands();
-        pmsm_observers();
-        OBSV.theta_d = (*CTRL).i->theta_d_elec;
-        while(OBSV.theta_d > M_PI) OBSV.theta_d  -= 2*M_PI;
-        while(OBSV.theta_d < -M_PI) OBSV.theta_d += 2*M_PI;  // 反转！
-
-        if (d_sim.user.bool_ESO_SPEED_ON == TRUE){
-            Main_esoaf_chen2021();
-        }
-        if (d_sim.user.bool_apply_ESO_SPEED_for_SPEED_FBK == TRUE){
-            (*CTRL).i->varOmega = OFSR.esoaf.xOmg * MOTOR.npp_inv;
-        }
-        // FOC_with_vecocity_control(AFE_USED.theta_d, 
-        //     OBSV.nsoaf.xOmg * MOTOR.npp_inv,
-        //     (*CTRL).i->cmd_varOmega,
-        //     (*CTRL).i->cmd_iDQ,
-        //     (*CTRL).i->iAB);
-        FOC_with_vecocity_control((*CTRL).i->theta_d_elec, 
-            (*CTRL).i->varOmega, 
-            (*CTRL).i->cmd_varOmega, 
-            (*CTRL).i->cmd_iDQ, 
-            (*CTRL).i->iAB);
-        #endif
-        break;
-    case MODE_SELECT_INVERTER_NONLINEARITY_SENSORLESS: // 49
-        #if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
-            US_P(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
-            US_P(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
-            US_C(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
-            US_C(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
-            IS_C(0)           = (*CTRL).i->iAB[0];
-            IS_C(1)           = (*CTRL).i->iAB[1];
-        #endif
-            US_SR_P(0) = (*CTRL).o->cmd_uAB[0];
-            US_SR_P(1) = (*CTRL).o->cmd_uAB[1];
-            US_SR_C(0) = (*CTRL).o->cmd_uAB[0];
-            US_SR_C(1) = (*CTRL).o->cmd_uAB[1];
-            IS_SR_C(0) = (*CTRL).i->iAB[0];
-            IS_SR_C(1) = (*CTRL).i->iAB[1];
-        #if WHO_IS_USER == USER_YZZ
-        _user_commands();
-        pmsm_observers();
-        Online_PAA_Based_Compensation();
-        // observer_PMSMife();
-        // controller_PMSMife_with_commands();
-        OBSV.theta_d = (*CTRL).i->theta_d_elec;
-        while(OBSV.theta_d > M_PI) OBSV.theta_d  -= 2*M_PI;
-        while(OBSV.theta_d < -M_PI) OBSV.theta_d += 2*M_PI;  // 反转！
-        if (d_sim.user.bool_ESO_SPEED_ON == TRUE){
-            Main_esoaf_chen2021();
-        }
-        if (d_sim.user.bool_apply_ESO_SPEED_for_SPEED_FBK == TRUE){
-            (*CTRL).i->varOmega = OFSR.esoaf.xOmg * MOTOR.npp_inv;
-        }
-        // observer();
-        if (d_sim.user.sensorless_speed_observer == 0){
-            OBSV.varOmega = (*CTRL).i->varOmega;
-        }else{
-            OBSV.varOmega = OBSV.nsoaf.xOmg * MOTOR.npp_inv;
-        }
-        
-        if (d_sim.user.sensorless_only_theta_on == 1){
-            FOC_with_vecocity_control(AFE_USED.theta_d, 
-                OBSV.varOmega, 
-                (*CTRL).i->cmd_varOmega, 
-                (*CTRL).i->cmd_iDQ, 
-                (*CTRL).i->iAB);
-        }else if (d_sim.user.sensorless_only_theta_on == 0){
-            FOC_with_vecocity_control((*CTRL).i->theta_d_elec, 
-                OBSV.varOmega,
-                (*CTRL).i->cmd_varOmega,
-                (*CTRL).i->cmd_iDQ,
-                (*CTRL).i->iAB);
-        }else if (d_sim.user.sensorless_only_theta_on == 2){
-            #if AFE_37_NO_SATURATION_BASED
-            FOC_with_vecocity_control(FE.no_sat.theta_d, 
-                OBSV.varOmega,
-                (*CTRL).i->cmd_varOmega,
-                (*CTRL).i->cmd_iDQ,
-                (*CTRL).i->iAB);
-            #endif
-        }else if (d_sim.user.sensorless_only_theta_on == 3){
-            #if AFE_38_OUTPUT_ERROR_CLOSED_LOOP
-            FOC_with_vecocity_control(FE.clfe4PMSM.theta_d, 
-                OBSV.varOmega,
-                (*CTRL).i->cmd_varOmega,
-                (*CTRL).i->cmd_iDQ,
-                (*CTRL).i->iAB);
-            #endif
-                // printf("FE.clfe4PMSM.theta_d is %f\n", FE.clfe4PMSM.theta_d);
-        }else if (d_sim.user.sensorless_only_theta_on == 4){
-            FOC_with_vecocity_control(FE.htz.theta_d, 
-                OBSV.varOmega,
-                (*CTRL).i->cmd_varOmega,
-                (*CTRL).i->cmd_iDQ,
-                (*CTRL).i->iAB);
-        }else if (d_sim.user.sensorless_only_theta_on == 5){
-            FOC_with_vecocity_control(FE.AFEOE.theta_d, 
-                OBSV.varOmega,
-                (*CTRL).i->cmd_varOmega,
-                (*CTRL).i->cmd_iDQ,
-                (*CTRL).i->iAB);
-        }
-        #endif
-        break;
     case MODE_SELECT_POSITION_LOOP: // 5
+        // Generate the position command
+        (*CTRL).i->cmd_varTheta = (*debug).set_deg_position_command * M_PI_OVER_180;
+
         #if WHO_IS_USER == USER_WB
-            //TODO: Here need a command function for position loop !
-            // (*debug).set_deg_position_command = d_sim.user.set_deg_position_command * sin( 2 * M_PI * d_sim.user.Position_cmd_sine_frequency * (*CTRL).timebase );
-            (*debug).set_deg_position_command = d_sim.user.set_deg_position_command;
+            if(d_sim.user.BOOL_WUBO_POS_CMD_TEST == TRUE){
+                (*CTRL).i->cmd_varTheta = 0.5 * M_PI * sinf( d_sim.user.Position_cmd_sine_frequency 
+                    * 2 * M_PI * (*CTRL).timebase ) + 0.17 * cosf( 3 * d_sim.user.Position_cmd_sine_frequency 
+                    * 2 * M_PI * (*CTRL).timebase ) + 0.1 * sinf( 7 * d_sim.user.Position_cmd_sine_frequency 
+                    * 2 * M_PI * (*CTRL).timebase )
+                    +  0.5 * M_PI + 0.17 + 0.1;
+            }
+        #endif
+
+        // ESO
+        #if WHO_IS_USER == USER_WB
+            if (d_sim.user.bool_ESO_SPEED_ON == TRUE){
+                Main_esoaf_chen2021();
+            }
+            if (d_sim.user.bool_apply_ESO_SPEED_for_SPEED_FBK == TRUE){
+                (*CTRL).i->varOmega = OBSV.esoaf.xOmg * MOTOR.npp_inv;
+            }
+        #endif
+
+        // Run position loop control
+        _user_position_loop( (*CTRL).i->cmd_varTheta, (*CTRL).i->varTheta );
+        
+        break;
+    
+    case MODE_SELECT_CURY_POSITION_LOOP: // 51
+        #if WHO_IS_USER == USER_WB
+            //TODO: 讲Cury的嵌入式代码移植到emy的架构下，并且加上新算法
+            /*
+                NO_POSITION_CONTROL 0
+                TWOMOTOR_POSITION_CONTROL 1
+                SINGLE_POSITION_CONTROL 2
+                SHANK_LOOP_RUN 3
+                HIP_LOOP_RUN 4
+                BOTH_LOOP_RUN 5
+                IMPEDANCE_CONTROL 6
+            */
+            Cury_call_position_loop_controller();
+            FOC_with_vecocity_control((*CTRL).i->theta_d_elec,
+                (*CTRL).i->varOmega,
+                (*CTRL).i->cmd_varOmega,
+                (*CTRL).i->cmd_iDQ,
+                (*CTRL).i->iAB);
+            // update the cury_controller -> the code here seems to be quite stupid 
+            cury_controller.CONTROLLER_TYPE = d_sim.user.tracking_trace_Type;
+
+        #endif
+        break;
+    case MODE_SELECT_POSITION_IMPEDANCE_CONTROL: //52
+        #if WHO_IS_USER == USER_WB
+            // Generate the position command
+            #if PC_SIMULATION == TRUE
+                if ( CTRL->timebase > 0.25 ){
+                    ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN * 0.01) * (int)(d_sim.user.bool_apply_external_Force_to_Position_Loop);
+                }
+            #endif
             (*CTRL).i->cmd_varTheta = (*debug).set_deg_position_command * M_PI_OVER_180;
-            _user_wubo_PositionLoop_controller( (*CTRL).i->varTheta,
-                                                (*CTRL).i->cmd_varTheta
-            );
+
+            if(d_sim.user.BOOL_WUBO_POS_CMD_TEST == TRUE){
+                (*CTRL).i->cmd_varTheta = 0.5 * M_PI * sinf( d_sim.user.Position_cmd_sine_frequency 
+                    * 2 * M_PI * (*CTRL).timebase ) + 0.17 * cosf( 3 * d_sim.user.Position_cmd_sine_frequency 
+                    * 2 * M_PI * (*CTRL).timebase ) + 0.1 * sinf( 7 * d_sim.user.Position_cmd_sine_frequency 
+                    * 2 * M_PI * (*CTRL).timebase )
+                    +  0.5 * M_PI + 0.17 + 0.1;}
+
+            // ESO
+            if (d_sim.user.bool_ESO_SPEED_ON == TRUE){
+                Main_esoaf_chen2021();
+            }
+            if (d_sim.user.bool_apply_ESO_SPEED_for_SPEED_FBK == TRUE){
+                (*CTRL).i->varOmega = OBSV.esoaf.xOmg * MOTOR.npp_inv;
+            }
+
+            _user_wubo_PositionLoop_IMP( (*CTRL).i->cmd_varTheta, (*CTRL).i->varTheta );
         #endif
         break;
     case MODE_SELECT_COMMISSIONING: // 9
-        // #if ENABLE_COMMISSIONING == TRUE
         #if ENABLE_COMMISSIONING
             commissioning();
         #endif
-        // #endif
         break;
     case MODE_SELECT_GENERATOR://8
         #if PC_SIMULATION == TRUE
@@ -1484,22 +1298,22 @@ int  main_switch(long mode_select){
 #endif
 
 /* Motor Speed ESO */
-//Observer for speed reconstruction
-#define CJH_STYLE_RK4_OBSERVER_RAW_CODE_FOR_ESO                                  \
-        US_SR(0) = US_SR_P(0);                                                     \
-        US_SR(1) = US_SR_P(1);                                                     \
-        IS_SR(0) = IS_SR_P(0);                                                     \
-        IS_SR(1) = IS_SR_P(1);                                                     \
+//OBSV
+#define CJH_STYLE_RK4_OBSERVER_RAW_CODE                                  \
+        US(0) = US_P(0);                                                     \
+        US(1) = US_P(1);                                                     \
+        IS(0) = IS_P(0);                                                     \
+        IS(1) = IS_P(1);                                                     \
         (*fp)(t, x, fx);                                                     \
         for(i=0;i<NS;++i){                                                   \
             k1[i] = fx[i] * hs;                                              \
             xk[i] = x[i] + k1[i]*0.5;                                        \
         }                                                                    \
                                                                             \
-        IS_SR(0) = 0.5*(IS_SR_P(0)+IS_SR_C(0));                                       \
-        IS_SR(1) = 0.5*(IS_SR_P(1)+IS_SR_C(1));                                       \
-        US_SR(0) = 0.5*(US_SR_P(0)+US_SR_C(0));                                       \
-        US_SR(1) = 0.5*(US_SR_P(1)+US_SR_C(1));                                       \
+        IS(0) = 0.5*(IS_P(0)+IS_C(0));                                       \
+        IS(1) = 0.5*(IS_P(1)+IS_C(1));                                       \
+        US(0) = 0.5*(US_P(0)+US_C(0));                                       \
+        US(1) = 0.5*(US_P(1)+US_C(1));                                       \
         (*fp)(t, xk, fx);                                                    \
         for(i=0;i<NS;++i){                                                   \
             k2[i] = fx[i] * hs;                                              \
@@ -1512,10 +1326,10 @@ int  main_switch(long mode_select){
             xk[i] = x[i] + k3[i];                                            \
         }                                                                    \
                                                                             \
-        IS_SR(0) = IS_SR_C(0);                                                     \
-        IS_SR(1) = IS_SR_C(1);                                                     \
-        US_SR(0) = US_SR_C(0);                                                     \
-        US_SR(1) = US_SR_C(1);                                                     \
+        IS(0) = IS_C(0);                                                     \
+        IS(1) = IS_C(1);                                                     \
+        US(0) = US_C(0);                                                     \
+        US(1) = US_C(1);                                                     \
         (*fp)(t, xk, fx);                                                    \
         for(i=0;i<NS;++i){                                                   \
             k4[i] = fx[i] * hs;                                              \
@@ -1527,27 +1341,27 @@ void general_4states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REAL
         REAL k1[NS], k2[NS], k3[NS], k4[NS], xk[NS];
         REAL fx[NS];
         int i;
-        CJH_STYLE_RK4_OBSERVER_RAW_CODE_FOR_ESO 
+        CJH_STYLE_RK4_OBSERVER_RAW_CODE
         #undef NS
     }
 
 void init_rk4(){
     int i;
     for(i=0; i<2; ++i){
-        OFSR.rk4.us[i] = 0;
-        OFSR.rk4.is[i] = 0;
-        // OFSR.rk4.us_curr[i] = 0;
-        OFSR.rk4.is_curr[i] = 0;
-        OFSR.rk4.us_prev[i] = 0;
-        OFSR.rk4.is_prev[i] = 0;
-        OFSR.rk4.is_lpf[i]  = 0;
-        OFSR.rk4.is_hpf[i]  = 0;
-        OFSR.rk4.is_bpf[i]  = 0;
+        OBSV.rk4.us[i] = 0;
+        OBSV.rk4.is[i] = 0;
+        // OBSV.rk4.us_curr[i] = 0;
+        OBSV.rk4.is_curr[i] = 0;
+        OBSV.rk4.us_prev[i] = 0;
+        OBSV.rk4.is_prev[i] = 0;
+        OBSV.rk4.is_lpf[i]  = 0;
+        OBSV.rk4.is_hpf[i]  = 0;
+        OBSV.rk4.is_bpf[i]  = 0;
 
-        OFSR.rk4.current_lpf_register[i] = 0;
-        OFSR.rk4.current_hpf_register[i] = 0;
-        OFSR.rk4.current_bpf_register1[i] = 0;
-        OFSR.rk4.current_bpf_register2[i] = 0;
+        OBSV.rk4.current_lpf_register[i] = 0;
+        OBSV.rk4.current_hpf_register[i] = 0;
+        OBSV.rk4.current_bpf_register1[i] = 0;
+        OBSV.rk4.current_bpf_register2[i] = 0;
     }
 }
 //ESO
@@ -1560,91 +1374,184 @@ void rhf_dynamics_ESO(REAL t, REAL *x, REAL *fx){
     REAL xPL  = x[3];
 
     /* Know Signals */
-    REAL iq = AB2T(IS_SR(0), IS_SR(1), (*CTRL).s->cosT, (*CTRL).s->sinT); // Option 1
+    REAL iq = AB2T(IS(0), IS(1), (*CTRL).s->cosT, (*CTRL).s->sinT); // Option 1
     // REAL iq = AB2T(IS(0), IS(1), cos(xPos), sin(xPos)); // Option 2
-    OFSR.esoaf.xTem = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * MOTOR.KActive * iq;
+    OBSV.esoaf.xTem = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * MOTOR.KActive * iq;
 
     /* 未测试，如果用iq给定会不会好一点？？ 计算量还少*/
     /* 未测试，如果用iq给定会不会好一点？？ 计算量还少*/
     /* 未测试，如果用iq给定会不会好一点？？ 计算量还少*/
-    // OFSR.esoaf.xTem = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * MOTOR.KActive * CTRL->I.cmd_iDQ[1];
+    // OBSV.esoaf.xTem = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * MOTOR.KActive * CTRL->I.cmd_iDQ[1];
 
     /* Output Error = sine of angle error */
-    // OFSR.esoaf.output_error_sine = sin(AFE_USED.theta_d - xPos);
-    // OFSR.esoaf.output_error = AFE_USED.theta_d - xPos;
-    OFSR.esoaf.output_error_sine = sin((*CTRL).i->theta_d_elec - xPos);
-    OFSR.esoaf.output_error = (*CTRL).i->theta_d_elec - xPos;
+    // OBSV.esoaf.output_error_sine = sin(AFE_USED.theta_d - xPos);
+    // OBSV.esoaf.output_error = AFE_USED.theta_d - xPos;
+    OBSV.esoaf.output_error_sine = sin( (*CTRL).i->theta_d_elec - xPos );
+    OBSV.esoaf.output_error = (*CTRL).i->theta_d_elec - xPos;
     // you should check for sudden change in angle error.
-    if(fabsf(OFSR.esoaf.output_error)>M_PI){
-        OFSR.esoaf.output_error -= sign(OFSR.esoaf.output_error) * 2*M_PI;
+    if(fabsf(OBSV.esoaf.output_error)>M_PI){
+        OBSV.esoaf.output_error -= sign(OBSV.esoaf.output_error) * 2*M_PI;
     }
+//     REAL angle_diff(REAL a, REAL b) {
+//     // a 和 b 必须在 [0, 2 * M_PI] 范围内
+//     a = fmod(a, 2 * M_PI);
+//     b = fmod(b, 2 * M_PI);
+//     REAL d1 = a - b;
+//     REAL d2;
+//     if (d1 > 0) {
+//         d2 = a - (b + 2 * M_PI); // d2 是负的
+//     } else {
+//         d2 = (2 * M_PI + a) - b; // d2 是正的
+//     }
+//     if (fabsf(d1) < fabsf(d2)) {
+//         return d1;
+//     } else {
+//         return d2;
+//     }
+// }
+
 
     /* Extended State Observer */
     // xPos
-    fx[0] = + OFSR.esoaf.ell[0]*OFSR.esoaf.output_error_sine + xOmg;
+    fx[0] = + OBSV.esoaf.ell[0]*OBSV.esoaf.output_error_sine + xOmg;
     // xOmg
-    fx[1] = + OFSR.esoaf.ell[1]*OFSR.esoaf.output_error_sine + (OFSR.esoaf.bool_ramp_load_torque>=0) * (OFSR.esoaf.xTem - xTL) * (MOTOR.Js_inv*MOTOR.npp);
+    fx[1] = + OBSV.esoaf.ell[1]*OBSV.esoaf.output_error_sine + (OBSV.esoaf.bool_ramp_load_torque>=0) * (OBSV.esoaf.xTem - xTL) * (MOTOR.Js_inv*MOTOR.npp);
     // xTL
-    fx[2] = - OFSR.esoaf.ell[2]*OFSR.esoaf.output_error_sine + xPL;
+    fx[2] = - OBSV.esoaf.ell[2]*OBSV.esoaf.output_error_sine + xPL;
     // xPL
-    fx[3] = - OFSR.esoaf.ell[3]*OFSR.esoaf.output_error_sine;
+    fx[3] = - OBSV.esoaf.ell[3]*OBSV.esoaf.output_error_sine;
 }
 void eso_one_parameter_tuning(REAL omega_ob){
     // Luenberger Observer Framework
-    if(OFSR.esoaf.bool_ramp_load_torque == -1){
-        OFSR.esoaf.ell[0] = 2*omega_ob;
-        OFSR.esoaf.ell[1] = omega_ob*omega_ob;
-        OFSR.esoaf.ell[2] = 0.0;
-        OFSR.esoaf.ell[3] = 0.0;        
-    }else if(OFSR.esoaf.bool_ramp_load_torque == FALSE){
-        OFSR.esoaf.ell[0] =                            3*omega_ob;
-        OFSR.esoaf.ell[1] =                            3*omega_ob*omega_ob;
-        OFSR.esoaf.ell[2] = (MOTOR.Js*MOTOR.npp_inv) * 1*omega_ob*omega_ob*omega_ob;
-        OFSR.esoaf.ell[3] = 0.0;
+    if(OBSV.esoaf.bool_ramp_load_torque == -1){
+        OBSV.esoaf.ell[0] = 2*omega_ob;
+        OBSV.esoaf.ell[1] = omega_ob*omega_ob;
+        OBSV.esoaf.ell[2] = 0.0;
+        OBSV.esoaf.ell[3] = 0.0;        
+    }else if(OBSV.esoaf.bool_ramp_load_torque == FALSE){
+        OBSV.esoaf.ell[0] =                            3*omega_ob;
+        OBSV.esoaf.ell[1] =                            3*omega_ob*omega_ob;
+        OBSV.esoaf.ell[2] = (MOTOR.Js*MOTOR.npp_inv) * 1*omega_ob*omega_ob*omega_ob;
+        OBSV.esoaf.ell[3] = 0.0;
     }else{
         // TODO: REAL check?
-        OFSR.esoaf.ell[0] =                            4*omega_ob;
-        OFSR.esoaf.ell[1] =                            6*omega_ob*omega_ob;
-        OFSR.esoaf.ell[2] = (MOTOR.Js*MOTOR.npp_inv) * 4*omega_ob*omega_ob*omega_ob;
-        OFSR.esoaf.ell[3] = (MOTOR.Js*MOTOR.npp_inv) * 1*omega_ob*omega_ob*omega_ob*omega_ob;
+        OBSV.esoaf.ell[0] =                            4*omega_ob;
+        OBSV.esoaf.ell[1] =                            6*omega_ob*omega_ob;
+        OBSV.esoaf.ell[2] = (MOTOR.Js*MOTOR.npp_inv) * 4*omega_ob*omega_ob*omega_ob;
+        OBSV.esoaf.ell[3] = (MOTOR.Js*MOTOR.npp_inv) * 1*omega_ob*omega_ob*omega_ob*omega_ob;
     }
 
     #if PC_SIMULATION
-    printf("ESO OPT: %g, %g, %g, %g\n", OFSR.esoaf.ell[0], OFSR.esoaf.ell[1], OFSR.esoaf.ell[2], OFSR.esoaf.ell[3]);
+        printf("Initialized ESO ! : ESO OPT: %g, %g, %g, %g\n", OBSV.esoaf.ell[0], OBSV.esoaf.ell[1], OBSV.esoaf.ell[2], OBSV.esoaf.ell[3]);
     #endif
 }
 void Main_esoaf_chen2021(){
 
     /* OBSERVATION */
 
-    if(OFSR.esoaf.set_omega_ob != OFSR.esoaf.omega_ob){
-        OFSR.esoaf.omega_ob = OFSR.esoaf.set_omega_ob;
-        eso_one_parameter_tuning(OFSR.esoaf.omega_ob);
+    if(OBSV.esoaf.set_omega_ob != OBSV.esoaf.omega_ob){
+        OBSV.esoaf.omega_ob = OBSV.esoaf.set_omega_ob;
+        eso_one_parameter_tuning(OBSV.esoaf.omega_ob);
     }
 
-    general_4states_rk4_solver(&rhf_dynamics_ESO, (*CTRL).timebase, OFSR.esoaf.x, CL_TS);
-    if(OFSR.esoaf.x[0]>M_PI){
-        OFSR.esoaf.x[0] -= 2*M_PI;
+    general_4states_rk4_solver(&rhf_dynamics_ESO, (*CTRL).timebase, OBSV.esoaf.x, CL_TS);
+    if(OBSV.esoaf.x[0]>M_PI){
+        OBSV.esoaf.x[0] -= 2*M_PI;
     }
-    if(OFSR.esoaf.x[0]<-M_PI){
-        OFSR.esoaf.x[0] += 2*M_PI;
+    if(OBSV.esoaf.x[0]<-M_PI){
+        OBSV.esoaf.x[0] += 2*M_PI;
     }
-    OFSR.esoaf.xPos = OFSR.esoaf.x[0];
-    OFSR.esoaf.xOmg = OFSR.esoaf.x[1];
-    OFSR.esoaf.xTL  = OFSR.esoaf.x[2];
-    OFSR.esoaf.xPL  = OFSR.esoaf.x[3]; // rotatum
+    OBSV.esoaf.xPos = OBSV.esoaf.x[0];
+    OBSV.esoaf.xOmg = OBSV.esoaf.x[1];
+    OBSV.esoaf.xTL  = OBSV.esoaf.x[2];
+    OBSV.esoaf.xPL  = OBSV.esoaf.x[3]; // rotatum
 
     /* Post-observer calculations */
 }
 void init_esoaf(){
 
-    OFSR.esoaf.ell[0] = 0.0;
-    OFSR.esoaf.ell[1] = 0.0;
-    OFSR.esoaf.ell[2] = 0.0;
-    OFSR.esoaf.ell[3] = 0.0;
-    OFSR.esoaf.set_omega_ob = d_sim.user.CAREFUL_ESOAF_OMEGA_OBSERVER;
-    OFSR.esoaf.bool_ramp_load_torque = -1;
+    OBSV.esoaf.ell[0] = 0.0;
+    OBSV.esoaf.ell[1] = 0.0;
+    OBSV.esoaf.ell[2] = 0.0;
+    OBSV.esoaf.ell[3] = 0.0;
+    OBSV.esoaf.set_omega_ob = d_sim.user.CAREFUL_ESOAF_OMEGA_OBSERVER;
+    OBSV.esoaf.bool_ramp_load_torque = -1;
 
-    OFSR.esoaf.omega_ob = OFSR.esoaf.set_omega_ob;
-    eso_one_parameter_tuning(OFSR.esoaf.omega_ob);
+    OBSV.esoaf.omega_ob = OBSV.esoaf.set_omega_ob;
+    eso_one_parameter_tuning(OBSV.esoaf.omega_ob);
 }
+
+/* 电机位置环公共代码 */
+// ***********************************************************************************
+//   cmd_varTheta : 目标位置        单位：rad
+//   varTheta     : 当前电机位置    单位：rad
+//   ENC_MAX（暂时弃用）      : 编码器最大值  (我暂时只能理解成绝对值encoder的量程，对于增量式编码器，这个值又是什么，或者说怎么保证增量式编码器电机位置走短弧？)
+//   统一单位！ 否则仿真和实物的参数会差倍数，感觉不舒服
+// ***********************************************************************************
+
+void _user_position_loop(REAL cmd_varTheta, REAL varTheta){
+    PID_Position->Ref = cmd_varTheta;
+    PID_Position->Fbk = varTheta;
+    PID_Position->Err = PID_Position->Ref - PID_Position->Fbk;
+    
+    //* The detail info plz go to Bilibili Horychen's Channel Search Position Loop
+    //* 位置环给定和反馈到底怎么给，什么单位制
+    //* 角度误差归一化到-pi~pi的期间下，只有短弧存在，长弧在这个区间是一定不存在的，所以可以推导出此时电机不可能走长弧
+    // 长弧和短弧，要选短的
+    // #if PC_SIMULATION == FALSE
+    //     if (PID_Position->Err > (ENC_MAX * 0.5)){
+    //         PID_Position->Err -= ENC_MAX;
+    //     }
+    //     if (PID_Position->Err < -(ENC_MAX * 0.5)){
+    //         PID_Position->Err += ENC_MAX;
+    //     }
+    // #else
+        if (PID_Position->Err > M_PI){
+            PID_Position->Err -= 2 * M_PI;
+        }
+        if (PID_Position->Err < -M_PI){
+            PID_Position->Err += 2 * M_PI;
+        }
+    // #endif
+    
+    //* Do Postion Control
+
+    PID_Position->Out = PID_Position->Kp * PID_Position->Err;
+    if(0){
+    // only for testing!
+        # if WHO_IS_USER == USER_WB
+            d_sim.user.Position_Loop_Ref_Diff_TEST = 0.5 * M_PI * d_sim.user.Position_cmd_sine_frequency 
+            * 2  * M_PI * cosf( d_sim.user.Position_cmd_sine_frequency * 2 * M_PI * (*CTRL).timebase ) 
+            
+            - 0.25 * 3 * d_sim.user.Position_cmd_sine_frequency 
+            * 2 * M_PI * sinf( 3 * d_sim.user.Position_cmd_sine_frequency * 2 * M_PI * (*CTRL).timebase ) 
+            
+            + 0.1 * 5 * d_sim.user.Position_cmd_sine_frequency 
+            * 2 * M_PI * cosf( 5 * d_sim.user.Position_cmd_sine_frequency * 2 * M_PI * (*CTRL).timebase );
+        #endif
+    }
+    if (d_sim.user.bool_Compensation_byPosDiff == TRUE){
+        d_sim.user.Position_Loop_Ref_Diff = (PID_Position->Ref - d_sim.user.Position_Loop_Ref_prev) * CL_TS_INVERSE;
+        if( d_sim.user.Position_Loop_Ref_Diff > PID_Position->OutLimit ) d_sim.user.Position_Loop_Ref_Diff = PID_Position->OutLimit;
+        if( d_sim.user.Position_Loop_Ref_Diff < -PID_Position->OutLimit ) d_sim.user.Position_Loop_Ref_Diff = -PID_Position->OutLimit;
+        (*CTRL).i->cmd_varOmega = PID_Position->Out + d_sim.user.Position_Loop_Ref_Diff;
+    }else{
+        (*CTRL).i->cmd_varOmega = PID_Position->Out;
+    }
+    
+    if( (*CTRL).i->cmd_varOmega > PID_Position->OutLimit ){
+        (*CTRL).i->cmd_varOmega = PID_Position->OutLimit;
+    }
+    if( (*CTRL).i->cmd_varOmega < -PID_Position->OutLimit ){
+        (*CTRL).i->cmd_varOmega = -PID_Position->OutLimit;
+    }
+
+    FOC_with_vecocity_control( (*CTRL).i->theta_d_elec, 
+            (*CTRL).i->varOmega,
+            (*CTRL).i->cmd_varOmega,
+            (*CTRL).i->cmd_iDQ,
+            (*CTRL).i->iAB );
+
+    d_sim.user.Position_Loop_Ref_prev = PID_Position->Ref;
+}
+

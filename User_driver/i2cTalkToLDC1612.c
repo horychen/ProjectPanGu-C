@@ -5,7 +5,6 @@
 
 #include "All_Definition.h"
 
-
 // Note: I2C Macros used in this example can be found in the F2837xD_I2C_defines.h file
 // Prototype statements for functions found within this file.
 

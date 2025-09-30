@@ -1,7 +1,7 @@
 /*
  * ShareMemory.c
  *
- *  Created on: 2021锟斤拷1锟斤拷15锟斤拷
+ *  Created on: 2021閿熸枻鎷�1閿熸枻鎷�15閿熸枻鎷�
  *      Author: JIAHAO
  *///cpu2 CONNECTION
 
@@ -61,7 +61,7 @@ void write_DAC_buffer(){
     }
 
     if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
-        // wubo:我用的这套设备dac：dac_watch在dsp中输出[-1,1]V,通过dac板子输出[-3,3V]
+        // wubo:鎴戠敤鐨勮繖濂楄澶嘾ac锛歞ac_watch鍦╠sp涓緭鍑篬-1,1]V,閫氳繃dac鏉垮瓙杈撳嚭[-3,3V]
         (*Axis4DAC).dac_watch[0] = Axis_1.iuvw[0]*0.2;
         (*Axis4DAC).dac_watch[1] = Axis_1.iuvw[1]*0.2;
         (*Axis4DAC).dac_watch[2] = Axis_1.iuvw[2]*0.2;
@@ -136,13 +136,21 @@ void write_DAC_buffer(){
             (*Axis4DAC).dac_watch[57] = d_sim.user.bezier_equivalent_Kp * 0.05; // maximum 20
         #endif
         /* Motor Speed ESO */
-        (*Axis4DAC).dac_watch[60] = OFSR.esoaf.xOmg * ELEC_RAD_PER_SEC_2_RPM * 0.002;
-        (*Axis4DAC).dac_watch[61] = OFSR.esoaf.xPos * 0.1; // -pi to pi
+//        (*Axis4DAC).dac_watch[60] = OFSR.esoaf.xOmg * ELEC_RAD_PER_SEC_2_RPM * 0.002;
+//        (*Axis4DAC).dac_watch[61] = OFSR.esoaf.xPos * 0.1; // -pi to pi
 
         /* From Sensor */
         (*Axis4DAC).dac_watch[70] = (*CTRL).enc->varOmega * MECH_RAD_PER_SEC_2_RPM * 0.002;
 
-
+        /* Suspension control */
+        (*Axis4DAC).dac_watch[70] = Axis->place_sensor[0] * 1 / 40000000;
+        (*Axis4DAC).dac_watch[71] = Axis->place_sensor[1] * 1 / 40000000;
+        (*Axis4DAC).dac_watch[72] = Axis->place_sensor[0] * 1 / 40000000;
+        (*Axis4DAC).dac_watch[73] = Axis->place_sensor[1] * 1 / 40000000;
+        (*Axis4DAC).dac_watch[74] = Axis->place_sensor[0] * 1 / 40000000;
+        (*Axis4DAC).dac_watch[75] = Axis->place_sensor[1] * 1 / 40000000;
+        (*Axis4DAC).dac_watch[76] = Axis->place_sensor[0] * 1 / 40000000;
+        (*Axis4DAC).dac_watch[77] = Axis->place_sensor[1] * 1 / 40000000;
 //        these two are equivalent
 //        *(*CTRL).s->Speed
 //        *CTRL->s->Speed
@@ -374,10 +382,20 @@ void write_DAC_buffer(){
             (*Axis4DAC).channels[5] = 77; // OBSV.nsoaf.xOmg
             (*Axis4DAC).channels[6] = 41; // OBSV.theta_d
             (*Axis4DAC).channels[7] = 51; // AFE_USED.theta_d *0.1
+        }else if((*Axis4DAC).channels_preset==16){(*Axis4DAC).channels_preset=0;
+        /* For suspension PD control */
+            (*Axis4DAC).channels[0] = 70; 
+            (*Axis4DAC).channels[1] = 71; 
+            (*Axis4DAC).channels[2] = 72; 
+            (*Axis4DAC).channels[3] = 73; 
+            (*Axis4DAC).channels[4] = 74; 
+            (*Axis4DAC).channels[5] = 75; 
+            (*Axis4DAC).channels[6] = 76; 
+            (*Axis4DAC).channels[7] = 77; 
         }
 
         if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
-            // 锟斤拷通锟斤拷DAC锟斤拷锟斤拷锟斤拷锟斤拷薷锟�(*Axis4DAC).channels锟斤拷锟斤拷锟斤拷确锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟叫�(*Axis4DAC).dac_watch锟斤拷锟斤拷锟叫的憋拷锟斤拷锟斤拷
+            // 閿熸枻鎷烽�氶敓鏂ゆ嫹DAC閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹钖烽敓锟�(*Axis4DAC).channels閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷风‘閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鍙拷(*Axis4DAC).dac_watch閿熸枻鎷烽敓鏂ゆ嫹閿熷彨鐨勬唻鎷烽敓鏂ゆ嫹閿熸枻鎷�
 
             Write.dac_buffer[0] = (*Axis4DAC).dac_watch[(*Axis4DAC).channels[0]] + (*Axis4DAC).dac_offset[0];
             Write.dac_buffer[1] = (*Axis4DAC).dac_watch[(*Axis4DAC).channels[1]] + (*Axis4DAC).dac_offset[1];

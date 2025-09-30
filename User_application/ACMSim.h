@@ -16,7 +16,7 @@
 #include "math.h"
 #include "stdlib.h"
 
-// 声明全局变量
+// 澹版槑鍏ㄥ眬鍙橀噺
 #if PC_SIMULATION == FALSE
 extern REAL CpuTimer_Delta;
 extern Uint32 CpuTimer_Before;
@@ -35,11 +35,11 @@ extern Uint32 CpuTimer_After;
     /* ePWM CONFIGURATION */
     #define SYSTEM_PROGRAM                     EPWM1ISR
     //        #define SYSTEM_PWM_KILO_FREQUENCY               10 // 10kHz
-    //        #define SYSTEM_CARRIER_PERIOD              (100000/SYSTEM_PWM_KILO_FREQUENCY) // = TBCLK (100 MHz) / 10 (kHz) = 100e6/1e4 = 100e2 = 1e4 cnt 锟斤拷应一锟斤拷锟截诧拷锟斤拷锟斤拷
+    //        #define SYSTEM_CARRIER_PERIOD              (100000/SYSTEM_PWM_KILO_FREQUENCY) // = TBCLK (100 MHz) / 10 (kHz) = 100e6/1e4 = 100e2 = 1e4 cnt 閿熸枻鎷峰簲涓�閿熸枻鎷烽敓鎴鎷烽敓鏂ゆ嫹閿熸枻鎷�
     //        #define SYSTEM_TBPRD                       (SYSTEM_CARRIER_PERIOD/2)
     #define SYSTEM_CARRIER_PERIOD              10000 // =100000/10, max is 100kHz
     #define SYSTEM_TBPRD                       5000  // =SYSTEM_CARRIER_PERIOD/2
-    //#define SYSTEM_PWM_DEADTIME_CNT            500 // 500 锟斤拷 TBCLK = EPWMCLK/1 = 100 MHz
+    //#define SYSTEM_PWM_DEADTIME_CNT            500 // 500 閿熸枻鎷� TBCLK = EPWMCLK/1 = 100 MHz
     #define SYSTEM_PWM_DEADTIME_CNT            200
     #define SYSTEM_PWM_DEADTIME_COMPENSATION   200
         // #define SYSTEM_PWM_DEADTIME_COMPENSATION   483
@@ -50,7 +50,7 @@ extern Uint32 CpuTimer_After;
     #define SYSTEM_MIN_PWM_DUTY_LIMATATION     0.04
     #define SYSTEM_PWM_UDC_UTILIZATION         SYSTEM_MAX_PWM_DUTY_LIMATATION
 
-    /* eCAP CONFIGURATION */ /* eCAP锟斤拷锟侥诧拷锟饺ｏ拷锟津波峰？锟叫讹拷锟斤拷锟节硷拷锟斤拷值锟斤拷20000锟斤拷锟斤拷锟揭伙拷锟斤拷锟街わ拷锟絋BCLK锟斤拷锟斤拷频锟剿ｏ拷锟斤拷锟斤拷200MHz锟斤拷锟斤拷锟斤拷100MHz锟斤拷 */
+    /* eCAP CONFIGURATION */ /* eCAP閿熸枻鎷烽敓渚ヨ鎷烽敓楗猴綇鎷烽敓娲ユ尝宄帮紵閿熷彨璁规嫹閿熸枻鎷烽敓鑺傜》鎷烽敓鏂ゆ嫹鍊奸敓鏂ゆ嫹20000閿熸枻鎷烽敓鏂ゆ嫹閿熸彮浼欐嫹閿熸枻鎷烽敓琛椼倧鎷烽敓绲婤CLK閿熸枻鎷烽敓鏂ゆ嫹棰戦敓鍓匡綇鎷烽敓鏂ゆ嫹閿熸枻鎷�200MHz閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷�100MHz閿熸枻鎷� */
     #define SYSTEM_PWM_INT_MAX_COUNT               20000
     #define SYSTEM_PWM_INT_MAX_COUNT_INVERSE       5e-5 // = 1 / 20000
     #define SYSTEM_HALF_PWM_MAX_COUNT          10000
@@ -69,8 +69,8 @@ extern Uint32 CpuTimer_After;
 #include "simuser_wb.h"
 #include "simuser_cjh.h"
 #include "simuser_yzz.h"
+#include "simuser_yzk.h"
 #include "simuser_bezier.h"
-
 
 #define CURRENT_LOOP_KI_TIMES_TEN FALSE
 #define WUBO_ONLINE_TUNING TRUE
@@ -137,7 +137,7 @@ REAL difference_between_two_angles(REAL first, REAL second);
 #define SYSTEM_QEP_QPOSMAX (9999)
 #define SYSTEM_QEP_QPOSMAX_PLUS_1 (10000)
 #define OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS 2358 // wb tuned with id=3A 20241027 // 2353 // cjh tuned with id_cmd = 4A @2024-10-05 // This value need an average value due to XXX(CJH told me one day but here space is not enough to print it out)
-#define positive_current_QPOSCNT_counting_down (-1) // 正向旋转的电流导致增量式编码器QEP读数减少 则填 -1，否则默认为 1。
+#define positive_current_QPOSCNT_counting_down (-1) // 姝ｅ悜鏃嬭浆鐨勭數娴佸鑷村閲忓紡缂栫爜鍣≦EP璇绘暟鍑忓皯 鍒欏～ -1锛屽惁鍒欓粯璁や负 1銆�
 #elif (ENCODER_TYPE == ABSOLUTE_ENCODER_SCI_SHANK) || (ENCODER_TYPE == ABSOLUTE_ENCODER_SCI_HIP)
 #define SYSTEM_QEP_PULSES_PER_REV (8388608)
 #define SYSTEM_QEP_REV_PER_PULSE (1.1920929e-7)

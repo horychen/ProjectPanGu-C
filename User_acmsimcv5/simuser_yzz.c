@@ -1,10 +1,7 @@
 #include "ACMSim.h"
 
 #if WHO_IS_USER == USER_YZZ
-    #if PC_SIMULATION == FALSE
-        #include "All_Definition.h"
-        extern st_axis *Axis;
-    #endif
+
 #if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
 void _user_pmsm_observer(void){
 
@@ -29,15 +26,6 @@ void rk4_init(){
     OBSV.rk4.us_prev[1] = 0.0;
     OBSV.rk4.is_prev[0] = 0.0;
     OBSV.rk4.is_prev[1] = 0.0;
-    OBSV.theta_d = 0.0;
-    OBSV.varOmega = 0.0;
-    OBSV.count_for_encoder = 0;
-    OBSV.sum_for_encoder = 0;
-    int ind;
-    for (ind = 0; ind < 10; ind++)
-    {
-        OBSV.aver_for_encoder[ind] = 0;
-    }
 }
 #endif
 
@@ -46,15 +34,9 @@ void rk4_init(){
 #if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
     struct ObserverForExperiment OBSV;
     struct SharedFluxEstimatorForExperiment FE;
-    #if ALG_AKT_SPEED_EST_AND_RS_ID
     struct Akatsu_Variables akt;
-    #endif
-    #if ALG_Awaya_InertiaId
     struct Awaya_Variables awy;
-    #endif
-    #if ALG_qaxis_inductance_identification
     struct Qaxis_InductanceId q_inductanceid;
-    #endif
     // struct Marino2005 marino={0};
     // struct Variables_SimulatedVM                         simvm      ={0};
     // struct Variables_Ohtani1992                          ohtani     ={0};
@@ -115,14 +97,6 @@ void rk4_init(){
             k4[i] = fx[i] * hs;                                              \
             x[i] = x[i] + (k1[i] + 2*(k2[i] + k3[i]) + k4[i])*one_over_six;  \
         }
-    void general_1states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REAL *x, REAL hs){
-        #define NS 1
-        REAL k1[NS], k2[NS], k3[NS], k4[NS], xk[NS];
-        REAL fx[NS];
-        int i;
-        CJH_STYLE_RK4_OBSERVER_RAW_CODE
-        #undef NS
-    }
     void general_2states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REAL *x, REAL hs){
         #define NS 2
         REAL k1[NS], k2[NS], k3[NS], k4[NS], xk[NS];
@@ -139,14 +113,14 @@ void rk4_init(){
         CJH_STYLE_RK4_OBSERVER_RAW_CODE
         #undef NS
     }
-    // void general_4states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REAL *x, REAL hs){
-    //     #define NS 4
-    //     REAL k1[NS], k2[NS], k3[NS], k4[NS], xk[NS];
-    //     REAL fx[NS];
-    //     int i;
-    //     CJH_STYLE_RK4_OBSERVER_RAW_CODE
-    //     #undef NS
-    // }
+    void general_4states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REAL *x, REAL hs){
+        #define NS 4
+        REAL k1[NS], k2[NS], k3[NS], k4[NS], xk[NS];
+        REAL fx[NS];
+        int i;
+        CJH_STYLE_RK4_OBSERVER_RAW_CODE
+        #undef NS
+    }
     void general_5states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REAL *x, REAL hs){
         #define NS 5
         REAL k1[NS], k2[NS], k3[NS], k4[NS], xk[NS];
@@ -180,8 +154,8 @@ void rk4_init(){
         #undef NS
     }
     #if PC_SIMULATION == TRUE
-        #define OFFSET_VOLTAGE_ALPHA 0//(1*-0.2) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
-        #define OFFSET_VOLTAGE_BETA  0//(1*+0.2) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
+        #define OFFSET_VOLTAGE_ALPHA 0//(1*-0.01 *((*CTRL).timebase>0.3)) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
+        #define OFFSET_VOLTAGE_BETA  0//(1*+0.01 *((*CTRL).timebase>0.3)) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
     #else
         #define OFFSET_VOLTAGE_ALPHA 0
         #define OFFSET_VOLTAGE_BETA  0
@@ -561,13 +535,8 @@ void rk4_init(){
             }
         }
         void rhf_Holtz2003_Dynamics(REAL t, REAL *x, REAL *fx){
-            #if RS_IDENTIFICATION
-                FE.htz.emf_stator[0] = US(0) - akt.rs_cal * IS(0) - FE.htz.u_offset[0] + OFFSET_VOLTAGE_ALPHA;
-                FE.htz.emf_stator[1] = US(1) - akt.rs_cal * IS(1) - FE.htz.u_offset[1] + OFFSET_VOLTAGE_BETA ;
-            #else
-                FE.htz.emf_stator[0] = US(0) - (*CTRL).motor->R * IS(0) - FE.htz.u_offset[0] + OFFSET_VOLTAGE_ALPHA;
-                FE.htz.emf_stator[1] = US(1) - (*CTRL).motor->R * IS(1) - FE.htz.u_offset[1] + OFFSET_VOLTAGE_BETA ;
-            #endif
+            FE.htz.emf_stator[0] = US(0) - (*CTRL).motor->R * IS(0) - FE.htz.u_offset[0] + OFFSET_VOLTAGE_ALPHA;
+            FE.htz.emf_stator[1] = US(1) - (*CTRL).motor->R * IS(1) - FE.htz.u_offset[1] + OFFSET_VOLTAGE_BETA ;
             fx[0] = (FE.htz.emf_stator[0]);
             fx[1] = (FE.htz.emf_stator[1]);
         }
@@ -584,13 +553,8 @@ void rk4_init(){
             #define BOOL_USE_METHOD_INTEGRAL_INPUT TRUE
 
             // Euler's method is shit at higher speeds
-            #if RS_IDENTIFICATION
-                FE.htz.emf_stator[0] = US_C(0) - akt.rs_cal * IS_C(0) - FE.htz.u_offset[0];
-                FE.htz.emf_stator[1] = US_C(1) - akt.rs_cal * IS_C(1) - FE.htz.u_offset[1];
-            #else
-                FE.htz.emf_stator[0] = US_C(0) - (*CTRL).motor->R*IS_C(0) - FE.htz.u_offset[0];
-                FE.htz.emf_stator[1] = US_C(1) - (*CTRL).motor->R*IS_C(1) - FE.htz.u_offset[1];
-            #endif
+            FE.htz.emf_stator[0] = US_C(0) - (*CTRL).motor->R*IS_C(0) - FE.htz.u_offset[0];
+            FE.htz.emf_stator[1] = US_C(1) - (*CTRL).motor->R*IS_C(1) - FE.htz.u_offset[1];
             // FE.htz.psi_1[0] += CL_TS*(FE.htz.emf_stator[0]);
             // FE.htz.psi_1[1] += CL_TS*(FE.htz.emf_stator[1]);
 
@@ -598,10 +562,6 @@ void rk4_init(){
             general_2states_rk4_solver(&rhf_Holtz2003_Dynamics, (*CTRL).timebase, FE.htz.psi_1, CL_TS);
             FE.htz.psi_2[0] = FE.htz.psi_1[0] - (*CTRL).motor->Lq*IS_C(0);
             FE.htz.psi_2[1] = FE.htz.psi_1[1] - (*CTRL).motor->Lq*IS_C(1);
-            #if LQ_IDENTIFICATION
-                FE.htz.psi_2[0] = FE.htz.psi_1[0] - q_inductanceid.Lq *IS_C(0);
-                FE.htz.psi_2[1] = FE.htz.psi_1[1] - q_inductanceid.Lq *IS_C(1);
-            #endif
             FE.htz.psi_2_ampl = sqrt(FE.htz.psi_2[0]*FE.htz.psi_2[0]+FE.htz.psi_2[1]*FE.htz.psi_2[1]);
 
             // 限幅前求角度还是应该限幅后？
@@ -613,14 +573,9 @@ void rk4_init(){
             FE.htz.psi_1_nonSat[1] += CL_TS*(FE.htz.emf_stator[1]);
             FE.htz.psi_2_nonSat[0] = FE.htz.psi_1_nonSat[0] - (*CTRL).motor->Lq*IS_C(0);
             FE.htz.psi_2_nonSat[1] = FE.htz.psi_1_nonSat[1] - (*CTRL).motor->Lq*IS_C(1);
-            #if LQ_IDENTIFICATION
-                FE.htz.psi_2_nonSat[0] = FE.htz.psi_1_nonSat[0] - q_inductanceid.Lq *IS_C(0);
-                FE.htz.psi_2_nonSat[1] = FE.htz.psi_1_nonSat[1] - q_inductanceid.Lq *IS_C(1);
-            #endif
 
             // FE.htz.psi_aster_max = (*CTRL).taao_flux_cmd + 0.05;
-            // FE.htz.psi_aster_max = (*CTRL).i->cmd_psi + FE.htz.extra_limit;
-            FE.htz.psi_aster_max = (*CTRL).motor->KE + FE.htz.extra_limit;
+            FE.htz.psi_aster_max = (*CTRL).i->cmd_psi + FE.htz.extra_limit;
             // FE.htz.psi_aster_max = (*CTRL).taao_flux_cmd;
 
             // 限幅是针对转子磁链限幅的
@@ -678,10 +633,6 @@ void rk4_init(){
             // 限幅后的转子磁链，再求取限幅后的定子磁链
             FE.htz.psi_1[0] = FE.htz.psi_2[0] + (*CTRL).motor->Lq*IS_C(0);
             FE.htz.psi_1[1] = FE.htz.psi_2[1] + (*CTRL).motor->Lq*IS_C(1);
-            #if LQ_IDENTIFICATION
-                FE.htz.psi_1[0] = FE.htz.psi_2[0] + q_inductanceid.Lq *IS_C(0);
-                FE.htz.psi_1[1] = FE.htz.psi_2[1] + q_inductanceid.Lq *IS_C(1);
-            #endif
 
             // Speed Estimation
             if(TRUE){
@@ -919,10 +870,12 @@ void rk4_init(){
 
                 FE.no_sat.psi_1[0] = d_sim.init.KE;
                 FE.no_sat.psi_1[1] = 0;
-                FE.no_sat.psi_2[0] = 0;
+                FE.no_sat.psi_2[0] = d_sim.init.KE;
                 FE.no_sat.psi_2[1] = 0;
                 FE.no_sat.psi_2_prev[ind] = 0;
                 FE.no_sat.psi_com[ind] = 0; 
+                FE.no_sat.psi_2_min[ind] = 0;
+                FE.no_sat.psi_2_max[ind] = 0;
 
                 FE.no_sat.rs_est = d_sim.init.R;
                 FE.no_sat.u_offset[ind] = 0;
@@ -943,13 +896,9 @@ void rk4_init(){
                 FE.no_sat.time_neg2pos_prev[ind] = 0;
                 FE.no_sat.u_offset[ind] = 0;
 
-                FE.no_sat.gamma_res_transient[ind] = 0;
                 FE.no_sat.extra_limit = 0.0;
                 FE.no_sat.flag_limit_too_low = FALSE;
                 FE.no_sat.theta_e = 0;
-                FE.no_sat.gamma_res_transient_shape = 1000;
-                FE.no_sat.gamma_res_transient_I[ind] = 0;
-                FE.no_sat.gamma_res_transient_shape_I = 5000;
             }
             FE.no_sat.ell_1 = d_sim.init.KE;
             FE.no_sat.ell_2 = d_sim.init.KE;
@@ -957,28 +906,16 @@ void rk4_init(){
             FE.no_sat.psi_1_min[1] = -d_sim.init.KE;
             FE.no_sat.psi_1_max[0] = d_sim.init.KE;
             FE.no_sat.psi_1_max[1] = d_sim.init.KE;
-            FE.no_sat.psi_2_min[0] = -d_sim.init.KE;
-            FE.no_sat.psi_2_max[0] = d_sim.init.KE;
-            FE.no_sat.psi_2_min[1] = 0;
-            FE.no_sat.psi_2_max[1] = 0;
+
         }
 
         void rhf_No_Saturation_Based_Dynamics(REAL t, REAL *x, REAL *fx){
-                #if RS_IDENTIFICATION
-                    FE.no_sat.emf_stator[0] = US(0) - akt.rs_cal * IS(0) + OFFSET_VOLTAGE_ALPHA \
-                        /*P*/- VM_NOSAT_PI_CORRECTION_GAIN_P * FE.no_sat.psi_com[0] \
-                        /*I*/- x[2];
-                    FE.no_sat.emf_stator[1] = US(1) - akt.rs_cal * IS(1) + OFFSET_VOLTAGE_BETA  \
-                        /*P*/- VM_NOSAT_PI_CORRECTION_GAIN_P * FE.no_sat.psi_com[1] \
-                        /*I*/- x[3];
-                #else
-                    FE.no_sat.emf_stator[0] = US(0) - (*CTRL).motor->R * IS(0) + OFFSET_VOLTAGE_ALPHA \
-                        /*P*/- FE.no_sat.gamma_res_transient[0] * FE.no_sat.psi_com[0] \
-                        /*I*/- x[2];
-                    FE.no_sat.emf_stator[1] = US(1) - (*CTRL).motor->R * IS(1) + OFFSET_VOLTAGE_BETA  \
-                        /*P*/- FE.no_sat.gamma_res_transient[1] * FE.no_sat.psi_com[1] \
-                        /*I*/- x[3];
-                #endif
+                FE.no_sat.emf_stator[0] = US(0) - (*CTRL).motor->R * IS(0) + OFFSET_VOLTAGE_ALPHA \
+                    /*P*/- VM_NOSAT_PI_CORRECTION_GAIN_P * FE.no_sat.psi_com[0] \
+                    /*I*/- x[2];
+                FE.no_sat.emf_stator[1] = US(1) - (*CTRL).motor->R * IS(1) + OFFSET_VOLTAGE_BETA  \
+                    /*P*/- VM_NOSAT_PI_CORRECTION_GAIN_P * FE.no_sat.psi_com[1] \
+                    /*I*/- x[3];
                 FE.no_sat.u_offset[0] = x[2];
                 FE.no_sat.u_offset[1] = x[3];
                 fx[0] = FE.no_sat.emf_stator[0];
@@ -992,24 +929,19 @@ void rk4_init(){
             general_4states_rk4_solver(&rhf_No_Saturation_Based_Dynamics, (*CTRL).timebase, FE.no_sat.psi_1, CL_TS);
             FE.no_sat.psi_2[0] = FE.no_sat.psi_1[0] - (*CTRL).motor->Lq*IS_C(0);
             FE.no_sat.psi_2[1] = FE.no_sat.psi_1[1] - (*CTRL).motor->Lq*IS_C(1);
-            #if LQ_IDENTIFICATION
-                FE.no_sat.psi_1[0] = FE.no_sat.psi_2[0] + q_inductanceid.Lq *IS_C(0);
-                FE.no_sat.psi_1[1] = FE.no_sat.psi_2[1] + q_inductanceid.Lq *IS_C(1);
-            #endif
-
             int ind;
             //psi1 
             for(ind=0;ind<2;++ind){ // Loop for alpha & beta components // destroy integer outside this loop to avoid accidentally usage 
                 /* 必须先检查是否进入levelA */
                 if(FE.no_sat.flag_pos2negLevelA[ind] == TRUE){ 
-                    if(FE.no_sat.psi_2_prev[ind]<0 && FE.no_sat.psi_2[ind]<0){ // 二次检查，磁链已经是负的了  <- 可以改为施密特触发器
+                    if(FE.no_sat.psi_1_prev[ind]<0 && FE.no_sat.psi_1[ind]<0){ // 二次检查，磁链已经是负的了  <- 可以改为施密特触发器
                         if(FE.no_sat.flag_pos2negLevelB[ind] == FALSE){
                             FE.no_sat.count_negative_cycle+=1; // FE.no_sat.count_positive_cycle = 0;
                             // printf("POS2NEG: %g, %d\n", (*CTRL).timebase, ind);
                             // printf("%g, %g\n", FE.no_sat.psi_2_prev[ind], FE.no_sat.psi_2[ind]);
                             // getch();
                             // 第一次进入寻找最小值的levelB，说明最大值已经检测到。
-                            FE.no_sat.psi_1_max[ind] = FE.no_sat.psi_2_max[ind]; // 不区别定转子磁链，区别：psi_2是连续更新的，而psi_1是离散更新的。
+                            FE.no_sat.psi_2_max[ind] = FE.no_sat.psi_1_max[ind]; // 不区别定转子磁链，区别：psi_2是连续更新的，而psi_1是离散更新的。
                             // 初始化
                             FE.no_sat.flag_neg2posLevelA[ind] = FALSE;
                             FE.no_sat.flag_neg2posLevelB[ind] = FALSE;
@@ -1017,7 +949,7 @@ void rk4_init(){
                             // 注意这里是正半周到负半周切换的时候才执行一次的哦！
                             // FE.no_sat.accumulated__u_off_saturation_time_correction[ind] += FE.no_sat.u_off_saturation_time_correction[ind];
                             // 饱和时间的正弦包络线的正负半周的频率比磁链频率低多啦！需要再额外加一个低频u_offset校正
-                            FE.no_sat.psi_com[ind]= 0.5 * (FE.no_sat.psi_2_max[ind] + FE.no_sat.psi_2_min[ind]);
+                            FE.no_sat.psi_com[ind]= 0.5 * (FE.no_sat.psi_1_max[ind] + FE.no_sat.psi_1_min[ind]);
                             FE.no_sat.ell_1 = (FE.no_sat.psi_2_max[ind] - FE.no_sat.psi_2_min[ind]) * 0.5;
                             FE.no_sat.psi_1_min[ind] = 0.0;
                             FE.no_sat.psi_2_min[ind] = 0.0;
@@ -1025,31 +957,31 @@ void rk4_init(){
                         }
                         FE.no_sat.flag_pos2negLevelB[ind] = TRUE;
                         if(FE.no_sat.flag_pos2negLevelB[ind] == TRUE){ // 寻找磁链最小值
-                            if(FE.no_sat.psi_2[ind] < FE.no_sat.psi_2_min[ind]){
-                                FE.no_sat.psi_2_min[ind] = FE.no_sat.psi_2[ind];
+                            if(FE.no_sat.psi_1[ind] < FE.no_sat.psi_1_min[ind]){
+                                FE.no_sat.psi_1_min[ind] = FE.no_sat.psi_1[ind];
                             }
                         }
                     }else{ // 磁链还没有变负，说明是虚假过零，比如在震荡，FE.no_sat.psi_2[0]>0
                         FE.no_sat.flag_pos2negLevelA[ind] = FALSE; /* 震荡的话，另一方的检测就有可能被触动？ */
                     }
                 }
-                if(FE.no_sat.psi_2_prev[ind]>0 && FE.no_sat.psi_2[ind]<0){ // 发现磁链由正变负的时刻
+                if(FE.no_sat.psi_1_prev[ind]>0 && FE.no_sat.psi_1[ind]<0){ // 发现磁链由正变负的时刻
                     FE.no_sat.flag_pos2negLevelA[ind] = TRUE;
                 }
 
 
                 if(FE.no_sat.flag_neg2posLevelA[ind] == TRUE){ 
-                    if(FE.no_sat.psi_2_prev[ind]>0 && FE.no_sat.psi_2[ind]>0){ // 二次检查，磁链已经是正的了
+                    if(FE.no_sat.psi_1_prev[ind]>0 && FE.no_sat.psi_1[ind]>0){ // 二次检查，磁链已经是正的了
                         if(FE.no_sat.flag_neg2posLevelB[ind] == FALSE){
                             FE.no_sat.count_positive_cycle+=1; // FE.no_sat.count_negative_cycle = 0;
                             // 第一次进入寻找最大值的levelB，说明最小值已经检测到。
-                            FE.no_sat.psi_1_min[ind] = FE.no_sat.psi_2_min[ind]; // 不区别定转子磁链，区别：psi_2是连续更新的，而psi_1是离散更新的。
+                            FE.no_sat.psi_2_min[ind] = FE.no_sat.psi_1_min[ind]; // 不区别定转子磁链，区别：psi_2是连续更新的，而psi_1是离散更新的。
                             // 初始化
                             FE.no_sat.flag_pos2negLevelA[ind] = FALSE;
                             FE.no_sat.flag_pos2negLevelB[ind] = FALSE;
 
                             // FE.no_sat.accumulated__u_off_saturation_time_correction[ind] += FE.no_sat.u_off_saturation_time_correction[ind];
-                            FE.no_sat.psi_com[ind]= 0.5 * (FE.no_sat.psi_2_max[ind] + FE.no_sat.psi_2_min[ind]);
+                            FE.no_sat.psi_com[ind]= 0.5 * (FE.no_sat.psi_1_max[ind] + FE.no_sat.psi_1_min[ind]);
                             FE.no_sat.ell_1 = (FE.no_sat.psi_2_max[ind] - FE.no_sat.psi_2_min[ind]) * 0.5;
 
                             FE.no_sat.psi_1_max[ind] = 0.0;
@@ -1058,23 +990,21 @@ void rk4_init(){
                         }
                         FE.no_sat.flag_neg2posLevelB[ind] = TRUE; 
                         if(FE.no_sat.flag_neg2posLevelB[ind] == TRUE){ // 寻找磁链最大值
-                            if(FE.no_sat.psi_2[ind] > FE.no_sat.psi_2_max[ind]){
-                                FE.no_sat.psi_2_max[ind] = FE.no_sat.psi_2[ind];
+                            if(FE.no_sat.psi_1[ind] > FE.no_sat.psi_1_max[ind]){
+                                FE.no_sat.psi_1_max[ind] = FE.no_sat.psi_1[ind];
                             }
                         }
                     }else{ // 磁链还没有变正，说明是虚假过零，比如在震荡，FE.no_sat.psi_2[0]<0
                         FE.no_sat.flag_neg2posLevelA[ind] = FALSE;
                     }
                 }
-                if(FE.no_sat.psi_2_prev[ind]<0 && FE.no_sat.psi_2[ind]>0){ // 发现磁链由负变正的时刻
+                if(FE.no_sat.psi_1_prev[ind]<0 && FE.no_sat.psi_1[ind]>0){ // 发现磁链由负变正的时刻
                     FE.no_sat.flag_neg2posLevelA[ind] = TRUE;
                 }
             }   
             //psi2
-            FE.no_sat.gamma_res_transient[0] = VM_NOSAT_PI_CORRECTION_GAIN_P*exp(- FE.no_sat.gamma_res_transient_shape * FE.no_sat.psi_com[0] * FE.no_sat.psi_com[0]);
-            FE.no_sat.gamma_res_transient[1] = VM_NOSAT_PI_CORRECTION_GAIN_P*exp(- FE.no_sat.gamma_res_transient_shape * FE.no_sat.psi_com[1] * FE.no_sat.psi_com[1]);
-            FE.no_sat.gamma_res_transient_I[0] = 80000*exp(- FE.no_sat.gamma_res_transient_shape_I * FE.no_sat.psi_com[0] * FE.no_sat.psi_com[0]);
-            FE.no_sat.gamma_res_transient_I[1] = 80000*exp(- FE.no_sat.gamma_res_transient_shape_I * FE.no_sat.psi_com[1] * FE.no_sat.psi_com[1]);
+            
+
             // 积分方法：（从上面的程序来看，u_off的LPF的输入是每半周更新一次的。
                 // FE.no_sat.u_offset[0] += VM_PROPOSED_PI_CORRECTION_GAIN_I * CL_TS * FE.no_sat.psi_com[0];
                 // FE.no_sat.u_offset[1] += VM_PROPOSED_PI_CORRECTION_GAIN_I * CL_TS * FE.no_sat.psi_com[0];
@@ -1240,11 +1170,10 @@ void rk4_init(){
                 FE.stwl.sat_max_time_reg[ind] = 0.0;
                 FE.stwl.extra_limit = 0.0;
                 FE.stwl.flag_limit_too_low = FALSE;
-                FE.stwl.u_off_saturation_time_sum[ind] = 0;
             };
         }
         int bool_positive_extra_limit_2 =TRUE;
-        REAL stwl_realtime_gain_off =  0.005;
+        REAL stwl_realtime_gain_off =  1.0;
         void rhf_Saturation_time_Without_Limiting_Dynamics(REAL t, REAL *x, REAL *fx){
             FE.stwl.emf_stator[0] = US(0) - (*CTRL).motor->R * IS(0) - FE.stwl.u_offset[0] + OFFSET_VOLTAGE_ALPHA;
             FE.stwl.emf_stator[1] = US(1) - (*CTRL).motor->R * IS(1) - FE.stwl.u_offset[1] + OFFSET_VOLTAGE_BETA ;
@@ -1252,11 +1181,11 @@ void rk4_init(){
             fx[1] = (FE.stwl.emf_stator[1]);
         }
         void Main_Saturation_time_Without_Limiting(){
-            #define PSI_MU_ASTER_MAX_STWL FE.stwl.psi_aster_max // Holtz缺点就是实际磁链超过给定磁链时，失效！自动检测上下界同时饱和的情况，然后增大限幅？
+            #define PSI_MU_ASTER_MAX FE.htz.psi_aster_max // Holtz缺点就是实际磁链超过给定磁链时，失效！自动检测上下界同时饱和的情况，然后增大限幅？
             #define BOOL_TURN_ON_ADAPTIVE_EXTRA_LIMIT FALSE // The limit is extended when both upper and lower limit are reached in a cycle.
 
             #define BOOL_USE_METHOD_LPF_INPUT      FALSE
-            #define BOOL_USE_METHOD_INTEGRAL_INPUT_STWL TRUE
+            #define BOOL_USE_METHOD_INTEGRAL_INPUT TRUE
 
             // Euler's method is shit at higher speeds
             FE.stwl.emf_stator[0] = US_C(0) - (*CTRL).motor->R*IS_C(0) - FE.stwl.u_offset[0];
@@ -1288,13 +1217,28 @@ void rk4_init(){
             int ind;
             for(ind=0;ind<2;++ind){
                 if((*CTRL).i->cmd_varOmega != 0.0){
-                    if(FE.stwl.psi_2[ind]    > PSI_MU_ASTER_MAX_STWL){ // TODO BUG呀！这里怎么可以是>应该是大于等于啊！
+                    if(FE.stwl.psi_2[ind]    > PSI_MU_ASTER_MAX){ // TODO BUG呀！这里怎么可以是>应该是大于等于啊！
+                        FE.stwl.psi_2[ind]   = PSI_MU_ASTER_MAX;
                         FE.stwl.sat_max_time[ind] += CL_TS;
-                    }else if(FE.stwl.psi_2[ind] < -PSI_MU_ASTER_MAX_STWL){
+                        // marino.lambda_inv = marino_saturation_gain_scale_factor1*LAMBDA_INV_xOmg;
+                        // marino.gamma_inv  = marino_saturation_gain_scale_factor2*GAMMA_INV_xTL;
+                        // marino_sat_d_axis_flux_control = 0.0;
+                        // marino_sat_q_axis_flux_control = 0.0;
+                    }else if(FE.stwl.psi_2[ind] < -PSI_MU_ASTER_MAX){
+                        FE.stwl.psi_2[ind]   = -PSI_MU_ASTER_MAX;
                         FE.stwl.sat_min_time[ind] += CL_TS;
+                    //     marino.lambda_inv = marino_saturation_gain_scale_factor1*LAMBDA_INV_xOmg;
+                    //     marino.gamma_inv  = marino_saturation_gain_scale_factor2*GAMMA_INV_xTL;
+                    //     marino_sat_d_axis_flux_control = 0.0;
+                    //     marino_sat_q_axis_flux_control = 0.0;
                     }else{
                         // 这样可以及时清零饱和时间
                         if(FE.stwl.sat_max_time[ind]>0){FE.stwl.sat_max_time[ind] -= CL_TS;}
+                        if(FE.stwl.sat_min_time[ind]>0){FE.stwl.sat_min_time[ind] -= CL_TS;}
+                        // marino.lambda_inv = LAMBDA_INV_xOmg;
+                        // marino.gamma_inv  = GAMMA_INV_xTL;
+                        // marino_sat_d_axis_flux_control = 1.0;
+                        // marino_sat_q_axis_flux_control = 1.0;
                     }
                 }
                 // 上限饱和减去下限饱和作为误差，主要为了消除实际磁链幅值大于给定的情况，实际上这种现象在常见工况下出现次数不多。
@@ -1325,16 +1269,38 @@ void rk4_init(){
             FE.stwl.psi_1[0] = FE.stwl.psi_2[0] + (*CTRL).motor->Lq*IS_C(0);
             FE.stwl.psi_1[1] = FE.stwl.psi_2[1] + (*CTRL).motor->Lq*IS_C(1);
 
+            // Speed Estimation
+            if(TRUE){
+                // FE.stwl.ireq[0] = (*CTRL).Lmu_inv*FE.stwl.psi_2[0] - IS_C(0);
+                // FE.stwl.ireq[1] = (*CTRL).Lmu_inv*FE.stwl.psi_2[1] - IS_C(1);
+                REAL temp;
+                temp = (FE.stwl.psi_1[0]*FE.stwl.psi_1[0]+FE.stwl.psi_1[1]*FE.stwl.psi_1[1]);
+                if(temp>0.001){
+                    FE.stwl.field_speed_est = - (FE.stwl.psi_1[0]*-FE.stwl.emf_stator[1] + FE.stwl.psi_1[1]*FE.stwl.emf_stator[0]) / temp;
+                }
+                temp = (FE.stwl.psi_2[0]*FE.stwl.psi_2[0]+FE.stwl.psi_2[1]*FE.stwl.psi_2[1]);
+                if(temp>0.001){
+                    FE.stwl.slip_est = (*CTRL).motor->Rreq*(IS_C(0)*-FE.stwl.psi_2[1]+IS_C(1)*FE.stwl.psi_2[0]) / temp;
+                }
+                FE.stwl.omg_est = FE.stwl.field_speed_est - FE.stwl.slip_est;
+            }
+
+
             // TODO My proposed saturation time based correction method NOTE VERY COOL
-            #define CALCULATE_OFFSET_VOLTAGE_COMPENSATION_TERMS_STWL \
+            #define CALCULATE_OFFSET_VOLTAGE_COMPENSATION_TERMS \
                 FE.stwl.u_off_original_lpf_input[ind]         = 0.5*(FE.stwl.psi_2_min[ind] + FE.stwl.psi_2_max[ind]) /  (FE.stwl.Delta_t+FE.stwl.Delta_t_last); \
                 FE.stwl.u_off_calculated_increment[ind]       = 0.5*(FE.stwl.psi_2_min[ind] + FE.stwl.psi_2_max[ind]) / ((FE.stwl.Delta_t+FE.stwl.Delta_t_last) - (FE.stwl.sat_max_time[ind]+FE.stwl.sat_min_time[ind])); \
                 FE.stwl.u_off_saturation_time_correction[ind] = FE.stwl.sat_max_time[ind] - FE.stwl.sat_min_time[ind]; \
-                FE.stwl.u_off_direct_calculated[ind] += (FE.stwl.count_negative_cycle+FE.stwl.count_positive_cycle>4) * FE.stwl.u_off_calculated_increment[ind]; \
-                FE.stwl.u_off_saturation_time_sum[ind] = FE.stwl.sat_max_time[ind] + FE.stwl.sat_min_time[ind];
+                FE.stwl.u_off_direct_calculated[ind] += (FE.stwl.count_negative_cycle+FE.stwl.count_positive_cycle>4) * FE.stwl.u_off_calculated_increment[ind]; // if(BOOL_USE_METHOD_DIFFERENCE_INPUT) 
                 // 引入 count：刚起动时的几个磁链正负半周里，Delta_t_last 存在巨大的计算误差，所以要放弃更新哦。
 
             for(ind=0;ind<2;++ind){ // Loop for alpha & beta components // destroy integer outside this loop to avoid accidentally usage 
+
+                // if( tmin!=0 && tmax!=0 ){
+                //     // The sat func's limit is too small.
+                //     limit += TS * min(tmin, tmax);
+                // }
+
 
                 /* 必须先检查是否进入levelA */
                 if(FE.stwl.flag_pos2negLevelA[ind] == TRUE){ 
@@ -1354,7 +1320,7 @@ void rk4_init(){
                             FE.stwl.flag_neg2posLevelB[ind] = FALSE;
 
                             // 注意这里是正半周到负半周切换的时候才执行一次的哦！
-                            CALCULATE_OFFSET_VOLTAGE_COMPENSATION_TERMS_STWL
+                            CALCULATE_OFFSET_VOLTAGE_COMPENSATION_TERMS
                             // FE.stwl.accumulated__u_off_saturation_time_correction[ind] += FE.stwl.u_off_saturation_time_correction[ind];
                             FE.stwl.sign__u_off_saturation_time_correction[ind] = -1.0;
                             // 饱和时间的正弦包络线的正负半周的频率比磁链频率低多啦！需要再额外加一个低频u_offset校正
@@ -1411,7 +1377,7 @@ void rk4_init(){
                             FE.stwl.flag_pos2negLevelA[ind] = FALSE;
                             FE.stwl.flag_pos2negLevelB[ind] = FALSE;
 
-                            CALCULATE_OFFSET_VOLTAGE_COMPENSATION_TERMS_STWL
+                            CALCULATE_OFFSET_VOLTAGE_COMPENSATION_TERMS
                             // FE.stwl.accumulated__u_off_saturation_time_correction[ind] += FE.stwl.u_off_saturation_time_correction[ind];
                             FE.stwl.sign__u_off_saturation_time_correction[ind] = 1.0;
 
@@ -1449,22 +1415,43 @@ void rk4_init(){
                 }
             }
 
-            #if BOOL_USE_METHOD_INTEGRAL_INPUT_STWL
-                #define INTEGRAL_INPUT_stwl(X)  FE.stwl.u_off_saturation_time_correction[X] //FE.stwl.u_off_saturation_time_correction[X] // exact offset calculation for compensation
+            /*这里一共有四种方案，积分两种，LPF两种：
+            1. Holtz03原版是用u_off_original_lpf_input过LPF，
+            2. 我发现u_off_original_lpf_input过积分器才能完全补偿偏置电压，
+            3. 我还提出可以直接算出偏置电压补偿误差（可加LPF），
+            4. 我还提出了用饱和时间去做校正的方法*/
+
+            // 积分方法：（从上面的程序来看，u_off的LPF的输入是每半周更新一次的。
+            #if BOOL_USE_METHOD_INTEGRAL_INPUT
+                #define INTEGRAL_INPUT(X)   FE.stwl.u_off_saturation_time_correction[X] // exact offset calculation for compensation
                 // FE.stwl.sat_time_offset[X]
                 // #define INTEGRAL_INPUT(X)   FE.stwl.accumulated__u_off_saturation_time_correction[X]
                 // #define INTEGRAL_INPUT(X)   FE.stwl.u_off_original_lpf_input[X]
-                // FE.stwl.u_off_original_lpf_input[ind]         = 0.5*(FE.stwl.psi_2_min[ind] + FE.stwl.psi_2_max[ind]) /  (FE.stwl.Delta_t+FE.stwl.Delta_t_last); \
-                // FE.stwl.u_off_calculated_increment[ind]       = 0.5*(FE.stwl.psi_2_min[ind] + FE.stwl.psi_2_max[ind]) / ((FE.stwl.Delta_t+FE.stwl.Delta_t_last) - (FE.stwl.sat_max_time[ind]+FE.stwl.sat_min_time[ind])); \
-                // FE.stwl.u_off_saturation_time_correction[ind] = FE.stwl.sat_max_time[ind] - FE.stwl.sat_min_time[ind]; \
-                // FE.stwl.u_off_direct_calculated[ind] += (FE.stwl.count_negative_cycle+FE.stwl.count_positive_cycle>4) * FE.stwl.u_off_calculated_increment[ind]; // if(BOOL_USE_METHOD_DIFFERENCE_INPUT) 
 
                 long int local_sum = FE.stwl.negative_cycle_in_count[0] + FE.stwl.positive_cycle_in_count[0] + FE.stwl.negative_cycle_in_count[1] + FE.stwl.positive_cycle_in_count[1];
                 if(local_sum>0){
                     FE.stwl.gain_off = stwl_realtime_gain_off * HOLTZ_2002_GAIN_OFFSET / ((REAL)local_sum*CL_TS);
                 }
-                FE.stwl.u_offset[0] += FE.stwl.gain_off * CL_TS * INTEGRAL_INPUT_stwl(0);
-                FE.stwl.u_offset[1] += FE.stwl.gain_off * CL_TS * INTEGRAL_INPUT_stwl(1);
+                FE.stwl.u_offset[0] += FE.stwl.gain_off * CL_TS * INTEGRAL_INPUT(0);
+                FE.stwl.u_offset[1] += FE.stwl.gain_off * CL_TS * INTEGRAL_INPUT(1);
+
+                // 想法是好的，但是没有用，因为咱们要的不是磁链正负半周的饱和时间最大和最小相互抵消；实际上观察到正负半周是饱和时间的正弦包络线的正负半周，频率比磁链频率低多啦！
+                // FE.stwl.accumulated__u_off_saturation_time_correction[0] += FE.stwl.gain_off * CL_TS * INTEGRAL_INPUT(0);
+                // FE.stwl.accumulated__u_off_saturation_time_correction[1] += FE.stwl.gain_off * CL_TS * INTEGRAL_INPUT(1);
+                // if(FE.stwl.sign__u_off_saturation_time_correction[0]>0){
+                //     FE.stwl.u_offset[0] = FE.stwl.accumulated__u_off_saturation_time_correction[0];
+                //     FE.stwl.sign__u_off_saturation_time_correction[0] = 0;
+                // }
+                // if(FE.stwl.sign__u_off_saturation_time_correction[1]>0){
+                //     FE.stwl.u_offset[1] = FE.stwl.accumulated__u_off_saturation_time_correction[1];
+                //     FE.stwl.sign__u_off_saturation_time_correction[1] = 0;
+                // }
+
+                // 本来想二重积分消除交流波动，但是我发现饱和时间误差波动的原因是上下饱和时间清零不及时导致的。但是哦……好像也没有有效地及时清零的方法，所以还是试试双重积分吧：
+                // FE.stwl.u_offset_intermediate[0] += FE.stwl.gain_off * CL_TS * INTEGRAL_INPUT(0);
+                // FE.stwl.u_offset_intermediate[1] += FE.stwl.gain_off * CL_TS * INTEGRAL_INPUT(1);
+                // FE.stwl.u_offset[0] += CL_TS * FE.stwl.u_offset_intermediate[0];
+                // FE.stwl.u_offset[1] += CL_TS * FE.stwl.u_offset_intermediate[1];
             #endif
 
             // 低通
@@ -1476,6 +1463,19 @@ void rk4_init(){
                 FE.stwl.u_offset[1] = _lpf( LPF_INPUT(1), FE.stwl.u_offset[1], TAU_OFF_INVERSE);
             #endif
 
+            // 差分
+            // 别傻，不是在这里更新的，此处更新频率是1/CL_TS啊…… 
+            // FE.stwl.u_offset[0] += DIFFERENCE_INPUT(0);
+            // FE.stwl.u_offset[1] += DIFFERENCE_INPUT(1);
+
+            // 直通
+            // FE.stwl.u_offset[0] = FE.stwl.u_off_direct_calculated[0];
+            // FE.stwl.u_offset[1] = FE.stwl.u_off_direct_calculated[1];
+
+            // FE.stwl.psi_1_nonSat[0] = FE.stwl.psi_1[0];
+            // FE.stwl.psi_1_nonSat[1] = FE.stwl.psi_1[1];
+            // FE.stwl.psi_2_nonSat[0] = FE.stwl.psi_2[0];
+            // FE.stwl.psi_2_nonSat[1] = FE.stwl.psi_2[1];
             FE.stwl.theta_d = atan2(FE.stwl.psi_2[1], FE.stwl.psi_2[0]);
             FE.stwl.theta_e = angle_diff(FE.stwl.theta_d, (*CTRL).i->theta_d_elec) * ONE_OVER_2PI * 360;
             FE.stwl.psi_2_prev[0] = FE.stwl.psi_2[0];
@@ -1548,86 +1548,25 @@ void rk4_init(){
     }
 
     #endif
-    #if AFE_42_BandP
-    void init_Bernard(){
-        FE.Bernard.theta_d = 0;
-        FE.Bernard.psi_2_ampl = 0;
-        FE.Bernard.psi_1[0] = 0;
-        FE.Bernard.psi_1[1] = 0;
-        FE.Bernard.psi_2[0] = 0;
-        FE.Bernard.psi_2[1] = 0;
-        FE.Bernard.psi_PM = d_sim.init.KE * 0.9;
-        FE.Bernard.GAMMA = 7000;
-        FE.Bernard.error_correction = 0;
-        FE.Bernard.emf_stator[0] = 0;
-        FE.Bernard.emf_stator[1] = 0;
-        FE.Bernard.x[0] = d_sim.init.KE;
-        FE.Bernard.x[1] = 0;
-        FE.Bernard.x[2] = d_sim.init.KE * 0.9;
-        FE.Bernard.cosT = 1;
-        FE.Bernard.sinT = 0;
-    }
-    void rhf_Bernard2017_Dynamics(REAL t, REAL *x, REAL *fx){
 
-        fx[0] = US(0) - (*CTRL).motor->R * IS(0) - 2 * FE.Bernard.GAMMA * FE.Bernard.psi_2[0] * FE.Bernard.error_correction + OFFSET_VOLTAGE_ALPHA;
-        fx[1] = US(1) - (*CTRL).motor->R * IS(1) - 2 * FE.Bernard.GAMMA * FE.Bernard.psi_2[1] * FE.Bernard.error_correction + OFFSET_VOLTAGE_BETA;
-        fx[2] = FE.Bernard.GAMMA * x[2] * FE.Bernard.error_correction;
-    }
-    void Main_Bernard2017(){
-
-        general_3states_rk4_solver(&rhf_Bernard2017_Dynamics, (*CTRL).timebase, FE.Bernard.x, CL_TS);
-        // Unpack x
-        FE.Bernard.psi_1[0] = FE.Bernard.x[0];
-        FE.Bernard.psi_1[1] = FE.Bernard.x[1];
-        FE.Bernard.psi_PM = FE.Bernard.x[2];
-        // rotor flux updates
-        FE.Bernard.psi_2[0] = FE.Bernard.psi_1[0] - (*CTRL).motor->Lq * IS_C(0);
-        FE.Bernard.psi_2[1] = FE.Bernard.psi_1[1] - (*CTRL).motor->Lq * IS_C(1);
-        FE.Bernard.psi_2_ampl = FE.Bernard.psi_2[0]*FE.Bernard.psi_2[0] + FE.Bernard.psi_2[1]*FE.Bernard.psi_2[1];
-        FE.Bernard.theta_d = atan2(FE.Bernard.psi_2[1], FE.Bernard.psi_2[0]);
-        FE.Bernard.error_correction = FE.Bernard.psi_2_ampl - FE.Bernard.psi_PM * FE.Bernard.psi_PM;
-        FE.Bernard.cosT = cos(FE.Bernard.theta_d);
-        FE.Bernard.sinT = sin(FE.Bernard.theta_d);
-        FE.Bernard.theta_e = angle_diff(FE.Bernard.theta_d, (*CTRL).i->theta_d_elec) * ONE_OVER_2PI * 360;
-    }
-    #endif
     void simulation_test_flux_estimators(){
         // MainFE_HUWU_1998();
-        #if AFE_37_NO_SATURATION_BASED
-            Main_No_Saturation_Based();
-        #endif
+        Main_No_Saturation_Based();
         VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
-            
+        Main_VM_ClosedLoopFluxEstimatorForPMSM();
         Main_the_active_flux_estimator();
-        // VM_LascuAndreescus2006();
-        #if AFE_42_BandP
-            Main_Bernard2017();
-        #endif
-        #if AFE_38_OUTPUT_ERROR_CLOSED_LOOP
-            Main_VM_ClosedLoopFluxEstimatorForPMSM();
-        #endif
+        VM_LascuAndreescus2006();
         // Main_Saturation_time_Without_Limiting();
         // VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
     }
 
     void init_FE(){
         // init_FE_huwu();
-        #if AFE_38_OUTPUT_ERROR_CLOSED_LOOP
         init_ClosedLoopFluxEstimatorForPMSM();
-        #endif
-        #if AFE_25_VM_CM_FUSION
         init_afe();
-        #endif
-        #if AFE_37_NO_SATURATION_BASED
-            init_No_Saturation_Based();
-        #endif
+        init_No_Saturation_Based();
         init_FE_htz();
-        #if AFE_13_LASCU_ANDREESCUS_2006
-            init_LascuAndreescus2006();
-        #endif
-        #if AFE_42_BandP
-            init_Bernard();
-        #endif
+        init_LascuAndreescus2006();
         // init_Saturation_time_Without_Limiting();
     }
 
@@ -1642,6 +1581,117 @@ void rk4_init(){
 /* 4rd-order ESO 
  ********************************************/
 /* The 4rd-order dynamic system */
+#if PC_SIMULATION || SELECT_ALGORITHM == ALG_ESOAF
+void rhf_dynamics_ESO(REAL t, REAL *x, REAL *fx){
+
+    /* Unpack States */
+    REAL xPos = x[0];
+    REAL xOmg = x[1];
+    REAL xTL  = x[2];
+    REAL xPL  = x[3];
+
+    /* Know Signals */
+    REAL iq = AB2T(IS(0), IS(1), AFE_USED.cosT, AFE_USED.sinT); // Option 1
+    // REAL iq = AB2T(IS(0), IS(1), cos(xPos), sin(xPos)); // Option 2
+    OBSV.esoaf.xTem = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * MOTOR.KActive * iq;
+
+    /* 未测试，如果用iq给定会不会好一点？？ 计算量还少*/
+    /* 未测试，如果用iq给定会不会好一点？？ 计算量还少*/
+    /* 未测试，如果用iq给定会不会好一点？？ 计算量还少*/
+    // OBSV.esoaf.xTem = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * MOTOR.KActive * CTRL->I.cmd_iDQ[1];
+
+    /* Output Error = sine of angle error */
+    OBSV.esoaf.output_error_sine = sin(AFE_USED.theta_d - xPos);
+    OBSV.esoaf.output_error = AFE_USED.theta_d - xPos;
+    // you should check for sudden change in angle error.
+    if(fabsf(OBSV.esoaf.output_error)>M_PI){
+        OBSV.esoaf.output_error -= sign(OBSV.esoaf.output_error) * 2*M_PI;
+    }
+
+    /* Extended State Observer */
+    // xPos
+    fx[0] = + OBSV.esoaf.ell[0]*OBSV.esoaf.output_error_sine + xOmg;
+    // xOmg
+    fx[1] = + OBSV.esoaf.ell[1]*OBSV.esoaf.output_error_sine + (OBSV.esoaf.bool_ramp_load_torque>=0) * (OBSV.esoaf.xTem - xTL) * (MOTOR.Js_inv*MOTOR.npp);
+    // xTL
+    fx[2] = - OBSV.esoaf.ell[2]*OBSV.esoaf.output_error_sine + xPL;
+    // xPL
+    fx[3] = - OBSV.esoaf.ell[3]*OBSV.esoaf.output_error_sine;
+}
+void eso_one_parameter_tuning(REAL omega_ob){
+    // Luenberger Observer Framework
+    if(OBSV.esoaf.bool_ramp_load_torque == -1){
+        OBSV.esoaf.ell[0] = 2*omega_ob;
+        OBSV.esoaf.ell[1] = omega_ob*omega_ob;
+        OBSV.esoaf.ell[2] = 0.0;
+        OBSV.esoaf.ell[3] = 0.0;        
+    }else if(OBSV.esoaf.bool_ramp_load_torque == FALSE){
+        OBSV.esoaf.ell[0] =                            3*omega_ob;
+        OBSV.esoaf.ell[1] =                            3*omega_ob*omega_ob;
+        OBSV.esoaf.ell[2] = (MOTOR.Js*MOTOR.npp_inv) * 1*omega_ob*omega_ob*omega_ob;
+        OBSV.esoaf.ell[3] = 0.0;
+    }else{
+        // TODO: REAL check?
+        OBSV.esoaf.ell[0] =                            4*omega_ob;
+        OBSV.esoaf.ell[1] =                            6*omega_ob*omega_ob;
+        OBSV.esoaf.ell[2] = (MOTOR.Js*MOTOR.npp_inv) * 4*omega_ob*omega_ob*omega_ob;
+        OBSV.esoaf.ell[3] = (MOTOR.Js*MOTOR.npp_inv) * 1*omega_ob*omega_ob*omega_ob*omega_ob;
+    }
+
+    // Natural Observer Framework
+    // if(OBSV.esoaf.bool_ramp_load_torque == FALSE){
+    //     // D, P, I, II?
+    //     OBSV.esoaf.ell[0] = (MOTOR.Js*MOTOR.npp_inv) * 3*omega_ob;
+    //     OBSV.esoaf.ell[1] = (MOTOR.Js*MOTOR.npp_inv) * 3*omega_ob*omega_ob;
+    //     OBSV.esoaf.ell[2] = (MOTOR.Js*MOTOR.npp_inv) * 1*omega_ob*omega_ob*omega_ob;
+    //     OBSV.esoaf.ell[3] = 0.0;
+    // }else{
+    //     OBSV.esoaf.ell[0] = (MOTOR.Js*MOTOR.npp_inv) * 4*omega_ob;
+    //     OBSV.esoaf.ell[1] = (MOTOR.Js*MOTOR.npp_inv) * 6*omega_ob*omega_ob;
+    //     OBSV.esoaf.ell[2] = (MOTOR.Js*MOTOR.npp_inv) * 4*omega_ob*omega_ob*omega_ob;
+    //     OBSV.esoaf.ell[3] = (MOTOR.Js*MOTOR.npp_inv) * 1*omega_ob*omega_ob*omega_ob*omega_ob;
+    // }
+
+    #if PC_SIMULATION
+    printf("ESO OPT: %g, %g, %g, %g", OBSV.esoaf.ell[0], OBSV.esoaf.ell[1], OBSV.esoaf.ell[2], OBSV.esoaf.ell[3]);
+    #endif
+}
+void Main_esoaf_chen2021(){
+
+    /* OBSERVATION */
+
+    if(OBSV.esoaf.set_omega_ob != OBSV.esoaf.omega_ob){
+        OBSV.esoaf.omega_ob = OBSV.esoaf.set_omega_ob;
+        eso_one_parameter_tuning(OBSV.esoaf.omega_ob);
+    }
+
+    general_4states_rk4_solver(&rhf_dynamics_ESO, (*CTRL).timebase, OBSV.esoaf.x, CL_TS);
+    if(OBSV.esoaf.x[0]>M_PI){
+        OBSV.esoaf.x[0] -= 2*M_PI;
+    }
+    if(OBSV.esoaf.x[0]<-M_PI){
+        OBSV.esoaf.x[0] += 2*M_PI;
+    }
+    OBSV.esoaf.xPos = OBSV.esoaf.x[0];
+    OBSV.esoaf.xOmg = OBSV.esoaf.x[1];
+    OBSV.esoaf.xTL  = OBSV.esoaf.x[2];
+    OBSV.esoaf.xPL  = OBSV.esoaf.x[3]; // rotatum
+
+    /* Post-observer calculations */
+}
+void init_esoaf(){
+
+    OBSV.esoaf.ell[0] = 0.0;
+    OBSV.esoaf.ell[1] = 0.0;
+    OBSV.esoaf.ell[2] = 0.0;
+    OBSV.esoaf.ell[3] = 0.0;
+    OBSV.esoaf.set_omega_ob = ESOAF_OMEGA_OBSERVER;
+    OBSV.esoaf.bool_ramp_load_torque = -1;
+
+    OBSV.esoaf.omega_ob = OBSV.esoaf.set_omega_ob;
+    eso_one_parameter_tuning(OBSV.esoaf.omega_ob);
+}
+#endif
 
 /********************************************/
 /* Natural Speed Observer for IPMSM with Active Flux Concept (Chen 2020)
@@ -1675,7 +1725,6 @@ void rhf_NSO_Dynamics(REAL t, REAL *x, REAL *fx){
         OBSV.nsoaf.active_power_est   = + fabsf(uQ_now_filtered) * xIq;
         OBSV.nsoaf.active_power_error = + fabsf(uQ_now_filtered) * OBSV.nsoaf.output_error; 
     #endif
-
     #ifdef NSOAF_IPMSM
         OBSV.nsoaf.active_power_real  = + iDQ_now[1];
         OBSV.nsoaf.active_power_est   = + xIq;
@@ -1685,13 +1734,6 @@ void rhf_NSO_Dynamics(REAL t, REAL *x, REAL *fx){
     /* State Observer */
     // xIq
     fx[0] = MOTOR.Lq_inv * (uQ_now - MOTOR.R * xIq - xOmg*(MOTOR.KE + MOTOR.Ld*iDQ_now[0])) - OBSV.nsoaf.KD*OBSV.nsoaf.active_power_error;
-    #if RS_IDENTIFICATION
-        fx[0] = MOTOR.Lq_inv * (uQ_now - akt.rs_cal * xIq - xOmg*(MOTOR.KE + MOTOR.Ld*iDQ_now[0])) - OBSV.nsoaf.KD*OBSV.nsoaf.active_power_error;
-    #endif
-
-    #if LQ_IDENTIFICATION
-        fx[0] = q_inductanceid.Lq_inv * (uQ_now - MOTOR.R  * xIq - xOmg*(MOTOR.KE + MOTOR.Ld*iDQ_now[0])) - OBSV.nsoaf.KD*OBSV.nsoaf.active_power_error;
-    #endif
     // xOmg
     // REAL KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * iDQ_now[0];
     OBSV.nsoaf.xTem = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * MOTOR.KActive * xIq;
@@ -1702,8 +1744,8 @@ void rhf_NSO_Dynamics(REAL t, REAL *x, REAL *fx){
     fx[2] = OBSV.nsoaf.KI * OBSV.nsoaf.active_power_error;
 }
 void nso_one_parameter_tuning(REAL omega_ob){
-    if(omega_ob<200){
-        OBSV.nsoaf.set_omega_ob = 200;
+    if(omega_ob<170){
+        OBSV.nsoaf.set_omega_ob = 170;
         return;
     }
 
@@ -1723,9 +1765,6 @@ void nso_one_parameter_tuning(REAL omega_ob){
     // OBSV.nsoaf.KI = omega_ob*omega_ob*omega_ob                     * one_over__npp_divided_by_Js__times__Lq_id_plus_KActive                                 * uq_inv;
 
     OBSV.nsoaf.KD = (  3*omega_ob - MOTOR.R*LQ_INV) * one_over__npp_divided_by_Js__times__Lq_id_plus_KActive                                 * uq_inv;
-    #if RS_IDENTIFICATION
-        OBSV.nsoaf.KD = (  3*omega_ob - akt.rs_cal*LQ_INV) * one_over__npp_divided_by_Js__times__Lq_id_plus_KActive                          * uq_inv;
-    #endif
     OBSV.nsoaf.KP = ( (3*omega_ob*omega_ob)         * one_over__npp_divided_by_Js__times__Lq_id_plus_KActive - 1.5*MOTOR.npp*MOTOR.KActive ) * uq_inv;
     OBSV.nsoaf.KI = omega_ob*omega_ob*omega_ob      * one_over__npp_divided_by_Js__times__Lq_id_plus_KActive                                 * uq_inv;
 
@@ -1776,9 +1815,7 @@ void Main_nsoaf_chen2020(){
 
     REAL KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * iDQ_now[0];
     OBSV.nsoaf.xTem = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * KActive * OBSV.nsoaf.xIq;
-    #if LQ_IDENTIFICATION
-        OBSV.nsoaf.xTem = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * (KActive = MOTOR.KE + (MOTOR.Ld - q_inductanceid.Lq) * iDQ_now[0]) * OBSV.nsoaf.xIq;
-    #endif
+
 
 
     /*  xTL的方程只是提供了粒子的xTL的取值建议；
@@ -2804,7 +2841,7 @@ void Main_parksul2014_FADO(){
         double f_plus = 2e4;
         akt.lambda1 = 1.5 * sqrt(f_plus);
         akt.lambda2 = 1.1 * f_plus;
-        // printf("STA for Akatsu00: %g, %g\n", akt.lambda1, akt.lambda2);
+        printf("STA for Akatsu00: %g, %g\n", akt.lambda1, akt.lambda2);
         akt.sta_state[0] = 0;
         akt.sta_state[1] = 0;
         akt.the_y_lpf = 0.0;
@@ -2844,7 +2881,8 @@ void Main_parksul2014_FADO(){
         // akt.the_gain_P = ; // 仿真就快一点
         // akt.the_gain_P = TS*P1*5;
         // akt.the_gain_P = TS*P1*1;
-        akt.rs_cal = MOTOR.R;
+        akt.rs_cal = 1.04 * 1.0;
+            akt.rs_direct_cal = 3.04;
             akt.voltage_drop[0] = 0;
             akt.voltage_drop[1] = 0;
             akt.voltage_drop_mod = 0;
@@ -2858,10 +2896,10 @@ void Main_parksul2014_FADO(){
         akt.the_u_sumup = 0.0;
         akt.the_u_offset = 0.0;
         akt.gamma_res_transient = 0.0;
-        akt.GAIN_RS = 0.8;
+        akt.GAIN_RS = 5;
         akt.omg_ctrl_err = 0;
         akt.gamma_res_transient = 0;
-        akt.gamma_res_transient_shape = 0.001;
+        akt.gamma_res_transient_shape = 500;
         // akt.zero_freq_operation_on = false;
     }
     
@@ -2881,27 +2919,25 @@ void Main_parksul2014_FADO(){
         if(temp>0.001){
             akt.field_speed_est = - (akt.psi_stator[0]*-akt.emf_stator[1] + akt.psi_stator[1]*akt.emf_stator[0]) / temp;
         }
-        akt.field_speed_est_lpf = _lpf(akt.field_speed_est, akt.field_speed_est_lpf, 7); // TAU_OFF = 5 from experiment
+        akt.field_speed_est_lpf = _lpf(akt.field_speed_est, akt.field_speed_est_lpf, 15); // TAU_OFF = 5 from experiment
         akt.omg_est_lpf = akt.field_speed_est_lpf; // 只需对同步速LPF，这样滑差的快速变化可以体现在转速中！
     }
     void RS_Identificaiton(){
-        akt.omg_fb = akt.omg_est_lpf;
-        akt.omg_ctrl_err = akt.omg_fb - (*CTRL).i->cmd_varOmega * MOTOR.npp;
-
+        akt.omg_fb = akt.omg_est_lpf * ELEC_RAD_PER_SEC_2_RPM;
+        akt.omg_ctrl_err = akt.omg_fb - (*CTRL).i->cmd_varOmega * MECH_RAD_PER_SEC_2_RPM;
         akt.gamma_res_transient = exp(-akt.omg_ctrl_err*akt.omg_ctrl_err*akt.gamma_res_transient_shape);
-        akt.xTem = (*CTRL).motor->npp * ( IS_C(1) * AFE_USED.psi_2[0] - IS_C(0) * AFE_USED.psi_2[1]);
+        akt.xTem = (*CTRL).motor->npp * (IS_C(1) * AFE_USED.psi_2[0] - IS_C(0) * AFE_USED.psi_2[1]);
+        akt.voltage_drop_mod = IS_C(0)*US_C(0) + IS_C(1)*US_C(1) - (*CTRL).motor->npp_inv*akt.field_speed_est_lpf* akt.xTem; // akt.field_speed_est or CTRL.omega_syn, 0.5 = 1/im.npp
         akt.current_mod      = (IS_C(0)*IS_C(0) + IS_C(1)*IS_C(1));    
-        akt.voltage_drop_mod = IS_C(0)*US_C(0) + IS_C(1)*US_C(1) - (*CTRL).motor->npp_inv * akt.omg_est_lpf * akt.xTem; // akt.field_speed_est or CTRL.omega_syn, 0.5 = 1/im.npp
-        // akt.voltage_drop_mod = IS_C(0)*US_C(0) + IS_C(1)*US_C(1) - (*CTRL).motor->npp_inv * akt.omg_est_lpf * akt.xTem;
-        if(++akt.count_rs < 0.2* 10000 *1){
-            akt.the_u += 1e-4 * akt.gamma_res_transient * akt.current_mod;
-            akt.the_y += 1e-4 * akt.gamma_res_transient * akt.voltage_drop_mod;
+        if(++akt.count_rs < 0.2* 4000 *1){
+            akt.the_u += 2.5e-4 * akt.gamma_res_transient * akt.current_mod;
+            akt.the_y += 2.5e-4 * akt.gamma_res_transient * akt.voltage_drop_mod;
             // the_u += TS * akt.current_mod;
             // the_y += TS * akt.voltage_drop_mod;
         }else{
             // if(ob.timebase>5)
             // if(akt.zero_freq_operation_on==false)
-            akt.rs_cal += (akt.GAIN_RS*akt.the_u/(1+akt.the_u*akt.the_u*akt.GAIN_RS)) * (akt.the_y - akt.rs_cal*akt.the_u);
+            akt.rs_cal += akt.GAIN_RS*akt.the_u/(1+akt.the_u*akt.the_u*akt.GAIN_RS) * (akt.the_y - akt.rs_cal*akt.the_u);
             akt.count_rs = 0; // printf("%d\n", akt.count_rs); // 800 is correct
             akt.the_u = 0.0;
             akt.the_y = 0.0;
@@ -2974,19 +3010,9 @@ void Main_parksul2014_FADO(){
         q_inductanceid.omega_elec = 0;
         q_inductanceid.omega_elec_est_from_Lq = 0;
         q_inductanceid.omega_elec_err = 0;
-        q_inductanceid.Lq = (*CTRL).motor->Lq;
-        q_inductanceid.Lq_est = (*CTRL).motor->Lq;
+        q_inductanceid.Lq = 0;
+        q_inductanceid.Lq_est = 0;
         q_inductanceid.GAINforID = 0.0002;
-        q_inductanceid.Lq_filtered = 0;
-        q_inductanceid.Lq_filtered_est = 0;
-        q_inductanceid.bool_Lq_id_enable = 0;
-        q_inductanceid.counter_Lq_id = 0;
-        q_inductanceid.Lq_inv = 1/(*CTRL).motor->Lq;
-        q_inductanceid.sum_Lq = 0;
-        q_inductanceid.id_filtered = 0;
-        q_inductanceid.iq_filtered = 0;
-        q_inductanceid.omega_elec_filtered = 0;
-        q_inductanceid.uD_cmd_filtered = 0;
     }
     void qaxis_inductance_identification(){
         #if ALG_AKT_SPEED_EST_AND_RS_ID
@@ -2995,72 +3021,35 @@ void Main_parksul2014_FADO(){
         #if SELECT_ALGORITHM == ALG_NSOAF
             q_inductanceid.omega_elec_est_from_Lq = OBSV.nsoaf.xOmg;
         #endif
-        q_inductanceid.omega_elec_err = q_inductanceid.omega_elec - q_inductanceid.omega_elec_est_from_Lq;
-        // q_inductanceid.Lq = -1 * ((*CTRL).o->cmd_uDQ[0] - (*CTRL).i->iDQ[0] * MOTOR.R)/((*CTRL).i->iDQ[1] * q_inductanceid.omega_elec);
-        // q_inductanceid.Lq_est = -1 * ((*CTRL).o->cmd_uDQ[0] - (*CTRL).i->iDQ[0] * MOTOR.R)/((*CTRL).i->iDQ[1] * q_inductanceid.omega_elec)\
-        // + q_inductanceid.GAINforID * q_inductanceid.omega_elec_err;
-        q_inductanceid.id_filtered = _lpf((*CTRL).i->iDQ[0], q_inductanceid.id_filtered, 10);
-        q_inductanceid.iq_filtered = _lpf((*CTRL).i->iDQ[1], q_inductanceid.iq_filtered, 10);
-        q_inductanceid.omega_elec_filtered = _lpf(q_inductanceid.omega_elec, q_inductanceid.omega_elec_filtered, 10);
-        q_inductanceid.uD_cmd_filtered = _lpf((*CTRL).o->cmd_uDQ[0], q_inductanceid.uD_cmd_filtered, 10);
-        REAL error = q_inductanceid.omega_elec_est_from_Lq * MOTOR.npp_inv - (*CTRL).i->cmd_varOmega;
-        if ((*CTRL).i->iDQ[1] * q_inductanceid.omega_elec != 0){
-                if(fabs(q_inductanceid.omega_elec_err)<0.7){
-                    q_inductanceid.counter_Lq_id += 1;
-                    q_inductanceid.Lq_est = -1 * ((*CTRL).o->cmd_uDQ[0] - (*CTRL).i->iDQ[0] * MOTOR.R)/((*CTRL).i->iDQ[1] * q_inductanceid.omega_elec);
-                    // q_inductanceid.Lq_est = -1 * ((*CTRL).o->cmd_uDQ[0])/((*CTRL).i->iDQ[1] * q_inductanceid.omega_elec);
-                    q_inductanceid.sum_Lq += q_inductanceid.Lq_est;
-                    if (q_inductanceid.counter_Lq_id > 8000){
-                        q_inductanceid.Lq = q_inductanceid.sum_Lq / q_inductanceid.counter_Lq_id;
-                        q_inductanceid.counter_Lq_id = 0;
-                        q_inductanceid.sum_Lq = 0;
-                        q_inductanceid.Lq_inv = 1/q_inductanceid.Lq_est;
-                        q_inductanceid.bool_Lq_id_enable = 1;
-                    }
-                }else{
-                    q_inductanceid.bool_Lq_id_enable = 0;
-                    q_inductanceid.counter_Lq_id = 0;
-                    q_inductanceid.sum_Lq = 0;
-                }
-                // if((q_inductanceid.Lq > 1.7 * (*CTRL).motor->Lq) || (q_inductanceid.Lq < 0.3 * (*CTRL).motor->Lq)){
-                //     q_inductanceid.Lq = (*CTRL).motor->Lq;
-                // }
-                // if((q_inductanceid.Lq_est > 1.7 * (*CTRL).motor->Lq) || (q_inductanceid.Lq_est < 0.3 * (*CTRL).motor->Lq)){
-                //     q_inductanceid.Lq_est = (*CTRL).motor->Lq;
-                // }
-            }
-        // q_inductanceid.Lq_filtered = _lpf(q_inductanceid.Lq, q_inductanceid.Lq_filtered, 10);
-        // q_inductanceid.Lq_filtered = q_inductanceid.Lq;
-        // q_inductanceid.Lq_filtered_est = _lpf(q_inductanceid.Lq_est, q_inductanceid.Lq_filtered_est, 5);
-        // q_inductanceid.Lq = -1 * ((*CTRL).o->cmd_uDQ[0] )/((*CTRL).i->iDQ[1] * q_inductanceid.omega_elec);
-        // q_inductanceid.Lq_est = -1 * ((*CTRL).o->cmd_uDQ[0] )/((*CTRL).i->iDQ[1] * q_inductanceid.omega_elec)\
-        // + q_inductanceid.GAINforID * q_inductanceid.omega_elec_err;
-
+        q_inductanceid.omega_elec_err = q_inductanceid.omega_elec_est_from_Lq - q_inductanceid.omega_elec;
+        q_inductanceid.Lq = -1 * ((*CTRL).o->cmd_uDQ[0] - (*CTRL).i->iDQ[0] * MOTOR.R)/((*CTRL).i->iDQ[1] * q_inductanceid.omega_elec);
+        q_inductanceid.Lq_est = -1 * ((*CTRL).o->cmd_uDQ[0] - (*CTRL).i->iDQ[0] * MOTOR.R)/((*CTRL).i->iDQ[1] * q_inductanceid.omega_elec)\
+        + q_inductanceid.GAINforID * q_inductanceid.omega_elec_err;
 
         }
 #endif
 /********************************************/
 /* COMMON *
  ********************************************/
-// void init_rk4(){
-//     int i;
-//     for(i=0; i<2; ++i){
-//         OBSV.rk4.us[i] = 0;
-//         OBSV.rk4.is[i] = 0;
-//         // OBSV.rk4.us_curr[i] = 0;
-//         OBSV.rk4.is_curr[i] = 0;
-//         OBSV.rk4.us_prev[i] = 0;
-//         OBSV.rk4.is_prev[i] = 0;
-//         OBSV.rk4.is_lpf[i]  = 0;
-//         OBSV.rk4.is_hpf[i]  = 0;
-//         OBSV.rk4.is_bpf[i]  = 0;
+void init_rk4(){
+    int i;
+    for(i=0; i<2; ++i){
+        OBSV.rk4.us[i] = 0;
+        OBSV.rk4.is[i] = 0;
+        // OBSV.rk4.us_curr[i] = 0;
+        OBSV.rk4.is_curr[i] = 0;
+        OBSV.rk4.us_prev[i] = 0;
+        OBSV.rk4.is_prev[i] = 0;
+        OBSV.rk4.is_lpf[i]  = 0;
+        OBSV.rk4.is_hpf[i]  = 0;
+        OBSV.rk4.is_bpf[i]  = 0;
 
-//         OBSV.rk4.current_lpf_register[i] = 0;
-//         OBSV.rk4.current_hpf_register[i] = 0;
-//         OBSV.rk4.current_bpf_register1[i] = 0;
-//         OBSV.rk4.current_bpf_register2[i] = 0;
-//     }
-// }
+        OBSV.rk4.current_lpf_register[i] = 0;
+        OBSV.rk4.current_hpf_register[i] = 0;
+        OBSV.rk4.current_bpf_register1[i] = 0;
+        OBSV.rk4.current_bpf_register2[i] = 0;
+    }
+}
 void pmsm_observers(){
     // stationary_voltage_DOB();
 
@@ -3076,13 +3065,10 @@ void pmsm_observers(){
         // // cjh_eemfao();
         // // cjh_eemfhgo_farza09();
         Main_nsoaf_chen2020();
-        #if ALG_AKT_SPEED_EST_AND_RS_ID
-            SpeedEstimationFromtheVMBasedFluxEstimation();
-            RS_Identificaiton();
-        #endif
-        #if ALG_qaxis_inductance_identification
-            qaxis_inductance_identification();
-        #endif
+        SpeedEstimationFromtheVMBasedFluxEstimation();
+        RS_Identificaiton();
+        // Awaya_InertiaId();
+        qaxis_inductance_identification();
         // Main_esoaf_chen2021();
         // // Main_QiaoXia2013_emfSMO();
         // Main_ChiXu2009_emfSMO();
@@ -3091,22 +3077,9 @@ void pmsm_observers(){
         /* 资源有限 */
         #if SELECT_ALGORITHM == ALG_NSOAF
             // MainFE_HuWu_1998(); // use algorithm 2
-            #if AFE_37_NO_SATURATION_BASED
-                Main_No_Saturation_Based();
-            #endif
-            VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
-            #if AFE_42_BandP
-                Main_Bernard2017();
-            #endif
-            #if AFE_38_OUTPUT_ERROR_CLOSED_LOOP
-                Main_VM_ClosedLoopFluxEstimatorForPMSM();
-            #endif
-            Main_nsoaf_chen2020();
             Main_the_active_flux_estimator();
-            #if ALG_AKT_SPEED_EST_AND_RS_ID
-                SpeedEstimationFromtheVMBasedFluxEstimation();
-                RS_Identificaiton();
-            #endif
+            //Main_VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
+            Main_nsoaf_chen2020();
         #elif SELECT_ALGORITHM == ALG_ESOAF
             Main_the_active_flux_estimator();
             Main_VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
@@ -3148,88 +3121,17 @@ void pmsm_observers(){
     // US_P(0) = US_C(0); // 由于没有测量电压，所以当前步电压是伪概念，在这里更新是无意义的
     // US_P(1) = US_C(1); // 由于没有测量电压，所以当前步电压是伪概念，在这里更新是无意义的
     IS_P(0) = IS_C(0);
-    IS_P(1) = IS_C(1); 
+    IS_P(1) = IS_C(1);
 }
-
-void variabel_parameters_sensorless(){
-    //for Lq, R, KE
-    #if WHO_IS_USER == USER_YZZ
-    int i;
-    i = d_sim.user.Variable_Parameters_time_num/2;
-    d_sim.user.Variable_Parameters_timebase += CL_TS;
-    if (d_sim.user.Variable_Parameters_status == 1){
-        if(d_sim.user.VP_time_num_count  < d_sim.user.Variable_Parameters_time_num){
-            if ((d_sim.user.Variable_Parameters_timebase > d_sim.user.Variable_Parameters_time*d_sim.user.VP_time_num_count)&&(d_sim.user.Variable_Parameters_timebase < d_sim.user.Variable_Parameters_time*(d_sim.user.VP_time_num_count+1))){
-                (*CTRL).motor->R = d_sim.init.R * (1-0.01*d_sim.user.Variable_Parameters_percent*(d_sim.user.VP_time_num_count-i));
-            }
-            else if(d_sim.user.Variable_Parameters_timebase > d_sim.user.Variable_Parameters_time*(d_sim.user.VP_time_num_count+1))
-            {
-                d_sim.user.VP_time_num_count +=1;
-            }
-        }
-    }else if(d_sim.user.Variable_Parameters_status == 2){
-        if(d_sim.user.VP_time_num_count  < d_sim.user.Variable_Parameters_time_num){
-            if ((d_sim.user.Variable_Parameters_timebase > d_sim.user.Variable_Parameters_time*d_sim.user.VP_time_num_count)&&(d_sim.user.Variable_Parameters_timebase < d_sim.user.Variable_Parameters_time*(d_sim.user.VP_time_num_count+1))){
-                (*CTRL).motor->Lq = d_sim.init.Lq * (1-0.01*d_sim.user.Variable_Parameters_percent*(d_sim.user.VP_time_num_count-i));
-            }
-            else if(d_sim.user.Variable_Parameters_timebase > d_sim.user.Variable_Parameters_time*(d_sim.user.VP_time_num_count+1))
-            {
-                d_sim.user.VP_time_num_count +=1;
-            }
-        }
-    }else if(d_sim.user.Variable_Parameters_status == 3){
-        if(d_sim.user.VP_time_num_count  < d_sim.user.Variable_Parameters_time_num){
-            if ((d_sim.user.Variable_Parameters_timebase > d_sim.user.Variable_Parameters_time*d_sim.user.VP_time_num_count)&&(d_sim.user.Variable_Parameters_timebase < d_sim.user.Variable_Parameters_time*(d_sim.user.VP_time_num_count+1))){
-                (*CTRL).motor->KE = d_sim.init.KE * (1-0.01*d_sim.user.Variable_Parameters_percent*(d_sim.user.VP_time_num_count-i));
-            }
-            else if(d_sim.user.Variable_Parameters_timebase > d_sim.user.Variable_Parameters_time*(d_sim.user.VP_time_num_count+1))
-            {
-                d_sim.user.VP_time_num_count +=1;
-            }
-        }
-    }else if(d_sim.user.Variable_Parameters_status == 4){
-        if(d_sim.user.VP_time_num_count  < d_sim.user.Variable_Parameters_time_num){
-            if ((d_sim.user.Variable_Parameters_timebase > d_sim.user.Variable_Parameters_time*d_sim.user.VP_time_num_count)&&(d_sim.user.Variable_Parameters_timebase < d_sim.user.Variable_Parameters_time*(d_sim.user.VP_time_num_count+1))){
-                OBSV.sum_for_encoder += (*CTRL).s->iQ->Fbk;
-                OBSV.count_for_encoder +=1; 
-            }
-            else if(d_sim.user.Variable_Parameters_timebase > d_sim.user.Variable_Parameters_time*(d_sim.user.VP_time_num_count+1))
-            {
-                d_sim.user.VP_time_num_count +=1;
-                OBSV.aver_for_encoder[d_sim.user.VP_time_num_count-1] = OBSV.sum_for_encoder / OBSV.count_for_encoder;
-                OBSV.sum_for_encoder = 0;
-                OBSV.count_for_encoder = 0;
-            }
-        }
-    }
-        #if PC_SIMULATION == FALSE
-            if(!Axis_1.FLAG_ENABLE_PWM_OUTPUT){   
-                (*CTRL).motor->KE = d_sim.init.KE;
-                (*CTRL).motor->R = d_sim.init.R;
-                (*CTRL).motor->Lq = d_sim.init.Lq; 
-                d_sim.user.Variable_Parameters_timebase = 0;
-                d_sim.user.VP_time_num_count = 0;
-            }
-        #endif
-    #endif
-}
-
 void init_pmsm_observers(){
     // RK4
-    // init_rk4();     // 龙格库塔法结构体初始化
+    init_rk4();     // 龙格库塔法结构体初始化
 
     // FE
     init_FE();
-    #if ALG_AKT_SPEED_EST_AND_RS_ID
     init_ake_Speed_Est_and_RS_ID();
-    #endif
-    #if ALG_Awaya_InertiaId
-    init_InertiaId();
-    #endif
-    #if ALG_qaxis_inductance_identification
+    // init_InertiaId();
     init_qaxis_inductance_identification();
-    #endif
-
     #if PC_SIMULATION
         // OBSV
         init_nsoaf();
@@ -3263,253 +3165,5 @@ void init_pmsm_observers(){
 }
 #endif
 
-//inverter nonlinearity
-
-REAL lpf1_inverter(REAL x, REAL y_tminus1)
-{
-    // #define LPF1_RC 0.6 // 0.7, 0.8, 1.2, 3太大滤得过分了 /* 观察I5+I7_LPF的动态情况进行确定 */
-    // #define ALPHA_RC (TS/(LPF1_RC + TS)) // TODO：优化
-    // return y_tminus1 + ALPHA_RC * (x - y_tminus1); // 0.00020828993959591752
-    return y_tminus1 + 0.00020828993959591752 * (x - y_tminus1);
-}
-REAL shift2pi(REAL thetaA)
-{
-    if (thetaA > M_PI)
-    {
-        return thetaA - 2 * M_PI;
-    }
-    else if (thetaA < -M_PI)
-    {   
-        return thetaA + 2 * M_PI;
-    }
-    else
-    {
-        return thetaA;
-    }
-}
-REAL trapezoidal_voltage_by_phase_current(REAL current, REAL V_plateau, REAL I_plateau, REAL oneOnver_I_plateau)
-{
-    REAL abs_current = fabsf(current);
-    if (abs_current < I_plateau)
-    {
-        return current * V_plateau * oneOnver_I_plateau;
-    }
-    else
-    {
-        return sign(current) * V_plateau;
-    }
-}
-REAL sigmoid_online_v2(REAL x, REAL a2, REAL a3)
-{
-    return a2 / (1.0 + exp(-a3 * x)) - a2 * 0.5;
-}
-REAL sigmoid_online(REAL x, REAL Vsat, REAL a3)
-{
-
-    REAL a2 = Vsat * 2;
-    // REAL a3 = 5.22150403;
-    return a2 / (1.0 + exp(-a3 * x)) - a2 * 0.5;
-}
-REAL sig_a2 = 7.4;
-REAL sig_a3 = 35.2;
-
-void inverterNonlinearity_Initialization()
-{
-    INV.gamma_theta_trapezoidal = GAIN_THETA_TRAPEZOIDAL;
-#ifdef _XCUBE1
-    INV.Vsat = 16.0575341 / 2; // 6.67054; // 180 V SiC
-#else
-    // INV.Vsat = sig_a2*0.5; //6.74233802;
-    INV.Vsat = 7.84; // 150 V
-#endif
-
-    INV.gain_Vsat = 0 * 10;
-
-    INV.thetaA = 0;
-    INV.cos_thetaA = 1;
-    INV.sin_thetaA = 0;
-
-    // --
-    INV.u_comp[0] = 0;
-    INV.u_comp[1] = 0;
-    INV.u_comp[2] = 0;
-    INV.ual_comp = 0;
-    INV.ube_comp = 0;
-    INV.uDcomp_atA = 0;
-    INV.uQcomp_atA = 0;
-
-    INV.iD_atA = 0;
-    INV.iQ_atA = 0;
-    INV.I5_plus_I7 = 0;
-    INV.I5_plus_I7_LPF = 0.0;
-    INV.theta_trapezoidal = 11.0 * M_PI_OVER_180; // in rad
-
-#ifdef _XCUBE1
-    INV.I_plateau_Max = 2.0;
-    INV.I_plateau_Min = 0.2;
-#else
-    INV.I_plateau_Max = 1.0;
-    INV.I_plateau_Min = 0.1;
-#endif
-    INV.I_plateau = 0.7;
-    INV.V_plateau = 1.5 * sig_a2 * 0.5;
-    INV.gamma_I_plateau = 10.0;
-    INV.gamma_V_plateau = 0.0; // this is updated by the estimated disturbance to the sinusoidal flux model.
-
-#if PC_SIMULATION
-    INV.sig_a2 = 1.0 * sig_a2;
-    INV.sig_a3 = 1.5 * sig_a3; // = shape parameter
-#else
-    INV.sig_a2 = sig_a2; // = Plateau * 2
-    INV.sig_a3 = sig_a3; // = shape parameter
-#endif
-
-    INV.w6 = 1;
-    INV.w12 = 0;
-    INV.w18 = 0;
-    INV.gamma_a2 = 400;
-    INV.gamma_a3 = 125;
-}
-void Online_PAA_Based_Compensation(void)
-{
-
-    // /* 角度反馈: (*CTRL).i->theta_d_elec or ELECTRICAL_POSITION_FEEDBACK? */
-    // INV.thetaA = ELECTRICAL_POSITION_FEEDBACK;
-    // // I (current vector amplitude)
-    // INV.iD_atA = sqrt(IS_C(0)*IS_C(0) + IS_C(1)*IS_C(1));
-
-    /* 在Park2012中，a相电流被建模成了sin函数，一个sin函数的自变量角度放在正交坐标系下看就是在交轴上的，所以要-1.5*pi */
-
-    // Phase A current's fundamental component transformation
-    /* 这里使用哪个角度的关键不在于是有感的角度还是无感的角度，而是你FOC电流控制器（Park变换）用的角度是哪个？ */
-    if ((*debug).SENSORLESS_CONTROL)
-    {
-        INV.thetaA = -M_PI * 1.5 + PMSM_ELECTRICAL_POSITION_FEEDBACK + atan2((*CTRL).i->cmd_iDQ[1], (*CTRL).i->cmd_iDQ[0]); /* Q: why -pi*(1.5)? */ /* ParkSul2014 suggests to use PLL to extract thetaA from current command */
-    }
-    else
-    {
-        INV.thetaA = -M_PI * 1.5 + (*CTRL).i->theta_d_elec + atan2((*CTRL).i->cmd_iDQ[1], (*CTRL).i->cmd_iDQ[0]); /* Q: why -pi*(1.5)? */ /* ParkSul2014 suggests to use PLL to extract thetaA from current command */
-    }
-    INV.thetaA = shift2pi(INV.thetaA); /* Q: how to handle it when INV.thetaA jumps between pi and -pi? */ // 这句话绝对不能省去，否则C相的梯形波会出错。
-
-    INV.cos_thetaA = cosf(INV.thetaA);
-    INV.sin_thetaA = sinf(INV.thetaA);
-    INV.iD_atA = AB2M(IS_C(0), IS_C(1), INV.cos_thetaA, INV.sin_thetaA);
-    INV.iQ_atA = AB2T(IS_C(0), IS_C(1), INV.cos_thetaA, INV.sin_thetaA);
-
-    if (FALSE)
-    {
-        /* Use q-axis current in phase A angle (Tentative and Failed) */
-        INV.I5_plus_I7 = INV.iQ_atA * cosf(6 * INV.thetaA);
-        INV.I5_plus_I7_LPF = lpf1_inverter(INV.I5_plus_I7, INV.I5_plus_I7_LPF);
-
-        INV.I11_plus_I13 = INV.iQ_atA * cosf(12 * INV.thetaA);
-        INV.I11_plus_I13_LPF = lpf1_inverter(INV.I11_plus_I13, INV.I11_plus_I13_LPF);
-
-        INV.I17_plus_I19 = INV.iQ_atA * cosf(18 * INV.thetaA);
-        INV.I17_plus_I19_LPF = lpf1_inverter(INV.I17_plus_I19, INV.I17_plus_I19_LPF);
-    }
-    else
-    {
-        /* Use d-axis current in phase A angle */
-        INV.I5_plus_I7 = INV.iD_atA * sinf(6 * INV.thetaA);                     /* Q: Why sinf? Why not cosf? 和上面的-1.5*pi有关系吗？ */
-        INV.I5_plus_I7_LPF = lpf1_inverter(INV.I5_plus_I7, INV.I5_plus_I7_LPF); /* lpf1 for inverter */
-
-        INV.I11_plus_I13 = INV.iD_atA * sinf(12 * INV.thetaA);
-        INV.I11_plus_I13_LPF = lpf1_inverter(INV.I11_plus_I13, INV.I11_plus_I13_LPF);
-
-        INV.I17_plus_I19 = INV.iD_atA * sinf(18 * INV.thetaA);
-        INV.I17_plus_I19_LPF = lpf1_inverter(INV.I17_plus_I19, INV.I17_plus_I19_LPF);
-    }
-
-#if PC_SIMULATION
-    // INV.gamma_a2 = 0.0;
-    // INV.gamma_a3 = 0.0;
-#endif
-
-    /* Online Update Sigmoid a3 */
-    // if((*CTRL).timebase>35){
-    //     INV.gamma_I_plateau = 0.0;
-    // }
-    INV.sig_a3 -= CL_TS * INV.gamma_a3 // *fabsf((*CTRL).i->cmd_speed_rpm)
-                  * (INV.w6 * INV.I5_plus_I7_LPF + INV.w12 * INV.I11_plus_I13_LPF + INV.w18 * INV.I17_plus_I19_LPF);
-
-    // (*CTRL).s->Motor_or_Generator = sign((*CTRL).i->omg_elec * (*CTRL).i->cmd_iDQ[1]);
-    // (*CTRL).s->Motor_or_Generator = sign((*CTRL).i->cmd_omg_elec);
-
-    /* Online Update Sigmoid a2 */
-    if ((*CTRL).timebase > 2)
-    {
-        /* Sensorless: Adaptive a2 based on flux amplitude error */
-        // use linear FE
-        // INV.sig_a2 += CL_TS * -100 * AFEOE.output_error_dq[0];
-
-        // use nonlinear (saturation) FE
-        INV.sig_a2 += CL_TS * -INV.gamma_a2 * (*CTRL).s->Motor_or_Generator * (MOTOR.KActive - FE.htz.psi_2_ampl_lpf);
-
-        /* Sensored: Adaptive a2 based on position error */
-        /* To use this, you must have a large enough stator current */
-        /* 这个好像只对梯形波（电流值的函数）有效 ……*/
-        // INV.sig_a2 += CL_TS * INV.gain_Vsat * sinf(ENC.theta_d_elec - ELECTRICAL_POSITION_FEEDBACK) * (*CTRL).s->Motor_or_Generator;
-    }
-    if (INV.sig_a2 > 40)
-    {
-        INV.sig_a2 = 40;
-    }
-    else if (INV.sig_a2 < 2)
-    {
-        INV.sig_a2 = 2;
-    }
-
-    /* Chen2021: linear approximation of u-i curve */
-    // if((*CTRL).timebase>35){
-    //     INV.gamma_I_plateau = 0.0;
-    // }
-    // INV.I_plateau += CL_TS * 0 * INV.gamma_I_plateau \
-    //                         // *fabsf((*CTRL).i->cmd_speed_rpm)
-    //                         *(    1*INV.I5_plus_I7_LPF
-    //                             + 0*INV.I11_plus_I13_LPF
-    //                             + 0*INV.I17_plus_I19_LPF
-    //                          );
-    // if(INV.I_plateau > INV.I_plateau_Max){
-    //     INV.I_plateau = INV.I_plateau_Max;
-    // }else if(INV.I_plateau < INV.I_plateau_Min){
-    //     INV.I_plateau = INV.I_plateau_Min;
-    // }
-
-    /* Chen2021SlessInv 覆盖 */
-    if (INV.gamma_I_plateau != 0)
-    {
-        REAL ia_cmd = ((*CTRL).o->cmd_iAB[0]);
-        REAL ib_cmd = (-0.5 * (*CTRL).o->cmd_iAB[0] - SIN_DASH_2PI_SLASH_3 * (*CTRL).o->cmd_iAB[1]);
-        REAL ic_cmd = (-0.5 * (*CTRL).o->cmd_iAB[0] - SIN_2PI_SLASH_3 * (*CTRL).o->cmd_iAB[1]);
-        REAL oneOver_I_plateau = 1.0 / INV.I_plateau;
-        INV.u_comp[0] = trapezoidal_voltage_by_phase_current(ia_cmd, INV.V_plateau, INV.I_plateau, oneOver_I_plateau);
-        INV.u_comp[1] = trapezoidal_voltage_by_phase_current(ib_cmd, INV.V_plateau, INV.I_plateau, oneOver_I_plateau);
-        INV.u_comp[2] = trapezoidal_voltage_by_phase_current(ic_cmd, INV.V_plateau, INV.I_plateau, oneOver_I_plateau);
-
-        /* Online Sigmoid a3 覆盖 覆盖 */
-        INV.u_comp[0] = sigmoid_online_v2(ia_cmd, INV.sig_a2, INV.sig_a3);
-        INV.u_comp[1] = sigmoid_online_v2(ib_cmd, INV.sig_a2, INV.sig_a3);
-        INV.u_comp[2] = sigmoid_online_v2(ic_cmd, INV.sig_a2, INV.sig_a3);
-    }
-
-    /* 相补偿电压Clarke为静止正交坐标系电压。 */
-    // 改成恒幅值变换
-    INV.ual_comp = 0.66666666667 * (INV.u_comp[0] - 0.5 * INV.u_comp[1] - 0.5 * INV.u_comp[2]);
-    INV.ube_comp = 0.66666666667 * 0.86602540378 * (INV.u_comp[1] - INV.u_comp[2]);
-    // INV.ual_comp = SQRT_2_SLASH_3      * (INV.u_comp[0] - 0.5*INV.u_comp[1] - 0.5*INV.u_comp[2]); // sqrt(2/3.)
-    // INV.ube_comp = 0.70710678118654746 * (                    INV.u_comp[1] -     INV.u_comp[2]); // sqrt(2/3.)*sinf(2*pi/3) = sqrt(2/3.)*(sqrt(3)/2)
-
-    // 区分补偿前的电压和补偿后的电压：
-    // (*CTRL).ual, (*CTRL).ube 是补偿前的电压！
-    // (*CTRL).ual + INV.ual_comp, (*CTRL).ube + INV.ube_comp 是补偿后的电压！
-}
-void yzz_inverter_Compensation_Online_PAA()
-{
-    Online_PAA_Based_Compensation();
-    (*CTRL).o->cmd_uAB_to_inverter[0] = (*CTRL).o->cmd_uAB[0] + INV.ual_comp;
-    (*CTRL).o->cmd_uAB_to_inverter[1] = (*CTRL).o->cmd_uAB[1] + INV.ube_comp;
-}
 
 #endif

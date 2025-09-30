@@ -1,6 +1,11 @@
 #include "All_Definition.h"
 st_axis Axis_1, *Axis;
 extern bool run_enable_from_PC;
+/* 临时修改 */
+int yzkdebug1;
+extern uint32_t raw_value_zero;
+extern uint32_t raw_value_one;
+/* 临时修改 */
 
 #if NUMBER_OF_AXES == 2 // ====为了同时运行两台电机，增加的另一份控制结构体
     st_axis Axis_2;
@@ -103,7 +108,7 @@ void main(void){
     // GPIO_SetupPinMux(2, GPIO_MUX_CPU1, 6);
     // GPIO_SetupPinMux(3, GPIO_MUX_CPU1, 6);
     I2CA_Init();
-    // Multiple_channel_config(0);
+    Multiple_channel_config(0);
 
 
     // 5. Handle Interrupts
@@ -166,10 +171,13 @@ void main_loop(){
         #endif
 //         #if WHO_IS_USER == USER_QIAN
             // Sensor Coil
-//            I2CA_ReadData_Channel(0);
-//            DELAY_US(30);
-//            I2CA_ReadData_Channel(1);
-//            DELAY_US(30);
+           I2CA_ReadData_Channel(0);
+           DELAY_US(30);
+           I2CA_ReadData_Channel(1);
+           DELAY_US(30);
+           Axis->place_sensor[0] = raw_value_zero;
+           Axis->place_sensor[1] = raw_value_one;
+        //    yzkdebug1++;
 //            I2CA_ReadData_Channel(2);
 //            DELAY_US(300);
 //            I2CA_ReadData_Channel(3);
