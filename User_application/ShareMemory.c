@@ -123,7 +123,7 @@ void write_DAC_buffer(){
         (*Axis4DAC).dac_watch[51] = Axis->place_sensor[3];
 
         /* Marker */
-        (*Axis4DAC).dac_watch[52] = d_sim.user.Mark_Sweeping_Freq_ThreeDB_Point;
+        // (*Axis4DAC).dac_watch[52] = d_sim.user.Mark_Sweeping_Freq_ThreeDB_Point;
         (*Axis4DAC).dac_watch[53] = (*CTRL).s->Speed->I_Term * 0.1;
         (*Axis4DAC).dac_watch[54] = (*CTRL).s->iD->I_Term * 0.02;
         (*Axis4DAC).dac_watch[55] = (*CTRL).s->iQ->I_Term * 0.02;
@@ -143,8 +143,8 @@ void write_DAC_buffer(){
         (*Axis4DAC).dac_watch[62] = PID_Position->Err * ONE_OVER_2PI * 1; //
 
         /* Motor Speed ESO */
-        (*Axis4DAC).dac_watch[66] = OBSV.esoaf.xOmg * ELEC_RAD_PER_SEC_2_RPM * 0.002;
-        (*Axis4DAC).dac_watch[67] = OBSV.esoaf.xPos * 0.1; // -pi to pi
+        // (*Axis4DAC).dac_watch[66] = OBSV.esoaf.xOmg * ELEC_RAD_PER_SEC_2_RPM * 0.002;
+        // (*Axis4DAC).dac_watch[67] = OBSV.esoaf.xPos * 0.1; // -pi to pi
 
         /* From Sensor */
         (*Axis4DAC).dac_watch[70] = (*CTRL).enc->varOmega * MECH_RAD_PER_SEC_2_RPM * 0.002;
@@ -331,7 +331,7 @@ void write_DAC_buffer(){
         }else if((*Axis4DAC).channels_preset==11){(*Axis4DAC).channels_preset=0;
             /* 20240414 Debugging */
             (*Axis4DAC).channels[0] = 40; // PID_Speed->Ref
-            (*Axis4DAC).channels[1] = 70; // (*Axis4DAC).dac_watch[70] = (*CTRL).enc->varOmega * MECH_RAD_PER_SEC_2_RPM;
+            (*Axis4DAC).channels[1] = 70; // c = (*CTRL).enc->varOmega * MECH_RAD_PER_SEC_2_RPM;
             (*Axis4DAC).channels[2] = 29; // PID_iQ->Ref
             (*Axis4DAC).channels[3] = 30; // PID_iQ->Fbk
             (*Axis4DAC).channels[4] = 44; // DC bus utilization

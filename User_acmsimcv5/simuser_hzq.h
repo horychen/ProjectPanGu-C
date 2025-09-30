@@ -1,7 +1,7 @@
-#ifndef SIMUSER_YZZ_H
-#define SIMUSER_YZZ_H
+#ifndef SIMUSER_HZQ_H
+#define SIMUSER_HZQ_H
 
-#if WHO_IS_USER == USER_YZZ
+#if WHO_IS_USER == USER_HZQ
 
 	#define CORRECTION_4_SHARED_FLUX_EST d_sim.init.KE
     #define U_MOTOR_KE                   d_sim.init.KE
@@ -11,7 +11,6 @@
 /* User */
 #include "super_config.h"
 #include "main_switch.h"
-
 
 /* Algorithms */
 
@@ -100,7 +99,7 @@
 #define US_P(X) OBSV.rk4.us_prev[X]
 #define IS_P(X) OBSV.rk4.is_prev[X]
 
-    #if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
+    #if (WHO_IS_USER == USER_HZQ) || (WHO_IS_USER == USER_CJH)
     // void init_rk4();
 
     #define AFE_11_OHTANI_1992 0
@@ -125,8 +124,9 @@
     #define AFE_41_LascuAndreescus2006 0
     #define AFE_42_BandP 0
     #define AFE_43_SuperTwistingA 0
-    #define AFE_44_ORTEGA_2011 0
-    #define AFE_45_CMwithDynamicCurrent 1
+    #define AFE_44_ORTEGA_2011 1
+    #define AFE_16_HE_EKF_2025 0
+    #define AFE_45_CMwithDynamicCurrent 0
     #define ALG_PLL_norm 1//DSP-based control of sensorless IPMSM drives for wide-speedrange operation
     #define ALG_AKT_SPEED_EST_AND_RS_ID 0
     #define ALG_Awaya_InertiaId 0
@@ -355,6 +355,40 @@
         } Ortega;
         #endif
 
+        #if AFE_16_HE_EKF_2025
+        struct HE_EKF{
+            /* EKF “global” parameters that we do not strictly need as states */
+            /* Define EKF parameters */
+            // Covariance            
+            // for intitalizeion
+            REAL B_cova; // Covariance matrix of curent sensor bias noise, noises being 0.01 A in alpha beta direction
+            REAL Q_cova; // Covariance of psudo measurement, noise in alpha beta direction
+            REAL initial_angle; // initial angle for flux, in radian
+            REAL initial_Covariance; // initial flux norm, in Wb
+            REAL Resistance;
+            REAL Inductance;
+            REAL Flux_norm;
+            REAL ONE_OVER_LPF_Hz; // low pass filter for 
+            
+            // State related
+            REAL IS_measured[2]; // measured current, with sensor offset
+            REAL R_cova[2][2]; // Covariance matrix of curent sensor bias noise, noises being 0.01 A in alpha beta direction
+            REAL B_p;
+            REAL B_prime[2][2]; // Covariance matrix of flux norm 0.14 Wb 0.002 error in alpha beta direction
+            REAL flux[2];  // Initial flux state at 0 degree in alpha beta direction
+            REAL sigmapri[2][2];  // Initial flux covariance at 0 degree, 0.01 Wb in alpha beta direction
+            REAL sigmapost[2][2];  // Initial flux covariance at 0 degree, 0.01 Wb in alpha beta direction
+            REAL Ibias[2];  // Initial flux covariance at 0 degree, 0 A in alpha beta direction
+            REAL last_current[2];//= {0, 0}; 
+            REAL f_d[2];//= {0, 0}; // refer to paper
+            REAL stator_flux[2];//= {0, 0};
+            REAL stator_flux_d[2];// ;
+            REAL h; // sudo measurement PM flux
+            REAL theta_d;
+            REAL theta_e;
+        } HE_EKF;
+        #endif
+
         #if AFE_45_CMwithDynamicCurrent
         struct CMwithDynamicCurrent{
             REAL x[6];
@@ -578,6 +612,7 @@
         #endif
         #if ALG_PLL_norm
             void Main_PLL_norm(REAL emf[2]);
+            void Main_PLL_norm_Psi(REAL psi[2]);
         #endif
     void init_afe();
     void init_FE();
@@ -597,7 +632,7 @@
     #ifndef ADD_PMSM_OBSERVER_H
     #define ADD_PMSM_OBSERVER_H
 
-    #if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
+    #if (WHO_IS_USER == USER_HZQ) || (WHO_IS_USER == USER_CJH)
         /* Select Algorithm 2*/
             #define ALG_NSOAF 1
             #define ALG_Park_Sul 2
@@ -1050,10 +1085,14 @@
         REAL ki;
         REAL emf_recon[2];
         REAL k_p_theta;
+        
+        REAL psi_ampl;
+        REAL psi_norm[2];
+        REAL psi_recon[2];
     };
     extern struct PhaseLockLoop_Norm PLLN;
     #endif
-    #if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
+    #if (WHO_IS_USER == USER_HZQ) || (WHO_IS_USER == USER_CJH)
 
         void init_QiaoXia2013();
         void init_ChiXu2009();
@@ -1096,7 +1135,7 @@ void InverterNonlinearity_ExperimentalSigmoid(REAL ual, REAL ube, REAL ial, REAL
 REAL u_comp_per_phase(REAL Vsat, REAL thetaA, REAL theta_trapezoidal, REAL oneOver_theta_trapezoidal);
 REAL lpf1(REAL x, REAL y_tminus1);
 REAL shift2pi(REAL thetaA);
-void yzz_inverter_Compensation_Online_PAA();
+void HZQ_inverter_Compensation_Online_PAA();
 void get_distorted_voltage_via_LUT_indexed(REAL ial, REAL ibe, REAL *ualbe_dist);
 void get_distorted_voltage_via_LUT(REAL ual, REAL ube, REAL ial, REAL ibe, REAL *ualbe_dist, REAL *lut_voltage, REAL *lut_current, int length_of_lut);
 void get_distorted_voltage_via_CurveFitting(REAL ual, REAL ube, REAL ial, REAL ibe, REAL *ualbe_dist);

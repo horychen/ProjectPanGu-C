@@ -9,7 +9,7 @@ extern REAL sig_a3;
 // 符号函数
 // #if PC_SIMULATION == TRUE //* utility的函数定义要小心，由于仿真和emy-c的ACMSim.h的内容不同，可能会导致编译错误
 REAL sign(REAL x){
-   return (x > 0) - (x < 0);
+    return (x > 0) - (x < 0);
 }
 // #endif
 
@@ -160,10 +160,10 @@ REAL difference_between_two_angles(REAL first, REAL second)
                 printf(">>> Current Loop Ki is 10 times larger <<<\n");
             else
                 printf("!!! Current Loop Ki is NOT 10 times larger !!!\n");
-            printf(">>> Speed loop update rate is 1/%d of the Current Loop <<<\n", d_sim.FOC.VL_EXE_PER_CL_EXE);
+            printf(">>> Speed Loop is 1/%d of the Current Loop <<<\n", d_sim.FOC.VL_EXE_PER_CL_EXE);
             printf(">>> InnerLoop Max CLBW is %fHz and Min CLBW is %fHz\n", 2*d_sim.user.zeta*d_sim.user.omega_n/2/M_PI, 4*d_sim.user.zeta*d_sim.user.omega_n/2/M_PI);
-            printf(">>> Current Loop Ki Scale = %f\n", d_sim.user.Current_Loop_Ki_scale);
         #endif
+
         if(d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation == TRUE){
             printf(">>> Voltages to Cuurent Regulation is Applied <<<\n");
         }else{
@@ -178,11 +178,6 @@ REAL difference_between_two_angles(REAL first, REAL second)
             printf(">>> Inverter Nonlinearity Compensation is Applied <<<\n");
         }else{
             printf("!!! Inverter Nonlinearity Compensation is NOT Applied !!!\n");
-        }
-        if(d_sim.user.bool_Compensation_byPosDiff == TRUE){
-            printf(">>> Position Loop Ref Compensation is Applied <<<\n");
-        }else{
-            printf("!!! Position Loop Ref Compensation is NOT Applied !!!\n");
         }
 
         #if WHO_IS_USER == USER_BEZIER

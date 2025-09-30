@@ -151,10 +151,8 @@ void commissioning(){
     (*CTRL).s->sinT = sin((*CTRL).i->theta_d_elec); // (*CTRL).i->theta_d_elec
     (*CTRL).i->iDQ[0] = AB2M((*CTRL).i->iAB[0], (*CTRL).i->iAB[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
     (*CTRL).i->iDQ[1] = AB2T((*CTRL).i->iAB[0], (*CTRL).i->iAB[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
-    
     // 参数自整定
     StepByStepCommissioning_NEW_WB();
-    
     _user_inverter_voltage_command(0);
 }
 
@@ -212,7 +210,7 @@ void init_COMM(){
     #if WHO_IS_USER == USER_WB
         COMM.bool_comm_status = d_sim.user.COMM_bool_comm_status;
     #else
-        COMM.bool_comm_status = 1;
+        COMM.bool_comm_status = 4;
     #endif
 
     
@@ -667,7 +665,7 @@ void COMM_inductanceId(REAL id_fb, REAL iq_fb){
 }
 #define COMM_FAST_SWITCH_MOD 5 // > 10 does not work
 #define COMM_FAST_SWITCH_VOLTAGE_CHANGE (0.5*COMM.last_voltage_command)
-void COMM_inductanceId_ver2(REAL id_fb, REAL iq_fb){
+void COMM_inductanceId_ver2(REAL id_fb, REAL iq_fb){    
 
     REAL id_avg = 0.0;
     REAL Delta_current = 0.0;
@@ -1211,7 +1209,6 @@ void StepByStepCommissioning_NEW_WB(){
     }else if(COMM.bool_comm_status == 1){
         // 电阻辨识
         if(G.flag_do_inverter_characteristics){
-            // v2仿真通常需要6e5 step以上
             COMM_resistanceId_v2( (*CTRL).i->iAB[0], (*CTRL).i->iAB[1] ); // v2 is intended only for better inverter nonlinearity identification considering the rotor movement issue (starting from negative maximal current value to force align)
         }else{
             COMM_resistanceId( (*CTRL).i->iAB[0], (*CTRL).i->iAB[1] );

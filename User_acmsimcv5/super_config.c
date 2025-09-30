@@ -3,73 +3,63 @@
 #include <stdio.h>
 
 void init_d_sim() {
-    d_sim.init.npp = 5;
-    d_sim.init.IN = 2.0;
-    d_sim.init.R = 5.35;
-    d_sim.init.Ld = 0.010199999999999999;
-    d_sim.init.Lq = 0.010199999999999999;
-    d_sim.init.KE = 0.0241167703876205;
+    d_sim.init.npp = 4;
+    d_sim.init.IN = 3;
+    d_sim.init.R = 1.6469;
+    d_sim.init.Ld = 0.0032;
+    d_sim.init.Lq = 0.0032;
+    d_sim.init.KE = 0.12618;
     d_sim.init.Rreq = 0.0;
-    d_sim.init.Js = 1.7000000000000003e-05;
-    d_sim.init.Vdc = 30;
+    d_sim.init.Js = 0.00049836;
+    d_sim.init.Vdc = 36;
 
     d_sim.sim.INVERTER_NONLINEARITY = 0;
     d_sim.sim.CLTS = 0.0001;
-    d_sim.sim.NUMBER_OF_STEPS = 6000;
+    d_sim.sim.NUMBER_OF_STEPS = 9600;
     d_sim.sim.MACHINE_SIMULATIONs_PER_SAMPLING_PERIOD = 1;
 
-    d_sim.FOC.delta = 20;
-    d_sim.FOC.CLBW_HZ = 483;
+    d_sim.FOC.delta = 15;
+    d_sim.FOC.CLBW_HZ = 800;
     d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation = FALSE;
     d_sim.FOC.VL_EXE_PER_CL_EXE = 1;
 
-    d_sim.CL.SERIES_KP_D_AXIS = 30.954740734350946;
-    d_sim.CL.SERIES_KI_D_AXIS = 524.5098039215686;
-    d_sim.CL.SERIES_KP_Q_AXIS = 30.954740734350946;
-    d_sim.CL.SERIES_KI_Q_AXIS = 524.5098039215686;
+    d_sim.CL.SERIES_KP_D_AXIS = 16.084954386379742;
+    d_sim.CL.SERIES_KI_D_AXIS = 514.65625;
+    d_sim.CL.SERIES_KP_Q_AXIS = 16.084954386379742;
+    d_sim.CL.SERIES_KI_Q_AXIS = 514.65625;
     d_sim.CL.LIMIT_DC_BUS_UTILIZATION = 0.96;
 
-    d_sim.VL.SERIES_KP = 0.014261510069008285;
-    d_sim.VL.SERIES_KI = 7.58694625841935;
+    d_sim.VL.SERIES_KP = 0.22058704353118255;
+    d_sim.VL.SERIES_KI = 22.340214425527417;
     d_sim.VL.LIMIT_OVERLOAD_FACTOR = 1.0;
 
-    d_sim.user.verbose = FALSE;
-    d_sim.user.who_is_user = 102209;
-    d_sim.user.mode_select_synchronous_motor = 3;
+    d_sim.user.verbose = TRUE;
+    d_sim.user.who_is_user = 1601;
+    d_sim.user.mode_select_synchronous_motor = 4;
     d_sim.user.mode_select_induction_motor = 32;
     d_sim.user.INVERTER_NONLINEARITY_COMPENSATION_METHOD = 0;
     d_sim.user.Select_exp_operation = 0;
     d_sim.user.set_rpm_speed_command = 100;
-    d_sim.user.set_id_command = 0.5;
-    d_sim.user.set_iq_command = 0.5;
-    d_sim.user.bool_apply_sweeping_frequency_excitation = FALSE;
-    d_sim.user.bool_sweeping_frequency_for_speed_loop = FALSE;
-    d_sim.user.bool_speed_sweeping_with_Load = FALSE;
-    d_sim.user.bool_sweeping_frequency_for_current_loop_iD = FALSE;
-    d_sim.user.bool_sweeping_frequency_for_Rejection_Load = FALSE;
-    d_sim.user.CMD_CURRENT_SINE_AMPERE = 1.0;
-    d_sim.user.CMD_SPEED_SINE_RPM = 100;
-    d_sim.user.CMD_SPEED_SINE_HZ = 1;
-    d_sim.user.CMD_SPEED_SINE_STEP_SIZE = 1;
-    d_sim.user.CMD_SPEED_SINE_LAST_END_TIME = 0.0;
-    d_sim.user.CMD_SPEED_SINE_END_TIME = 1e-4;
-    d_sim.user.CMD_SPEED_SINE_HZ_CEILING = 400;
-    d_sim.user.timebase_for_Sweeping = 0.0;
-    d_sim.user.Mark_Sweeping_Freq_ThreeDB_Point = 0.0;
-    d_sim.user.Mark_Counter = 0.0;
+    d_sim.user.set_iq_command = -0.5;
+    d_sim.user.set_id_command = 0.0;
     d_sim.user.Set_SpeedLoop_KI_as_Zero = FALSE;
-    d_sim.user.Stable_Time_for_Sweeping = 1.5;
-    d_sim.user.flag_clear_timebase_once = FALSE;
-    d_sim.user.Position_Loop_Kp = 10.0;
-    d_sim.user.bool_use_position_feedforward_by_PosDiff = TRUE;
-    d_sim.user.set_deg_position_command = 180;
-    d_sim.user.Position_Loop_Output_Limit = 20;
-    d_sim.user.Position_Loop_Ref_prev = 0.0;
-    d_sim.user.Position_Loop_Ref_Diff = 0.0;
-    d_sim.user.bool_Compensation_byPosDiff = TRUE;
-    d_sim.user.bool_ESO_SPEED_ON = FALSE;
+    d_sim.user.CAREFUL_ESOAF_OMEGA_OBSERVER = 3000;
     d_sim.user.bool_apply_ESO_SPEED_for_SPEED_FBK = FALSE;
-    d_sim.user.CAREFUL_ESOAF_OMEGA_OBSERVER = 4500;
+    d_sim.user.bool_ESO_SPEED_ON = FALSE;
+    d_sim.user.Variable_Parameters_percent = 3;
+    d_sim.user.Variable_Parameters_time = 3;
+    d_sim.user.Variable_Parameters_status = 4;
+    d_sim.user.Variable_Parameters_time_num = 7;
+    d_sim.user.VP_time_num_count = 0;
+    d_sim.user.Variable_Parameters_timebase = 0.0;
+    d_sim.user.sensorless_only_theta_on = 0;
+    d_sim.user.sensorless_speed_observer = 0;
+    d_sim.user.SENSORLESS_CONTROL = 0;
+    d_sim.user.inverter_nonlinearity_on = 0;
+    d_sim.user.ell_feedback_on = 0;
+    d_sim.user.vvvf_voltage = 2;
+    d_sim.user.vvvf_frequency = 2;
+    d_sim.user.Breaking_Torque = 1.5;
     d_sim.user.VL_FEEDBACK_KFB = 0;
 
 }

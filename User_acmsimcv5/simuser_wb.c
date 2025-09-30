@@ -2,27 +2,22 @@
 
 #if WHO_IS_USER == USER_WB
 
-
-/* Wubo's Strcture */
 wubo_SignalGenerator wubo_SG;
 wubo_Parameter_mismatch wubo_ParaMis;
 wubo_Hit_Wall wubo_HW;
 SpeedInnerLoop SIL_Controller;
 Harnefors_1998_BackCals Harnefors_1998_BackCals_Variable;
-Rohr_1991 Rohr_1991_Controller;
-Pos_IMP Pos_IMP_CTRL;
-wubo_Sul_1996 wubo_Sul_1996_Var;
-int wubo_debug_tools[10] = {1,0,0,0,0,0,0,0,0,0};
 
 
-/* Calculation for Vdc utilization BUT this is not beauty it makes CHAOS!!!!*/
-#if PC_SIMULATION
-    #define DC_BUS_VOLTAGE_INVERSE_WUBO (1.732 / d_sim.init.Vdc)
-#else
-    #include "All_Definition.h"
-    extern st_axis *Axis;
-    #define DC_BUS_VOLTAGE_INVERSE_WUBO (1.732 / Axis->vdc)
-#endif
+
+    /* Calculation for Vdc utilization BUT this is not beauty it makes CHAOS!!!!*/
+    #if PC_SIMULATION
+        #define DC_BUS_VOLTAGE_INVERSE_WUBO (1.732 / d_sim.init.Vdc)
+    #else
+        #include "All_Definition.h"
+        extern st_axis *Axis;
+        #define DC_BUS_VOLTAGE_INVERSE_WUBO (1.732 / Axis->vdc)
+    #endif
 
 
 REAL global_id_ampl[NUMBER_OF_FREQUENCY_LEVEL] = {1, 1, 1};
@@ -81,26 +76,6 @@ void UDQ_GIVEN_TEST(){
     (*CTRL).o->cmd_uAB_to_inverter[1] = (*CTRL).o->cmd_uAB[1];
 }
 
-
-
-
-
-void _init_Sul_1996(){
-        wubo_Sul_1996_Var.Udist = 0;
-        wubo_Sul_1996_Var.iu    = 0;
-        wubo_Sul_1996_Var.iv    = 0;
-        wubo_Sul_1996_Var.iw    = 0;
-        wubo_Sul_1996_Var.uAB_comp[0] = 0;
-        wubo_Sul_1996_Var.uAB_comp[1] = 0;
-        wubo_Sul_1996_Var.Tcom  = 0;
-        wubo_Sul_1996_Var.M = SUL_1996_COMPENSATION_Toff 
-                            - SUL_1996_COMPENSATION_Ton
-                            - SUL_1996_COMPENSATION_Td 
-                            + 0;  // 原文中的time error变量
-        wubo_Sul_1996_Var.inv_comp_degree    = 0.3;  // 补偿程度，范围为0到1
-        wubo_Sul_1996_Var.BOOL_INGORE_VCE_VD = 0;  // 原文公式31忽略了Vce和Vd，由于Vdc较大
-}
-
 /*
 Author: Wubo
 Algorithm: Six First-Order Curve for Compensation
@@ -146,94 +121,10 @@ void wubo_inverter_Compensation(REAL iAB[2]){
         CTRL->o->cmd_uAB_to_inverter[0] = CTRL->o->cmd_uAB[0] + UVW2A_AI(dist_ua, dist_ub, dist_uc);
         CTRL->o->cmd_uAB_to_inverter[1] = CTRL->o->cmd_uAB[1] + UVW2B_AI(dist_ua, dist_ub, dist_uc);
     }
-
-    /* Inverter Compensation Dead Time 1996 Sul*/
-    // ***********************************************************************************
-    // 以下数据均来自FNC42060F的数据手册 Page 5
-    // Ton:  0.75us
-    // Toff: 0.725us
-    // Td:   2us
-    // Vd:   1.95V 
-    // Vce:  1.85V
-    // Ts:   10kHz，sampling time
-    // Tcom = Td - Toff + Ton + Ts *(Vce+Vd)/Vdc
-    // 文中所使用的是恒福值变化
-    // ***********************************************************************************
-    wubo_Sul_1996_Var.Tcom = SUL_1996_COMPENSATION_Td
-                           + SUL_1996_COMPENSATION_Ton
-                           - SUL_1996_COMPENSATION_Toff
-                           + CL_TS * (SUL_1996_COMPENSATION_Vce0 + SUL_1996_COMPENSATION_Vd0) * DC_BUS_VOLTAGE_INVERSE_WUBO * (0.5773672055);
-
-    wubo_Sul_1996_Var.M = SUL_1996_COMPENSATION_Toff 
-                        - SUL_1996_COMPENSATION_Ton
-                        - SUL_1996_COMPENSATION_Td 
-                        + 0.0;
-                        // + wubo_Sul_1996_Var.Tcom;  // 原文中的time error变量
-    
-    #if PC_SIMULATION
-        IU = AB2U_AI(iAB[0], iAB[1]);
-        IV = AB2V_AI(iAB[0], iAB[1]);
-        IW = AB2W_AI(iAB[0], iAB[1]);
-        UDIST = 0.1666666666667 * ( d_sim.init.Vdc * wubo_Sul_1996_Var.M * CL_TS_INVERSE 
-                                - SUL_1996_COMPENSATION_Vce0
-                                - SUL_1996_COMPENSATION_Vd0 );
-    #else
-        // 保证补偿程度不会飞到区间以外
-        if (wubo_Sul_1996_Var.inv_comp_degree > 1) wubo_Sul_1996_Var.inv_comp_degree = 1;
-        if (wubo_Sul_1996_Var.inv_comp_degree < 0) wubo_Sul_1996_Var.inv_comp_degree = 0;
-        // 直接从measurement函数中获取iuvw，但这样会存在一个严重的问题，怎么解决iuvw的温漂零飘
-        IU = Axis->iuvw[0];
-        IV = Axis->iuvw[1];
-        IW = Axis->iuvw[2];
-        // IU = AB2U_AI(iAB[0], iAB[1]);
-        // IV = AB2V_AI(iAB[0], iAB[1]);
-        // IW = AB2W_AI(iAB[0], iAB[1]);
-        UDIST = 0.1666666666667 * ( Axis->vdc * wubo_Sul_1996_Var.M * CL_TS_INVERSE 
-                        - SUL_1996_COMPENSATION_Vce0
-                        - SUL_1996_COMPENSATION_Vd0 );
-    #endif
-
-    REAL uU_dist;
-    REAL uV_dist;
-    REAL uW_dist;
-    uU_dist = UDIST * ( 2*sign(IU) - sign(IV) - sign(IW) ) - 0.5*(SUL_1996_RCE_PLUS_RD)*IU;
-    uV_dist = UDIST * ( 2*sign(IV) - sign(IW) - sign(IU) ) - 0.5*(SUL_1996_RCE_PLUS_RD)*IV;
-    uW_dist = UDIST * ( 2*sign(IW) - sign(IU) - sign(IV) ) - 0.5*(SUL_1996_RCE_PLUS_RD)*IW;
-
-    UA_COMP = UVW2A_AI(uU_dist, uV_dist, uW_dist);
-    UB_COMP = UVW2B_AI(uU_dist, uV_dist, uW_dist);
-
-    if (d_sim.user.BOOL_1996_SUL_ON == TRUE){
-        #if PC_SIMULATION
-            // 仿真时，相当于加上voltage distortion来仿真逆变器的非线性
-            (*CTRL).o->cmd_uAB_to_inverter[0] = (*CTRL).o->cmd_uAB[0] + INV_COMP_DEGREE * UA_COMP;
-            (*CTRL).o->cmd_uAB_to_inverter[1] = (*CTRL).o->cmd_uAB[1] + INV_COMP_DEGREE * UB_COMP;
-        #else
-            (*CTRL).o->cmd_uAB_to_inverter[0] = (*CTRL).o->cmd_uAB[0] - INV_COMP_DEGREE * UA_COMP;
-            (*CTRL).o->cmd_uAB_to_inverter[1] = (*CTRL).o->cmd_uAB[1] - INV_COMP_DEGREE * UB_COMP;
-        #endif
-    }else{
-        (*CTRL).o->cmd_uAB_to_inverter[0] = (*CTRL).o->cmd_uAB[0];
-        (*CTRL).o->cmd_uAB_to_inverter[1] = (*CTRL).o->cmd_uAB[1];
-    }
-
+    /*
+    With more compensation methods, we can add more else if here.
+    */
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // REAL inverter_current_point[NUMBER_OF_COMPENSATION_POINTS] = {0.85, 0.216, 0.03, 0, -0.019, -0.17, -0.86};
 // REAL inverter_voltage_point[NUMBER_OF_COMPENSATION_POINTS] = {4.06, 3.67, 1.83, 0, -2.36, -3.58, -4.066};
@@ -310,6 +201,12 @@ REAL CJH_LUT_index_inverter_compensation_get_dist_voltage(REAL current_value){
         }
 }
 
+
+
+//TODO:这个变量需要删除
+/* For wubo debuger */
+REAL wubo_debug_tools[10] = {1,0,0,0,0,0,0,0,0,0};
+
 /* User Tuner */
 REAL _init_WC_Tuner_Part2(REAL zeta, REAL omega_n, REAL max_CLBW_PER_min_CLBW){
     REAL Ld  = d_sim.init.Ld * wubo_ParaMis.percent_Ld;
@@ -344,8 +241,8 @@ REAL _init_WC_Tuner_Part2(REAL zeta, REAL omega_n, REAL max_CLBW_PER_min_CLBW){
         PID_iD->Ki_CODE = Series_D_KI * Series_D_KP * CL_TS * 10;
         PID_iQ->Ki_CODE = Series_Q_KI * Series_Q_KP * CL_TS * 10;
     #else
-        PID_iD->Ki_CODE = Series_D_KI * Series_D_KP * CL_TS * d_sim.user.Current_Loop_Ki_scale;
-        PID_iQ->Ki_CODE = Series_Q_KI * Series_Q_KP * CL_TS * d_sim.user.Current_Loop_Ki_scale;
+        PID_iD->Ki_CODE = Series_D_KI * Series_D_KP * CL_TS;
+        PID_iQ->Ki_CODE = Series_Q_KI * Series_Q_KP * CL_TS;
     #endif
     
     PID_Speed->Ki_CODE = Series_Speed_KI * Series_Speed_KP * VL_TS;
@@ -359,14 +256,6 @@ REAL _init_WC_Tuner_Part2(REAL zeta, REAL omega_n, REAL max_CLBW_PER_min_CLBW){
     return  K0;
 }
 void _init_WC_Tuner(){
-    #if CURRENT_LOOP_KI_TIMES_TEN
-        PID_iD->Ki_CODE  = d_sim.CL.SERIES_KI_D_AXIS * d_sim.CL.SERIES_KP_D_AXIS * CL_TS * 10;
-        PID_iQ->Ki_CODE  = d_sim.CL.SERIES_KI_Q_AXIS * d_sim.CL.SERIES_KP_Q_AXIS * CL_TS * 10;
-    #else
-        PID_iD->Ki_CODE  = d_sim.CL.SERIES_KI_D_AXIS * d_sim.CL.SERIES_KP_D_AXIS * CL_TS * d_sim.user.Current_Loop_Ki_scale;
-        PID_iQ->Ki_CODE  = d_sim.CL.SERIES_KI_Q_AXIS * d_sim.CL.SERIES_KP_Q_AXIS * CL_TS * d_sim.user.Current_Loop_Ki_scale;
-    #endif
-    
     /* Tuned by d_sim */
     //* Due to the fact that TI tuner is running at Python at momment hence our tuner should use paramter to run the tuning process
     REAL K0 = 0.0;
@@ -375,7 +264,8 @@ void _init_WC_Tuner(){
         printf("FOC_VLBW = %f rad/s\n", SIL_Controller.FOC_VLBW);
         printf("FOC_VLBW = %f Hz\n", SIL_Controller.FOC_VLBW_Hz);
         printf("FOC_CLBW = %f rad/s\n", SIL_Controller.FOC_CLBW);
-          printf("K0       = %f\n",       K0);
+        printf("FOC_CLBW = %f Hz\n", SIL_Controller.FOC_CLBW_Hz);
+        printf("K0       = %f\n",       K0);
         if (SIL_Controller.FOC_CLBW - 4 * K0 * SIL_Controller.KFB < 0){
             printf("can not do zero-pole cancellation\n");
         }else{
@@ -388,6 +278,7 @@ void _init_WC_Tuner(){
     // >>实验<<限幅的部分我放在pangu-c的main.c中的measurement函数里面，也就是说，测量此时的Vdc，然后根据Vdc觉得限幅的大小
 
     // see when codes run here
+    extern REAL wubo_debug_tools[10];
     wubo_debug_tools[2] = 99;
 }
 void _user_wubo_WC_Tuner_Online(){
@@ -397,6 +288,7 @@ void _user_wubo_WC_Tuner_Online(){
     // >>实验<<限幅的部分我放在pangu-c的main.c中的measurement函数里面，也就是说，测量此时的Vdc，然后根据Vdc觉得限幅的大小
 
     // see when codes run here
+    extern REAL wubo_debug_tools[10];
     wubo_debug_tools[3] = 99;
 }
 void _user_wubo_TI_Tuner_Online(){
@@ -431,8 +323,8 @@ void _user_wubo_TI_Tuner_Online(){
         PID_iD->Ki_CODE = Series_D_KI * Series_D_KP * CL_TS * 10;
         PID_iQ->Ki_CODE = Series_Q_KI * Series_Q_KP * CL_TS * 10;
     #else
-        PID_iD->Ki_CODE = Series_D_KI * Series_D_KP * CL_TS * d_sim.user.Current_Loop_Ki_scale;
-        PID_iQ->Ki_CODE = Series_Q_KI * Series_Q_KP * CL_TS * d_sim.user.Current_Loop_Ki_scale;
+        PID_iD->Ki_CODE = Series_D_KI * Series_D_KP * CL_TS;
+        PID_iQ->Ki_CODE = Series_Q_KI * Series_Q_KP * CL_TS;
     #endif
     
     PID_Speed->Ki_CODE = Series_Speed_KI * Series_Speed_KP * VL_TS;
@@ -441,6 +333,7 @@ void _user_wubo_TI_Tuner_Online(){
     SIL_Controller.KFB = 0;
 
     // see when codes run here
+    extern REAL wubo_debug_tools[10];
     wubo_debug_tools[4] = 99;
 }
 
@@ -458,33 +351,33 @@ void _user_wubo_FOC(REAL theta_d_elec, REAL iAB[2]){
 
     #if USE_LAOMING_PI
         /* New Sytle from Lao Ming */
-        texas_pi_id.Kp = PID_iD->Kp;
-        texas_pi_id.Ki = d_sim.CL.SERIES_KI_D_AXIS * CL_TS;
-        texas_pi_id.Umax = PID_iD->OutLimit;
-        texas_pi_id.Umin = -PID_iD->OutLimit;
+        pi_id.Kp = PID_iD->Kp;
+        pi_id.Ki = d_sim.CL.SERIES_KI_D_AXIS * CL_TS;
+        pi_id.Umax = PID_iD->OutLimit;
+        pi_id.Umin = -PID_iD->OutLimit;
         // printf("id max is %f\n", pi_id.Umax);
         
-        texas_pi_iq.Kp = PID_iQ->Kp;
-        texas_pi_iq.Ki = d_sim.CL.SERIES_KI_Q_AXIS * CL_TS;
-        texas_pi_iq.Umax = PID_iQ->OutLimit;
-        texas_pi_iq.Umin = -PID_iQ->OutLimit;
+        pi_iq.Kp = PID_iQ->Kp;
+        pi_iq.Ki = d_sim.CL.SERIES_KI_Q_AXIS * CL_TS;
+        pi_iq.Umax = PID_iQ->OutLimit;
+        pi_iq.Umin = -PID_iQ->OutLimit;
         
-        texas_pi_id.Fbk = (*CTRL).i->iDQ[0];
-        texas_pi_id.Ref = (*CTRL).i->cmd_iDQ[0];
-        texas_pi_id.Out = PI_MACRO(texas_pi_id);
+        pi_id.Fbk = (*CTRL).i->iDQ[0];
+        pi_id.Ref = (*CTRL).i->cmd_iDQ[0];
+        pi_id.Out = PI_MACRO(pi_id);
 
-        texas_pi_iq.Fbk = (*CTRL).i->iDQ[1];
-        texas_pi_iq.Ref = (*CTRL).i->cmd_iDQ[1];
-        texas_pi_iq.Out = PI_MACRO(texas_pi_iq);
+        pi_iq.Fbk = (*CTRL).i->iDQ[1];
+        pi_iq.Ref = (*CTRL).i->cmd_iDQ[1];
+        pi_iq.Out = PI_MACRO(pi_iq);
 
         REAL decoupled_d_axis_voltage;
         REAL decoupled_q_axis_voltage;
         if(d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation == TRUE){
-            decoupled_d_axis_voltage = texas_pi_id.Out - texas_pi_iq.Fbk * MOTOR.Lq * (*CTRL).i->varOmega * MOTOR.npp;
-            decoupled_q_axis_voltage = texas_pi_iq.Out + (MOTOR.KActive + texas_pi_id.Fbk * MOTOR.Ld) * (*CTRL).i->varOmega * MOTOR.npp;
+            decoupled_d_axis_voltage = pi_id.Out - pi_iq.Fbk * MOTOR.Lq * (*CTRL).i->varOmega * MOTOR.npp;
+            decoupled_q_axis_voltage = pi_iq.Out + (MOTOR.KActive + pi_id.Fbk * MOTOR.Ld) * (*CTRL).i->varOmega * MOTOR.npp;
         }else{
-            decoupled_d_axis_voltage = texas_pi_id.Out;
-            decoupled_q_axis_voltage = texas_pi_iq.Out;
+            decoupled_d_axis_voltage = pi_id.Out;
+            decoupled_q_axis_voltage = pi_iq.Out;
         }
     #else
         REAL decoupled_d_axis_voltage;
@@ -585,12 +478,12 @@ void _user_wubo_SpeedInnerLoop_controller(st_pid_regulator *r, SpeedInnerLoop *r
 
 /* Codes for Harnefors 1998 back calculation */
 void _init_Harnerfors_1998_BackCalc(){
-    Harnefors_1998_BackCals_Variable.Err_bar        = 0.0;
-    Harnefors_1998_BackCals_Variable.I_Term_prev    = 0.0;
+    Harnefors_1998_BackCals_Variable.Err_bar = 0.0;
+    Harnefors_1998_BackCals_Variable.I_Term_prev = 0.0;
     Harnefors_1998_BackCals_Variable.I_Term_prev_iD = 0.0;
     Harnefors_1998_BackCals_Variable.I_Term_prev_iQ = 0.0;
-    Harnefors_1998_BackCals_Variable.K_INVERSE_iD   = 1 / (PID_iD->Kp + PID_iD->Ki_CODE);
-    Harnefors_1998_BackCals_Variable.K_INVERSE_iQ   = 1 / (PID_iQ->Kp + PID_iQ->Ki_CODE);
+    Harnefors_1998_BackCals_Variable.K_INVERSE_iD = 1 / (PID_iD->Kp + PID_iD->Ki_CODE);
+    Harnefors_1998_BackCals_Variable.K_INVERSE_iQ = 1 / (PID_iQ->Kp + PID_iQ->Ki_CODE);
 }
 void _user_Harnefors_back_calc_PI_antiWindup(st_pid_regulator *r, Harnefors_1998_BackCals *H, REAL K_inverse, REAL coupling_term){
     r->Err = r->Ref - r->Fbk;
@@ -611,151 +504,60 @@ void _user_Harnefors_back_calc_PI_antiWindup(st_pid_regulator *r, Harnefors_1998
     r->Out = r->P_Term + r->I_Term + coupling_term;
 }
 
-/* 1991 Rohr Example */
-void _init_Rohr_1991(){
-    Rohr_1991_Controller.yp         = 0.0;
-    Rohr_1991_Controller.K_adapt    = 0.0;
-    Rohr_1991_Controller.KI_const   = d_sim.user.Rohr_K_integral;
-    Rohr_1991_Controller.output     = 0.0;
-    Rohr_1991_Controller.I_term     = 0.0;
-    Rohr_1991_Controller.K_range[0] = d_sim.user.Rohr_K_min;
-    Rohr_1991_Controller.K_range[1] = d_sim.user.Rohr_K_max;
-    Rohr_1991_Controller.gamma      = d_sim.user.Rohr_gamma;
-    Rohr_1991_Controller.sigma      = d_sim.user.Rohr_sigma;
-    Rohr_1991_Controller.NS         = ROHR_CONTROLLER_NUMBER_OF_STATES;
-    int i;
-    for(i=0;i<Rohr_1991_Controller.NS;++i){
-        Rohr_1991_Controller.x[i] = 0.0;
-        Rohr_1991_Controller.x_dot[i] = 0.0;
-    }
-}
-
-void rk4_wubo_style(REAL t, REAL *x, REAL hs){ // 四阶龙格库塔法 stolen from CJH :>
-    #define NS ROHR_CONTROLLER_NUMBER_OF_STATES
-
-    REAL k1[NS], k2[NS], k3[NS], k4[NS], xk[NS];
-    REAL fx[NS];
-    int i;
-    Rohr_1991_dynamics(t, x, fx); // timer.t,
-    for(i=0;i<NS;++i){        
-        k1[i] = fx[i] * hs;
-        xk[i] = x[i] + k1[i]*0.5;
-    }
-    Rohr_1991_dynamics(t, xk, fx); // timer.t+hs/2.,
-    for(i=0;i<NS;++i){        
-        k2[i] = fx[i] * hs;
-        xk[i] = x[i] + k2[i]*0.5;
-    }
-    Rohr_1991_dynamics(t, xk, fx); // timer.t+hs/2.,
-    for(i=0;i<NS;++i){        
-        k3[i] = fx[i] * hs;
-        xk[i] = x[i] + k3[i];
-    }
-    Rohr_1991_dynamics(t, xk, fx); // timer.t+hs, 
-    for(i=0;i<NS;++i){        
-        k4[i] = fx[i] * hs;
-        x[i] = x[i] + (k1[i] + 2*(k2[i] + k3[i]) + k4[i])*one_over_six;
-        // derivatives
-        // ACM.x_dot[i] = (k1[i] + 2*(k2[i] + k3[i]) + k4[i])*one_over_six / hs;
-    }
-    #undef NS
-}
-
-void Rohr_1991_dynamics(REAL t, REAL x[], REAL fx[]){
-    // K ->x[0]
-    REAL yp = Rohr_1991_Controller.yp;
-
-    if (d_sim.user.bool_apply_Rohr_1991_Controller_with_Forgetting_Factor){
-        fx[0] = yp * yp * Rohr_1991_Controller.gamma - Rohr_1991_Controller.sigma * x[0];
-    }else{
-        fx[0] = yp * yp * Rohr_1991_Controller.gamma;
-    }
-    fx[1] = Rohr_1991_Controller.KI_const * yp;
-}
-
-void _user_Rohr_1991_controller(st_pid_regulator *r, Rohr_1991 *Rohr_r, REAL y, REAL y_ref){
-    //TODO: 我这个代码结构不太好啊，Rohr_r我为什么不直接用wb文件里的变量，反而还要extern到main switch中去，这样好吗？
-    // void Rohr_1991_dynamics();
-    // 计算Error
-    Rohr_r->yp = y_ref - y;
-    // 执行RK4
-    // rk4_wubo_style( (*CTRL).timebase, Rohr_1991_Controller.x, CL_TS );
-    rk4_wubo_style( (*CTRL).timebase, Rohr_r->x, CL_TS );
-
-    Rohr_r->K_adapt = Rohr_r->x[0];
-    if (Rohr_r->K_adapt > Rohr_r->K_range[1])
-        Rohr_r->K_adapt = Rohr_r->K_range[1];
-    else if (Rohr_r->K_adapt < Rohr_r->K_range[0])
-        Rohr_r->K_adapt = Rohr_r->K_range[0];
-    
-    Rohr_r->I_term  = Rohr_r->x[1];
-    REAL KP_term = Rohr_r->K_adapt * Rohr_r->yp;
-
-    REAL I_max = WUBO_MAX( r->OutLimit - KP_term, 0.0 );
-    REAL I_min = WUBO_MIN( r->OutLimit - KP_term, 0.0 );
-
-    if (Rohr_r->I_term > I_max)
-        Rohr_r->I_term = I_max;
-    else if (Rohr_r->I_term < I_min)
-        Rohr_r->I_term = I_min;
-    
-    // 更新输出
-    Rohr_r->output = KP_term + Rohr_r->I_term;
-    if(Rohr_r->output > r->OutLimit)
-        Rohr_r->output = r->OutLimit;
-    else if(Rohr_r->output < -r->OutLimit)
-        Rohr_r->output = -r->OutLimit;
-}
-
-
-
 /* DPCC */
 void DPCC(REAL cmd_idq[2], REAL idq[2]){
     (*CTRL).o->cmd_uDQ[0] = 0.0;
     (*CTRL).o->cmd_uDQ[1] = 0.0;
 }
 
-/* Impedance Position Loop */
-void _init_Pos_IMP(){
-    Pos_IMP_CTRL.Kiq = d_sim.user.IMP_Spring_Factor;
-    Pos_IMP_CTRL.Biq = d_sim.user.IMP_Damping_Factor;
-    Pos_IMP_CTRL.Err_Pos = 0.0;
-    Pos_IMP_CTRL.Err_Vel = 0.0;
-    Pos_IMP_CTRL.Output = 0.0;
-}
-
+/* Position Loop */
 void _user_wubo_get_SpeedFeedForward_for_PositionLoop(REAL Theta){
+
 }
 
 void _user_wubo_PositionLoop_controller(REAL Theta, REAL cmd_Theta){
-}
+    // Calculation of the position feedforward
+    PID_Position->Ref = cmd_Theta;
+    d_sim.user.Position_Loop_Ref_prev = PID_Position->Ref;
 
-void _user_wubo_PositionLoop_IMP(REAL cmd_varTheta, REAL varTheta){
-    PID_Position->Ref = cmd_varTheta;
-    PID_Position->Fbk = varTheta;
-    PID_Position->Err = varTheta - cmd_varTheta;
+    PID_Position->Fbk = Theta;
 
-    if (PID_Position->Err > M_PI){
-        PID_Position->Err -= 2 * M_PI;
-    }
-    if (PID_Position->Err < -M_PI){
-        PID_Position->Err += 2 * M_PI;
-    }
-
-    Pos_IMP_CTRL.Err_Pos = PID_Position->Err;
-    Pos_IMP_CTRL.Err_Vel = (*CTRL).i->varOmega - 0; // 恒值位置的导数为0
-
-    Pos_IMP_CTRL.Output = - Pos_IMP_CTRL.Kiq * Pos_IMP_CTRL.Err_Pos - Pos_IMP_CTRL.Biq * Pos_IMP_CTRL.Err_Vel;
-
-    (*CTRL).i->cmd_iDQ[0] = 0;
-    (*CTRL).i->cmd_iDQ[1] = Pos_IMP_CTRL.Output;
+    PID_Position->Err = PID_Position->Ref - PID_Position->Fbk;
+    //* The detail info plz go to Bilibili Horychen's Channel Search Position Loop
+    //* But I DO NOT understand this method yet
+    // 位置环
+    // 长弧和短弧，要选短的
+    #if PC_SIMULATION == FALSE
+        if (PID_Position->Err > (CAN_QMAX * 0.5)){
+            PID_Position->Err -= CAN_QMAX;
+        }
+        if (PID_Position->Err < -(CAN_QMAX * 0.5)){
+            PID_Position->Err += CAN_QMAX;
+        }
+    #endif
     
-    if ( (*CTRL).i->cmd_iDQ[1] > (d_sim.init.IN * d_sim.VL.LIMIT_OVERLOAD_FACTOR) ){
-        (*CTRL).i->cmd_iDQ[1] = d_sim.init.IN * d_sim.VL.LIMIT_OVERLOAD_FACTOR;
-    }else if( (*CTRL).i->cmd_iDQ[1] < -(d_sim.init.IN * d_sim.VL.LIMIT_OVERLOAD_FACTOR) ){
-        (*CTRL).i->cmd_iDQ[1] = -d_sim.init.IN * d_sim.VL.LIMIT_OVERLOAD_FACTOR;
+    //* Do Postion Control
+    PID_Position->Out = PID_Position->Kp * PID_Position->Err;
+    if( PID_Position->Out > PID_Position->OutLimit ){
+        PID_Position->Out = PID_Position->OutLimit;
     }
-    _onlyFOC( (*CTRL).i->theta_d_elec, (*CTRL).i->iAB );
+    if( PID_Position->Out < -PID_Position->OutLimit ){
+        PID_Position->Out = -PID_Position->OutLimit;
+    }
+
+    // Position Diff Feedforward and Compensation of Output
+    if ( d_sim.user.bool_use_position_feedforward_by_PosDiff == TRUE ){
+        
+    }
+    
+
+    // PID_Position->calc(PID_Position);
+    (*CTRL).i->cmd_varOmega = PID_Position->Out;
+    FOC_with_vecocity_control( (*CTRL).i->theta_d_elec, 
+            (*CTRL).i->varOmega,
+            (*CTRL).i->cmd_varOmega,
+            (*CTRL).i->cmd_iDQ,
+            (*CTRL).i->iAB );
 }
 
 /* Auto MISMATCH the Parameter with CTRL.timebase */
@@ -962,215 +764,7 @@ void _init_wubo_Hit_Wall(){
 }
 
 
-/* Online Adaptation */
-// void inverterNonlinearity_Initialization(){
-//     INV.gamma_theta_trapezoidal = GAIN_THETA_TRAPEZOIDAL;
-// #ifdef _XCUBE1
-//     INV.Vsat = 16.0575341 / 2; // 6.67054; // 180 V SiC
-// #else
-//     // INV.Vsat = sig_a2*0.5; //6.74233802;
-//     INV.Vsat = 7.84; // 150 V
-// #endif
 
-//     INV.gain_Vsat = 0 * 10;
-
-//     INV.thetaA = 0;
-//     INV.cos_thetaA = 1;
-//     INV.sin_thetaA = 0;
-
-//     // --
-//     INV.u_comp[0] = 0;
-//     INV.u_comp[1] = 0;
-//     INV.u_comp[2] = 0;
-//     INV.ual_comp = 0;
-//     INV.ube_comp = 0;
-//     INV.uDcomp_atA = 0;
-//     INV.uQcomp_atA = 0;
-    
-//     INV.iD_atA = 0;
-//     INV.iQ_atA = 0;
-//     INV.I5_plus_I7 = 0;
-//     INV.I5_plus_I7_LPF = 0.0;
-//     INV.theta_trapezoidal = 11.0 * M_PI_OVER_180; // in rad
-
-// #ifdef _XCUBE1
-//     INV.I_plateau_Max = 2.0;
-//     INV.I_plateau_Min = 0.2;
-// #else
-//     INV.I_plateau_Max = 1.0;
-//     INV.I_plateau_Min = 0.1;
-// #endif
-//     INV.I_plateau = 0.7;
-//     INV.V_plateau = 1.5 * sig_a2 * 0.5;
-//     INV.gamma_I_plateau = 10.0;
-//     INV.gamma_V_plateau = 0.0; // this is updated by the estimated disturbance to the sinusoidal flux model.
-
-// #if PC_SIMULATION
-//     INV.sig_a2 = 1.0 * sig_a2;
-//     INV.sig_a3 = 1.5 * sig_a3; // = shape parameter
-// #else
-//     INV.sig_a2 = sig_a2; // = Plateau * 2
-//     INV.sig_a3 = sig_a3; // = shape parameter
-// #endif
-
-//     INV.w6 = 1;
-//     INV.w12 = 0;
-//     INV.w18 = 0;
-//     INV.gamma_a2 = 400;
-//     INV.gamma_a3 = 700;
-// }
-// void Online_PAA_Based_Compensation(void)
-// {
-
-//     // /* 角度反馈: (*CTRL).i->theta_d_elec or ELECTRICAL_POSITION_FEEDBACK? */
-//     // INV.thetaA = ELECTRICAL_POSITION_FEEDBACK;
-//     // // I (current vector amplitude)
-//     // INV.iD_atA = sqrt(IS_C(0)*IS_C(0) + IS_C(1)*IS_C(1));
-
-//     /* 在Park2012中，a相电流被建模成了sin函数，一个sin函数的自变量角度放在正交坐标系下看就是在交轴上的，所以要-1.5*pi */
-
-//     // Phase A current's fundamental component transformation
-//     /* 这里使用哪个角度的关键不在于是有感的角度还是无感的角度，而是你FOC电流控制器（Park变换）用的角度是哪个？ */
-//     if (d_sim.user.sensorless_only_theta_on != 0)
-//     {
-//         INV.thetaA = -M_PI * 1.5 + PMSM_ELECTRICAL_POSITION_FEEDBACK + atan2((*CTRL).i->cmd_iDQ[1], (*CTRL).i->cmd_iDQ[0]); /* Q: why -pi*(1.5)? */ /* ParkSul2014 suggests to use PLL to extract thetaA from current command */
-//         // printf("thetaA = %f\n", INV.thetaA);
-//     }
-//     else
-//     {
-//         INV.thetaA = -M_PI * 1.5 + (*CTRL).i->theta_d_elec + atan2((*CTRL).i->cmd_iDQ[1], (*CTRL).i->cmd_iDQ[0]); /* Q: why -pi*(1.5)? */ /* ParkSul2014 suggests to use PLL to extract thetaA from current command */
-//     }
-//     INV.thetaA = shift2pi(INV.thetaA); /* Q: how to handle it when INV.thetaA jumps between pi and -pi? */ // 这句话绝对不能省去，否则C相的梯形波会出错。
-
-//     INV.cos_thetaA = cosf(INV.thetaA);
-//     INV.sin_thetaA = sinf(INV.thetaA);
-//     INV.iD_atA = AB2M(IS_C(0), IS_C(1), INV.cos_thetaA, INV.sin_thetaA);
-//     INV.iQ_atA = AB2T(IS_C(0), IS_C(1), INV.cos_thetaA, INV.sin_thetaA);
-//     // printf("iD_atA = %f, iQ_atA = %f\n", INV.iD_atA, INV.iQ_atA);
-
-//     if (FALSE)
-//     {
-//         /* Use q-axis current in phase A angle (Tentative and Failed) */
-//         INV.I5_plus_I7 = INV.iQ_atA * cosf(6 * INV.thetaA);
-//         INV.I5_plus_I7_LPF = lpf1_inverter(INV.I5_plus_I7, INV.I5_plus_I7_LPF);
-
-//         INV.I11_plus_I13 = INV.iQ_atA * cosf(12 * INV.thetaA);
-//         INV.I11_plus_I13_LPF = lpf1_inverter(INV.I11_plus_I13, INV.I11_plus_I13_LPF);
-
-//         INV.I17_plus_I19 = INV.iQ_atA * cosf(18 * INV.thetaA);
-//         INV.I17_plus_I19_LPF = lpf1_inverter(INV.I17_plus_I19, INV.I17_plus_I19_LPF);
-//     }
-//     else
-//     {
-//         /* Use d-axis current in phase A angle */
-//         INV.I5_plus_I7 = INV.iD_atA * sinf(6 * INV.thetaA);                     /* Q: Why sinf? Why not cosf? 和上面的-1.5*pi有关系吗？ */
-//         INV.I5_plus_I7_LPF = lpf1_inverter(INV.I5_plus_I7, INV.I5_plus_I7_LPF); /* lpf1 for inverter */
-
-//         INV.I11_plus_I13 = INV.iD_atA * sinf(12 * INV.thetaA);
-//         INV.I11_plus_I13_LPF = lpf1_inverter(INV.I11_plus_I13, INV.I11_plus_I13_LPF);
-
-//         INV.I17_plus_I19 = INV.iD_atA * sinf(18 * INV.thetaA);
-//         INV.I17_plus_I19_LPF = lpf1_inverter(INV.I17_plus_I19, INV.I17_plus_I19_LPF);
-//         // printf("I5+I7_LPF = %f\n", INV.I5_plus_I7_LPF);
-//         // printf("I11+I13_LPF = %f\n", INV.I11_plus_I13_LPF);
-//         // printf("I17+I19_LPF = %f\n", INV.I17_plus_I19_LPF);
-//     }
-
-// #if PC_SIMULATION
-//     // INV.gamma_a2 = 0.0;
-//     // INV.gamma_a3 = 0.0;
-// #endif
-
-//     /* Online Update Sigmoid a3 */
-//     // if((*CTRL).timebase>35){
-//     //     INV.gamma_I_plateau = 0.0;
-//     // }
-//     INV.sig_a3 -= CL_TS * INV.gamma_a3 // *fabsf((*CTRL).i->cmd_speed_rpm)
-//                   * (INV.w6 * INV.I5_plus_I7_LPF + INV.w12 * INV.I11_plus_I13_LPF + INV.w18 * INV.I17_plus_I19_LPF);
-//     INV.error_a3 = INV.w6 * INV.I5_plus_I7_LPF + INV.w12 * INV.I11_plus_I13_LPF + INV.w18 * INV.I17_plus_I19_LPF;
-//     (*CTRL).s->Motor_or_Generator = sign((*CTRL).i->varOmega * (*CTRL).i->cmd_iDQ[1]);
-//     // (*CTRL).s->Motor_or_Generator = sign((*CTRL).i->cmd_omg_elec);
-
-//     /* Online Update Sigmoid a2 */
-//     if ((*CTRL).timebase > 2)
-//     {
-//         /* Sensorless: Adaptive a2 based on flux amplitude error */
-//         // use linear FE
-//         // INV.sig_a2 += CL_TS * -100 * AFEOE.output_error_dq[0];
-
-//         // use nonlinear (saturation) FE
-//         FE.htz.psi_2_ampl_lpf = lpf1_inverter(FE.htz.psi_2_ampl, FE.htz.psi_2_ampl_lpf);
-//         INV.sig_a2 += CL_TS * -INV.gamma_a2 * (*CTRL).s->Motor_or_Generator * (MOTOR.KActive - FE.htz.psi_2_ampl_lpf);
-//         INV.error_a2 = MOTOR.KActive - FE.htz.psi_2_ampl_lpf;
-//         /* Sensored: Adaptive a2 based on position error */
-//         /* To use this, you must have a large enough stator current */
-//         /* 这个好像只对梯形波（电流值的函数）有效 ……*/
-//         // INV.sig_a2 += CL_TS * INV.gain_Vsat * sinf(ENC.theta_d_elec - ELECTRICAL_POSITION_FEEDBACK) * (*CTRL).s->Motor_or_Generator;
-//     }
-//     if (INV.sig_a2 > 40)
-//     {
-//         INV.sig_a2 = 40;
-//     }
-//     else if (INV.sig_a2 < 2)
-//     {
-//         INV.sig_a2 = 2;
-//     }
-
-//     /* Chen2021: linear approximation of u-i curve */
-//     // if((*CTRL).timebase>35){
-//     //     INV.gamma_I_plateau = 0.0;
-//     // }
-//     // INV.I_plateau += CL_TS * 0 * INV.gamma_I_plateau \
-//     //                         // *fabsf((*CTRL).i->cmd_speed_rpm)
-//     //                         *(    1*INV.I5_plus_I7_LPF
-//     //                             + 0*INV.I11_plus_I13_LPF
-//     //                             + 0*INV.I17_plus_I19_LPF
-//     //                          );
-//     // if(INV.I_plateau > INV.I_plateau_Max){
-//     //     INV.I_plateau = INV.I_plateau_Max;
-//     // }else if(INV.I_plateau < INV.I_plateau_Min){
-//     //     INV.I_plateau = INV.I_plateau_Min;
-//     // }
-
-//     /* Chen2021SlessInv 覆盖 */
-//     if (INV.gamma_I_plateau != 0)
-//     {
-//         REAL ia_cmd = ((*CTRL).o->cmd_iAB[0]);
-//         // printf("((*CTRL).o->cmd_iAB[0] = %f\n", (*CTRL).o->cmd_iAB[0]);
-//         REAL ib_cmd = (-0.5 * (*CTRL).o->cmd_iAB[0] - SIN_DASH_2PI_SLASH_3 * (*CTRL).o->cmd_iAB[1]);
-//         REAL ic_cmd = (-0.5 * (*CTRL).o->cmd_iAB[0] - SIN_2PI_SLASH_3 * (*CTRL).o->cmd_iAB[1]);
-//         REAL oneOver_I_plateau = 1.0 / INV.I_plateau;
-//         INV.u_comp[0] = trapezoidal_voltage_by_phase_current(ia_cmd, INV.V_plateau, INV.I_plateau, oneOver_I_plateau);
-//         INV.u_comp[1] = trapezoidal_voltage_by_phase_current(ib_cmd, INV.V_plateau, INV.I_plateau, oneOver_I_plateau);
-//         INV.u_comp[2] = trapezoidal_voltage_by_phase_current(ic_cmd, INV.V_plateau, INV.I_plateau, oneOver_I_plateau);
-
-//         /* Online Sigmoid a3 覆盖 覆盖 */
-//         INV.u_comp[0] = sigmoid_online_v2(ia_cmd, INV.sig_a2, INV.sig_a3);
-//         INV.u_comp[1] = sigmoid_online_v2(ib_cmd, INV.sig_a2, INV.sig_a3);
-//         INV.u_comp[2] = sigmoid_online_v2(ic_cmd, INV.sig_a2, INV.sig_a3);
-//         // printf("ia_cmd = %f, INV.sig_a2 = %f, INV.sig_a3 = %f\n", ia_cmd, INV.sig_a2, INV.sig_a3);
-//         // printf("u_comp[0] = %f, u_comp[1] = %f, u_comp[2] = %f\n", INV.u_comp[0], INV.u_comp[1], INV.u_comp[2]);
-//     }
-
-//     /* 相补偿电压Clarke为静止正交坐标系电压。 */
-//     // 改成恒幅值变换
-//     INV.ual_comp = 0.66666666667 * (INV.u_comp[0] - 0.5 * INV.u_comp[1] - 0.5 * INV.u_comp[2]);
-//     INV.ube_comp = 0.66666666667 * 0.86602540378 * (INV.u_comp[1] - INV.u_comp[2]);
-//     // INV.ual_comp = SQRT_2_SLASH_3      * (INV.u_comp[0] - 0.5*INV.u_comp[1] - 0.5*INV.u_comp[2]); // sqrt(2/3.)
-//     // INV.ube_comp = 0.70710678118654746 * (                    INV.u_comp[1] -     INV.u_comp[2]); // sqrt(2/3.)*sinf(2*pi/3) = sqrt(2/3.)*(sqrt(3)/2)
-
-//     // 区分补偿前的电压和补偿后的电压：
-//     // (*CTRL).ual, (*CTRL).ube 是补偿前的电压！
-//     // (*CTRL).ual + INV.ual_comp, (*CTRL).ube + INV.ube_comp 是补偿后的电压！
-// }
-// void yzz_inverter_Compensation_Online_PAA()
-// {
-//     if(d_sim.user.inverter_nonlinearity_on == 1){
-//         Online_PAA_Based_Compensation();
-//         (*CTRL).o->cmd_uAB_to_inverter[0] = (*CTRL).o->cmd_uAB[0] + INV.ual_comp;
-//         (*CTRL).o->cmd_uAB_to_inverter[1] = (*CTRL).o->cmd_uAB[1] + INV.ube_comp;
-//     }
-// }
 
 
 

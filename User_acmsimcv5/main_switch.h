@@ -12,9 +12,11 @@
 #define USER_GZT    2021531030
 #define USER_WB     2023231051
 #define USER_YZZ    2023231060
+#define USER_HZQ    1601
+#define USER_WB2    970308
 #define USER_GEN    240828
 #define USER_QIAN   2022231110
-#define USER_CURY   369
+#define USER_CURY   201314
 
 #define MODE_SELECT_PWM_DIRECT         1
 #define MODE_SELECT_VOLTAGE_OPEN_LOOP  11
@@ -28,18 +30,22 @@
 #define MODE_SELECT_VELOCITY_LOOP            4
 #define MODE_SELECT_VELOCITY_LOOP_SENSORLESS 41
 #define MODE_SELECT_TESTING_SENSORLESS       42
-#define MODE_SELECT_V_LOOP_WC_TUNER   43  // 这个模式被弃用了，现在于USER_WB中实现WC Tuner
+#define MODE_SELECT_VELOCITY_LOOP_WC_TUNER   43 // 这个模式被弃用了，现在于USER_WB中实现WC Tuner
 #define MODE_SELECT_Marino2005               44
-#define MODE_SELECT_SWEEPING_FREQ   46
-#define MODE_SELECT_V_LOOP_ESO_SPEED_REF 47
+#define MODE_SELECT_VELOCITY_LOOP_HARNEFORS_1998   45
+#define MODE_SELECT_SWEEPING_FREQ_FOR_VELOCITY_AND_CURRENT   46
+#define MODE_SELECT_VELOCITY_LOOP_USING_ESO_FOR_SPEED 47
+#define MODE_SELECT_VARIABLE_PARAMETERS_VELOCITY_LOOP_SENSORLESS 48
+#define MODE_SELECT_INVERTER_NONLINEARITY_SENSORLESS 49
 #define MODE_SELECT_POSITION_LOOP            5
-#define MODE_SELECT_CURY_POSITION_LOOP       51
-#define MODE_SELECT_POSITION_IMPEDANCE_CONTROL 52
+#define MODE_SELECT_NONLINEAR_FLUX_OBSERVER  6
+#define MODE_SELECT_CONSTRAINT_DOMINATED_EKF 16
 #define MODE_SELECT_COMMISSIONING            9
 #define MODE_SELECT_NYQUIST_PLOTTING         91
 #define MODE_SELECT_UDQ_GIVEN_TEST           98
 #define MODE_SELECT_GENERATOR                8
 #define MODE_SELECT_NB_MODE                  99
+
 
 typedef struct {
     float32 Ref;
@@ -58,6 +64,8 @@ typedef struct {
     float32 Kd;
     float32 SatDiff;
     float32 FbkPrev;
+    float32 KFB_Term;
+    float32 KFB;
     void (*calc)();
 } st_pid_regulator;
 typedef st_pid_regulator *st_pid_regulator_handle;
@@ -83,6 +91,8 @@ void tustin_PI(st_pid_regulator *r);
     /*Kd*/  0.0, \
     /*Difference between Non-Saturated Output and Saturated Output*/  0.0, \
     /*Previous Feedback*/  0.0, \
+    /*Feedback Term*/ 0.0, \
+    /*KFB*/ 0.0, \
     (void (*)(Uint32)) incremental_PI \
 }
     // (void (*)(Uint32)) tustin_PI \
@@ -135,7 +145,6 @@ extern st_PIDController pid1_dispY;
 /* wubo:yi！？这两个函数怎么会在我那里 */
 // void  PIDController_Init(st_PIDController *pid);
 // float PIDController_Update(st_PIDController *pid);
-
 
 
 struct DebugExperiment{
@@ -194,7 +203,7 @@ void init_experiment();
 void init_CTRL();
 void _user_time_varying_parameters();// 时变参数
 void _user_observer();
-void _onlyFOC(REAL theta_d_elec, REAL iAB[2]); // only current loop
+void _onlyFOC(REAL theta_d_elec, REAL iAB[2], REAL varOmega); // only current loop
 void _pseudoEncoder(); // 使用内部给定角度代替码盘位置反馈
 void _user_inverter_voltage_command(int bool_use_iab_cmd);
 void Generator(); // 电机发电模式
@@ -211,11 +220,14 @@ extern struct SweepFreq{
     // REAL *p_set_rpm_speed_command, REAL *p_set_iq_cmd, REAL *p_set_id_cmd, int *p_set_current_loop, int *p_flag_overwrite_theta_d, REAL *p_Overwrite_Current_Frequency
 void cmd_fast_speed_reversal(REAL timebase, REAL instant, REAL interval, REAL rpm_cmd);
 void cmd_slow_speed_reversal(REAL timebase, REAL instant, REAL interval, REAL rpm_cmd);
-
 int main_switch(long mode_select);
 void FOC_with_vecocity_control(REAL theta_d_elec, REAL varOmega, REAL cmd_varOmega, REAL cmd_iDQ[2], REAL iAB[2]);
-void _user_position_loop(REAL cmd_varTheta, REAL varTheta);
-
+void RK4_FOC_with_vecocity_control(REAL theta_d_elec, REAL varOmega, REAL cmd_varOmega, REAL cmd_iDQ[2], REAL iAB[2]);
+void rhf_PI_DynamicsforSpeed(REAL t, REAL *x, REAL *fx);
+void rhf_PI_DynamicsforQcurrent(REAL t, REAL *x, REAL *fx);
+void rhf_PI_DynamicsforDcurrent(REAL t, REAL *x, REAL *fx);
+void General_PI_Dynamics(st_pid_regulator *r, void (*dynamic_func)(REAL, REAL *, REAL *));
+void _RK4_PI_Controller_FOC(REAL theta_d_elec, REAL iAB[2]);
 
 
 
@@ -306,16 +318,17 @@ typedef struct {
     REAL R;
     REAL KE;
     REAL Ld;
+    REAL Ld_inv;
     REAL Lq;
     REAL Lq_inv;
     REAL DeltaL; // Ld - Lq for IPMSM
     REAL KActive;
     REAL Rreq;
     // electrical for induction motor
-    // REAL Lsigma;
-    // REAL Lsigma_inv;
-    // REAL Lmu;
-    // REAL Lmu_inv;
+    REAL Lsigma;
+    REAL Lsigma_inv;
+    REAL Lmu;
+    REAL Lmu_inv;
     REAL alpha;
     REAL alpha_inv;
     // mechanical
@@ -327,8 +340,8 @@ typedef struct {
 
 
 //
-#define MA_SEQUENCE_LENGTH            2  // 10   // 40 for Yaojie large Lq motor  // Note MA_SEQUENCE_LENGTH * CL_TS = window of moving average in seconds
-#define MA_SEQUENCE_LENGTH_INVERSE    0.5// 0.1  // 0.025                        // 20 MA gives speed resolution of 3 rpm for 2500 ppr encoder
+#define MA_SEQUENCE_LENGTH            20  // 10   // 40 for Yaojie large Lq motor  // Note MA_SEQUENCE_LENGTH * CL_TS = window of moving average in seconds
+#define MA_SEQUENCE_LENGTH_INVERSE    0.05// 0.1  // 0.025                        // 20 MA gives speed resolution of 3 rpm for 2500 ppr encoder
 // #define MA_SEQUENCE_LENGTH         20 // 20 * CL_TS = window of moving average in seconds
 // #define MA_SEQUENCE_LENGTH_INVERSE 0.05 // 20 MA gives speed resolution of 3 rpm for 2500 ppr encoder
 // #define MA_SEQUENCE_LENGTH         80
@@ -417,6 +430,8 @@ typedef struct {
     REAL sig_a3;
     REAL gamma_a2;
     REAL gamma_a3;
+    REAL error_a3;
+    REAL error_a2;
 } st_InverterNonlinearity; // inverter
 typedef struct {
     // ECAP support (i.e., the API)
@@ -520,10 +535,10 @@ struct ControllerForExperiment{
     // REAL states[5];
     // REAL outputs[4];
 };
-
-struct ObserverForExperiment{
+//Observer for speed reconstruction, OFSR
+struct ObserverForSpeedReconstruction{
         /* Common */
-        struct RK4_DATA{
+        struct RK4_SR_DATA{
             REAL us[2];
             REAL is[2];
             REAL us_curr[2];
@@ -543,7 +558,7 @@ struct ObserverForExperiment{
             // REAL omg_elec; // omg_elec = npp * omg_mech
             // REAL theta_d;
         } rk4;
-//ESO
+//Observer for speed reconstruction
         struct Chen21_ESO_AF{
                 #define NS_CHEN_2021 4
                 REAL xPos;
@@ -563,14 +578,14 @@ struct ObserverForExperiment{
                 REAL xTem;
             } esoaf;
 };
-//OBSV
-extern struct ObserverForExperiment OBSV;
-#define US(X)   OBSV.rk4.us[X]
-#define IS(X)   OBSV.rk4.is[X]
-#define US_C(X) OBSV.rk4.us_curr[X] // 当前步电压是伪概念，测量的时候，没有电压传感器，所以也测量不到当前电压；就算有电压传感器，由于PWM比较寄存器没有更新，输出电压也是没有变化的。
-#define IS_C(X) OBSV.rk4.is_curr[X]
-#define US_P(X) OBSV.rk4.us_prev[X]
-#define IS_P(X) OBSV.rk4.is_prev[X]
+//Observer for speed reconstruction
+extern struct ObserverForSpeedReconstruction OFSR;
+#define US_SR(X)   OFSR.rk4.us[X]
+#define IS_SR(X)   OFSR.rk4.is[X]
+#define US_SR_C(X) OFSR.rk4.us_curr[X] // 当前步电压是伪概念，测量的时候，没有电压传感器，所以也测量不到当前电压；就算有电压传感器，由于PWM比较寄存器没有更新，输出电压也是没有变化的。
+#define IS_SR_C(X) OFSR.rk4.is_curr[X]
+#define US_SR_P(X) OFSR.rk4.us_prev[X]
+#define IS_SR_P(X) OFSR.rk4.is_prev[X]
 void init_rk4();
 typedef void (*pointer_flux_estimator_dynamics)(REAL t, REAL *x, REAL *fx);
     void general_4states_rk4_solver(pointer_flux_estimator_dynamics fp, REAL t, REAL *x, REAL hs);
@@ -617,9 +632,16 @@ void _user_Check_ThreeDB_Point( REAL Fbk, REAL Ref);
 REAL PostionSpeedMeasurement_MovingAvergage(int32 QPOSCNT, st_enc *p_enc);
 
 /* Commission */
-#define ENABLE_COMMISSIONING TRUE
+#if PC_SIMULATION
+    #define ENABLE_COMMISSIONING TRUE /*Simulation*/
+    #define SELF_COMM_INVERTER FALSE
+    #define TUNING_CURRENT_SCALE_FACTOR_INIT FALSE2
+#else
+    #define ENABLE_COMMISSIONING FALSE /*Experiment*/
+    #define SELF_COMM_INVERTER FALSE
+    #define TUNING_CURRENT_SCALE_FACTOR_INIT FALSE
+    /*As we use (*CTRL).o->iab_cmd for look up, now dead-time compensation during ENABLE_COMMISSIONING is not active*/
+#endif
 #define EXCITE_BETA_AXIS_AND_MEASURE_PHASE_B FALSE
-
-/* Encoder */
 
 #endif

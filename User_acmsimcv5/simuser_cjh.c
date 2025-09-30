@@ -4,6 +4,12 @@
     #define U_MOTOR_KE                   d_sim.init.KE
     #define IM_FLUX_COMMAND_DC_PART     d_sim.init.KE // 1.3593784874408608
     #define IM_FLUX_COMMAND_SINE_PART   0.0
+    #define GAIN_THETA_TRAPEZOIDAL (40) // 20
+    #define GAMMA_INV_xTL 17142.85714285714
+    #define LAMBDA_INV_xOmg 10000 // 2700.0 is too large, leading to unstable flux amplitude contorl
+    #define DELTA_INV_alpha (0*500) // 1000
+    #define IM_MAGNETIZING_INDUCTANCE   (d_sim.init.Ld - d_sim.init.Lq)
+    
 /* 逆变器非线性 */
 
 /* 拟合法 */
@@ -26,7 +32,7 @@ REAL sig_a3 = 5.6;
 
 // 150 V
 // REAL sig_a2 = 13.25723639;
-// REAL sig_a3 = 5.6420585;
+// REAL sig_a3 = 5.6420585;7
 
 // 180 V
 // REAL sig_a2 = 15.43046115;
@@ -1546,8 +1552,8 @@ void controller_IFOC(){
     flux_observer(); // FLUX_FEEDBACK_ALPHA, FLUX_FEEDBACK_BETA
     // (*CTRL).i->varOmega = FE.htz.omg_est;=
 
-                    // (*CTRL).i->varOmega = OBSV.esoaf.xOmg - (OBSV.esoaf.bool_ramp_load_torque<0) * (*CTRL).s->omega_sl;
-                    // (*CTRL).i->varOmega = OBSV.esoaf.xOmg;
+                    // (*CTRL).i->varOmega = OFSR.esoaf.xOmg - (OFSR.esoaf.bool_ramp_load_torque<0) * (*CTRL).s->omega_sl;
+                    // (*CTRL).i->varOmega = OFSR.esoaf.xOmg;
 
                         //（编码器反馈）
                         // (*CTRL).i->varOmega     = qep.varOmega;

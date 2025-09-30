@@ -389,12 +389,14 @@ void DISABLE_PWM_OUTPUT(){
         // PID_iX->OutPrev = 0;
         // PID_iy->OutPrev = 0;
 
-        // Sweeping 
-        d_sim.user.timebase_for_Sweeping        = 0.0;
-        d_sim.user.CMD_SPEED_SINE_HZ            = 0.0;
-        d_sim.user.CMD_SPEED_SINE_END_TIME      = CL_TS;
-        d_sim.user.CMD_SPEED_SINE_LAST_END_TIME = 0.0;
-        d_sim.user.flag_clear_timebase_once     = FALSE;
+        // Sweeping
+        #if WHO_IS_USER == USER_WB
+            d_sim.user.timebase_for_Sweeping        = 0.0;
+            d_sim.user.CMD_SPEED_SINE_HZ            = 0.0;
+            d_sim.user.CMD_SPEED_SINE_END_TIME      = CL_TS;
+            d_sim.user.CMD_SPEED_SINE_LAST_END_TIME = 0.0;
+            d_sim.user.flag_clear_timebase_once     = FALSE;
+        #endif
         // d_sim.user.Mark_Counter                 = 0.0; // clear the MARK !!!!! clear ti manually !!
         
         EPwm1Regs.CMPA.bit.CMPA = 2500;
