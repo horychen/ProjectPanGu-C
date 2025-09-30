@@ -1446,7 +1446,7 @@ void rk4_init(){
             main_HE_EKF();
         #endif
         #if AFE_35_SATURATION_TIME_DIFFERENCE
-        VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
+        // VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
         #endif
         #if AFE_25_VM_CM_FUSION
         Main_the_active_flux_estimator();
@@ -2936,10 +2936,12 @@ void pmsm_observers(){
     // stationary_voltage_DOB();
 
     (*CTRL).motor->KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * (*CTRL).i->cmd_iDQ[0];
+    simulation_test_flux_estimators();
+    Main_PLL_norm_Psi(FE.Ortega.psi_2);
 
     #if PC_SIMULATION
         // /* Cascaded Flux Estimator */
-        simulation_test_flux_estimators();
+        
         // OBSV.nsoaf.theta_d = FE.AFEOE.theta_d ;
 
         // /* Speed and Position Estimator */
@@ -2965,11 +2967,11 @@ void pmsm_observers(){
         /* 资源有限 */
         #if SELECT_ALGORITHM == ALG_NSOAF
             // MainFE_HuWu_1998(); // use algorithm 2
-            VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
+            // VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
             #if AFE_38_OUTPUT_ERROR_CLOSED_LOOP
                 Main_VM_ClosedLoopFluxEstimatorForPMSM();
             #endif
-            Main_nsoaf_chen2020();
+            //  Main_nsoaf_chen2020(); // disable the compare function
             #if AFE_25_VM_CM_FUSION
             Main_the_active_flux_estimator();
             #endif

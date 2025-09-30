@@ -839,13 +839,14 @@ void axis_basic_setup(int axisCnt){
     //
     //    Axis->FLAG_ENABLE_PWM_OUTPUT = FALSE;
 
-    Axis->channels_preset = 11; // 9; // 101;
+    Axis->channels_preset = 14; // 9; // 101;
     // 2  /* iD current and iQ current info */
     // 9  /* With SPEED ESO */
     // 10 /* WCtuner Debug */
     // 11 /* 20240414 Debugging */
     // 12 /* 20240418 Pos Loop */
     // 13 /* 20250528 Teleopration */
+    // 14 /* Kalman Filter For Sensorless Control
 
     
     #if WHO_IS_USER == USER_BEZIER

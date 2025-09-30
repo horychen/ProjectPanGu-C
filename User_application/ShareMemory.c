@@ -116,6 +116,8 @@ void write_DAC_buffer(){
         (*Axis4DAC).dac_watch[46] = Axis_1.iuvw[1]*0.1;
         (*Axis4DAC).dac_watch[47] = Axis_1.iuvw[2]*0.1;
 
+        
+
         /* Sensor Coil */
         (*Axis4DAC).dac_watch[48] = Axis->place_sensor[0];
         (*Axis4DAC).dac_watch[49] = Axis->place_sensor[1];
@@ -149,7 +151,15 @@ void write_DAC_buffer(){
         /* From Sensor */
         (*Axis4DAC).dac_watch[70] = (*CTRL).enc->varOmega * MECH_RAD_PER_SEC_2_RPM * 0.002;
 
-
+        /* Kalman Filter For Sensorless Control */
+        (*Axis4DAC).dac_watch[71] = PLLN.omega_elec * ELEC_RAD_PER_SEC_2_RPM * 0.001; // -1000RPM ~ 1000RPM
+        (*Axis4DAC).dac_watch[72] = CTRL->i->theta_d_elec * 0.25 * ONE_OVER_2PI; //
+        # if AFE_44_ORTEGA_2011 == 1
+            (*Axis4DAC).dac_watch[73] = FE.Ortega.theta_d * ONE_OVER_2PI * 2; // unit : degree
+        #endif
+        #if AFE_16_HE_EKF_2025 == 1
+            (*Axis4DAC).dac_watch[74] = FE.Ortega.theta_d * ONE_OVER_2PI * 2; // unit : degree
+        #endif
 //        these two are equivalent
 //        *(*CTRL).s->Speed
 //        *CTRL->s->Speed
@@ -358,6 +368,16 @@ void write_DAC_buffer(){
             (*Axis4DAC).channels[5] = 76; // CTRL_2.i->iDQ[1]; // iQ
             (*Axis4DAC).channels[6] = 77; // CTRL_1.i->cmd_iDQ[1] * 0.1;
             (*Axis4DAC).channels[7] = 78; // CTRL_2.i->cmd_iDQ[1] * 0.1;
+        }else if((*Axis4DAC).channels_preset==14){(*Axis4DAC).channels_preset=0;
+            /* Kalman Filter For Sensorless Control */
+            (*Axis4DAC).channels[0] = 40; // PID_Speed->Ref
+            (*Axis4DAC).channels[1] = 70; // (*CTRL).enc->varOmega * MECH_RAD_PER_SEC_2_RPM
+            (*Axis4DAC).channels[2] = 71; // PLLN.omega_elec * ELEC_RAD_PER_SEC_2_RPM * 001; // -100RPM ~ 100RPM; 
+            (*Axis4DAC).channels[3] = 72; // CTRL->i->theta_d_elec * 0.25 * ONE_OVER_2PI; //; 
+            (*Axis4DAC).channels[4] = 73; // FE.Ortega.theta_d * ONE_OVER_60 * ONE_OVER_60 * 10; // unit : degree; 
+            // (*Axis4DAC).channels[5] = 74  // FE.HE_EKF.theta_d * ONE_OVER_60 * ONE_OVER_60 * 10; // unit : degree; 
+            (*Axis4DAC).channels[6] = 77; 
+            (*Axis4DAC).channels[7] = 78; 
         }
         // [33] = (*CTRL).o->cmd_uDQ[0] * 0.02;
         // [34] = (*CTRL).o->cmd_uDQ[1] * 0.02;

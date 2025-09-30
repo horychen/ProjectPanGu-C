@@ -1065,7 +1065,27 @@ int  main_switch(long mode_select){
         #endif
         break;
     case MODE_SELECT_VELOCITY_LOOP: // 4
-        _user_commands();         // User commands
+
+        _user_commands();
+        #if (WHO_IS_USER == USER_HZQ)
+            US_P(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
+            US_P(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
+            US_C(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
+            US_C(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
+            IS_C(0)           = (*CTRL).i->iAB[0];
+            IS_C(1)           = (*CTRL).i->iAB[1];
+
+            US_SR_P(0) = (*CTRL).o->cmd_uAB[0];
+            US_SR_P(1) = (*CTRL).o->cmd_uAB[1];
+            US_SR_C(0) = (*CTRL).o->cmd_uAB[0];
+            US_SR_C(1) = (*CTRL).o->cmd_uAB[1];
+            IS_SR_C(0) = (*CTRL).i->iAB[0];
+            IS_SR_C(1) = (*CTRL).i->iAB[1];
+            
+            pmsm_observers();
+        #endif
+
+        
         FOC_with_vecocity_control((*CTRL).i->theta_d_elec,
             (*CTRL).i->varOmega,
             (*CTRL).i->cmd_varOmega,
