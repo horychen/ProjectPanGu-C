@@ -5,9 +5,15 @@ YZK_2025_TIA_CTRL *YZK_CTRL;
 LowPassFilter *YZK_LPF;
 st_pid_regulator *YZK_PID;
 p4ps5_motor_suspension_parameters *YZK_p4ps5;
+filters_t *g_filters;
 REAL K; // 一个神秘的导出系数
 
-
+    /* IIR */
+static const REAL LP_b0 = 0.04613180207f;
+static const REAL LP_b1 = 0.09226360415f;
+static const REAL LP_b2 = 0.04613180207f;
+static const REAL LP_a1 = -1.30728502829f;
+static const REAL LP_a2 = 0.49181223659f;
 
 /* Initialising */
 void _init_YZK_ALL(){
@@ -143,3 +149,50 @@ void suspension_p4ps5_PD_Xaxis(REAL Y_Pos){
 
     // return psi_cmd;
 }
+
+// IIR
+void _IIR_lpf(biquad_t *f_out, float fs, float fc, float Q){
+    REAL w0 = 2.0f * (REAL)M_PI * fc / fs;
+    REAL cosw0 = cosf(w0);
+    REAL sinw0 = sinf(w0);
+    REAL alpha = sinw0 / (2.0f * Q);
+
+    REAL b0 = (1.0f - cosw0) * 0.5f;
+    REAL b1 = 1.0f - cosw0;
+    REAL b2 = b0;
+    REAL a0 = 1.0f + alpha;
+    REAL a1 = -2.0f * cosw0;
+    REAL a2 = 1.0f - alpha;
+
+    // 归一化
+    b0 /= a0; b1 /= a0; b2 /= a0;
+    a1 /= a0; a2 /= a0;
+
+    biquad_init(f_out, b0, b1, b2, a1, a2);
+}
+
+REAL biquad_process(biquad_t *f, float x) {
+    // y = b0*x + s1
+    float y = f->b0 * x + f->s1;
+    // update states
+    float s1_new = f->b1 * x - f->a1 * y + f->s2;
+    float s2_new = f->b2 * x - f->a2 * y;
+    f->s1 = s1_new;
+    f->s2 = s2_new;
+    return y;
+}
+
+void biquad_init(biquad_t *f, float b0, float b1, float b2, float a1, float a2) {
+    f->b0 = b0; f->b1 = b1; f->b2 = b2;
+    f->a1 = a1; f->a2 = a2;
+    f->s1 = 0.0f; f->s2 = 0.0f;
+}
+
+void filters_init(void) {
+    biquad_init(&g_filters->lp_ch0, LP_b0, LP_b1, LP_b2, LP_a1, LP_a2);
+    biquad_init(&g_filters->lp_ch1, LP_b0, LP_b1, LP_b2, LP_a1, LP_a2);
+}
+
+
+
+

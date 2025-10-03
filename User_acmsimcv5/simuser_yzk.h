@@ -23,7 +23,19 @@ typedef struct {
     REAL g;
 } p4ps5_motor_suspension_parameters;
 
+// IIR
+typedef struct {
+    float b0, b1, b2;
+    float a1, a2;
+    float s1, s2;   // 状态（DF2-T）
+    // REAL lp_ch0;
+    // REAL lp_ch1;
+} biquad_t;
 
+typedef struct {
+    biquad_t lp_ch0;   /* 低通通道 0 */
+    biquad_t lp_ch1;   /* 低通通道 1 */
+} filters_t;
 
 /* 控制器变量，YZK专用 */
 typedef struct {
@@ -69,8 +81,6 @@ typedef struct {
 void _init_YZK_2025_ALL();
 
 
-
-
 // typedef struct {
 //     float32 Ref;
 //     float32 Fbk;
@@ -111,6 +121,11 @@ extern LowPassFilter *YZK_LPF;
 extern st_pid_regulator *YZK_PID;
 // extern st_pid_regulator YZK_XXXXXX;
 extern p4ps5_motor_suspension_parameters *YZK_p4ps5;
+extern filters_t *g_filters;
 
+void _IIR_lpf(biquad_t *f_out, float fs, float fc, float Q);
+REAL biquad_process(biquad_t *f, float x);
+void biquad_init(biquad_t *f, float b0, float b1, float b2, float a1, float a2);
+void filters_init(void);
 
 #endif

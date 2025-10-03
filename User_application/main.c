@@ -175,8 +175,21 @@ void main_loop(){
            DELAY_US(30);
            I2CA_ReadData_Channel(1);
            DELAY_US(30);
+           filters_init();
+
            Axis->place_sensor[0] = raw_value_zero;
            Axis->place_sensor[1] = raw_value_one;
+
+           REAL int0 = Axis->place_sensor[0];
+           REAL int1 = Axis->place_sensor[1];
+
+           REAL y0 = biquad_process(&g_filters->lp_ch0, int0);
+           REAL y1 = biquad_process(&g_filters->lp_ch1, int1);
+
+           YZK_CTRL->disFbk_X = y0;
+           YZK_CTRL->disFbk_Y = y1;
+        //    lp_ch0
+        //    lp_ch1
         //    yzkdebug1++;
 //            I2CA_ReadData_Channel(2);
 //            DELAY_US(300);
