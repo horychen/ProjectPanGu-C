@@ -183,11 +183,15 @@ void main_loop(){
            REAL int0 = Axis->place_sensor[0];
            REAL int1 = Axis->place_sensor[1];
 
-           REAL y0 = biquad_process(&g_filters->lp_ch0, int0);
+           REAL x0 = biquad_process(&g_filters->lp_ch0, int0);
            REAL y1 = biquad_process(&g_filters->lp_ch1, int1);
 
-           YZK_CTRL->disFbk_X = y0;
-           YZK_CTRL->disFbk_Y = y1;
+           YZK_CTRL->disFbk_X = x0;  // DAC:0.7870-0.7899 // disFbk(filtered)：1457715-1452433
+           YZK_CTRL->disFbk_Y = y1;  // DAC:0.7870-0.7899 // disFbk(filtered)：1457715-1452433
+
+           suspension_p4ps5_PD_Xaxis(YZK_CTRL->disFbk_X);
+           suspension_p4ps5_PD_Yaxis(YZK_CTRL->disFbk_Y);
+
         //    lp_ch0
         //    lp_ch1
         //    yzkdebug1++;

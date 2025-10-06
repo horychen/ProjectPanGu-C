@@ -8,12 +8,27 @@ p4ps5_motor_suspension_parameters *YZK_p4ps5;
 filters_t *g_filters;
 REAL K; // 一个神秘的导出系数
 
+
+// K = tan(pi * fc / fs)
+// norm = 1 + K/Q + K^2
+// b0 = K^2 / norm
+// b1 = 2*b0
+// b2 = b0
+// a1 = 2*(K^2 - 1) / norm
+// a2 = (1 - K/Q + K^2) / norm
+
     /* IIR */
-static const REAL LP_b0 = 0.04613180207f;
-static const REAL LP_b1 = 0.09226360415f;
-static const REAL LP_b2 = 0.04613180207f;
-static const REAL LP_a1 = -1.30728502829f;
-static const REAL LP_a2 = 0.49181223659f;
+static const REAL LP0_b0 = 0.04613180207f;
+static const REAL LP0_b1 = 0.09226360415f;
+static const REAL LP0_b2 = 0.04613180207f;
+static const REAL LP0_a1 = -1.30728502829f;
+static const REAL LP0_a2 = 0.49181223659f;
+
+static const REAL LP1_b0 = 8.005707207323e-01;
+static const REAL LP1_b1 = 1.601141441465e+00;
+static const REAL LP1_b2 = 8.005707207323e-01;
+static const REAL LP1_a1 = 1.560975798186e+00;
+static const REAL LP1_a2 = 6.413070847429e-01;
 
 /* Initialising */
 void _init_YZK_ALL(){
@@ -55,6 +70,19 @@ void _init_YZK_ALL(){
     YZK_PID->Ki_CODE = 0.0;
     YZK_PID->Kd = 0.0;
     YZK_PID->OutLimit = 25;
+
+    /* 参数初始化 */
+    YZK_p4ps5->npp = 5;
+    YZK_p4ps5->npp_inv = 0.2;
+    YZK_p4ps5->Js = 1;
+    YZK_p4ps5->Js_inv = 1;
+    YZK_p4ps5->M_rotor = 150;  // rotor mass
+    YZK_p4ps5->ge = 6.5;       // air gap length
+    YZK_p4ps5->mu_0 = 4*M_PI*1e-7;     // 真空磁导率
+    YZK_p4ps5->S = 1;        // alpha正对的面积
+    YZK_p4ps5->N_alpha = 120;  // alpha线圈匝数
+    YZK_p4ps5->N_beta = 120;   // beta线圈匝数
+    YZK_p4ps5->g = 10;
 }
 
 
@@ -75,7 +103,7 @@ double lowpass_update(LowPassFilter *f, double input) {
     return f->prev_output;
 }
 
-// X_Pos 
+// Y_Pos 
 void suspension_p4ps5_PD_Yaxis(REAL Y_Pos){
     /* 位置环 */    
     // 1. 误差
@@ -112,12 +140,12 @@ void suspension_p4ps5_PD_Yaxis(REAL Y_Pos){
 
     // return psi_cmd;
 }
-
-void suspension_p4ps5_PD_Xaxis(REAL Y_Pos){
+// Y_Pos 
+void suspension_p4ps5_PD_Xaxis(REAL X_Pos){
     /* 位置环 */    
     // 1. 误差
     YZK_CTRL->prev_error_X = YZK_CTRL->Err_X; // 保存上次误差
-    YZK_CTRL->disFbk_X = Y_Pos;
+    YZK_CTRL->disFbk_X = X_Pos;
     YZK_CTRL->varTheta = (*CTRL).i->varTheta;
     YZK_CTRL->Err_X = YZK_CTRL->CMD_X - YZK_CTRL->disFbk_X;
 
@@ -129,7 +157,7 @@ void suspension_p4ps5_PD_Xaxis(REAL Y_Pos){
 
     // 4. 控制律: 磁链参考 看那张纸上的公式，找不到找YZK
     YZK_CTRL->CMD_psi_alpha = YZK_p4ps5->M_rotor * YZK_p4ps5->g
-    - YZK_CTRL->KP_X * YZK_CTRL->Err_X 
+    - YZK_CTRL->KP_X * YZK_CTRL->Err_X
     - YZK_CTRL->KD_X * YZK_LPF->de;
 
     if (YZK_CTRL->CMD_psi_alpha < 0.0) YZK_CTRL->CMD_psi_alpha = 0.0;   // 避免 sqrt 负数
@@ -189,8 +217,8 @@ void biquad_init(biquad_t *f, float b0, float b1, float b2, float a1, float a2) 
 }
 
 void filters_init(void) {
-    biquad_init(&g_filters->lp_ch0, LP_b0, LP_b1, LP_b2, LP_a1, LP_a2);
-    biquad_init(&g_filters->lp_ch1, LP_b0, LP_b1, LP_b2, LP_a1, LP_a2);
+    biquad_init(&g_filters->lp_ch0, LP0_b0, LP0_b1, LP0_b2, LP0_a1, LP0_a2);
+    biquad_init(&g_filters->lp_ch1, LP1_b0, LP1_b1, LP1_b2, LP1_a1, LP1_a2);
 }
 
 
