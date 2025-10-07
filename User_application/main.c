@@ -175,23 +175,7 @@ void main_loop(){
            DELAY_US(30);
            I2CA_ReadData_Channel(1);
            DELAY_US(30);
-           filters_init();
-
-           Axis->place_sensor[0] = raw_value_zero;
-           Axis->place_sensor[1] = raw_value_one;
-
-           REAL int0 = Axis->place_sensor[0];
-           REAL int1 = Axis->place_sensor[1];
-
-           REAL x0 = biquad_process(&g_filters->lp_ch0, int0);
-           REAL y1 = biquad_process(&g_filters->lp_ch1, int1);
-
-        //    YZK_CTRL->disFbk_X = x0;  // DAC:0.7870-0.7899 // disFbk(filtered)：1457715-1452433
-        //    YZK_CTRL->disFbk_Y = y1;  // DAC:0.7870-0.7899 // disFbk(filtered)：1457715-1452433
-           
-           suspension_p4ps5_PD_Xaxis(x0);
-           suspension_p4ps5_PD_Yaxis(y1);
-
+        //
         //    lp_ch0
         //    lp_ch1
         //    yzkdebug1++;
@@ -241,6 +225,9 @@ void main_measurement(){
 
         // measure d-axis angle and then use a poor algorithm to calculate speed
         measurement_enc();
+    #endif
+    #if WHO_IS_USER == USER_YZK
+        measurement_displacement_count_axisCnt0();
     #endif
     CTRL->i->varOmega     = CTRL->enc->varOmega;
     CTRL->i->theta_d_elec = CTRL->enc->theta_d_elec;
@@ -1299,7 +1286,26 @@ void measurement_position_count_axisCnt0(){
         position_count_SCI_fromCPU2 = position_count_SCI_shank_fromCPU2;
     #endif
         // 正电流导致编码器读数增大：
+    #if WHO_IS_USER == USER_YZK
+        position_count_SCI_fromCPU2 = position_count_SCI_hip_fromCPU2;
+    #endif
         CTRL->enc->encoder_abs_cnt = wubo_debug_motor_enc_dirc[0] * (int32)position_count_SCI_fromCPU2 - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis;
+}
+
+void measurement_displacement_count_axisCnt0(){
+    Axis->place_sensor[0] = raw_value_zero;
+    Axis->place_sensor[1] = raw_value_one;
+
+    REAL int0 = Axis->place_sensor[0];
+    REAL int1 = Axis->place_sensor[1];
+
+    REAL x0 = biquad_process(&YZK_CTRL.filt.lp_ch0, int0);
+    REAL y1 = biquad_process(&YZK_CTRL.filt.lp_ch1, int1);
+
+    YZK_CTRL.disFbk_X = x0;  // DAC:0.7870-0.7899 // disFbk(filtered)：1457715-1452433
+    YZK_CTRL.disFbk_Y = y1;  // DAC:0.7870-0.7899 // disFbk(filtered)：1457715-1452433
+
+
 }
 
 

@@ -349,7 +349,7 @@ void init_experiment(){
     // init_debug;   // initilizating debug is removed into main.c to execute only once
     overwrite_d_sim(); // overwrite d_sim with user's algorithm
     init_CTRL(); // 控制器结构体初始化
-
+    // filters_init();
     //OBSV
     init_rk4();
     //ESO
@@ -390,9 +390,7 @@ void init_experiment(){
             d_sim.user.BOOL_INIT_MY_VARIABLES = TRUE;
         }
     #endif
-    #if WHO_IS_USER == USER_YZK
-        _init_YZK_ALL();
-    #endif
+    init_YZK_ALL();
 }
 /* 公用的核心电机控制实现代码，不要修改！*/
 void incremental_PI(st_pid_regulator *r){
@@ -1043,7 +1041,7 @@ int  main_switch(long mode_select){
             if ( (d_sim.user.bool_sweeping_frequency_for_speed_loop == TRUE) || (d_sim.user.bool_sweeping_frequency_for_Rejection_Load == TRUE) ){
                 
                 // Runing Speed ESO
-                if (d_sim.user.bool_ESO_SPEED_ON = TRUE){
+                if (d_sim.user.bool_ESO_SPEED_ON == TRUE){
                     Main_esoaf_chen2021();
                 }
                 if (d_sim.user.bool_apply_ESO_SPEED_for_SPEED_FBK == TRUE){
@@ -1174,6 +1172,12 @@ int  main_switch(long mode_select){
             }
 
             _user_wubo_PositionLoop_IMP( (*CTRL).i->cmd_varTheta, (*CTRL).i->varTheta );
+        #endif
+        break;
+    case MODE_SELECT_SUSPENSION_CONTROl:
+        #if WHO_IS_USER == USER_YZK
+            suspension_p4ps5_PD_Xaxis(YZK_CTRL.disFbk_X);
+            suspension_p4ps5_PD_Yaxis(YZK_CTRL.disFbk_Y);
         #endif
         break;
     case MODE_SELECT_COMMISSIONING: // 9

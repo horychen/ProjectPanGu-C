@@ -32,16 +32,16 @@ REAL angle_error_limiter(REAL angle_error){
 
 
 
-extern REAL hall_sensor_read[3];
-extern int current_pole[3];
-extern REAL hall_qep_count;
-extern int count_magnet[3];
-extern REAL hall_theta_r_elec[3];
-extern REAL hall_theta_r_elec_incremental[3];
-extern REAL hall_theta_r_elec_local_absolute[3];
-extern REAL normalizer[3];
-extern REAL hall_rotating_direction;
-extern REAL eddy_displacement[2];
+//extern REAL hall_sensor_read[3];
+//extern int current_pole[3];
+//extern REAL hall_qep_count;
+//extern int count_magnet[3];
+//extern REAL hall_theta_r_elec[3];
+//extern REAL hall_theta_r_elec_incremental[3];
+//extern REAL hall_theta_r_elec_local_absolute[3];
+//extern REAL normalizer[3];
+//extern REAL hall_rotating_direction;
+//extern REAL eddy_displacement[2];
 //extern REAL used_theta_d_elec;
 extern REAL target_position_cnt;
 extern long long sci_pos;
