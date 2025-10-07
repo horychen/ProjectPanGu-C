@@ -389,9 +389,9 @@ void init_experiment(){
             _init_Pos_IMP();   // Basic Example for Impedance Control
             d_sim.user.BOOL_INIT_MY_VARIABLES = TRUE;
         }
+    #endif
     #if WHO_IS_USER == USER_YZK
         _init_YZK_ALL();
-    #endif
     #endif
 }
 /* 公用的核心电机控制实现代码，不要修改！*/

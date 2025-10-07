@@ -21,6 +21,7 @@ typedef struct {
     REAL N_alpha;  // alpha线圈匝数
     REAL N_beta;   // beta线圈匝数
     REAL g;
+    REAL K;
 } p4ps5_motor_suspension_parameters;
 
 // IIR

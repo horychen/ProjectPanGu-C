@@ -186,11 +186,11 @@ void main_loop(){
            REAL x0 = biquad_process(&g_filters->lp_ch0, int0);
            REAL y1 = biquad_process(&g_filters->lp_ch1, int1);
 
-           YZK_CTRL->disFbk_X = x0;  // DAC:0.7870-0.7899 // disFbk(filtered)：1457715-1452433
-           YZK_CTRL->disFbk_Y = y1;  // DAC:0.7870-0.7899 // disFbk(filtered)：1457715-1452433
-
-           suspension_p4ps5_PD_Xaxis(YZK_CTRL->disFbk_X);
-           suspension_p4ps5_PD_Yaxis(YZK_CTRL->disFbk_Y);
+        //    YZK_CTRL->disFbk_X = x0;  // DAC:0.7870-0.7899 // disFbk(filtered)：1457715-1452433
+        //    YZK_CTRL->disFbk_Y = y1;  // DAC:0.7870-0.7899 // disFbk(filtered)：1457715-1452433
+           
+           suspension_p4ps5_PD_Xaxis(x0);
+           suspension_p4ps5_PD_Yaxis(y1);
 
         //    lp_ch0
         //    lp_ch1

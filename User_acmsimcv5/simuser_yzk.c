@@ -6,7 +6,6 @@ LowPassFilter *YZK_LPF;
 st_pid_regulator *YZK_PID;
 p4ps5_motor_suspension_parameters *YZK_p4ps5;
 filters_t *g_filters;
-REAL K; // 一个神秘的导出系数
 
 
 // K = tan(pi * fc / fs)
@@ -24,21 +23,27 @@ static const REAL LP0_b2 = 0.04613180207f;
 static const REAL LP0_a1 = -1.30728502829f;
 static const REAL LP0_a2 = 0.49181223659f;
 
-static const REAL LP1_b0 = 8.005707207323e-01;
-static const REAL LP1_b1 = 1.601141441465e+00;
-static const REAL LP1_b2 = 8.005707207323e-01;
-static const REAL LP1_a1 = 1.560975798186e+00;
-static const REAL LP1_a2 = 6.413070847429e-01;
+static const REAL LP1_b0 = 0.04613180207f;
+static const REAL LP1_b1 = 0.09226360415f;
+static const REAL LP1_b2 = 0.04613180207f;
+static const REAL LP1_a1 = -1.30728502829f;
+static const REAL LP1_a2 = 0.49181223659f;
 
+static const REAL KP_X = 0.2;
+static const REAL KP_Y = 0.5;
+// static const REAL YZK_CTRL->KI_X = 0.0;
+// static const REAL YZK_CTRL->KI_Y = 0.0;
+// static const REAL YZK_CTRL->KD_X = 0.0;
+// static const REAL YZK_CTRL->KD_Y = 0.0;
 /* Initialising */
 void _init_YZK_ALL(){
     /* XY方向 */
-    YZK_CTRL->CMD_X = 0.0;
-    YZK_CTRL->CMD_Y = 0.0;
+    YZK_CTRL->CMD_X = 1722575;
+    YZK_CTRL->CMD_Y = 1712097;
     YZK_CTRL->Err_X = 0.0;
     YZK_CTRL->Err_Y = 0.0;
-    YZK_CTRL->KP_X = 0.0;
-    YZK_CTRL->KP_Y = 0.0;
+    YZK_CTRL->KP_X = 0.2;
+    YZK_CTRL->KP_Y = 0.2;
     YZK_CTRL->KI_X = 0.0;
     YZK_CTRL->KI_Y = 0.0;
     YZK_CTRL->KD_X = 0.0;
@@ -83,6 +88,7 @@ void _init_YZK_ALL(){
     YZK_p4ps5->N_alpha = 120;  // alpha线圈匝数
     YZK_p4ps5->N_beta = 120;   // beta线圈匝数
     YZK_p4ps5->g = 10;
+    YZK_p4ps5->K = 1 / (YZK_p4ps5->N_alpha * YZK_p4ps5->N_alpha * YZK_p4ps5->mu_0 * YZK_p4ps5->S);
 }
 
 
@@ -120,7 +126,7 @@ void suspension_p4ps5_PD_Yaxis(REAL Y_Pos){
 
     // 4. 控制律: 磁链参考 看那张纸上的公式，找不到找YZK
     YZK_CTRL->CMD_psi_beta = YZK_p4ps5->M_rotor * YZK_p4ps5->g
-    - YZK_CTRL->KP_Y * YZK_CTRL->Err_Y 
+    - KP_Y * YZK_CTRL->Err_Y 
     - YZK_CTRL->KD_Y * YZK_LPF->de;
 
     if (YZK_CTRL->CMD_psi_beta < 0.0) YZK_CTRL->CMD_psi_beta = 0.0;   // 避免 sqrt 负数
@@ -128,8 +134,8 @@ void suspension_p4ps5_PD_Yaxis(REAL Y_Pos){
     YZK_CTRL->CMD_psi_beta = sqrt(YZK_CTRL->CMD_psi_beta);
 
     // 5. 电流参考
-    K = 0;
-    YZK_CTRL->CMD_I_beta = K * YZK_CTRL->CMD_psi_beta * 1 / (YZK_p4ps5->ge - YZK_CTRL->disFbk_Y);
+    // K = 1 / N_alpha;
+    YZK_CTRL->CMD_I_beta = YZK_p4ps5->K * YZK_CTRL->CMD_psi_beta * 1 / (YZK_p4ps5->ge - YZK_CTRL->disFbk_Y);
 
     // 6. PI
     incremental_PI(YZK_PID);
@@ -140,7 +146,7 @@ void suspension_p4ps5_PD_Yaxis(REAL Y_Pos){
 
     // return psi_cmd;
 }
-// Y_Pos 
+// X_Pos 
 void suspension_p4ps5_PD_Xaxis(REAL X_Pos){
     /* 位置环 */    
     // 1. 误差
@@ -157,7 +163,7 @@ void suspension_p4ps5_PD_Xaxis(REAL X_Pos){
 
     // 4. 控制律: 磁链参考 看那张纸上的公式，找不到找YZK
     YZK_CTRL->CMD_psi_alpha = YZK_p4ps5->M_rotor * YZK_p4ps5->g
-    - YZK_CTRL->KP_X * YZK_CTRL->Err_X
+    - KP_X * YZK_CTRL->Err_X
     - YZK_CTRL->KD_X * YZK_LPF->de;
 
     if (YZK_CTRL->CMD_psi_alpha < 0.0) YZK_CTRL->CMD_psi_alpha = 0.0;   // 避免 sqrt 负数
@@ -165,8 +171,8 @@ void suspension_p4ps5_PD_Xaxis(REAL X_Pos){
     YZK_CTRL->CMD_psi_alpha = sqrt(YZK_CTRL->CMD_psi_alpha);
 
     // 5. 电流参考
-    K = 0;
-    YZK_CTRL->CMD_I_alpha = K * YZK_CTRL->CMD_psi_alpha * 1 / (YZK_p4ps5->ge - YZK_CTRL->disFbk_X);
+    // K = 0;
+    YZK_CTRL->CMD_I_alpha = YZK_p4ps5->K * YZK_CTRL->CMD_psi_alpha * 1 / (YZK_p4ps5->ge - YZK_CTRL->disFbk_X);
 
     /* 电流环 */
     incremental_PI_YZK(YZK_PID);
