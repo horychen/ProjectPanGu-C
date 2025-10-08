@@ -227,7 +227,7 @@ void main_measurement(){
         measurement_enc();
     #endif
     #if WHO_IS_USER == USER_YZK
-        measurement_displacement_count_axisCnt0();
+        measurement_displacement_count();
     #endif
     CTRL->i->varOmega     = CTRL->enc->varOmega;
     CTRL->i->theta_d_elec = CTRL->enc->theta_d_elec;
@@ -1268,8 +1268,38 @@ void cla_test_codes(){
     Cla1Regs.MCTL.bit.IACKE = 1;
     EDIS;
 }
+REAL s1_new0 = 0.0;
+REAL s1_new1 = 0.0;
+REAL s2_new0 = 0.0;
+REAL s2_new1 = 0.0;
+REAL x0 = 0.0;
+REAL y0 = 0.0;
+int yzkdebug4 = 0;
+void measurement_displacement_count(){
+    // Axis->place_sensor[0] = raw_value_zero;
+    // Axis->place_sensor[1] = raw_value_one;
 
+    // int0 = Axis->place_sensor[0];
+    // int1 = Axis->place_sensor[1];
+    x0 = YZK_CTRL.filt.lp_ch0.b0 * raw_value_zero + YZK_CTRL.filt.lp_ch0.s1;
+    // yzkdebug4++;
+    y0 = YZK_CTRL.filt.lp_ch1.b0 * raw_value_one + YZK_CTRL.filt.lp_ch1.s1;
+    s1_new0 = YZK_CTRL.filt.lp_ch0.b1 * raw_value_zero - YZK_CTRL.filt.lp_ch0.a1 * x0 + YZK_CTRL.filt.lp_ch0.s2;
+    s2_new0 = YZK_CTRL.filt.lp_ch0.b2 * raw_value_zero - YZK_CTRL.filt.lp_ch0.a2 * x0;
+    s1_new1 = YZK_CTRL.filt.lp_ch1.b1 * raw_value_one - YZK_CTRL.filt.lp_ch1.a1 * y0 + YZK_CTRL.filt.lp_ch1.s2;
+    s2_new1 = YZK_CTRL.filt.lp_ch1.b2 * raw_value_one - YZK_CTRL.filt.lp_ch1.a2 * y0;
 
+    YZK_CTRL.filt.lp_ch0.s1 = s1_new0;
+    YZK_CTRL.filt.lp_ch0.s2 = s2_new0;
+    YZK_CTRL.filt.lp_ch1.s1 = s1_new1;
+    YZK_CTRL.filt.lp_ch1.s2 = s2_new1;
+
+    // x0 = lp_biquad_process(&YZK_CTRL.filt.lp_ch0, raw_value_zero);
+    // y0 = lp_biquad_process(&YZK_CTRL.filt.lp_ch1, raw_value_one);
+
+    YZK_CTRL.disFbk_X = x0;  // DAC:0.7870-0.7899 // disFbk(filtered)：1457715-1452433
+    YZK_CTRL.disFbk_Y = y0;  // DAC:0.7870-0.7899 // disFbk(filtered)：1457715-1452433
+}
 
 extern REAL wubo_debug_motor_enc_dirc[2];
 
@@ -1292,21 +1322,7 @@ void measurement_position_count_axisCnt0(){
         CTRL->enc->encoder_abs_cnt = wubo_debug_motor_enc_dirc[0] * (int32)position_count_SCI_fromCPU2 - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis;
 }
 
-void measurement_displacement_count_axisCnt0(){
-    Axis->place_sensor[0] = raw_value_zero;
-    Axis->place_sensor[1] = raw_value_one;
 
-    REAL int0 = Axis->place_sensor[0];
-    REAL int1 = Axis->place_sensor[1];
-
-    REAL x0 = biquad_process(&YZK_CTRL.filt.lp_ch0, int0);
-    REAL y1 = biquad_process(&YZK_CTRL.filt.lp_ch1, int1);
-
-    YZK_CTRL.disFbk_X = x0;  // DAC:0.7870-0.7899 // disFbk(filtered)：1457715-1452433
-    YZK_CTRL.disFbk_Y = y1;  // DAC:0.7870-0.7899 // disFbk(filtered)：1457715-1452433
-
-
-}
 
 
 void measurement_position_count_axisCnt1(){

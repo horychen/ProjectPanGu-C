@@ -9,9 +9,11 @@
 
 // // IIR
 typedef struct {
-        float b0, b1, b2;
-        float a1, a2;
-        float s1, s2;   // 状态（DF2-T）
+        REAL b0, b1, b2;
+        REAL a1, a2;
+        REAL s1, s2;   // 状态（DF2-T）
+        REAL x1s, x2s; // x[n-1], x[n-2]
+        REAL y1s, y2s, y0s; // y[n-1], y[n-2]
         // REAL lp_ch0;
         // REAL lp_ch1;
 } biquad_t;
@@ -25,48 +27,53 @@ typedef struct {
         REAL prev_output;
         REAL alpha;
         REAL TAU;
-        REAL de_raw; // delta error before filtering
-        REAL de; // delta error
+        REAL de_raw_X; // delta error before filtering
+        REAL de_raw_Y;
+        REAL de_X; // delta error
+        REAL de_Y;
+
 } LPFs;
 
 /* 控制器变量，YZK专用 */
 struct YZK_2025_TIA_CTRL{
     /* XY方向，位置环 */
-    double CMD_X;
-    double CMD_Y;
-    double Err_X;
-    double Err_Y;
-    double KP_X;
-    double KP_Y;
-    double KI_X;
-    double KI_Y;
-    double KD_X;
-    double KD_Y;
+    REAL CMD_X;
+    REAL CMD_Y;
+    REAL Err_X;
+    REAL Err_Y;
+    REAL KP_X;
+    REAL KP_Y;
+    REAL KI_X;
+    REAL KI_Y;
+    REAL KD_X;
+    REAL KD_Y;
     /* 磁链 */
-    double CMD_psi_alpha;
-    double CMD_psi_beta;
-    double Err_psi_alpha;
-    double Err_psi_beta;
-    double CMD_I_alpha;
-    double CMD_I_beta;
-    double CMD_U_alpha;
-    double CMD_U_beta;
-    double Err_I_alpha;
-    double Err_I_beta;
+    REAL CMD_psi_alpha;
+    REAL CMD_psi_beta;
+    REAL Err_psi_alpha;
+    REAL Err_psi_beta;
+    REAL CMD_I_alpha;
+    REAL CMD_I_beta;
+    REAL CMD_U_alpha;
+    REAL CMD_U_beta;
+    REAL Err_I_alpha;
+    REAL Err_I_beta;
     /* FOC */
-    double disFbk_X;
-    double disFbk_Y;
-    double encFbk;
-    double prev_error_X;
-    double prev_error_Y;
-    // double I_Term_prev_iD;
-    // double I_Term_prev_iQ;
-    // double K_INVERSE_iD;
-    // double K_INVERSE_iQ;
+    REAL disFbk_X;
+    REAL disFbk_Y;
+    REAL encFbk;
+    REAL prev_error_X;
+    REAL prev_error_Y;
+    // REAL I_Term_prev_iD;
+    // REAL I_Term_prev_iQ;
+    // REAL K_INVERSE_iD;
+    // REAL K_INVERSE_iQ;
     /* Misc*/
-    double varTheta;
-    double Out;
-
+    REAL varTheta;
+    REAL OutPrev_alpha;
+    REAL OutPrev_beta;
+    REAL Out_alpha;
+    REAL Out_beta;
     struct {
         REAL alpha;
         REAL alpha_inv;
@@ -88,22 +95,22 @@ struct YZK_2025_TIA_CTRL{
     // #define p4ps5_motor_suspension_parameters YZK_CTRL.motor
     // #define biquad_t YZK_CTRL.biq
     struct {
-        float32 Ref;
-        float32 Fbk;
-        float32 Err;
-        float32 ErrPrev;
-        float32 P_Term; 
-        float32 I_Term; 
-        float32 D_Term;
-        float32 OutNonSat;
-        float32 OutLimit;
-        float32 Out;
-        float32 OutPrev; // for incremental pid
-        float32 Kp;
-        float32 Ki_CODE;
-        float32 Kd;
-        float32 SatDiff;
-        float32 FbkPrev;
+        REAL Ref;
+        REAL Fbk;
+        REAL Err;
+        REAL ErrPrev;
+        REAL P_Term; 
+        REAL I_Term; 
+        REAL D_Term;
+        REAL OutNonSat;
+        REAL OutLimit;
+        REAL Out;
+        REAL OutPrev; // for incremental pid
+        REAL Kp;
+        REAL Ki_CODE;
+        REAL Kd;
+        REAL SatDiff;
+        REAL FbkPrev; 
         void (*calc)();
     } pids;
     LPFs LPFs;

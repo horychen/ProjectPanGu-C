@@ -143,14 +143,14 @@ void write_DAC_buffer(){
         (*Axis4DAC).dac_watch[70] = (*CTRL).enc->varOmega * MECH_RAD_PER_SEC_2_RPM * 0.002;
 
         /* Suspension control */
-        (*Axis4DAC).dac_watch[70] = Axis->place_sensor[0] * 1 / 45000000;
-        (*Axis4DAC).dac_watch[71] = Axis->place_sensor[1] * 1 / 45000000;
-        (*Axis4DAC).dac_watch[72] = Axis->place_sensor[0] * 1 / 45000000;
-        (*Axis4DAC).dac_watch[73] = Axis->place_sensor[1] * 1 / 45000000;
-        (*Axis4DAC).dac_watch[74] = Axis->place_sensor[0] * 1 / 45000000;
-        (*Axis4DAC).dac_watch[75] = Axis->place_sensor[1] * 1 / 45000000;
-        (*Axis4DAC).dac_watch[76] = Axis->place_sensor[0] * 1 / 45000000;
-        (*Axis4DAC).dac_watch[77] = Axis->place_sensor[1] * 1 / 45000000;
+        (*Axis4DAC).dac_watch[70] = YZK_CTRL.disFbk_X * 1 / 40000000;
+        (*Axis4DAC).dac_watch[71] = YZK_CTRL.disFbk_Y * 1 / 40000000;
+        (*Axis4DAC).dac_watch[72] = YZK_CTRL.disFbk_X * 1 / 40000000;
+        (*Axis4DAC).dac_watch[73] = YZK_CTRL.disFbk_Y * 1 / 40000000;
+        (*Axis4DAC).dac_watch[74] = YZK_CTRL.disFbk_X * 1 / 40000000;
+        (*Axis4DAC).dac_watch[75] = YZK_CTRL.disFbk_Y * 1 / 40000000;
+        (*Axis4DAC).dac_watch[76] = YZK_CTRL.disFbk_X * 1 / 40000000;
+        (*Axis4DAC).dac_watch[77] = YZK_CTRL.disFbk_Y * 1 / 40000000;
 //        these two are equivalent
 //        *(*CTRL).s->Speed
 //        *CTRL->s->Speed

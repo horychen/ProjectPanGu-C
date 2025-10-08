@@ -1,6 +1,7 @@
 // This file is used in both simulation and experiment, so editing this file in experiment will result in overwritten.
 
 #include "ACMSim.h"
+int yzkdebug;
 #if PC_SIMULATION
     #define DC_BUS_VOLTAGE_INVERSE (1.732 / d_sim.init.Vdc)
 #else
@@ -349,7 +350,7 @@ void init_experiment(){
     // init_debug;   // initilizating debug is removed into main.c to execute only once
     overwrite_d_sim(); // overwrite d_sim with user's algorithm
     init_CTRL(); // 控制器结构体初始化
-    // filters_init();
+    filters_init();
     //OBSV
     init_rk4();
     //ESO
@@ -874,6 +875,13 @@ int  main_switch(long mode_select){
         }
         _pseudoEncoder();
         break;
+    case MODE_SELECT_SUSPENSION_CONTROl:  //7
+        #if WHO_IS_USER == USER_YZK
+            suspension_p4ps5_PD_Xaxis(YZK_CTRL.disFbk_X);
+            suspension_p4ps5_PD_Yaxis(YZK_CTRL.disFbk_Y); //程序不知道怎么运行 这个很重要
+            yzkdebug++;
+        #endif
+        break;
     case MODE_SELECT_FOC: // 3
         (*CTRL).i->cmd_iDQ[0] = (*debug).set_id_command;
         (*CTRL).i->cmd_iDQ[1] = (*debug).set_iq_command;
@@ -1172,12 +1180,6 @@ int  main_switch(long mode_select){
             }
 
             _user_wubo_PositionLoop_IMP( (*CTRL).i->cmd_varTheta, (*CTRL).i->varTheta );
-        #endif
-        break;
-    case MODE_SELECT_SUSPENSION_CONTROl:
-        #if WHO_IS_USER == USER_YZK
-            suspension_p4ps5_PD_Xaxis(YZK_CTRL.disFbk_X);
-            suspension_p4ps5_PD_Yaxis(YZK_CTRL.disFbk_Y);
         #endif
         break;
     case MODE_SELECT_COMMISSIONING: // 9
