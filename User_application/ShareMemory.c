@@ -153,7 +153,7 @@ void write_DAC_buffer(){
         (*Axis4DAC).dac_watch[77] = YZK_CTRL.disFbk_Y * 1 / 40000000;
 //        these two are equivalent
 //        *(*CTRL).s->Speed
-//        *CTRL->s->Speed
+//        *CTRL->s->Speed··
 
 //        #if WHO_IS_USER == USER_WB
 //            (*Axis4DAC).dac_watch[0] = 0;

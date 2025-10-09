@@ -85,9 +85,9 @@
     #endif
 
     //ADC UVW to PIN config
-    #define PIN_ADCA_U 0
+    #define PIN_ADCA_U 2
     #define PIN_ADCA_V 1
-    #define PIN_ADCA_W 2
+    #define PIN_ADCA_W 0
 
     #define PIN_ADCB_U 3
     #define PIN_ADCB_V 4

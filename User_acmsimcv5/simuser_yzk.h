@@ -11,9 +11,10 @@
 typedef struct {
         REAL b0, b1, b2;
         REAL a1, a2;
-        REAL s1, s2;   // 状态（DF2-T）
-        REAL x1s, x2s; // x[n-1], x[n-2]
-        REAL y1s, y2s, y0s; // y[n-1], y[n-2]
+        REAL s1x, s2x;   // 状态（DF2-T）
+        REAL s1y, s2y;   // 状态（DF2-T）
+        // REAL x1s, x2s; // x[n-1], x[n-2]
+        // REAL y1s, y2s, y0s; // y[n-1], y[n-2]
         // REAL lp_ch0;
         // REAL lp_ch1;
 } biquad_t;
@@ -64,6 +65,8 @@ struct YZK_2025_TIA_CTRL{
     REAL encFbk;
     REAL prev_error_X;
     REAL prev_error_Y;
+    REAL prev_error_I_alpha;
+    REAL prev_error_I_beta;
     // REAL I_Term_prev_iD;
     // REAL I_Term_prev_iQ;
     // REAL K_INVERSE_iD;
@@ -90,7 +93,8 @@ struct YZK_2025_TIA_CTRL{
         REAL N_alpha;  // alpha线圈匝数
         REAL N_beta;   // beta线圈匝数
         REAL g;
-        REAL K;
+        REAL K_X;
+        REAL K_Y;
     } motor;
     // #define p4ps5_motor_suspension_parameters YZK_CTRL.motor
     // #define biquad_t YZK_CTRL.biq

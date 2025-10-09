@@ -109,6 +109,7 @@ REAL difference_between_two_angles(REAL first, REAL second);
 #define RESOLVER_2 6
 #define ABSOLUTE_ENCODER_MD1 7
 #define INCREMENTAL_ENCODER_QEP 8
+#define GONGWANG_ENCODER_19 19
 
 
 //#define ENCODER_TYPE INCREMENTAL_ENCODER_QEP
@@ -116,7 +117,7 @@ REAL difference_between_two_angles(REAL first, REAL second);
 
 #ifdef _MOTOR_GROUP
 //    #define ENCODER_TYPE ABSOLUTE_ENCODER_MD1
-    #define ENCODER_TYPE INCREMENTAL_ENCODER_QEP
+    #define ENCODER_TYPE GONGWANG_ENCODER_19
 #endif
 
 
@@ -191,6 +192,14 @@ REAL difference_between_two_angles(REAL first, REAL second);
 
     // MOTOR1 110228 wb tuned with id_cmd = 3A, 20240902
     // MOTOR2 5151 wb tuned with id_cmd = 3A, 20240902
+#elif ENCODER_TYPE == GONGWANG_ENCODER_19
+    #define SYSTEM_QEP_PULSES_PER_REV (524288) // 2^19
+    #define SYSTEM_QEP_REV_PER_PULSE (1.907348633e-6) // 1 / 2^19
+    #define CNT_2_ELEC_RAD (SYSTEM_QEP_REV_PER_PULSE * 2 * M_PI * INIT_NPP)
+    #define SYSTEM_QEP_QPOSMAX (SYSTEM_QEP_PULSES_PER_REV - 1)
+    #define SYSTEM_QEP_QPOSMAX_PLUS_1 (SYSTEM_QEP_PULSES_PER_REV)
+    #define MOTOR1_OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS 110288
+    // #define MOTOR2_OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS 5151
 #endif
 
 

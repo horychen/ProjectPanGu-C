@@ -1276,29 +1276,31 @@ REAL x0 = 0.0;
 REAL y0 = 0.0;
 int yzkdebug4 = 0;
 void measurement_displacement_count(){
-    // Axis->place_sensor[0] = raw_value_zero;
-    // Axis->place_sensor[1] = raw_value_one;
+    Axis->place_sensor[0] = raw_value_zero;
+    Axis->place_sensor[1] = raw_value_one;
 
     // int0 = Axis->place_sensor[0];
     // int1 = Axis->place_sensor[1];
-    x0 = YZK_CTRL.filt.lp_ch0.b0 * raw_value_zero + YZK_CTRL.filt.lp_ch0.s1;
+    x0 = YZK_CTRL.biq.b0 * raw_value_zero + YZK_CTRL.biq.s1x;
     // yzkdebug4++;
-    y0 = YZK_CTRL.filt.lp_ch1.b0 * raw_value_one + YZK_CTRL.filt.lp_ch1.s1;
-    s1_new0 = YZK_CTRL.filt.lp_ch0.b1 * raw_value_zero - YZK_CTRL.filt.lp_ch0.a1 * x0 + YZK_CTRL.filt.lp_ch0.s2;
-    s2_new0 = YZK_CTRL.filt.lp_ch0.b2 * raw_value_zero - YZK_CTRL.filt.lp_ch0.a2 * x0;
-    s1_new1 = YZK_CTRL.filt.lp_ch1.b1 * raw_value_one - YZK_CTRL.filt.lp_ch1.a1 * y0 + YZK_CTRL.filt.lp_ch1.s2;
-    s2_new1 = YZK_CTRL.filt.lp_ch1.b2 * raw_value_one - YZK_CTRL.filt.lp_ch1.a2 * y0;
+    y0 = YZK_CTRL.biq.b0 * raw_value_one + YZK_CTRL.biq.s1y;
+    s1_new0 = YZK_CTRL.biq.b1 * raw_value_zero - YZK_CTRL.biq.a1 * x0 + YZK_CTRL.biq.s2x;
+    s2_new0 = YZK_CTRL.biq.b2 * raw_value_zero - YZK_CTRL.biq.a2 * x0;
+    s1_new1 = YZK_CTRL.biq.b1 * raw_value_one - YZK_CTRL.biq.a1 * y0 + YZK_CTRL.biq.s2y;
+    s2_new1 = YZK_CTRL.biq.b2 * raw_value_one - YZK_CTRL.biq.a2 * y0;
 
-    YZK_CTRL.filt.lp_ch0.s1 = s1_new0;
-    YZK_CTRL.filt.lp_ch0.s2 = s2_new0;
-    YZK_CTRL.filt.lp_ch1.s1 = s1_new1;
-    YZK_CTRL.filt.lp_ch1.s2 = s2_new1;
+    YZK_CTRL.biq.s1x = s1_new0;
+    YZK_CTRL.biq.s2x = s2_new0;
+    YZK_CTRL.biq.s1y = s1_new1;
+    YZK_CTRL.biq.s2y = s2_new1;
 
-    // x0 = lp_biquad_process(&YZK_CTRL.filt.lp_ch0, raw_value_zero);
-    // y0 = lp_biquad_process(&YZK_CTRL.filt.lp_ch1, raw_value_one);
+    // x0 = biquad_process(&YZK_CTRL.biq, raw_value_zero);
+    // y0 = biquad_process(&YZK_CTRL.biq, raw_value_one);
+    // x0 = lowpass_update(raw_value_zero);
+    // y0 = lowpass_update(raw_value_one);
 
-    YZK_CTRL.disFbk_X = x0;  // DAC:0.7870-0.7899 // disFbk(filtered)：1457715-1452433
-    YZK_CTRL.disFbk_Y = y0;  // DAC:0.7870-0.7899 // disFbk(filtered)：1457715-1452433
+    YZK_CTRL.disFbk_X = x0/10000;  // DAC:0.7870-0.7899 // disFbk(filtered)：1457715-1452433
+    YZK_CTRL.disFbk_Y = y0/10000;  // DAC:0.7870-0.7899 // disFbk(filtered)：1457715-1452433
 }
 
 extern REAL wubo_debug_motor_enc_dirc[2];
@@ -1306,15 +1308,15 @@ extern REAL wubo_debug_motor_enc_dirc[2];
 #if ENCODER_TYPE != INCREMENTAL_ENCODER_QEP
 
 void measurement_position_count_axisCnt0(){
-    #if (ENCODER_TYPE == ABSOLUTE_ENCODER_SCI_SHANK)
-            position_count_SCI_fromCPU2 = position_count_SCI_shank_fromCPU2;
-    #elif (ENCODER_TYPE == ABSOLUTE_ENCODER_SCI_HIP)
-            position_count_SCI_fromCPU2 = position_count_SCI_hip_fromCPU2;
-    #endif
+    // #if (ENCODER_TYPE == ABSOLUTE_ENCODER_SCI_SHANK)
+    //         position_count_SCI_fromCPU2 = position_count_SCI_shank_fromCPU2;
+    // #elif (ENCODER_TYPE == ABSOLUTE_ENCODER_SCI_HIP)
+    //         position_count_SCI_fromCPU2 = position_count_SCI_hip_fromCPU2;
+    // #endif
 
-    #if NUMBER_OF_AXES == 2
-        position_count_SCI_fromCPU2 = position_count_SCI_shank_fromCPU2;
-    #endif
+    // #if NUMBER_OF_AXES == 2
+    //     position_count_SCI_fromCPU2 = position_count_SCI_shank_fromCPU2;
+    // #endif
         // 正电流导致编码器读数增大：
     #if WHO_IS_USER == USER_YZK
         position_count_SCI_fromCPU2 = position_count_SCI_hip_fromCPU2;

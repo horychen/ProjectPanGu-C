@@ -18,17 +18,17 @@ struct YZK_2025_TIA_CTRL YZK_CTRL;
 // a2 = (1 - K/Q + K^2) / norm
 
     /* IIR */
-static const REAL LP0_b0 = 0.013359200027856523f;       //0.003621681514928641;
-static const REAL LP0_b1 = 0.026718400055713045f;        //0.007243363029857282;
-static const REAL LP0_b2 = 0.013359200027856523f;       //0.003621681514928641;
-static const REAL LP0_a1 = -1.6474599810769766f;       //-1.822694925196308;
-static const REAL LP0_a2 = 0.7008967811884026f;        //0.8371816512560227;    200Hz
+static const REAL LP0_b0 = 0.000087655375;       //0.003621681514928641;             0.000087655375;
+static const REAL LP0_b1 = 0.000175310749;        //0.007243363029857282;            0.000175310749;
+static const REAL LP0_b2 = 0.000087655375;       //0.003621681514928641;             0.000087655375;
+static const REAL LP0_a1 = -1.973340329766;       //-1.822694925196308;                -1.973340329766;
+static const REAL LP0_a2 = 0.973690951265;        //0.8371816512560227;    200Hz       0.973690951265;
 
-static const REAL LP1_b0 = 0.013359200027856523f;                   //0.020083365564211256f;              //0.04613180207
-static const REAL LP1_b1 = 0.026718400055713045f;                   //0.04016673112842251f;              //0.09226360415
-static const REAL LP1_b2 = 0.013359200027856523f;                   //0.020083365564211256f;              //0.04613180207
-static const REAL LP1_a1 = -1.6474599810769766f;                    //-1.561018075800718f;                //-1.30728502829
-static const REAL LP1_a2 = 0.7008967811884026f;     //400Hz            //0.6413515380575631f;    //500Hz        //0.49181223659      //800Hz
+static const REAL LP1_b0 = 0.000087655375;              //0.013359200027856523f;                   //0.020083365564211256f;              //0.04613180207
+static const REAL LP1_b1 = 0.000175310749;              //0.026718400055713045f;                   //0.04016673112842251f;              //0.09226360415
+static const REAL LP1_b2 = 0.000087655375;              //0.013359200027856523f;                   //0.020083365564211256f;              //0.04613180207
+static const REAL LP1_a1 = -1.973340329766;             //-1.6474599810769766f;                    //-1.561018075800718f;                //-1.30728502829
+static const REAL LP1_a2 = 0.973690951265;    //30Hz          //0.7008967811884026f;     //400Hz            //0.6413515380575631f;    //500Hz        //0.49181223659      //800Hz
 
 static const REAL C3 = -1.29166723e-18;
 static const REAL C2 =  1.36515629e-10;
@@ -47,16 +47,16 @@ static const REAL L_B = -5.89365901e+00;
 /* Initialising */
 void init_YZK_ALL(){
     /* XY方向 */
-    YZK_CTRL.CMD_X = 6;
-    YZK_CTRL.CMD_Y = 6;
+    YZK_CTRL.CMD_X = 3725.0000;
+    YZK_CTRL.CMD_Y = 3753.0000;
     YZK_CTRL.Err_X = 0.0;
     YZK_CTRL.Err_Y = 0.0;
-    YZK_CTRL.KP_X = 0.2;
-    YZK_CTRL.KP_Y = 0.2;
+    YZK_CTRL.KP_X = 0.0005;
+    YZK_CTRL.KP_Y = 0.0005;
     YZK_CTRL.KI_X = 0.0;
     YZK_CTRL.KI_Y = 0.0;
-    YZK_CTRL.KD_X = 0.0;
-    YZK_CTRL.KD_Y = 0.0;
+    YZK_CTRL.KD_X = 10;
+    YZK_CTRL.KD_Y = 10;
     /* 磁链 */
     YZK_CTRL.CMD_psi_alpha = 0.0;
     YZK_CTRL.CMD_psi_beta  = 0.0;
@@ -76,6 +76,8 @@ void init_YZK_ALL(){
     // YZK_CTRL.I_Term_prev_iQ = 0.0;
     // YZK_CTRL.K_INVERSE_iD = 0.0;
     // YZK_CTRL.K_INVERSE_iQ = 0.0;
+    /* LPFs*/
+    YZK_CTRL.LPFs.TAU = 0.5026548;
 
     /* FOC */
     YZK_CTRL.disFbk_X = 0.0;
@@ -83,11 +85,13 @@ void init_YZK_ALL(){
     YZK_CTRL.encFbk = 0.0;
     YZK_CTRL.prev_error_X = 0.0;
     YZK_CTRL.prev_error_Y = 0.0;
+    YZK_CTRL.prev_error_I_alpha = 0.0;
+    YZK_CTRL.prev_error_I_beta = 0.0;
 
-    YZK_CTRL.pids.Kp = 0.2;
-    YZK_CTRL.pids.Ki_CODE = 100;
+    YZK_CTRL.pids.Kp = 0.7793;
+    YZK_CTRL.pids.Ki_CODE = 0.1794;
     YZK_CTRL.pids.Kd = 0.0;
-    YZK_CTRL.pids.OutLimit = 25;
+    YZK_CTRL.pids.OutLimit = 1;
 
     /* 参数初始化 */
     YZK_CTRL.motor.npp = 5;
@@ -95,13 +99,15 @@ void init_YZK_ALL(){
     YZK_CTRL.motor.Js = 1;
     YZK_CTRL.motor.Js_inv = 1;
     YZK_CTRL.motor.M_rotor = 1.50;  // rotor mass
-    YZK_CTRL.motor.ge = 6.5;       // air gap length
+    YZK_CTRL.motor.ge = 37500000;       // air gap length
     YZK_CTRL.motor.mu_0 = 4*M_PI*1e-7;     // 真空磁导率
     YZK_CTRL.motor.S = 1;        // alpha正对的面积
     YZK_CTRL.motor.N_alpha = 120;  // alpha线圈匝数
     YZK_CTRL.motor.N_beta = 120;   // beta线圈匝数
     YZK_CTRL.motor.g = 10;
-    YZK_CTRL.motor.K = 1 / (YZK_CTRL.motor.N_alpha * YZK_CTRL.motor.N_alpha * YZK_CTRL.motor.mu_0 * YZK_CTRL.motor.S);
+    // YZK_CTRL.motor.K = 50000;
+    YZK_CTRL.motor.K_X = 1 / (YZK_CTRL.motor.N_alpha * YZK_CTRL.motor.N_alpha * YZK_CTRL.motor.mu_0 * YZK_CTRL.motor.S);
+    YZK_CTRL.motor.K_Y = 1 / (YZK_CTRL.motor.N_beta * YZK_CTRL.motor.N_beta * YZK_CTRL.motor.mu_0 * YZK_CTRL.motor.S);
 }
 
 
@@ -136,36 +142,39 @@ void suspension_p4ps5_PD_Yaxis(REAL Y_Pos){
 
     // 3. 低通滤波(获得/dot{Err_Y})
     YZK_CTRL.LPFs.de_Y = YZK_CTRL.LPFs.de_raw_Y;
-    // YZK_CTRL.LPFs.de = lowpass_update(&YZK_CTRL.LPFs, YZK_CTRL.LPFs.de_raw);
+    // YZK_CTRL.LPFs.de_Y = lowpass_update(&YZK_CTRL.LPFs, YZK_CTRL.LPFs.de_raw_Y);
 
     // 4. 控制律: 磁链参考 看那张纸上的公式，找不到找YZK
     YZK_CTRL.CMD_psi_beta = YZK_CTRL.motor.M_rotor * YZK_CTRL.motor.g - YZK_CTRL.KP_Y * YZK_CTRL.Err_Y - YZK_CTRL.KD_Y * YZK_CTRL.LPFs.de_Y;
 
-    if (YZK_CTRL.CMD_psi_beta < 0.0) YZK_CTRL.CMD_psi_beta = -YZK_CTRL.CMD_psi_beta;   // 避免 sqrt 负数
+    if (YZK_CTRL.CMD_psi_beta < 0.0) YZK_CTRL.CMD_psi_beta = -sqrt(-YZK_CTRL.CMD_psi_beta);   // 避免 sqrt 负数
 
-    YZK_CTRL.CMD_psi_beta = sqrt(YZK_CTRL.CMD_psi_beta);
+    if (YZK_CTRL.CMD_psi_beta > 0.0) YZK_CTRL.CMD_psi_beta = sqrt(YZK_CTRL.CMD_psi_beta);
 
     // 5. 电流参考
     // K = 1 / N_alpha;
-    YZK_CTRL.CMD_I_beta = YZK_CTRL.motor.K * YZK_CTRL.CMD_psi_beta * 1 / (YZK_CTRL.motor.ge - YZK_CTRL.disFbk_Y);
+    YZK_CTRL.CMD_I_beta = YZK_CTRL.motor.K_Y * YZK_CTRL.CMD_psi_beta * 1 / (YZK_CTRL.motor.ge - YZK_CTRL.disFbk_Y);
+    YZK_CTRL.Err_I_beta = YZK_CTRL.CMD_I_beta - CTRL->i->iAB[1];
 
     // 6. PI
-    YZK_CTRL.Out_beta = YZK_CTRL.OutPrev_beta + YZK_CTRL.pids.Kp * ( YZK_CTRL.Err_Y - YZK_CTRL.prev_error_Y ) + YZK_CTRL.pids.Ki_CODE * YZK_CTRL.Err_Y;
+    YZK_CTRL.Out_beta = YZK_CTRL.OutPrev_beta + YZK_CTRL.pids.Kp * ( YZK_CTRL.Err_I_beta - YZK_CTRL.prev_error_I_beta ) + YZK_CTRL.pids.Ki_CODE * YZK_CTRL.Err_I_beta;
     if(YZK_CTRL.Out_beta > YZK_CTRL.pids.OutLimit) YZK_CTRL.Out_beta = YZK_CTRL.pids.OutLimit;
     else if(YZK_CTRL.Out_beta < -YZK_CTRL.pids.OutLimit) YZK_CTRL.Out_beta = -YZK_CTRL.pids.OutLimit;
-    YZK_CTRL.prev_error_Y = YZK_CTRL.Err_Y; 
+    YZK_CTRL.prev_error_I_beta = YZK_CTRL.Err_I_beta; 
     YZK_CTRL.OutPrev_beta = YZK_CTRL.Out_beta;
     YZK_CTRL.CMD_U_beta = YZK_CTRL.Out_beta;
     // incremental_PI_YZK(&YZK_CTRL.pids);
     // YZK_CTRL.CMD_U_beta = YZK_CTRL.Out;
-
+    (*CTRL).o->cmd_uAB_to_inverter[1] = YZK_CTRL.CMD_U_beta;
+    // 7.更新状态
+    YZK_CTRL.prev_error_Y = YZK_CTRL.Err_Y;
     // return psi_cmd;
 }
 // X_Pos 
 void suspension_p4ps5_PD_Xaxis(REAL X_Pos){
     /* 位置环 */    
     // 1. 误差
-    YZK_CTRL.prev_error_X = YZK_CTRL.Err_X; // 保存上次误差
+    // YZK_CTRL.prev_error_X = YZK_CTRL.Err_X; // 保存上次误差
     // YZK_CTRL.disFbk_X = X_Pos;
     YZK_CTRL.varTheta = (*CTRL).i->varTheta;
     YZK_CTRL.Err_X = YZK_CTRL.CMD_X - YZK_CTRL.disFbk_X;
@@ -175,29 +184,33 @@ void suspension_p4ps5_PD_Xaxis(REAL X_Pos){
 // 
     // 3. 低通滤波(获得/dot{Err_X})
     YZK_CTRL.LPFs.de_X = YZK_CTRL.LPFs.de_raw_X;
-    // YZK_CTRL.LPFs.de = lowpass_update(&YZK_CTRL.LPFs, YZK_CTRL.LPFs.de_raw);
+    // YZK_CTRL.LPFs.de_X = lowpass_update(&YZK_CTRL.LPFs, YZK_CTRL.LPFs.de_raw_X);
 // 
     // 4. 控制律: 磁链参考 看那张纸上的公式，找不到找YZK
-    YZK_CTRL.CMD_psi_alpha = YZK_CTRL.motor.M_rotor * YZK_CTRL.motor.g - YZK_CTRL.KP_X * YZK_CTRL.Err_X - YZK_CTRL.KD_X * YZK_CTRL.LPFs.de_X;
+    YZK_CTRL.CMD_psi_alpha = YZK_CTRL.KP_X * YZK_CTRL.Err_X + YZK_CTRL.KD_X * YZK_CTRL.LPFs.de_X;
 // 
-    if (YZK_CTRL.CMD_psi_alpha < 0.0) YZK_CTRL.CMD_psi_alpha = -YZK_CTRL.CMD_psi_alpha;   // 避免 sqrt 负数
+    if (YZK_CTRL.CMD_psi_alpha < 0.0) YZK_CTRL.CMD_psi_alpha = sqrt(-YZK_CTRL.CMD_psi_alpha);   // 避免 sqrt 负数
 // 
-    YZK_CTRL.CMD_psi_alpha = sqrt(YZK_CTRL.CMD_psi_alpha);
+    if (YZK_CTRL.CMD_psi_alpha > 0.0) YZK_CTRL.CMD_psi_alpha = - sqrt(YZK_CTRL.CMD_psi_alpha);    //注意传感器反装 如果不是这里要改
 // 
     // 5. 电流参考
     // K = 0;
-    YZK_CTRL.CMD_I_alpha = YZK_CTRL.motor.K * YZK_CTRL.CMD_psi_alpha * 1 / (YZK_CTRL.motor.ge - YZK_CTRL.disFbk_X);
+    YZK_CTRL.CMD_I_alpha = YZK_CTRL.motor.K_X * YZK_CTRL.CMD_psi_alpha * 1 / (YZK_CTRL.motor.ge - YZK_CTRL.disFbk_X);
+    YZK_CTRL.Err_I_alpha = YZK_CTRL.CMD_I_alpha - CTRL->i->iAB[0];
 // 
     /* 电流环 */
-    YZK_CTRL.Out_alpha = YZK_CTRL.OutPrev_alpha + YZK_CTRL.pids.Kp * ( YZK_CTRL.Err_X - YZK_CTRL.prev_error_X ) + YZK_CTRL.pids.Ki_CODE * YZK_CTRL.Err_X;
+    YZK_CTRL.Out_alpha = YZK_CTRL.OutPrev_alpha + YZK_CTRL.pids.Kp * ( YZK_CTRL.Err_I_alpha - YZK_CTRL.prev_error_I_alpha ) + YZK_CTRL.pids.Ki_CODE * YZK_CTRL.Err_I_alpha;
     if(YZK_CTRL.Out_alpha > YZK_CTRL.pids.OutLimit) YZK_CTRL.Out_alpha = YZK_CTRL.pids.OutLimit;
     else if(YZK_CTRL.Out_alpha < -YZK_CTRL.pids.OutLimit) YZK_CTRL.Out_alpha = -YZK_CTRL.pids.OutLimit;
-    YZK_CTRL.prev_error_X = YZK_CTRL.Err_X; 
+    YZK_CTRL.prev_error_I_alpha = YZK_CTRL.Err_I_alpha; 
     YZK_CTRL.OutPrev_alpha = YZK_CTRL.Out_alpha;
     YZK_CTRL.CMD_U_alpha = YZK_CTRL.Out_alpha;
-// 
+    // incremental_PI_YZK(&YZK_CTRL.pids);
+    // YZK_CTRL.CMD_U_alpha = YZK_CTRL.Out;
+    (*CTRL).o->cmd_uAB_to_inverter[0] = YZK_CTRL.CMD_U_alpha;
+    
     // 更新状态
-    // YZK_CTRL.prev_error = YZK_CTRL.Err_X;
+    YZK_CTRL.prev_error_X = YZK_CTRL.Err_X;
 // 
     // return psi_cmd;
 }
@@ -232,51 +245,51 @@ REAL biquad_process(biquad_t *f, REAL x0) {
     // f->y2s = f->y1s;
     // f->y1s = f->y0s;
     // return f->y0s;
-    REAL y = f->b0 * x0 + f->s1;
+    REAL y = f->b0 * x0 + f->s1x;
     // f->x1s = x0;
-    REAL s1_new = f->b1 * x0 - f->a1 * y + f->s2;
+    REAL s1_new = f->b1 * x0 - f->a1 * y + f->s2x;
     REAL s2_new = f->b2 * x0 - f->a2 * y;
     // write back
-    f->s1 = s1_new;
-    f->s2 = s2_new;
+    f->s1x = s1_new;
+    f->s2x = s2_new;
     return y;
 }
 
 void biquad_init(biquad_t *f, REAL b0, REAL b1, REAL b2, REAL a1, REAL a2) {
     f->b0 = b0; f->b1 = b1; f->b2 = b2;
     f->a1 = a1; f->a2 = a2;
-    f->s1 = 0.0f; f->s2 = 0.0f;
+    f->s1x = 0.0f; f->s2x = 0.0f;
 }
 
 void filters_init(void) {
-    biquad_init(&YZK_CTRL.filt.lp_ch0, LP0_b0, LP0_b1, LP0_b2, LP0_a1, LP0_a2);
-    biquad_init(&YZK_CTRL.filt.lp_ch1, LP1_b0, LP1_b1, LP1_b2, LP1_a1, LP1_a2);
+    biquad_init(&YZK_CTRL.biq, LP0_b0, LP0_b1, LP0_b2, LP0_a1, LP0_a2);
+    biquad_init(&YZK_CTRL.biq, LP1_b0, LP1_b1, LP1_b2, LP1_a1, LP1_a2);
 }
 
-/* 传感器三次拟合 */
-REAL sensor_to_distance(REAL dis_input, double valid_min, double valid_max) {
-    REAL x = ((C3 * dis_input + C2) * dis_input + C1) * dis_input + C0;
+/* 传感器三次拟合 暂时弃用*/
+// REAL sensor_to_distance(REAL dis_input, double valid_min, double valid_max) {
+    // REAL x = ((C3 * dis_input + C2) * dis_input + C1) * dis_input + C0;
     // sanity checks
-    if (!isfinite(x)) {
+    // if (!isfinite(x)) {
         // fallback
-        x = L_A * dis_input + L_B;
-    }
-
+        // x = L_A * dis_input + L_B;
+    // }
+// 
     // If cubic gives an out-of-range result, clamp to valid range.
     // Optionally, you can fallback to linear if outside by large margin.
-    if (x < valid_min || x > valid_max) {
-        double xl = L_A * dis_input + L_B;
+    // if (x < valid_min || x > valid_max) {
+        // double xl = L_A * dis_input + L_B;
         // choose the one closer to the valid interval center
-        double mid = 0.5 * (valid_min + valid_max);
-        double d_cubic = (x < valid_min) ? (valid_min - x) : (x - valid_max);
-        double d_lin = fabs(xl - mid);
+        // double mid = 0.5 * (valid_min + valid_max);
+        // double d_cubic = (x < valid_min) ? (valid_min - x) : (x - valid_max);
+        // double d_lin = fabs(xl - mid);
         // If linear seems reasonable, use it; otherwise clamp cubic
-        if (isfinite(xl) && d_lin < d_cubic*10.0) {
-            x = xl;
-        } else {
-            if (x < valid_min) x = valid_min;
-            if (x > valid_max) x = valid_max;
-        }
-    }
-    return x;
-}
+        // if (isfinite(xl) && d_lin < d_cubic*10.0) {
+            // x = xl;
+        // } else {
+            // if (x < valid_min) x = valid_min;
+            // if (x > valid_max) x = valid_max;
+        // }
+    // }
+    // return x;
+// }
