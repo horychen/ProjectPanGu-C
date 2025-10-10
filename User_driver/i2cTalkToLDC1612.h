@@ -3,10 +3,7 @@ extern int channel_1_number;
 extern int channel_2_number;
 extern int channel_3_number;
 extern uint16_t type_of_LDC;
-extern uint32_t raw_value_zero;
-extern uint32_t raw_value_one;
-extern uint32_t raw_value_two;
-extern uint32_t raw_value_three;
+
 
 __interrupt void i2c_int1a_isr(void);
 void pass(void);

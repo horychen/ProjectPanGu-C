@@ -12,6 +12,11 @@ REAL TEST_SHANK_KP = 0.3;
 REAL TEST_HIP_SPD_KP = 0.005;
 REAL TEST_HIP_SPD_KI = 5e-6;
 
+extern uint32_t raw_value_zero;
+extern uint32_t raw_value_one;
+extern uint32_t raw_value_two;
+extern uint32_t raw_value_three;
+
 #define HIP_TYPE 0
 #define SHANK_TYPE 1
 
@@ -266,10 +271,10 @@ int32 cnt_four_bar_map_motor_encoder_angle = 0;
     #define SCALE_LEM_A3   0.03045988 // ADCA3
 
 // Displacement sensor 
-    #define OFFSET_COIL_DSP01  35976270  // D_max is z at 0.2 mm (36535874)
-    #define OFFSET_COIL_DSP02  35791394  // D_max is z at 0.2 mm (36604835)
-    #define OFFSET_COIL_DSP03  36292538  // D_max is z at 0.2 mm (36857493)
-    #define OFFSET_COIL_DSP04  36043458  // D_max is z at 0.2 mm (36469167)
+    #define OFFSET_COIL_DSP01  35976270.0  // D_max is z at 0.2 mm (36535874)
+    #define OFFSET_COIL_DSP02  35791394.0  // D_max is z at 0.2 mm (36604835)
+    #define OFFSET_COIL_DSP03  36292538.0  // D_max is z at 0.2 mm (36857493)
+    #define OFFSET_COIL_DSP04  36043458.0  // D_max is z at 0.2 mm (36469167)
     
     #define SCALE_COIL_DSP01   5.36e-6
     #define SCALE_COIL_DSP02   3.688e-6
@@ -339,6 +344,16 @@ void init_experiment_AD_gain_and_offset(){
     Axis->adc_offset[4] = OFFSET_LEM_B7;
     Axis->adc_offset[5] = OFFSET_LEM_B8;
     Axis->adc_offset[6] = OFFSET_LEM_B9;
+
+    Axis->dis_offset[0] = OFFSET_COIL_DSP01;
+    Axis->dis_offset[1] = OFFSET_COIL_DSP02;
+    Axis->dis_offset[2] = OFFSET_COIL_DSP03;
+    Axis->dis_offset[3] = OFFSET_COIL_DSP04;
+
+    Axis->dis_scale[0] = SCALE_COIL_DSP01;
+    Axis->dis_scale[1] = SCALE_COIL_DSP02;
+    Axis->dis_scale[2] = SCALE_COIL_DSP03;
+    Axis->dis_scale[3] = SCALE_COIL_DSP04;
 
 
     /* two motor OFFSET */
@@ -686,16 +701,12 @@ void main(void){
     while(1){
         if(type_of_LDC == 1614){
             I2CA_ReadData_Channel(0);
-            Axis_1.dis_coil[0] = (raw_value_zero - OFFSET_COIL_DSP01)*SCALE_COIL_DSP01;
             DELAY_US(100);              //延迟 300 毫秒？
             I2CA_ReadData_Channel(1);
-            Axis_1.dis_coil[1] = (raw_value_one - OFFSET_COIL_DSP02)*SCALE_COIL_DSP02;
             DELAY_US(100);              
             I2CA_ReadData_Channel(2);
-            Axis_1.dis_coil[2] = (raw_value_two - OFFSET_COIL_DSP03)*SCALE_COIL_DSP03;
             DELAY_US(100);              
             I2CA_ReadData_Channel(3);
-            Axis_1.dis_coil[3] = (raw_value_three - OFFSET_COIL_DSP04)*SCALE_COIL_DSP04;
         }
         else if(type_of_LDC == 1612){
             I2CA_ReadData_Channel(0);
@@ -1039,6 +1050,12 @@ void measurement(){
         Axis->iuvw[0]=((REAL)(AdcaResultRegs.ADCRESULT1 ) - Axis->adc_offset[1]) * Axis->adc_scale[1]; //
         Axis->iuvw[1]=((REAL)(AdcaResultRegs.ADCRESULT2 ) - Axis->adc_offset[2]) * Axis->adc_scale[2]; //
         Axis->iuvw[2]=((REAL)(AdcaResultRegs.ADCRESULT3 ) - Axis->adc_offset[3]) * Axis->adc_scale[3]; //
+
+        // Sensor coil
+        Axis->dis_coil[0] = (raw_value_zero - Axis->dis_offset[0])*Axis->dis_scale[0];
+        Axis->dis_coil[1] = (raw_value_one  - Axis->dis_offset[1])*Axis->dis_scale[1];
+        Axis->dis_coil[2] = (raw_value_two  - Axis->dis_offset[2])*Axis->dis_scale[2];
+        Axis->dis_coil[3] = (raw_value_three- Axis->dis_offset[3])*Axis->dis_scale[3];
 
         // 电流接口
         if(USE_3_CURRENT_SENSORS){

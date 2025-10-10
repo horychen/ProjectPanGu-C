@@ -127,10 +127,10 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
     (*Axis4DAC).dac_watch[51] = AFE_USED.theta_d *0.1;
     (*Axis4DAC).dac_watch[52] = (*Axis4DAC).used_theta_d_elec *0.1;
 
-    (*Axis4DAC).dac_watch[60] = Axis_1.dis_coil[0];
-    (*Axis4DAC).dac_watch[61] = Axis_1.dis_coil[1];
-    (*Axis4DAC).dac_watch[62] = Axis_1.dis_coil[2];
-    (*Axis4DAC).dac_watch[63] = Axis_1.dis_coil[3];
+    (*Axis4DAC).dac_watch[60] = Axis->dis_coil[0];
+    (*Axis4DAC).dac_watch[61] = Axis->dis_coil[1];
+    (*Axis4DAC).dac_watch[62] = Axis->dis_coil[2];
+    (*Axis4DAC).dac_watch[63] = Axis->dis_coil[3];
     // (*Axis4DAC).dac_watch[64] = Axis_1.dis_coil[4];
     // (*Axis4DAC).dac_watch[65] = Axis_1.dis_coil[5];
     // (*Axis4DAC).dac_watch[66] = Axis_1.dis_coil[6];
