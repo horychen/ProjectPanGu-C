@@ -552,7 +552,7 @@ void main(void){
 
         Axis->FLAG_ENABLE_PWM_OUTPUT = FALSE;
 
-        Axis->channels_preset = 1; // 9; // 101;    }
+        Axis->channels_preset = 6;  //1; // 9; // 101;    }
 
         Axis->pCTRL->enc->sum_qepPosCnt = 0;
         Axis->pCTRL->enc->cursor = 0;

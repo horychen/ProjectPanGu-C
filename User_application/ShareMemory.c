@@ -127,6 +127,13 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
     (*Axis4DAC).dac_watch[51] = AFE_USED.theta_d *0.1;
     (*Axis4DAC).dac_watch[52] = (*Axis4DAC).used_theta_d_elec *0.1;
 
+    (*Axis4DAC).dac_watch[60] = ;
+    (*Axis4DAC).dac_watch[61] = 
+    (*Axis4DAC).dac_watch[62] = 
+    (*Axis4DAC).dac_watch[63] = 
+    (*Axis4DAC).dac_watch[64] = 
+    (*Axis4DAC).dac_watch[65] = 
+
     if((*Axis4DAC).channels_preset==1){(*Axis4DAC).channels_preset=0;
         (*Axis4DAC).channels[0] = 23;
         (*Axis4DAC).channels[1] = 24;
@@ -163,6 +170,15 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
         (*Axis4DAC).channels[5] = 5;
         (*Axis4DAC).channels[6] = 3;
         (*Axis4DAC).channels[7] = 4;
+    }else if((*Axis4DAC).channels_preset==6){(*Axis4DAC).channels_preset=0;
+        (*Axis4DAC).channels[0] = 60;
+        (*Axis4DAC).channels[1] = 61;
+        (*Axis4DAC).channels[2] = 62;
+        (*Axis4DAC).channels[3] = 63;
+        (*Axis4DAC).channels[4] = 64;
+        (*Axis4DAC).channels[5] = 65;
+        (*Axis4DAC).channels[6] = 66;
+        (*Axis4DAC).channels[7] = 67;
     }
 
     // 锟斤拷通锟斤拷DAC锟斤拷锟斤拷锟斤拷锟斤拷薷锟�(*Axis4DAC).channels锟斤拷锟斤拷锟斤拷确锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟叫�(*Axis4DAC).dac_watch锟斤拷锟斤拷锟叫的憋拷锟斤拷锟斤拷
