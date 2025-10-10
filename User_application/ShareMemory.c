@@ -133,6 +133,8 @@ if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
     (*Axis4DAC).dac_watch[63] = Axis_1.dis_coil[3];
     // (*Axis4DAC).dac_watch[64] = Axis_1.dis_coil[4];
     // (*Axis4DAC).dac_watch[65] = Axis_1.dis_coil[5];
+    // (*Axis4DAC).dac_watch[66] = Axis_1.dis_coil[6];
+    // (*Axis4DAC).dac_watch[67] = Axis_1.dis_coil[7];
 
     if((*Axis4DAC).channels_preset==1){(*Axis4DAC).channels_preset=0;
         (*Axis4DAC).channels[0] = 23;
