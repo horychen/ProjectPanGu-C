@@ -125,7 +125,7 @@ typedef struct{
 //        volatile struct ADC_RESULT_REGS *pAdcaResultRegs;
 //        volatile struct ADC_RESULT_REGS *pAdcbResultRegs;
 //        volatile struct ADC_RESULT_REGS *pAdccResultRegs;
-    // Sensor - Raw measurement
+    // Current Sensor - Raw measurement
         REAL vdc;
         REAL iabg[6];
         REAL iuvw[6];
@@ -138,6 +138,10 @@ typedef struct{
         REAL dac_watch_stator_resistance;
         int channels[NO_OF_DAC_CHANNELS];
         int channels_preset;
+    // Displacement Sensor
+        REAL dis_coil[4];
+        REAL dis_offset[4];
+        REAL dis_scale[4];
 } st_axis;
 extern st_axis Axis_1;
 extern st_axis Axis_2;
