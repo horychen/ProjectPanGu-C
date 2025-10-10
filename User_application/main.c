@@ -696,17 +696,21 @@ void main(void){
             }
         }
     #endif
-
+    
     // 7. Main loop
     while(1){
         if(type_of_LDC == 1614){
             I2CA_ReadData_Channel(0);
-            DELAY_US(100);              //延迟 300 毫秒？
+            Axis->dis_coil[0] = ((raw_value_zero - Axis->dis_offset[0])*Axis->dis_scale[0])*5;
+//            DELAY_US(10);              //延迟 10 毫秒？
             I2CA_ReadData_Channel(1);
-            DELAY_US(100);              
+            Axis->dis_coil[1] = ((raw_value_one  - Axis->dis_offset[1])*Axis->dis_scale[1])*5;
+//            DELAY_US(10);
             I2CA_ReadData_Channel(2);
-            DELAY_US(100);              
+            Axis->dis_coil[2] = ((raw_value_two  - Axis->dis_offset[2])*Axis->dis_scale[2])*5;
+//            DELAY_US(10);
             I2CA_ReadData_Channel(3);
+            Axis->dis_coil[3] = ((raw_value_three- Axis->dis_offset[3])*Axis->dis_scale[3])*5;
         }
         else if(type_of_LDC == 1612){
             I2CA_ReadData_Channel(0);
@@ -1052,10 +1056,10 @@ void measurement(){
         Axis->iuvw[2]=((REAL)(AdcaResultRegs.ADCRESULT3 ) - Axis->adc_offset[3]) * Axis->adc_scale[3]; //
 
         // Sensor coil
-        Axis->dis_coil[0] = (raw_value_zero - Axis->dis_offset[0])*Axis->dis_scale[0];
-        Axis->dis_coil[1] = (raw_value_one  - Axis->dis_offset[1])*Axis->dis_scale[1];
-        Axis->dis_coil[2] = (raw_value_two  - Axis->dis_offset[2])*Axis->dis_scale[2];
-        Axis->dis_coil[3] = (raw_value_three- Axis->dis_offset[3])*Axis->dis_scale[3];
+//        Axis->dis_coil[0] = (raw_value_zero - Axis->dis_offset[0])*Axis->dis_scale[0];
+//        Axis->dis_coil[1] = (raw_value_one  - Axis->dis_offset[1])*Axis->dis_scale[1];
+//        Axis->dis_coil[2] = (raw_value_two  - Axis->dis_offset[2])*Axis->dis_scale[2];
+//        Axis->dis_coil[3] = (raw_value_three- Axis->dis_offset[3])*Axis->dis_scale[3];
 
         // 电流接口
         if(USE_3_CURRENT_SENSORS){
