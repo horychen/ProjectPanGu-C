@@ -265,6 +265,17 @@ int32 cnt_four_bar_map_motor_encoder_angle = 0;
     #define SCALE_LEM_A2   0.03060669 // ADCA2
     #define SCALE_LEM_A3   0.03045988 // ADCA3
 
+// Displacement sensor 
+    #define OFFSET_COIL_DSP01  35976270  // D_max is z at 0.2 mm (36535874)
+    #define OFFSET_COIL_DSP02  35791394  // D_max is z at 0.2 mm (36604835)
+    #define OFFSET_COIL_DSP03  36292538  // D_max is z at 0.2 mm (36857493)
+    #define OFFSET_COIL_DSP04  36043458  // D_max is z at 0.2 mm (36469167)
+    
+    #define SCALE_COIL_DSP01   5.36e-6
+    #define SCALE_COIL_DSP02   3.688e-6
+    #define SCALE_COIL_DSP03   5.31e-6
+    #define SCALE_COIL_DSP04   7.047e-6
+
 #else
     scale and offset...
 #endif
@@ -675,12 +686,17 @@ void main(void){
     while(1){
         if(type_of_LDC == 1614){
             I2CA_ReadData_Channel(0);
-            DELAY_US(300);              //延迟 300 毫秒？
+            Axis_1.dis_coil[0] = (raw_value_zero - OFFSET_COIL_DSP01)*SCALE_COIL_DSP01;
+            DELAY_US(100);              //延迟 300 毫秒？
             I2CA_ReadData_Channel(1);
-            DELAY_US(300);              
+            Axis_1.dis_coil[1] = (raw_value_one - OFFSET_COIL_DSP02)*SCALE_COIL_DSP02;
+            DELAY_US(100);              
             I2CA_ReadData_Channel(2);
-            DELAY_US(300);              
-            I2CA_ReadData_Channel(3);}
+            Axis_1.dis_coil[2] = (raw_value_two - OFFSET_COIL_DSP03)*SCALE_COIL_DSP03;
+            DELAY_US(100);              
+            I2CA_ReadData_Channel(3);
+            Axis_1.dis_coil[3] = (raw_value_three - OFFSET_COIL_DSP04)*SCALE_COIL_DSP04;
+        }
         else if(type_of_LDC == 1612){
             I2CA_ReadData_Channel(0);
             DELAY_US(300);              
