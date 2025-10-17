@@ -1,7 +1,7 @@
 /*
  * ShareMemory.c
  *
- *  Created on: 2021锟斤拷1锟斤拷15锟斤拷
+ *  Created on: 2021é”Ÿæ–¤æ‹·1é”Ÿæ–¤æ‹·15é”Ÿæ–¤æ‹·
  *      Author: JIAHAO
  *///cpu2 CONNECTION
 
@@ -61,7 +61,7 @@ void write_DAC_buffer(){
     }
 
     if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
-        // wubo:我用的这套设备dac：dac_watch在dsp中输出[-1,1]V,通过dac板子输出[-3,3V]
+        // wubo:æˆ‘ç”¨çš„è¿™å¥—è®¾å¤‡dacï¼šdac_watchåœ¨dspä¸­è¾“å‡º[-1,1]V,é€šè¿‡dacæ�¿å­�è¾“å‡º[-3,3V]
         (*Axis4DAC).dac_watch[0] = Axis_1.iuvw[0]*0.2;
         (*Axis4DAC).dac_watch[1] = Axis_1.iuvw[1]*0.2;
         (*Axis4DAC).dac_watch[2] = Axis_1.iuvw[2]*0.2;
@@ -149,17 +149,13 @@ void write_DAC_buffer(){
         // (*Axis4DAC).dac_watch[67] = OBSV.esoaf.xPos * 0.1; // -pi to pi
 
         /* From Sensor */
-        (*Axis4DAC).dac_watch[70] = (*CTRL).enc->varOmega * MECH_RAD_PER_SEC_2_RPM * 0.002;
-
+        (*Axis4DAC).dac_watch[70] = (*CTRL).enc->varOmega * MECH_RAD_PER_SEC_2_RPM * 0.001;
+        (*Axis4DAC).dac_watch[77] = PLLN_EKF.omega_elec *  ELEC_RAD_PER_SEC_2_RPM  * 0.001;
         /* Kalman Filter For Sensorless Control */
         (*Axis4DAC).dac_watch[71] = PLLN.omega_elec * ELEC_RAD_PER_SEC_2_RPM * 0.001; // -1000RPM ~ 1000RPM
-        (*Axis4DAC).dac_watch[72] = CTRL->i->theta_d_elec * 0.25 * ONE_OVER_2PI; //
-        # if AFE_44_ORTEGA_2011 == 1
-            (*Axis4DAC).dac_watch[73] = FE.Ortega.theta_d * ONE_OVER_2PI * 2; // unit : degree
-        #endif
-        #if AFE_16_HE_EKF_2025 == 1
-            (*Axis4DAC).dac_watch[74] = FE.Ortega.theta_d * ONE_OVER_2PI * 2; // unit : degree
-        #endif
+        (*Axis4DAC).dac_watch[72] = OBSV.theta_d * ONE_OVER_2PI * 2; //
+        (*Axis4DAC).dac_watch[73] = FE.Ortega.theta_d * ONE_OVER_2PI * 2; // unit : degree
+        (*Axis4DAC).dac_watch[74] = FE.HE_EKF.theta_d * ONE_OVER_2PI * 2; // unit : degree
 //        these two are equivalent
 //        *(*CTRL).s->Speed
 //        *CTRL->s->Speed
@@ -375,7 +371,7 @@ void write_DAC_buffer(){
             (*Axis4DAC).channels[2] = 71; // PLLN.omega_elec * ELEC_RAD_PER_SEC_2_RPM * 001; // -100RPM ~ 100RPM; 
             (*Axis4DAC).channels[3] = 72; // CTRL->i->theta_d_elec * 0.25 * ONE_OVER_2PI; //; 
             (*Axis4DAC).channels[4] = 73; // FE.Ortega.theta_d * ONE_OVER_60 * ONE_OVER_60 * 10; // unit : degree; 
-            // (*Axis4DAC).channels[5] = 74  // FE.HE_EKF.theta_d * ONE_OVER_60 * ONE_OVER_60 * 10; // unit : degree; 
+            (*Axis4DAC).channels[5] = 74;  // FE.HE_EKF.theta_d * ONE_OVER_60 * ONE_OVER_60 * 10; // unit : degree;
             (*Axis4DAC).channels[6] = 77; 
             (*Axis4DAC).channels[7] = 78; 
         }
@@ -383,7 +379,7 @@ void write_DAC_buffer(){
         // [34] = (*CTRL).o->cmd_uDQ[1] * 0.02;
 
         if(IPCRtoLFlagBusy(IPC_FLAG7) == 0){
-            // 锟斤拷通锟斤拷DAC锟斤拷锟斤拷锟斤拷锟斤拷薷锟�(*Axis4DAC).channels锟斤拷锟斤拷锟斤拷确锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟叫�(*Axis4DAC).dac_watch锟斤拷锟斤拷锟叫的憋拷锟斤拷锟斤拷
+            // é”Ÿæ–¤æ‹·é€šé”Ÿæ–¤æ‹·DACé”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·è–·é”Ÿï¿½(*Axis4DAC).channelsé”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·ç¡®é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿå�«ï¿½(*Axis4DAC).dac_watché”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿå�«çš„æ†‹æ‹·é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·
 
             Write.dac_buffer[0] = (*Axis4DAC).dac_watch[(*Axis4DAC).channels[0]] + (*Axis4DAC).dac_offset[0];
             Write.dac_buffer[1] = (*Axis4DAC).dac_watch[(*Axis4DAC).channels[1]] + (*Axis4DAC).dac_offset[1];

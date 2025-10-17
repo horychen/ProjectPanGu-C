@@ -240,7 +240,7 @@ void main_measurement(){
     (*CTRL).i->iAB[1] = Axis->iabg[1];
 
     // 观测器专用变量（与你无关，别管啦！）
-    # if( WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
+    # if( WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH) //|| (WHO_IS_USER == USER_HZQ)
         IS_C(0) = Axis->iabg[0];
         IS_C(1) = Axis->iabg[1];
         US_C(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous

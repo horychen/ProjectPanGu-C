@@ -813,7 +813,7 @@ void _user_commands(){
             if ((*CTRL).timebase > CL_TS){
                 (*CTRL).i->cmd_varOmega = (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
                 #if PC_SIMULATION
-                    ACM.TLoad = 1 * (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);
+                    ACM.TLoad = 1 * (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.5);
                 #endif
             }
             if ((*CTRL).timebase > 0.2){
@@ -1064,9 +1064,8 @@ int  main_switch(long mode_select){
             _user_wubo_FOC((*CTRL).i->theta_d_elec, (*CTRL).i->iAB);
         #endif
         break;
-    case MODE_SELECT_VELOCITY_LOOP: // 4
 
-        _user_commands();
+    case MODE_SELECT_VELOCITY_LOOP: // 4
         #if (WHO_IS_USER == USER_HZQ)
             US_P(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
             US_P(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
@@ -1081,11 +1080,9 @@ int  main_switch(long mode_select){
             US_SR_C(1) = (*CTRL).o->cmd_uAB[1];
             IS_SR_C(0) = (*CTRL).i->iAB[0];
             IS_SR_C(1) = (*CTRL).i->iAB[1];
-            
-            pmsm_observers();
+            // pmsm_observers();
         #endif
-
-        
+        _user_commands();
         FOC_with_vecocity_control((*CTRL).i->theta_d_elec,
             (*CTRL).i->varOmega,
             (*CTRL).i->cmd_varOmega,
@@ -1093,8 +1090,9 @@ int  main_switch(long mode_select){
             (*CTRL).i->iAB);
 
         break;
+
     case MODE_SELECT_VELOCITY_LOOP_SENSORLESS : //41
-        #if (WHO_IS_USER == USER_YZZ)
+        #if (WHO_IS_USER == USER_HZQ)
             US_P(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
             US_P(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
             US_C(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
@@ -1108,49 +1106,132 @@ int  main_switch(long mode_select){
             US_SR_C(1) = (*CTRL).o->cmd_uAB[1];
             IS_SR_C(0) = (*CTRL).i->iAB[0];
             IS_SR_C(1) = (*CTRL).i->iAB[1];
-        #if WHO_IS_USER == USER_YZZ
-        _user_commands();
-        pmsm_observers();
+        #if WHO_IS_USER == USER_HZQ
+            _user_commands();
+            pmsm_observers();
+            OBSV.theta_d = (*CTRL).i->theta_d_elec;
+            while(OBSV.theta_d > M_PI) OBSV.theta_d  -= 2*M_PI;
+            while(OBSV.theta_d < -M_PI) OBSV.theta_d += 2*M_PI;
+            #if (AFE_44_ORTEGA_2011)
+                FOC_with_vecocity_control(FE.Ortega.theta_d, 
+                    PLLN.omega_elec * MOTOR.npp_inv, 
+                    (*CTRL).i->cmd_varOmega, 
+                    (*CTRL).i->cmd_iDQ, 
+                    (*CTRL).i->iAB
+                );
+            #elif (AFE_16_HE_EKF_2025)
+                FOC_with_vecocity_control(FE.HE_EKF.theta_d, 
+                PLLN_EKF.omega_elec * MOTOR.npp_inv, 
+                (*CTRL).i->cmd_varOmega, 
+                (*CTRL).i->cmd_iDQ, 
+                (*CTRL).i->iAB
+            );
+            #else         
+                FOC_with_vecocity_control((*CTRL).i->theta_d_elec,
+                (*CTRL).i->varOmega,
+                (*CTRL).i->cmd_varOmega,
+                (*CTRL).i->cmd_iDQ,
+                (*CTRL).i->iAB);
+            #endif
 
-        // OBSV.theta_d = (*CTRL).i->theta_d_elec;
-        // while(OBSV.theta_d > M_PI) OBSV.theta_d  -= 2*M_PI;
-        // while(OBSV.theta_d < -M_PI) OBSV.theta_d += 2*M_PI;  // 反转！
-        // if (d_sim.user.bool_ESO_SPEED_ON == TRUE){
-        //     Main_esoaf_chen2021();
-        // }
-        // if (d_sim.user.bool_apply_ESO_SPEED_for_SPEED_FBK == TRUE){
-        //     (*CTRL).i->varOmega = OFSR.esoaf.xOmg * MOTOR.npp_inv;
-        // }
+            #endif
+        break;
 
-        FOC_with_vecocity_control(FE.CMDC.theta_d, 
-            FE.CMDC.omega_elec*MOTOR.npp_inv, 
-            (*CTRL).i->cmd_varOmega, 
-            (*CTRL).i->cmd_iDQ, 
-            (*CTRL).i->iAB
-        );
 
-        // // observer();
-        // if (d_sim.user.sensorless_speed_observer == 0){
-        //     OBSV.varOmega = (*CTRL).i->varOmega;
-        // }else if(d_sim.user.sensorless_speed_observer == 1){
-        //     OBSV.varOmega = OBSV.nsoaf.xOmg * MOTOR.npp_inv;
-        // }
-        
-        // if (d_sim.user.sensorless_only_theta_on == 1){
-        //     FOC_with_vecocity_control(AFE_USED.theta_d, 
-        //         OBSV.varOmega, 
-        //         (*CTRL).i->cmd_varOmega, 
-        //         (*CTRL).i->cmd_iDQ, 
-        //         (*CTRL).i->iAB);
-        // }else if (d_sim.user.sensorless_only_theta_on == 0){
-        //     FOC_with_vecocity_control((*CTRL).i->theta_d_elec, 
-        //         OBSV.varOmega,
-        //         (*CTRL).i->cmd_varOmega,
-        //         (*CTRL).i->cmd_iDQ,
-        //         (*CTRL).i->iAB);
-        // }
+    case MODE_SELECT_NONLINEAR_FLUX_OBSERVER: // 6
+        #if (AFE_44_ORTEGA_2011)
+            #if (WHO_IS_USER == USER_HZQ)
+                US_P(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
+                US_P(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
+                US_C(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
+                US_C(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
+                IS_C(0)           = (*CTRL).i->iAB[0];
+                IS_C(1)           = (*CTRL).i->iAB[1];
+            #endif
+                US_SR_P(0) = (*CTRL).o->cmd_uAB[0];
+                US_SR_P(1) = (*CTRL).o->cmd_uAB[1];
+                US_SR_C(0) = (*CTRL).o->cmd_uAB[0];
+                US_SR_C(1) = (*CTRL).o->cmd_uAB[1];
+                IS_SR_C(0) = (*CTRL).i->iAB[0];
+                IS_SR_C(1) = (*CTRL).i->iAB[1];
+            #if WHO_IS_USER == USER_HZQ
+            _user_commands();
+            pmsm_observers();
+
+            // OBSV.theta_d = (*CTRL).i->theta_d_elec;
+            // while(OBSV.theta_d > M_PI) OBSV.theta_d  -= 2*M_PI;
+            // while(OBSV.theta_d < -M_PI) OBSV.theta_d += 2*M_PI;  // 反转！
+            // if (d_sim.user.bool_ESO_SPEED_ON == TRUE){
+            //     Main_esoaf_chen2021();
+            // }
+            // if (d_sim.user.bool_apply_ESO_SPEED_for_SPEED_FBK == TRUE){
+            //     (*CTRL).i->varOmega = OFSR.esoaf.xOmg * MOTOR.npp_inv;
+            // }
+            // FE.Ortega.theta_d=(*CTRL).i->theta_d_elec;
+            #if (AFE_44_ORTEGA_2011)
+                FOC_with_vecocity_control(FE.Ortega.theta_d, 
+                    PLLN.omega_elec * MOTOR.npp_inv, 
+                    (*CTRL).i->cmd_varOmega, 
+                    (*CTRL).i->cmd_iDQ, 
+                    (*CTRL).i->iAB
+                );
+            #endif
+            #endif
         #endif
         break;
+
+    case MODE_SELECT_CONSTRAINT_DOMINATED_EKF: // 16
+        #if (AFE_16_HE_EKF_2025)
+            #if (WHO_IS_USER == USER_HZQ)
+                US_P(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
+                US_P(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
+                US_C(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
+                US_C(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
+                IS_C(0)           = (*CTRL).i->iAB[0];
+                IS_C(1)           = (*CTRL).i->iAB[1];
+            #endif
+                US_SR_P(0) = (*CTRL).o->cmd_uAB[0];
+                US_SR_P(1) = (*CTRL).o->cmd_uAB[1];
+                US_SR_C(0) = (*CTRL).o->cmd_uAB[0];
+                US_SR_C(1) = (*CTRL).o->cmd_uAB[1];
+                IS_SR_C(0) = (*CTRL).i->iAB[0];
+                IS_SR_C(1) = (*CTRL).i->iAB[1];
+            #if WHO_IS_USER == USER_HZQ 
+            _user_commands();
+            pmsm_observers();
+
+            // OBSV.theta_d = (*CTRL).i->theta_d_elec;
+            // while(OBSV.theta_d > M_PI) OBSV.theta_d  -= 2*M_PI;
+            // while(OBSV.theta_d < -M_PI) OBSV.theta_d += 2*M_PI;  // 反转！
+            // if (d_sim.user.bool_ESO_SPEED_ON == TRUE){
+            //     Main_esoaf_chen2021();
+            // }
+            // if (d_sim.user.bool_apply_ESO_SPEED_for_SPEED_FBK == TRUE){
+            //     (*CTRL).i->varOmega = OFSR.esoaf.xOmg * MOTOR.npp_inv;
+            // }
+            // FE.Ortega.theta_d=(*CTRL).i->theta_d_elec;
+            // #if (AFE_44_ORTEGA_2011)
+            // FOC_with_vecocity_control(FE.Ortega.theta_d, 
+            //     PLLN.omega_elec * MOTOR.npp_inv, 
+            //     (*CTRL).i->cmd_varOmega, 
+            //     (*CTRL).i->cmd_iDQ, 
+            //     (*CTRL).i->iAB
+            // );
+            // #endif
+            #if (AFE_16_HE_EKF_2025)
+                FOC_with_vecocity_control(FE.HE_EKF.theta_d, 
+                PLLN.omega_elec * MOTOR.npp_inv, 
+                (*CTRL).i->cmd_varOmega, 
+                (*CTRL).i->cmd_iDQ, 
+                (*CTRL).i->iAB
+            );
+            #endif
+            #endif
+        #endif
+        break;
+
+
+
     case MODE_SELECT_TESTING_SENSORLESS : //42
         break;
     case MODE_SELECT_VELOCITY_LOOP_WC_TUNER: // 43
@@ -1362,97 +1443,6 @@ int  main_switch(long mode_select){
             );
         #endif
         break;
-
-    case MODE_SELECT_NONLINEAR_FLUX_OBSERVER: // 6
-        #if (AFE_44_ORTEGA_2011)
-            #if (WHO_IS_USER == USER_HZQ)
-                US_P(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
-                US_P(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
-                US_C(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
-                US_C(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
-                IS_C(0)           = (*CTRL).i->iAB[0];
-                IS_C(1)           = (*CTRL).i->iAB[1];
-            #endif
-                US_SR_P(0) = (*CTRL).o->cmd_uAB[0];
-                US_SR_P(1) = (*CTRL).o->cmd_uAB[1];
-                US_SR_C(0) = (*CTRL).o->cmd_uAB[0];
-                US_SR_C(1) = (*CTRL).o->cmd_uAB[1];
-                IS_SR_C(0) = (*CTRL).i->iAB[0];
-                IS_SR_C(1) = (*CTRL).i->iAB[1];
-            #if WHO_IS_USER == USER_HZQ
-            _user_commands();
-            pmsm_observers();
-
-            // OBSV.theta_d = (*CTRL).i->theta_d_elec;
-            // while(OBSV.theta_d > M_PI) OBSV.theta_d  -= 2*M_PI;
-            // while(OBSV.theta_d < -M_PI) OBSV.theta_d += 2*M_PI;  // 反转！
-            // if (d_sim.user.bool_ESO_SPEED_ON == TRUE){
-            //     Main_esoaf_chen2021();
-            // }
-            // if (d_sim.user.bool_apply_ESO_SPEED_for_SPEED_FBK == TRUE){
-            //     (*CTRL).i->varOmega = OFSR.esoaf.xOmg * MOTOR.npp_inv;
-            // }
-            // FE.Ortega.theta_d=(*CTRL).i->theta_d_elec;
-            FOC_with_vecocity_control(FE.Ortega.theta_d, 
-                PLLN.omega_elec * MOTOR.npp_inv, 
-                (*CTRL).i->cmd_varOmega, 
-                (*CTRL).i->cmd_iDQ, 
-                (*CTRL).i->iAB
-            );
-            #endif
-        #endif
-        break;
-
-    case MODE_SELECT_CONSTRAINT_DOMINATED_EKF: // 16
-        #if (AFE_16_HE_EKF_2025)
-            #if (WHO_IS_USER == USER_HZQ)
-                US_P(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
-                US_P(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
-                US_C(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
-                US_C(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
-                IS_C(0)           = (*CTRL).i->iAB[0];
-                IS_C(1)           = (*CTRL).i->iAB[1];
-            #endif
-                US_SR_P(0) = (*CTRL).o->cmd_uAB[0];
-                US_SR_P(1) = (*CTRL).o->cmd_uAB[1];
-                US_SR_C(0) = (*CTRL).o->cmd_uAB[0];
-                US_SR_C(1) = (*CTRL).o->cmd_uAB[1];
-                IS_SR_C(0) = (*CTRL).i->iAB[0];
-                IS_SR_C(1) = (*CTRL).i->iAB[1];
-            #if WHO_IS_USER == USER_HZQ 
-            _user_commands();
-            pmsm_observers();
-
-            // OBSV.theta_d = (*CTRL).i->theta_d_elec;
-            // while(OBSV.theta_d > M_PI) OBSV.theta_d  -= 2*M_PI;
-            // while(OBSV.theta_d < -M_PI) OBSV.theta_d += 2*M_PI;  // 反转！
-            // if (d_sim.user.bool_ESO_SPEED_ON == TRUE){
-            //     Main_esoaf_chen2021();
-            // }
-            // if (d_sim.user.bool_apply_ESO_SPEED_for_SPEED_FBK == TRUE){
-            //     (*CTRL).i->varOmega = OFSR.esoaf.xOmg * MOTOR.npp_inv;
-            // }
-            // FE.Ortega.theta_d=(*CTRL).i->theta_d_elec;
-            #if (AFE_44_ORTEGA_2011)
-            FOC_with_vecocity_control(FE.Ortega.theta_d, 
-                PLLN.omega_elec * MOTOR.npp_inv, 
-                (*CTRL).i->cmd_varOmega, 
-                (*CTRL).i->cmd_iDQ, 
-                (*CTRL).i->iAB
-            );
-            #endif
-            #if (AFE_16_HE_EKF_2025)
-                FOC_with_vecocity_control(FE.HE_EKF.theta_d, 
-                PLLN.omega_elec * MOTOR.npp_inv, 
-                (*CTRL).i->cmd_varOmega, 
-                (*CTRL).i->cmd_iDQ, 
-                (*CTRL).i->iAB
-            );
-            #endif
-            #endif
-        #endif
-        break;
-
 
     case MODE_SELECT_COMMISSIONING: // 9
         // #if ENABLE_COMMISSIONING == TRUE
