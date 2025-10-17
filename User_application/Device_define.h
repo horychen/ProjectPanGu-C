@@ -57,6 +57,7 @@
     // Abs encoder comm. via 485 tamagawa protocol
     #define PIN_485_SCIB_WE_SCICTX_UART3pin7 31
     #define PIN_485_SCIA_WE_SCICRX_UART3pin8 37
+    #define PIN_485_SCIA_WE_SCICRX_UART3pin9 83
 
     //SCI pin config
 
@@ -75,6 +76,10 @@
     #define MUX_SCI_TXDC 5
     #define MUX_SCI_RXDC 5
 
+    #define PIN_SCI_TXDD 47
+    #define PIN_SCI_RXDD 46
+    #define MUX_SCI_TXDD 6
+    #define MUX_SCI_RXDD 6
     // DC BUS
     #if BOOL_LOAD_SWEEPING_ON == FALSE
         #define OFFSET_VDC_BUS_IPM1 8
@@ -85,9 +90,9 @@
     #endif
 
     //ADC UVW to PIN config
-    #define PIN_ADCA_U 2
+    #define PIN_ADCA_U 0
     #define PIN_ADCA_V 1
-    #define PIN_ADCA_W 0
+    #define PIN_ADCA_W 2
 
     #define PIN_ADCB_U 3
     #define PIN_ADCB_V 4
@@ -96,9 +101,9 @@
     // Lem 2的三个蓝色块块分别是adc a1 a2 a3
     // In fact A is the first inverter in MOTOR_GROUP
     #if BOOL_LOAD_SWEEPING_ON == FALSE
-        #define OFFSET_LEM_A1 2027.0 // WuBo tuned in 20241027 //2010  // 2034  // 2029.57894737 // ADCA1
-        #define OFFSET_LEM_A2 2050.0 // WuBo tuned in 20241027 //2038   // 2049  // 2043.08771930 // ADCA2
-        #define OFFSET_LEM_A3 2046.0 // WuBo tuned in 20241027 //2029   // 2050  // 2042.98245614 // ADCA3
+        #define OFFSET_LEM_A1 2037.0 // WuBo tuned in 20241027 //2010  // 2034  // 2029.57894737 // ADCA1
+        #define OFFSET_LEM_A2 2049.0 // WuBo tuned in 20241027 //2038   // 2049  // 2043.08771930 // ADCA2
+        #define OFFSET_LEM_A3 2055.0 // WuBo tuned in 20241027 //2029   // 2050  // 2042.98245614 // ADCA3
         #define SCALE_LEM_A1 0.0305   // 0.03080704 // ADCA1
         #define SCALE_LEM_A2 0.030334 // 0.03060669 // ADCA2
         #define SCALE_LEM_A3 0.03045988//0.02983  // 0.03045988 // ADCA3

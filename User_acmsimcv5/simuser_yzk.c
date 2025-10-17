@@ -7,6 +7,9 @@
 // p4ps5_motor_suspension_parameters *YZK_p4ps5;
 // filters_t *g_filters;
 
+const REAL I_ampa;
+const REAL I_ampb;
+const REAL F_freq;
 struct YZK_2025_TIA_CTRL YZK_CTRL;
 
 // K = tan(pi * fc / fs)
@@ -18,17 +21,17 @@ struct YZK_2025_TIA_CTRL YZK_CTRL;
 // a2 = (1 - K/Q + K^2) / norm
 
     /* IIR */
-static const REAL LP0_b0 = 0.000087655375;       //0.003621681514928641;             0.000087655375;
-static const REAL LP0_b1 = 0.000175310749;        //0.007243363029857282;            0.000175310749;
-static const REAL LP0_b2 = 0.000087655375;       //0.003621681514928641;             0.000087655375;
-static const REAL LP0_a1 = -1.973340329766;       //-1.822694925196308;                -1.973340329766;
-static const REAL LP0_a2 = 0.973690951265;        //0.8371816512560227;    200Hz       0.973690951265;
+static const REAL LP0_b0 = 0.003621681514928641;       //0.003621681514928641;             0.000087655375;
+static const REAL LP0_b1 = 0.007243363029857282;       //0.007243363029857282;            0.000175310749;
+static const REAL LP0_b2 = 0.003621681514928641;       //0.003621681514928641;             0.000087655375;
+static const REAL LP0_a1 = -1.822694925196308;      //-1.822694925196308;                -1.973340329766;
+static const REAL LP0_a2 = 0.8371816512560227;       //0.8371816512560227;    200Hz       0.973690951265;
 
-static const REAL LP1_b0 = 0.000087655375;              //0.013359200027856523f;                   //0.020083365564211256f;              //0.04613180207
-static const REAL LP1_b1 = 0.000175310749;              //0.026718400055713045f;                   //0.04016673112842251f;              //0.09226360415
-static const REAL LP1_b2 = 0.000087655375;              //0.013359200027856523f;                   //0.020083365564211256f;              //0.04613180207
-static const REAL LP1_a1 = -1.973340329766;             //-1.6474599810769766f;                    //-1.561018075800718f;                //-1.30728502829
-static const REAL LP1_a2 = 0.973690951265;    //30Hz          //0.7008967811884026f;     //400Hz            //0.6413515380575631f;    //500Hz        //0.49181223659      //800Hz
+static const REAL LP1_b0 =0.003621681514928641;                          //0.000087655375;              //0.013359200027856523f;                   //0.020083365564211256f;                          //0.04613180207
+static const REAL LP1_b1 =0.007243363029857282;                          //0.000175310749;              //0.026718400055713045f;                   //0.04016673112842251f;                            //0.09226360415
+static const REAL LP1_b2 =0.003621681514928641;                          //0.000087655375;              //0.013359200027856523f;                   //0.020083365564211256f;                          //0.04613180207
+static const REAL LP1_a1 =-1.822694925196308;                          //-1.973340329766;             //-1.6474599810769766f;                    //-1.561018075800718f;                            //-1.30728502829
+static const REAL LP1_a2 =0.8371816512560227;   //200Hz                       //0.973690951265;    //30Hz          //0.7008967811884026f;     //400Hz            //0.6413515380575631f;    //500Hz        //0.49181223659      //800Hz
 
 static const REAL C3 = -1.29166723e-18;
 static const REAL C2 =  1.36515629e-10;
@@ -47,16 +50,16 @@ static const REAL L_B = -5.89365901e+00;
 /* Initialising */
 void init_YZK_ALL(){
     /* XY方向 */
-    YZK_CTRL.CMD_X = 3725.0000;
-    YZK_CTRL.CMD_Y = 3753.0000;
+    YZK_CTRL.CMD_X = 3772.0000;
+    YZK_CTRL.CMD_Y = 3739.0000;
     YZK_CTRL.Err_X = 0.0;
     YZK_CTRL.Err_Y = 0.0;
-    YZK_CTRL.KP_X = 0.0005;
-    YZK_CTRL.KP_Y = 0.0005;
+    YZK_CTRL.KP_X = 0.3;
+    YZK_CTRL.KP_Y = 0.5;
     YZK_CTRL.KI_X = 0.0;
     YZK_CTRL.KI_Y = 0.0;
-    YZK_CTRL.KD_X = 10;
-    YZK_CTRL.KD_Y = 10;
+    YZK_CTRL.KD_X = 5e-3;
+    YZK_CTRL.KD_Y = 8e-3;
     /* 磁链 */
     YZK_CTRL.CMD_psi_alpha = 0.0;
     YZK_CTRL.CMD_psi_beta  = 0.0;
@@ -91,7 +94,7 @@ void init_YZK_ALL(){
     YZK_CTRL.pids.Kp = 0.7793;
     YZK_CTRL.pids.Ki_CODE = 0.1794;
     YZK_CTRL.pids.Kd = 0.0;
-    YZK_CTRL.pids.OutLimit = 1;
+    YZK_CTRL.pids.OutLimit = 4;
 
     /* 参数初始化 */
     YZK_CTRL.motor.npp = 5;
@@ -99,13 +102,14 @@ void init_YZK_ALL(){
     YZK_CTRL.motor.Js = 1;
     YZK_CTRL.motor.Js_inv = 1;
     YZK_CTRL.motor.M_rotor = 1.50;  // rotor mass
-    YZK_CTRL.motor.ge = 37500000;       // air gap length
+    YZK_CTRL.motor.ge = 3800;       // air gap length
     YZK_CTRL.motor.mu_0 = 4*M_PI*1e-7;     // 真空磁导率
     YZK_CTRL.motor.S = 1;        // alpha正对的面积
     YZK_CTRL.motor.N_alpha = 120;  // alpha线圈匝数
     YZK_CTRL.motor.N_beta = 120;   // beta线圈匝数
     YZK_CTRL.motor.g = 10;
-    // YZK_CTRL.motor.K = 50000;
+    // YZK_CTRL.motor.K_X = 50000;
+    // YZK_CTRL.motor.K_Y = 50000;
     YZK_CTRL.motor.K_X = 1 / (YZK_CTRL.motor.N_alpha * YZK_CTRL.motor.N_alpha * YZK_CTRL.motor.mu_0 * YZK_CTRL.motor.S);
     YZK_CTRL.motor.K_Y = 1 / (YZK_CTRL.motor.N_beta * YZK_CTRL.motor.N_beta * YZK_CTRL.motor.mu_0 * YZK_CTRL.motor.S);
 }
@@ -134,7 +138,7 @@ void suspension_p4ps5_PD_Yaxis(REAL Y_Pos){
     // 1. 误差
     // YZK_CTRL.prev_error_Y = YZK_CTRL.Err_Y; // 保存上次误差
     // YZK_CTRL.disFbk_Y = Y_Pos;
-    YZK_CTRL.varTheta = (*CTRL).i->varTheta;
+    YZK_CTRL.varTheta = (*CTRL).i->theta_d_elec;
     YZK_CTRL.Err_Y = YZK_CTRL.CMD_Y - YZK_CTRL.disFbk_Y;
 
     // 2. 误差微分 (差分法)
@@ -143,17 +147,21 @@ void suspension_p4ps5_PD_Yaxis(REAL Y_Pos){
     // 3. 低通滤波(获得/dot{Err_Y})
     YZK_CTRL.LPFs.de_Y = YZK_CTRL.LPFs.de_raw_Y;
     // YZK_CTRL.LPFs.de_Y = lowpass_update(&YZK_CTRL.LPFs, YZK_CTRL.LPFs.de_raw_Y);
-
+    YZK_CTRL.CMD_I_beta = sin(YZK_CTRL.varTheta) * (5 + YZK_CTRL.KP_Y * YZK_CTRL.Err_Y - YZK_CTRL.KD_Y * YZK_CTRL.LPFs.de_Y);
+    // 有经验悬浮法 仅限于p4ps5
     // 4. 控制律: 磁链参考 看那张纸上的公式，找不到找YZK
-    YZK_CTRL.CMD_psi_beta = YZK_CTRL.motor.M_rotor * YZK_CTRL.motor.g - YZK_CTRL.KP_Y * YZK_CTRL.Err_Y - YZK_CTRL.KD_Y * YZK_CTRL.LPFs.de_Y;
+    // YZK_CTRL.CMD_psi_beta = YZK_CTRL.motor.M_rotor * YZK_CTRL.motor.g - YZK_CTRL.KP_Y * YZK_CTRL.Err_Y - YZK_CTRL.KD_Y * YZK_CTRL.LPFs.de_Y;
 
-    if (YZK_CTRL.CMD_psi_beta < 0.0) YZK_CTRL.CMD_psi_beta = -sqrt(-YZK_CTRL.CMD_psi_beta);   // 避免 sqrt 负数
+    // if (YZK_CTRL.CMD_psi_beta < 0.0) YZK_CTRL.CMD_psi_beta = - sqrt(-YZK_CTRL.CMD_psi_beta);   // 避免 sqrt 负数
 
-    if (YZK_CTRL.CMD_psi_beta > 0.0) YZK_CTRL.CMD_psi_beta = sqrt(YZK_CTRL.CMD_psi_beta);
+    // if (YZK_CTRL.CMD_psi_beta > 0.0) YZK_CTRL.CMD_psi_beta = sqrt(YZK_CTRL.CMD_psi_beta);
 
     // 5. 电流参考
     // K = 1 / N_alpha;
-    YZK_CTRL.CMD_I_beta = YZK_CTRL.motor.K_Y * YZK_CTRL.CMD_psi_beta * 1 / (YZK_CTRL.motor.ge - YZK_CTRL.disFbk_Y);
+    // YZK_CTRL.CMD_I_beta = - I_ampb * sin(YZK_CTRL.varTheta - M_PI/3);
+    // YZK_CTRL.CMD_I_beta = I_ampb * sin(YZK_CTRL.varTheta - M_PI/3) * sin(2 * F_freq * M_PI * CTRL->timebase);
+    // YZK_CTRL.CMD_I_beta = sin(YZK_CTRL.varTheta) * YZK_CTRL.motor.K_Y * YZK_CTRL.CMD_psi_beta * 1 / (YZK_CTRL.motor.ge - YZK_CTRL.disFbk_Y);
+    
     YZK_CTRL.Err_I_beta = YZK_CTRL.CMD_I_beta - CTRL->i->iAB[1];
 
     // 6. PI
@@ -176,7 +184,7 @@ void suspension_p4ps5_PD_Xaxis(REAL X_Pos){
     // 1. 误差
     // YZK_CTRL.prev_error_X = YZK_CTRL.Err_X; // 保存上次误差
     // YZK_CTRL.disFbk_X = X_Pos;
-    YZK_CTRL.varTheta = (*CTRL).i->varTheta;
+    YZK_CTRL.varTheta = (*CTRL).i->theta_d_elec;
     YZK_CTRL.Err_X = YZK_CTRL.CMD_X - YZK_CTRL.disFbk_X;
 // 
     // 2. 误差微分 (差分法)
@@ -189,13 +197,15 @@ void suspension_p4ps5_PD_Xaxis(REAL X_Pos){
     // 4. 控制律: 磁链参考 看那张纸上的公式，找不到找YZK
     YZK_CTRL.CMD_psi_alpha = YZK_CTRL.KP_X * YZK_CTRL.Err_X + YZK_CTRL.KD_X * YZK_CTRL.LPFs.de_X;
 // 
-    if (YZK_CTRL.CMD_psi_alpha < 0.0) YZK_CTRL.CMD_psi_alpha = sqrt(-YZK_CTRL.CMD_psi_alpha);   // 避免 sqrt 负数
+    if (YZK_CTRL.CMD_psi_alpha < 0.0) YZK_CTRL.CMD_psi_alpha = - sqrt(-YZK_CTRL.CMD_psi_alpha);   // 避免 sqrt 负数
 // 
-    if (YZK_CTRL.CMD_psi_alpha > 0.0) YZK_CTRL.CMD_psi_alpha = - sqrt(YZK_CTRL.CMD_psi_alpha);    //注意传感器反装 如果不是这里要改
+    if (YZK_CTRL.CMD_psi_alpha > 0.0) YZK_CTRL.CMD_psi_alpha = sqrt(YZK_CTRL.CMD_psi_alpha);    //注意传感器反装 如果不是这里要改
 // 
     // 5. 电流参考
     // K = 0;
-    YZK_CTRL.CMD_I_alpha = YZK_CTRL.motor.K_X * YZK_CTRL.CMD_psi_alpha * 1 / (YZK_CTRL.motor.ge - YZK_CTRL.disFbk_X);
+    // YZK_CTRL.CMD_I_alpha = I_ampa * cos(YZK_CTRL.varTheta - M_PI/3);
+    // YZK_CTRL.CMD_I_alpha = I_ampa * cos(YZK_CTRL.varTheta - M_PI/3) * cos(2 * F_freq * M_PI * CTRL->timebase);
+    YZK_CTRL.CMD_I_alpha = cos(YZK_CTRL.varTheta) * YZK_CTRL.motor.K_X * YZK_CTRL.CMD_psi_alpha * 1 / (YZK_CTRL.motor.ge - YZK_CTRL.disFbk_X);
     YZK_CTRL.Err_I_alpha = YZK_CTRL.CMD_I_alpha - CTRL->i->iAB[0];
 // 
     /* 电流环 */

@@ -20,6 +20,7 @@ void voltage_measurement_based_on_eCAP();
 void measurement_position_count_axisCnt0();
 void measurement_position_count_axisCnt1();
 void measurement_displacement_count();
+void measurement_displacement_count_optical_sensor();
 void measurement_enc();
 void measurement_current_axisCnt0();
 void measurement_current_axisCnt1();

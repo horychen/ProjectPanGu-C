@@ -228,6 +228,7 @@ void main_measurement(){
     #endif
     #if WHO_IS_USER == USER_YZK
         measurement_displacement_count();
+        measurement_displacement_count_optical_sensor();
     #endif
     CTRL->i->varOmega     = CTRL->enc->varOmega;
     CTRL->i->theta_d_elec = CTRL->enc->theta_d_elec;
@@ -452,7 +453,7 @@ void DISABLE_PWM_OUTPUT(){
     DELAY_US(5);
     GpioDataRegs.GPDCLEAR.bit.GPIO106 = 1; // TODO: What is this doing?
 }
-
+int pwm_test_mode = 1;
 void ENABLE_PWM_OUTPUT(int positionLoopType){
     G.flag_experimental_initialized = FALSE;
     if (use_first_set_three_phase == 1){
@@ -521,7 +522,7 @@ void ENABLE_PWM_OUTPUT(int positionLoopType){
     /* MAIN SWITCH */
     /* MAIN SWITCH */
 
-    int pwm_test_mode = main_switch(debug->mode_select);
+    pwm_test_mode = main_switch(debug->mode_select);
 
     //(*CTRL).o->cmd_uAB_to_inverter[0]
 
@@ -756,6 +757,18 @@ void EUREKA_GPIO_SETUP(){
     // GPIO137 - 485TX-SCIB
     GPIO_SetupPinMux(137, GPIO_MUX_CPU2, 6);
     GPIO_SetupPinOptions(137, GPIO_OUTPUT, GPIO_PUSHPULL);
+    // GPIO136 - 485RX-SCIC
+    // GPIO_SetupPinMux(136, GPIO_MUX_CPU2, 6);
+    // GPIO_SetupPinOptions(136, GPIO_INPUT, GPIO_PUSHPULL);
+    // GPIO135 - 485TX-SCIC
+    // GPIO_SetupPinMux(135, GPIO_MUX_CPU2, 6);
+    // GPIO_SetupPinOptions(135, GPIO_OUTPUT, GPIO_PUSHPULL);
+        // GPIO47 - 485RX-SCID
+    GPIO_SetupPinMux(46, GPIO_MUX_CPU2, 6);
+    GPIO_SetupPinOptions(46, GPIO_INPUT, GPIO_PUSHPULL);
+    // GPIO46- 485TX-SCID
+    GPIO_SetupPinMux(47, GPIO_MUX_CPU2, 6);
+    GPIO_SetupPinOptions(47, GPIO_OUTPUT, GPIO_PUSHPULL);
 
     //GPIO39 - SCIRX-C
     GPIO_SetupPinMux(39, GPIO_MUX_CPU2, 5);
@@ -792,6 +805,14 @@ void EUREKA_GPIO_SETUP(){
     //485TX-SCIB
     GPIO_SetupPinMux(PIN_SCI_TXDB, GPIO_MUX_CPU2, MUX_SCI_TXDB);
     GPIO_SetupPinOptions(PIN_SCI_TXDB, GPIO_OUTPUT, GPIO_PUSHPULL);
+    
+    //485RX-SCID
+    GPIO_SetupPinMux(PIN_SCI_RXDD, GPIO_MUX_CPU2, MUX_SCI_RXDD);
+    GPIO_SetupPinOptions(PIN_SCI_RXDD, GPIO_INPUT, GPIO_PUSHPULL);
+
+    //485TX-SCID
+    GPIO_SetupPinMux(PIN_SCI_TXDD, GPIO_MUX_CPU2, MUX_SCI_TXDD);
+    GPIO_SetupPinOptions(PIN_SCI_TXDD, GPIO_OUTPUT, GPIO_PUSHPULL);
 
     //SCIRX-C
     GPIO_SetupPinMux(PIN_SCI_RXDC, GPIO_MUX_CPU2, MUX_SCI_RXDC);
@@ -811,7 +832,8 @@ void EUREKA_GPIO_SETUP(){
     GPIO_SetupPinOptions(PIN_485_SCIB_WE_SCICTX_UART3pin7, GPIO_OUTPUT, GPIO_ASYNC);
     GPIO_SetupPinMux    (PIN_485_SCIA_WE_SCICRX_UART3pin8, GPIO_MUX_CPU2, 0); // GPIO139 - 485-SCIA-WE-(use SCICRX as GPIO, in UART3 pin8)
     GPIO_SetupPinOptions(PIN_485_SCIA_WE_SCICRX_UART3pin8, GPIO_OUTPUT, GPIO_ASYNC);
-
+    GPIO_SetupPinMux    (PIN_485_SCIA_WE_SCICRX_UART3pin9, GPIO_MUX_CPU2, 0); // GPIO111 - 485-SCIA-D1-(use SCICRX as GPIO, in UART3 pin9)
+    GPIO_SetupPinOptions(PIN_485_SCIA_WE_SCICRX_UART3pin9, GPIO_OUTPUT, GPIO_ASYNC);
     // =========FOR EUREKA===========
     //        // =========TEST BOARD PIN============
     //        // =========NOT FOR EUREKA===========
@@ -1268,6 +1290,9 @@ void cla_test_codes(){
     Cla1Regs.MCTL.bit.IACKE = 1;
     EDIS;
 }
+void measurement_displacement_count_optical_sensor(){
+    
+}
 REAL s1_new0 = 0.0;
 REAL s1_new1 = 0.0;
 REAL s2_new0 = 0.0;
@@ -1275,6 +1300,7 @@ REAL s2_new1 = 0.0;
 REAL x0 = 0.0;
 REAL y0 = 0.0;
 int yzkdebug4 = 0;
+// 自制传感器 在做实验前一定要标定target
 void measurement_displacement_count(){
     Axis->place_sensor[0] = raw_value_zero;
     Axis->place_sensor[1] = raw_value_one;
@@ -1328,9 +1354,9 @@ void measurement_position_count_axisCnt0(){
 
 
 void measurement_position_count_axisCnt1(){
-    #if NUMBER_OF_AXES == 2
-        position_count_SCI_fromCPU2 = position_count_SCI_hip_fromCPU2;
-    #endif
+    // #if NUMBER_OF_AXES == 2
+    //     position_count_SCI_fromCPU2 = position_count_SCI_hip_fromCPU2;
+    // #endif
         // 正电流导致编码器读数减小
         CTRL->enc->encoder_abs_cnt = wubo_debug_motor_enc_dirc[1] * ( (int32)position_count_SCI_fromCPU2 - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis );
         // dq变化中，d轴理论上指向永磁体的北极，
