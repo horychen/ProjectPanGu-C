@@ -35,7 +35,7 @@ void init_d_sim() {
 
     d_sim.user.verbose = TRUE;
     d_sim.user.who_is_user = 1601;
-    d_sim.user.mode_select_synchronous_motor = 6;
+    d_sim.user.mode_select_synchronous_motor = 41;
     d_sim.user.mode_select_induction_motor = 32;
     d_sim.user.INVERTER_NONLINEARITY_COMPENSATION_METHOD = 0;
     d_sim.user.Select_exp_operation = 0;
