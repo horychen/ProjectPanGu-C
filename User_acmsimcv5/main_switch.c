@@ -1043,8 +1043,8 @@ int  main_switch(long mode_select){
         #if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
             US_P(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
             US_P(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
-            US_C(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
-            US_C(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
+            US_C(0) = (*CTRL).i->uAB[0]; // 后缀_P表示上一步的电压，P = Previous
+            US_C(1) = (*CTRL).i->uAB[1]; // 后缀_C表示当前步的电压，C = Current
             IS_C(0)           = (*CTRL).i->iAB[0];
             IS_C(1)           = (*CTRL).i->iAB[1];
         #endif

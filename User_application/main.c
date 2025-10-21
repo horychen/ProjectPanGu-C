@@ -274,6 +274,15 @@ void main_adc_measurement(){
     Axis->adc_voltage[5] = ((REAL)(Axis->adc_data[5]) - Axis->adc_offset_ex[5]) * Axis->adc_scale_ex[5];
     Axis->adc_voltage[6] = ((REAL)(Axis->adc_data[6]) - Axis->adc_offset_ex[6]) * Axis->adc_scale_ex[6];
     Axis->adc_voltage[7] = ((REAL)(Axis->adc_data[7]) - Axis->adc_offset_ex[7]) * Axis->adc_scale_ex[7];
+    Axis->terminal_voltage[0] = Axis->adc_voltage[0]*10.0; // A phase to GND
+    Axis->terminal_voltage[1] = Axis->adc_voltage[1]*10.0; // B phase to GND
+    Axis->terminal_voltage[2] = Axis->adc_voltage[2]*10.0; // C phase to GND
+    Axis->neutral_voltage = (Axis->terminal_voltage[0] + Axis->terminal_voltage[1] + Axis->terminal_voltage[2]) / 3.0;
+    Axis->phase_voltage[0] = Axis->terminal_voltage[0] - Axis->neutral_voltage;
+    Axis->phase_voltage[1] = Axis->terminal_voltage[1] - Axis->neutral_voltage;
+    Axis->phase_voltage[2] = Axis->terminal_voltage[2] - Axis->neutral_voltage;
+    (*CTRL).i->uAB[0] = UVW2A_AI(Axis->phase_voltage[0], Axis->phase_voltage[1], Axis->phase_voltage[2]);
+    (*CTRL).i->uAB[1] = UVW2B_AI(Axis->phase_voltage[0], Axis->phase_voltage[1], Axis->phase_voltage[2]);
 }
 
 void DISABLE_PWM_OUTPUT(){
