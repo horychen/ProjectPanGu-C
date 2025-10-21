@@ -120,6 +120,23 @@
     #define SCALE_LEM_B8 0.03038256 // ADCB8
     #define SCALE_LEM_B9 0.03039058 // ADCB9
 
+    #define ADC_OFFSET_0 32768
+    #define ADC_OFFSET_1 32768
+    #define ADC_OFFSET_2 32768
+    #define ADC_OFFSET_3 32768
+    #define ADC_OFFSET_4 32768
+    #define ADC_OFFSET_5 32768
+    #define ADC_OFFSET_6 32768
+    #define ADC_OFFSET_7 32768
+
+    #define ADC_SCALE_0 3.125e-4 // 10.24/2^16
+    #define ADC_SCALE_1 3.125e-4
+    #define ADC_SCALE_2 3.125e-4
+    #define ADC_SCALE_3 3.125e-4
+    #define ADC_SCALE_4 3.125e-4
+    #define ADC_SCALE_5 3.125e-4
+    #define ADC_SCALE_6 3.125e-4
+    #define ADC_SCALE_7 3.125e-4
 
 #endif
 #ifdef _INDUCTION_MOTOR_GROUP // mmlab drive version 3 （王千等）

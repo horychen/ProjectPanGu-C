@@ -236,7 +236,7 @@ void InitHighSpeedSpiGpio()
 // Comment out other unwanted lines.
 
     GpioCtrlRegs.GPBPUD.bit.GPIO58 = 0;   // Enable pull-up on GPIO16 (SPISIMOA)
-    GpioCtrlRegs.GPBPUD.bit.GPIO59 = 0;   // Enable pull-up on GPIO17 (SPISOMIA)
+    GpioCtrlRegs.GPBPUD.bit.GPIO59 = 1;   // Enable pull-up on GPIO17 (SPISOMIA)
     GpioCtrlRegs.GPBPUD.bit.GPIO60 = 0;   // Enable pull-up on GPIO18 (SPICLKA)
     //GpioCtrlRegs.GPBPUD.bit.GPIO61 = 0;   // Enable pull-up on GPIO19 (SPISTEA) // ��MAX5307ͨѶ������Ҫ���������ϵ� SPISTEA ���ܣ�GPIO61��Ϊ��ͨ��GPIOʹ�ü��ɣ���Ҫ��GPIO61��ʹ��Ȩ����Ȩ��CPU02�������������void Gpio_initialize(void)
 

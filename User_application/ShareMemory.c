@@ -13,7 +13,6 @@ extern Uint32 position_count_CAN_ID0x01_fromCPU2;
 extern Uint32 position_count_CAN_ID0x03_fromCPU2;
 extern Uint32 position_count_SCI_hip_fromCPU2;
 extern Uint32 position_count_SCI_shank_fromCPU2;
-
 st_axis *Axis4DAC;
 #if NUMBER_OF_DSP_CORES == 2
 
