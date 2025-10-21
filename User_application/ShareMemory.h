@@ -12,10 +12,11 @@ struct IPC_MEMORY_WRITE{
 extern struct IPC_MEMORY_WRITE Write;
 
 struct IPC_MEMORY_READ{
-    /* read only (RO) shared memory @ GS0 */
+     /* read/write (RW) shared memory @ GS0  owned by CPU2 */
     Uint32 SCI_A_position_count;
     Uint32 SCI_B_position_count;
 
+    //* [WuBo] shank and hip are mixed up with the sci_A and sci_B, makes me confused
     Uint32 SCI_shank_position_count;
     Uint32 CAN_position_count_ID0x03;
 
@@ -24,8 +25,9 @@ struct IPC_MEMORY_READ{
 
     REAL position_cmd_elec;
     REAL speed_cmd_elec;
-    REAL current_cmd_from_PC;
-    bool run_enable;
+
+    int16_t adc_test_val;
+    Uint16 adc_raw[8];
     int16 SCI_char;
 };// ˫�����
 extern struct IPC_MEMORY_READ Read;

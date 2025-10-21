@@ -207,7 +207,7 @@ void main_loop(){
 // extern long long sci_pos;
 
 void main_measurement(){
-
+    main_adc_measurement();
     #if ENCODER_TYPE == INCREMENTAL_ENCODER_QEP
         PostionSpeedMeasurement_MovingAvergage(EQep1Regs.QPOSCNT, CTRL->enc);
     #else
@@ -261,65 +261,7 @@ void main_measurement(){
         PID_iD->OutLimit = Axis->vdc * 0.5773672 * d_sim.CL.LIMIT_DC_BUS_UTILIZATION;
         PID_iQ->OutLimit = Axis->vdc * 0.5773672 * d_sim.CL.LIMIT_DC_BUS_UTILIZATION;
         PID_Speed->OutLimit = d_sim.VL.LIMIT_OVERLOAD_FACTOR * d_sim.init.IN;
-
-        // 电流环输出限幅2V
-        // PID_iD->OutLimit = 2;
-        // PID_iQ->OutLimit = 2; 
-        // PID_iX->outLimit = Axis->vdc * 0.5773672;
-        // PID_iY->outLimit = Axis->vdc * 0.5773672;
     }
-
-    //    这样不能形成保护，必须设置故障状态才行。
-    //    if(fabs(G.Current_W)>8 || fabs(G.Current_V)>8){
-    //        DSP_PWM_DISABLE
-    //        DSP_2PWM_DISABLE
-    //    }
-
-    // 电流采样ADC温飘校准 // TODO 改成用ADC Raw Results校准。
-    //    if(Axis->AD_offset_flag2==FALSE)
-    //    {
-    //        Axis->offset_counter += 1;
-    //        Axis->iuvw_offset_online[0] += (REAL)(AdcaResultRegs.ADCRESULT1 ) ;
-    //        Axis->iuvw_offset_online[1] += (REAL)(AdcaResultRegs.ADCRESULT2 ) ;
-    //        Axis->iuvw_offset_online[2] += (REAL)(AdcaResultRegs.ADCRESULT3 ) ;
-    //        Axis->iuvw_offset_online[3] += (REAL)(AdcaResultRegs.ADCRESULT11 ) ;
-    //        Axis->iuvw_offset_online[4] += (REAL)(AdcaResultRegs.ADCRESULT9 ) ;
-    //        Axis->iuvw_offset_online[5] += (REAL)(AdcaResultRegs.ADCRESULT8 ) ;
-    //        if(Axis->offset_counter>=5000){
-    //            Axis->iuvw_offset_online[0] = Axis->iuvw_offset_online[0] / 5000;
-    //            Axis->iuvw_offset_online[1] = Axis->iuvw_offset_online[1] / 5000;
-    //            Axis->iuvw_offset_online[2] = Axis->iuvw_offset_online[2] / 5000;
-    //            Axis->iuvw_offset_online[3] = Axis->iuvw_offset_online[3] / 5000;
-    //            Axis->iuvw_offset_online[4] = Axis->iuvw_offset_online[4] / 5000;
-    //            Axis->iuvw_offset_online[5] = Axis->iuvw_offset_online[5] / 5000;
-    //            Axis->AD_offset_flag2 = TRUE;
-    //            Axis->offset_counter = 0;
-    //        }
-    //
-    //        // 来不及完成偏置检测（比如刚上电数字开关就是开的），采用默认值
-    //        /* 427-1401：添加开关信号滤波。今天发现在刚上电的时候，XCUBE-II的前两个中断里，数字开关是打开的，然后才变成关闭。*/
-    //        if(Axis->FLAG_ENABLE_PWM_OUTPUT && Axis->offset_counter>100){
-    //            Axis->iuvw_offset_online[0] = 0.0;
-    //            Axis->iuvw_offset_online[1] = 0.0;
-    //            Axis->iuvw_offset_online[2] = 0.0;
-    //            Axis->iuvw_offset_online[3] = 0.0;
-    //            Axis->iuvw_offset_online[4] = 0.0;
-    //            Axis->iuvw_offset_online[5] = 0.0;
-    //            Axis->AD_offset_flag2 = TRUE;
-    //        }
-    //
-    //        // 上电的时候，电机可能在转，此时根据电流判断是否还要额外进行偏置补偿。
-    //        if( fabs(Axis->iuvw[0])>0.05 || fabs(Axis->iuvw[1])>0.05 || fabs(Axis->iuvw[2])>0.05 || \
-    //            fabs(Axis->iuvw[3])>0.05 || fabs(Axis->iuvw[4])>0.05 || fabs(Axis->iuvw[5])>0.05){
-    //            Axis->iuvw_offset_online[0] = 0.0;
-    //            Axis->iuvw_offset_online[1] = 0.0;
-    //            Axis->iuvw_offset_online[2] = 0.0;
-    //            Axis->iuvw_offset_online[3] = 0.0;
-    //            Axis->iuvw_offset_online[4] = 0.0;
-    //            Axis->iuvw_offset_online[5] = 0.0;
-    //            Axis->AD_offset_flag2 = TRUE;
-    //        }
-    //    }
 }
 
 // int down_freq_ecap_counter = 1;
@@ -327,9 +269,27 @@ void main_measurement(){
 extern REAL imife_realtime_gain_off;
 
 //REAL wubo_debug_flag_PWM = 0;
-//REAL wubo_debug_motor_enc_dirc[2] = {1.0, -1.0};
+REAL wubo_debug_motor_enc_dirc[2] = {1.0, -1.0};
 
-
+void main_adc_measurement(){
+    Axis->adc_voltage[0] = ((REAL)(Axis->adc_data[0]) - Axis->adc_offset_ex[0]) * Axis->adc_scale_ex[0];
+    Axis->adc_voltage[1] = ((REAL)(Axis->adc_data[1]) - Axis->adc_offset_ex[1]) * Axis->adc_scale_ex[1];
+    Axis->adc_voltage[2] = ((REAL)(Axis->adc_data[2]) - Axis->adc_offset_ex[2]) * Axis->adc_scale_ex[2];
+    Axis->adc_voltage[3] = ((REAL)(Axis->adc_data[3]) - Axis->adc_offset_ex[3]) * Axis->adc_scale_ex[3];
+    Axis->adc_voltage[4] = ((REAL)(Axis->adc_data[4]) - Axis->adc_offset_ex[4]) * Axis->adc_scale_ex[4];
+    Axis->adc_voltage[5] = ((REAL)(Axis->adc_data[5]) - Axis->adc_offset_ex[5]) * Axis->adc_scale_ex[5];
+    Axis->adc_voltage[6] = ((REAL)(Axis->adc_data[6]) - Axis->adc_offset_ex[6]) * Axis->adc_scale_ex[6];
+    Axis->adc_voltage[7] = ((REAL)(Axis->adc_data[7]) - Axis->adc_offset_ex[7]) * Axis->adc_scale_ex[7];
+    Axis->terminal_voltage[0] = Axis->adc_voltage[0]*10.0; // A phase to GND
+    Axis->terminal_voltage[1] = Axis->adc_voltage[1]*10.0; // B phase to GND
+    Axis->terminal_voltage[2] = Axis->adc_voltage[2]*10.0; // C phase to GND
+    Axis->neutral_voltage = (Axis->terminal_voltage[0] + Axis->terminal_voltage[1] + Axis->terminal_voltage[2]) / 3.0;
+    Axis->phase_voltage[0] = Axis->terminal_voltage[0] - Axis->neutral_voltage;
+    Axis->phase_voltage[1] = Axis->terminal_voltage[1] - Axis->neutral_voltage;
+    Axis->phase_voltage[2] = Axis->terminal_voltage[2] - Axis->neutral_voltage;
+    (*CTRL).i->uAB[0] = UVW2A_AI(Axis->phase_voltage[0], Axis->phase_voltage[1], Axis->phase_voltage[2]);
+    (*CTRL).i->uAB[1] = UVW2B_AI(Axis->phase_voltage[0], Axis->phase_voltage[1], Axis->phase_voltage[2]);
+}
 
 void DISABLE_PWM_OUTPUT(){
     DSP_PWM_DISABLE
@@ -398,7 +358,7 @@ void DISABLE_PWM_OUTPUT(){
             d_sim.user.flag_clear_timebase_once     = FALSE;
         #endif
         // d_sim.user.Mark_Counter                 = 0.0; // clear the MARK !!!!! clear ti manually !!
-        
+        #endif
         EPwm1Regs.CMPA.bit.CMPA = 2500;
         EPwm2Regs.CMPA.bit.CMPA = 2500;
         EPwm3Regs.CMPA.bit.CMPA = 2500;
@@ -426,6 +386,15 @@ void DISABLE_PWM_OUTPUT(){
             (*debug).CMD_SPEED_SINE_LAST_END_TIME = d_sim.user.CMD_SPEED_SINE_LAST_END_TIME;
             (*debug).CMD_SPEED_SINE_END_TIME      = d_sim.user.CMD_SPEED_SINE_END_TIME;
             (*debug).CMD_SPEED_SINE_HZ_CEILING    = d_sim.user.CMD_SPEED_SINE_HZ_CEILING;
+        #endif
+        #if WHO_IS_USER == USER_YZZ
+            if(!Axis_1.FLAG_ENABLE_PWM_OUTPUT){   
+                (*CTRL).motor->KE = d_sim.init.KE;
+                (*CTRL).motor->R = d_sim.init.R;
+                (*CTRL).motor->Lq = d_sim.init.Lq; 
+                d_sim.user.Variable_Parameters_timebase = 0;
+                d_sim.user.VP_time_num_count = 0;
+            }
         #endif
         /* WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING*/
     }
@@ -610,7 +579,7 @@ __interrupt void EPWM1ISR(void){
 
 
     if(IPCRtoLFlagBusy(IPC_FLAG7) == 1){
-        run_enable_from_PC = Read.run_enable;
+        // run_enable_from_PC = Read.run_enable;
         IPCRtoLFlagAcknowledge(IPC_FLAG7);
     }
 
@@ -676,7 +645,6 @@ Uint32 position_count_CAN_ID0x01_fromCPU2;
 Uint32 position_count_CAN_ID0x03_fromCPU2;
 Uint32 position_count_CAN_fromCPU2;
 Uint32 CPU2_commu_error_counter = 0;
-
 int USE_3_CURRENT_SENSORS = TRUE;
 
 REAL legBouncingSpeed = 50;
@@ -852,6 +820,9 @@ void axis_basic_setup(int axisCnt){
     #if WHO_IS_USER == USER_BEZIER
         Axis->channels_preset = 9; // 8; // 101;
     #endif
+    #if WHO_IS_USER == USER_YZZ
+        Axis->channels_preset = 11;
+    #endif
     #if BOOL_LOAD_SWEEPING_ON //6作为Load Sweeping使用的channel preset
         Axis->channels_preset = 6; 
     #endif
@@ -891,6 +862,24 @@ void init_experiment_AD_gain_and_offset()
     Axis->adc_offset[5] = OFFSET_LEM_B8;
     Axis->adc_offset[6] = OFFSET_LEM_B9;
 
+    /* ADC EXTENDED OFFSET */
+    Axis->adc_offset_ex[0] = ADC_OFFSET_0;
+    Axis->adc_offset_ex[1] = ADC_OFFSET_1;
+    Axis->adc_offset_ex[2] = ADC_OFFSET_2;
+    Axis->adc_offset_ex[3] = ADC_OFFSET_3;
+    Axis->adc_offset_ex[4] = ADC_OFFSET_4;
+    Axis->adc_offset_ex[5] = ADC_OFFSET_5;
+    Axis->adc_offset_ex[6] = ADC_OFFSET_6;
+    Axis->adc_offset_ex[7] = ADC_OFFSET_7;
+    /* ADC EXTENDED SCALE */
+    Axis->adc_scale_ex[0] = ADC_SCALE_0;
+    Axis->adc_scale_ex[1] = ADC_SCALE_1;
+    Axis->adc_scale_ex[2] = ADC_SCALE_2;
+    Axis->adc_scale_ex[3] = ADC_SCALE_3;
+    Axis->adc_scale_ex[4] = ADC_SCALE_4;
+    Axis->adc_scale_ex[5] = ADC_SCALE_5;
+    Axis->adc_scale_ex[6] = ADC_SCALE_6;
+    Axis->adc_scale_ex[7] = ADC_SCALE_7;
     /* two motor OFFSET */
     #if NUMBER_OF_AXES == 2
         #if ENCODER_TYPE == INCREMENTAL_ENCODER_QEP                      /* eQEP OFFSET */
@@ -1428,7 +1417,7 @@ void measurement_current_axisCnt1(){
     }
     else{
         REAL phase_V_current = -Axis->iuvw[3] - Axis->iuvw[5];
-        Axis->iabg[0] = UV2A_AI(Axis->iuvw[3], phase_V_`current);
+        Axis->iabg[0] = UV2A_AI(Axis->iuvw[3], phase_V_current);
         Axis->iabg[1] = UV2B_AI(Axis->iuvw[3], phase_V_current);
     }
 }
@@ -1456,13 +1445,16 @@ void read_count_from_cpu02_dsp_cores_2(){
     if (IPCRtoLFlagBusy(IPC_FLAG10) == 1){ // if flag
         max_counter_missing_position_measurement = counter_missing_position_measurement;
         counter_missing_position_measurement = 0;
-        Axis_1.SCI_Position_Count_fromCPU2 = Read.SCI_A_position_count;
-        Axis_2.SCI_Position_Count_fromCPU2 = Read.SCI_B_position_count;
-        // Axis_3.SCI_Position_Count_fromCPU2 = Read.SCI_C_position_count;
-        // Axis_4.SCI_Position_Count_fromCPU2 = Read.SCI_D_position_count;
-
-        // position_count_SCI_shank_fromCPU2 = Read.SCI_shank_position_count;
-        // position_count_SCI_hip_fromCPU2   = Read.SCI_hip_position_count;
+        position_count_SCI_shank_fromCPU2 = Read.SCI_shank_position_count;
+        position_count_SCI_hip_fromCPU2 = Read.SCI_hip_position_count;
+        Axis->adc_data[0] = Read.adc_raw[0];
+        Axis->adc_data[1] = Read.adc_raw[1];
+        Axis->adc_data[2] = Read.adc_raw[2];
+        Axis->adc_data[3] = Read.adc_raw[3];
+        Axis->adc_data[4] = Read.adc_raw[4];
+        Axis->adc_data[5] = Read.adc_raw[5];
+        Axis->adc_data[6] = Read.adc_raw[6];
+        Axis->adc_data[7] = Read.adc_raw[7];
         //            position_count_CAN_ID0x01_fromCPU2 = Read.CAN_position_count_ID0x01;
         //            position_count_CAN_ID0x03_fromCPU2 = Read.CAN_position_count_ID0x03;
         IPCRtoLFlagAcknowledge(IPC_FLAG10);
@@ -1483,6 +1475,14 @@ void read_count_from_cpu02_dsp_cores_2(){
         position_count_CAN_ID0x01_fromCPU2 = Read.CAN_position_count_ID0x01;
         position_count_CAN_ID0x03_fromCPU2 = Read.CAN_position_count_ID0x03;
         IPCRtoLFlagAcknowledge(IPC_FLAG11);
+    }
+    if (IPCRtoLFlagBusy(IPC_FLAG7) == 0) // if flag
+    {
+        max_counter_missing_position_measurement = counter_missing_position_measurement;
+        counter_missing_position_measurement = 0;
+        position_count_CAN_ID0x01_fromCPU2 = Read.CAN_position_count_ID0x01;
+        position_count_CAN_ID0x03_fromCPU2 = Read.CAN_position_count_ID0x03;
+        IPCRtoLFlagAcknowledge(IPC_FLAG7);
     }
 #endif
 }

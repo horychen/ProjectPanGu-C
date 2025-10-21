@@ -689,6 +689,10 @@ void _onlyFOC(REAL theta_d_elec, REAL iAB[2], REAL varOmega){
         yzz_inverter_Compensation_Online_PAA();
     #endif
 
+    #if WHO_IS_USER == USER_YZZ
+        yzz_inverter_Compensation_Online_PAA();
+    #endif
+
     (*CTRL).o->dc_bus_utilization_ratio = DC_BUS_VOLTAGE_INVERSE * sqrtf( (*CTRL).o->cmd_uAB_to_inverter[0]
                                                                         * (*CTRL).o->cmd_uAB_to_inverter[0]
                                                                         + (*CTRL).o->cmd_uAB_to_inverter[1]
@@ -1095,8 +1099,8 @@ int  main_switch(long mode_select){
         #if (WHO_IS_USER == USER_HZQ)
             US_P(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
             US_P(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
-            US_C(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
-            US_C(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
+            US_C(0) = (*CTRL).i->uAB[0]; // 后缀_P表示上一步的电压，P = Previous
+            US_C(1) = (*CTRL).i->uAB[1]; // 后缀_C表示当前步的电压，C = Current
             IS_C(0)           = (*CTRL).i->iAB[0];
             IS_C(1)           = (*CTRL).i->iAB[1];
         #endif

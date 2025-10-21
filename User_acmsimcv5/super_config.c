@@ -61,5 +61,15 @@ void init_d_sim() {
     d_sim.user.vvvf_frequency = 2;
     d_sim.user.Breaking_Torque = 1.5;
     d_sim.user.VL_FEEDBACK_KFB = 0;
+    d_sim.user.set_id_command = 0.0;
+    d_sim.user.Variable_Parameters_percent = 3;
+    d_sim.user.Variable_Parameters_time = 3;
+    d_sim.user.Variable_Parameters_status = 4;
+    d_sim.user.Variable_Parameters_time_num = 7;
+    d_sim.user.VP_time_num_count = 0;
+    d_sim.user.Variable_Parameters_timebase = 0.0;
+    d_sim.user.sensorless_only_theta_on = 0;
+    d_sim.user.sensorless_speed_observer = 0;
+    d_sim.user.SENSORLESS_CONTROL = 0;
 
 }

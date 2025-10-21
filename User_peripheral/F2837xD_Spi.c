@@ -23,7 +23,7 @@
 // BRR          = (LSPCLK freq / SPI CLK freq) - 1
 //
 #if CPU_FRQ_200MHZ
-//#define SPI_BRR        ((200E6 / 4) / 500E3) - 1 // 用这个BRR也能跑，就是SPI输出的频率就是降低了大概十倍吧……
+//#define SPI_BRR        ((200E6 / 4) / 500E3) - 1 // 锟斤拷锟斤拷锟紹RR也锟斤拷锟杰ｏ拷锟斤拷锟斤拷SPI锟斤拷锟斤拷锟狡碉拷示锟斤拷墙锟斤拷锟斤拷舜锟斤拷十锟斤拷锟缴★拷锟斤拷
 #define SPI_BRR        ((200E6 / 4) / 5E6) - 1 // 12.5 MHz for high speed SPI
 #endif
 
@@ -38,12 +38,13 @@
 //
 // InitSPI - This function initializes the SPI to a known state
 //
+#if NUMBER_OF_DSP_CORES == 1
 void InitSpi(void)
 {
-    // GPIO配置
+    // GPIO锟斤拷锟斤拷
     //InitSpiaGpio();
 
-    // 上电复位后，SPI工作在标准模式下，禁止SPI FIFO功能
+    // 锟较电复位锟斤拷SPI锟斤拷锟斤拷锟节憋拷准模式锟铰ｏ拷锟斤拷止SPI FIFO锟斤拷锟斤拷
     // Initialize SPI FIFO registers
     //SpiaRegs.SPIFFTX.all=0xE040;
     //SpiaRegs.SPIFFRX.all=0x204f;
@@ -51,7 +52,7 @@ void InitSpi(void)
     //SpiaRegs.SPIFFRX.all=0x0;//0x0021;      // Set RX FIFO level to 8
     //SpiaRegs.SPIFFCT.all=0x0;
 
-    // SPI 寄存器配置
+    // SPI 锟侥达拷锟斤拷锟斤拷锟斤拷
 
     //SpiaRegs.SPICCR.all =0x000F;    // Reset on, output at rising edge, 16-bit char bits
     // Set reset low before configuration changes
@@ -76,34 +77,34 @@ void InitSpi(void)
 
     // Set the baud rate
     SpiaRegs.SPIBRR.bit.SPI_BIT_RATE = SPI_BRR;
-    //SpiaRegs.SPIBRR = 0x1;           // SPI Baud Rate = LSPCLK/(SPIBRR+1), 根据书上公式，LSPCLK=37.5MHz so=37.5/4=9.375MHz
+    //SpiaRegs.SPIBRR = 0x1;           // SPI Baud Rate = LSPCLK/(SPIBRR+1), 锟斤拷锟斤拷锟斤拷锟较癸拷式锟斤拷LSPCLK=37.5MHz so=37.5/4=9.375MHz
 
-    SpiaRegs.SPICCR.all = 0x008F;    // 在改变设置前将RESET清零，并在设置结束后将其置位
+    SpiaRegs.SPICCR.all = 0x008F;    // 锟节改憋拷锟斤拷锟斤拷前锟斤拷RESET锟斤拷锟姐，锟斤拷锟斤拷锟斤拷锟矫斤拷锟斤拷锟斤拷锟斤拷锟斤拷位
 
     // Set FREE bit
     // Halting on a breakpoint will not halt the SPI
     SpiaRegs.SPIPRI.bit.FREE = 1;   // breakpoints don't disturb xmission
 
     //GpioCtrlRegs.GPBMUX2.bit.GPIO57 = 0; // Configure GPIO57 as C\S\ signal for MAX5307
-    // 唤醒MAX5307
+    // 锟斤拷锟斤拷MAX5307
     GpioDataRegs.GPBSET.bit.GPIO61 = 1;             //cs=1
     NOP;
     NOP;
     GpioDataRegs.GPBCLEAR.bit.GPIO61 = 1;           //cs=0
 
-    SpiaRegs.SPITXBUF=0xfffc;                       //MAX5307唤醒字符
-    while(SpiaRegs.SPISTS.bit.INT_FLAG!=1){NOP;}    // 数据传完后INT_FLAG会置位
+    SpiaRegs.SPITXBUF=0xfffc;                       //MAX5307锟斤拷锟斤拷锟街凤拷
+    while(SpiaRegs.SPISTS.bit.INT_FLAG!=1){NOP;}    // 锟斤拷锟捷达拷锟斤拷锟絀NT_FLAG锟斤拷锟斤拷位
 
-    GpioDataRegs.GPBSET.bit.GPIO61 = 1;             //cs=1为下一次做准备
+    GpioDataRegs.GPBSET.bit.GPIO61 = 1;             //cs=1为锟斤拷一锟斤拷锟斤拷准锟斤拷
 
-    SpiaRegs.SPICCR.bit.SPISWRESET=0;               //通过reset 清楚SPI中断标志INT_FLAG
+    SpiaRegs.SPICCR.bit.SPISWRESET=0;               //通锟斤拷reset 锟斤拷锟絊PI锟叫断憋拷志INT_FLAG
     NOP;
     NOP;
     // Release the SPI from reset
     SpiaRegs.SPICCR.bit.SPISWRESET=1;               // Relinquish SPI from Reset
 
 }
-
+#endif
 //
 // InitSpiGpio - This function initializes GPIO pins to function as SPI pins.
 //               Each GPIO pin can be configured as a GPIO pin or up to 3
@@ -235,9 +236,9 @@ void InitHighSpeedSpiGpio()
 // Comment out other unwanted lines.
 
     GpioCtrlRegs.GPBPUD.bit.GPIO58 = 0;   // Enable pull-up on GPIO16 (SPISIMOA)
-    GpioCtrlRegs.GPBPUD.bit.GPIO59 = 0;   // Enable pull-up on GPIO17 (SPISOMIA)
+    GpioCtrlRegs.GPBPUD.bit.GPIO59 = 1;   // Enable pull-up on GPIO17 (SPISOMIA)
     GpioCtrlRegs.GPBPUD.bit.GPIO60 = 0;   // Enable pull-up on GPIO18 (SPICLKA)
-    //GpioCtrlRegs.GPBPUD.bit.GPIO61 = 0;   // Enable pull-up on GPIO19 (SPISTEA) // 与MAX5307通讯，不需要真正意义上的 SPISTEA 功能，GPIO61作为普通的GPIO使用即可，需要把GPIO61的使用权限授权给CPU02，具体见函数：void Gpio_initialize(void)
+    //GpioCtrlRegs.GPBPUD.bit.GPIO61 = 0;   // Enable pull-up on GPIO19 (SPISTEA) // 锟斤拷MAX5307通讯锟斤拷锟斤拷锟斤拷要锟斤拷锟斤拷锟斤拷锟斤拷锟较碉拷 SPISTEA 锟斤拷锟杰ｏ拷GPIO61锟斤拷为锟斤拷通锟斤拷GPIO使锟矫硷拷锟缴ｏ拷锟斤拷要锟斤拷GPIO61锟斤拷使锟斤拷权锟斤拷锟斤拷权锟斤拷CPU02锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟絭oid Gpio_initialize(void)
 
     GpioCtrlRegs.GPBPUD.bit.GPIO63 = 0;   // Enable pull-up on GPIO63 (SPISIMOB)
     GpioCtrlRegs.GPCPUD.bit.GPIO64 = 0;   // Enable pull-up on GPIO64 (SPISOMIB)
@@ -256,7 +257,7 @@ void InitHighSpeedSpiGpio()
     GpioCtrlRegs.GPBQSEL2.bit.GPIO58 = 3; // Asynch input GPIO16 (SPISIMOA)
     GpioCtrlRegs.GPBQSEL2.bit.GPIO59 = 3; // Asynch input GPIO17 (SPISOMIA)
     GpioCtrlRegs.GPBQSEL2.bit.GPIO60 = 3; // Asynch input GPIO18 (SPICLKA)
-    //GpioCtrlRegs.GPBQSEL2.bit.GPIO61 = 3; // Asynch input GPIO19 (SPISTEA) // 与MAX5307通讯，不需要真正意义上的 SPISTEA 功能，GPIO61作为普通的GPIO使用即可，需要把GPIO61的使用权限授权给CPU02，具体见函数：void Gpio_initialize(void)
+    //GpioCtrlRegs.GPBQSEL2.bit.GPIO61 = 3; // Asynch input GPIO19 (SPISTEA) // 锟斤拷MAX5307通讯锟斤拷锟斤拷锟斤拷要锟斤拷锟斤拷锟斤拷锟斤拷锟较碉拷 SPISTEA 锟斤拷锟杰ｏ拷GPIO61锟斤拷为锟斤拷通锟斤拷GPIO使锟矫硷拷锟缴ｏ拷锟斤拷要锟斤拷GPIO61锟斤拷使锟斤拷权锟斤拷锟斤拷权锟斤拷CPU02锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟絭oid Gpio_initialize(void)
 
     GpioCtrlRegs.GPBQSEL2.bit.GPIO63 = 3; // Asynch input GPIO63 (SPISIMOB)
     GpioCtrlRegs.GPCQSEL1.bit.GPIO64 = 3; // Asynch input GPIO64 (SPISOMIB)
@@ -280,7 +281,7 @@ void InitHighSpeedSpiGpio()
     GpioCtrlRegs.GPBMUX2.bit.GPIO58 = 3; // Configure GPIO16 as SPISIMOA
     GpioCtrlRegs.GPBMUX2.bit.GPIO59 = 3; // Configure GPIO17 as SPISOMIA
     GpioCtrlRegs.GPBMUX2.bit.GPIO60 = 3; // Configure GPIO18 as SPICLKA
-    //GpioCtrlRegs.GPBMUX2.bit.GPIO61 = 3; // Configure GPIO19 as SPISTEA // 与MAX5307通讯，不需要真正意义上的 SPISTEA 功能，GPIO61作为普通的GPIO使用即可，需要把GPIO61的使用权限授权给CPU02，具体见函数：void Gpio_initialize(void)
+    //GpioCtrlRegs.GPBMUX2.bit.GPIO61 = 3; // Configure GPIO19 as SPISTEA // 锟斤拷MAX5307通讯锟斤拷锟斤拷锟斤拷要锟斤拷锟斤拷锟斤拷锟斤拷锟较碉拷 SPISTEA 锟斤拷锟杰ｏ拷GPIO61锟斤拷为锟斤拷通锟斤拷GPIO使锟矫硷拷锟缴ｏ拷锟斤拷要锟斤拷GPIO61锟斤拷使锟斤拷权锟斤拷锟斤拷权锟斤拷CPU02锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟絭oid Gpio_initialize(void)
 
     GpioCtrlRegs.GPBGMUX2.bit.GPIO63 = 3;
     GpioCtrlRegs.GPCGMUX1.bit.GPIO64 = 3;

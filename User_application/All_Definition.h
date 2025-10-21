@@ -159,6 +159,13 @@ typedef struct{
         REAL place_sensor[8];
         REAL place_offset[8];
         REAL place_scale[8];        
+        REAL adc_voltage[8];
+        REAL adc_offset_ex[8];
+        REAL adc_scale_ex[8];
+        Uint16 adc_data[8];
+        REAL terminal_voltage[3];
+        REAL neutral_voltage;
+        REAL phase_voltage[3];
 } st_axis;
 
 extern st_axis Axis_1;
