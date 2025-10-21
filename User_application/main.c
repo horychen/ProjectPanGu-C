@@ -358,7 +358,6 @@ void DISABLE_PWM_OUTPUT(){
             d_sim.user.flag_clear_timebase_once     = FALSE;
         #endif
         // d_sim.user.Mark_Counter                 = 0.0; // clear the MARK !!!!! clear ti manually !!
-        #endif
         EPwm1Regs.CMPA.bit.CMPA = 2500;
         EPwm2Regs.CMPA.bit.CMPA = 2500;
         EPwm3Regs.CMPA.bit.CMPA = 2500;
@@ -453,43 +452,6 @@ void ENABLE_PWM_OUTPUT(int positionLoopType){
     (*CTRL).timebase = CL_TS * (*CTRL).timebase_counter; //(*CTRL).timebase += CL_TS; // 2048 = float/REAL max
 
     #if ALLOW_RUNTIME_PARAM_UPDATE && WHO_IS_USER == USER_WB
-    #endif
-
-    
-
-    #if WHO_IS_USER != USER_XM
-        // 根据指令，产生控制输出（电压）
-                                                                //(*CTRL).s->Motor_or_Gnerator = sign((*CTRL).i->cmd_iDQ[1]) == sign(CTRL->enc->rpm); // sign((*CTRL).i->cmd_iDQ[1]) != sign((*CTRL).i->cmd_speed_rpm))
-        //        runtime_command_and_tuning(Axis->Select_exp_operation);
-        //        // 0x03 is shank
-        //        //    position_count_CAN_fromCPU2 = position_count_CAN_ID0x03_fromCPU2;
-        //        // 0x01 is hip
-        //        // position_count_CAN_fromCPU2 = position_count_CAN_ID0x01_fromCPU2;
-        //
-        //        if (positionLoopType == 0){
-        //            // do nothing
-        //        }
-        //        else{
-        //            // do position loop
-        //            Axis->Set_manual_rpm = call_position_loop_controller(positionLoopType);
-        //        }
-        //
-        //        if (flag_RPM_wave == 1)
-        //        {
-        //            Axis->Set_manual_rpm = (*CTRL).timebase * 20;
-        //            if ( (*CTRL).timebase * 20 > 400)
-        //            {
-        //                Axis->Set_manual_rpm = 400;
-        //            }
-        //        }
-
-        //        if(IPCRtoLFlagBusy(IPC_FLAG8) == 1){
-        //            iq_command_from_PC = Read.current_cmd_from_PC;
-        //            IPCRtoLFlagAcknowledge(IPC_FLAG8);
-        //        }
-        //        if(run_enable_from_PC == false){
-        //            iq_command_from_PC = 0.0;
-        //        }
     #endif
 
     /* MAIN SWITCH */
@@ -1101,18 +1063,9 @@ void voltage_commands_to_pwm()
         (*CTRL).svgen1.CMPA[0] = (*CTRL).svgen1.Ta * SYSTEM_TBPRD;
         (*CTRL).svgen1.CMPA[1] = (*CTRL).svgen1.Tb * SYSTEM_TBPRD;
         (*CTRL).svgen1.CMPA[2] = (*CTRL).svgen1.Tc * SYSTEM_TBPRD;
-        //#if USE_DEATIME_PRECOMP
-        if(wubo_debug_USE_DEATIME_PRECOMP){
-            // DeadtimeCompensation(Axis->iuvw[0], Axis->iuvw[1], Axis->iuvw[2], (*CTRL).svgen1.CMPA, (*CTRL).svgen1.CMPA_DBC);
-            EPwm1Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen1.CMPA_DBC[0];
-            EPwm2Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen1.CMPA_DBC[1];
-            EPwm3Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen1.CMPA_DBC[2];
-        }
-        else{
-            EPwm1Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen1.CMPA[0];
-            EPwm2Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen1.CMPA[1];
-            EPwm3Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen1.CMPA[2];
-        }
+        EPwm1Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen1.CMPA[0];
+        EPwm2Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen1.CMPA[1];
+        EPwm3Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen1.CMPA[2];
     }
 
     if (axisCnt == 1){
@@ -1128,16 +1081,9 @@ void voltage_commands_to_pwm()
         (*CTRL).svgen2.CMPA[0] = (*CTRL).svgen2.Ta * SYSTEM_TBPRD;
         (*CTRL).svgen2.CMPA[1] = (*CTRL).svgen2.Tb * SYSTEM_TBPRD;
         (*CTRL).svgen2.CMPA[2] = (*CTRL).svgen2.Tc * SYSTEM_TBPRD;
-        #if USE_DEATIME_PRECOMP
-            DeadtimeCompensation(Axis->iuvw[3], Axis->iuvw[4], Axis->iuvw[5], (*CTRL).svgen2.CMPA, (*CTRL).svgen2.CMPA_DBC);
-            EPwm4Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen2.CMPA_DBC[0];
-            EPwm5Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen2.CMPA_DBC[1];
-            EPwm6Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen2.CMPA_DBC[2];
-        #else
-            EPwm4Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen2.CMPA[0];
-            EPwm5Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen2.CMPA[1];
-            EPwm6Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen2.CMPA[2];
-        #endif
+        EPwm4Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen2.CMPA[0];
+        EPwm5Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen2.CMPA[1];
+        EPwm6Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen2.CMPA[2];
     }
 
     //    svgen2.Ualpha = svgen1.Ualpha*0.5        + svgen1.Ubeta*0.8660254; // rotate 60 deg

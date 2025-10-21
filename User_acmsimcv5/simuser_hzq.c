@@ -1251,6 +1251,10 @@ void rk4_init(){
         FE.HE_EKF.Ibias[1] = 0;// Initial flux covariance at 0 degree, 0 A in alpha beta direction
         FE.HE_EKF.last_current[0] = 0;
         FE.HE_EKF.last_current[1] = 0;  
+        FE.HE_EKF.current_offset[0] = 0;
+        FE.HE_EKF.current_offset[1] = 0;
+        FE.HE_EKF.current_compensated[0] = 0;
+        FE.HE_EKF.current_compensated[1] = 0;
     }
 
     void multiply_2x2_matrices(const REAL A[2][2], const REAL B[2][2], REAL C[2][2])
@@ -1275,8 +1279,8 @@ void rk4_init(){
 
     void main_HE_EKF(){
 
-        FE.HE_EKF.IS_measured[0] = IS_C(0) + OFFSET_CURRENT_SENSOR_ALPHA;
-        FE.HE_EKF.IS_measured[1] = IS_C(1) + OFFSET_CURRENT_SENSOR_BETA;
+        FE.HE_EKF.IS_measured[0] = IS_C(0) + FE.HE_EKF.current_offset[0];
+        FE.HE_EKF.IS_measured[1] = IS_C(1) + FE.HE_EKF.current_offset[1];
 
         FE.HE_EKF.stator_flux_d[0] = US_C(0) - MOTOR.R *  (FE.HE_EKF.IS_measured[0] - FE.HE_EKF.Ibias[0]) ;
         FE.HE_EKF.stator_flux_d[1] = US_C(1) - MOTOR.R *  (FE.HE_EKF.IS_measured[1] - FE.HE_EKF.Ibias[1]) ;
@@ -1338,10 +1342,18 @@ void rk4_init(){
         // Apply first order low pass filter on Ibias
         FE.HE_EKF.Ibias[0] = FE.HE_EKF.Ibias[0] + alpha*(Ibias_update0 - FE.HE_EKF.Ibias[0]);
         FE.HE_EKF.Ibias[1] = FE.HE_EKF.Ibias[1] + alpha*(Ibias_update1 - FE.HE_EKF.Ibias[1]);
-
+        
+        FE.HE_EKF.current_compensated[0] = FE.HE_EKF.IS_measured[0] - FE.HE_EKF.Ibias[0];
+        FE.HE_EKF.current_compensated[1] = FE.HE_EKF.IS_measured[1] - FE.HE_EKF.Ibias[1];
+        
         FE.HE_EKF.theta_d = atan2(FE.HE_EKF.flux[1], FE.HE_EKF.flux[0]);
         FE.HE_EKF.theta_e = angle_diff(FE.HE_EKF.theta_d, (*CTRL).i->theta_d_elec) * ONE_OVER_2PI * 360;
-
+        FE.HE_EKF.cosT = cos(FE.HE_EKF.theta_d);
+        FE.HE_EKF.sinT = sin(FE.HE_EKF.theta_d);
+        FE.HE_EKF.current_compensated_dq[0] = AB2M(FE.HE_EKF.current_compensated[0], FE.HE_EKF.current_compensated[1], FE.HE_EKF.cosT, FE.HE_EKF.sinT);
+        FE.HE_EKF.current_compensated_dq[1] = AB2T(FE.HE_EKF.current_compensated[0], FE.HE_EKF.current_compensated[1], FE.HE_EKF.cosT, FE.HE_EKF.sinT);
+        FE.HE_EKF.current_bf_compensated_dq[0] =AB2M(FE.HE_EKF.IS_measured[0], FE.HE_EKF.IS_measured[1], FE.HE_EKF.cosT, FE.HE_EKF.sinT);
+        FE.HE_EKF.current_bf_compensated_dq[1] =AB2T(FE.HE_EKF.IS_measured[0], FE.HE_EKF.IS_measured[1], FE.HE_EKF.cosT, FE.HE_EKF.sinT);
     }
     // #endif
 

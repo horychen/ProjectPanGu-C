@@ -5,10 +5,10 @@
 void init_d_sim() {
     d_sim.init.npp = 4;
     d_sim.init.IN = 3;
-    d_sim.init.R = 1.6469;
-    d_sim.init.Ld = 0.0032;
-    d_sim.init.Lq = 0.0032;
-    d_sim.init.KE = 0.12618;
+    d_sim.init.R = 1.744;
+    d_sim.init.Ld = 0.002;
+    d_sim.init.Lq = 0.002;
+    d_sim.init.KE = 0.095;
     d_sim.init.Rreq = 0.0;
     d_sim.init.Js = 0.00049836;
     d_sim.init.Vdc = 36;

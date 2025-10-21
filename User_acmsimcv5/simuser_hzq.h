@@ -386,6 +386,12 @@
             REAL h; // sudo measurement PM flux
             REAL theta_d;
             REAL theta_e;
+            REAL current_offset[2];
+            REAL current_compensated[2];
+            REAL current_compensated_dq[2];
+            REAL current_bf_compensated_dq[2];
+            REAL cosT;
+            REAL sinT;
         } HE_EKF;
         // #endif
 
