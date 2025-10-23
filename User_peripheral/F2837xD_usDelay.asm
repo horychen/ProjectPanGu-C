@@ -48,7 +48,7 @@
         .global  __F28x_usDelay
 _F28x_usDelay:
         SUB    ACC,#1
-        BF     _F28x_usDelay,GEQ    ;; Loop if ACC >= 0
+       BF     _F28x_usDelay,GEQ    ;; Loop if ACC >= 0
         LRETR
 
 ;There is a 9/10 cycle overhead and each loop

@@ -832,8 +832,10 @@ void EUREKA_GPIO_SETUP(){
     GPIO_SetupPinOptions(PIN_485_SCIB_WE_SCICTX_UART3pin7, GPIO_OUTPUT, GPIO_ASYNC);
     GPIO_SetupPinMux    (PIN_485_SCIA_WE_SCICRX_UART3pin8, GPIO_MUX_CPU2, 0); // GPIO139 - 485-SCIA-WE-(use SCICRX as GPIO, in UART3 pin8)
     GPIO_SetupPinOptions(PIN_485_SCIA_WE_SCICRX_UART3pin8, GPIO_OUTPUT, GPIO_ASYNC);
-    GPIO_SetupPinMux    (PIN_485_SCIA_WE_SCICRX_UART3pin9, GPIO_MUX_CPU2, 0); // GPIO111 - 485-SCIA-D1-(use SCICRX as GPIO, in UART3 pin9)
-    GPIO_SetupPinOptions(PIN_485_SCIA_WE_SCICRX_UART3pin9, GPIO_OUTPUT, GPIO_ASYNC);
+    GPIO_SetupPinMux    (PIN_485_SCIC_WE_SCICRX_UART3pin10, GPIO_MUX_CPU2, 0); // GPIO111 - 485-SCIA-D1-(use SCICRX as GPIO, in UART3 pin9)
+    GPIO_SetupPinOptions(PIN_485_SCIC_WE_SCICRX_UART3pin10, GPIO_OUTPUT, GPIO_ASYNC);
+    GPIO_SetupPinMux    (PIN_485_SCID_WE_SCICRX_UART3pin9, GPIO_MUX_CPU2, 0); // GPIO111 - 485-SCIA-D1-(use SCICRX as GPIO, in UART3 pin9)
+    GPIO_SetupPinOptions(PIN_485_SCID_WE_SCICRX_UART3pin9, GPIO_OUTPUT, GPIO_ASYNC);
     // =========FOR EUREKA===========
     //        // =========TEST BOARD PIN============
     //        // =========NOT FOR EUREKA===========
@@ -1005,8 +1007,9 @@ void init_spi() {
 
     DevCfgRegs.CPUSEL5.bit.SCI_A = 1; // assign sci-a to cpu2
     DevCfgRegs.CPUSEL5.bit.SCI_B = 1; // assign sci-b to cpu2
-    DevCfgRegs.CPUSEL5.bit.SCI_C = 1;
-
+    DevCfgRegs.CPUSEL5.bit.SCI_C = 1; // assign sci-c to cpu2
+    DevCfgRegs.CPUSEL5.bit.SCI_D = 1; // assign sci-d to cpu2
+    
     DevCfgRegs.CPUSEL8.bit.CAN_A = 1; // assign can-a to cpu2
     DevCfgRegs.CPUSEL8.bit.CAN_B = 1; // assign can-b to cpu2
 

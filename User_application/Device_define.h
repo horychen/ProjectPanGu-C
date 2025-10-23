@@ -57,7 +57,8 @@
     // Abs encoder comm. via 485 tamagawa protocol
     #define PIN_485_SCIB_WE_SCICTX_UART3pin7 31
     #define PIN_485_SCIA_WE_SCICRX_UART3pin8 37
-    #define PIN_485_SCIA_WE_SCICRX_UART3pin9 83
+    #define PIN_485_SCIC_WE_SCICRX_UART3pin10 82
+    #define PIN_485_SCID_WE_SCICRX_UART3pin9 83
 
     //SCI pin config
 
