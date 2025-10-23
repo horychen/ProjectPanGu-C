@@ -611,7 +611,8 @@ void _onlyFOC(REAL theta_d_elec, REAL iAB[2], REAL varOmega){
         decoupled_q_axis_voltage = PID_iQ->Out + (MOTOR.KActive + PID_iD->Fbk * MOTOR.Ld) * varOmega * MOTOR.npp;
     }else{
         decoupled_d_axis_voltage = PID_iD->Out;
-        decoupled_q_axis_voltage = PID_iQ->Out + MOTOR.KActive * varOmega * MOTOR.npp;
+        decoupled_q_axis_voltage = PID_iQ->Out;
+        // decoupled_q_axis_voltage = PID_iQ->Out + MOTOR.KActive * varOmega * MOTOR.npp;
     }
 
     /* 对补偿后的dq轴电压进行限幅度 */
