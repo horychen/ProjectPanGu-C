@@ -611,7 +611,7 @@ void _onlyFOC(REAL theta_d_elec, REAL iAB[2], REAL varOmega){
         decoupled_q_axis_voltage = PID_iQ->Out + (MOTOR.KActive + PID_iD->Fbk * MOTOR.Ld) * varOmega * MOTOR.npp;
     }else{
         decoupled_d_axis_voltage = PID_iD->Out;
-        decoupled_q_axis_voltage = PID_iQ->Out + MOTOR.KActive * varOmega * MOTOR.npp;
+        decoupled_q_axis_voltage = PID_iQ->Out;
     }
 
     /* 对补偿后的dq轴电压进行限幅度 */
@@ -687,10 +687,9 @@ void _user_commands(){
         (*CTRL).i->cmd_varOmega = 50 * RPM_2_MECH_RAD_PER_SEC;
     }
     if ((*CTRL).timebase < 3.5 && (*CTRL).timebase > 2){
-        (*CTRL).i->cmd_varOmega = -50 * RPM_2_MECH_RAD_PER_SEC;
         (*CTRL).i->cmd_varOmega = 50 * RPM_2_MECH_RAD_PER_SEC;
-        FE.HE_EKF.current_offset[0] = 0.05;
-        FE.HE_EKF.current_offset[1] = 0.1;
+        // FE.HE_EKF.current_offset[0] = 0.05;
+        // FE.HE_EKF.current_offset[1] = 0.1;
     }
     if ((*CTRL).timebase < 8 && (*CTRL).timebase > 3.5){
         (*CTRL).i->cmd_varOmega = -50 * RPM_2_MECH_RAD_PER_SEC;
@@ -704,7 +703,7 @@ void _user_commands(){
     if ((*CTRL).timebase > 18){
         (*CTRL).i->cmd_varOmega = 0;
     }
-    if ((*CTRL).timebase > 24){
+    if ((*CTRL).timebase > 22){
         (*CTRL).i->cmd_varOmega = 10 * RPM_2_MECH_RAD_PER_SEC;
     }
     #if PC_SIMULATION == TRUE
@@ -1071,8 +1070,8 @@ int  main_switch(long mode_select){
         #if (WHO_IS_USER == USER_HZQ)
             US_P(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
             US_P(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
-            US_C(0) = (*CTRL).i->uAB[0]; // 后缀_P表示上一步的电压，P = Previous
-            US_C(1) = (*CTRL).i->uAB[1]; // 后缀_C表示当前步的电压，C = Current
+            US_C(0) = (*CTRL).i->uAB_filtered[0]; // 后缀_P表示上一步的电压，P = Previous
+            US_C(1) = (*CTRL).i->uAB_filtered[1]; // 后缀_C表示当前步的电压，C = Current
             // US_C(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
             // US_C(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
             IS_C(0)           = (*CTRL).i->iAB[0];

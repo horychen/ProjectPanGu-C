@@ -159,6 +159,11 @@ void write_DAC_buffer(){
         (*Axis4DAC).dac_watch[75] = (*CTRL).i->iDQ[1] * 0.1; // unit : degree
         (*Axis4DAC).dac_watch[76] = FE.HE_EKF.current_bf_compensated_dq[1] * 0.1; // unit : degree
         (*Axis4DAC).dac_watch[77] = FE.HE_EKF.current_compensated_dq[1] * 0.1; // unit : degree
+        // (*Axis4DAC).dac_watch[78] = Axis->adc_voltage[0];
+        // (*Axis4DAC).dac_watch[76] = FE.HE_EKF.flux[0] * 0.1; // unit : degree
+        // (*Axis4DAC).dac_watch[77] = FE.HE_EKF.current_compensated_dq[1] * 0.1; // unit : degree
+        // (*Axis4DAC).dac_watch[76] = (*CTRL).i->uAB_filtered[0]* 0.2; // unit : degree
+        // (*Axis4DAC).dac_watch[77] = (*CTRL).i->uAB_filtered[1]* 0.2; // unit : degree
 //        these two are equivalent
 //        *(*CTRL).s->Speed
 //        *CTRL->s->Speed

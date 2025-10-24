@@ -289,6 +289,8 @@ void main_adc_measurement(){
     Axis->phase_voltage[2] = Axis->terminal_voltage[2] - Axis->neutral_voltage;
     (*CTRL).i->uAB[0] = UVW2A_AI(Axis->phase_voltage[0], Axis->phase_voltage[1], Axis->phase_voltage[2]);
     (*CTRL).i->uAB[1] = UVW2B_AI(Axis->phase_voltage[0], Axis->phase_voltage[1], Axis->phase_voltage[2]);
+    (*CTRL).i->uAB_filtered[0] = _lpf((*CTRL).i->uAB[0],(*CTRL).i->uAB_filtered[0],0.2390572236);
+    (*CTRL).i->uAB_filtered[1] = _lpf((*CTRL).i->uAB[1],(*CTRL).i->uAB_filtered[1],0.2390572236);
 }
 
 void DISABLE_PWM_OUTPUT(){
