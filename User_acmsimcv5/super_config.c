@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 void init_d_sim() {
-    d_sim.init.npp = 5;
+    d_sim.init.npp = 4;
     d_sim.init.IN = 2.0;
     d_sim.init.R = 0.188296244;
     d_sim.init.Ld = 0.0009000000000000001;

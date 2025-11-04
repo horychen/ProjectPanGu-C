@@ -13,6 +13,9 @@ extern struct IPC_MEMORY_WRITE Write;
 
 struct IPC_MEMORY_READ{
     /* read only (RO) shared memory @ GS0 */
+    Uint32 SCI_A_position_count;
+    Uint32 SCI_B_position_count;
+    
     Uint32 SCI_shank_position_count;
     Uint32 CAN_position_count_ID0x03;
 
@@ -21,8 +24,11 @@ struct IPC_MEMORY_READ{
 
     REAL position_cmd_elec;
     REAL speed_cmd_elec;
-    REAL current_cmd_from_PC;
-    bool run_enable;
+    // REAL current_cmd_from_PC;
+    // bool run_enable;
+
+    int16_t adc_test_val;
+    Uint16 adc_raw[8];
     int16 SCI_char;
 };// ˫�����
 extern struct IPC_MEMORY_READ Read;

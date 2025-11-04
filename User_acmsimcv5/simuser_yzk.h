@@ -27,7 +27,7 @@ typedef struct {
 typedef struct {
         REAL prev_output;
         REAL alpha;
-        REAL TAU;
+        REAL TAU;      // 
         REAL de_raw_X; // delta error before filtering
         REAL de_raw_Y;
         REAL de_X; // delta error
@@ -53,6 +53,10 @@ struct YZK_2025_TIA_CTRL{
     REAL CMD_psi_beta;
     REAL Err_psi_alpha;
     REAL Err_psi_beta;
+    REAL CMD_F_X;
+    REAL CMD_F_Y;
+    REAL CMD_F_alpha;
+    REAL CMD_F_beta;
     REAL CMD_I_alpha;
     REAL CMD_I_beta;
     REAL CMD_U_alpha;
@@ -137,8 +141,8 @@ extern struct YZK_2025_TIA_CTRL YZK_CTRL;
 
 
 /* 悬浮控制函数 */
-void suspension_p4ps5_PD_Yaxis(REAL Y_Pos);
-void suspension_p4ps5_PD_Xaxis(REAL X_Pos);
+// void suspension_p4ps5_PD_Yaxis();
+void suspension_p4ps5_PD_doubleaxis(REAL X_Pos, REAL Y_Pos);
 // extern struct YZK_CTRL;
 // extern LowPassFilter *YZK_LPF;
 // extern st_pid_regulator *YZK_PID;

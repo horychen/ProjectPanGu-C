@@ -877,8 +877,8 @@ int  main_switch(long mode_select){
         break;
     case MODE_SELECT_SUSPENSION_CONTROl:  //7
         #if WHO_IS_USER == USER_YZK
-            suspension_p4ps5_PD_Xaxis(YZK_CTRL.disFbk_X);
-            suspension_p4ps5_PD_Yaxis(YZK_CTRL.disFbk_Y); //程序不知道怎么运行 这个很重要
+            // suspension_p4ps5_PD_Xaxis(YZK_CTRL.disFbk_X);
+            suspension_p4ps5_PD_doubleaxis(YZK_CTRL.disFbk_X, YZK_CTRL.disFbk_Y); //程序不知道怎么运行 这个很重要
             yzkdebug++;
         #endif
         break;

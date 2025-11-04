@@ -50,12 +50,12 @@ static const REAL L_B = -5.89365901e+00;
 /* Initialising */
 void init_YZK_ALL(){
     /* XY方向 */
-    YZK_CTRL.CMD_X = 3772.0000;
-    YZK_CTRL.CMD_Y = 3739.0000;
+    YZK_CTRL.CMD_X = 3.28999996;
+    YZK_CTRL.CMD_Y = 3.9000001;
     YZK_CTRL.Err_X = 0.0;
     YZK_CTRL.Err_Y = 0.0;
-    YZK_CTRL.KP_X = 0.3;
-    YZK_CTRL.KP_Y = 0.5;
+    YZK_CTRL.KP_X = 200;
+    YZK_CTRL.KP_Y = 200;
     YZK_CTRL.KI_X = 0.0;
     YZK_CTRL.KI_Y = 0.0;
     YZK_CTRL.KD_X = 5e-3;
@@ -65,6 +65,10 @@ void init_YZK_ALL(){
     YZK_CTRL.CMD_psi_beta  = 0.0;
     YZK_CTRL.Err_psi_alpha = 0.0;
     YZK_CTRL.Err_psi_beta  = 0.0;
+    YZK_CTRL.CMD_F_X       = 0.0;
+    YZK_CTRL.CMD_F_Y       = 0.0;
+    YZK_CTRL.CMD_F_alpha   = 0.0;
+    YZK_CTRL.CMD_F_beta    = 0.0;
     YZK_CTRL.CMD_I_alpha   = 0.0;
     YZK_CTRL.CMD_I_beta    = 0.0;
     YZK_CTRL.CMD_U_alpha   = 0.0;
@@ -94,7 +98,7 @@ void init_YZK_ALL(){
     YZK_CTRL.pids.Kp = 0.7793;
     YZK_CTRL.pids.Ki_CODE = 0.1794;
     YZK_CTRL.pids.Kd = 0.0;
-    YZK_CTRL.pids.OutLimit = 4;
+    YZK_CTRL.pids.OutLimit = 6;
 
     /* 参数初始化 */
     YZK_CTRL.motor.npp = 5;
@@ -110,8 +114,8 @@ void init_YZK_ALL(){
     YZK_CTRL.motor.g = 10;
     // YZK_CTRL.motor.K_X = 50000;
     // YZK_CTRL.motor.K_Y = 50000;
-    YZK_CTRL.motor.K_X = 1 / (YZK_CTRL.motor.N_alpha * YZK_CTRL.motor.N_alpha * YZK_CTRL.motor.mu_0 * YZK_CTRL.motor.S);
-    YZK_CTRL.motor.K_Y = 1 / (YZK_CTRL.motor.N_beta * YZK_CTRL.motor.N_beta * YZK_CTRL.motor.mu_0 * YZK_CTRL.motor.S);
+    YZK_CTRL.motor.K_X = 0.1;  // 1 A / 10 N
+    YZK_CTRL.motor.K_Y = 0.1;  // 1 A / 10 N
 }
 
 
@@ -133,36 +137,64 @@ double lowpass_update(LPFs *f, double input) {
 }
 
 // Y_Pos 
-void suspension_p4ps5_PD_Yaxis(REAL Y_Pos){
+// void suspension_p4ps5_PD_Yaxis(REAL Y_Pos){
+    
+// }
+// X_Pos 
+void suspension_p4ps5_PD_doubleaxis(REAL X_Pos, REAL Y_Pos){
     /* 位置环 */    
     // 1. 误差
-    // YZK_CTRL.prev_error_Y = YZK_CTRL.Err_Y; // 保存上次误差
-    // YZK_CTRL.disFbk_Y = Y_Pos;
+    // YZK_CTRL.prev_error_X = YZK_CTRL.Err_X; // 保存上次误差
+    // YZK_CTRL.disFbk_X = X_Pos;
     YZK_CTRL.varTheta = (*CTRL).i->theta_d_elec;
-    YZK_CTRL.Err_Y = YZK_CTRL.CMD_Y - YZK_CTRL.disFbk_Y;
-
+    YZK_CTRL.Err_X = - YZK_CTRL.CMD_X + YZK_CTRL.disFbk_X;
+    // YZK_CTRL.varTheta = (*CTRL).i->theta_d_elec;
+    YZK_CTRL.Err_Y = - YZK_CTRL.CMD_Y + YZK_CTRL.disFbk_Y;
+// 
     // 2. 误差微分 (差分法)
+    YZK_CTRL.LPFs.de_raw_X = (YZK_CTRL.Err_X - YZK_CTRL.prev_error_X) * CL_TS_INVERSE;
     YZK_CTRL.LPFs.de_raw_Y = (YZK_CTRL.Err_Y - YZK_CTRL.prev_error_Y) * CL_TS_INVERSE;
-
-    // 3. 低通滤波(获得/dot{Err_Y})
-    YZK_CTRL.LPFs.de_Y = YZK_CTRL.LPFs.de_raw_Y;
-    // YZK_CTRL.LPFs.de_Y = lowpass_update(&YZK_CTRL.LPFs, YZK_CTRL.LPFs.de_raw_Y);
-    YZK_CTRL.CMD_I_beta = sin(YZK_CTRL.varTheta) * (5 + YZK_CTRL.KP_Y * YZK_CTRL.Err_Y - YZK_CTRL.KD_Y * YZK_CTRL.LPFs.de_Y);
-    // 有经验悬浮法 仅限于p4ps5
+// 
+    // 3. 低通滤波(获得/dot{Err_X})
+    // YZK_CTRL.LPFs.de_X = YZK_CTRL.LPFs.de_raw_X;
+    YZK_CTRL.LPFs.de_X = lowpass_update(&YZK_CTRL.LPFs, YZK_CTRL.LPFs.de_raw_X);
+    YZK_CTRL.LPFs.de_Y = lowpass_update(&YZK_CTRL.LPFs, YZK_CTRL.LPFs.de_raw_Y);
+// 
     // 4. 控制律: 磁链参考 看那张纸上的公式，找不到找YZK
-    // YZK_CTRL.CMD_psi_beta = YZK_CTRL.motor.M_rotor * YZK_CTRL.motor.g - YZK_CTRL.KP_Y * YZK_CTRL.Err_Y - YZK_CTRL.KD_Y * YZK_CTRL.LPFs.de_Y;
-
-    // if (YZK_CTRL.CMD_psi_beta < 0.0) YZK_CTRL.CMD_psi_beta = - sqrt(-YZK_CTRL.CMD_psi_beta);   // 避免 sqrt 负数
-
-    // if (YZK_CTRL.CMD_psi_beta > 0.0) YZK_CTRL.CMD_psi_beta = sqrt(YZK_CTRL.CMD_psi_beta);
-
+    // YZK_CTRL.CMD_psi_alpha = YZK_CTRL.KP_X * YZK_CTRL.Err_X + YZK_CTRL.KD_X * YZK_CTRL.LPFs.de_X;
+// 
+    // if (YZK_CTRL.CMD_psi_alpha < 0.0) YZK_CTRL.CMD_psi_alpha = - sqrt(-YZK_CTRL.CMD_psi_alpha);   // 避免 sqrt 负数
+// 
+    // if (YZK_CTRL.CMD_psi_alpha > 0.0) YZK_CTRL.CMD_psi_alpha = sqrt(YZK_CTRL.CMD_psi_alpha);    //注意传感器反装 如果不是这里要改
+// 
     // 5. 电流参考
-    // K = 1 / N_alpha;
-    // YZK_CTRL.CMD_I_beta = - I_ampb * sin(YZK_CTRL.varTheta - M_PI/3);
-    // YZK_CTRL.CMD_I_beta = I_ampb * sin(YZK_CTRL.varTheta - M_PI/3) * sin(2 * F_freq * M_PI * CTRL->timebase);
-    // YZK_CTRL.CMD_I_beta = sin(YZK_CTRL.varTheta) * YZK_CTRL.motor.K_Y * YZK_CTRL.CMD_psi_beta * 1 / (YZK_CTRL.motor.ge - YZK_CTRL.disFbk_Y);
-    
+    // YZK_CTRL.CMD_F_X = I_ampa * cos(2 * F_freq * M_PI * CTRL->timebase);
+    // YZK_CTRL.CMD_F_Y = I_ampa * sin(2 * F_freq * M_PI * CTRL->timebase);
+    YZK_CTRL.CMD_F_X = YZK_CTRL.KP_X * YZK_CTRL.Err_X + YZK_CTRL.KD_X * YZK_CTRL.LPFs.de_X;
+    YZK_CTRL.CMD_F_Y = YZK_CTRL.KP_Y * YZK_CTRL.Err_Y + YZK_CTRL.KD_Y * YZK_CTRL.LPFs.de_Y;
+
+    // K = 0;
+    YZK_CTRL.CMD_F_alpha = YZK_CTRL.CMD_F_X * cos(M_PI/6) - YZK_CTRL.CMD_F_Y * sin(M_PI/6);
+    YZK_CTRL.CMD_F_beta  = YZK_CTRL.CMD_F_X * sin(M_PI/6) + YZK_CTRL.CMD_F_Y * cos(M_PI/6);
+    YZK_CTRL.CMD_I_alpha = YZK_CTRL.motor.K_X * (YZK_CTRL.CMD_F_alpha * cos(YZK_CTRL.varTheta) + YZK_CTRL.CMD_F_beta * sin(YZK_CTRL.varTheta));
+    YZK_CTRL.CMD_I_beta  = YZK_CTRL.motor.K_Y * ( - YZK_CTRL.CMD_F_alpha * sin(YZK_CTRL.varTheta) + YZK_CTRL.CMD_F_beta * cos(YZK_CTRL.varTheta));
+    // YZK_CTRL.CMD_I_alpha = I_ampa * cos(YZK_CTRL.varTheta - M_PI/3) * cos(2 * F_freq * M_PI * CTRL->timebase);
+    // YZK_CTRL.CMD_I_alpha = cos(YZK_CTRL.varTheta) * YZK_CTRL.motor.K_X * YZK_CTRL.CMD_psi_alpha * 1 / (YZK_CTRL.motor.ge - YZK_CTRL.disFbk_X);
+    YZK_CTRL.Err_I_alpha = YZK_CTRL.CMD_I_alpha - CTRL->i->iAB[0];
     YZK_CTRL.Err_I_beta = YZK_CTRL.CMD_I_beta - CTRL->i->iAB[1];
+// 
+    /* 电流环 */
+    YZK_CTRL.Out_alpha = YZK_CTRL.OutPrev_alpha + YZK_CTRL.pids.Kp * ( YZK_CTRL.Err_I_alpha - YZK_CTRL.prev_error_I_alpha ) + YZK_CTRL.pids.Ki_CODE * YZK_CTRL.Err_I_alpha;
+    if(YZK_CTRL.Out_alpha > YZK_CTRL.pids.OutLimit) YZK_CTRL.Out_alpha = YZK_CTRL.pids.OutLimit;
+    else if(YZK_CTRL.Out_alpha < -YZK_CTRL.pids.OutLimit) YZK_CTRL.Out_alpha = -YZK_CTRL.pids.OutLimit;
+    YZK_CTRL.prev_error_I_alpha = YZK_CTRL.Err_I_alpha; 
+    YZK_CTRL.OutPrev_alpha = YZK_CTRL.Out_alpha;
+    YZK_CTRL.CMD_U_alpha = YZK_CTRL.Out_alpha;
+    // incremental_PI_YZK(&YZK_CTRL.pids);
+    // YZK_CTRL.CMD_U_alpha = YZK_CTRL.Out;
+    (*CTRL).o->cmd_uAB_to_inverter[0] = YZK_CTRL.CMD_U_alpha;
+    // 更新状态
+    YZK_CTRL.prev_error_X = YZK_CTRL.Err_X;
 
     // 6. PI
     YZK_CTRL.Out_beta = YZK_CTRL.OutPrev_beta + YZK_CTRL.pids.Kp * ( YZK_CTRL.Err_I_beta - YZK_CTRL.prev_error_I_beta ) + YZK_CTRL.pids.Ki_CODE * YZK_CTRL.Err_I_beta;
@@ -176,52 +208,6 @@ void suspension_p4ps5_PD_Yaxis(REAL Y_Pos){
     (*CTRL).o->cmd_uAB_to_inverter[1] = YZK_CTRL.CMD_U_beta;
     // 7.更新状态
     YZK_CTRL.prev_error_Y = YZK_CTRL.Err_Y;
-    // return psi_cmd;
-}
-// X_Pos 
-void suspension_p4ps5_PD_Xaxis(REAL X_Pos){
-    /* 位置环 */    
-    // 1. 误差
-    // YZK_CTRL.prev_error_X = YZK_CTRL.Err_X; // 保存上次误差
-    // YZK_CTRL.disFbk_X = X_Pos;
-    YZK_CTRL.varTheta = (*CTRL).i->theta_d_elec;
-    YZK_CTRL.Err_X = YZK_CTRL.CMD_X - YZK_CTRL.disFbk_X;
-// 
-    // 2. 误差微分 (差分法)
-    YZK_CTRL.LPFs.de_raw_X = (YZK_CTRL.Err_X - YZK_CTRL.prev_error_X) * CL_TS_INVERSE;
-// 
-    // 3. 低通滤波(获得/dot{Err_X})
-    YZK_CTRL.LPFs.de_X = YZK_CTRL.LPFs.de_raw_X;
-    // YZK_CTRL.LPFs.de_X = lowpass_update(&YZK_CTRL.LPFs, YZK_CTRL.LPFs.de_raw_X);
-// 
-    // 4. 控制律: 磁链参考 看那张纸上的公式，找不到找YZK
-    YZK_CTRL.CMD_psi_alpha = YZK_CTRL.KP_X * YZK_CTRL.Err_X + YZK_CTRL.KD_X * YZK_CTRL.LPFs.de_X;
-// 
-    if (YZK_CTRL.CMD_psi_alpha < 0.0) YZK_CTRL.CMD_psi_alpha = - sqrt(-YZK_CTRL.CMD_psi_alpha);   // 避免 sqrt 负数
-// 
-    if (YZK_CTRL.CMD_psi_alpha > 0.0) YZK_CTRL.CMD_psi_alpha = sqrt(YZK_CTRL.CMD_psi_alpha);    //注意传感器反装 如果不是这里要改
-// 
-    // 5. 电流参考
-    // K = 0;
-    // YZK_CTRL.CMD_I_alpha = I_ampa * cos(YZK_CTRL.varTheta - M_PI/3);
-    // YZK_CTRL.CMD_I_alpha = I_ampa * cos(YZK_CTRL.varTheta - M_PI/3) * cos(2 * F_freq * M_PI * CTRL->timebase);
-    YZK_CTRL.CMD_I_alpha = cos(YZK_CTRL.varTheta) * YZK_CTRL.motor.K_X * YZK_CTRL.CMD_psi_alpha * 1 / (YZK_CTRL.motor.ge - YZK_CTRL.disFbk_X);
-    YZK_CTRL.Err_I_alpha = YZK_CTRL.CMD_I_alpha - CTRL->i->iAB[0];
-// 
-    /* 电流环 */
-    YZK_CTRL.Out_alpha = YZK_CTRL.OutPrev_alpha + YZK_CTRL.pids.Kp * ( YZK_CTRL.Err_I_alpha - YZK_CTRL.prev_error_I_alpha ) + YZK_CTRL.pids.Ki_CODE * YZK_CTRL.Err_I_alpha;
-    if(YZK_CTRL.Out_alpha > YZK_CTRL.pids.OutLimit) YZK_CTRL.Out_alpha = YZK_CTRL.pids.OutLimit;
-    else if(YZK_CTRL.Out_alpha < -YZK_CTRL.pids.OutLimit) YZK_CTRL.Out_alpha = -YZK_CTRL.pids.OutLimit;
-    YZK_CTRL.prev_error_I_alpha = YZK_CTRL.Err_I_alpha; 
-    YZK_CTRL.OutPrev_alpha = YZK_CTRL.Out_alpha;
-    YZK_CTRL.CMD_U_alpha = YZK_CTRL.Out_alpha;
-    // incremental_PI_YZK(&YZK_CTRL.pids);
-    // YZK_CTRL.CMD_U_alpha = YZK_CTRL.Out;
-    (*CTRL).o->cmd_uAB_to_inverter[0] = YZK_CTRL.CMD_U_alpha;
-    
-    // 更新状态
-    YZK_CTRL.prev_error_X = YZK_CTRL.Err_X;
-// 
     // return psi_cmd;
 }
 

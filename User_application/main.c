@@ -227,8 +227,9 @@ void main_measurement(){
         measurement_enc();
     #endif
     #if WHO_IS_USER == USER_YZK
-        measurement_displacement_count();
-        measurement_displacement_count_optical_sensor();
+        // measurement_displacement_count();
+        // measurement_displacement_count_optical_sensor();
+        main_adc_measurement();
     #endif
     CTRL->i->varOmega     = CTRL->enc->varOmega;
     CTRL->i->theta_d_elec = CTRL->enc->theta_d_elec;
@@ -335,7 +336,27 @@ extern REAL imife_realtime_gain_off;
 
 //REAL wubo_debug_flag_PWM = 0;
 REAL wubo_debug_motor_enc_dirc[2] = {1.0, -1.0};
-
+void main_adc_measurement(){
+    Axis->place_sensor[2] = ((REAL)(Axis->adc_data[0]) - Axis->adc_offset_ex[0]) * Axis->adc_scale_ex[0];
+    Axis->place_sensor[3] = ((REAL)(Axis->adc_data[1]) - Axis->adc_offset_ex[1]) * Axis->adc_scale_ex[1];
+    // Axis->adc_voltage[2] = ((REAL)(Axis->adc_data[2]) - Axis->adc_offset_ex[2]) * Axis->adc_scale_ex[2];
+    // Axis->adc_voltage[3] = ((REAL)(Axis->adc_data[3]) - Axis->adc_offset_ex[3]) * Axis->adc_scale_ex[3];
+    // Axis->adc_voltage[4] = ((REAL)(Axis->adc_data[4]) - Axis->adc_offset_ex[4]) * Axis->adc_scale_ex[4];
+    // Axis->adc_voltage[5] = ((REAL)(Axis->adc_data[5]) - Axis->adc_offset_ex[5]) * Axis->adc_scale_ex[5];
+    // Axis->adc_voltage[6] = ((REAL)(Axis->adc_data[6]) - Axis->adc_offset_ex[6]) * Axis->adc_scale_ex[6];
+    // Axis->adc_voltage[7] = ((REAL)(Axis->adc_data[7]) - Axis->adc_offset_ex[7]) * Axis->adc_scale_ex[7];
+    // Axis->terminal_voltage[0] = Axis->adc_voltage[0]*10.0; // A phase to GND
+    // Axis->terminal_voltage[1] = Axis->adc_voltage[1]*10.0; // B phase to GND
+    // Axis->terminal_voltage[2] = Axis->adc_voltage[2]*10.0; // C phase to GND
+    // Axis->neutral_voltage = (Axis->terminal_voltage[0] + Axis->terminal_voltage[1] + Axis->terminal_voltage[2]) / 3.0;
+    // Axis->phase_voltage[0] = Axis->terminal_voltage[0] - Axis->neutral_voltage;
+    // Axis->phase_voltage[1] = Axis->terminal_voltage[1] - Axis->neutral_voltage;
+    // Axis->phase_voltage[2] = Axis->terminal_voltage[2] - Axis->neutral_voltage;
+    // (*CTRL).i->uAB[0] = UVW2A_AI(Axis->phase_voltage[0], Axis->phase_voltage[1], Axis->phase_voltage[2]);
+    // (*CTRL).i->uAB[1] = UVW2B_AI(Axis->phase_voltage[0], Axis->phase_voltage[1], Axis->phase_voltage[2]);
+    YZK_CTRL.disFbk_X = Axis->place_sensor[2];
+    YZK_CTRL.disFbk_Y = Axis->place_sensor[3];
+}
 
 
 void DISABLE_PWM_OUTPUT(){
@@ -598,7 +619,7 @@ __interrupt void EPWM1ISR(void){
     // read from CPU02
     read_count_from_cpu02_dsp_cores_2();
     if(IPCRtoLFlagBusy(IPC_FLAG7) == 1){
-        run_enable_from_PC = Read.run_enable;
+        // run_enable_from_PC = Read.run_enable;
         IPCRtoLFlagAcknowledge(IPC_FLAG7);
     }
     // 对每一个CTRL都需要做一次的代码
@@ -933,6 +954,24 @@ void init_experiment_AD_gain_and_offset()
     Axis->adc_offset[5] = OFFSET_LEM_B8;
     Axis->adc_offset[6] = OFFSET_LEM_B9;
 
+    /* ADC EXTENDED OFFSET */
+    Axis->adc_offset_ex[0] = ADC_OFFSET_0;
+    Axis->adc_offset_ex[1] = ADC_OFFSET_1;
+    Axis->adc_offset_ex[2] = ADC_OFFSET_2;
+    Axis->adc_offset_ex[3] = ADC_OFFSET_3;
+    Axis->adc_offset_ex[4] = ADC_OFFSET_4;
+    Axis->adc_offset_ex[5] = ADC_OFFSET_5;
+    Axis->adc_offset_ex[6] = ADC_OFFSET_6;
+    Axis->adc_offset_ex[7] = ADC_OFFSET_7;
+    /* ADC EXTENDED SCALE */
+    Axis->adc_scale_ex[0] = ADC_SCALE_0;
+    Axis->adc_scale_ex[1] = ADC_SCALE_1;
+    Axis->adc_scale_ex[2] = ADC_SCALE_2;
+    Axis->adc_scale_ex[3] = ADC_SCALE_3;
+    Axis->adc_scale_ex[4] = ADC_SCALE_4;
+    Axis->adc_scale_ex[5] = ADC_SCALE_5;
+    Axis->adc_scale_ex[6] = ADC_SCALE_6;
+    Axis->adc_scale_ex[7] = ADC_SCALE_7;
     /* two motor OFFSET */
     #if NUMBER_OF_AXES == 2
         #if ENCODER_TYPE == INCREMENTAL_ENCODER_QEP                      /* eQEP OFFSET */
@@ -955,6 +994,13 @@ void init_experiment_AD_gain_and_offset()
             }
             if(axisCnt==1){
                 Axis_2.pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = HIP__OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
+            }
+        #elif ENCODER_TYPE == GONGWANG_ENCODER_19
+            if(axisCnt==0){
+                Axis->pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = MOTOR1_OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
+            }
+            if(axisCnt==1){
+                Axis->pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = MOTOR2_OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
             }
         #endif
     #else
@@ -1330,6 +1376,7 @@ void measurement_displacement_count(){
 
     YZK_CTRL.disFbk_X = x0/10000;  // DAC:0.7870-0.7899 // disFbk(filtered)：1457715-1452433
     YZK_CTRL.disFbk_Y = y0/10000;  // DAC:0.7870-0.7899 // disFbk(filtered)：1457715-1452433
+
 }
 
 extern REAL wubo_debug_motor_enc_dirc[2];
@@ -1525,6 +1572,14 @@ void read_count_from_cpu02_dsp_cores_2()
         counter_missing_position_measurement = 0;
         position_count_SCI_shank_fromCPU2 = Read.SCI_shank_position_count;
         position_count_SCI_hip_fromCPU2 = Read.SCI_hip_position_count;
+        Axis->adc_data[0] = Read.adc_raw[0];
+        Axis->adc_data[1] = Read.adc_raw[1];
+        Axis->adc_data[2] = Read.adc_raw[2];
+        Axis->adc_data[3] = Read.adc_raw[3];
+        Axis->adc_data[4] = Read.adc_raw[4];
+        Axis->adc_data[5] = Read.adc_raw[5];
+        Axis->adc_data[6] = Read.adc_raw[6];
+        Axis->adc_data[7] = Read.adc_raw[7];
         //            position_count_CAN_ID0x01_fromCPU2 = Read.CAN_position_count_ID0x01;
         //            position_count_CAN_ID0x03_fromCPU2 = Read.CAN_position_count_ID0x03;
         IPCRtoLFlagAcknowledge(IPC_FLAG10);
