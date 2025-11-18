@@ -2,9 +2,9 @@
 st_axis Axis_1, *Axis;
 extern bool run_enable_from_PC;
 /* 临时修改 */
-int yzkdebug1;
 extern uint32_t raw_value_zero;
 extern uint32_t raw_value_one;
+REAL WUBO_debug_theta_d;
 /* 临时修改 */
 
 #if NUMBER_OF_AXES == 2 // ====为了同时运行两台电机，增加的另一份控制结构体
@@ -25,7 +25,7 @@ extern uint32_t raw_value_one;
 #endif
 void main(void){
 
-    InitSysCtrl();      // 1. Initialize System Control: PLL, WatchDog, enable Peripheral Clocks.
+     InitSysCtrl();      // 1. Initialize System Control: PLL, WatchDog, enable Peripheral Clocks.
     Gpio_initialize();  // 2. Initialize GPIO and assign GPIO to peripherals.
     DINT;               // 3.1 Clear all interrupts and initialize PIE vector table.
     InitPieCtrl();      // 3.2 Initialize the PIE control registers to their default state. The default state is all PIE interrupts disabled and flags are cleared.
@@ -333,12 +333,28 @@ void main_measurement(){
 // int down_freq_ecap_counter = 1;
 // Uint64 timebase_counter = 0;
 extern REAL imife_realtime_gain_off;
-
+REAL prev_out_x = 0;
+REAL prev_out_y = 0;
 //REAL wubo_debug_flag_PWM = 0;
-REAL wubo_debug_motor_enc_dirc[2] = {1.0, -1.0};
+REAL debug_motor_enc_direction[2] = {1.0, 1.0};
 void main_adc_measurement(){
-    Axis->place_sensor[2] = ((REAL)(Axis->adc_data[0]) - Axis->adc_offset_ex[0]) * Axis->adc_scale_ex[0];
-    Axis->place_sensor[3] = ((REAL)(Axis->adc_data[1]) - Axis->adc_offset_ex[1]) * Axis->adc_scale_ex[1];
+    Axis->place_sensor[4] = ((REAL)(Axis->adc_data[0]) - Axis->adc_offset_ex[0]) * Axis->adc_scale_ex[0];
+    Axis->place_sensor[5] = ((REAL)(Axis->adc_data[1]) - Axis->adc_offset_ex[1]) * Axis->adc_scale_ex[1];
+    Axis->place_sensor[4] = Axis->place_sensor[4] * 30 / 5.191 - 15;
+    Axis->place_sensor[5] = Axis->place_sensor[5] * 30 / 5.191 - 15;
+    // 做一个数据截断 x轴
+    if (Axis->place_sensor[4] >= 0)
+    Axis->place_sensor[2] = floor(Axis->place_sensor[4] * 300.0) / 300.0;
+    else
+    Axis->place_sensor[2] = ceil(Axis->place_sensor[4] * 300.0)  / 300.0;
+    // 做一个数据截断 y轴
+    if (Axis->place_sensor[5] >= 0)
+    Axis->place_sensor[3] = floor(Axis->place_sensor[5] * 300.0) / 300.0;
+    else
+    Axis->place_sensor[3] = ceil(Axis->place_sensor[5] * 300.0)  / 300.0;
+    
+    // Axis->place_sensor[2] = Axis->place_sensor[4];
+    // Axis->place_sensor[3] = Axis->place_sensor[5];
     // Axis->adc_voltage[2] = ((REAL)(Axis->adc_data[2]) - Axis->adc_offset_ex[2]) * Axis->adc_scale_ex[2];
     // Axis->adc_voltage[3] = ((REAL)(Axis->adc_data[3]) - Axis->adc_offset_ex[3]) * Axis->adc_scale_ex[3];
     // Axis->adc_voltage[4] = ((REAL)(Axis->adc_data[4]) - Axis->adc_offset_ex[4]) * Axis->adc_scale_ex[4];
@@ -354,8 +370,10 @@ void main_adc_measurement(){
     // Axis->phase_voltage[2] = Axis->terminal_voltage[2] - Axis->neutral_voltage;
     // (*CTRL).i->uAB[0] = UVW2A_AI(Axis->phase_voltage[0], Axis->phase_voltage[1], Axis->phase_voltage[2]);
     // (*CTRL).i->uAB[1] = UVW2B_AI(Axis->phase_voltage[0], Axis->phase_voltage[1], Axis->phase_voltage[2]);
-    YZK_CTRL.disFbk_X = Axis->place_sensor[2];
+    YZK_CTRL.disFbk_X = - Axis->place_sensor[2];
     YZK_CTRL.disFbk_Y = Axis->place_sensor[3];
+    // prev_out_x = Axis->place_sensor[2];
+    // prev_out_y = Axis->place_sensor[3];
 }
 
 
@@ -908,7 +926,7 @@ void axis_basic_setup(int axisCnt){
     //
     //    Axis->FLAG_ENABLE_PWM_OUTPUT = FALSE;
 
-    Axis->channels_preset = 9; // 9; // 101;
+    Axis->channels_preset = 16; // 9; // 101;
     #if WHO_IS_USER == USER_BEZIER
         Axis->channels_preset = 9; // 8; // 101;
     #endif
@@ -1394,10 +1412,10 @@ void measurement_position_count_axisCnt0(){
     //     position_count_SCI_fromCPU2 = position_count_SCI_shank_fromCPU2;
     // #endif
         // 正电流导致编码器读数增大：
-    #if WHO_IS_USER == USER_YZK
-        position_count_SCI_fromCPU2 = position_count_SCI_hip_fromCPU2;
-    #endif
-        CTRL->enc->encoder_abs_cnt = wubo_debug_motor_enc_dirc[0] * (int32)position_count_SCI_fromCPU2 - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis;
+    // #if WHO_IS_USER == USER_YZK
+    position_count_SCI_fromCPU2 = position_count_SCI_hip_fromCPU2;
+    // #endif
+    CTRL->enc->encoder_abs_cnt =  debug_motor_enc_direction[0] * (int32)position_count_SCI_fromCPU2 - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis;
 }
 
 
@@ -1408,7 +1426,10 @@ void measurement_position_count_axisCnt1(){
     //     position_count_SCI_fromCPU2 = position_count_SCI_hip_fromCPU2;
     // #endif
         // 正电流导致编码器读数减小
-        CTRL->enc->encoder_abs_cnt = wubo_debug_motor_enc_dirc[1] * ( (int32)position_count_SCI_fromCPU2 - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis );
+    // #if WHO_IS_USER == USER_YZK
+    position_count_SCI_fromCPU2 = position_count_SCI_hip_fromCPU2;
+    // #endif
+    CTRL->enc->encoder_abs_cnt = debug_motor_enc_direction[1] * ( (int32)position_count_SCI_fromCPU2 - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis );
         // dq变化中，d轴理论上指向永磁体的北极，
 }
 
@@ -1501,9 +1522,9 @@ void measurement_enc(){
 
 void measurement_current_axisCnt0(){
     // LEM1
-    Axis->iuvw[PIN_ADCA_U] = ((REAL)(AdcaResultRegs.ADCRESULT1) - Axis->adc_offset[1]) * Axis->adc_scale[1]; //
-    Axis->iuvw[PIN_ADCA_V] = ((REAL)(AdcaResultRegs.ADCRESULT2) - Axis->adc_offset[2]) * Axis->adc_scale[2]; //
-    Axis->iuvw[PIN_ADCA_W] = ((REAL)(AdcaResultRegs.ADCRESULT3) - Axis->adc_offset[3]) * Axis->adc_scale[3]; //
+    Axis->iuvw[PIN_ADCA_U] = ((REAL)(AdcaResultRegs.ADCRESULT1) - Axis->adc_offset[1]) * Axis->adc_scale[1] * 0.33333333; //
+    Axis->iuvw[PIN_ADCA_V] = ((REAL)(AdcaResultRegs.ADCRESULT2) - Axis->adc_offset[2]) * Axis->adc_scale[2] * 0.33333333; //
+    Axis->iuvw[PIN_ADCA_W] = ((REAL)(AdcaResultRegs.ADCRESULT3) - Axis->adc_offset[3]) * Axis->adc_scale[3] * 0.33333333; //
 
     // 电流接口
     if (USE_3_CURRENT_SENSORS)
@@ -1523,9 +1544,9 @@ void measurement_current_axisCnt0(){
 void measurement_current_axisCnt1()
 {
     // LEM2
-    Axis->iuvw[3] = ((REAL)(AdcbResultRegs.ADCRESULT7) - Axis->adc_offset[4]) * Axis->adc_scale[4]; //
-    Axis->iuvw[4] = ((REAL)(AdcbResultRegs.ADCRESULT8) - Axis->adc_offset[5]) * Axis->adc_scale[5]; //
-    Axis->iuvw[5] = ((REAL)(AdcbResultRegs.ADCRESULT9) - Axis->adc_offset[6]) * Axis->adc_scale[6]; //
+    Axis->iuvw[3] = ((REAL)(AdcbResultRegs.ADCRESULT7) - Axis->adc_offset[4]) * Axis->adc_scale[4] * 0.5; //
+    Axis->iuvw[4] = ((REAL)(AdcbResultRegs.ADCRESULT8) - Axis->adc_offset[5]) * Axis->adc_scale[5] * 0.5; //
+    Axis->iuvw[5] = ((REAL)(AdcbResultRegs.ADCRESULT9) - Axis->adc_offset[6]) * Axis->adc_scale[6] * 0.5; //
 
     // 电流接口
     if (USE_3_CURRENT_SENSORS)
@@ -1540,7 +1561,7 @@ void measurement_current_axisCnt1()
     else
     {
         REAL phase_V_current = -Axis->iuvw[3] - Axis->iuvw[5];
-        Axis->iabg[0] = UV2A_AI(Axis->iuvw[3], phase_V_`current);
+        Axis->iabg[0] = UV2A_AI(Axis->iuvw[3], phase_V_current);
         Axis->iabg[1] = UV2B_AI(Axis->iuvw[3], phase_V_current);
     }
 }

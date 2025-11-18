@@ -5,13 +5,13 @@
 void init_d_sim() {
     d_sim.init.npp = 4;
     d_sim.init.IN = 2.0;
-    d_sim.init.R = 0.188296244;
+    d_sim.init.R =  0.1441; // 0.188296244;
     d_sim.init.Ld = 0.0009000000000000001;
     d_sim.init.Lq = 0.0009000000000000001;
     d_sim.init.KE = 0.0435477383;
     d_sim.init.Rreq = 0.0;
     d_sim.init.Js = 0.00104183296;
-    d_sim.init.Vdc = 30;
+    d_sim.init.Vdc = 48;
 
     d_sim.sim.INVERTER_NONLINEARITY = 0;
     d_sim.sim.CLTS = 0.0001;
@@ -34,26 +34,26 @@ void init_d_sim() {
     d_sim.VL.LIMIT_OVERLOAD_FACTOR = 1.0;
 
     d_sim.user.verbose = FALSE;
-    d_sim.user.who_is_user = 102209;
-    d_sim.user.mode_select_synchronous_motor = 36;
+    d_sim.user.who_is_user = 2023231061;
+    d_sim.user.mode_select_synchronous_motor = 1;
     d_sim.user.mode_select_induction_motor = 32;
     d_sim.user.INVERTER_NONLINEARITY_COMPENSATION_METHOD = 0;
     d_sim.user.Select_exp_operation = 0;
     d_sim.user.set_rpm_speed_command = 100;
-    d_sim.user.set_id_command = 0.5;
-    d_sim.user.set_iq_command = 0.5;
-    d_sim.user.bool_apply_sweeping_frequency_excitation = FALSE;
+    d_sim.user.set_id_command = 0;
+    d_sim.user.set_iq_command = 0;
+    d_sim.user.bool_apply_sweeping_frequency_excitation = TRUE;
     d_sim.user.bool_sweeping_frequency_for_speed_loop = FALSE;
     d_sim.user.bool_speed_sweeping_with_Load = FALSE;
     d_sim.user.bool_sweeping_frequency_for_current_loop_iD = FALSE;
     d_sim.user.bool_sweeping_frequency_for_Rejection_Load = FALSE;
     d_sim.user.CMD_CURRENT_SINE_AMPERE = 1.0;
-    d_sim.user.CMD_SPEED_SINE_RPM = 100;
+    d_sim.user.CMD_SPEED_SINE_RPM = 1;
     d_sim.user.CMD_SPEED_SINE_HZ = 1;
     d_sim.user.CMD_SPEED_SINE_STEP_SIZE = 1;
     d_sim.user.CMD_SPEED_SINE_LAST_END_TIME = 0.0;
     d_sim.user.CMD_SPEED_SINE_END_TIME = 1e-4;
-    d_sim.user.CMD_SPEED_SINE_HZ_CEILING = 400;
+    d_sim.user.CMD_SPEED_SINE_HZ_CEILING = 800;
     d_sim.user.timebase_for_Sweeping = 0.0;
     d_sim.user.Mark_Sweeping_Freq_ThreeDB_Point = 0.0;
     d_sim.user.Mark_Counter = 0.0;

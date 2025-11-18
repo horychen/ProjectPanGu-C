@@ -355,6 +355,12 @@ void init_experiment(){
     init_rk4();
     //ESO
     init_esoaf();
+    
+    
+    
+    init_YZK_ALL();
+    
+    
     #if WHO_IS_USER == USER_BEZIER
         set_points(&BezierVL);
         set_points(&BezierVL_AdaptVersion);
@@ -391,7 +397,9 @@ void init_experiment(){
             d_sim.user.BOOL_INIT_MY_VARIABLES = TRUE;
         }
     #endif
-    init_YZK_ALL();
+
+
+    
 }
 /* 公用的核心电机控制实现代码，不要修改！*/
 void incremental_PI(st_pid_regulator *r){
@@ -809,11 +817,14 @@ void overwrite_sweeping_frequency(){
                     (*CTRL).i->cmd_iDQ[0] = 0.0;
                     (*CTRL).i->cmd_iDQ[1] = d_sim.user.CMD_CURRENT_SINE_AMPERE\
                      * sin(2* M_PI *d_sim.user.CMD_SPEED_SINE_HZ*(d_sim.user.timebase_for_Sweeping  - d_sim.user.CMD_SPEED_SINE_LAST_END_TIME));
+                //  Suspension PI freq. SWEEPING
+                if(WHO_IS_USER == USER_YZK)
+                YZK_CTRL.CMD_I_alpha = d_sim.user.CMD_CURRENT_SINE_AMPERE\
+                     * sin(2* M_PI *d_sim.user.CMD_SPEED_SINE_HZ*(d_sim.user.timebase_for_Sweeping  - d_sim.user.CMD_SPEED_SINE_LAST_END_TIME));
+                // if(WHO_IS_USER == USER_YZK)
                 }
             }
         }
-
-
     }
 }
 
@@ -848,6 +859,9 @@ void _user_inverter_voltage_command(int bool_use_cmd_iAB){
         Ib = (*CTRL).i->iAB[1];
     }
 }
+
+
+
 /* MAIN SWITCH as per MODE_SELECT */
 int  main_switch(long mode_select){
     static long mode_select_last = 0;
@@ -860,6 +874,24 @@ int  main_switch(long mode_select){
             (*CTRL).svgen1.Ta = 0.5;
             (*CTRL).svgen1.Tb = 0.5;
             (*CTRL).svgen1.Tc = 0.5;
+        }
+        if(BOOL_DIRECT_FIELD_TEST == TRUE){
+            // (*CTRL).timebase 
+            const double offset = 0.5;
+            const double amp = 0.05;
+            double tmod = fmod(CTRL->timebase, 5.0);   // 结果在 [0,2)
+            int bit = (tmod < 2.5) ? 1 : 0;      // 前半周期为高电平
+            // if(mode_initialized == FALSE){
+            // mode_initialized = TRUE;
+            test_sus = (float)(offset  + bit * amp);
+            (*CTRL).svgen1.Ta = (float)(offset  + bit * amp);
+            // CTRL_2.svgen1.Ta = 0.55;
+            (*CTRL).svgen1.Tb = 0.5;
+            (*CTRL).svgen1.Tc = 0.5;
+            // CTRL_1.svgen1.Ta = 0.5;
+            // CTRL_1.svgen1.Tb = 0.5;
+            // CTRL_1.svgen1.Tc = 0.5;
+            // }
         }
         mode_select_last = mode_select; // return 5 makes line 809 can not work properly hence we need to add this code here
         return 5; // set Axis->Select_exp_operation to 5 in experiment

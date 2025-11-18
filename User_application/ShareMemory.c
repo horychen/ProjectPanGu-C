@@ -139,18 +139,30 @@ void write_DAC_buffer(){
 //        (*Axis4DAC).dac_watch[60] = OFSR.esoaf.xOmg * ELEC_RAD_PER_SEC_2_RPM * 0.002;
 //        (*Axis4DAC).dac_watch[61] = OFSR.esoaf.xPos * 0.1; // -pi to pi
 
+        (*Axis4DAC).dac_watch[62] = (*CTRL).o->cmd_uAB_to_inverter[0];
+        (*Axis4DAC).dac_watch[63] = (*CTRL).o->cmd_uAB_to_inverter[1];
+        
         /* From Sensor */
         (*Axis4DAC).dac_watch[70] = (*CTRL).enc->varOmega * MECH_RAD_PER_SEC_2_RPM * 0.002;
 
         /* Suspension control */
-        (*Axis4DAC).dac_watch[70] = YZK_CTRL.disFbk_X * 1 / 40000000;
-        (*Axis4DAC).dac_watch[71] = YZK_CTRL.disFbk_Y * 1 / 40000000;
-        (*Axis4DAC).dac_watch[72] = YZK_CTRL.disFbk_X * 1 / 40000000;
-        (*Axis4DAC).dac_watch[73] = YZK_CTRL.disFbk_Y * 1 / 40000000;
-        (*Axis4DAC).dac_watch[74] = YZK_CTRL.disFbk_X * 1 / 40000000;
-        (*Axis4DAC).dac_watch[75] = YZK_CTRL.disFbk_Y * 1 / 40000000;
-        (*Axis4DAC).dac_watch[76] = YZK_CTRL.disFbk_X * 1 / 40000000;
-        (*Axis4DAC).dac_watch[77] = YZK_CTRL.disFbk_Y * 1 / 40000000;
+        (*Axis4DAC).dac_watch[70] = - YZK_CTRL.disFbk_X / 15;
+        (*Axis4DAC).dac_watch[71] = YZK_CTRL.CMD_F_X / 200; //YZK_CTRL.disFbk_Y / 20;
+        (*Axis4DAC).dac_watch[72] = YZK_CTRL.CMD_F_X_Kp / 200;
+        (*Axis4DAC).dac_watch[73] = YZK_CTRL.CMD_F_X_Kd / 200;//YZK_CTRL.LPFs_y.de_Y / 100;
+        // (*Axis4DAC).dac_watch[74] = CTRL->i->iAB[0] / 10;
+        // (*Axis4DAC).dac_watch[75] = CTRL->i->iAB[1] / 10;//YZK_CTRL.CMD_F_Y / 100;
+        // (*Axis4DAC).dac_watch[76] = YZK_CTRL.CMD_I_alpha / 10;//YZK_CTRL.CMD_F_X_Kp / 200;
+        // (*Axis4DAC).dac_watch[77] = YZK_CTRL.CMD_I_beta / 10;//YZK_CTRL.CMD_F_X_Kd / 200;
+        (*Axis4DAC).dac_watch[78] = YZK_CTRL.CMD_I_alpha / 10;
+        (*Axis4DAC).dac_watch[79] = YZK_CTRL.CMD_I_beta / 10;
+        (*Axis4DAC).dac_watch[74] = YZK_CTRL.disFbk_Y / 15;
+        (*Axis4DAC).dac_watch[75] = YZK_CTRL.CMD_F_Y / 200;
+        (*Axis4DAC).dac_watch[76] = YZK_CTRL.CMD_F_Y_Kp / 200;
+        (*Axis4DAC).dac_watch[77] = YZK_CTRL.CMD_F_Y_Kd / 200;
+        // (*Axis4DAC).dac_watch[84] = Axis->place_sensor[4] / 11;
+        // (*Axis4DAC).dac_watch[85] = Axis->place_sensor[5] / 11;
+
 //        these two are equivalent
 //        *(*CTRL).s->Speed
 //        *CTRL->s->Speed··
@@ -384,8 +396,8 @@ void write_DAC_buffer(){
             (*Axis4DAC).channels[7] = 51; // AFE_USED.theta_d *0.1
         }else if((*Axis4DAC).channels_preset==16){(*Axis4DAC).channels_preset=0;
         /* For suspension PD control */
-            (*Axis4DAC).channels[0] = 70; 
-            (*Axis4DAC).channels[1] = 71; 
+            (*Axis4DAC).channels[0] = 70;// 70; 78 for test square wave 
+            (*Axis4DAC).channels[1] = 71; // 71; 
             (*Axis4DAC).channels[2] = 72; 
             (*Axis4DAC).channels[3] = 73; 
             (*Axis4DAC).channels[4] = 74; 

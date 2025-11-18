@@ -3,7 +3,8 @@
 
 #include "ACMSim.h"
 
-
+extern float test_sus;
+extern BOOL BOOL_DIRECT_FIELD_TEST;
 /* 电机参数，YZK悬浮电机专用 */
 
 
@@ -25,14 +26,16 @@ typedef struct {
 } filters_t;
 
 typedef struct {
-        REAL prev_output;
-        REAL alpha;
-        REAL TAU;      // 
+        REAL prev_output_x;
+        REAL prev_output_y;
+        REAL alpha_x;
+        REAL alpha_y;
+        REAL TAU_x;      // 
+        REAL TAU_y;      // 
         REAL de_raw_X; // delta error before filtering
         REAL de_raw_Y;
         REAL de_X; // delta error
         REAL de_Y;
-
 } LPFs;
 
 /* 控制器变量，YZK专用 */
@@ -55,6 +58,12 @@ struct YZK_2025_TIA_CTRL{
     REAL Err_psi_beta;
     REAL CMD_F_X;
     REAL CMD_F_Y;
+    REAL CMD_F_X_prime;
+    REAL CMD_F_Y_prime;
+    REAL CMD_F_X_Kp;
+    REAL CMD_F_X_Kd;
+    REAL CMD_F_Y_Kp;
+    REAL CMD_F_Y_Kd;
     REAL CMD_F_alpha;
     REAL CMD_F_beta;
     REAL CMD_I_alpha;
@@ -81,6 +90,9 @@ struct YZK_2025_TIA_CTRL{
     REAL OutPrev_beta;
     REAL Out_alpha;
     REAL Out_beta;
+    REAL Out_alpha_KI;
+    REAL Out_beta_KI;
+    REAL KDLimit;
     struct {
         REAL alpha;
         REAL alpha_inv;
@@ -112,16 +124,21 @@ struct YZK_2025_TIA_CTRL{
         REAL D_Term;
         REAL OutNonSat;
         REAL OutLimit;
+        REAL OutLimit_alphaKI;
+        REAL OutLimit_betaKI;
         REAL Out;
         REAL OutPrev; // for incremental pid
-        REAL Kp;
-        REAL Ki_CODE;
+        REAL Kp_alpha;
+        REAL Kp_beta;
+        REAL Ki_CODE_alpha;
+        REAL Ki_CODE_beta;
         REAL Kd;
         REAL SatDiff;
         REAL FbkPrev; 
         void (*calc)();
     } pids;
-    LPFs LPFs;
+    LPFs LPFs_x;
+    LPFs LPFs_y;
     biquad_t biq;
     filters_t filt;
     // #define st_pid_regulator_suspension YZK_CTRL.pids

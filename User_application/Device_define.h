@@ -84,7 +84,7 @@
     // DC BUS
     #if BOOL_LOAD_SWEEPING_ON == FALSE
         #define OFFSET_VDC_BUS_IPM1 8
-        #define SCALE_VDC_BUS_IPM1 0.17890418
+        #define SCALE_VDC_BUS_IPM1  0.153004169 //0.17890418
     #else if BOOL_LOAD_SWEEPING_ON
         #define OFFSET_VDC_BUS_IPM1 8
         #define SCALE_VDC_BUS_IPM1 0.15384615
@@ -99,7 +99,9 @@
     #define PIN_ADCB_V 4
     #define PIN_ADCB_W 5
 
-    // Lem 2的三个蓝色块块分别是adc a1 a2 a3
+    // PLZ Check the code PLZ PLZ PLZ, OFFSET variables are chaos now !!!!!!!!!
+    // PLZ Check the code PLZ PLZ PLZ, OFFSET variables are chaos now !!!!!!!!!
+    // PLZ Check the code PLZ PLZ PLZ, OFFSET variables are chaos now !!!!!!!!!
     // In fact A is the first inverter in MOTOR_GROUP
     #if BOOL_LOAD_SWEEPING_ON == FALSE
         #define OFFSET_LEM_A1 2037.0 // WuBo tuned in 20241027 //2010  // 2034  // 2029.57894737 // ADCA1
@@ -117,11 +119,12 @@
         #define SCALE_LEM_A3 0.030761  // 0.03045988 // ADCA3
     #endif
 
-    // Lem 1的三个蓝色块块分别是adc b7 b8 b9 // 令逆变器输出端指向电机为正方向，若LEM上的箭头与正方向相同，则SCALE为正数，若LEM上的箭头与正方向相反，则SCALE为负数，
+    // 令逆变器输出端指向电机为正方向，若LEM上的箭头与正方向相同，则SCALE为正数，若LEM上的箭头与正方向相反，则SCALE为负数，
     // B is the second inverter in MOTOR_GROUP
-    #define OFFSET_LEM_B7 2020 // 2023.89473684 // ADCB7
-    #define OFFSET_LEM_B8 2029 // 2042.33333333 // ADCB8
-    #define OFFSET_LEM_B9 2038 // 2043.43859649 // ADCB9
+    
+    #define OFFSET_LEM_B7  2007 // 2020 // 2023.89473684 // ADCB7
+    #define OFFSET_LEM_B8  2023 // 2029 // 2042.33333333 // ADCB8
+    #define OFFSET_LEM_B9  2036 // 2038 // 2043.43859649 // ADCB9
     #define SCALE_LEM_B7 0.03076297 // ADCB7
     #define SCALE_LEM_B8 0.03038256 // ADCB8
     #define SCALE_LEM_B9 0.03039058 // ADCB9
@@ -244,7 +247,7 @@
     #define PIN_ADCB_V 4
     #define PIN_ADCB_W 5
 
-    // Lem 1的三个蓝色块块分别是adc b7 b8 b9 // 令逆变器输出端指向电机为正方向，若LEM上的箭头与正方向相同，则SCALE为正数，若LEM上的箭头与正方向相反，则SCALE为负数，
+    // 令逆变器输出端指向电机为正方向，若LEM上的箭头与正方向相同，则SCALE为正数，若LEM上的箭头与正方向相反，则SCALE为负数，
     #define OFFSET_LEM_B7 2025 // 2023.89473684 // ADCB7
     #define OFFSET_LEM_B8 2041 // 2042.33333333 // ADCB8
     #define OFFSET_LEM_B9 2045 // 2043.43859649 // ADCB9
@@ -252,7 +255,6 @@
     #define SCALE_LEM_B8 0.03038256 // ADCB8
     #define SCALE_LEM_B9 0.03039058 // ADCB9
 
-    // Lem 2的三个蓝色块块分别是adc a1 a2 a3
     #define OFFSET_LEM_A1 2030      // 2029.57894737 // ADCA1
     #define OFFSET_LEM_A2 2043      // 2043.08771930 // ADCA2
     #define OFFSET_LEM_A3 2042      // 2042.98245614 // ADCA3
