@@ -193,6 +193,7 @@ extern struct DebugExperiment *debug;
 
 /* User Specified Functions */
 void init_debug();
+void init_debug_2(); // 确保debug2被正确初始化！！！！
 void init_experiment();
 void init_CTRL();
 void _user_time_varying_parameters();// 时变参数

@@ -25,7 +25,8 @@ REAL WUBO_debug_theta_d;
 #endif
 void main(void){
 
-     InitSysCtrl();      // 1. Initialize System Control: PLL, WatchDog, enable Peripheral Clocks.
+
+    InitSysCtrl();      // 1. Initialize System Control: PLL, WatchDog, enable Peripheral Clocks.
     Gpio_initialize();  // 2. Initialize GPIO and assign GPIO to peripherals.
     DINT;               // 3.1 Clear all interrupts and initialize PIE vector table.
     InitPieCtrl();      // 3.2 Initialize the PIE control registers to their default state. The default state is all PIE interrupts disabled and flags are cleared.
@@ -41,7 +42,7 @@ void main(void){
         #ifdef _FLASH
             // use this code when u need to cut off the power and reboot it offline
             //  Send boot command to allow the CPU02 application to begin executioz`n
-            IPCBootCPU2(C1C2_BROM_BOOTMODE_BOOT_FROM_FLASH);
+            IPCBootCPU2(C1C2_BROM_BOOTMODE_BOOT_FROM_FLASH)
         #else
             //  Send boot command to allow the CPU02 application to begin execution
             // seriesly i dont know what does this sentences mean, do no change it might as well
@@ -89,6 +90,7 @@ void main(void){
     /* All this init operation should be same as emy-c WUBO*/
     init_d_sim();      // do this only once here
     init_debug();      // do this only once here
+    init_debug_2();    // do this only once here
     init_experiment(); // 控制器结构体初始化（同实验）
     get_bezier_points(); // for testing Cury the leg trajectgory tracking 
     for (axisCnt = 0; axisCnt < NUMBER_OF_AXES; axisCnt++){

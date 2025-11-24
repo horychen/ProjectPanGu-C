@@ -240,10 +240,10 @@ void suspension_p4ps5_PD_doubleaxis(REAL X_Pos, REAL Y_Pos){
     }
     
 
-    // overwrite_sweeping_frequency();
+    // overwrite_sweeping_f_1.quency_1.;
 
-    YZK_CTRL.Err_I_alpha = YZK_CTRL.CMD_I_alpha - CTRL->i->iAB[0];
-    YZK_CTRL.Err_I_beta  = YZK_CTRL.CMD_I_beta - CTRL->i->iAB[1];
+    YZK_CTRL.Err_I_alpha = YZK_CTRL.CMD_I_alpha - CTRL_1.i->iAB[0];
+    YZK_CTRL.Err_I_beta  = YZK_CTRL.CMD_I_beta - CTRL_1.i->iAB[1];
 
     /* 电流环 */
     YZK_CTRL.Out_alpha_KI = YZK_CTRL.pids.Ki_CODE_alpha * YZK_CTRL.Err_I_alpha;
@@ -263,7 +263,7 @@ void suspension_p4ps5_PD_doubleaxis(REAL X_Pos, REAL Y_Pos){
     // incremental_PI_YZK(&YZK_CTRL.pids);
     // YZK_CTRL.CMD_U_alpha = YZK_CTRL.Out;
     
-    (*CTRL).o->cmd_uAB_to_inverter[0] = YZK_CTRL.CMD_U_alpha;
+    CTRL_1.o->cmd_uAB_to_inverter[0] = YZK_CTRL.CMD_U_alpha;
     // 更新状态
     YZK_CTRL.prev_error_X = YZK_CTRL.Err_X;
 
@@ -284,7 +284,7 @@ void suspension_p4ps5_PD_doubleaxis(REAL X_Pos, REAL Y_Pos){
     YZK_CTRL.CMD_U_beta = YZK_CTRL.Out_beta;
     // incremental_PI_YZK(&YZK_CTRL.pids);
     // YZK_CTRL.CMD_U_beta = YZK_CTRL.Out;
-    (*CTRL).o->cmd_uAB_to_inverter[1] = YZK_CTRL.CMD_U_beta;
+    CTRL_1.o->cmd_uAB_to_inverter[1] = YZK_CTRL.CMD_U_beta;
     // 7.更新状态
     YZK_CTRL.prev_error_Y = YZK_CTRL.Err_Y;
     // return psi_cmd;

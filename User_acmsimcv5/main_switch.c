@@ -232,6 +232,89 @@ void init_debug(){
         (*debug).CMD_SPEED_SINE_HZ_CEILING                            = d_sim.user.CMD_SPEED_SINE_HZ_CEILING;
     #endif
 }
+
+void init_debug_2(){
+    debug = &debug_2;
+    (*debug).error = 0;
+    (*debug).who_is_user = d_sim.user.who_is_user;
+    if(d_sim.init.Rreq>0){
+        (*debug).mode_select = d_sim.user.mode_select_induction_motor;
+    }else{
+        (*debug).mode_select = d_sim.user.mode_select_synchronous_motor;
+    }
+        /* Open Loop  */
+        // (*debug).mode_select = MODE_SELECT_PWM_DIRECT;                            //  1
+        // (*debug).mode_select = MODE_SELECT_VOLTAGE_OPEN_LOOP;                     // 11
+        /*  Without the Encoder */
+        // (*debug).mode_select = MODE_SELECT_WITHOUT_ENCODER_CURRENT_VECTOR_ROTATE; //  2
+        /* FOC */
+        // (*debug).mode_select = MODE_SELECT_FOC;                                   //  3
+        // (*debug).mode_select = MODE_SELECT_FOC_SENSORLESS;                        // 31
+        // (*debug).mode_select = MODE_SELECT_INDIRECT_FOC;                          // 32
+        /* Speed Loop  */
+        // (*debug).mode_select = MODE_SELECT_VELOCITY_LOOP;                         //  4
+        // (*debug).mode_select = MODE_SELECT_VELOCITY_LOOP_SENSORLESS;              // 41
+        // (*debug).mode_select = MODE_SELECT_V_LOOP_WC_TUNER;                // 43
+        /* Position Loop  */
+        // (*debug).mode_select = MODE_SELECT_POSITION_LOOP;                         //  5
+        /* Commission  */
+        // (*debug).mode_select = MODE_SELECT_COMMISSIONING;                         //  9
+
+    (*debug).Overwrite_Current_Frequency = 3.0;
+    (*debug).Overwrite_theta_d           = 0.0;
+
+    
+    (*debug).set_id_command              = d_sim.user.set_id_command;
+    (*debug).set_iq_command              = d_sim.user.set_iq_command;
+    (*debug).set_rpm_speed_command       = d_sim.user.set_rpm_speed_command;
+    (*debug).set_deg_position_command    = 50.0;
+    (*debug).vvvf_voltage = 3.0;
+    (*debug).vvvf_frequency = 5.0;
+
+    //* due to user WB's habit, make all cmd to zero to make it clear
+    #if (PC_SIMULATION == FALSE) && (WHO_IS_USER == USER_WB)
+    // #if (PC_SIMULATION == FALSE)
+        (*debug).set_id_command              = 0.0;
+        (*debug).set_iq_command              = 0.0;
+        (*debug).set_rpm_speed_command       = 0.0;
+        (*debug).set_deg_position_command    = 50.0; // Unit: Degree
+    #endif
+
+    (*debug).delta                                                = d_sim.FOC.delta;
+    (*debug).CLBW_HZ                                              = d_sim.FOC.CLBW_HZ;
+    (*debug).VL_EXE_PER_CL_EXE                                    = d_sim.FOC.VL_EXE_PER_CL_EXE;
+    (*debug).LIMIT_DC_BUS_UTILIZATION                             = d_sim.CL.LIMIT_DC_BUS_UTILIZATION;
+    (*debug).LIMIT_OVERLOAD_FACTOR                                = d_sim.VL.LIMIT_OVERLOAD_FACTOR;
+    (*debug).Select_exp_operation                                 = d_sim.user.Select_exp_operation;
+    (*debug).bool_apply_decoupling_voltages_to_current_regulation = d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation;
+    (*debug).INVERTER_NONLINEARITY_COMPENSATION_INIT              = d_sim.user.INVERTER_NONLINEARITY_COMPENSATION_METHOD;
+
+    #if WHO_IS_USER == USER_YZZ
+        (*debug).SENSORLESS_CONTROL      = 0;
+        (*debug).SENSORLESS_CONTROL_HFSI = 0;
+    #endif
+    #if WHO_IS_USER == 2023231051
+        //For WuBo
+        (*debug).zeta                                                 = d_sim.user.zeta;
+        (*debug).omega_n                                              = d_sim.user.omega_n;
+        (*debug).max_CLBW_PER_min_CLBW                                = d_sim.user.max_CLBW_PER_min_CLBW;
+        (*debug).bool_apply_WC_tunner_for_speed_loop                  = d_sim.user.bool_apply_WC_tunner_for_speed_loop;
+        (*debug).bool_sweeping_frequency_for_speed_loop               = d_sim.user.bool_sweeping_frequency_for_speed_loop;
+        (*debug).bool_Null_D_Control                                  = d_sim.user.bool_Null_D_Control;
+        (*debug).bool_apply_sweeping_frequency_excitation             = d_sim.user.bool_apply_sweeping_frequency_excitation;
+        (*debug).bool_Parameter_Mismatch_test                         = d_sim.user.bool_Parameter_Mismatch_test;
+        //For Sweeping
+        (*debug).CMD_CURRENT_SINE_AMPERE                              = d_sim.user.CMD_CURRENT_SINE_AMPERE;
+        (*debug).CMD_SPEED_SINE_RPM                                   = d_sim.user.CMD_SPEED_SINE_RPM;
+        (*debug).CMD_SPEED_SINE_HZ                                    = d_sim.user.CMD_SPEED_SINE_HZ;
+        (*debug).CMD_SPEED_SINE_STEP_SIZE                             = d_sim.user.CMD_SPEED_SINE_STEP_SIZE;
+        (*debug).CMD_SPEED_SINE_LAST_END_TIME                         = d_sim.user.CMD_SPEED_SINE_LAST_END_TIME;
+        (*debug).CMD_SPEED_SINE_END_TIME                              = d_sim.user.CMD_SPEED_SINE_END_TIME;
+        (*debug).CMD_SPEED_SINE_HZ_CEILING                            = d_sim.user.CMD_SPEED_SINE_HZ_CEILING;
+    #endif
+}
+
+
 void init_CTRL(){
     allocate_CTRL(CTRL);
 
@@ -911,7 +994,7 @@ int  main_switch(long mode_select){
         #if WHO_IS_USER == USER_YZK
             // suspension_p4ps5_PD_Xaxis(YZK_CTRL.disFbk_X);
             suspension_p4ps5_PD_doubleaxis(YZK_CTRL.disFbk_X, YZK_CTRL.disFbk_Y); //程序不知道怎么运行 这个很重要
-            yzkdebug++;
+            // yzkdebug++;
         #endif
         break;
     case MODE_SELECT_FOC: // 3
