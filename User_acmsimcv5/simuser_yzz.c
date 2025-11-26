@@ -1294,7 +1294,7 @@ void rk4_init(){
         FE.CMDC.integral_tilde_iq = FE.CMDC.x[5];
         while(FE.CMDC.theta_d > M_PI) FE.CMDC.theta_d  -= 2*M_PI;
         while(FE.CMDC.theta_d < -M_PI) FE.CMDC.theta_d += 2*M_PI;
-        FE.CMDC.tilde_theta_d = angle_diff(FE.CMDC.theta_d, ACM.theta_d) * ONE_OVER_2PI * 360;
+        // FE.CMDC.tilde_theta_d = angle_diff(FE.CMDC.theta_d, ACM.theta_d) * ONE_OVER_2PI * 360;
     }
     #endif
     void simulation_test_flux_estimators(){
@@ -3449,6 +3449,158 @@ void get_distorted_voltage_via_LUT(REAL ual, REAL ube, REAL ial, REAL ibe, REAL 
         ualbe_dist[1] = UV2B_AI(dist_ua, dist_ub); // 0.66666667 * 0.8660254 * ( dist_ub -     dist_uc);
     }
 }
+//小写的kpki是给电流环用的，大写的KPKIKD是给位置环用的
+int yzk_Debug = 0;
+REAL overwrite_suspension_frequency = 0.1;
+REAL overwrite_suspension_amplitude = 8.0;
+void SuspensionCurrentControl(){
+    // 1. 计算悬浮电流控制器的输出电压
+    // 2. 将输出电压转换为PWM占空比re
+    // === 0) 直流母线保护 ===
+    CTRL->sc->iAB[0] = Axis->iuvw[0];
+    CTRL->sc->iAB[1] = Axis->iuvw[1];
+    REAL Vdc = 48;
+    if (Vdc < CTRL->sc->vdc_min) {
+    // 低压：输出居中，占空比 0.5，冻结积分避免乱冲
+        CTRL->sc->Duty[0] = 0.5f;
+        CTRL->sc->Duty[1] = 0.5f;
+        CTRL->sc->Duty[2] = 0.5f;
+        CTRL->sc->I_curr[0] = 0.0f;
+        CTRL->sc->I_curr[1] = 0.0f;
+        return; 
+    }
+    REAL VDC_inverse = 1.0 / Axis->vdc;
+    if(yzk_Debug == 1){
+        CTRL->sc->cmd_FX = overwrite_suspension_amplitude * cos(CTRL->timebase*overwrite_suspension_frequency);
+        CTRL->sc->cmd_FY = overwrite_suspension_amplitude * sin(CTRL->timebase*overwrite_suspension_frequency);
+    }else if (yzk_Debug == 2)
+    {
+        CTRL->sc->cmd_FX = overwrite_suspension_amplitude * cos(CTRL->timebase*overwrite_suspension_frequency);
+    }
+    
+    CTRL->sc->cmd_iAB[0] = 0.5 * CTRL->sc->KIC_inv * (CTRL->sc->cmd_FX - CTRL->sc->cmd_FY);
+    CTRL->sc->cmd_iAB[1] = 0.5 * CTRL->sc->KIC_inv * (CTRL->sc->cmd_FX + CTRL->sc->cmd_FY);
+    // === 2) 电流误差 ===
+    CTRL->sc->P_curr[0] = CTRL->sc->cmd_iAB[0] - CTRL->sc->iAB[0];
+    CTRL->sc->P_curr[1] = CTRL->sc->cmd_iAB[1] - CTRL->sc->iAB[1];
+    // === 3) 积分项（先积分再夹紧） ===
+    
+    CTRL->sc->I_curr[0] += CTRL->sc->ki * CTRL->sc->P_curr[0] * CL_TS;
+    // CTRL->sc->I_max_curr = max( CTRL->sc->I_max_limit_curr - CTRL->sc->P_curr[0], 0.0);
+    // CTRL->sc->I_min_curr = min( CTRL->sc->I_min_limit_curr - CTRL->sc->P_curr[0], 0.0);
+    CTRL->sc->I_curr[0] = clampf(CTRL->sc->I_curr[0], CTRL->sc->I_min_curr, CTRL->sc->I_max_curr);
+    // === 3) 积分项（先积分再夹紧） ===
 
+    CTRL->sc->I_curr[1] += CTRL->sc->ki * CTRL->sc->P_curr[1] * CL_TS;
+    // CTRL->sc->I_max_curr = max( CTRL->sc->I_max_limit_curr - CTRL->sc->P_curr[1], 0.0);
+    // CTRL->sc->I_min_curr = min( CTRL->sc->I_min_limit_curr - CTRL->sc->P_curr[1], 0.0);
+    CTRL->sc->I_curr[1] = clampf(CTRL->sc->I_curr[1], CTRL->sc->I_min_curr, CTRL->sc->I_max_curr);
+    // === 4) 未饱和电压（调制波） ===
+    REAL Ua_unsat = CTRL->sc->kp * CTRL->sc->P_curr[0] + CTRL->sc->I_curr[0] + 0.5f * Vdc;
+    REAL Ub_unsat = CTRL->sc->kp * CTRL->sc->P_curr[1] + CTRL->sc->I_curr[1] + 0.5f * Vdc;
+
+    // === 5) 电压限幅到 [0, Vdc]，再换算占空比 ===
+    CTRL->sc->cmd_uAB[0] = clampf(Ua_unsat, 0.0f, Vdc);
+    CTRL->sc->cmd_uAB[1] = clampf(Ub_unsat, 0.0f, Vdc);
+
+    CTRL->sc->Duty[0]= CTRL->sc->cmd_uAB[0] * VDC_inverse;
+    CTRL->sc->Duty[1]= CTRL->sc->cmd_uAB[1] * VDC_inverse;
+    CTRL->sc->Duty[2]= 0.5; // C相占空比固定为0.5
+}
+    
+void SuspensionDisplacementControl(){
+    // 误差保存（上一次）
+    CTRL->sc->P_disX_Prev = CTRL->sc->P_disX;
+    CTRL->sc->P_disY_Prev = CTRL->sc->P_disY;
+    // 当前位置误差 e = r - y
+    CTRL->sc->P_disX = CTRL->sc->cmd_disX - CTRL->sc->disX;
+    CTRL->sc->P_disY = CTRL->sc->cmd_disY - CTRL->sc->disY;
+     // ===== 积分（带积分限幅）=====
+    CTRL->sc->I_disX += CTRL->sc->KI * CTRL->sc->P_disX * CL_TS;
+    CTRL->sc->I_disY += CTRL->sc->KI * CTRL->sc->P_disY * CL_TS;
+    // X I tenm min max
+    // CTRL->sc->I_max_dis = max( CTRL->sc->I_max_limit- CTRL->sc->P_disX,0);
+    // CTRL->sc->I_min_dis = min( CTRL->sc->I_min_limit- CTRL->sc->P_disX,0);
+    // 积分限幅（基础抗积分饱和）
+    CTRL->sc->I_disX = clampf(CTRL->sc->I_disX, CTRL->sc->I_min_dis, CTRL->sc->I_max_dis);
+    // Y I tenm min max
+    // CTRL->sc->I_max_dis = max( CTRL->sc->I_max_limit- CTRL->sc->P_disY,0);
+    // CTRL->sc->I_min_dis = min( CTRL->sc->I_min_limit- CTRL->sc->P_disY,0);
+    // 积分限幅（基础抗积分饱和）
+    CTRL->sc->I_disY = clampf(CTRL->sc->I_disY, CTRL->sc->I_min_dis, CTRL->sc->I_max_dis);
+    // ===== 微分（带一阶滤波）=====
+    CTRL->sc->D_disX = CTRL->sc->tau * CTRL->sc->tau_ts_inv * CTRL->sc->D_disX
+    + CTRL->sc->KD * CTRL->sc->tau_ts_inv * (CTRL->sc->P_disX - CTRL->sc->P_disX_Prev);
+    CTRL->sc->D_disY = CTRL->sc->tau * CTRL->sc->tau_ts_inv * CTRL->sc->D_disY
+    + CTRL->sc->KD * CTRL->sc->tau_ts_inv * (CTRL->sc->P_disY - CTRL->sc->P_disY_Prev);
+    // ===== 未饱和输出（把 P/I/D 都加上）=====
+    REAL cmd_FX_unsat = CTRL->sc->KP * CTRL->sc->P_disX + CTRL->sc->I_disX + CTRL->sc->D_disX;
+    REAL cmd_FY_unsat = CTRL->sc->KP * CTRL->sc->P_disY + CTRL->sc->I_disY + CTRL->sc->D_disY;
+    // ===== 输出限幅 =====
+    CTRL->sc->cmd_FX = clampf(cmd_FX_unsat, CTRL->sc->Fmin, CTRL->sc->Fmax);
+    CTRL->sc->cmd_FY = clampf(cmd_FY_unsat, CTRL->sc->Fmin, CTRL->sc->Fmax);
+}
+// 简单限幅
+REAL clampf(REAL x, REAL lo, REAL hi) {
+    return (x < lo) ? lo : (x > hi) ? hi : x;
+}
+
+REAL max(REAL a, REAL b) {
+    return (a > b) ? a : b;
+}
+
+REAL min(REAL a, REAL b) {
+    return (a < b) ? a : b;
+}
+
+void init_suspension(){
+    // 初始化悬浮控制器参数
+    CTRL->sc->uAB[0] = 0;
+    CTRL->sc->uAB[1] = 0;
+    CTRL->sc->cmd_uAB[0] = 0;
+    CTRL->sc->cmd_uAB[1] = 0;
+    CTRL->sc->iAB[0] = 0;
+    CTRL->sc->iAB[1] = 0;
+    CTRL->sc->cmd_iAB[0] = 0;
+    CTRL->sc->cmd_iAB[1] = 0;
+    CTRL->sc->Duty[0] = 0.5;
+    CTRL->sc->Duty[1] = 0.5;
+    CTRL->sc->Duty[2] = 0.5;
+    CTRL->sc->ki = 1;//电流积分增益
+    CTRL->sc->kp = 8;
+    CTRL->sc->KIC_inv = 0.8;
+    CTRL->sc->KI = 0.01;//位移积分增益
+    CTRL->sc->KP = 5;
+    CTRL->sc->KD = 0;
+    CTRL->sc->cmd_disX = 0;
+    CTRL->sc->cmd_disY = 0;
+    CTRL->sc->disX = 0;
+    CTRL->sc->disY = 0;
+    CTRL->sc->I_disX = 0;
+    CTRL->sc->P_disX = 0;
+    CTRL->sc->D_disX = 0;
+    CTRL->sc->I_disY = 0;
+    CTRL->sc->P_disY = 0;
+    CTRL->sc->D_disY = 0;
+    CTRL->sc->P_disX_Prev = 0;
+    CTRL->sc->P_disY_Prev = 0;
+    CTRL->sc->I_curr[0] = 0;
+    CTRL->sc->I_curr[1] = 0;
+    CTRL->sc->P_curr[0] = 0;
+    CTRL->sc->P_curr[1] = 0;
+    CTRL->sc->tau = 0.1;
+    CTRL->sc->tau_ts_inv = 1.0/(CL_TS + CTRL->sc->tau);
+    CTRL->sc->Fmax = 1.5;
+    CTRL->sc->Fmin = -1.5;
+    CTRL->sc->I_max_dis = 2;
+    CTRL->sc->I_min_dis = -2;
+    CTRL->sc->I_max_curr = 2;
+    CTRL->sc->I_min_curr = -2;
+    CTRL->sc->vdc_min = 0.0; // 直流母线最低允许电压
+    CTRL->sc->I_max_limit = 2;
+    CTRL->sc->I_min_limit = -2;
+    CTRL->sc->I_max_limit_curr = 2;
+    CTRL->sc->I_min_limit_curr = -2;
+}
 
 #endif

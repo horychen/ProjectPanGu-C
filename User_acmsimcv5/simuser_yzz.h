@@ -8,6 +8,11 @@
     #define IM_FLUX_COMMAND_DC_PART     d_sim.init.KE // 1.3593784874408608
     #define IM_FLUX_COMMAND_SINE_PART   0.0
     void rk4_init();
+    REAL clampf(REAL x, REAL lo, REAL hi);
+    REAL max(REAL a, REAL b);
+    REAL min(REAL a, REAL b);
+    void SuspensionCurrentControl();
+    void SuspensionDisplacementControl();
 /* User */
 #include "super_config.h"
 #include "main_switch.h"

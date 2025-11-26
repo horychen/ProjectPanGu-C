@@ -45,6 +45,7 @@
 #define MODE_SELECT_UDQ_GIVEN_TEST           98
 #define MODE_SELECT_GENERATOR                8
 #define MODE_SELECT_NB_MODE                  99
+#define MODE_SELECT_SUSPENSION_CONTROL       100
 
 
 typedef struct {
@@ -340,7 +341,52 @@ typedef struct {
     REAL Js_inv;
 } st_motor_parameters;
 
-
+typedef struct {
+    // voltage commands
+    REAL uAB[2];
+    REAL cmd_uAB[2];
+    REAL iAB[2];
+    REAL cmd_iAB[2];
+    REAL Duty[3];
+    REAL ki;//for current
+    REAL kp;
+    REAL KIC_inv;//单位电流产生的力
+    REAL KI;//for displacement
+    REAL KP;
+    REAL KD;
+    REAL cmd_disX;
+    REAL cmd_disY;
+    REAL disX;
+    REAL disY;
+    REAL cmd_FX;    
+    REAL cmd_FY;
+    REAL FX;
+    REAL FY;
+    REAL I_disX;
+    REAL P_disX;
+    REAL D_disX;
+    REAL I_disY;
+    REAL P_disY;
+    REAL D_disY;
+    REAL P_disX_Prev;
+    REAL P_disY_Prev;
+    REAL I_curr[2];
+    REAL P_curr[2];
+    REAL tau;
+    REAL tau_ts_inv;
+    REAL delta_d;
+    REAL Fmin;
+    REAL Fmax;
+    REAL I_min_dis;
+    REAL I_max_dis;
+    REAL I_min_curr;
+    REAL I_max_curr;
+    REAL vdc_min;
+    REAL I_min_limit;
+    REAL I_max_limit;
+    REAL I_max_limit_curr;
+    REAL I_min_limit_curr;
+} suspension_controller;
 //
 #define MA_SEQUENCE_LENGTH            20  // 10   // 40 for Yaojie large Lq motor  // Note MA_SEQUENCE_LENGTH * CL_TS = window of moving average in seconds
 #define MA_SEQUENCE_LENGTH_INVERSE    0.05// 0.1  // 0.025                        // 20 MA gives speed resolution of 3 rpm for 2500 ppr encoder
@@ -436,42 +482,6 @@ typedef struct {
     REAL error_a2;
 } st_InverterNonlinearity; // inverter
 typedef struct {
-    // ECAP support (i.e., the API)
-    REAL terminal_DutyOnRatio[3];
-    REAL terminal_voltage[3];
-    REAL line_to_line_voltage[3]; // uv, vw, wu
-    REAL pwm_time;
-    REAL uab0[3];
-    REAL dq[2];
-    REAL dq_lpf[2];
-    REAL dq_mismatch[2];
-    // [Internal variables]
-        // Run TI's example
-        struct TestECapture {
-            // REAL TSt1, TSt2, TSt3, TSt4;
-            REAL Period1, Period2, Period3;
-            REAL DutyOnTime1, DutyOffTime1, DutyOnTime2, DutyOffTime2;
-        }ecapU, ecapV, ecapW;
-        // On-demand ECAP decode with nonlinear filtering out disturbance. This mode gives raw ECAP values
-        int flag_nonlinear_filtering;
-        int flag_bad_U_capture;
-        int flag_bad_V_capture;
-        int flag_bad_W_capture;
-        // On-interrupt ECAP decode. This mode gives ECAP values that are already free of disturbance.
-        Uint32 good_capture_U[4];
-        Uint32 good_capture_V[4];
-        Uint32 good_capture_W[4];
-        struct bad_values {
-            Uint32 on1, off1, on2, off2;
-        } u_ecap_bad1, v_ecap_bad1, w_ecap_bad1, u_ecap_bad2, v_ecap_bad2, w_ecap_bad2;
-        // ISR counting
-        Uint64 ECapIntCount[3];
-        Uint64 ECapPassCount[3];
-        // ISR nesting
-        int password_isr_nesting; // set to 178 in EPWM1 ISR
-        int decipher_password[3];
-} st_capture; // eCapture
-typedef struct {
     // To show that REAL type is not very accurate 64 missing by counting 1e-4 sec to 10 sec.
         Uint32  test_integer;
         REAL    test_float;
@@ -523,8 +533,6 @@ struct ControllerForExperiment{
     SVGENDQ svgen1;
     SVGENDQ svgen2;
 
-    /* Capture (line-to-line voltage) */
-    st_capture *cap;
 
     /* Console */
     st_global_variables *g;
@@ -536,6 +544,7 @@ struct ControllerForExperiment{
     // REAL inputs[8];
     // REAL states[5];
     // REAL outputs[4];
+    suspension_controller *sc;
 };
 //Observer for speed reconstruction, OFSR
 struct ObserverForSpeedReconstruction{

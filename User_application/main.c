@@ -49,7 +49,7 @@ void main(void){
     ePWM_initialize();
     ADC_initialize();
     eQEP_initialize(0);
-    InitECaptureContinuousMode();
+    // InitECaptureContinuousMode();
     // 4.3 Assign peripherals to CPU02
     /* SPI and SCI */
     #if NUMBER_OF_DSP_CORES == 1
@@ -476,6 +476,10 @@ void ENABLE_PWM_OUTPUT(int positionLoopType){
             EPwm5Regs.CMPA.bit.CMPA = (*CTRL).svgen2.Tb * 50000000 * CL_TS;
             EPwm6Regs.CMPA.bit.CMPA = (*CTRL).svgen2.Tc * 50000000 * CL_TS;
         }
+    }else if (global_tmp_pwm_test_mode == 100){ // 100表示直接输出占空比
+        EPwm1Regs.CMPA.bit.CMPA = CTRL->sc->Duty[0] * 50000000 * CL_TS; // 0-5000，5000表示0%的占空比
+        EPwm2Regs.CMPA.bit.CMPA = CTRL->sc->Duty[1] * 50000000 * CL_TS;
+        EPwm3Regs.CMPA.bit.CMPA = CTRL->sc->Duty[2] * 50000000 * CL_TS;
     }
     else{ // 否则根据上面的控制率controller()由voltage_commands_to_pwm()计算出的电压，输出到逆变器
         voltage_commands_to_pwm();
@@ -1093,71 +1097,71 @@ void voltage_commands_to_pwm()
 }
 
 #if WHO_IS_USER == USER_YZZ || WHO_IS_USER == USER_CJH
-void voltage_measurement_based_on_eCAP()
-{
-    CAP.terminal_voltage[0] = (CAP.terminal_DutyOnRatio[0]) * Axis->vdc - Axis->vdc * 0.5; // -0.5 is due to duty ratio calculation; - vdc * 0.5 is referring to the center of dc bus capacitor.
-    CAP.terminal_voltage[1] = (CAP.terminal_DutyOnRatio[1]) * Axis->vdc - Axis->vdc * 0.5;
-    CAP.terminal_voltage[2] = (CAP.terminal_DutyOnRatio[2]) * Axis->vdc - Axis->vdc * 0.5;
+// void voltage_measurement_based_on_eCAP()
+// {
+//     CAP.terminal_voltage[0] = (CAP.terminal_DutyOnRatio[0]) * Axis->vdc - Axis->vdc * 0.5; // -0.5 is due to duty ratio calculation; - vdc * 0.5 is referring to the center of dc bus capacitor.
+//     CAP.terminal_voltage[1] = (CAP.terminal_DutyOnRatio[1]) * Axis->vdc - Axis->vdc * 0.5;
+//     CAP.terminal_voltage[2] = (CAP.terminal_DutyOnRatio[2]) * Axis->vdc - Axis->vdc * 0.5;
 
-    CAP.line_to_line_voltage[0] = CAP.terminal_voltage[0] - CAP.terminal_voltage[1];
-    CAP.line_to_line_voltage[1] = CAP.terminal_voltage[1] - CAP.terminal_voltage[2];
-    CAP.line_to_line_voltage[2] = CAP.terminal_voltage[2] - CAP.terminal_voltage[0];
+//     CAP.line_to_line_voltage[0] = CAP.terminal_voltage[0] - CAP.terminal_voltage[1];
+//     CAP.line_to_line_voltage[1] = CAP.terminal_voltage[1] - CAP.terminal_voltage[2];
+//     CAP.line_to_line_voltage[2] = CAP.terminal_voltage[2] - CAP.terminal_voltage[0];
 
-    if (CAP.flag_bad_U_capture == FALSE && CAP.flag_bad_V_capture == FALSE && CAP.flag_bad_W_capture == FALSE)
-    {
-        // Use ecap feedback
-        CAP.uab0[0] = 0.33333 * (2 * CAP.terminal_voltage[0] - CAP.terminal_voltage[1] - CAP.terminal_voltage[2]);
-        CAP.uab0[1] = 0.57735 * (CAP.terminal_voltage[1] - CAP.terminal_voltage[2]);
-        CAP.uab0[2] = 0.33333 * (CAP.terminal_voltage[0] + CAP.terminal_voltage[1] + CAP.terminal_voltage[2]);
-        CAP.dq[0] = (*CTRL).s->cosT * CAP.uab0[0] + (*CTRL).s->sinT * CAP.uab0[1];
-        CAP.dq[1] = -(*CTRL).s->sinT * CAP.uab0[0] + (*CTRL).s->cosT * CAP.uab0[1];
-    }
-    else
-    {
-        // Assume the voltage vector is rtoating at a constant speed when ecap measurement is disturbed.
-        CAP.uab0[0] = (*CTRL).s->cosT * CAP.dq[0] - (*CTRL).s->sinT * CAP.dq[1];
-        CAP.uab0[1] = (*CTRL).s->sinT * CAP.dq[0] + (*CTRL).s->cosT * CAP.dq[1];
-    }
+//     if (CAP.flag_bad_U_capture == FALSE && CAP.flag_bad_V_capture == FALSE && CAP.flag_bad_W_capture == FALSE)
+//     {
+//         // Use ecap feedback
+//         CAP.uab0[0] = 0.33333 * (2 * CAP.terminal_voltage[0] - CAP.terminal_voltage[1] - CAP.terminal_voltage[2]);
+//         CAP.uab0[1] = 0.57735 * (CAP.terminal_voltage[1] - CAP.terminal_voltage[2]);
+//         CAP.uab0[2] = 0.33333 * (CAP.terminal_voltage[0] + CAP.terminal_voltage[1] + CAP.terminal_voltage[2]);
+//         CAP.dq[0] = (*CTRL).s->cosT * CAP.uab0[0] + (*CTRL).s->sinT * CAP.uab0[1];
+//         CAP.dq[1] = -(*CTRL).s->sinT * CAP.uab0[0] + (*CTRL).s->cosT * CAP.uab0[1];
+//     }
+//     else
+//     {
+//         // Assume the voltage vector is rtoating at a constant speed when ecap measurement is disturbed.
+//         CAP.uab0[0] = (*CTRL).s->cosT * CAP.dq[0] - (*CTRL).s->sinT * CAP.dq[1];
+//         CAP.uab0[1] = (*CTRL).s->sinT * CAP.dq[0] + (*CTRL).s->cosT * CAP.dq[1];
+//     }
 
-    // 电压测量
-    if (G.flag_use_ecap_voltage == 2 || G.flag_use_ecap_voltage == 1)
-    {
-        /*Use original ecap measured voltage*/
-        US_P(0) = US_C(0);
-        US_P(1) = US_C(1);
-        US_C(0) = CAP.uab0[0];
-        US_C(1) = CAP.uab0[1];
-    }
-    //    else if(G.flag_use_ecap_voltage==3){
-    //        ecap_moving_average();
-    //    }
-    if (G.flag_use_ecap_voltage == 10)
-    {
-        /*Use lpf ecap measured voltage*/
-        CAP.dq_lpf[0] = _lpf(CAP.dq[0], CAP.dq_lpf[0], 800);
-        CAP.dq_lpf[1] = _lpf(CAP.dq[1], CAP.dq_lpf[1], 800);
-        CAP.uab0[0] = (*CTRL).s->cosT * CAP.dq_lpf[0] - (*CTRL).s->sinT * CAP.dq_lpf[1];
-        CAP.uab0[1] = (*CTRL).s->sinT * CAP.dq_lpf[0] + (*CTRL).s->cosT * CAP.dq_lpf[1];
-        US_P(0) = US_C(0);
-        US_P(1) = US_C(1);
-        US_C(0) = CAP.uab0[0];
-        US_C(1) = CAP.uab0[1];
-    }
-    else if (G.flag_use_ecap_voltage == 0)
-    {
-        /*Use command voltage for feedback*/
-        US_P(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
-        US_P(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
-        US_C(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
-        US_C(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
-    }
+//     // 电压测量
+//     if (G.flag_use_ecap_voltage == 2 || G.flag_use_ecap_voltage == 1)
+//     {
+//         /*Use original ecap measured voltage*/
+//         US_P(0) = US_C(0);
+//         US_P(1) = US_C(1);
+//         US_C(0) = CAP.uab0[0];
+//         US_C(1) = CAP.uab0[1];
+//     }
+//     //    else if(G.flag_use_ecap_voltage==3){
+//     //        ecap_moving_average();
+//     //    }
+//     if (G.flag_use_ecap_voltage == 10)
+//     {
+//         /*Use lpf ecap measured voltage*/
+//         CAP.dq_lpf[0] = _lpf(CAP.dq[0], CAP.dq_lpf[0], 800);
+//         CAP.dq_lpf[1] = _lpf(CAP.dq[1], CAP.dq_lpf[1], 800);
+//         CAP.uab0[0] = (*CTRL).s->cosT * CAP.dq_lpf[0] - (*CTRL).s->sinT * CAP.dq_lpf[1];
+//         CAP.uab0[1] = (*CTRL).s->sinT * CAP.dq_lpf[0] + (*CTRL).s->cosT * CAP.dq_lpf[1];
+//         US_P(0) = US_C(0);
+//         US_P(1) = US_C(1);
+//         US_C(0) = CAP.uab0[0];
+//         US_C(1) = CAP.uab0[1];
+//     }
+//     else if (G.flag_use_ecap_voltage == 0)
+//     {
+//         /*Use command voltage for feedback*/
+//         US_P(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
+//         US_P(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
+//         US_C(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
+//         US_C(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
+//     }
 
-    // (for watch only) Mismatch between ecap measurement and command to inverter
-    (*CTRL).o->cmd_uDQ_to_inverter[0] = (*CTRL).s->cosT * (*CTRL).o->cmd_uAB_to_inverter[0] + (*CTRL).s->sinT * (*CTRL).o->cmd_uAB_to_inverter[1];
-    (*CTRL).o->cmd_uDQ_to_inverter[1] = -(*CTRL).s->sinT * (*CTRL).o->cmd_uAB_to_inverter[0] + (*CTRL).s->cosT * (*CTRL).o->cmd_uAB_to_inverter[1];
-    CAP.dq_mismatch[0] = (*CTRL).o->cmd_uDQ_to_inverter[0] - CAP.dq[0];
-    CAP.dq_mismatch[1] = (*CTRL).o->cmd_uDQ_to_inverter[1] - CAP.dq[1];
-}
+//     // (for watch only) Mismatch between ecap measurement and command to inverter
+//     (*CTRL).o->cmd_uDQ_to_inverter[0] = (*CTRL).s->cosT * (*CTRL).o->cmd_uAB_to_inverter[0] + (*CTRL).s->sinT * (*CTRL).o->cmd_uAB_to_inverter[1];
+//     (*CTRL).o->cmd_uDQ_to_inverter[1] = -(*CTRL).s->sinT * (*CTRL).o->cmd_uAB_to_inverter[0] + (*CTRL).s->cosT * (*CTRL).o->cmd_uAB_to_inverter[1];
+//     CAP.dq_mismatch[0] = (*CTRL).o->cmd_uDQ_to_inverter[0] - CAP.dq[0];
+//     CAP.dq_mismatch[1] = (*CTRL).o->cmd_uDQ_to_inverter[1] - CAP.dq[1];
+// }
 #endif
 
 

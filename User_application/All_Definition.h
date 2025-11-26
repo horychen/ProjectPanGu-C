@@ -41,7 +41,7 @@
 /* Driver -----------------------------------------------------------------------------------*/
     #include "CONSOLE.h"
     #include "DAC_MAX5307.h"
-    #include "ECaptureVoltage.h"
+    // #include "ECaptureVoltage.h"
     #include "F2837xD_Ipc_drivers.h" // ˫��ͨѶ
     #include "F2837xD_struct.h"
     #include "F2837xD_sdfm_drivers.h"

@@ -20,6 +20,7 @@ void voltage_measurement_based_on_eCAP();
 void measurement_position_count_axisCnt0();
 void measurement_position_count_axisCnt1();
 void measurement_enc();
+void main_adc_measurements();
 void measurement_current_axisCnt0();
 void measurement_current_axisCnt1();
 #if WHO_IS_USER == USER_QIAN
