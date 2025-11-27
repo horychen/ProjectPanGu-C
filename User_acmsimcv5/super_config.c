@@ -35,12 +35,12 @@ void init_d_sim() {
 
     d_sim.user.verbose = TRUE;
     d_sim.user.who_is_user = 1601;
-    d_sim.user.mode_select_synchronous_motor = 100;
+    d_sim.user.mode_select_synchronous_motor = 3;
     d_sim.user.mode_select_induction_motor = 32;
     d_sim.user.INVERTER_NONLINEARITY_COMPENSATION_METHOD = 0;
     d_sim.user.Select_exp_operation = 0;
     d_sim.user.set_rpm_speed_command = 100;
-    d_sim.user.set_iq_command = -0.5;
+    d_sim.user.set_iq_command = 1;
     d_sim.user.set_id_command = 0.0;
     d_sim.user.Set_SpeedLoop_KI_as_Zero = FALSE;
     d_sim.user.CAREFUL_ESOAF_OMEGA_OBSERVER = 3000;

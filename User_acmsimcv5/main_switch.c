@@ -895,6 +895,9 @@ void _user_inverter_voltage_command(int bool_use_cmd_iAB){
         Ib = (*CTRL).i->iAB[1];
     }
 }
+bool hzq_hfj_test = 1;
+bool high_freq_injection = 1;
+REAL hfj_voltage =4.0;
 /* MAIN SWITCH as per MODE_SELECT */
 int  main_switch(long mode_select){
     static long mode_select_last = 0;
@@ -1482,6 +1485,23 @@ int  main_switch(long mode_select){
             // SuspensionDisplacementControl();
         #endif
         return 100; 
+        break;
+    case MODE_SELECT_HIGH_FREQ_INJECTION: // 101
+            if (hzq_hfj_test ==1){
+                (*CTRL).o->cmd_uAB_to_inverter[0] = hfj_voltage;
+                (*CTRL).o->cmd_uAB_to_inverter[1] = 0;
+                hzq_hfj_test = 0;
+            }else{
+                (*CTRL).o->cmd_uAB_to_inverter[0] = -hfj_voltage;
+                (*CTRL).o->cmd_uAB_to_inverter[1] = 0;
+                hzq_hfj_test = 1;
+            }
+            if ((*CTRL).o->cmd_uAB_to_inverter[0]>(hfj_voltage+0.5) && (*CTRL).o->cmd_uAB_to_inverter[0]<-(hfj_voltage+0.5))
+            {
+                (*CTRL).o->cmd_uAB_to_inverter[0] = 0;
+            }
+            
+        return 101; 
         break;
     default:
         // 鐢靛帇鎸囦护(*CTRL).o->cmd_uAB[0/1]閫氳繃閫嗗彉鍣紝浜х敓瀹為檯鐢靛帇ACM.ual, ACM.ube锛堝彉鎹㈠埌dq绯讳笅寰楀埌ACM.ud锛孉CM.uq锛�

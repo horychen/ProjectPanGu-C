@@ -424,6 +424,7 @@ void DISABLE_PWM_OUTPUT(){
 
 int global_tmp_pwm_test_mode;
 
+
 void ENABLE_PWM_OUTPUT(int positionLoopType){
     G.flag_experimental_initialized = FALSE;
     if (use_first_set_three_phase == 1){

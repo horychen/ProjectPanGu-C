@@ -83,13 +83,13 @@
     // DC BUS
     #if BOOL_LOAD_SWEEPING_ON
         #define OFFSET_VDC_BUS_IPM1 8
-        #define SCALE_VDC_BUS_IPM1 0.15384615s
+        #define SCALE_VDC_BUS_IPM1 0.1889999
     #elif BOOL_TELEOPERARION_WITH_FORMULA_BOARD
         #define OFFSET_VDC_BUS_IPM1 8
         #define SCALE_VDC_BUS_IPM1 0.15625
     #else
         #define OFFSET_VDC_BUS_IPM1 9
-        #define SCALE_VDC_BUS_IPM1 0.157068
+        #define SCALE_VDC_BUS_IPM1 0.1889999
     #endif
 
     //ADC UVW to PIN config
@@ -138,9 +138,9 @@
         #define SCALE_LEM_A3 0.031633  // ADCA3
     #else // Default Setup for XXXX (Waiting for a name as a gift for Little Black Board)
     //LEM1-100(盲潞搂氓鈥滐拷盲禄拢氓锟铰�)
-        #define OFFSET_LEM_A1 2015 // 2035.0 // WuBo tuned in 20241027 //2010  // 2034  // 2029.57894737 // ADCA1
-        #define OFFSET_LEM_A2 2042 // 2047.0 // WuBo tuned in 20241027 //2038   // 2049  // 2043.08771930 // ADCA2
-        #define OFFSET_LEM_A3 2033 // 2057.0 // WuBo tuned in 20241027 //2029   // 2050  // 2042.98245614 // ADCA3
+        #define OFFSET_LEM_A1 2035 // 2035.0 // WuBo tuned in 20241027 //2010  // 2034  // 2029.57894737 // ADCA1
+        #define OFFSET_LEM_A2 2040 // 2047.0 // WuBo tuned in 20241027 //2038   // 2049  // 2043.08771930 // ADCA2
+        #define OFFSET_LEM_A3 2045 // 2057.0 // WuBo tuned in 20241027 //2029   // 2050  // 2042.98245614 // ADCA3
         #define SCALE_LEM_A1 0.0305   // 0.03080704 // ADCA1
         #define SCALE_LEM_A2 0.030334 // 0.03060669 // ADCA2
         #define SCALE_LEM_A3 0.031633  // 0.03045988 // ADCA3

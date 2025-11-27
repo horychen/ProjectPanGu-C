@@ -46,6 +46,7 @@
 #define MODE_SELECT_GENERATOR                8
 #define MODE_SELECT_NB_MODE                  99
 #define MODE_SELECT_SUSPENSION_CONTROL       100
+#define MODE_SELECT_HIGH_FREQ_INJECTION      101
 
 
 typedef struct {
