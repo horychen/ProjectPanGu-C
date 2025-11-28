@@ -594,25 +594,75 @@ void _onlyFOC(REAL theta_d_elec, REAL iAB[2], REAL varOmega){
     REAL Tem     = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * (MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * (*CTRL).i->iDQ[0]) * (*CTRL).i->iDQ[1];     // 转矩 For luenberger position observer for HFSI
     REAL cmd_Tem = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * (MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * (*CTRL).i->cmd_iDQ[0]) * (*CTRL).i->cmd_iDQ[1];
     MOTOR.KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * (*CTRL).i->iDQ[0];
+    // if(CTRL->timebase > 1.0){
+    //     if(d_sim.user.ell_feedback_on == 1){
+    //         MOTOR.KActive = FE.no_sat.ell_1 + (MOTOR.Ld - MOTOR.Lq) * (*CTRL).i->iDQ[0];
+    //     }else if(d_sim.user.ell_feedback_on == 2){
+    //         MOTOR.KActive = FE.Bernard.psi_PM + (MOTOR.Ld - MOTOR.Lq) * (*CTRL).i->iDQ[0];
+    //     }
+    // }
+    #if USE_LAOMING_PI
+        /* New Sytle from Lao Ming */
+        pi_id.Kp = PID_iD->Kp;
+        pi_id.Ki = d_sim.CL.SERIES_KI_D_AXIS * CL_TS;
+        pi_id.Umax = PID_iD->OutLimit;
+        pi_id.Umin = -PID_iD->OutLimit;
+        // printf("id max is %f\n", pi_id.Umax);
+        
+        pi_iq.Kp = PID_iQ->Kp;
+        pi_iq.Ki = d_sim.CL.SERIES_KI_Q_AXIS * CL_TS;
+        pi_iq.Umax = PID_iQ->OutLimit;
+        pi_iq.Umin = -PID_iQ->OutLimit;
+        
+        pi_id.Fbk = (*CTRL).i->iDQ[0];
+        pi_id.Ref = (*CTRL).i->cmd_iDQ[0];
+        pi_id.Out = PI_MACRO(pi_id);
 
-    /* D-Axis Current Loop */
-    PID_iD->Fbk = (*CTRL).i->iDQ[0];
-    PID_iD->Ref = (*CTRL).i->cmd_iDQ[0];
-    PID_iD->calc(PID_iD);
-    PID_iQ->Fbk = (*CTRL).i->iDQ[1];
-    PID_iQ->Ref = (*CTRL).i->cmd_iDQ[1];
-    PID_iQ->calc(PID_iQ);
+        pi_iq.Fbk = (*CTRL).i->iDQ[1];
+        pi_iq.Ref = (*CTRL).i->cmd_iDQ[1];
+        pi_iq.Out = PI_MACRO(pi_iq);
 
-    // 电流环前馈DQ轴解耦
-    REAL decoupled_d_axis_voltage;
-    REAL decoupled_q_axis_voltage;
-    if(d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation == TRUE){
-        decoupled_d_axis_voltage = PID_iD->Out - PID_iQ->Fbk * MOTOR.Lq * varOmega * MOTOR.npp;
-        decoupled_q_axis_voltage = PID_iQ->Out + (MOTOR.KActive + PID_iD->Fbk * MOTOR.Ld) * varOmega * MOTOR.npp;
-    }else{
-        decoupled_d_axis_voltage = PID_iD->Out;
-        decoupled_q_axis_voltage = PID_iQ->Out;
-    }
+        REAL decoupled_d_axis_voltage;
+        REAL decoupled_q_axis_voltage;
+        if(d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation == TRUE){
+            decoupled_d_axis_voltage = pi_id.Out - pi_iq.Fbk * MOTOR.Lq * (*CTRL).i->varOmega * MOTOR.npp;
+            decoupled_q_axis_voltage = pi_iq.Out + (MOTOR.KActive + pi_id.Fbk * MOTOR.Ld) * (*CTRL).i->varOmega * MOTOR.npp;
+        }else{
+            decoupled_d_axis_voltage = pi_id.Out;
+            decoupled_q_axis_voltage = pi_iq.Out;
+        }
+    #else
+        /* D-Axis Current Loop */
+        PID_iD->Fbk = (*CTRL).i->iDQ[0];
+        PID_iD->Ref = (*CTRL).i->cmd_iDQ[0];
+        PID_iD->calc(PID_iD);
+
+        /* Q-Axis Current Loop */
+        #if FALSE
+            PID_iQ->Fbk = (*CTRL).i->iDQ[1];
+            PID_iQ->Ref = (*CTRL).i->cmd_iDQ[1];
+            PID_iQ->OutLimit = BezierCL.points[BezierCL.order].y;
+            control_output(PID_iQ, &BezierCL);
+            // control_output_adaptVersion(PID_iQ, &BezierCL);
+        #else
+            PID_iQ->Fbk = (*CTRL).i->iDQ[1];
+            PID_iQ->Ref = (*CTRL).i->cmd_iDQ[1];
+            PID_iQ->calc(PID_iQ);
+        #endif
+
+        // 电流环前馈DQ轴解耦
+        REAL decoupled_d_axis_voltage;
+        REAL decoupled_q_axis_voltage;
+        if(d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation == TRUE){
+            decoupled_d_axis_voltage = PID_iD->Out - PID_iQ->Fbk * MOTOR.Lq * varOmega * MOTOR.npp;
+            decoupled_q_axis_voltage = PID_iQ->Out + (MOTOR.KActive + PID_iD->Fbk * MOTOR.Ld) * varOmega * MOTOR.npp;
+        }else{
+            decoupled_d_axis_voltage = PID_iD->Out;
+            decoupled_q_axis_voltage = PID_iQ->Out + MOTOR.KActive * varOmega * MOTOR.npp;
+            // decoupled_d_axis_voltage = PID_iD->Out;
+            // decoupled_q_axis_voltage = PID_iQ->Out;
+        }
+    #endif
 
     /* 对补偿后的dq轴电压进行限幅度 */
     if (decoupled_d_axis_voltage > PID_iD->OutLimit) decoupled_d_axis_voltage = PID_iD->OutLimit;
@@ -628,16 +678,12 @@ void _onlyFOC(REAL theta_d_elec, REAL iAB[2], REAL varOmega){
     // (*CTRL).s->sinT_compensated_1p5omegaTs = sinf(used_theta_d_elec + 1.5omg_elec*CL_TS);
     (*CTRL).s->cosT_compensated_1p5omegaTs = (*CTRL).s->cosT;
     (*CTRL).s->sinT_compensated_1p5omegaTs = (*CTRL).s->sinT;
-    (*CTRL).o->cmd_uAB[0] = MT2A((*CTRL).o->cmd_uDQ[0], (*CTRL).o->cmd_uDQ[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
-    (*CTRL).o->cmd_uAB[1] = MT2B((*CTRL).o->cmd_uDQ[0], (*CTRL).o->cmd_uDQ[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
+    (*CTRL).o->cmd_uAB[0] = MT2A((*CTRL).o->cmd_uDQ[0], (*CTRL).o->cmd_uDQ[1], (*CTRL).s->cosT_compensated_1p5omegaTs, (*CTRL).s->sinT_compensated_1p5omegaTs);
+    (*CTRL).o->cmd_uAB[1] = MT2B((*CTRL).o->cmd_uDQ[0], (*CTRL).o->cmd_uDQ[1], (*CTRL).s->cosT_compensated_1p5omegaTs, (*CTRL).s->sinT_compensated_1p5omegaTs);
     (*CTRL).o->cmd_uAB_to_inverter[0] = (*CTRL).o->cmd_uAB[0];
     (*CTRL).o->cmd_uAB_to_inverter[1] = (*CTRL).o->cmd_uAB[1];
-    (*CTRL).o->cmd_iAB[0] = MT2A((*CTRL).i->cmd_iDQ[0], (*CTRL).i->cmd_iDQ[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
-    (*CTRL).o->cmd_iAB[1] = MT2B((*CTRL).i->cmd_iDQ[0], (*CTRL).i->cmd_iDQ[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
-
-    #if WHO_IS_USER == USER_YZZ
-        yzz_inverter_Compensation_Online_PAA();
-    #endif
+    (*CTRL).o->cmd_iAB[0] = MT2A((*CTRL).i->cmd_iDQ[0], (*CTRL).i->cmd_iDQ[1], (*CTRL).s->cosT_compensated_1p5omegaTs, (*CTRL).s->sinT_compensated_1p5omegaTs);
+    (*CTRL).o->cmd_iAB[1] = MT2B((*CTRL).i->cmd_iDQ[0], (*CTRL).i->cmd_iDQ[1], (*CTRL).s->cosT_compensated_1p5omegaTs, (*CTRL).s->sinT_compensated_1p5omegaTs);
 
     #if WHO_IS_USER == USER_YZZ
         yzz_inverter_Compensation_Online_PAA();
@@ -683,29 +729,38 @@ void _user_commands(){
         // 凸极永磁采用 iD<0 获得更大的 有功磁链（aka 转矩系数）
         // (*CTRL).i->cmd_iDQ[0] = -1.0;
     }
-    if ((*CTRL).timebase < 2 && (*CTRL).timebase > 0){
-        (*CTRL).i->cmd_varOmega = 50 * RPM_2_MECH_RAD_PER_SEC;
-    }
-    if ((*CTRL).timebase < 3.5 && (*CTRL).timebase > 2){
-        (*CTRL).i->cmd_varOmega = 50 * RPM_2_MECH_RAD_PER_SEC;
-        // FE.HE_EKF.current_offset[0] = 0.05;
-        // FE.HE_EKF.current_offset[1] = 0.1;
-    }
-    if ((*CTRL).timebase < 8 && (*CTRL).timebase > 3.5){
-        (*CTRL).i->cmd_varOmega = -50 * RPM_2_MECH_RAD_PER_SEC;
-    }
-    if ((*CTRL).timebase > 8){
-        (*CTRL).i->cmd_varOmega += 12.50 * RPM_2_MECH_RAD_PER_SEC * CL_TS;
-    }
-    if ((*CTRL).timebase > 16){
-        (*CTRL).i->cmd_varOmega = 50 * RPM_2_MECH_RAD_PER_SEC;
-    }
-    if ((*CTRL).timebase > 18){
-        (*CTRL).i->cmd_varOmega = 0;
-    }
-    if ((*CTRL).timebase > 22){
-        (*CTRL).i->cmd_varOmega = 10 * RPM_2_MECH_RAD_PER_SEC;
-    }
+
+
+
+    (*CTRL).i->cmd_varOmega = 50 * RPM_2_MECH_RAD_PER_SEC;
+
+
+    #if FALSE // configured experiument series
+        if ((*CTRL).timebase < 4 && (*CTRL).timebase > 2){
+            (*CTRL).i->cmd_varOmega = 50 * RPM_2_MECH_RAD_PER_SEC;
+        }
+        if ((*CTRL).timebase < 7.5 && (*CTRL).timebase > 4){
+            (*CTRL).i->cmd_varOmega = 50 * RPM_2_MECH_RAD_PER_SEC;
+            // FE.HE_EKF.current_offset[0] = 0.05;
+            // FE.HE_EKF.current_offset[1] = 0.1;
+        }
+        if ((*CTRL).timebase < 10 && (*CTRL).timebase > 7.5){
+            (*CTRL).i->cmd_varOmega = -50 * RPM_2_MECH_RAD_PER_SEC;
+        }
+        if ((*CTRL).timebase > 10){
+            (*CTRL).i->cmd_varOmega += 12.50 * RPM_2_MECH_RAD_PER_SEC * CL_TS;
+        }
+        if ((*CTRL).timebase > 18){
+            (*CTRL).i->cmd_varOmega = 50 * RPM_2_MECH_RAD_PER_SEC;
+        }
+        if ((*CTRL).timebase > 20){
+            (*CTRL).i->cmd_varOmega = 0;
+        }
+        if ((*CTRL).timebase > 23){
+            (*CTRL).i->cmd_varOmega = 10 * RPM_2_MECH_RAD_PER_SEC;
+        }    
+        #endif
+
     #if PC_SIMULATION == TRUE
         #if WHO_IS_USER == USER_WB
             ACM.TLoad = 0;
@@ -785,18 +840,59 @@ void _user_commands(){
             // }
         #elif WHO_IS_USER == USER_HZQ
             // (*CTRL).i->cmd_varOmega = 0.0;
-            // if ((*CTRL).timebase > CL_TS){
-            //     (*CTRL).i->cmd_varOmega = (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
-            //     #if PC_SIMULATION
-            //         ACM.TLoad = 1 * (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.5);
-            //     #endif
-            // }
-            // if ((*CTRL).timebase > 0.2){
-            //     #if PC_SIMULATION
-            //         ACM.TLoad = d_sim.user.Breaking_Torque;
-            //         // printf("TLoad is %f\n", ACM.TLoad);
-            //     #endif
-            // }
+            #if  PC_SIMULATION
+            {
+                if ((*CTRL).timebase < 0.2 && (*CTRL).timebase > 0.1){
+                    (*CTRL).i->cmd_varOmega = 100 * RPM_2_MECH_RAD_PER_SEC;
+                }
+                if ((*CTRL).timebase < 0.3 && (*CTRL).timebase > 0.2){
+                    (*CTRL).i->cmd_varOmega = 100 * RPM_2_MECH_RAD_PER_SEC;
+                    ACM.TLoad = 0.4 * (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);//0.3 rated torque load
+                    // FE.HE_EKF.current_offset[0] = 0.05;
+                    // FE.HE_EKF.current_offset[1] = 0.1;
+                }
+                if ((*CTRL).timebase < 0.4 && (*CTRL).timebase > 0.3){
+                    (*CTRL).i->cmd_varOmega = -100 * RPM_2_MECH_RAD_PER_SEC;
+                    ACM.TLoad = 0.4 * (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);//0.4 rated torque load
+                    // FE.HE_EKF.current_offset[0] = 0.05;
+                    // FE.HE_EKF.current_offset[1] = 0.1;
+                }
+                if ((*CTRL).timebase < 0.5 && (*CTRL).timebase > 0.4){
+                    (*CTRL).i->cmd_varOmega = -100 * RPM_2_MECH_RAD_PER_SEC;
+                    ACM.TLoad = 0.4 * (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);//0.4 rated torque load
+                }
+                if ((*CTRL).timebase < 2 && (*CTRL).timebase > 1){
+                    (*CTRL).i->cmd_varOmega += 200* RPM_2_MECH_RAD_PER_SEC * CL_TS;
+                    ACM.TLoad = 0.4 * (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);//0.4 rated torque load
+                }
+                // if ((*CTRL).timebase > 2){
+                //     (*CTRL).i->cmd_varOmega = 100 * RPM_2_MECH_RAD_PER_SEC;
+                //     ACM.TLoad = 0.4 * (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);//0.3 rated torque load
+                // }
+                if ((*CTRL).timebase < 3 && (*CTRL).timebase > 2){
+                    (*CTRL).i->cmd_varOmega -= 200* RPM_2_MECH_RAD_PER_SEC * CL_TS;
+                    ACM.TLoad = 0.4 * (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);//0.4 rated torque load
+                }
+                // if ((*CTRL).timebase > 2.5){
+                //     (*CTRL).i->cmd_varOmega = 0;
+                //     ACM.TLoad = 0.4 * (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);//0.3 rated torque load
+                // }
+                if ((*CTRL).timebase > 3){
+                    (*CTRL).i->cmd_varOmega = -100 * RPM_2_MECH_RAD_PER_SEC;
+                    ACM.TLoad = 0.4 * (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);//0.3 rated torque load
+                }
+                // if ((*CTRL).timebase > 18){
+                //     (*CTRL).i->cmd_varOmega = 50 * RPM_2_MECH_RAD_PER_SEC;
+                // }
+                // if ((*CTRL).timebase > 0.8){
+                //     (*CTRL).i->cmd_varOmega = 0;
+                // }
+                // if ((*CTRL).timebase > 0.9){
+                //     (*CTRL).i->cmd_varOmega = 10 * RPM_2_MECH_RAD_PER_SEC;
+                // }                
+            }
+            #endif
+
 
             // if ((*CTRL).timebase > 5){
             //     (*CTRL).i->cmd_varOmega = 0.5 * (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
@@ -1090,15 +1186,29 @@ int  main_switch(long mode_select){
             while(OBSV.theta_d > M_PI) OBSV.theta_d  -= 2*M_PI;
             while(OBSV.theta_d < -M_PI) OBSV.theta_d += 2*M_PI;
             #if (AFE_44_ORTEGA_2011)
-                FOC_with_vecocity_control(FE.Ortega.theta_d, 
-                    PLLN.omega_elec * MOTOR.npp_inv, 
-                    (*CTRL).i->cmd_varOmega, 
-                    (*CTRL).i->cmd_iDQ, 
-                    (*CTRL).i->iAB
-                );
+            //     FOC_with_vecocity_control(FE.Ortega.theta_d, 
+            //         PLLN.omega_elec * MOTOR.npp_inv, 
+            //         (*CTRL).i->cmd_varOmega, 
+            //         (*CTRL).i->cmd_iDQ, 
+            //         (*CTRL).i->iAB
+            //     );
             #elif (AFE_16_HE_EKF_2025)
                 FOC_with_vecocity_control(FE.HE_EKF.theta_d, 
                 PLLN_EKF.omega_elec * MOTOR.npp_inv, 
+                (*CTRL).i->cmd_varOmega, 
+                (*CTRL).i->cmd_iDQ, 
+                (*CTRL).i->iAB
+            );
+            #elif (AFE_16_HE_SE3_2025)
+                FOC_with_vecocity_control(FE.HE_SE3.theta_d, 
+                FE.HE_SE3.omega_elec * MOTOR.npp_inv, 
+                (*CTRL).i->cmd_varOmega, 
+                (*CTRL).i->cmd_iDQ, 
+                (*CTRL).i->iAB
+            );
+            #elif (AFE_16_HE_SE3_EKF_2025)
+                FOC_with_vecocity_control(FE.HE_SE3_EKF.theta_d, 
+                FE.HE_SE3_EKF.omega_elec * MOTOR.npp_inv, 
                 (*CTRL).i->cmd_varOmega, 
                 (*CTRL).i->cmd_iDQ, 
                 (*CTRL).i->iAB

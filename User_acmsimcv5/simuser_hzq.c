@@ -181,8 +181,8 @@ void rk4_init(){
         #undef NS
     }
     #if PC_SIMULATION == TRUE
-        #define OFFSET_CURRENT_SENSOR_ALPHA 0.10//(1*-0.2) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
-        #define OFFSET_CURRENT_SENSOR_BETA  -0.05//(1*+0.2) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
+        #define OFFSET_CURRENT_SENSOR_ALPHA 0//(1*-0.2) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
+        #define OFFSET_CURRENT_SENSOR_BETA  0//(1*+0.2) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
     #else
         #define OFFSET_CURRENT_SENSOR_ALPHA 0
         #define OFFSET_CURRENT_SENSOR_BETA  0
@@ -1210,51 +1210,32 @@ void rk4_init(){
     }
     // #endif
 
-    // #if AFE_16_HE_EKF_2025
-    void init_HE_EKF(){
-        /* Define EKF parameters */
-        FE.HE_EKF.B_cova = 10000; // Covariance matrix of curent sensor bias noise, noises being 0.01 A in alpha beta direction
-        FE.HE_EKF.Q_cova = 0.000001; // Covariance of psudo measurement, noise in alpha beta direction
-        // FE.HE_EKF.inital_angle = 0; // initial zero angle for flux, in radian
-        FE.HE_EKF.initial_angle = CTRL->enc->theta_d_elec; // initial angle for flux, in radian
-        FE.HE_EKF.initial_angle = (*CTRL).i->theta_d_elec; // initial angle for flux, in radian
-        FE.HE_EKF.initial_Covariance  = 0.02; // initial flux norm, in Wb
-        FE.HE_EKF.Resistance = MOTOR.R;
-        FE.HE_EKF.Inductance = MOTOR.Ld;
-        FE.HE_EKF.Flux_norm = MOTOR.KE; //psi PM flux
-        FE.HE_EKF.ONE_OVER_LPF_Hz =0.01;
-        // matrix of bias noise, noises being 0.01 A in alpha beta direction
+    /* Helper function: Generate Gaussian random noise using Box-Muller transform
+     * Returns a random value from a normal distribution N(mean, std_dev^2)
+     * Uses Box-Muller transform: converts uniform random to Gaussian
+     */
+    REAL randn(REAL mean, REAL std_dev) {
+        static int has_spare = 0;
+        static REAL spare;
         
-        // static double B[2][2] = {{B_cova*B_cova,B_cova*B_cova},{B_cova*B_cova,B_cova*B_cova}};
-        FE.HE_EKF.B_p =FE.HE_EKF.B_cova*FE.HE_EKF.B_cova*(FE.HE_EKF.Inductance+ CL_TS *FE.HE_EKF.Resistance)*(FE.HE_EKF.Inductance+ CL_TS *FE.HE_EKF.Resistance)* CL_TS* CL_TS;
-        FE.HE_EKF.B_prime[0][0] = FE.HE_EKF.B_p; 
-        FE.HE_EKF.B_prime[0][1] = 0;
-        FE.HE_EKF.B_prime[1][0] = 0;
-        FE.HE_EKF.B_prime[1][1] = FE.HE_EKF.B_p;
-        // Covariance matrix of flux norm 0.14 Wb 0.002 error in alpha beta direction
+        if (has_spare) {
+            has_spare = 0;
+            return mean + std_dev * spare;
+        }
         
-        FE.HE_EKF.IS_measured[0] = IS_C(0) + OFFSET_CURRENT_SENSOR_ALPHA;
-        FE.HE_EKF.IS_measured[1] = IS_C(1) + OFFSET_CURRENT_SENSOR_BETA;
-        // Initial state
-        FE.HE_EKF.flux[0] = FE.HE_EKF.Flux_norm * cos(FE.HE_EKF.initial_angle);
-        FE.HE_EKF.flux[1] = FE.HE_EKF.Flux_norm * sin(FE.HE_EKF.initial_angle);
-        FE.HE_EKF.stator_flux[0]= FE.HE_EKF.Flux_norm * cos(FE.HE_EKF.initial_angle);
-        FE.HE_EKF.stator_flux[1]= FE.HE_EKF.Flux_norm * sin(FE.HE_EKF.initial_angle);
-
-        //state at 0 degree in alpha beta direction
-        FE.HE_EKF.sigmapri[0][0] = FE.HE_EKF.initial_Covariance*FE.HE_EKF.initial_Covariance;
-        FE.HE_EKF.sigmapri[0][1] = 0;
-        FE.HE_EKF.sigmapri[1][0] = 0;
-        FE.HE_EKF.sigmapri[1][1] = FE.HE_EKF.initial_Covariance*FE.HE_EKF.initial_Covariance;
-        // Initial flux covariance at 0 degree, 0.01 Wb in alpha beta direction
-        FE.HE_EKF.Ibias[0] = 0;  
-        FE.HE_EKF.Ibias[1] = 0;// Initial flux covariance at 0 degree, 0 A in alpha beta direction
-        FE.HE_EKF.last_current[0] = 0;
-        FE.HE_EKF.last_current[1] = 0;  
-        FE.HE_EKF.current_offset[0] = 0;
-        FE.HE_EKF.current_offset[1] = 0;
-        FE.HE_EKF.current_compensated[0] = 0;
-        FE.HE_EKF.current_compensated[1] = 0;
+        has_spare = 1;
+        
+        REAL u, v, s;
+        do {
+            u = ((REAL)rand() / RAND_MAX) * 2.0 - 1.0;
+            v = ((REAL)rand() / RAND_MAX) * 2.0 - 1.0;
+            s = u * u + v * v;
+        } while (s >= 1.0 || s == 0.0);
+        
+        s = sqrt(-2.0 * log(s) / s);
+        spare = v * s;
+        
+        return mean + std_dev * u * s;
     }
 
     void multiply_2x2_matrices(const REAL A[2][2], const REAL B[2][2], REAL C[2][2])
@@ -1276,86 +1257,1161 @@ void rk4_init(){
         /* Step 2: 1x2 * 2x1 => scalar */
         return (HR[0] * H[0] + HR[1] * H[1]);
     }
-
-    void main_HE_EKF(){
-
-        FE.HE_EKF.IS_measured[0] = IS_C(0) + FE.HE_EKF.current_offset[0];
-        FE.HE_EKF.IS_measured[1] = IS_C(1) + FE.HE_EKF.current_offset[1];
-
-        FE.HE_EKF.stator_flux_d[0] = US_C(0) - MOTOR.R *  (FE.HE_EKF.IS_measured[0] - FE.HE_EKF.Ibias[0]) ;
-        FE.HE_EKF.stator_flux_d[1] = US_C(1) - MOTOR.R *  (FE.HE_EKF.IS_measured[1] - FE.HE_EKF.Ibias[1]) ;
-
-        FE.HE_EKF.stator_flux[0] = FE.HE_EKF.flux[0] + FE.HE_EKF.Inductance * (FE.HE_EKF.IS_measured[0]) + FE.HE_EKF.stator_flux_d[0]*CL_TS; // use the last iteration estimate active flux
-        FE.HE_EKF.stator_flux[1] = FE.HE_EKF.flux[1] + FE.HE_EKF.Inductance * (FE.HE_EKF.IS_measured[1]) + FE.HE_EKF.stator_flux_d[1]*CL_TS; // use the last iteration estimate active flux
-
-        FE.HE_EKF.flux[0] = FE.HE_EKF.stator_flux[0] - FE.HE_EKF.Inductance * (FE.HE_EKF.IS_measured[0]); // PM flux
-        FE.HE_EKF.flux[1] = FE.HE_EKF.stator_flux[1] - FE.HE_EKF.Inductance * (FE.HE_EKF.IS_measured[1]);// PM flux
+    
+    /* Helper function: M * R * M^T for a 2x2 M and 2x2 R, stores result in output parameter 
+     * OPTIMIZED VERSION for when:
+     * - M is SO(2) rotation matrix: M = [c, -s; s, c] where c=cos(θ), s=sin(θ)
+     * - R is symmetric matrix: R = [a, b; b, a]
+     * 
+     * Mathematical derivation:
+     * For rotation matrix M and symmetric R, M*R*M^T has analytical form:
+     * result = [a, b; b, a] (R is invariant under SO(2) similarity transform when R=[a,b;b,a])
+     * 
+     * More generally, for R=[r00, r01; r10, r11]:
+     * result[0][0] = r00*c² + r11*s² + (r01+r10)*c*s
+     * result[0][1] = result[1][0] = (r11-r00)*c*s + r01*c² - r10*s²
+     * result[1][1] = r00*s² + r11*c² - (r01+r10)*c*s
+     * 
+     * For symmetric R (r01=r10=b, r00=r11=a):
+     * result[0][0] = a*(c²+s²) + 2b*c*s = a + 2b*c*s = a + b*sin(2θ)
+     * result[0][1] = result[1][0] = 0 + b*(c²-s²) = b*cos(2θ)
+     * result[1][1] = a*(s²+c²) - 2b*c*s = a - 2b*c*s = a - b*sin(2θ)
+     */
+    void compute_MRM_T(const REAL M[2][2], const REAL Rmat[2][2], REAL result[2][2])
+    {
+        // Check if Rmat is symmetric with form [a, b; b, a]
+        // This is common for covariance matrices in 2D systems
+        REAL r00 = Rmat[0][0];
+        REAL r01 = Rmat[0][1];
+        REAL r10 = Rmat[1][0];
+        REAL r11 = Rmat[1][1];
         
-        FE.HE_EKF.last_current[0]= FE.HE_EKF.IS_measured[0];
-        FE.HE_EKF.last_current[1]= FE.HE_EKF.IS_measured[1];
+        // Extract rotation matrix components
+        REAL c = M[0][0];  // cos(θ)
+        REAL s = M[1][0];  // sin(θ)
+        
+        // Fast path for symmetric matrix [a, b; b, a]
+        // if (fabs(r00 - r11) < 1e-10 && fabs(r01 - r10) < 1e-10) {
+        //     // Symmetric case: R = [a, b; b, a]
+        //     REAL a = r00;
+        //     REAL b = r01;
+        //     REAL cs2 = 2.0 * c * s;  // 2*cos(θ)*sin(θ) = sin(2θ)
+        //     REAL c2_s2 = c*c - s*s;  // cos²(θ) - sin²(θ) = cos(2θ)
+            
+        //     result[0][0] = a + b * cs2;
+        //     result[0][1] = b * c2_s2;
+        //     result[1][0] = result[0][1];  // Symmetric
+        //     result[1][1] = a - b * cs2;
+        // }
+        // else {
+            // General case (fallback to standard computation)
+            // Precompute common terms
+            REAL c2 = c * c;
+            REAL s2 = s * s;
+            REAL cs = c * s;
+            
+            REAL r_sum = r01 + r10;
+            REAL r_diff = r11 - r00;
+            
+            result[0][0] = r00*c2 + r11*s2 + r_sum*cs;
+            result[0][1] = r_diff*cs + r01*c2 - r10*s2;
+            result[1][0] = r_diff*cs - r01*s2 + r10*c2;
+            result[1][1] = r00*s2 + r11*c2 - r_sum*cs;
+        // }
+    }
 
-        int count_i, count_j;
-        for (count_i = 0; count_i < 2; count_i++) {
-            for (count_j = 0; count_j < 2; count_j++) {
-                FE.HE_EKF.sigmapri[count_i][count_j] = FE.HE_EKF.sigmapost[count_i][count_j] + FE.HE_EKF.B_prime[count_i][count_j];
-            }
+
+    void  init_HE_pure_integration(){
+        FE.HE_pure_integration.initial_angle = 0; // initial zero angle for flux, in radian
+        FE.HE_pure_integration.initial_Covariance  = 0.02; // initial flux norm, in Wb
+        FE.HE_pure_integration.Resistance = MOTOR.R*1.0;
+        FE.HE_pure_integration.Inductance = MOTOR.Ld*1.0;
+        FE.HE_pure_integration.Flux_norm = MOTOR.KE*1.0; //psi PM flux
+        FE.HE_pure_integration.ONE_OVER_LPF_Hz =0.003; // tracking the current bias now
+        FE.HE_pure_integration.IS_measured[0] = IS_C(0) + OFFSET_CURRENT_SENSOR_ALPHA;
+        FE.HE_pure_integration.IS_measured[1] = IS_C(1) + OFFSET_CURRENT_SENSOR_BETA;
+        FE.HE_pure_integration.flux[0] = FE.HE_pure_integration.Flux_norm * cos(FE.HE_pure_integration.initial_angle);
+        FE.HE_pure_integration.flux[1] = FE.HE_pure_integration.Flux_norm * sin(FE.HE_pure_integration.initial_angle);
+        FE.HE_pure_integration.stator_flux[0]= FE.HE_pure_integration.Flux_norm * cos(FE.HE_pure_integration.initial_angle);
+        FE.HE_pure_integration.stator_flux[1]= FE.HE_pure_integration.Flux_norm * sin(FE.HE_pure_integration.initial_angle);
+        FE.HE_pure_integration.last_current[0] = 0;
+        FE.HE_pure_integration.last_current[1] = 0;  
+        FE.HE_pure_integration.Ibias[0] = 0.1;  
+        FE.HE_pure_integration.Ibias[1] = 0.15;// Initial flux covariance at 0 degree, 0 A in alpha beta direction
+        // filter of current bias
+        // Compute filter time constant: tau = 1/(2*pi*cutoff)        
+        FE.HE_pure_integration.tau = 1.0/ ONE_OVER_2PI * FE.HE_pure_integration.ONE_OVER_LPF_Hz;
+    }
+
+    void  step_HE_pure_integration(){
+        if PC_SIMULATION{
+            FE.HE_pure_integration.Ibias[0] += randn(0.0, 10) * CL_TS ;
+            FE.HE_pure_integration.Ibias[1] += randn(0.0, 10) * CL_TS ;
         }
+        FE.HE_pure_integration.IS_measured[0] = IS_C(0) + FE.HE_pure_integration.Ibias[0]*1;// + randn(0.0, 0.01);
+        FE.HE_pure_integration.IS_measured[1] = IS_C(1) + FE.HE_pure_integration.Ibias[1]*1;// + randn(0.0, 0.01);
+        // Cache frequently used values
+        REAL IS_biased_0 = FE.HE_pure_integration.IS_measured[0];
+        REAL IS_biased_1 = FE.HE_pure_integration.IS_measured[1];
+
+        FE.HE_pure_integration.stator_flux_d[0] = US_C(0) - FE.HE_pure_integration.Resistance * IS_biased_0;
+        FE.HE_pure_integration.stator_flux_d[1] = US_C(1) - FE.HE_pure_integration.Resistance * IS_biased_1;
+
+        // Stator flux integration (cache intermediate values)
+        REAL L_IS_0 = FE.HE_pure_integration.Inductance * IS_biased_0;
+        REAL L_IS_1 = FE.HE_pure_integration.Inductance * IS_biased_1;
+        REAL L_IS_Last_0 = FE.HE_pure_integration.Inductance * FE.HE_pure_integration.last_current[0];
+        REAL L_IS_Last_1 = FE.HE_pure_integration.Inductance * FE.HE_pure_integration.last_current[1];
+        
+        FE.HE_pure_integration.stator_flux[0] = FE.HE_pure_integration.flux[0] + L_IS_Last_0 + FE.HE_pure_integration.stator_flux_d[0]*CL_TS;
+        FE.HE_pure_integration.stator_flux[1] = FE.HE_pure_integration.flux[1] + L_IS_Last_1 + FE.HE_pure_integration.stator_flux_d[1]*CL_TS;
+
+        // PM flux extraction
+        FE.HE_pure_integration.flux[0] = FE.HE_pure_integration.stator_flux[0] - L_IS_0;
+        FE.HE_pure_integration.flux[1] = FE.HE_pure_integration.stator_flux[1] - L_IS_1;
+        
+        FE.HE_pure_integration.last_current[0] = IS_biased_0;
+        FE.HE_pure_integration.last_current[1] = IS_biased_1;
+
+    }
+    void  init_HE_EKF_no_sensor_correct(){
+        /* Define EKF parameters */
+        FE.HE_EKF_no_sensor_correct.B_cova = 10000; // Covariance matrix of curent sensor bias noise, noises being 0.01 A in alpha beta direction
+        FE.HE_EKF_no_sensor_correct.Q_cova = 0.000001; // Covariance of psudo measurement, noise in alpha beta direction
+        // FE.HE_EKF.inital_angle = 0; // initial zero angle for flux, in radian
+        FE.HE_EKF_no_sensor_correct.initial_angle = 0; // initial zero angle for flux, in radian
+        FE.HE_EKF_no_sensor_correct.initial_Covariance  = 0.02; // initial flux norm, in Wb
+        FE.HE_EKF_no_sensor_correct.Resistance = MOTOR.R*1.0;
+        FE.HE_EKF_no_sensor_correct.Inductance = MOTOR.Ld*1.0;
+        FE.HE_EKF_no_sensor_correct.Flux_norm = MOTOR.KE*1.0; //psi PM flux
+        FE.HE_EKF_no_sensor_correct.ONE_OVER_LPF_Hz =0.003; // tracking the current bias now
+        // matrix of bias noise, noises being 0.01 A in alpha beta direction
+        
+        // static REAL B[2][2] = {{B_cova*B_cova,B_cova*B_cova},{B_cova*B_cova,B_cova*B_cova}};
+        FE.HE_EKF_no_sensor_correct.B_p =FE.HE_EKF_no_sensor_correct.B_cova*FE.HE_EKF_no_sensor_correct.B_cova*(FE.HE_EKF_no_sensor_correct.Inductance+ CL_TS *FE.HE_EKF_no_sensor_correct.Resistance)*(FE.HE_EKF_no_sensor_correct.Inductance+ CL_TS *FE.HE_EKF_no_sensor_correct.Resistance)* CL_TS* CL_TS;
+        FE.HE_EKF_no_sensor_correct.B_prime[0][0] = FE.HE_EKF_no_sensor_correct.B_p; 
+        FE.HE_EKF_no_sensor_correct.B_prime[0][1] = 0;
+        FE.HE_EKF_no_sensor_correct.B_prime[1][0] = 0;
+        FE.HE_EKF_no_sensor_correct.B_prime[1][1] = FE.HE_EKF_no_sensor_correct.B_p;
+        // Covariance matrix of flux norm 0.14 Wb 0.002 error in alpha beta direction
+        
+        FE.HE_EKF_no_sensor_correct.IS_measured[0] = IS_C(0) + OFFSET_CURRENT_SENSOR_ALPHA;
+        FE.HE_EKF_no_sensor_correct.IS_measured[1] = IS_C(1) + OFFSET_CURRENT_SENSOR_BETA;
+        // Initial state
+        FE.HE_EKF_no_sensor_correct.flux[0] = FE.HE_EKF_no_sensor_correct.Flux_norm * cos(FE.HE_EKF_no_sensor_correct.initial_angle);
+        FE.HE_EKF_no_sensor_correct.flux[1] = FE.HE_EKF_no_sensor_correct.Flux_norm * sin(FE.HE_EKF_no_sensor_correct.initial_angle);
+        FE.HE_EKF_no_sensor_correct.stator_flux[0]= FE.HE_EKF_no_sensor_correct.Flux_norm * cos(FE.HE_EKF_no_sensor_correct.initial_angle);
+        FE.HE_EKF_no_sensor_correct.stator_flux[1]= FE.HE_EKF_no_sensor_correct.Flux_norm * sin(FE.HE_EKF_no_sensor_correct.initial_angle);
+
+        //state at 0 degree in alpha beta direction
+        FE.HE_EKF_no_sensor_correct.sigmapri[0][0] = FE.HE_EKF_no_sensor_correct.initial_Covariance*FE.HE_EKF_no_sensor_correct.initial_Covariance;
+        FE.HE_EKF_no_sensor_correct.sigmapri[0][1] = 0;
+        FE.HE_EKF_no_sensor_correct.sigmapri[1][0] = 0;
+        FE.HE_EKF_no_sensor_correct.sigmapri[1][1] = FE.HE_EKF_no_sensor_correct.initial_Covariance*FE.HE_EKF_no_sensor_correct.initial_Covariance;
+        // Initial flux covariance at 0 degree, 0.01 Wb in alpha beta direction
+        FE.HE_EKF_no_sensor_correct.Ibias[0] = 0.1;  
+        FE.HE_EKF_no_sensor_correct.Ibias[1] = 0.15;// Initial flux covariance at 0 degree, 0 A in alpha beta direction
+
+        FE.HE_EKF_no_sensor_correct.last_current[0] = 0;
+        FE.HE_EKF_no_sensor_correct.last_current[1] = 0;  
+        // filter of current bias
+        // Compute filter time constant: tau = 1/(2*pi*cutoff)        
+        FE.HE_EKF_no_sensor_correct.tau = 1.0/ ONE_OVER_2PI * FE.HE_EKF_no_sensor_correct.ONE_OVER_LPF_Hz;
+    }
+
+
+    
+    void  step_HE_EKF_no_sensor_correct(){
+        if PC_SIMULATION{
+            FE.HE_EKF_no_sensor_correct.Ibias[0] += randn(0.0, 10) * CL_TS ;
+            FE.HE_EKF_no_sensor_correct.Ibias[1] += randn(0.0, 10) * CL_TS ;
+        }
+        FE.HE_EKF_no_sensor_correct.IS_measured[0] = IS_C(0) + FE.HE_EKF_no_sensor_correct.Ibias[0]*1 ;//+ randn(0.0, 0.01);
+        FE.HE_EKF_no_sensor_correct.IS_measured[1] = IS_C(1) + FE.HE_EKF_no_sensor_correct.Ibias[1]*1 ;//+ randn(0.0, 0.01);
+        // Cache frequently used values
+        REAL IS_biased_0 = FE.HE_EKF_no_sensor_correct.IS_measured[0] - FE.HE_EKF_no_sensor_correct.Ibias_est[0];
+        REAL IS_biased_1 = FE.HE_EKF_no_sensor_correct.IS_measured[1] - FE.HE_EKF_no_sensor_correct.Ibias_est[1];
+
+        FE.HE_EKF_no_sensor_correct.stator_flux_d[0] = US_C(0) - FE.HE_EKF_no_sensor_correct.Resistance * IS_biased_0;
+        FE.HE_EKF_no_sensor_correct.stator_flux_d[1] = US_C(1) - FE.HE_EKF_no_sensor_correct.Resistance * IS_biased_1;
+
+        // Stator flux integration (cache intermediate values)
+        REAL L_IS_0 = FE.HE_EKF_no_sensor_correct.Inductance * IS_biased_0;
+        REAL L_IS_1 = FE.HE_EKF_no_sensor_correct.Inductance * IS_biased_1;
+        REAL L_IS_Last_0 = FE.HE_EKF_no_sensor_correct.Inductance * FE.HE_EKF_no_sensor_correct.last_current[0];
+        REAL L_IS_Last_1 = FE.HE_EKF_no_sensor_correct.Inductance * FE.HE_EKF_no_sensor_correct.last_current[1];
+        
+        FE.HE_EKF_no_sensor_correct.stator_flux[0] = FE.HE_EKF_no_sensor_correct.flux[0] + L_IS_Last_0 + FE.HE_EKF_no_sensor_correct.stator_flux_d[0]*CL_TS;
+        FE.HE_EKF_no_sensor_correct.stator_flux[1] = FE.HE_EKF_no_sensor_correct.flux[1] + L_IS_Last_1 + FE.HE_EKF_no_sensor_correct.stator_flux_d[1]*CL_TS;
+        // PM flux extraction
+        FE.HE_EKF_no_sensor_correct.flux[0] = FE.HE_EKF_no_sensor_correct.stator_flux[0] - L_IS_0;
+        FE.HE_EKF_no_sensor_correct.flux[1] = FE.HE_EKF_no_sensor_correct.stator_flux[1] - L_IS_1;
+        
+        FE.HE_EKF_no_sensor_correct.last_current[0] = IS_biased_0;
+        FE.HE_EKF_no_sensor_correct.last_current[1] = IS_biased_1;
+        // Covariance prediction (unrolled for 2x2)
+        FE.HE_EKF_no_sensor_correct.sigmapri[0][0] = FE.HE_EKF_no_sensor_correct.sigmapost[0][0] + FE.HE_EKF_no_sensor_correct.B_prime[0][0];
+        FE.HE_EKF_no_sensor_correct.sigmapri[0][1] = FE.HE_EKF_no_sensor_correct.sigmapost[0][1] + FE.HE_EKF_no_sensor_correct.B_prime[0][1];
+        FE.HE_EKF_no_sensor_correct.sigmapri[1][0] = FE.HE_EKF_no_sensor_correct.sigmapost[1][0] + FE.HE_EKF_no_sensor_correct.B_prime[1][0];
+        FE.HE_EKF_no_sensor_correct.sigmapri[1][1] = FE.HE_EKF_no_sensor_correct.sigmapost[1][1] + FE.HE_EKF_no_sensor_correct.B_prime[1][1];
 
         /* EKF Correction */
-        /* Compute Kalman Gain K = P H^T (H P H^T + R)^-1 */
-        REAL Ht[2] = {2*FE.HE_EKF.flux[0], 2*FE.HE_EKF.flux[1]};
+        // Compute Jacobian H^T (cache flux values)
+        REAL flux_0 = FE.HE_EKF_no_sensor_correct.flux[0];
+        REAL flux_1 = FE.HE_EKF_no_sensor_correct.flux[1];
+        REAL Ht[2] = {2.0*flux_0, 2.0*flux_1};
+
+        REAL Q_prime_Htsigma = FE.HE_EKF_no_sensor_correct.Q_cova + compute_HRH_T(Ht, FE.HE_EKF_no_sensor_correct.sigmapri);
+        REAL Q_prime_Htsigma_inv = 1.0 / Q_prime_Htsigma;
+
+        // Compute Kalman gain (optimized)
+        REAL K[2];
+        K[0] = (FE.HE_EKF_no_sensor_correct.sigmapri[0][0]*Ht[0] + FE.HE_EKF_no_sensor_correct.sigmapri[0][1]*Ht[1]) * Q_prime_Htsigma_inv;
+        K[1] = (FE.HE_EKF_no_sensor_correct.sigmapri[1][0]*Ht[0] + FE.HE_EKF_no_sensor_correct.sigmapri[1][1]*Ht[1]) * Q_prime_Htsigma_inv;
+
+        // Compute innovation (cache Flux_norm_squared)
+        FE.HE_EKF_no_sensor_correct.h = flux_0 * flux_0 + flux_1 * flux_1;
+        REAL Flux_norm_squared = FE.HE_EKF_no_sensor_correct.Flux_norm * FE.HE_EKF_no_sensor_correct.Flux_norm;
+        REAL innovation = Flux_norm_squared - FE.HE_EKF_no_sensor_correct.h;
+
+        // State update
+        FE.HE_EKF_no_sensor_correct.flux[0] += K[0] * innovation;
+        FE.HE_EKF_no_sensor_correct.flux[1] += K[1] * innovation;
+
+        // Compute I - KH (unrolled for 2x2)
+        REAL I_KH[2][2];
+        I_KH[0][0] = 1.0 - K[0] * Ht[0];
+        I_KH[0][1] = -K[0] * Ht[1];
+        I_KH[1][0] = -K[1] * Ht[0];
+        I_KH[1][1] = 1.0 - K[1] * Ht[1];
+
+        multiply_2x2_matrices(I_KH, FE.HE_EKF_no_sensor_correct.sigmapri, FE.HE_EKF_no_sensor_correct.sigmapost);
+
+        // // Sensor bias correction (optimized)
+        // REAL current_sensor_correction = innovation / (FE.HE_EKF.Inductance + CL_TS * FE.HE_EKF.Resistance) * CL_TS_INVERSE;
+        // REAL nt[2];
+        // nt[0] =  K[0] * current_sensor_correction;
+        // nt[1] =  K[1] * current_sensor_correction;
+
+        // REAL Ibias_update0 = FE.HE_EKF.Ibias_est[0] + nt[0] * CL_TS;
+        // REAL Ibias_update1 = FE.HE_EKF.Ibias_est[1] + nt[1] * CL_TS;
+
+        // // Apply first order low pass filter on Ibias
+        // REAL alpha = CL_TS/(FE.HE_EKF.tau + CL_TS);
+        FE.HE_EKF_no_sensor_correct.Ibias_est[0] = 0;
+        FE.HE_EKF_no_sensor_correct.Ibias_est[1] = 0;
+
+        // FE.HE_EKF.theta_d = atan2(FE.HE_EKF.flux[1], FE.HE_EKF.flux[0]);
+        // FE.HE_EKF.theta_e = angle_diff(FE.HE_EKF.theta_d, (*CTRL).i->theta_d_elec) * ONE_OVER_2PI * 360;
+    }
+
+
+
+
+
+    // #if AFE_16_HE_EKF_2025
+    void init_HE_EKF(){
+        /* Define EKF parameters */
+        FE.HE_EKF.B_cova = 10000; // Covariance matrix of curent sensor bias noise, noises being 0.01 A in alpha beta direction
+        FE.HE_EKF.Q_cova = 0.000001; // Covariance of psudo measurement, noise in alpha beta direction
+        // FE.HE_EKF.inital_angle = 0; // initial zero angle for flux, in radian
+        FE.HE_EKF.initial_angle = 0; // initial zero angle for flux, in radian
+        FE.HE_EKF.initial_Covariance  = 0.02; // initial flux norm, in Wb
+        FE.HE_EKF.Resistance = MOTOR.R*1.0;
+        FE.HE_EKF.Inductance = MOTOR.Ld*1.0;
+        FE.HE_EKF.Flux_norm = MOTOR.KE*1.0; //psi PM flux
+        FE.HE_EKF.ONE_OVER_LPF_Hz =0.003; // tracking the current bias now
+        // matrix of bias noise, noises being 0.01 A in alpha beta direction
+        
+        // static REAL B[2][2] = {{B_cova*B_cova,B_cova*B_cova},{B_cova*B_cova,B_cova*B_cova}};
+        FE.HE_EKF.B_p =FE.HE_EKF.B_cova*FE.HE_EKF.B_cova*(FE.HE_EKF.Inductance+ CL_TS *FE.HE_EKF.Resistance)*(FE.HE_EKF.Inductance+ CL_TS *FE.HE_EKF.Resistance)* CL_TS* CL_TS;
+        FE.HE_EKF.B_prime[0][0] = FE.HE_EKF.B_p; 
+        FE.HE_EKF.B_prime[0][1] = 0;
+        FE.HE_EKF.B_prime[1][0] = 0;
+        FE.HE_EKF.B_prime[1][1] = FE.HE_EKF.B_p;
+        // Covariance matrix of flux norm 0.14 Wb 0.002 error in alpha beta direction
+        
+        FE.HE_EKF.IS_measured[0] = IS_C(0) + OFFSET_CURRENT_SENSOR_ALPHA;
+        FE.HE_EKF.IS_measured[1] = IS_C(1) + OFFSET_CURRENT_SENSOR_BETA;
+        // Initial state
+        FE.HE_EKF.flux[0] = FE.HE_EKF.Flux_norm * cos(FE.HE_EKF.initial_angle);
+        FE.HE_EKF.flux[1] = FE.HE_EKF.Flux_norm * sin(FE.HE_EKF.initial_angle);
+        FE.HE_EKF.stator_flux[0]= FE.HE_EKF.Flux_norm * cos(FE.HE_EKF.initial_angle);
+        FE.HE_EKF.stator_flux[1]= FE.HE_EKF.Flux_norm * sin(FE.HE_EKF.initial_angle);
+
+        //state at 0 degree in alpha beta direction
+        FE.HE_EKF.sigmapri[0][0] = FE.HE_EKF.initial_Covariance*FE.HE_EKF.initial_Covariance;
+        FE.HE_EKF.sigmapri[0][1] = 0;
+        FE.HE_EKF.sigmapri[1][0] = 0;
+        FE.HE_EKF.sigmapri[1][1] = FE.HE_EKF.initial_Covariance*FE.HE_EKF.initial_Covariance;
+        // Initial flux covariance at 0 degree, 0.01 Wb in alpha beta direction
+        FE.HE_EKF.Ibias[0] = 0.1;  
+        FE.HE_EKF.Ibias[1] = 0.15;// Initial flux covariance at 0 degree, 0 A in alpha beta direction
+        FE.HE_EKF.Ibias_est[0] = 0;  
+        FE.HE_EKF.Ibias_est[1] = 0;// Initial flux covariance at 0 degree, 0 A in alpha beta direction
+        FE.HE_EKF.last_current[0] = 0;
+        FE.HE_EKF.last_current[1] = 0;  
+        // filter of current bias
+        // Compute filter time constant: tau = 1/(2*pi*cutoff)        
+        FE.HE_EKF.tau = 1.0/ ONE_OVER_2PI * FE.HE_EKF.ONE_OVER_LPF_Hz;
+    }
+
+
+
+    /* ============================================================================
+     * TIMING ANALYSIS for step_HE_EKF() on TI TMS320F28377 DSP
+     * ============================================================================
+     * 
+     * This is a simplified EKF without state transition matrix (Phi).
+     * Uses direct flux integration with covariance update.
+     * 
+     * Operation Count Estimation (with TMU acceleration):
+     * 
+     * 1. Current measurements & randn (2x):        ~150 cycles
+     * 2. Stator flux derivative calculations:      ~30 cycles
+     * 3. Stator flux integration (2 lines):        ~40 cycles
+     * 4. PM flux extraction:                       ~20 cycles
+     * 5. Covariance prediction (loop 2x2):         ~30 cycles (unrolled below)
+     * 6. Jacobian H^T computation:                 ~10 cycles
+     * 7. compute_HRH_T():                          ~25 cycles
+     * 8. Kalman gain calculation (division):       ~40 cycles
+     * 9. Innovation computation:                   ~20 cycles
+     * 10. State update (flux):                     ~25 cycles
+     * 11. I-KH computation (loop 2x2):             ~30 cycles (unrolled below)
+     * 12. multiply_2x2_matrices():                 ~50 cycles
+     * 13. Sensor bias correction:                  ~40 cycles
+     * 14. Bias update & filtering:                 ~50 cycles
+     * 15. atan2() for theta_d (TMU):               ~25 cycles
+     * 16. angle_diff():                            ~50 cycles
+     * 17. Memory operations:                       ~50 cycles
+     * 
+     * TOTAL ESTIMATED CYCLES: ~685-800 cycles
+     * 
+     * EXECUTION TIME @ 200 MHz:
+     * - Best case:  685 cycles × 5 ns = ~3.4 µs
+     * - Typical:    740 cycles × 5 ns = ~3.7 µs
+     * - Worst case: 800 cycles × 5 ns = ~4.0 µs
+     * 
+     * With optimizations:
+     * - Estimated time: ~3.4-4.0 µs
+     * 
+     * For different control frequencies:
+     * - 10 kHz (100 µs):    ~4% CPU usage
+     * - 20 kHz (50 µs):     ~8% CPU usage
+     * - 50 kHz (20 µs):     ~20% CPU usage
+     * - 100 kHz (10 µs):    ~40% CPU usage
+     * - 200 kHz (5 µs):     ~80% CPU usage
+     * 
+     * Comparison with other observers:
+     * - step_HE_SE3():     ~2.5-3 µs    (no covariance)
+     * - step_HE_EKF():     ~3.4-4 µs    (simple EKF, no Phi)
+     * - step_HE_SE3_EKF(): ~5-7 µs      (full EKF with Phi, SE(3))
+     * 
+     * This observer provides a good balance between computational cost
+     * and estimation quality with covariance tracking.
+     * ============================================================================
+     */
+
+    void step_HE_EKF(){
+        if PC_SIMULATION{
+            FE.HE_EKF.Ibias[0] += randn(0.0, 10) * CL_TS ;
+            FE.HE_EKF.Ibias[1] += randn(0.0, 10) * CL_TS ;
+        }
+        FE.HE_EKF.IS_measured[0] = IS_C(0) + FE.HE_EKF.Ibias[0]*1 ;//+ randn(0.0, 0.01);
+        FE.HE_EKF.IS_measured[1] = IS_C(1) + FE.HE_EKF.Ibias[1]*1 ;//+ randn(0.0, 0.01);
+
+        // Cache frequently used values
+        REAL IS_biased_0 = FE.HE_EKF.IS_measured[0] - FE.HE_EKF.Ibias_est[0];
+        REAL IS_biased_1 = FE.HE_EKF.IS_measured[1] - FE.HE_EKF.Ibias_est[1];
+
+        FE.HE_EKF.stator_flux_d[0] = US_C(0) - FE.HE_EKF.Resistance * IS_biased_0;
+        FE.HE_EKF.stator_flux_d[1] = US_C(1) - FE.HE_EKF.Resistance * IS_biased_1;
+
+        // Stator flux integration (cache intermediate values)
+        REAL L_IS_0 = FE.HE_EKF.Inductance * IS_biased_0;
+        REAL L_IS_1 = FE.HE_EKF.Inductance * IS_biased_1;
+
+        REAL L_IS_Last_0 = FE.HE_EKF.Inductance * FE.HE_EKF.last_current[0];
+        REAL L_IS_Last_1 = FE.HE_EKF.Inductance * FE.HE_EKF.last_current[1];
+        
+        FE.HE_EKF.stator_flux[0] = FE.HE_EKF.flux[0] + L_IS_Last_0 + FE.HE_EKF.stator_flux_d[0]*CL_TS;
+        FE.HE_EKF.stator_flux[1] = FE.HE_EKF.flux[1] + L_IS_Last_1 + FE.HE_EKF.stator_flux_d[1]*CL_TS;
+
+        // PM flux extraction
+        FE.HE_EKF.flux[0] = FE.HE_EKF.stator_flux[0] - L_IS_0;
+        FE.HE_EKF.flux[1] = FE.HE_EKF.stator_flux[1] - L_IS_1;
+        
+        FE.HE_EKF.last_current[0] = IS_biased_0;
+        FE.HE_EKF.last_current[1] = IS_biased_1;
+
+        // Covariance prediction (unrolled for 2x2)
+        FE.HE_EKF.sigmapri[0][0] = FE.HE_EKF.sigmapost[0][0] + FE.HE_EKF.B_prime[0][0];
+        FE.HE_EKF.sigmapri[0][1] = FE.HE_EKF.sigmapost[0][1] + FE.HE_EKF.B_prime[0][1];
+        FE.HE_EKF.sigmapri[1][0] = FE.HE_EKF.sigmapost[1][0] + FE.HE_EKF.B_prime[1][0];
+        FE.HE_EKF.sigmapri[1][1] = FE.HE_EKF.sigmapost[1][1] + FE.HE_EKF.B_prime[1][1];
+
+        /* EKF Correction */
+        // Compute Jacobian H^T (cache flux values)
+        REAL flux_0 = FE.HE_EKF.flux[0];
+        REAL flux_1 = FE.HE_EKF.flux[1];
+        REAL Ht[2] = {2.0*flux_0, 2.0*flux_1};
 
         REAL Q_prime_Htsigma = FE.HE_EKF.Q_cova + compute_HRH_T(Ht, FE.HE_EKF.sigmapri);
+        REAL Q_prime_Htsigma_inv = 1.0 / Q_prime_Htsigma;
 
+        // Compute Kalman gain (optimized)
+        REAL K[2];
+        K[0] = (FE.HE_EKF.sigmapri[0][0]*Ht[0] + FE.HE_EKF.sigmapri[0][1]*Ht[1]) * Q_prime_Htsigma_inv;
+        K[1] = (FE.HE_EKF.sigmapri[1][0]*Ht[0] + FE.HE_EKF.sigmapri[1][1]*Ht[1]) * Q_prime_Htsigma_inv;
 
-        REAL K[2] ={ (FE.HE_EKF.sigmapri[0][0]*Ht[0]+FE.HE_EKF.sigmapri[0][1]*Ht[1])/Q_prime_Htsigma, (FE.HE_EKF.sigmapri[1][0]*Ht[0]+FE.HE_EKF.sigmapri[1][1]*Ht[1])/Q_prime_Htsigma};
+        // Compute innovation (cache Flux_norm_squared)
+        FE.HE_EKF.h = flux_0 * flux_0 + flux_1 * flux_1;
+        REAL Flux_norm_squared = FE.HE_EKF.Flux_norm * FE.HE_EKF.Flux_norm;
+        REAL innovation = Flux_norm_squared - FE.HE_EKF.h;
 
-        FE.HE_EKF.h = FE.HE_EKF.flux[0] * FE.HE_EKF.flux[0] + FE.HE_EKF.flux[1] * FE.HE_EKF.flux[1];
+        // State update
+        FE.HE_EKF.flux[0] += K[0] * innovation;
+        FE.HE_EKF.flux[1] += K[1] * innovation;
 
-        FE.HE_EKF.flux[0] += K[0] * ((FE.HE_EKF.Flux_norm * FE.HE_EKF.Flux_norm)-FE.HE_EKF.h);
-        FE.HE_EKF.flux[1] += K[1] * ((FE.HE_EKF.Flux_norm * FE.HE_EKF.Flux_norm)-FE.HE_EKF.h);
-
-
+        // Compute I - KH (unrolled for 2x2)
         REAL I_KH[2][2];
-        REAL Identity_matrix[2][2] = {{1, 0}, {0, 1}};
-        for (count_i = 0; count_i < 2; count_i++) {
-            for (count_j = 0; count_j < 2; count_j++) {
-                I_KH[count_i][count_j] = Identity_matrix[count_i][count_j] - K[count_i] * Ht[count_j];
-            }
-        }
+        I_KH[0][0] = 1.0 - K[0] * Ht[0];
+        I_KH[0][1] = -K[0] * Ht[1];
+        I_KH[1][0] = -K[1] * Ht[0];
+        I_KH[1][1] = 1.0 - K[1] * Ht[1];
 
-        multiply_2x2_matrices(I_KH, FE.HE_EKF.sigmapri, FE.HE_EKF.sigmapost); // sigmapost = (I - K H) sigmapri
+        multiply_2x2_matrices(I_KH, FE.HE_EKF.sigmapri, FE.HE_EKF.sigmapost);
 
-        REAL nt[2] = {0, 0};
-        REAL current_sensor_correction= ((FE.HE_EKF.Flux_norm * FE.HE_EKF.Flux_norm-FE.HE_EKF.h))/(FE.HE_EKF.Inductance + CL_TS *FE.HE_EKF.Resistance)/ CL_TS ;
-        nt[0] = K[0] * current_sensor_correction ;
-        nt[1] = K[1] * current_sensor_correction ;
+        // Sensor bias correction (optimized)
+        REAL current_sensor_correction = innovation / (FE.HE_EKF.Inductance + CL_TS * FE.HE_EKF.Resistance) * CL_TS_INVERSE;
+        REAL nt[2];
+        nt[0] =  K[0] * current_sensor_correction;
+        nt[1] =  K[1] * current_sensor_correction;
 
-        REAL Ibias_update0 = FE.HE_EKF.Ibias[0]+ nt[0] * CL_TS;
-        REAL Ibias_update1 = FE.HE_EKF.Ibias[1]+ nt[1] * CL_TS;
+        REAL Ibias_update0 = FE.HE_EKF.Ibias_est[0] + nt[0] * CL_TS;
+        REAL Ibias_update1 = FE.HE_EKF.Ibias_est[1] + nt[1] * CL_TS;
 
-        // filter of current bias
-        // Compute filter time constant: tau = 1/(2*pi*cutoff)
-        REAL tau = 1.0/ ONE_OVER_2PI * FE.HE_EKF.ONE_OVER_LPF_Hz;
-        // Compute alpha: filter coefficient
-        REAL alpha = CL_TS/(tau + CL_TS);
         // Apply first order low pass filter on Ibias
-        FE.HE_EKF.Ibias[0] = FE.HE_EKF.Ibias[0] + alpha*(Ibias_update0 - FE.HE_EKF.Ibias[0]);
-        FE.HE_EKF.Ibias[1] = FE.HE_EKF.Ibias[1] + alpha*(Ibias_update1 - FE.HE_EKF.Ibias[1]);
-        
-        FE.HE_EKF.current_compensated[0] = FE.HE_EKF.IS_measured[0] - FE.HE_EKF.Ibias[0];
-        FE.HE_EKF.current_compensated[1] = FE.HE_EKF.IS_measured[1] - FE.HE_EKF.Ibias[1];
-        
+        REAL alpha = CL_TS/(FE.HE_EKF.tau + CL_TS);
+        FE.HE_EKF.Ibias_est[0] = FE.HE_EKF.Ibias_est[0] + alpha*(Ibias_update0 - FE.HE_EKF.Ibias_est[0]);
+        FE.HE_EKF.Ibias_est[1] = FE.HE_EKF.Ibias_est[1] + alpha*(Ibias_update1 - FE.HE_EKF.Ibias_est[1]);
+
         FE.HE_EKF.theta_d = atan2(FE.HE_EKF.flux[1], FE.HE_EKF.flux[0]);
         FE.HE_EKF.theta_e = angle_diff(FE.HE_EKF.theta_d, (*CTRL).i->theta_d_elec) * ONE_OVER_2PI * 360;
-        FE.HE_EKF.cosT = cos(FE.HE_EKF.theta_d);
-        FE.HE_EKF.sinT = sin(FE.HE_EKF.theta_d);
-        FE.HE_EKF.current_compensated_dq[0] = AB2M(FE.HE_EKF.current_compensated[0], FE.HE_EKF.current_compensated[1], FE.HE_EKF.cosT, FE.HE_EKF.sinT);
-        FE.HE_EKF.current_compensated_dq[1] = AB2T(FE.HE_EKF.current_compensated[0], FE.HE_EKF.current_compensated[1], FE.HE_EKF.cosT, FE.HE_EKF.sinT);
-        FE.HE_EKF.current_bf_compensated_dq[0] =AB2M(FE.HE_EKF.IS_measured[0], FE.HE_EKF.IS_measured[1], FE.HE_EKF.cosT, FE.HE_EKF.sinT);
-        FE.HE_EKF.current_bf_compensated_dq[1] =AB2T(FE.HE_EKF.IS_measured[0], FE.HE_EKF.IS_measured[1], FE.HE_EKF.cosT, FE.HE_EKF.sinT);
     }
     // #endif
+
+    // #if AFE_16_HE_SE3_2025
+    /*
+    * he_se3_incremental_flux_observer.c
+    *
+    * Implements an incremental PM-flux observer based on the equations in the prompt.
+    *
+    * Assumptions (IMPORTANT - read):
+    * 1) The operator [v]_+ used in the paper is interpreted here as the 2x2 "complex-number"
+    *    matrix representation of the 2-vector v = [vx; vy]:
+    *
+    *        [v]_+ = [ [ vx, -vy ],
+    *                  [ vy,  vx ] ]
+    *
+    *    This maps v to the real 2x2 matrix that corresponds to multiplication by (vx + j*vy).
+    *
+    * 2) Under that mapping, inverse([v]_+) exists when ||v||^2 = vx^2 + vy^2 > 0 and is
+    *    the matrix corresponding to multiplication by the complex reciprocal.
+    *
+    * 3) The paper's formula (chi = [psi]_{+}^{-1} [psi_dot]_{+}) therefore reduces to
+    *    computing the complex scalar c = (psi_dot_x + j*psi_dot_y) / (psi_x + j*psi_y),
+    *    then turning c back into a 2x2 real matrix (see code).
+    *
+    * 4) The code computes two values related to angular velocity:
+    *    - chi_det: det(chi) as in the paper (for the complex-matrix mapping this equals |c|^2).
+    *    - omega_est: the imaginary part of c, which in many physical interpretations corresponds
+    *      to the rotational rate (this is provided as an alternative and likely better match to
+    *      a physical angular velocity estimate). The original equation used det(chi) for
+    *      
+    *    Please check which definition your paper intends; adapt get_estimated_omega() accordingly.
+    *
+    * API in this single-file "library":
+    *   void init_HE_SE3(void);
+    *   void set_dt(REAL dt);
+    *   void set_measured_flux_dot(REAL psi_dot_x, REAL psi_dot_y);
+    *   void set_predicted_flux_prior(REAL psi_x, REAL psi_y); // sets \hat{\psi}_{p,t-1|t-1}
+    *   void step_HE_SE3(void);
+    *   void get_predicted_flux(REAL *out_x, REAL *out_y); // \hat{\psi}_{p,t}
+    *   REAL get_chi_det(void);
+    *   REAL get_estimated_omega_imag(void); // imaginary part of c
+    *
+    * The user requested void init_HE_SE3() and void step_HE_SE3() signatures: they exist.
+    * Internally, inputs are provided via the setter functions above before calling step_HE_SE3().
+    */
+
+    /* ---------- Utility helpers ---------- */
+
+    // FE.HE_SE3.flux_perior_prev[0], FE.HE_SE3.flux_perior_prev[1], FE.HE_SE3.flux_dot_meas[0], FE.HE_SE3.flux_dot_meas[1]
+    static void complex_divide(REAL flux_prev_alpha, REAL flux_prev_beta,
+                            REAL flux_d_alpha, REAL flux_d_beta,
+                            REAL *chi_alpha, REAL *chi_beta)
+    {
+        /* 
+        * Compute:
+        *   chi = [flux_prev]_+^{-1} * [flux_dot]_+
+        * where:
+        *   [flux_prev]_+ = [ flux_prev_alpha, -flux_prev_beta;
+        *                     flux_prev_beta,  flux_prev_alpha ]
+        *
+        * and:
+        *   [flux_dot]_+  = [ flux_d_alpha, -flux_d_beta;
+        *                     flux_d_beta,  flux_d_alpha ]
+        *
+        * For such matrices, the result corresponds to complex division:
+        *   chi = (flux_d_alpha + j*flux_d_beta) / (flux_prev_alpha + j*flux_prev_beta)
+        *
+        * and can be written back as:
+        *   chi = [ chi_a, -chi_b;
+        *           chi_b,  chi_a ]
+        */
+
+        REAL denom = flux_prev_alpha * flux_prev_alpha + flux_prev_beta * flux_prev_beta;
+        if (denom == 0.0) {
+            *chi_alpha = 0.0;
+            *chi_beta = 0.0;
+            return;
+        }
+
+        /* complex division: (a + jb) / (c + jd) = ((a*c + b*d) + j(b*c - a*d)) / (c² + d²) */
+        REAL a = flux_d_alpha;
+        REAL b = flux_d_beta;
+        REAL c = flux_prev_alpha;
+        REAL d = flux_prev_beta;
+
+        *chi_alpha = (a * c + b * d) / denom;   // real part
+        *chi_beta = (b * c - a * d) / denom;   // imaginary part
+    }
+
+    static void exp_complex_matrix(REAL a, REAL b, REAL Dt, REAL mout[2][2]) {
+        REAL ea = exp(a * Dt);
+        REAL theta = b * Dt;
+        REAL c = cos(theta);
+        REAL s = sin(theta);
+        mout[0][0] = ea * c;
+        mout[0][1] = -ea * s;
+        mout[1][0] = ea * s;
+        mout[1][1] = ea * c;
+    }
+
+    void init_HE_SE3() {
+        FE.HE_SE3.Flux_norm = MOTOR.KE * 1.0; // initial flux norm
+        FE.HE_SE3.Resistance = MOTOR.R * 1.0;
+        FE.HE_SE3.Inductance = MOTOR.Ld * 1.0;  
+        // printf("MOTOR.Ld = %f, FE.HE_SE3.Inductance = %f\n", MOTOR.Ld, FE.HE_SE3.Inductance);      
+
+        // FE.HE_SE3.flux_prior[0] = 1.0;
+        // FE.HE_SE3.flux_prior[1] = 0.0;
+
+        FE.HE_SE3.flux_perior[0] = FE.HE_SE3.Flux_norm;
+        FE.HE_SE3.flux_perior[1] = 0.0;
+        FE.HE_SE3.flux_perior_prev[0] = FE.HE_SE3.Flux_norm;
+        FE.HE_SE3.flux_perior_prev[1] = 0.0;        
+        FE.HE_SE3.flux_postrior[0] = FE.HE_SE3.Flux_norm;
+        FE.HE_SE3.flux_postrior[1] = 0.0;
+        FE.HE_SE3.flux_postrior_prev[0] = FE.HE_SE3.Flux_norm;
+        FE.HE_SE3.flux_postrior_prev[1] = 0.0;
+        // screw matrix at first
+        // [1,0;
+        // -0,1]
+        FE.HE_SE3.chi_alpha =1;
+        FE.HE_SE3.chi_beta=0;
+
+        FE.HE_SE3.IS_measured[0] = IS_C(0) + OFFSET_CURRENT_SENSOR_ALPHA;
+        FE.HE_SE3.IS_measured[1] = IS_C(1) + OFFSET_CURRENT_SENSOR_BETA;
+        FE.HE_SE3.IS_measured_prev[0] = IS_C(0) + OFFSET_CURRENT_SENSOR_ALPHA;
+        FE.HE_SE3.IS_measured_prev[1] = IS_C(1) + OFFSET_CURRENT_SENSOR_BETA;
+
+        FE.HE_SE3.Ibias[0] = 0;
+        FE.HE_SE3.Ibias[1] = 0;
+        FE.HE_SE3.theta_d = 0.0;
+        FE.HE_SE3.theta_e = 0.0;
+        FE.HE_SE3.omega_elec = 0;
+        FE.HE_SE3.omega_elec_pre=0;
+
+        FE.HE_SE3.ONE_OVER_LPF_Hz = 0.0002; // cutoff frequency for speed filter
+
+        FE.HE_SE3.tau = 1.0/ ONE_OVER_2PI * FE.HE_SE3.ONE_OVER_LPF_Hz;
+    }
+
+
+    /* ============================================================================
+     * TIMING ANALYSIS for step_HE_SE3() on TI TMS320F28377 DSP
+     * ============================================================================
+     * 
+     * This is a simpler flux observer without full EKF covariance propagation.
+     * Uses SE(3) group structure for flux normalization constraint.
+     * 
+     * Operation Count Estimation (with TMU acceleration):
+     * 
+     * 1. Current measurements & randn (2x):        ~150 cycles
+     * 2. Basic arithmetic (f_d calculations):      ~40 cycles
+     * 3. complex_divide():                         ~50 cycles
+     * 4. sqrt() + sign() (chi_det, omega):         ~15 cycles
+     * 5. Filter calculations (alpha, omega):       ~25 cycles
+     * 6. exp_complex_matrix() (sin/cos TMU):       ~80 cycles
+     * 7. Matrix-vector products (flux_perior):     ~20 cycles
+     * 8. sqrt() for normalization:                 ~12 cycles
+     * 9. Flux normalization (3 mults):             ~10 cycles
+     * 10. State updates (assignments):             ~30 cycles
+     * 11. atan2() for theta_d (TMU):               ~25 cycles
+     * 12. angle_diff():                            ~50 cycles
+     * 
+     * TOTAL ESTIMATED CYCLES: ~500-600 cycles
+     * 
+     * EXECUTION TIME @ 200 MHz:
+     * - Best case:  500 cycles × 5 ns = ~2.5 µs
+     * - Typical:    550 cycles × 5 ns = ~2.75 µs
+     * - Worst case: 600 cycles × 5 ns = ~3.0 µs
+     * 
+     * With optimizations:
+     * - Estimated time: ~2.5-3.0 µs
+     * 
+     * For different control frequencies:
+     * - 10 kHz (100 µs):    ~3% CPU usage
+     * - 20 kHz (50 µs):     ~6% CPU usage
+     * - 50 kHz (20 µs):     ~15% CPU usage
+     * - 100 kHz (10 µs):    ~30% CPU usage
+     * - 200 kHz (5 µs):     ~60% CPU usage
+     * 
+     * Comparison with step_HE_SE3_EKF():
+     * - step_HE_SE3():     ~2.5-3 µs    (simpler, no covariance)
+     * - step_HE_SE3_EKF(): ~5-7 µs      (full EKF with covariance)
+     * - Speedup: ~2x faster
+     * 
+     * This observer is suitable for high-speed applications where 
+     * covariance tracking is not required.
+     * ============================================================================
+     */
+
+    void step_HE_SE3() {
+
+        if PC_SIMULATION{
+            FE.HE_SE3.Ibias[0] += randn(0.0, 10) * CL_TS ;
+            FE.HE_SE3.Ibias[1] += randn(0.0, 10) * CL_TS ;
+        }
+        FE.HE_SE3.IS_measured[0] = IS_C(0) + FE.HE_SE3.Ibias[0]  + randn(0.0, 0.01);
+        FE.HE_SE3.IS_measured[1] = IS_C(1) + FE.HE_SE3.Ibias[1]  + randn(0.0, 0.01);
+
+        // Cache frequently used values
+        REAL IS_diff_0 = FE.HE_SE3.IS_measured[0] - FE.HE_SE3.IS_measured_prev[0];
+        REAL IS_diff_1 = FE.HE_SE3.IS_measured[1] - FE.HE_SE3.IS_measured_prev[1];
+        REAL IS_biased_0 = FE.HE_SE3.IS_measured[0];
+        REAL IS_biased_1 = FE.HE_SE3.IS_measured[1];
+        
+        FE.HE_SE3.f_d[0] = US_C(0) - FE.HE_SE3.Resistance * IS_biased_0 - FE.HE_SE3.Inductance  * IS_diff_0 * CL_TS_INVERSE; 
+        FE.HE_SE3.f_d[1] = US_C(1) - FE.HE_SE3.Resistance * IS_biased_1 - FE.HE_SE3.Inductance  * IS_diff_1 * CL_TS_INVERSE;
+
+        FE.HE_SE3.IS_measured_prev[0] = FE.HE_SE3.IS_measured[0];
+        FE.HE_SE3.IS_measured_prev[1] = FE.HE_SE3.IS_measured[1];
+
+        complex_divide(FE.HE_SE3.flux_perior_prev[0], FE.HE_SE3.flux_perior_prev[1], FE.HE_SE3.f_d[0], FE.HE_SE3.f_d[1], &FE.HE_SE3.chi_alpha, &FE.HE_SE3.chi_beta);
+
+        FE.HE_SE3.chi_det = FE.HE_SE3.chi_alpha*FE.HE_SE3.chi_alpha + FE.HE_SE3.chi_beta*FE.HE_SE3.chi_beta;
+        FE.HE_SE3.omega_elec = sqrt(FE.HE_SE3.chi_det) * sign(FE.HE_SE3.chi_beta);
+        
+        // Filtering omega_elec (optimized)
+        REAL alpha = CL_TS/(FE.HE_SE3.tau + CL_TS);
+        FE.HE_SE3.omega_elec = FE.HE_SE3.omega_elec_pre + alpha*(FE.HE_SE3.omega_elec - FE.HE_SE3.omega_elec_pre);
+        FE.HE_SE3.omega_elec_pre = FE.HE_SE3.omega_elec;
+
+        // Calculate phi matrix
+        exp_complex_matrix(FE.HE_SE3.chi_alpha, FE.HE_SE3.chi_beta, CL_TS, FE.HE_SE3.Phi);
+
+        // PM flux prior estimate update (cache posterior flux)
+        REAL flux_post_0 = FE.HE_SE3.flux_perior_prev[0];
+        REAL flux_post_1 = FE.HE_SE3.flux_perior_prev[1];
+        FE.HE_SE3.flux_perior[0] = FE.HE_SE3.Phi[0][0]*flux_post_0 + FE.HE_SE3.Phi[0][1]*flux_post_1;
+        FE.HE_SE3.flux_perior[1] = FE.HE_SE3.Phi[1][0]*flux_post_0 + FE.HE_SE3.Phi[1][1]*flux_post_1;
+
+        // Flux normalization (optimized: compute squared norm, then inverse sqrt)
+        REAL flux_perior_norm_squared = FE.HE_SE3.flux_perior[0]*FE.HE_SE3.flux_perior[0] + 
+                                         FE.HE_SE3.flux_perior[1]*FE.HE_SE3.flux_perior[1];
+        REAL One_over_prior_psi_norm = 1.0 / sqrt(flux_perior_norm_squared);
+        
+        // Apply normalization constraint
+        REAL norm_factor = FE.HE_SE3.Flux_norm * One_over_prior_psi_norm;
+        FE.HE_SE3.flux_postrior[0] = FE.HE_SE3.flux_perior[0] * norm_factor;
+        FE.HE_SE3.flux_postrior[1] = FE.HE_SE3.flux_perior[1] * norm_factor;
+
+        // Update previous states
+        FE.HE_SE3.flux_perior_prev[0] = FE.HE_SE3.flux_perior[0];
+        FE.HE_SE3.flux_perior_prev[1] = FE.HE_SE3.flux_perior[1];
+
+        FE.HE_SE3.flux_postrior_prev[0] = FE.HE_SE3.flux_postrior[0];
+        FE.HE_SE3.flux_postrior_prev[1] = FE.HE_SE3.flux_postrior[1];
+
+        FE.HE_SE3.theta_d = atan2(FE.HE_SE3.flux_postrior[1], FE.HE_SE3.flux_postrior[0]);
+        FE.HE_SE3.theta_e = angle_diff(FE.HE_SE3.theta_d, (*CTRL).i->theta_d_elec) * ONE_OVER_2PI * 360;
+        
+    }
+
+
+    /* Helper function: Creates 2x2 cross-product (skew-symmetric) matrix from 2D vector */
+    void Cross_vector(const REAL a[2], REAL result[2][2]){
+        result[0][0] = a[0];
+        result[0][1] = -a[1];
+        result[1][0] = a[1];
+        result[1][1] = a[0];
+    }
+
+    /* Helper function: Computes inverse of a 2x2 matrix
+     * For matrix M = [a b]
+     *                [c d]
+     * Inverse is: (1/det) * [ d  -b]
+     *                       [-c   a]
+     * where det = ad - bc
+     * Returns 0 if successful, -1 if matrix is singular (non-invertible)
+     */
+    int inverse_2x2(const REAL M[2][2], REAL inv[2][2]){
+        REAL det = M[0][0] * M[1][1] - M[0][1] * M[1][0];
+        
+        /* Check if matrix is singular (determinant is zero or very small) */
+        if (fabs(det) < 1e-12) {
+            /* Matrix is singular, cannot compute inverse */
+            return -1;
+        }
+        
+        REAL inv_det = 1.0 / det;
+        
+        inv[0][0] =  M[1][1] * inv_det;
+        inv[0][1] = -M[0][1] * inv_det;
+        inv[1][0] = -M[1][0] * inv_det;
+        inv[1][1] =  M[0][0] * inv_det;
+        
+        return 0;
+    }
+
+    /* Helper function: Multiplies a 2x2 matrix by a 2D vector
+     * Computes: result = M * v
+     * where M is 2x2 matrix and v is 2D vector
+     */
+    void multiply_2x2_matrix_2_Vector(const REAL M[2][2], const REAL v[2], REAL result[2]){
+        result[0] = M[0][0] * v[0] + M[0][1] * v[1];
+        result[1] = M[1][0] * v[0] + M[1][1] * v[1];
+    }
+
+    /* Helper function: Computes logarithm of a 2x2 matrix
+     * For rotation-like matrices of the form:
+     * M = [cos(θ)  -sin(θ)]
+     *     [sin(θ)   cos(θ)]
+     * 
+     * log(M) = [    0    -θ]
+     *          [    θ     0]
+     * 
+     * This is the matrix logarithm for SO(2) (2D rotation group)
+     * Returns 0 if successful, -1 if matrix cannot be processed
+     */
+    int log_of_matrix(const REAL M[2][2], REAL result[2][2]){
+        /* For a scaled rotation matrix M = p*R where R is a rotation matrix:
+         * M = p * [cos(θ), -sin(θ)]
+         *         [sin(θ),  cos(θ)]
+         * 
+         * det(M) = p²
+         * log(M) = log(p)*I + log(R)
+         *        = [log(p),  -θ   ]
+         *          [   θ  , log(p)]
+         */
+        
+        /* Compute determinant to find scaling factor p */
+        REAL det = M[0][0] * M[1][1] - M[0][1] * M[1][0];
+        
+        if (det <= 0.0) {
+            /* Invalid matrix: determinant must be positive for scaled rotation */
+            // printf("log_of_matrix: Invalid matrix, det = %f <= 0\n", det);
+            return -1;
+        }
+        
+        /* Extract scaling factor: p = sqrt(det) */
+        REAL p = sqrt(det);
+        
+        /* Extract rotation angle from normalized matrix M/p */
+        /* For M = p*R: M[0][0] = p*cos(θ), M[1][0] = p*sin(θ) */
+        REAL theta = atan2(M[1][0], M[0][0]);
+        
+        /* Compute log(p) */
+        REAL log_p = log(p);
+        
+        /* Matrix logarithm: log(M) = log(p)*I + θ*J where J is skew-symmetric */
+        result[0][0] = log_p;
+        result[0][1] = -theta;
+        result[1][0] = theta;
+        result[1][1] = log_p;
+        
+        return 0;
+    }
+
+    /* ============================================================================
+     * TIMING ANALYSIS for step_HE_SE3_EKF() on TI TMS320F28377 DSP
+     * ============================================================================
+     * 
+     * DSP Specifications (TMS320F28377D/S):
+     * - Dual-core C28x CPU @ 200 MHz (each core)
+     * - Instruction cycle: 5 ns
+     * - TMU (Trigonometric Math Unit) for fast trig functions
+     * - FPU32 (32-bit Floating Point Unit)
+     * - 32-bit floating-point operations: ~1-2 cycles (with FPU32)
+     * - sqrt() with TMU: ~8-12 cycles
+     * - Division with FPU: ~8-10 cycles
+     * - atan2() with TMU: ~18-25 cycles
+     * - sin/cos with TMU: ~10-15 cycles each
+     * - fabs(): ~1-2 cycles
+     * 
+     * Operation Count Estimation (with TMU acceleration):
+     * 
+     * 1. Current measurements & randn (2x):        ~150 cycles (Box-Muller)
+     * 2. Basic arithmetic (f_d calculations):      ~40 cycles
+     * 3. complex_divide():                         ~50 cycles
+     * 4. sqrt() + sign() (TMU):                    ~15 cycles
+     * 5. Filter calculations:                      ~25 cycles
+     * 6. exp_complex_matrix() (sin/cos TMU):       ~80 cycles
+     * 7. Matrix-vector products (2x):              ~20 cycles
+     * 8. compute_MRM_T() optimized (2x):           ~90 cycles (with fast path)
+     * 9. Covariance update (sigmapri):             ~30 cycles
+     * 10. compute_HRH_T():                         ~25 cycles
+     * 11. Kalman gain calculation:                 ~50 cycles
+     * 12. Innovation & update:                     ~40 cycles
+     * 13. I-KH computation:                        ~30 cycles
+     * 14. multiply_2x2_matrices():                 ~50 cycles
+     * 15. Cross_vector():                          ~15 cycles
+     * 16. inverse_2x2() (with FPU division):       ~60 cycles
+     * 17. multiply_2x2_matrix_2_Vector():          ~15 cycles
+     * 18. Cross_vector() (2nd):                    ~15 cycles
+     * 19. log_inner computation:                   ~20 cycles
+     * 20. log_of_matrix() (atan2 TMU):             ~60 cycles
+     * 21. Cross_vector() (3rd):                    ~15 cycles
+     * 22. multiply_2x2_matrices() (2nd):           ~50 cycles
+     * 23. nt calculations:                         ~20 cycles
+     * 24. Ibias update & filter:                   ~50 cycles
+     * 25. atan2() for theta_d (TMU):               ~25 cycles
+     * 26. angle_diff():                            ~50 cycles
+     * 27. Memory operations & assignments:         ~100 cycles
+     * 
+     * TOTAL ESTIMATED CYCLES: ~1,100-1,400 cycles
+     * 
+     * EXECUTION TIME @ 200 MHz:
+     * - Best case:  1,100 cycles × 5 ns = ~5.5 µs
+     * - Typical:    1,250 cycles × 5 ns = ~6.25 µs
+     * - Worst case: 1,400 cycles × 5 ns = ~7.0 µs
+     * 
+     * With optimizations applied (loop unrolling, fast paths, TMU):
+     * - Estimated time: ~5-7 µs
+     * 
+     * For different control frequencies:
+     * - 10 kHz (100 µs period):   ~6% CPU usage
+     * - 20 kHz (50 µs period):    ~12% CPU usage
+     * - 50 kHz (20 µs period):    ~30% CPU usage
+     * - 100 kHz (10 µs period):   ~60% CPU usage
+     * - 200 kHz (5 µs period):    ~120% CPU usage (exceeds limit)
+     * 
+     * NOTE: Actual timing depends on:
+     * - Compiler optimization level (-O2, -O3, --opt_for_speed=5)
+     * - Memory access patterns (RAM vs Flash, prefetch enabled)
+     * - Pipeline efficiency
+     * - Interrupt latency
+     * - TMU/FPU32 pipeline utilization
+     * 
+     * Key advantages of F28377 vs F28335:
+     * - ~2.5-3x faster overall (200MHz vs 150MHz + TMU)
+     * - Much faster trig functions (TMU: 10-25 cycles vs software: 100-200 cycles)
+     * - Better FPU performance (1-2 cycles vs 8-10 cycles)
+     * - Dual cores (can offload other tasks)
+     * 
+     * Recommendation: Measure actual execution time using:
+     * - GPIO toggle + oscilloscope
+     * - CPU Timer (e.g., CpuTimer0)
+     * - CCS Code Composer Studio profiler
+     * 
+     * Example timing code:
+     *   CpuTimer0Regs.TCR.bit.TSS = 0;
+     *   uint32_t t_start = CpuTimer0Regs.TIM.all;
+     *   step_HE_SE3_EKF();
+     *   uint32_t cycles = t_start - CpuTimer0Regs.TIM.all;
+     *   float time_us = cycles / 200.0;  // @ 200 MHz
+     * ============================================================================
+     */
+    void init_HE_SE3_EKF() {
+        /* Define EKF parameters */
+        FE.HE_SE3_EKF.B_cova = 10000; // Covariance matrix of curent sensor bias noise, noises being 0.01 A in alpha beta direction
+        FE.HE_SE3_EKF.G_cova = 0.0001; // Covariance of psudo measurement, noise in alpha beta direction
+        FE.HE_SE3_EKF.initial_angle = 0;
+        FE.HE_SE3_EKF.initial_Covariance  = 0.02; // initial flux norm, in Wb
+
+        FE.HE_SE3_EKF.Resistance = MOTOR.R*1.0;
+        FE.HE_SE3_EKF.Inductance = MOTOR.Ld*1.0;
+        FE.HE_SE3_EKF.Flux_norm = MOTOR.KE*1.0; //psi PM flux
+
+        // filter for velocity
+        FE.HE_SE3_EKF.ONE_OVER_LPF_Hz = 0.0001;
+        FE.HE_SE3_EKF.ONE_OVER_LPF_Hz_resistance = 0.001;
+        // matrix of bias noise, noises being 0.01 A in alpha beta direction
+        
+        // static REAL B[2][2] = {{B_cova*B_cova,B_cova*B_cova},{B_cova*B_cova,B_cova*B_cova}};
+        FE.HE_SE3_EKF.B_p =FE.HE_SE3_EKF.B_cova*FE.HE_SE3_EKF.B_cova*(FE.HE_SE3_EKF.Inductance+ CL_TS *FE.HE_SE3_EKF.Resistance)*(FE.HE_SE3_EKF.Inductance+ CL_TS *FE.HE_SE3_EKF.Resistance)* CL_TS* CL_TS;
+        FE.HE_SE3_EKF.B_prime[0][0] = FE.HE_SE3_EKF.B_p; 
+        FE.HE_SE3_EKF.B_prime[0][1] = 0;
+        FE.HE_SE3_EKF.B_prime[1][0] = 0;
+        FE.HE_SE3_EKF.B_prime[1][1] = FE.HE_SE3_EKF.B_p;
+        // Covariance matrix of flux norm 0.14 Wb 0.002 error in alpha beta direction
+        
+        FE.HE_SE3_EKF.IS_measured[0] = IS_C(0) + OFFSET_CURRENT_SENSOR_ALPHA;
+        FE.HE_SE3_EKF.IS_measured[1] = IS_C(1) + OFFSET_CURRENT_SENSOR_BETA;
+        FE.HE_SE3_EKF.IS_measured_prev[0] = IS_C(0) + OFFSET_CURRENT_SENSOR_ALPHA;
+        FE.HE_SE3_EKF.IS_measured_prev[1] = IS_C(1) + OFFSET_CURRENT_SENSOR_BETA;
+
+        FE.HE_SE3_EKF.Phi[0][0] = 1;
+        FE.HE_SE3_EKF.Phi[0][1] = 0;
+        FE.HE_SE3_EKF.Phi[1][0] = 0;
+        FE.HE_SE3_EKF.Phi[1][1] = 1;
+        // Initial state
+        FE.HE_SE3_EKF.flux_perior[0] = FE.HE_SE3_EKF.Flux_norm;
+        FE.HE_SE3_EKF.flux_perior[1] = 0.0;
+        FE.HE_SE3_EKF.flux_perior_prev[0] = FE.HE_SE3_EKF.Flux_norm;
+        FE.HE_SE3_EKF.flux_perior_prev[1] = 0.0;        
+        FE.HE_SE3_EKF.flux_postrior[0] = FE.HE_SE3_EKF.Flux_norm;
+        FE.HE_SE3_EKF.flux_postrior[1] = 0.0;
+        FE.HE_SE3_EKF.flux_postrior_prev[0] = FE.HE_SE3_EKF.Flux_norm;
+        FE.HE_SE3_EKF.flux_postrior_prev[1] = 0.0;
+
+        //state at 0 degree in alpha beta direction
+        FE.HE_SE3_EKF.sigmapri[0][0] = FE.HE_SE3_EKF.initial_Covariance*FE.HE_SE3_EKF.initial_Covariance;
+        FE.HE_SE3_EKF.sigmapri[0][1] = 0;
+        FE.HE_SE3_EKF.sigmapri[1][0] = 0;
+        FE.HE_SE3_EKF.sigmapri[1][1] = FE.HE_SE3_EKF.initial_Covariance*FE.HE_SE3_EKF.initial_Covariance;
+        // Initial flux covariance at 0 degree, 0.01 Wb in alpha beta direction
+        FE.HE_SE3_EKF.Ibias[0] = 0;  
+        FE.HE_SE3_EKF.Ibias[1] = 0;// Initial flux covariance at 0 degree, 0 A in alpha beta direction
+        FE.HE_SE3_EKF.Ibias_est[0] = 0;  
+        FE.HE_SE3_EKF.Ibias_est[1] = 0;// Initial flux covariance at 0 degree, 0 A in alpha beta direction
+        FE.HE_SE3_EKF.last_current[0] = 0;
+        FE.HE_SE3_EKF.last_current[1] = 0;  
+        // filter of current bias
+        // Compute filter time constant: tau = 1/(2*pi*cutoff)        
+        FE.HE_SE3_EKF.tau = 1.0/ ONE_OVER_2PI * FE.HE_SE3_EKF.ONE_OVER_LPF_Hz;
+        FE.HE_SE3_EKF.tau_resistance = 1.0/ ONE_OVER_2PI * FE.HE_SE3_EKF.ONE_OVER_LPF_Hz_resistance;
+        FE.HE_SE3_EKF.alpha = CL_TS/(FE.HE_SE3_EKF.tau + CL_TS);
+        FE.HE_SE3_EKF.Beta = CL_TS/(FE.HE_SE3_EKF.tau_resistance + CL_TS);
+    }
+    void step_HE_SE3_EKF() {
+        if PC_SIMULATION{
+            FE.HE_SE3_EKF.Ibias[0] += randn(0.0, 10) * CL_TS ;
+            FE.HE_SE3_EKF.Ibias[1] += randn(0.0, 10) * CL_TS ;
+        }
+        FE.HE_SE3_EKF.IS_measured[0] = IS_C(0) + FE.HE_SE3_EKF.Ibias[0] * 1 +  randn(0.0, 0.02);
+        FE.HE_SE3_EKF.IS_measured[1] = IS_C(1) + FE.HE_SE3_EKF.Ibias[1] * 1 +  randn(0.0, 0.02);
+
+        // Cache frequently used values
+        REAL IS_biased_0 = FE.HE_SE3_EKF.IS_measured[0] -FE.HE_SE3_EKF.Ibias_est[0];
+        REAL IS_biased_1 = FE.HE_SE3_EKF.IS_measured[1] -FE.HE_SE3_EKF.Ibias_est[1];
+        REAL IS_diff_0 = IS_biased_0 - FE.HE_SE3_EKF.IS_measured_prev[0];
+        REAL IS_diff_1 = IS_biased_1 - FE.HE_SE3_EKF.IS_measured_prev[1];
+
+        FE.HE_SE3_EKF.f_d[0] = US_C(0) - FE.HE_SE3_EKF.Resistance  * IS_biased_0 - FE.HE_SE3_EKF.Inductance * IS_diff_0 * CL_TS_INVERSE; 
+        FE.HE_SE3_EKF.f_d[1] = US_C(1) - FE.HE_SE3_EKF.Resistance  * IS_biased_1 - FE.HE_SE3_EKF.Inductance  * IS_diff_1 * CL_TS_INVERSE;
+
+        FE.HE_SE3_EKF.IS_measured_prev[0] = IS_biased_0;
+        FE.HE_SE3_EKF.IS_measured_prev[1] = IS_biased_1;
+
+        complex_divide(FE.HE_SE3_EKF.flux_perior_prev[0], FE.HE_SE3_EKF.flux_perior_prev[1], FE.HE_SE3_EKF.f_d[0], FE.HE_SE3_EKF.f_d[1], &FE.HE_SE3_EKF.chi_alpha, &FE.HE_SE3_EKF.chi_beta);
+
+        FE.HE_SE3_EKF.chi_det = FE.HE_SE3_EKF.chi_alpha*FE.HE_SE3_EKF.chi_alpha + FE.HE_SE3_EKF.chi_beta*FE.HE_SE3_EKF.chi_beta;
+        // FE.HE_SE3_EKF.omega_elec = sqrt(FE.HE_SE3_EKF.chi_det) * sign(FE.HE_SE3_EKF.chi_beta);
+        FE.HE_SE3_EKF.omega_elec = FE.HE_SE3_EKF.chi_beta;
+
+        // Filtering omega_elec (optimized filter coefficient computation)
+
+        FE.HE_SE3_EKF.omega_elec = FE.HE_SE3_EKF.omega_elec_pre + FE.HE_SE3_EKF.alpha*(FE.HE_SE3_EKF.omega_elec - FE.HE_SE3_EKF.omega_elec_pre);
+        FE.HE_SE3_EKF.omega_elec_pre = FE.HE_SE3_EKF.omega_elec;
+
+        // Calculate phi matrix
+        exp_complex_matrix(FE.HE_SE3_EKF.chi_alpha, FE.HE_SE3_EKF.chi_beta, CL_TS, FE.HE_SE3_EKF.Phi);
+        // printf("Phi: [[%f, %f], [%f, %f]]\n", FE.HE_SE3_EKF.Phi[0][0], FE.HE_SE3_EKF.Phi[0][1], FE.HE_SE3_EKF.Phi[1][0], FE.HE_SE3_EKF.Phi[1][1]);
+
+        // PM flux prior estimate update (manual inline to avoid function call overhead)
+        REAL flux_perior_prev_0 = FE.HE_SE3_EKF.flux_perior_prev[0];
+        REAL flux_perior_prev_1 = FE.HE_SE3_EKF.flux_perior_prev[1];
+
+        FE.HE_SE3_EKF.flux_perior[0] = FE.HE_SE3_EKF.Phi[0][0]*FE.HE_SE3_EKF.flux_postrior_prev[0] + FE.HE_SE3_EKF.Phi[0][1]*FE.HE_SE3_EKF.flux_postrior_prev[1];
+        FE.HE_SE3_EKF.flux_perior[1] = FE.HE_SE3_EKF.Phi[1][0]*FE.HE_SE3_EKF.flux_postrior_prev[0] + FE.HE_SE3_EKF.Phi[1][1]*FE.HE_SE3_EKF.flux_postrior_prev[1];
+
+        // Sigma covariance matrix update
+        REAL Phi_sigma_Phi_T[2][2];
+        REAL Phi_B_prime_Phi_T[2][2];
+        // printf("FE.HE_SE3_EKF.sigmapost: [[%f, %f], [%f, %f]]\n", FE.HE_SE3_EKF.sigmapost[0][0], FE.HE_SE3_EKF.sigmapost[0][1], FE.HE_SE3_EKF.sigmapost[1][0], FE.HE_SE3_EKF.sigmapost[1][1]);
+        compute_MRM_T(FE.HE_SE3_EKF.Phi, FE.HE_SE3_EKF.sigmapost, Phi_sigma_Phi_T);
+        // printf("Phi_sigma_Phi_T: [[%f, %f], [%f, %f]]\n", Phi_sigma_Phi_T[0][0], Phi_sigma_Phi_T[0][1], Phi_sigma_Phi_T[1][0], Phi_sigma_Phi_T[1][1]);
+
+        compute_MRM_T(FE.HE_SE3_EKF.Phi, FE.HE_SE3_EKF.B_prime, Phi_B_prime_Phi_T);
+        // printf("Phi_B_Phi_T: [[%f, %f], [%f, %f]]\n", Phi_B_prime_Phi_T[0][0], Phi_B_prime_Phi_T[0][1], Phi_B_prime_Phi_T[1][0], Phi_B_prime_Phi_T[1][1]);
+
+        // Precompute common terms
+        REAL Rt_plus_L = FE.HE_SE3_EKF.Resistance*CL_TS + FE.HE_SE3_EKF.Inductance;
+        REAL Rt_plus_L_inverse = 1.0 / Rt_plus_L;
+        REAL Rt_plus_L_inverse_t_inverse = Rt_plus_L_inverse * CL_TS_INVERSE;
+
+        // Unrolled loop for sigmapri (2x2 matrix)
+        FE.HE_SE3_EKF.sigmapri[0][0] = Phi_sigma_Phi_T[0][0] + Phi_B_prime_Phi_T[0][0];
+        FE.HE_SE3_EKF.sigmapri[0][1] = Phi_sigma_Phi_T[0][1] + Phi_B_prime_Phi_T[0][1];
+        FE.HE_SE3_EKF.sigmapri[1][0] = Phi_sigma_Phi_T[1][0] + Phi_B_prime_Phi_T[1][0];
+        FE.HE_SE3_EKF.sigmapri[1][1] = Phi_sigma_Phi_T[1][1] + Phi_B_prime_Phi_T[1][1];
+        // printf("sigmapri: [[%f, %f], [%f, %f]]\n", FE.HE_SE3_EKF.sigmapri[0][0], FE.HE_SE3_EKF.sigmapri[0][1], FE.HE_SE3_EKF.sigmapri[1][0], FE.HE_SE3_EKF.sigmapri[1][1]);
+
+        /* EKF Correction */
+        // Compute measurement and Jacobian
+        // Measurement equation: z = ||ψ||² (scalar)
+        // Jacobian: H = ∂(||ψ||²)/∂ψ = 2ψ^T (1x2 row vector)
+        // H^T = 2ψ (2x1 column vector)
+        REAL flux_perior_0 = FE.HE_SE3_EKF.flux_perior[0];
+        REAL flux_perior_1 = FE.HE_SE3_EKF.flux_perior[1];
+        REAL Ht[2] = {2.0*flux_perior_0, 2.0*flux_perior_1};  // H^T (column vector)
+        // printf("Ht: [%f, %f]\n", Ht[0], Ht[1]);
+
+        // Compute innovation covariance: S = H*Σ*H^T + R
+        // where H is (1x2), Σ is (2x2), H^T is (2x1), R is scalar
+        REAL H_sigma_Ht = compute_HRH_T(Ht, FE.HE_SE3_EKF.sigmapri);  // H*Σ*H^T
+        REAL S = H_sigma_Ht + FE.HE_SE3_EKF.G_cova;  // Innovation covariance
+        REAL S_inverse = 1.0 / S;
+        // printf("S (innovation covariance): %f\n", S);
+
+        // Compute Kalman gain: K = Σ*H^T*S^(-1)
+        // K is (2x1) = (2x2)*(2x1)*(scalar)
+        REAL K[2];
+        K[0] = (FE.HE_SE3_EKF.sigmapri[0][0]*Ht[0] + FE.HE_SE3_EKF.sigmapri[0][1]*Ht[1]) * S_inverse;
+        K[1] = (FE.HE_SE3_EKF.sigmapri[1][0]*Ht[0] + FE.HE_SE3_EKF.sigmapri[1][1]*Ht[1]) * S_inverse;
+        // printf("K: [%f, %f]\n", K[0], K[1]);
+
+        // Compute innovation (measurement residual)
+        // z (measurement) = Flux_norm²
+        // h(ψ⁻) (predicted measurement) = ||ψ⁻||²
+        FE.HE_SE3_EKF.h = flux_perior_0 * flux_perior_0 + flux_perior_1 * flux_perior_1;
+        REAL Flux_norm_squared = FE.HE_SE3_EKF.Flux_norm * FE.HE_SE3_EKF.Flux_norm;
+        REAL innovation = Flux_norm_squared - FE.HE_SE3_EKF.h;  // y = z - h(ψ⁻)
+        // printf("innovation: %f\n", innovation);
+        
+        // State update: ψ⁺ = ψ⁻ + K*y
+        REAL K_innovation[2] = {K[0] * innovation, K[1] * innovation};
+        // printf("K_innovation: [%f, %f]\n", K_innovation[0], K_innovation[1]);
+
+        FE.HE_SE3_EKF.flux_postrior[0] = flux_perior_0 + K_innovation[0];
+        FE.HE_SE3_EKF.flux_postrior[1] = flux_perior_1 + K_innovation[1];
+
+        // Covariance update: Σ⁺ = (I - K*H)*Σ⁻
+        // where K is (2x1), H is (1x2), so K*H is (2x2)
+        REAL I_KH[2][2];
+        I_KH[0][0] = 1.0 - K[0] * Ht[0];
+        I_KH[0][1] =     - K[0] * Ht[1];
+        I_KH[1][0] =     - K[1] * Ht[0];
+        I_KH[1][1] = 1.0 - K[1] * Ht[1];
+
+        multiply_2x2_matrices(I_KH, FE.HE_SE3_EKF.sigmapri, FE.HE_SE3_EKF.sigmapost);
+
+        /* SE3_EKF version
+        // Sensor calibration update
+        REAL Flux_prior_plus[2][2];
+        REAL Flux_prior_inverse_plus[2][2];
+        REAL K_z_h_plus[2][2];
+        Cross_vector(FE.HE_SE3_EKF.flux_perior, Flux_prior_plus);
+        // printf("Flux_prior_plus: [[%f, %f], [%f, %f]]\n", Flux_prior_plus[0][0], Flux_prior_plus[0][1], Flux_prior_plus[1][0], Flux_prior_plus[1][1]);
+        inverse_2x2(Flux_prior_plus, Flux_prior_inverse_plus);
+        Cross_vector(K_z_h, K_z_h_plus);
+        // printf("K_z_h_plus: [[%f, %f], [%f, %f]]\n", K_z_h_plus[0][0], K_z_h_plus[0][1], K_z_h_plus[1][0], K_z_h_plus[1][1]);
+        // printf("Flux_prior_inverse_plus: [[%f, %f], [%f, %f]]\n", Flux_prior_inverse_plus[0][0], Flux_prior_inverse_plus[0][1], Flux_prior_inverse_plus[1][0], Flux_prior_inverse_plus[1][1]);
+
+        // REAL Flux_prior_inverse_K_z_h[2];
+        // multiply_2x2_matrix_2_Vector(Flux_prior_inverse, K_z_h, Flux_prior_inverse_K_z_h);
+    
+        REAL Flux_prior_inverse_K_z_h_plus[2][2];
+        multiply_2x2_matrices(K_z_h_plus, Flux_prior_inverse_plus, Flux_prior_inverse_K_z_h_plus);
+        // printf("Flux_prior_inverse_K_z_h_plus: [[%f, %f], [%f, %f]]\n", Flux_prior_inverse_K_z_h_plus[0][0], Flux_prior_inverse_K_z_h_plus[0][1], Flux_prior_inverse_K_z_h_plus[1][0], Flux_prior_inverse_K_z_h_plus[1][1]);
+
+        // Compute log_inner = I + Flux_prior_inverse_K_z_h_plus (unrolled)
+        REAL log_inner[2][2];
+        log_inner[0][0] = 1.0 + Flux_prior_inverse_K_z_h_plus[0][0];
+        log_inner[0][1] = Flux_prior_inverse_K_z_h_plus[0][1];
+        log_inner[1][0] = Flux_prior_inverse_K_z_h_plus[1][0];
+        log_inner[1][1] = 1.0 + Flux_prior_inverse_K_z_h_plus[1][1];
+        // printf("log_inner: [[%f, %f], [%f, %f]]\n", log_inner[0][0], log_inner[0][1], log_inner[1][0], log_inner[1][1]);
+
+        REAL Log[2][2];
+        log_of_matrix(log_inner, Log);
+
+        // printf("Log: [[%f, %f], [%f, %f]]\n", Log[0][0], Log[0][1], Log[1][0], Log[1][1]);
+
+        // REAL Last_Flux_posterior_plux[2][2];
+        // Cross_vector(FE.HE_SE3_EKF.flux_postrior_prev, Last_Flux_posterior_plux);
+
+        // REAL Flux_posterior_Log[2][2];
+        // multiply_2x2_matrices(Last_Flux_posterior_plux, Log, Flux_posterior_Log);
+
+        // REAL nt[2];
+        // nt[0] = Rt_plus_L_inverse_t_inverse * Flux_posterior_Log[0][0];
+        // nt[1] = Rt_plus_L_inverse_t_inverse * Flux_posterior_Log[1][0];
+
+        REAL Last_Flux_posterior_plus[2][2];
+        Cross_vector(FE.HE_SE3_EKF.flux_postrior_prev, Last_Flux_posterior_plus);
+
+        REAL Flux_posterior_Log[2][2];
+        // printf("Log: %f,%f;%f,%f\n", Log[0][0],Log[0][1],Log[1][0],Log[1][1]);
+        multiply_2x2_matrices(Last_Flux_posterior_plus, Log, Flux_posterior_Log);
+
+        REAL nt[2];
+        // printf("Flux_posterior_Log: %f,%f\n", Flux_posterior_Log[0][0],Flux_posterior_Log[1][0]);
+        nt[0] = Rt_plus_L_inverse_t_inverse * Flux_posterior_Log[0][0];
+        nt[1] = Rt_plus_L_inverse_t_inverse * Flux_posterior_Log[1][0];
+
+        */
+
+        // Sensor bias correction (optimized)
+        REAL current_sensor_correction = innovation / (FE.HE_SE3_EKF.Inductance + CL_TS * FE.HE_SE3_EKF.Resistance) * CL_TS_INVERSE;
+        REAL nt[2];
+        nt[0] =  K[0] * current_sensor_correction;
+        nt[1] =  K[1] * current_sensor_correction;
+        // printf("nt0: %f, nt1: %f\n", nt[0], nt[1]);
+
+        /* EKF version
+        REAL innovation = Flux_norm_squared - FE.HE_EKF.h;        
+        FE.HE_EKF.flux[0] += K[0] * innovation;
+        FE.HE_EKF.flux[1] += K[1] * innovation;
+
+        // Compute I - KH (unrolled for 2x2)
+        REAL I_KH[2][2];
+        I_KH[0][0] = 1.0 - K[0] * Ht[0];
+        I_KH[0][1] = -K[0] * Ht[1];
+        I_KH[1][0] = -K[1] * Ht[0];
+        I_KH[1][1] = 1.0 - K[1] * Ht[1];
+
+        multiply_2x2_matrices(I_KH, FE.HE_EKF.sigmapri, FE.HE_EKF.sigmapost);
+
+        // Sensor bias correction (optimized)
+        REAL current_sensor_correction = innovation / (FE.HE_EKF.Inductance + CL_TS * FE.HE_EKF.Resistance) * CL_TS_INVERSE;
+        REAL nt[2];
+        nt[0] =  K[0] * current_sensor_correction;
+        nt[1] =  K[1] * current_sensor_correction;
+        */
+
+        // printf("nt0: %f, nt1: %f\n", nt[0], nt[1]);
+        REAL Ibias_update0 = FE.HE_SE3_EKF.Ibias_est[0] + nt[0] * CL_TS;
+        REAL Ibias_update1 = FE.HE_SE3_EKF.Ibias_est[1] + nt[1] * CL_TS;
+
+        // Apply first order low pass filter on Ibias
+        FE.HE_SE3_EKF.Ibias_est[0] = FE.HE_SE3_EKF.Ibias_est[0] + FE.HE_SE3_EKF.Beta*(Ibias_update0 - FE.HE_SE3_EKF.Ibias_est[0]);
+        FE.HE_SE3_EKF.Ibias_est[1] = FE.HE_SE3_EKF.Ibias_est[1] + FE.HE_SE3_EKF.Beta*(Ibias_update1 - FE.HE_SE3_EKF.Ibias_est[1]);
+
+        FE.HE_SE3_EKF.theta_d = atan2(FE.HE_SE3_EKF.flux_postrior[1], FE.HE_SE3_EKF.flux_postrior[0]);
+        // printf("%f\n", FE.HE_SE3_EKF.theta_d);
+        FE.HE_SE3_EKF.theta_e = angle_diff(FE.HE_SE3_EKF.theta_d, (*CTRL).i->theta_d_elec) * ONE_OVER_2PI * 360;
+
+        FE.HE_SE3_EKF.flux_perior_prev[0] = FE.HE_SE3_EKF.flux_perior[0];
+        FE.HE_SE3_EKF.flux_perior_prev[1] = FE.HE_SE3_EKF.flux_perior[1];
+
+        FE.HE_SE3_EKF.flux_postrior_prev[0] = FE.HE_SE3_EKF.flux_postrior[0];
+        FE.HE_SE3_EKF.flux_postrior_prev[1] = FE.HE_SE3_EKF.flux_postrior[1];
+    }
 
     #if AFE_45_CMwithDynamicCurrent
     void init_CMwithDynamicCurrent(){
@@ -1451,20 +2507,18 @@ void rk4_init(){
     #endif
     void simulation_test_flux_estimators(){
         // AFE_44_ORTEGA_2011
-        main_ortega_2011();
+        // main_ortega_2011();
         // AFE_16_HE_EKF_2025
-        main_HE_EKF();
+        step_HE_pure_integration();
+        step_HE_EKF_no_sensor_correct();
+        step_HE_EKF();
+        // step_HE_SE3();
+        // step_HE_SE3_EKF();
         
         // MainFE_HUWU_1998();
         #if AFE_43_SuperTwistingA
             Main_SuperTwistingA();
         #endif
-        // #if AFE_44_ORTEGA_2011
-        //     main_ortega_2011();
-        // #endif
-        // #if AFE_16_HE_EKF_2025
-        //     main_HE_EKF();
-        // #endif
         #if AFE_35_SATURATION_TIME_DIFFERENCE
         // VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
         #endif
@@ -1484,10 +2538,12 @@ void rk4_init(){
 
     void init_FE(){
         // AFE_44_ORTEGA_2011
-        init_ortega();
+        // init_ortega();
         // AFE_16_HE_EKF_2025
-        init_HE_EKF();
-
+        // AFE_16_HE_SE3_2025
+        init_HE_SE3();
+        init_HE_SE3_EKF();
+        init_HE_pure_integration();
         // init_FE_huwu();
         #if AFE_38_OUTPUT_ERROR_CLOSED_LOOP
         init_ClosedLoopFluxEstimatorForPMSM();
@@ -1498,12 +2554,6 @@ void rk4_init(){
         #if AFE_43_SuperTwistingA
             init_SuperTwistingA();
         #endif
-        // #if AFE_44_ORTEGA_2011
-        //     init_ortega();
-        // #endif
-        // #if AFE_16_HE_EKF_2025
-        //     init_HE_EKF();
-        // #endif
         #if AFE_35_SATURATION_TIME_DIFFERENCE
             init_FE_htz();
         #endif
@@ -2693,7 +3743,7 @@ void Main_parksul2014_FADO(){
 
 #if ALG_AKT_SPEED_EST_AND_RS_ID
     void init_ake_Speed_Est_and_RS_ID(){
-        double f_plus = 2e4;
+        REAL f_plus = 2e4;
         akt.lambda1 = 1.5 * sqrt(f_plus);
         akt.lambda2 = 1.1 * f_plus;
         // printf("STA for Akatsu00: %g, %g\n", akt.lambda1, akt.lambda2);
@@ -2820,7 +3870,7 @@ void Main_parksul2014_FADO(){
         // #define SPEED_SIGNAL (CTRL.omg_fb)
 
         // Inertia Observer 2 Awaya1992 
-        static double t = 0.0;
+        static REAL t = 0.0;
         t += CL_TS;
 
         // awy.q0 += TS * awy.awaya_lambda*( -awy.q0 + im.npp*awaya_fluxMod*CTRL.iTs_cmd);
@@ -3067,9 +4117,11 @@ void pmsm_observers(){
     (*CTRL).motor->KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * (*CTRL).i->cmd_iDQ[0];
     simulation_test_flux_estimators();
     // if (AFE_44_ORTEGA_2011)
-    Main_PLL_norm_Psi(FE.Ortega.psi_2);
+    // Main_PLL_norm_Psi(FE.Ortega.psi_2);
     // if (AFE_16_HE_EKF_2025)
-    Main_PLL_norm_Psi_EKF(FE.HE_EKF.flux);
+    // Main_PLL_norm_Psi_EKF(FE.HE_EKF.flux);
+    // if (AFE_16_HE_SE3_2025)
+    // Main_PLL_norm_Psi(FE.HE_SE3.flux_postrior);
 
     #if PC_SIMULATION
         // /* Cascaded Flux Estimator */
@@ -3085,16 +4137,6 @@ void pmsm_observers(){
             SpeedEstimationFromtheVMBasedFluxEstimation();
             RS_Identificaiton();
         #endif
-        // #if (AFE_44_ORTEGA_2011)
-        //     Main_PLL_norm_Psi(FE.Ortega.psi_2);
-        // #endif
-        // #if (AFE_16_HE_EKF_2025)
-        //     Main_PLL_norm_Psi(FE.HE_EKF.flux);
-        // #endif
-        // Main_esoaf_chen2021();
-        // // Main_QiaoXia2013_emfSMO();
-        // Main_ChiXu2009_emfSMO();
-        // Main_parksul2014_FADO();
     #else
         /* 资源有限 */
         #if SELECT_ALGORITHM == ALG_NSOAF

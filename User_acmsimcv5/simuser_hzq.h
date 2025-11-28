@@ -125,7 +125,9 @@
     #define AFE_42_BandP 0
     #define AFE_43_SuperTwistingA 0
     #define AFE_44_ORTEGA_2011 0
-    #define AFE_16_HE_EKF_2025 1
+    #define AFE_16_HE_EKF_2025 0
+    #define AFE_16_HE_SE3_2025 0
+    #define AFE_16_HE_SE3_EKF_2025 0
     #define AFE_45_CMwithDynamicCurrent 0
     #define ALG_PLL_norm 1//DSP-based control of sensorless IPMSM drives for wide-speedrange operation
     #define ALG_AKT_SPEED_EST_AND_RS_ID 0
@@ -356,6 +358,78 @@
         // #endif
 
         // #if AFE_16_HE_EKF_2025
+        struct HE_pure_integration{
+            /* EKF â€œglobalâ€� parameters that we do not strictly need as states */
+            /* Define EKF parameters */
+            // Covariance            
+            // for intitalizeion
+            // REAL B_cova; // Covariance matrix of curent sensor bias noise, noises being 0.01 A in alpha beta direction
+            // REAL Q_cova; // Covariance of psudo measurement, noise in alpha beta direction
+            REAL initial_angle; // initial angle for flux, in radian
+            REAL initial_Covariance; // initial flux norm, in Wb
+            REAL Resistance;
+            REAL Inductance;
+            REAL Flux_norm;
+            REAL ONE_OVER_LPF_Hz; // low pass filter for 
+            REAL tau;            
+
+            // State related
+            REAL IS_measured[2]; // measured current, with sensor offset
+            // REAL R_cova[2][2]; // Covariance matrix of curent sensor bias noise, noises being 0.01 A in alpha beta direction
+            // REAL B_p;
+            // REAL B_prime[2][2]; // Covariance matrix of flux norm 0.14 Wb 0.002 error in alpha beta direction
+            REAL flux[2];  // Initial flux state at 0 degree in alpha beta direction
+            // REAL sigmapri[2][2];  // Initial flux covariance at 0 degree, 0.01 Wb in alpha beta direction
+            // REAL sigmapost[2][2];  // Initial flux covariance at 0 degree, 0.01 Wb in alpha beta direction
+            REAL Ibias[2];  // Initial flux covariance at 0 degree, 0 A in alpha beta direction
+            // REAL Ibias_est[2];  // Initial flux covariance at 0 degree, 0 A in alpha beta direction
+            REAL last_current[2];//= {0, 0}; 
+            REAL f_d[2];//= {0, 0}; // refer to paper
+            REAL stator_flux[2];//= {0, 0};
+            REAL stator_flux_d[2];// ;
+            REAL h; // sudo measurement PM flux
+            REAL theta_d;
+            REAL theta_e;
+        } HE_pure_integration;
+
+
+        // #if AFE_16_HE_EKF_2025
+        struct HE_EKF_no_sensor_correct{
+            /* EKF â€œglobalâ€� parameters that we do not strictly need as states */
+            /* Define EKF parameters */
+            // Covariance            
+            // for intitalizeion
+            REAL B_cova; // Covariance matrix of curent sensor bias noise, noises being 0.01 A in alpha beta direction
+            REAL Q_cova; // Covariance of psudo measurement, noise in alpha beta direction
+            REAL initial_angle; // initial angle for flux, in radian
+            REAL initial_Covariance; // initial flux norm, in Wb
+            REAL Resistance;
+            REAL Inductance;
+            REAL Flux_norm;
+            REAL ONE_OVER_LPF_Hz; // low pass filter for 
+            REAL tau;            
+
+            // State related
+            REAL IS_measured[2]; // measured current, with sensor offset
+            REAL R_cova[2][2]; // Covariance matrix of curent sensor bias noise, noises being 0.01 A in alpha beta direction
+            REAL B_p;
+            REAL B_prime[2][2]; // Covariance matrix of flux norm 0.14 Wb 0.002 error in alpha beta direction
+            REAL flux[2];  // Initial flux state at 0 degree in alpha beta direction
+            REAL sigmapri[2][2];  // Initial flux covariance at 0 degree, 0.01 Wb in alpha beta direction
+            REAL sigmapost[2][2];  // Initial flux covariance at 0 degree, 0.01 Wb in alpha beta direction
+            REAL Ibias[2];  // Initial flux covariance at 0 degree, 0 A in alpha beta direction
+            REAL Ibias_est[2];  // Initial flux covariance at 0 degree, 0 A in alpha beta direction
+            REAL last_current[2];//= {0, 0}; 
+            REAL f_d[2];//= {0, 0}; // refer to paper
+            REAL stator_flux[2];//= {0, 0};
+            REAL stator_flux_d[2];// ;
+            REAL h; // sudo measurement PM flux
+            REAL theta_d;
+            REAL theta_e;
+        } HE_EKF_no_sensor_correct;
+
+
+        // #if AFE_16_HE_EKF_2025
         struct HE_EKF{
             /* EKF â€œglobalâ€� parameters that we do not strictly need as states */
             /* Define EKF parameters */
@@ -369,7 +443,8 @@
             REAL Inductance;
             REAL Flux_norm;
             REAL ONE_OVER_LPF_Hz; // low pass filter for 
-            
+            REAL tau;            
+
             // State related
             REAL IS_measured[2]; // measured current, with sensor offset
             REAL R_cova[2][2]; // Covariance matrix of curent sensor bias noise, noises being 0.01 A in alpha beta direction
@@ -379,6 +454,7 @@
             REAL sigmapri[2][2];  // Initial flux covariance at 0 degree, 0.01 Wb in alpha beta direction
             REAL sigmapost[2][2];  // Initial flux covariance at 0 degree, 0.01 Wb in alpha beta direction
             REAL Ibias[2];  // Initial flux covariance at 0 degree, 0 A in alpha beta direction
+            REAL Ibias_est[2];  // Initial flux covariance at 0 degree, 0 A in alpha beta direction
             REAL last_current[2];//= {0, 0}; 
             REAL f_d[2];//= {0, 0}; // refer to paper
             REAL stator_flux[2];//= {0, 0};
@@ -386,14 +462,95 @@
             REAL h; // sudo measurement PM flux
             REAL theta_d;
             REAL theta_e;
-            REAL current_offset[2];
-            REAL current_compensated[2];
-            REAL current_compensated_dq[2];
-            REAL current_bf_compensated_dq[2];
-            REAL cosT;
-            REAL sinT;
+
         } HE_EKF;
-        // #endif
+        // #endi
+
+        struct HE_SE3{
+            /* Parameters */
+            REAL Flux_norm; /* nominal PM flux magnitude */
+            REAL Resistance;
+            REAL Inductance;
+
+            REAL IS_measured[2];
+            REAL IS_measured_prev[2];
+            REAL Ibias[2];
+
+            /* State variables (2D vectors) */
+            REAL flux_perior[2]; /* psi_pred_x, psi_pred_y */            
+            REAL flux_perior_prev[2]; /* psi_pred_prev_x, psi_pred_prev_y */
+            REAL flux_postrior[2]; /* psi_prior_x, psi_prior_y */
+            REAL flux_postrior_prev[2]; /* psi_prior_x, psi_prior_y */
+            REAL f_d[2]; /* meas_psi_dot_x, meas_psi_dot_y */
+
+            REAL Phi[2][2]; // State Transition Matrix
+            /* chi matrix representation */
+            REAL chi_alpha;
+            REAL chi_beta;
+
+            REAL theta_d;
+            REAL theta_e;
+            REAL omega_elec;
+            REAL omega_elec_pre;
+            REAL ONE_OVER_LPF_Hz;
+            REAL tau;
+
+            /* Derived values */
+            REAL chi_det;
+        } HE_SE3;
+
+        struct HE_SE3_EKF{
+            /* Parameters */
+            REAL Flux_norm; /* nominal PM flux magnitude */
+            REAL Resistance;
+            REAL Inductance;
+
+            REAL IS_measured[2];
+            REAL IS_measured_prev[2];
+            REAL Ibias[2];
+            REAL Ibias_est[2];
+
+            /* State variables (2D vectors) */
+            REAL flux_perior[2]; /* psi_pred_x, psi_pred_y */            
+            REAL flux_perior_prev[2]; /* psi_pred_prev_x, psi_pred_prev_y */
+            REAL flux_postrior[2]; /* psi_prior_x, psi_prior_y */
+            REAL flux_postrior_prev[2]; /* psi_prior_x, psi_prior_y */
+            REAL f_d[2]; /* meas_psi_dot_x, meas_psi_dot_y */
+
+            REAL Phi[2][2]; // State Transition Matrix
+            /* chi matrix representation */
+            REAL chi_alpha;
+            REAL chi_beta;
+
+            REAL theta_d;
+            REAL theta_e;
+            REAL omega_elec;
+            REAL omega_elec_pre;
+
+            // filter for velocity
+            REAL ONE_OVER_LPF_Hz;
+            REAL tau;
+
+            REAL ONE_OVER_LPF_Hz_resistance;
+            REAL tau_resistance;
+
+            /* Derived values */
+            REAL chi_det;
+            REAL h;
+            REAL R_cova[2][2]; // Covariance matrix of curent sensor bias noise, noises being 0.01 A in alpha beta direction
+            REAL B_p;
+            REAL B_prime[2][2]; // Covariance matrix of flux norm 0.14 Wb 0.002 error in alpha beta direction
+            REAL sigmapri[2][2];  // Initial flux covariance at 0 degree, 0.01 Wb in alpha beta direction
+            REAL sigmapost[2][2];  // Initial flux covariance at 0 degree, 0.01 Wb in alpha beta direction
+            REAL last_current[2];//= {0, 0}; 
+            REAL B_cova; // Covariance matrix of curent sensor bias noise, noises being 0.01 A in alpha beta direction
+            REAL G_cova; // Covariance of psudo measurement, noise in alpha beta direction
+            REAL initial_angle; // initial angle for flux, in radian
+            REAL initial_Covariance; // initial flux norm, in Wb
+            REAL alpha;
+            REAL Beta;
+        } HE_SE3_EKF;
+
 
         #if AFE_45_CMwithDynamicCurrent
         struct CMwithDynamicCurrent{

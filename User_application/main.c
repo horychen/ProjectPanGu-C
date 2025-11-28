@@ -85,6 +85,8 @@ void main(void){
     init_d_sim();      // do this only once here
     init_debug();      // do this only once here
     init_experiment(); // 控制器结构体初始化（同实验）
+    init_HE_EKF_no_sensor_correct(); // 初始无传感器校正的HE_EKF
+    init_HE_EKF();
     #if WHO_IS_USER == USER_BEZIER || WHO_IS_USER == USER_WB
         get_bezier_points(); // for testing Cury the leg trajectgory tracking 
     #endif
@@ -771,7 +773,7 @@ void axis_basic_setup(int axisCnt){
     //
     //    Axis->FLAG_ENABLE_PWM_OUTPUT = FALSE;
 
-    Axis->channels_preset = 14; // 9; // 101;
+    // Axis->channels_preset = 14; // 9; // 101;
     // 2  /* iD current and iQ current info */
     // 9  /* With SPEED ESO */
     // 10 /* WCtuner Debug */
@@ -789,6 +791,9 @@ void axis_basic_setup(int axisCnt){
     #endif
     #if BOOL_LOAD_SWEEPING_ON //6作为Load Sweeping使用的channel preset
         Axis->channels_preset = 6; 
+    #endif
+    #if WHO_IS_USER == USER_HZQ
+        Axis->channels_preset = 14;
     #endif
 
     Axis->pCTRL->enc->sum_qepPosCnt = 0;
