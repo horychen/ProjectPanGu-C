@@ -8,7 +8,7 @@
     extern st_axis *Axis;
     #define DC_BUS_VOLTAGE_INVERSE (1.732 / Axis->vdc)
 #endif
-/* 瀹氫箟椤剁骇缁撴瀯浣擄紙鎸囬拡鐨勯泦鍚堬級 */
+/* 定义顶级结构体（指针的集合） */
 ST_D_SIM d_sim;
 int axisCnt = 0;
 int use_first_set_three_phase = 1;
@@ -18,7 +18,7 @@ struct DebugExperiment debug_1;
 struct DebugExperiment *debug = &debug_1;
 struct ObserverForSpeedReconstruction OFSR;
 REAL one_over_six = 1.0/6.0;
-// 瀹氫箟鍐呭瓨绌洪棿锛堢粨鏋勪綋锛�
+// 定义内存空间（结构体）
 st_motor_parameters     t_motor_1={0};
 st_enc                  t_enc_1={0};
 st_psd                  t_psd_1={0};
@@ -26,13 +26,13 @@ st_controller_inputs    t_I_1={0};
 st_controller_states    t_S_1={0};
 st_controller_outputs   t_O_1={0};
 st_InverterNonlinearity t_inv_1={0}; // Because of the sv_count bug, I cannot declare t_inv in this .c file. // extern st_InverterNonlinearity t_inv; 
+st_capture              t_cap_1={0};
 st_global_variables     t_g_1={0};
-suspension_controller  t_sc_1 = {0};
 st_pid_regulator _PID_iD_1       = st_pid_regulator_DEFAULTS;
 st_pid_regulator _PID_iQ_1       = st_pid_regulator_DEFAULTS;
 st_pid_regulator _PID_Speed_1    = st_pid_regulator_DEFAULTS;
 st_pid_regulator _PID_Position_1 = st_pid_regulator_DEFAULTS;
-/* 涓哄叏灞�缁撴瀯浣撳垎閰嶅叿浣撶殑鍐呭瓨锛屼负瀹為獙涓敱浜庡鍙扮數鏈虹殑鎺у埗缁撴瀯浣撹繘琛屽垵濮嬪寲 */
+/* 为全局结构体分配具体的内存，为实验中由于多台电机的控制结构体进行初始化 */
 #if PC_SIMULATION == FALSE
     //#pragma DATA_SECTION(CTRL     ,"MYGLOBALS"); //
     #pragma DATA_SECTION(CTRL_1       ,"MYGLOBALS_1"); //
@@ -82,7 +82,7 @@ st_pid_regulator _PID_Position_1 = st_pid_regulator_DEFAULTS;
         st_controller_states    t_S_2={0};
         st_controller_outputs   t_O_2={0};
         st_InverterNonlinearity t_inv_2={0}; // Because of the sv_count bug, I cannot declare t_inv in this .c file. // extern st_InverterNonlinearity t_inv;
-    
+        st_capture              t_cap_2={0};
         st_global_variables     t_g_2={0};
 
         st_pid_regulator _PID_iD_2       = st_pid_regulator_DEFAULTS;
@@ -103,10 +103,10 @@ st_pid_regulator _PID_Position_1 = st_pid_regulator_DEFAULTS;
     #endif
 #endif
 
-/* 鍒濆鍖栭《绾х粨鏋勪綋鎸囬拡锛屾寚鍚戝畾涔夊ソ鐨勫唴瀛樼┖闂� */
+/* 初始化顶级结构体指针，指向定义好的内存空间 */
 void allocate_CTRL(struct ControllerForExperiment *p){
     /* My attemp to use calloc with TI's compiler in CCS has failed. */
-        // p->motor = calloc(1,sizeof(st_pmsm_parameters)); // 鎰忔�濇槸锛屼竴涓紝st_pmsm_parameters閭ｄ箞澶х殑绌洪棿
+        // p->motor = calloc(1,sizeof(st_pmsm_parameters)); // 意思是，一个，st_pmsm_parameters那么大的空间
         // p->I = calloc(1,sizeof(st_controller_inputs));
         // p->S = calloc(1,sizeof(st_controller_states));
         // p->O = calloc(1,sizeof(st_controller_outputs));
@@ -119,12 +119,12 @@ void allocate_CTRL(struct ControllerForExperiment *p){
         p->s     = &t_S_1;
         p->o     = &t_O_1;
         p->inv   = &t_inv_1;
+        p->cap   = &t_cap_1;
         p->g     = &t_g_1;
         p->s->iD  = &_PID_iD_1;
         p->s->iQ  = &_PID_iQ_1;
         p->s->Speed = &_PID_Speed_1;
         p->s->Position = &_PID_Position_1;
-        p->sc    = &t_sc_1;
         // p->S->iX = &_PID_iX_1;
         // p->S->iY = &_PID_iY_1;
     }
@@ -139,6 +139,7 @@ void allocate_CTRL(struct ControllerForExperiment *p){
                 p->s     = &t_S_2;
                 p->o     = &t_O_2;
                 p->inv   = &t_inv_2;
+                p->cap   = &t_cap_2;
                 p->g     = &t_g_2;
                 p->s->iD  = &_PID_iD_2;
                 p->s->iQ  = &_PID_iQ_2;
@@ -239,7 +240,7 @@ void init_CTRL(){
     /* Machine parameters */
     // elec
     (*CTRL).motor->R  = d_sim.init.R;
-    (*CTRL).motor->KE = d_sim.init.KE; // * (0.1/0.1342); // 銆愬疄楠岀紪鍙凤細銆�
+    (*CTRL).motor->KE = d_sim.init.KE; // * (0.1/0.1342); // 【实验编号：】
     (*CTRL).motor->Ld = d_sim.init.Ld;
     (*CTRL).motor->Lq = d_sim.init.Lq;
     (*CTRL).motor->Ld_inv = 1.0 / (*CTRL).motor->Ld;
@@ -282,14 +283,14 @@ void init_CTRL(){
 
 
     /* Controller Parameter Initializaiton */
-    // TODO: 鍦ㄨ繖閲屽彲浠une浣犵殑pi绯绘暟
+    // TODO: 在这里可以tune你的pi系数
     // KT = 1.5*npp*KE
     // d_currentKp = CLBW_Hz * 2 * np.pi * Ld
     // d_currentKi = R / Ld
     // q_currentKp = CLBW_Hz * 2 * np.pi * Lq
     // q_currentKi = R / Lq
     // speedKi = 2*np.pi * CLBW_Hz / delta**2  # THIS IS INTEGRAL GAIN
-    // speedKp = delta * speedKi / KT * Js     # 杩欓噷涓嶉渶瑕乶pp
+    // speedKp = delta * speedKi / KT * Js     # 这里不需要npp
 
     #if WHO_IS_USER == USER_WB
         /* WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING*/
@@ -313,31 +314,31 @@ void init_CTRL(){
         PID_iD->Ki_CODE  = d_sim.CL.SERIES_KI_D_AXIS * d_sim.CL.SERIES_KP_D_AXIS * CL_TS;
         PID_iQ->Ki_CODE  = d_sim.CL.SERIES_KI_Q_AXIS * d_sim.CL.SERIES_KP_Q_AXIS * CL_TS;
     #endif
-    PID_iD->OutLimit  = 0.57735 * d_sim.CL.LIMIT_DC_BUS_UTILIZATION * d_sim.init.Vdc; // TODO锛氬垵濮嬪寲鐨勬椂鍊欏鏋滄病鏈夌粰姣嶇嚎渚涚數杩欓噷浼氭湁闂锛屼絾鍦ㄤ腑鏂噷濡傛灉鎸佺画鍒锋柊闄愬箙灏辨病浜嬨��
-    PID_iQ->OutLimit  = 0.57735 * d_sim.CL.LIMIT_DC_BUS_UTILIZATION * d_sim.init.Vdc; // TODO锛氬垵濮嬪寲鐨勬椂鍊欏鏋滄病鏈夌粰姣嶇嚎渚涚數杩欓噷浼氭湁闂锛屼絾鍦ㄤ腑鏂噷濡傛灉鎸佺画鍒锋柊闄愬箙灏辨病浜嬨��
-    // /* Capture */
-    // (*CTRL).cap->flag_nonlinear_filtering = FALSE;
-    // (*CTRL).cap->flag_bad_U_capture = FALSE;
-    // (*CTRL).cap->flag_bad_V_capture = FALSE;
-    // (*CTRL).cap->flag_bad_W_capture = FALSE;
-    // (*CTRL).cap->good_capture_U[0] = SYSTEM_HALF_PWM_MAX_COUNT;
-    // (*CTRL).cap->good_capture_U[1] = SYSTEM_HALF_PWM_MAX_COUNT;
-    // (*CTRL).cap->good_capture_U[2] = SYSTEM_HALF_PWM_MAX_COUNT;
-    // (*CTRL).cap->good_capture_U[3] = SYSTEM_HALF_PWM_MAX_COUNT;
-    // (*CTRL).cap->good_capture_V[0] = SYSTEM_HALF_PWM_MAX_COUNT;
-    // (*CTRL).cap->good_capture_V[1] = SYSTEM_HALF_PWM_MAX_COUNT;
-    // (*CTRL).cap->good_capture_V[2] = SYSTEM_HALF_PWM_MAX_COUNT;
-    // (*CTRL).cap->good_capture_V[3] = SYSTEM_HALF_PWM_MAX_COUNT;
-    // (*CTRL).cap->good_capture_W[0] = SYSTEM_HALF_PWM_MAX_COUNT;
-    // (*CTRL).cap->good_capture_W[1] = SYSTEM_HALF_PWM_MAX_COUNT;
-    // (*CTRL).cap->good_capture_W[2] = SYSTEM_HALF_PWM_MAX_COUNT;
-    // (*CTRL).cap->good_capture_W[3] = SYSTEM_HALF_PWM_MAX_COUNT;
-    // (*CTRL).cap->ECapIntCount[0] = 0;
-    // (*CTRL).cap->ECapIntCount[1] = 0;
-    // (*CTRL).cap->ECapIntCount[2] = 0;
-    // (*CTRL).cap->ECapPassCount[0] = 0;
-    // (*CTRL).cap->ECapPassCount[1] = 0;
-    // (*CTRL).cap->ECapPassCount[2] = 0;
+    PID_iD->OutLimit  = 0.57735 * d_sim.CL.LIMIT_DC_BUS_UTILIZATION * d_sim.init.Vdc; // TODO：初始化的时候如果没有给母线供电这里会有问题，但在中断里如果持续刷新限幅就没事。
+    PID_iQ->OutLimit  = 0.57735 * d_sim.CL.LIMIT_DC_BUS_UTILIZATION * d_sim.init.Vdc; // TODO：初始化的时候如果没有给母线供电这里会有问题，但在中断里如果持续刷新限幅就没事。
+    /* Capture */
+    (*CTRL).cap->flag_nonlinear_filtering = FALSE;
+    (*CTRL).cap->flag_bad_U_capture = FALSE;
+    (*CTRL).cap->flag_bad_V_capture = FALSE;
+    (*CTRL).cap->flag_bad_W_capture = FALSE;
+    (*CTRL).cap->good_capture_U[0] = SYSTEM_HALF_PWM_MAX_COUNT;
+    (*CTRL).cap->good_capture_U[1] = SYSTEM_HALF_PWM_MAX_COUNT;
+    (*CTRL).cap->good_capture_U[2] = SYSTEM_HALF_PWM_MAX_COUNT;
+    (*CTRL).cap->good_capture_U[3] = SYSTEM_HALF_PWM_MAX_COUNT;
+    (*CTRL).cap->good_capture_V[0] = SYSTEM_HALF_PWM_MAX_COUNT;
+    (*CTRL).cap->good_capture_V[1] = SYSTEM_HALF_PWM_MAX_COUNT;
+    (*CTRL).cap->good_capture_V[2] = SYSTEM_HALF_PWM_MAX_COUNT;
+    (*CTRL).cap->good_capture_V[3] = SYSTEM_HALF_PWM_MAX_COUNT;
+    (*CTRL).cap->good_capture_W[0] = SYSTEM_HALF_PWM_MAX_COUNT;
+    (*CTRL).cap->good_capture_W[1] = SYSTEM_HALF_PWM_MAX_COUNT;
+    (*CTRL).cap->good_capture_W[2] = SYSTEM_HALF_PWM_MAX_COUNT;
+    (*CTRL).cap->good_capture_W[3] = SYSTEM_HALF_PWM_MAX_COUNT;
+    (*CTRL).cap->ECapIntCount[0] = 0;
+    (*CTRL).cap->ECapIntCount[1] = 0;
+    (*CTRL).cap->ECapIntCount[2] = 0;
+    (*CTRL).cap->ECapPassCount[0] = 0;
+    (*CTRL).cap->ECapPassCount[1] = 0;
+    (*CTRL).cap->ECapPassCount[2] = 0;
 
 }
 void overwrite_d_sim(){
@@ -347,7 +348,7 @@ void init_experiment(){
     // init_d_sim();   // initilizating d_sim is removed into main.c to execute only once
     // init_debug;   // initilizating debug is removed into main.c to execute only once
     overwrite_d_sim(); // overwrite d_sim with user's algorithm
-    init_CTRL(); // 鎺у埗鍣ㄧ粨鏋勪綋鍒濆鍖�
+    init_CTRL(); // 控制器结构体初始化
 
     //OFSR
     init_rk4();
@@ -365,7 +366,6 @@ void init_experiment(){
         rk4_init(); // 
         // observer_init();
         init_pmsm_observers(); // 
-        init_suspension();
         inverterNonlinearity_Initialization();
     #endif
 
@@ -385,7 +385,7 @@ void init_experiment(){
         _init_Harnerfors_1998_BackCalc(); // should be placed after init_wctuner, cuz it needs to use the variable from wctuner
     #endif
 }
-/* 鍏敤鐨勬牳蹇冪數鏈烘帶鍒跺疄鐜颁唬鐮侊紝涓嶈淇敼锛�*/
+/* 公用的核心电机控制实现代码，不要修改！*/
 void incremental_PI(st_pid_regulator *r){
     r->Err = r->Ref - r->Fbk;
     r->Out = r->OutPrev + r->Kp * ( r->Err - r->ErrPrev ) + r->Ki_CODE * r->Err;
@@ -397,12 +397,12 @@ void incremental_PI(st_pid_regulator *r){
 
 void tustin_PI(st_pid_regulator *r){
     #define DYNAMIC_CLAPMING TRUE
-    r->Err = r->Ref - r->Fbk;// 璇樊
-    r->P_Term = r->Err * r->Kp;    // 姣斾緥
-    r->I_Term += r->Err * r->Ki_CODE;    // 绉垎
+    r->Err = r->Ref - r->Fbk;// 误差
+    r->P_Term = r->Err * r->Kp;    // 比例
+    r->I_Term += r->Err * r->Ki_CODE;    // 积分
     r->OutNonSat = r->I_Term;
 
-    // 娣诲姞绉垎楗卞拰鐗规��
+    // 添加积分饱和特性
     #if DYNAMIC_CLAPMING
         // dynamic clamping
         if( r->I_Term > r->OutLimit - r->P_Term)     /* BUGGY if use r->Out instead of r->P_Term!!! */
@@ -417,26 +417,26 @@ void tustin_PI(st_pid_regulator *r){
             r->I_Term = -r->OutLimit;
     #endif
 
-    // 寰垎
+    // 微分
     // r->D_Term = r->Kd * (r->Err - r->ErrPrev);
 
-    // 杈撳嚭
+    // 输出
     r->Out = r->I_Term + r->P_Term; // + r->D_Term
     r->OutNonSat += r->P_Term; // + r->D_Term
 
-    // 杈撳嚭闄愬箙
+    // 输出限幅
     if(r->Out > r->OutLimit)
         r->Out = r->OutLimit;
     else if(r->Out < -r->OutLimit)
         r->Out = -r->OutLimit;
 
-    // 褰撳墠姝ヨ宸祴鍊间负涓婁竴姝ヨ宸�
+    // 当前步误差赋值为上一步误差
     r->ErrPrev = r->Err;
-    // 璁板綍楗卞拰杈撳嚭鍜屾湭楗卞拰杈撳嚭鐨勫樊
+    // 记录饱和输出和未饱和输出的差
     r->SatDiff = r->Out - r->OutNonSat;
 }
 REAL _veclocityController(REAL cmd_varOmega, REAL varOmega){
-    /* 鎯虫竻妤氫綘鐨勯�熷害鎺у埗鍣ㄥ埌搴曡涓嶈涓诲姩闄嶉锛� */
+    /* 想清楚你的速度控制器到底要不要主动降频！ */
     if ((*CTRL).s->the_vc_count++ >= d_sim.FOC.VL_EXE_PER_CL_EXE){
         (*CTRL).s->the_vc_count = 1;
         PID_Speed->Ref = cmd_varOmega;
@@ -456,7 +456,7 @@ REAL _veclocityController(REAL cmd_varOmega, REAL varOmega){
 
 #if WHO_USER == USER_YZZ
 REAL _RK4_veclocityController(REAL cmd_varOmega, REAL varOmega){
-    /* 鎯虫竻妤氫綘鐨勯�熷害鎺у埗鍣ㄥ埌搴曡涓嶈涓诲姩闄嶉锛� */
+    /* 想清楚你的速度控制器到底要不要主动降频！ */
     if ((*CTRL).s->the_vc_count++ >= SPEED_LOOP_CEILING){
         (*CTRL).s->the_vc_count = 1;
         PID_Speed->Ref = cmd_varOmega;
@@ -487,7 +487,7 @@ void FOC_with_vecocity_control(REAL theta_d_elec, REAL varOmega, REAL cmd_varOme
 
 
 void _pseudoEncoder(){
-    /* 鏂紑缂栫爜鍣紝寮�鐜帶鍒剁數娴佺煝閲忔棆杞�佽烦璺冿紝閫嗭紙鍙樺櫒锛夐棴鐫�鐪� */
+    /* 断开编码器，开环控制电流矢量旋转、跳跃，逆（变器）闭着眼 */
     (*CTRL).i->cmd_iDQ[0] = (*debug).set_id_command;
     (*CTRL).i->cmd_iDQ[1] = (*debug).set_iq_command;
     if (fabsf((*debug).Overwrite_Current_Frequency) > 0)
@@ -529,11 +529,11 @@ void rhf_PI_DynamicsforDcurrent(REAL t, REAL *x, REAL *fx){
 
 void General_PI_Dynamics(st_pid_regulator *r, void (*dynamic_func)(REAL, REAL *, REAL *)) {
     r->Err = r->Ref - r->Fbk;
-    // 璋冪敤 RK4 鏁板�肩Н鍒嗗櫒鏉ヨ绠楃Н鍒嗛」
+    // 调用 RK4 数值积分器来计算积分项
     general_1states_rk4_solver(dynamic_func, (*CTRL).timebase, &(r->I_Term), CL_TS);
-    // PI 鎺у埗鍣ㄨ緭鍑鸿绠�
+    // PI 控制器输出计算
     r->Out = r->Kp * r->Err + r->I_Term;
-    // 闄愬箙鎿嶄綔
+    // 限幅操作
     if (r->Out > r->OutLimit) r->Out = r->OutLimit;
     else if (r->Out < -r->OutLimit) r->Out = -r->OutLimit;
 }
@@ -549,7 +549,7 @@ void _RK4_PI_Controller_FOC(REAL theta_d_elec, REAL iAB[2]){
     PID_iQ->Ref = (*CTRL).i->cmd_iDQ[1];
     General_PI_Dynamics(CTRL->s->iQ, &rhf_PI_DynamicsforQcurrent);
     General_PI_Dynamics(CTRL->s->iD, &rhf_PI_DynamicsforDcurrent);
-        // 鐢垫祦鐜墠棣圖Q杞磋В鑰�
+        // 电流环前馈DQ轴解耦
     REAL decoupled_d_axis_voltage;
     REAL decoupled_q_axis_voltage;
     if(d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation == TRUE){
@@ -566,7 +566,7 @@ void _RK4_PI_Controller_FOC(REAL theta_d_elec, REAL iAB[2]){
     (*CTRL).o->cmd_uDQ[0] = decoupled_d_axis_voltage;
     (*CTRL).o->cmd_uDQ[1] = decoupled_q_axis_voltage;
 
-    /* 7. 鍙嶅笗鍏嬪彉鎹� */
+    /* 7. 反帕克变换 */
     // See D:\Users\horyc\Downloads\Documents\2003 TIA Bae SK Sul A compensation method for time delay of.pdf
     // (*CTRL).s->cosT_compensated_1p5omegaTs = cosf(used_theta_d_elec + 1.5omg_elec*CL_TS);
     // (*CTRL).s->sinT_compensated_1p5omegaTs = sinf(used_theta_d_elec + 1.5omg_elec*CL_TS);
@@ -585,36 +585,86 @@ void _RK4_PI_Controller_FOC(REAL theta_d_elec, REAL iAB[2]){
 #endif
 
 void _onlyFOC(REAL theta_d_elec, REAL iAB[2], REAL varOmega){
-    // 甯曞厠鍙樻崲
+    // 帕克变换
     (*CTRL).s->cosT = cos(theta_d_elec);
     (*CTRL).s->sinT = sin(theta_d_elec);
     (*CTRL).i->iDQ[0] = AB2M(iAB[0], iAB[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
     (*CTRL).i->iDQ[1] = AB2T(iAB[0], iAB[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
-    /* 鏇存柊渚濊禆浜巇q杞寸數娴佺殑鐗╃悊閲� */
-    REAL Tem     = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * (MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * (*CTRL).i->iDQ[0]) * (*CTRL).i->iDQ[1];     // 杞煩 For luenberger position observer for HFSI
+    /* 更新依赖于dq轴电流的物理量 */
+    REAL Tem     = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * (MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * (*CTRL).i->iDQ[0]) * (*CTRL).i->iDQ[1];     // 转矩 For luenberger position observer for HFSI
     REAL cmd_Tem = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * (MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * (*CTRL).i->cmd_iDQ[0]) * (*CTRL).i->cmd_iDQ[1];
     MOTOR.KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * (*CTRL).i->iDQ[0];
+    // if(CTRL->timebase > 1.0){
+    //     if(d_sim.user.ell_feedback_on == 1){
+    //         MOTOR.KActive = FE.no_sat.ell_1 + (MOTOR.Ld - MOTOR.Lq) * (*CTRL).i->iDQ[0];
+    //     }else if(d_sim.user.ell_feedback_on == 2){
+    //         MOTOR.KActive = FE.Bernard.psi_PM + (MOTOR.Ld - MOTOR.Lq) * (*CTRL).i->iDQ[0];
+    //     }
+    // }
+    #if USE_LAOMING_PI
+        /* New Sytle from Lao Ming */
+        pi_id.Kp = PID_iD->Kp;
+        pi_id.Ki = d_sim.CL.SERIES_KI_D_AXIS * CL_TS;
+        pi_id.Umax = PID_iD->OutLimit;
+        pi_id.Umin = -PID_iD->OutLimit;
+        // printf("id max is %f\n", pi_id.Umax);
+        
+        pi_iq.Kp = PID_iQ->Kp;
+        pi_iq.Ki = d_sim.CL.SERIES_KI_Q_AXIS * CL_TS;
+        pi_iq.Umax = PID_iQ->OutLimit;
+        pi_iq.Umin = -PID_iQ->OutLimit;
+        
+        pi_id.Fbk = (*CTRL).i->iDQ[0];
+        pi_id.Ref = (*CTRL).i->cmd_iDQ[0];
+        pi_id.Out = PI_MACRO(pi_id);
 
-    /* D-Axis Current Loop */
-    PID_iD->Fbk = (*CTRL).i->iDQ[0];
-    PID_iD->Ref = (*CTRL).i->cmd_iDQ[0];
-    PID_iD->calc(PID_iD);
-    PID_iQ->Fbk = (*CTRL).i->iDQ[1];
-    PID_iQ->Ref = (*CTRL).i->cmd_iDQ[1];
-    PID_iQ->calc(PID_iQ);
+        pi_iq.Fbk = (*CTRL).i->iDQ[1];
+        pi_iq.Ref = (*CTRL).i->cmd_iDQ[1];
+        pi_iq.Out = PI_MACRO(pi_iq);
 
-    // 鐢垫祦鐜墠棣圖Q杞磋В鑰�
-    REAL decoupled_d_axis_voltage;
-    REAL decoupled_q_axis_voltage;
-    if(d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation == TRUE){
-        decoupled_d_axis_voltage = PID_iD->Out - PID_iQ->Fbk * MOTOR.Lq * varOmega * MOTOR.npp;
-        decoupled_q_axis_voltage = PID_iQ->Out + (MOTOR.KActive + PID_iD->Fbk * MOTOR.Ld) * varOmega * MOTOR.npp;
-    }else{
-        decoupled_d_axis_voltage = PID_iD->Out;
-        decoupled_q_axis_voltage = PID_iQ->Out;
-    }
+        REAL decoupled_d_axis_voltage;
+        REAL decoupled_q_axis_voltage;
+        if(d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation == TRUE){
+            decoupled_d_axis_voltage = pi_id.Out - pi_iq.Fbk * MOTOR.Lq * (*CTRL).i->varOmega * MOTOR.npp;
+            decoupled_q_axis_voltage = pi_iq.Out + (MOTOR.KActive + pi_id.Fbk * MOTOR.Ld) * (*CTRL).i->varOmega * MOTOR.npp;
+        }else{
+            decoupled_d_axis_voltage = pi_id.Out;
+            decoupled_q_axis_voltage = pi_iq.Out;
+        }
+    #else
+        /* D-Axis Current Loop */
+        PID_iD->Fbk = (*CTRL).i->iDQ[0];
+        PID_iD->Ref = (*CTRL).i->cmd_iDQ[0];
+        PID_iD->calc(PID_iD);
 
-    /* 瀵硅ˉ鍋垮悗鐨刣q杞寸數鍘嬭繘琛岄檺骞呭害 */
+        /* Q-Axis Current Loop */
+        #if FALSE
+            PID_iQ->Fbk = (*CTRL).i->iDQ[1];
+            PID_iQ->Ref = (*CTRL).i->cmd_iDQ[1];
+            PID_iQ->OutLimit = BezierCL.points[BezierCL.order].y;
+            control_output(PID_iQ, &BezierCL);
+            // control_output_adaptVersion(PID_iQ, &BezierCL);
+        #else
+            PID_iQ->Fbk = (*CTRL).i->iDQ[1];
+            PID_iQ->Ref = (*CTRL).i->cmd_iDQ[1];
+            PID_iQ->calc(PID_iQ);
+        #endif
+
+        // 电流环前馈DQ轴解耦
+        REAL decoupled_d_axis_voltage;
+        REAL decoupled_q_axis_voltage;
+        if(d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation == TRUE){
+            decoupled_d_axis_voltage = PID_iD->Out - PID_iQ->Fbk * MOTOR.Lq * varOmega * MOTOR.npp;
+            decoupled_q_axis_voltage = PID_iQ->Out + (MOTOR.KActive + PID_iD->Fbk * MOTOR.Ld) * varOmega * MOTOR.npp;
+        }else{
+            decoupled_d_axis_voltage = PID_iD->Out;
+            decoupled_q_axis_voltage = PID_iQ->Out + MOTOR.KActive * varOmega * MOTOR.npp;
+            // decoupled_d_axis_voltage = PID_iD->Out;
+            // decoupled_q_axis_voltage = PID_iQ->Out;
+        }
+    #endif
+
+    /* 对补偿后的dq轴电压进行限幅度 */
     if (decoupled_d_axis_voltage > PID_iD->OutLimit) decoupled_d_axis_voltage = PID_iD->OutLimit;
     else if (decoupled_d_axis_voltage < -PID_iD->OutLimit) decoupled_d_axis_voltage = -PID_iD->OutLimit;
     if (decoupled_q_axis_voltage > PID_iQ->OutLimit) decoupled_q_axis_voltage = PID_iQ->OutLimit;
@@ -622,22 +672,18 @@ void _onlyFOC(REAL theta_d_elec, REAL iAB[2], REAL varOmega){
     (*CTRL).o->cmd_uDQ[0] = decoupled_d_axis_voltage;
     (*CTRL).o->cmd_uDQ[1] = decoupled_q_axis_voltage;
 
-    /* 7. 鍙嶅笗鍏嬪彉鎹� */
+    /* 7. 反帕克变换 */
     // See D:\Users\horyc\Downloads\Documents\2003 TIA Bae SK Sul A compensation method for time delay of.pdf
     // (*CTRL).s->cosT_compensated_1p5omegaTs = cosf(used_theta_d_elec + 1.5omg_elec*CL_TS);
     // (*CTRL).s->sinT_compensated_1p5omegaTs = sinf(used_theta_d_elec + 1.5omg_elec*CL_TS);
     (*CTRL).s->cosT_compensated_1p5omegaTs = (*CTRL).s->cosT;
     (*CTRL).s->sinT_compensated_1p5omegaTs = (*CTRL).s->sinT;
-    (*CTRL).o->cmd_uAB[0] = MT2A((*CTRL).o->cmd_uDQ[0], (*CTRL).o->cmd_uDQ[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
-    (*CTRL).o->cmd_uAB[1] = MT2B((*CTRL).o->cmd_uDQ[0], (*CTRL).o->cmd_uDQ[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
+    (*CTRL).o->cmd_uAB[0] = MT2A((*CTRL).o->cmd_uDQ[0], (*CTRL).o->cmd_uDQ[1], (*CTRL).s->cosT_compensated_1p5omegaTs, (*CTRL).s->sinT_compensated_1p5omegaTs);
+    (*CTRL).o->cmd_uAB[1] = MT2B((*CTRL).o->cmd_uDQ[0], (*CTRL).o->cmd_uDQ[1], (*CTRL).s->cosT_compensated_1p5omegaTs, (*CTRL).s->sinT_compensated_1p5omegaTs);
     (*CTRL).o->cmd_uAB_to_inverter[0] = (*CTRL).o->cmd_uAB[0];
     (*CTRL).o->cmd_uAB_to_inverter[1] = (*CTRL).o->cmd_uAB[1];
-    (*CTRL).o->cmd_iAB[0] = MT2A((*CTRL).i->cmd_iDQ[0], (*CTRL).i->cmd_iDQ[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
-    (*CTRL).o->cmd_iAB[1] = MT2B((*CTRL).i->cmd_iDQ[0], (*CTRL).i->cmd_iDQ[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
-
-    #if WHO_IS_USER == USER_YZZ
-        yzz_inverter_Compensation_Online_PAA();
-    #endif
+    (*CTRL).o->cmd_iAB[0] = MT2A((*CTRL).i->cmd_iDQ[0], (*CTRL).i->cmd_iDQ[1], (*CTRL).s->cosT_compensated_1p5omegaTs, (*CTRL).s->sinT_compensated_1p5omegaTs);
+    (*CTRL).o->cmd_iAB[1] = MT2B((*CTRL).i->cmd_iDQ[0], (*CTRL).i->cmd_iDQ[1], (*CTRL).s->cosT_compensated_1p5omegaTs, (*CTRL).s->sinT_compensated_1p5omegaTs);
 
     #if WHO_IS_USER == USER_YZZ
         yzz_inverter_Compensation_Online_PAA();
@@ -648,7 +694,7 @@ void _onlyFOC(REAL theta_d_elec, REAL iAB[2], REAL varOmega){
                                                                         + (*CTRL).o->cmd_uAB_to_inverter[1]
                                                                         * (*CTRL).o->cmd_uAB_to_inverter[1] );
 
-    /// 8. 琛ュ伩閫嗗彉鍣ㄩ潪绾挎��
+    /// 8. 补偿逆变器非线性
     #if WHO_IS_USER == USER_WB
         /* wubo:  */
         wubo_inverter_Compensation( (*CTRL).i->iAB );
@@ -672,40 +718,19 @@ void _user_commands(){
     // (*CTRL).i->cmd_varOmega = (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
 
     if (CTRL->motor->Rreq > 0){
-        // 鎰熷簲鐢垫満闇�瑕佸姳纾�
+        // 感应电机需要励磁
         (*CTRL).i->cmd_iDQ[0] = 2.0;
 
     }else{
-        // 琛ㄨ创姘哥閲囩敤 iD=0 鎺у埗
+        // 表贴永磁采用 iD=0 控制
         (*CTRL).i->cmd_iDQ[0] = 0.0;
         // (*CTRL).i->cmd_iDQ[0] = -20.0;
 
-        // 鍑告瀬姘哥閲囩敤 iD<0 鑾峰緱鏇村ぇ鐨� 鏈夊姛纾侀摼锛坅ka 杞煩绯绘暟锛�
+        // 凸极永磁采用 iD<0 获得更大的 有功磁链（aka 转矩系数）
         // (*CTRL).i->cmd_iDQ[0] = -1.0;
     }
-    if ((*CTRL).timebase < 2 && (*CTRL).timebase > 0){
-        (*CTRL).i->cmd_varOmega = 50 * RPM_2_MECH_RAD_PER_SEC;
-    }
-    if ((*CTRL).timebase < 3.5 && (*CTRL).timebase > 2){
-        (*CTRL).i->cmd_varOmega = 50 * RPM_2_MECH_RAD_PER_SEC;
-        // FE.HE_EKF.current_offset[0] = 0.05;
-        // FE.HE_EKF.current_offset[1] = 0.1;
-    }
-    if ((*CTRL).timebase < 8 && (*CTRL).timebase > 3.5){
-        (*CTRL).i->cmd_varOmega = -50 * RPM_2_MECH_RAD_PER_SEC;
-    }
-    if ((*CTRL).timebase > 8){
-        (*CTRL).i->cmd_varOmega += 12.50 * RPM_2_MECH_RAD_PER_SEC * CL_TS;
-    }
-    if ((*CTRL).timebase > 16){
-        (*CTRL).i->cmd_varOmega = 50 * RPM_2_MECH_RAD_PER_SEC;
-    }
-    if ((*CTRL).timebase > 18){
-        (*CTRL).i->cmd_varOmega = 0;
-    }
-    if ((*CTRL).timebase > 22){
-        (*CTRL).i->cmd_varOmega = 10 * RPM_2_MECH_RAD_PER_SEC;
-    }
+    
+
     #if PC_SIMULATION == TRUE
         #if WHO_IS_USER == USER_WB
             ACM.TLoad = 0;
@@ -785,18 +810,85 @@ void _user_commands(){
             // }
         #elif WHO_IS_USER == USER_HZQ
             // (*CTRL).i->cmd_varOmega = 0.0;
-            // if ((*CTRL).timebase > CL_TS){
-            //     (*CTRL).i->cmd_varOmega = (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
-            //     #if PC_SIMULATION
-            //         ACM.TLoad = 1 * (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.5);
-            //     #endif
-            // }
-            // if ((*CTRL).timebase > 0.2){
-            //     #if PC_SIMULATION
-            //         ACM.TLoad = d_sim.user.Breaking_Torque;
-            //         // printf("TLoad is %f\n", ACM.TLoad);
-            //     #endif
-            // }
+            #if  PC_SIMULATION
+            {
+                if ((*CTRL).timebase < 0.2 && (*CTRL).timebase > 0.1){
+                    (*CTRL).i->cmd_varOmega = 100 * RPM_2_MECH_RAD_PER_SEC;
+                }
+                if ((*CTRL).timebase < 0.3 && (*CTRL).timebase > 0.2){
+                    (*CTRL).i->cmd_varOmega = 100 * RPM_2_MECH_RAD_PER_SEC;
+                    ACM.TLoad = 0.4 * (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);//0.3 rated torque load
+                    // FE.HE_EKF.current_offset[0] = 0.05;
+                    // FE.HE_EKF.current_offset[1] = 0.1;
+                }
+                if ((*CTRL).timebase < 0.4 && (*CTRL).timebase > 0.3){
+                    (*CTRL).i->cmd_varOmega = -100 * RPM_2_MECH_RAD_PER_SEC;
+                    ACM.TLoad = 0.4 * (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);//0.4 rated torque load
+                    // FE.HE_EKF.current_offset[0] = 0.05;
+                    // FE.HE_EKF.current_offset[1] = 0.1;
+                }
+                if ((*CTRL).timebase < 0.5 && (*CTRL).timebase > 0.4){
+                    (*CTRL).i->cmd_varOmega = -100 * RPM_2_MECH_RAD_PER_SEC;
+                    ACM.TLoad = 0.4 * (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);//0.4 rated torque load
+                }
+                if ((*CTRL).timebase < 2 && (*CTRL).timebase > 1){
+                    (*CTRL).i->cmd_varOmega += 200* RPM_2_MECH_RAD_PER_SEC * CL_TS;
+                    ACM.TLoad = 0.4 * (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);//0.4 rated torque load
+                }
+                // if ((*CTRL).timebase > 2){
+                //     (*CTRL).i->cmd_varOmega = 100 * RPM_2_MECH_RAD_PER_SEC;
+                //     ACM.TLoad = 0.4 * (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);//0.3 rated torque load
+                // }
+                if ((*CTRL).timebase < 3 && (*CTRL).timebase > 2){
+                    (*CTRL).i->cmd_varOmega -= 200* RPM_2_MECH_RAD_PER_SEC * CL_TS;
+                    ACM.TLoad = 0.4 * (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);//0.4 rated torque load
+                }
+                // if ((*CTRL).timebase > 2.5){
+                //     (*CTRL).i->cmd_varOmega = 0;
+                //     ACM.TLoad = 0.4 * (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);//0.3 rated torque load
+                // }
+                if ((*CTRL).timebase > 3){
+                    (*CTRL).i->cmd_varOmega = -100 * RPM_2_MECH_RAD_PER_SEC;
+                    ACM.TLoad = 0.4 * (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);//0.3 rated torque load
+                }
+                // if ((*CTRL).timebase > 18){
+                //     (*CTRL).i->cmd_varOmega = 50 * RPM_2_MECH_RAD_PER_SEC;
+                // }
+                // if ((*CTRL).timebase > 0.8){
+                //     (*CTRL).i->cmd_varOmega = 0;
+                // }
+                // if ((*CTRL).timebase > 0.9){
+                //     (*CTRL).i->cmd_varOmega = 10 * RPM_2_MECH_RAD_PER_SEC;
+                // }                
+            }
+            #else
+            {
+                if ((*CTRL).timebase < 4 && (*CTRL).timebase > 2){
+                    (*CTRL).i->cmd_varOmega = 50 * RPM_2_MECH_RAD_PER_SEC;
+                }
+                if ((*CTRL).timebase < 7.5 && (*CTRL).timebase > 4){
+                    (*CTRL).i->cmd_varOmega = 50 * RPM_2_MECH_RAD_PER_SEC;
+                    // FE.HE_EKF.current_offset[0] = 0.05;
+                    // FE.HE_EKF.current_offset[1] = 0.1;
+                }
+                if ((*CTRL).timebase < 10 && (*CTRL).timebase > 7.5){
+                    (*CTRL).i->cmd_varOmega = -50 * RPM_2_MECH_RAD_PER_SEC;
+                }
+                if ((*CTRL).timebase > 10){
+                    (*CTRL).i->cmd_varOmega += 12.50 * RPM_2_MECH_RAD_PER_SEC * CL_TS;
+                }
+                if ((*CTRL).timebase > 18){
+                    (*CTRL).i->cmd_varOmega = 50 * RPM_2_MECH_RAD_PER_SEC;
+                }
+                if ((*CTRL).timebase > 20){
+                    (*CTRL).i->cmd_varOmega = 0;
+                }
+                if ((*CTRL).timebase > 23){
+                    (*CTRL).i->cmd_varOmega = 10 * RPM_2_MECH_RAD_PER_SEC;
+                }                
+            }
+            #endif
+
 
             // if ((*CTRL).timebase > 5){
             //     (*CTRL).i->cmd_varOmega = 0.5 * (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
@@ -804,24 +896,24 @@ void _user_commands(){
         #endif
     #endif
 
-    /* 鎵瑕嗙洊 */
+    /* 扫频覆盖 */
     overwrite_sweeping_frequency();
 }
 
 
 void overwrite_sweeping_frequency(){
     #if WHO_IS_USE == USER_WB
-        //杩欏彞璇濆簲璇ユ斁鍦ㄦ渶鍓嶉潰锛�
+        //这句话应该放在最前面！
             d_sim.user.timebase_for_Sweeping += CL_TS; // Separate the timebase with the DSP timebase !!!
 
         #if PC_SIMULATION
-            ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * 3.0 * 0.5); // 寮哄埗灏嗚礋杞借缃负0    
+            ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * 3.0 * 0.5); // 强制将负载设置为0    
         #endif
 
         if(d_sim.user.bool_apply_sweeping_frequency_excitation){
 
             if (d_sim.user.bool_speed_sweeping_with_Load == TRUE){
-                //鍓峏XX绉掑紑鍚亽閫熸ā寮忥紝浠ヤ娇寰楃郴缁熻揪鍒扮ǔ鎬�
+                //前XXX秒开启恒速模式，以使得系统达到稳态
                 if ( (d_sim.user.timebase_for_Sweeping < d_sim.user.Stable_Time_for_Sweeping) && (d_sim.user.flag_clear_timebase_once == FALSE)  ){
                     // (*CTRL).i->cmd_varOmega = 0.5 * d_sim.user.CMD_SPEED_SINE_RPM * RPM_2_MECH_RAD_PER_SEC;
                     (*CTRL).i->cmd_varOmega = 0.0;
@@ -833,14 +925,14 @@ void overwrite_sweeping_frequency(){
                 }
             }
 
-            // 鐢熸垚鎵淇″彿
+            // 生成扫频信号
             if ( d_sim.user.timebase_for_Sweeping  > d_sim.user.CMD_SPEED_SINE_END_TIME ){
                 d_sim.user.CMD_SPEED_SINE_HZ += d_sim.user.CMD_SPEED_SINE_STEP_SIZE;
                 d_sim.user.CMD_SPEED_SINE_LAST_END_TIME = d_sim.user.CMD_SPEED_SINE_END_TIME;
                 d_sim.user.CMD_SPEED_SINE_END_TIME += 1.0 / d_sim.user.CMD_SPEED_SINE_HZ;
             }
             if (d_sim.user.CMD_SPEED_SINE_HZ > d_sim.user.CMD_SPEED_SINE_HZ_CEILING){
-                (*CTRL).i->cmd_varOmega = 0.0; // 鍒拌揪鎵鐨勯鐜囦笂闄愶紝閫熷害褰掗浂
+                (*CTRL).i->cmd_varOmega = 0.0; // 到达扫频的频率上限，速度归零
                 (*CTRL).i->cmd_iDQ[0] = 0.0;
                 (*CTRL).i->cmd_iDQ[1] = 0.0;
             }else{
@@ -895,9 +987,6 @@ void _user_inverter_voltage_command(int bool_use_cmd_iAB){
         Ib = (*CTRL).i->iAB[1];
     }
 }
-bool hzq_hfj_test = 1;
-bool high_freq_injection = 1;
-REAL hfj_voltage =4.0;
 /* MAIN SWITCH as per MODE_SELECT */
 int  main_switch(long mode_select){
     static long mode_select_last = 0;
@@ -966,10 +1055,10 @@ int  main_switch(long mode_select){
         break;
     case MODE_SELECT_FOC_SENSORLESS: //31
         #if (WHO_IS_USER == USER_YZZ)
-            US_P(0) = (*CTRL).o->cmd_uAB[0]; // 鍚庣紑_P琛ㄧず涓婁竴姝ョ殑鐢靛帇锛孭 = Previous
-            US_P(1) = (*CTRL).o->cmd_uAB[1]; // 鍚庣紑_C琛ㄧず褰撳墠姝ョ殑鐢靛帇锛孋 = Current
-            US_C(0) = (*CTRL).o->cmd_uAB[0]; // 鍚庣紑_P琛ㄧず涓婁竴姝ョ殑鐢靛帇锛孭 = Previous
-            US_C(1) = (*CTRL).o->cmd_uAB[1]; // 鍚庣紑_C琛ㄧず褰撳墠姝ョ殑鐢靛帇锛孋 = Current
+            US_P(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
+            US_P(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
+            US_C(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
+            US_C(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
             IS_C(0)           = (*CTRL).i->iAB[0];
             IS_C(1)           = (*CTRL).i->iAB[1];
         #endif
@@ -1001,7 +1090,7 @@ int  main_switch(long mode_select){
 
         break;
     case MODE_SELECT_INDIRECT_FOC:   // 32
-        _user_commands();         // 鐢ㄦ埛鎸囦护
+        _user_commands();         // 用户指令
         #if (WHO_IS_USER == USER_CJH)
             controller_IFOC();
         #endif
@@ -1045,10 +1134,10 @@ int  main_switch(long mode_select){
 
     case MODE_SELECT_VELOCITY_LOOP: // 4
         #if (WHO_IS_USER == USER_HZQ)
-            US_P(0) = (*CTRL).o->cmd_uAB[0]; // 鍚庣紑_P琛ㄧず涓婁竴姝ョ殑鐢靛帇锛孭 = Previous
-            US_P(1) = (*CTRL).o->cmd_uAB[1]; // 鍚庣紑_C琛ㄧず褰撳墠姝ョ殑鐢靛帇锛孋 = Current
-            US_C(0) = (*CTRL).o->cmd_uAB[0]; // 鍚庣紑_P琛ㄧず涓婁竴姝ョ殑鐢靛帇锛孭 = Previous
-            US_C(1) = (*CTRL).o->cmd_uAB[1]; // 鍚庣紑_C琛ㄧず褰撳墠姝ョ殑鐢靛帇锛孋 = Current
+            US_P(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
+            US_P(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
+            US_C(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
+            US_C(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
             IS_C(0)           = (*CTRL).i->iAB[0];
             IS_C(1)           = (*CTRL).i->iAB[1];
 
@@ -1071,12 +1160,10 @@ int  main_switch(long mode_select){
 
     case MODE_SELECT_VELOCITY_LOOP_SENSORLESS : //41
         #if (WHO_IS_USER == USER_HZQ)
-            US_P(0) = (*CTRL).o->cmd_uAB[0]; // 鍚庣紑_P琛ㄧず涓婁竴姝ョ殑鐢靛帇锛孭 = Previous
-            US_P(1) = (*CTRL).o->cmd_uAB[1]; // 鍚庣紑_C琛ㄧず褰撳墠姝ョ殑鐢靛帇锛孋 = Current
-            US_C(0) = (*CTRL).i->uAB_filtered[0]; // 鍚庣紑_P琛ㄧず涓婁竴姝ョ殑鐢靛帇锛孭 = Previous
-            US_C(1) = (*CTRL).i->uAB_filtered[1]; // 鍚庣紑_C琛ㄧず褰撳墠姝ョ殑鐢靛帇锛孋 = Current
-            // US_C(0) = (*CTRL).o->cmd_uAB[0]; // 鍚庣紑_P琛ㄧず涓婁竴姝ョ殑鐢靛帇锛孭 = Previous
-            // US_C(1) = (*CTRL).o->cmd_uAB[1]; // 鍚庣紑_C琛ㄧず褰撳墠姝ョ殑鐢靛帇锛孋 = Current
+            US_P(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
+            US_P(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
+            US_C(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
+            US_C(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
             IS_C(0)           = (*CTRL).i->iAB[0];
             IS_C(1)           = (*CTRL).i->iAB[1];
         #endif
@@ -1093,15 +1180,29 @@ int  main_switch(long mode_select){
             while(OBSV.theta_d > M_PI) OBSV.theta_d  -= 2*M_PI;
             while(OBSV.theta_d < -M_PI) OBSV.theta_d += 2*M_PI;
             #if (AFE_44_ORTEGA_2011)
-                FOC_with_vecocity_control(FE.Ortega.theta_d, 
-                    PLLN.omega_elec * MOTOR.npp_inv, 
-                    (*CTRL).i->cmd_varOmega, 
-                    (*CTRL).i->cmd_iDQ, 
-                    (*CTRL).i->iAB
-                );
+            //     FOC_with_vecocity_control(FE.Ortega.theta_d, 
+            //         PLLN.omega_elec * MOTOR.npp_inv, 
+            //         (*CTRL).i->cmd_varOmega, 
+            //         (*CTRL).i->cmd_iDQ, 
+            //         (*CTRL).i->iAB
+            //     );
             #elif (AFE_16_HE_EKF_2025)
                 FOC_with_vecocity_control(FE.HE_EKF.theta_d, 
                 PLLN_EKF.omega_elec * MOTOR.npp_inv, 
+                (*CTRL).i->cmd_varOmega, 
+                (*CTRL).i->cmd_iDQ, 
+                (*CTRL).i->iAB
+            );
+            #elif (AFE_16_HE_SE3_2025)
+                FOC_with_vecocity_control(FE.HE_SE3.theta_d, 
+                FE.HE_SE3.omega_elec * MOTOR.npp_inv, 
+                (*CTRL).i->cmd_varOmega, 
+                (*CTRL).i->cmd_iDQ, 
+                (*CTRL).i->iAB
+            );
+            #elif (AFE_16_HE_SE3_EKF_2025)
+                FOC_with_vecocity_control(FE.HE_SE3_EKF.theta_d, 
+                FE.HE_SE3_EKF.omega_elec * MOTOR.npp_inv, 
                 (*CTRL).i->cmd_varOmega, 
                 (*CTRL).i->cmd_iDQ, 
                 (*CTRL).i->iAB
@@ -1121,10 +1222,10 @@ int  main_switch(long mode_select){
     case MODE_SELECT_NONLINEAR_FLUX_OBSERVER: // 6
         #if (AFE_44_ORTEGA_2011)
             #if (WHO_IS_USER == USER_HZQ)
-                US_P(0) = (*CTRL).o->cmd_uAB[0]; // 鍚庣紑_P琛ㄧず涓婁竴姝ョ殑鐢靛帇锛孭 = Previous
-                US_P(1) = (*CTRL).o->cmd_uAB[1]; // 鍚庣紑_C琛ㄧず褰撳墠姝ョ殑鐢靛帇锛孋 = Current
-                US_C(0) = (*CTRL).o->cmd_uAB[0]; // 鍚庣紑_P琛ㄧず涓婁竴姝ョ殑鐢靛帇锛孭 = Previous
-                US_C(1) = (*CTRL).o->cmd_uAB[1]; // 鍚庣紑_C琛ㄧず褰撳墠姝ョ殑鐢靛帇锛孋 = Current
+                US_P(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
+                US_P(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
+                US_C(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
+                US_C(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
                 IS_C(0)           = (*CTRL).i->iAB[0];
                 IS_C(1)           = (*CTRL).i->iAB[1];
             #endif
@@ -1140,7 +1241,7 @@ int  main_switch(long mode_select){
 
             // OBSV.theta_d = (*CTRL).i->theta_d_elec;
             // while(OBSV.theta_d > M_PI) OBSV.theta_d  -= 2*M_PI;
-            // while(OBSV.theta_d < -M_PI) OBSV.theta_d += 2*M_PI;  // 鍙嶈浆锛�
+            // while(OBSV.theta_d < -M_PI) OBSV.theta_d += 2*M_PI;  // 反转！
             // if (d_sim.user.bool_ESO_SPEED_ON == TRUE){
             //     Main_esoaf_chen2021();
             // }
@@ -1163,10 +1264,10 @@ int  main_switch(long mode_select){
     case MODE_SELECT_CONSTRAINT_DOMINATED_EKF: // 16
         #if (AFE_16_HE_EKF_2025)
             #if (WHO_IS_USER == USER_HZQ)
-                US_P(0) = (*CTRL).o->cmd_uAB[0]; // 鍚庣紑_P琛ㄧず涓婁竴姝ョ殑鐢靛帇锛孭 = Previous
-                US_P(1) = (*CTRL).o->cmd_uAB[1]; // 鍚庣紑_C琛ㄧず褰撳墠姝ョ殑鐢靛帇锛孋 = Current
-                US_C(0) = (*CTRL).o->cmd_uAB[0]; // 鍚庣紑_P琛ㄧず涓婁竴姝ョ殑鐢靛帇锛孭 = Previous
-                US_C(1) = (*CTRL).o->cmd_uAB[1]; // 鍚庣紑_C琛ㄧず褰撳墠姝ョ殑鐢靛帇锛孋 = Current
+                US_P(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
+                US_P(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
+                US_C(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
+                US_C(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
                 IS_C(0)           = (*CTRL).i->iAB[0];
                 IS_C(1)           = (*CTRL).i->iAB[1];
             #endif
@@ -1182,7 +1283,7 @@ int  main_switch(long mode_select){
 
             // OBSV.theta_d = (*CTRL).i->theta_d_elec;
             // while(OBSV.theta_d > M_PI) OBSV.theta_d  -= 2*M_PI;
-            // while(OBSV.theta_d < -M_PI) OBSV.theta_d += 2*M_PI;  // 鍙嶈浆锛�
+            // while(OBSV.theta_d < -M_PI) OBSV.theta_d += 2*M_PI;  // 反转！
             // if (d_sim.user.bool_ESO_SPEED_ON == TRUE){
             //     Main_esoaf_chen2021();
             // }
@@ -1209,6 +1310,9 @@ int  main_switch(long mode_select){
             #endif
         #endif
         break;
+
+
+
     case MODE_SELECT_TESTING_SENSORLESS : //42
         break;
     case MODE_SELECT_VELOCITY_LOOP_WC_TUNER: // 43
@@ -1317,10 +1421,10 @@ int  main_switch(long mode_select){
         _user_commands();  
         #if WHO_IS_USER == USER_YZZ
         //for OBSV
-            US_P(0) = (*CTRL).o->cmd_uAB[0]; // 鍚庣紑_P琛ㄧず涓婁竴姝ョ殑鐢靛帇锛孭 = Previous
-            US_P(1) = (*CTRL).o->cmd_uAB[1]; // 鍚庣紑_C琛ㄧず褰撳墠姝ョ殑鐢靛帇锛孋 = Current
-            US_C(0) = (*CTRL).o->cmd_uAB[0]; // 鍚庣紑_P琛ㄧず涓婁竴姝ョ殑鐢靛帇锛孭 = Previous
-            US_C(1) = (*CTRL).o->cmd_uAB[1]; // 鍚庣紑_C琛ㄧず褰撳墠姝ョ殑鐢靛帇锛孋 = Current
+            US_P(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
+            US_P(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
+            US_C(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
+            US_C(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
             IS_C(0)           = (*CTRL).i->iAB[0];
             IS_C(1)           = (*CTRL).i->iAB[1];
         //for OFSR
@@ -1335,7 +1439,7 @@ int  main_switch(long mode_select){
         pmsm_observers();
         OBSV.theta_d = (*CTRL).i->theta_d_elec;
         while(OBSV.theta_d > M_PI) OBSV.theta_d  -= 2*M_PI;
-        while(OBSV.theta_d < -M_PI) OBSV.theta_d += 2*M_PI;  // 鍙嶈浆锛�
+        while(OBSV.theta_d < -M_PI) OBSV.theta_d += 2*M_PI;  // 反转！
 
         if (d_sim.user.bool_ESO_SPEED_ON == TRUE){
             Main_esoaf_chen2021();
@@ -1357,10 +1461,10 @@ int  main_switch(long mode_select){
         break;
     case MODE_SELECT_INVERTER_NONLINEARITY_SENSORLESS: // 49
         #if (WHO_IS_USER == USER_YZZ)
-            US_P(0) = (*CTRL).o->cmd_uAB[0]; // 鍚庣紑_P琛ㄧず涓婁竴姝ョ殑鐢靛帇锛孭 = Previous
-            US_P(1) = (*CTRL).o->cmd_uAB[1]; // 鍚庣紑_C琛ㄧず褰撳墠姝ョ殑鐢靛帇锛孋 = Current
-            US_C(0) = (*CTRL).o->cmd_uAB[0]; // 鍚庣紑_P琛ㄧず涓婁竴姝ョ殑鐢靛帇锛孭 = Previous
-            US_C(1) = (*CTRL).o->cmd_uAB[1]; // 鍚庣紑_C琛ㄧず褰撳墠姝ョ殑鐢靛帇锛孋 = Current
+            US_P(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
+            US_P(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
+            US_C(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
+            US_C(1) = (*CTRL).o->cmd_uAB[1]; // 后缀_C表示当前步的电压，C = Current
             IS_C(0)           = (*CTRL).i->iAB[0];
             IS_C(1)           = (*CTRL).i->iAB[1];
         #endif
@@ -1380,7 +1484,7 @@ int  main_switch(long mode_select){
         // controller_PMSMife_with_commands();
         OBSV.theta_d = (*CTRL).i->theta_d_elec;
         while(OBSV.theta_d > M_PI) OBSV.theta_d  -= 2*M_PI;
-        while(OBSV.theta_d < -M_PI) OBSV.theta_d += 2*M_PI;  // 鍙嶈浆锛�
+        while(OBSV.theta_d < -M_PI) OBSV.theta_d += 2*M_PI;  // 反转！
         if (d_sim.user.bool_ESO_SPEED_ON == TRUE){
             Main_esoaf_chen2021();
         }
@@ -1441,15 +1545,15 @@ int  main_switch(long mode_select){
         #if WHO_IS_USER == USER_WB && PC_SIMULATION == TRUE
             d_sim.user.flag_Nyquist_one_cycle_DONE = FALSE;
             if ((*CTRL).timebase > d_sim.user.CMD_SPEED_SINE_END_TIME){
-                d_sim.user.flag_Nyquist_one_cycle_DONE = TRUE; // 鐢ㄦ潵娓呯┖Nyquist_sum_sin鍜宻um_cos锛屼互杩涜涓嬩竴娆¤绠�
+                d_sim.user.flag_Nyquist_one_cycle_DONE = TRUE; // 用来清空Nyquist_sum_sin和sum_cos，以进行下一次计算
                 d_sim.user.CMD_SPEED_SINE_HZ += d_sim.user.CMD_SPEED_SINE_STEP_SIZE;
                 d_sim.user.CMD_SPEED_SINE_LAST_END_TIME = d_sim.user.CMD_SPEED_SINE_END_TIME;
                 d_sim.user.CMD_SPEED_SINE_END_TIME += d_sim.user.Nyquist_plot_num_cycles / d_sim.user.CMD_SPEED_SINE_HZ;
             }
             if (d_sim.user.CMD_SPEED_SINE_HZ > d_sim.user.Nyquist_Freq_Ceiling){
-                (*CTRL).i->cmd_iDQ[0] = 0.0; // 鍒拌揪鎵鐨勯鐜囦笂闄愶紝閫熷害褰掗浂
+                (*CTRL).i->cmd_iDQ[0] = 0.0; // 到达扫频的频率上限，速度归零
             }else{
-                // 杩欓噷鐨勪俊鍙峰叾瀹炲彲浠ユ槸浠绘剰褰㈠紡鐨勶紝涓嶄竴瀹氭槸姝ｅ鸡娉�
+                // 这里的信号其实可以是任意形式的，不一定是正弦波
                 (*CTRL).i->cmd_iDQ[0] = d_sim.user.Nyquist_Input_Current_Amp * sinf ( 2 * M_PI * d_sim.user.CMD_SPEED_SINE_HZ * ( (*CTRL).timebase - d_sim.user.CMD_SPEED_SINE_LAST_END_TIME ) );
                 _onlyFOC( (*CTRL).i->theta_d_elec, (*CTRL).i->iAB );
 
@@ -1460,7 +1564,7 @@ int  main_switch(long mode_select){
                     d_sim.user.Nyquist_sum_sin = 0.0;
                     d_sim.user.Nyquist_sum_cos = 0.0;
                 }
-                // 鍒╃敤鍚岄cos()鍜宻in()鎻愬彇璋愭尝淇″彿鐨勫疄閮ㄥ拰铏氶儴锛屽亣璁剧郴缁熶负绾挎�у畾甯哥郴缁�
+                // 利用同频cos()和sin()提取谐波信号的实部和虚部，假设系统为线性定常系统
                 // A=sum( va*cos ) B=sum( va*sin )
                 // a1=2A/N a2=2B/N mag=sqrt(a1^2+a2^2) deg=tan(a2/a1)
                 d_sim.user.Nyquist_sum_sin += PID_iD->Ref * sinf( 2 * M_PI * d_sim.user.CMD_SPEED_SINE_HZ * ( (*CTRL).timebase - d_sim.user.CMD_SPEED_SINE_LAST_END_TIME ) );
@@ -1479,32 +1583,8 @@ int  main_switch(long mode_select){
             NB_MODE_codes();
         #endif
         break;
-    case MODE_SELECT_SUSPENSION_CONTROL: // 100
-        #if WHO_IS_USER == USER_YZZ
-            SuspensionCurrentControl();
-            // SuspensionDisplacementControl();
-        #endif
-        return 100; 
-        break;
-    case MODE_SELECT_HIGH_FREQ_INJECTION: // 101
-            if (hzq_hfj_test ==1){
-                (*CTRL).o->cmd_uAB_to_inverter[0] = hfj_voltage;
-                (*CTRL).o->cmd_uAB_to_inverter[1] = 0;
-                hzq_hfj_test = 0;
-            }else{
-                (*CTRL).o->cmd_uAB_to_inverter[0] = -hfj_voltage;
-                (*CTRL).o->cmd_uAB_to_inverter[1] = 0;
-                hzq_hfj_test = 1;
-            }
-            if ((*CTRL).o->cmd_uAB_to_inverter[0]>(hfj_voltage+0.5) && (*CTRL).o->cmd_uAB_to_inverter[0]<-(hfj_voltage+0.5))
-            {
-                (*CTRL).o->cmd_uAB_to_inverter[0] = 0;
-            }
-            
-        return 101; 
-        break;
     default:
-        // 鐢靛帇鎸囦护(*CTRL).o->cmd_uAB[0/1]閫氳繃閫嗗彉鍣紝浜х敓瀹為檯鐢靛帇ACM.ual, ACM.ube锛堝彉鎹㈠埌dq绯讳笅寰楀埌ACM.ud锛孉CM.uq锛�
+        // 电压指令(*CTRL).o->cmd_uAB[0/1]通过逆变器，产生实际电压ACM.ual, ACM.ube（变换到dq系下得到ACM.ud，ACM.uq）
         // voltage_commands_to_pwm(); // this function only exists in DSP codes
         // inverter_model(); // in Simulation
         (*debug).error = 999;
@@ -1521,7 +1601,7 @@ int  main_switch(long mode_select){
         // ACM.Ld = d_sim.init.Ld * 0.25;
         // ACM.Lq = d_sim.init.Lq * 0.25;
         
-        // 0. 鍙傛暟鏃跺彉
+        // 0. 参数时变
         // if (fabsf((*CTRL).timebase-0.025)<CL_TS){
         //     printf("[Runtime] Rotor inertia of the simulated machine has changed! Js=%g\n", ACM.Js);
             // ACM.Js     = 0.1 * d_sim.init.Js; // kg.m^2 0.41500000000000004
@@ -1540,7 +1620,7 @@ int  main_switch(long mode_select){
         static REAL Tload = 0.0;
         // static int load_state = 0;
         // static REAL dc_part = LOAD_TORQUE;
-        // static REAL viscous_part = 0.0; // 杩欎釜鍙橀噺鍘诲埌Config鏂囦欢閲岄潰浜�
+        // static REAL viscous_part = 0.0; // 这个变量去到Config文件里面了
         // viscous_part = VISCOUS_COEFF*ACM.rpm*RPM_2_ELEC_RAD_PER_SEC;
         // Tload = dc_part + viscous_part;
         if(CTRL_1.timebase > 0.5){
@@ -1653,9 +1733,9 @@ void rhf_dynamics_ESO(REAL t, REAL *x, REAL *fx){
     // REAL iq = AB2T(IS(0), IS(1), cos(xPos), sin(xPos)); // Option 2
     OFSR.esoaf.xTem = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * MOTOR.KActive * iq;
 
-    /* 鏈祴璇曪紝濡傛灉鐢╥q缁欏畾浼氫笉浼氬ソ涓�鐐癸紵锛� 璁＄畻閲忚繕灏�*/
-    /* 鏈祴璇曪紝濡傛灉鐢╥q缁欏畾浼氫笉浼氬ソ涓�鐐癸紵锛� 璁＄畻閲忚繕灏�*/
-    /* 鏈祴璇曪紝濡傛灉鐢╥q缁欏畾浼氫笉浼氬ソ涓�鐐癸紵锛� 璁＄畻閲忚繕灏�*/
+    /* 未测试，如果用iq给定会不会好一点？？ 计算量还少*/
+    /* 未测试，如果用iq给定会不会好一点？？ 计算量还少*/
+    /* 未测试，如果用iq给定会不会好一点？？ 计算量还少*/
     // OFSR.esoaf.xTem = CLARKE_TRANS_TORQUE_GAIN * MOTOR.npp * MOTOR.KActive * CTRL->I.cmd_iDQ[1];
 
     /* Output Error = sine of angle error */

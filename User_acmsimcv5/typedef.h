@@ -102,6 +102,7 @@ extern REAL one_over_six;
     #define SATURATED_MAGNETIC_CIRCUIT FALSE
 
 #define CL_TS          (d_sim.sim.CLTS)
+#define CL_TS_SQUARE          (CL_TS * CL_TS)
 #define CL_TS_INVERSE  (1.0 / CL_TS)
 #define VL_TS          (d_sim.FOC.VL_EXE_PER_CL_EXE*CL_TS)
 #define PL_TS          VL_TS

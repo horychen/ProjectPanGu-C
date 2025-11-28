@@ -27,7 +27,7 @@ int isNumber(REAL x){
 
 // 低通滤波器：测量值，上一步的滤波器输出，时间常数的倒数
 REAL _lpf(REAL x, REAL y, REAL tau_inv){
-    return y + tau_inv * (x - y);
+    return y + CL_TS * tau_inv * (x - y);
 }
 // 高通滤波器：测量值，上一步的低通滤波器输出的地址，时间常数的倒数
 REAL _hpf(REAL x, REAL *lpf_y, REAL tau_inv){
