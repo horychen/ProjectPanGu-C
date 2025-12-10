@@ -5,9 +5,9 @@
 void init_d_sim() {
     d_sim.init.npp = 4;
     d_sim.init.IN = 3;
-    d_sim.init.R = 1.67;
-    d_sim.init.Ld = 0.0026;
-    d_sim.init.Lq = 0.0026;
+    d_sim.init.R = 1.7;
+    d_sim.init.Ld = 0.0026000000000000003;
+    d_sim.init.Lq = 0.0026000000000000003;
     d_sim.init.KE = 0.114;
     d_sim.init.Rreq = 0.0;
     d_sim.init.Js = 0.00049836;
@@ -15,7 +15,7 @@ void init_d_sim() {
 
     d_sim.sim.INVERTER_NONLINEARITY = 0;
     d_sim.sim.CLTS = 0.0001;
-    d_sim.sim.NUMBER_OF_STEPS = 9600;
+    d_sim.sim.NUMBER_OF_STEPS = 40001;
     d_sim.sim.MACHINE_SIMULATIONs_PER_SAMPLING_PERIOD = 1;
 
     d_sim.FOC.delta = 15;
@@ -23,13 +23,13 @@ void init_d_sim() {
     d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation = FALSE;
     d_sim.FOC.VL_EXE_PER_CL_EXE = 1;
 
-    d_sim.CL.SERIES_KP_D_AXIS = 16.084954386379742;
-    d_sim.CL.SERIES_KI_D_AXIS = 514.65625;
-    d_sim.CL.SERIES_KP_Q_AXIS = 16.084954386379742;
-    d_sim.CL.SERIES_KI_Q_AXIS = 514.65625;
+    d_sim.CL.SERIES_KP_D_AXIS = 13.069025438933542;
+    d_sim.CL.SERIES_KI_D_AXIS = 653.8461538461537;
+    d_sim.CL.SERIES_KP_Q_AXIS = 13.069025438933542;
+    d_sim.CL.SERIES_KI_Q_AXIS = 653.8461538461537;
     d_sim.CL.LIMIT_DC_BUS_UTILIZATION = 0.96;
 
-    d_sim.VL.SERIES_KP = 0.22058704353118255;
+    d_sim.VL.SERIES_KP = 0.24415502765582991;
     d_sim.VL.SERIES_KI = 22.340214425527417;
     d_sim.VL.LIMIT_OVERLOAD_FACTOR = 1.0;
 
@@ -61,15 +61,5 @@ void init_d_sim() {
     d_sim.user.vvvf_frequency = 2;
     d_sim.user.Breaking_Torque = 1.5;
     d_sim.user.VL_FEEDBACK_KFB = 0;
-    d_sim.user.set_id_command = 0.0;
-    d_sim.user.Variable_Parameters_percent = 3;
-    d_sim.user.Variable_Parameters_time = 3;
-    d_sim.user.Variable_Parameters_status = 4;
-    d_sim.user.Variable_Parameters_time_num = 7;
-    d_sim.user.VP_time_num_count = 0;
-    d_sim.user.Variable_Parameters_timebase = 0.0;
-    d_sim.user.sensorless_only_theta_on = 0;
-    d_sim.user.sensorless_speed_observer = 0;
-    d_sim.user.SENSORLESS_CONTROL = 0;
 
 }

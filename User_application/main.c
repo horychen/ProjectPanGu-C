@@ -612,7 +612,7 @@ Uint32 position_count_CAN_ID0x03_fromCPU2;
 Uint32 position_count_CAN_fromCPU2;
 Uint32 CPU2_commu_error_counter = 0;
 int USE_3_CURRENT_SENSORS = TRUE;
-
+int Use_three_turns_current_coil = TRUE;
 REAL legBouncingSpeed = 50;
 REAL hipBouncingFreq = 10;
 REAL legBouncingIq = 2;
@@ -1336,10 +1336,16 @@ void measurement_enc(){
 
 void measurement_current_axisCnt0(){
     // LEM1
-    Axis->iuvw[PIN_ADCA_U] = ((REAL)(AdcaResultRegs.ADCRESULT1) - Axis->adc_offset[1]) * Axis->adc_scale[1]; //
-    Axis->iuvw[PIN_ADCA_V] = ((REAL)(AdcaResultRegs.ADCRESULT2) - Axis->adc_offset[2]) * Axis->adc_scale[2]; //
-    Axis->iuvw[PIN_ADCA_W] = ((REAL)(AdcaResultRegs.ADCRESULT3) - Axis->adc_offset[3]) * Axis->adc_scale[3]; //
-
+    if(Use_three_turns_current_coil == FALSE){
+        Axis->iuvw[PIN_ADCA_U] = ((REAL)(AdcaResultRegs.ADCRESULT1) - Axis->adc_offset[1]) * Axis->adc_scale[1]; //
+        Axis->iuvw[PIN_ADCA_V] = ((REAL)(AdcaResultRegs.ADCRESULT2) - Axis->adc_offset[2]) * Axis->adc_scale[2]; //
+        Axis->iuvw[PIN_ADCA_W] = ((REAL)(AdcaResultRegs.ADCRESULT3) - Axis->adc_offset[3]) * Axis->adc_scale[3]; //
+    }
+    else{
+        Axis->iuvw[PIN_ADCA_U] = ((REAL)(AdcaResultRegs.ADCRESULT1) - Axis->adc_offset[1]) * Axis->adc_scale[1]  * 0.33333333333; //
+        Axis->iuvw[PIN_ADCA_V] = ((REAL)(AdcaResultRegs.ADCRESULT2) - Axis->adc_offset[2]) * Axis->adc_scale[2]  * 0.33333333333; //
+        Axis->iuvw[PIN_ADCA_W] = ((REAL)(AdcaResultRegs.ADCRESULT3) - Axis->adc_offset[3]) * Axis->adc_scale[3]  * 0.33333333333; //
+    }
     // 电流接口
     if (USE_3_CURRENT_SENSORS){
         Axis->iabg[0] = UVW2A_AI(Axis->iuvw[0], Axis->iuvw[1], Axis->iuvw[2]);

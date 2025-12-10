@@ -1374,6 +1374,7 @@ void rk4_init(){
         FE.HE_pure_integration.last_current[1] = IS_biased_1;
 
     }
+    
     void  init_HE_EKF_no_sensor_correct(){
         /* Define EKF parameters */
         FE.HE_EKF_no_sensor_correct.B_cova = 10000; // Covariance matrix of curent sensor bias noise, noises being 0.01 A in alpha beta direction
@@ -1420,7 +1421,6 @@ void rk4_init(){
     }
 
 
-    
     void  step_HE_EKF_no_sensor_correct(){
         if PC_SIMULATION{
             FE.HE_EKF_no_sensor_correct.Ibias[0] += randn(0.0, 10) * CL_TS ;
@@ -1504,9 +1504,6 @@ void rk4_init(){
         // FE.HE_EKF.theta_d = atan2(FE.HE_EKF.flux[1], FE.HE_EKF.flux[0]);
         // FE.HE_EKF.theta_e = angle_diff(FE.HE_EKF.theta_d, (*CTRL).i->theta_d_elec) * ONE_OVER_2PI * 360;
     }
-
-
-
 
 
     // #if AFE_16_HE_EKF_2025
@@ -1801,8 +1798,8 @@ void rk4_init(){
 
     void init_HE_SE3() {
         FE.HE_SE3.Flux_norm = MOTOR.KE * 1.0; // initial flux norm
-        FE.HE_SE3.Resistance = MOTOR.R * 1.0;
-        FE.HE_SE3.Inductance = MOTOR.Ld * 1.0;  
+        FE.HE_SE3.Resistance = MOTOR.R * 1.0; // overestimate resistance for stability
+        FE.HE_SE3.Inductance = MOTOR.Ld * 1.0; // overestimate inductance for stability
         // printf("MOTOR.Ld = %f, FE.HE_SE3.Inductance = %f\n", MOTOR.Ld, FE.HE_SE3.Inductance);      
 
         // FE.HE_SE3.flux_prior[0] = 1.0;
@@ -1892,11 +1889,11 @@ void rk4_init(){
     void step_HE_SE3() {
 
         if PC_SIMULATION{
-            FE.HE_SE3.Ibias[0] += randn(0.0, 10) * CL_TS ;
-            FE.HE_SE3.Ibias[1] += randn(0.0, 10) * CL_TS ;
+            FE.HE_SE3.Ibias[0] += randn(0.0, 20) * CL_TS ;
+            FE.HE_SE3.Ibias[1] += randn(0.0, 20) * CL_TS ;
         }
-        FE.HE_SE3.IS_measured[0] = IS_C(0) + FE.HE_SE3.Ibias[0]  + randn(0.0, 0.01);
-        FE.HE_SE3.IS_measured[1] = IS_C(1) + FE.HE_SE3.Ibias[1]  + randn(0.0, 0.01);
+        FE.HE_SE3.IS_measured[0] = IS_C(0) ;//+ FE.HE_SE3.Ibias[0] ;// + randn(0.0, 0.01);
+        FE.HE_SE3.IS_measured[1] = IS_C(1) ;//+ FE.HE_SE3.Ibias[1] ;// + randn(0.0, 0.01);
 
         // Cache frequently used values
         REAL IS_diff_0 = FE.HE_SE3.IS_measured[0] - FE.HE_SE3.IS_measured_prev[0];
@@ -2202,8 +2199,8 @@ void rk4_init(){
             FE.HE_SE3_EKF.Ibias[0] += randn(0.0, 10) * CL_TS ;
             FE.HE_SE3_EKF.Ibias[1] += randn(0.0, 10) * CL_TS ;
         }
-        FE.HE_SE3_EKF.IS_measured[0] = IS_C(0) + FE.HE_SE3_EKF.Ibias[0] * 1 +  randn(0.0, 0.02);
-        FE.HE_SE3_EKF.IS_measured[1] = IS_C(1) + FE.HE_SE3_EKF.Ibias[1] * 1 +  randn(0.0, 0.02);
+        FE.HE_SE3_EKF.IS_measured[0] = IS_C(0) ;//+ FE.HE_SE3_EKF.Ibias[0] * 1;// +  randn(0.0, 0.02);
+        FE.HE_SE3_EKF.IS_measured[1] = IS_C(1) ;//+ FE.HE_SE3_EKF.Ibias[1] * 1;// +  randn(0.0, 0.02);
 
         // Cache frequently used values
         REAL IS_biased_0 = FE.HE_SE3_EKF.IS_measured[0] -FE.HE_SE3_EKF.Ibias_est[0];
@@ -2509,11 +2506,11 @@ void rk4_init(){
         // AFE_44_ORTEGA_2011
         // main_ortega_2011();
         // AFE_16_HE_EKF_2025
-        step_HE_pure_integration();
-        step_HE_EKF_no_sensor_correct();
+        // step_HE_pure_integration();
+        // step_HE_EKF_no_sensor_correct();
         step_HE_EKF();
-        // step_HE_SE3();
-        // step_HE_SE3_EKF();
+        step_HE_SE3();
+        step_HE_SE3_EKF();
         
         // MainFE_HUWU_1998();
         #if AFE_43_SuperTwistingA
@@ -2540,10 +2537,13 @@ void rk4_init(){
         // AFE_44_ORTEGA_2011
         // init_ortega();
         // AFE_16_HE_EKF_2025
+        // init_HE_pure_integration();
+        // init_HE_EKF_no_sensor_correct();
+        init_HE_EKF();
         // AFE_16_HE_SE3_2025
         init_HE_SE3();
         init_HE_SE3_EKF();
-        init_HE_pure_integration();
+
         // init_FE_huwu();
         #if AFE_38_OUTPUT_ERROR_CLOSED_LOOP
         init_ClosedLoopFluxEstimatorForPMSM();
