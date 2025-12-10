@@ -852,14 +852,15 @@ void _user_commands(){
                     // FE.HE_EKF.current_offset[1] = 0.1;
                 }
                 if ((*CTRL).timebase < 0.4 && (*CTRL).timebase > 0.3){
+                    // (*CTRL).i->cmd_varOmega = 0;
                     (*CTRL).i->cmd_varOmega = -100 * RPM_2_MECH_RAD_PER_SEC;
                     ACM.TLoad = 0.4 * (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);//0.4 rated torque load
                     // FE.HE_EKF.current_offset[0] = 0.05;
                     // FE.HE_EKF.current_offset[1] = 0.1;
                 }
                 if ((*CTRL).timebase < 0.5 && (*CTRL).timebase > 0.4){
-                    (*CTRL).i->cmd_varOmega = -100 * RPM_2_MECH_RAD_PER_SEC;
-                    ACM.TLoad = 0.4 * (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);//0.4 rated torque load
+                    // (*CTRL).i->cmd_varOmega = -100 * RPM_2_MECH_RAD_PER_SEC;
+                    // ACM.TLoad = 0.4 * (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);//0.4 rated torque load
                 }
                 if ((*CTRL).timebase < 2 && (*CTRL).timebase > 1){
                     (*CTRL).i->cmd_varOmega += 200* RPM_2_MECH_RAD_PER_SEC * CL_TS;

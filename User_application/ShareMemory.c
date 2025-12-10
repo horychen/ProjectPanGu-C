@@ -118,9 +118,9 @@ void write_DAC_buffer(){
         
 
         /* Sensor Coil */
-        (*Axis4DAC).dac_watch[48] = Axis->place_sensor[0];
-        (*Axis4DAC).dac_watch[49] = Axis->place_sensor[1];
-        (*Axis4DAC).dac_watch[50] = Axis->place_sensor[2];
+        (*Axis4DAC).dac_watch[48] = Axis->phase_voltage[0]*0.1;
+        (*Axis4DAC).dac_watch[49] = Axis->phase_voltage[1]*0.1;
+        (*Axis4DAC).dac_watch[50] = Axis->phase_voltage[2]*0.1;
         (*Axis4DAC).dac_watch[51] = Axis->place_sensor[3];
 
         /* Marker */
@@ -153,16 +153,16 @@ void write_DAC_buffer(){
         (*Axis4DAC).dac_watch[72] = (*CTRL).i->cmd_varOmega * MECH_RAD_PER_SEC_2_RPM * 0.001;
         /* Kalman Filter For Sensorless Control */
         // (*Axis4DAC).dac_watch[71] = PLLN.omega_elec * ELEC_RAD_PER_SEC_2_RPM * 0.001; // -1000RPM ~ 1000RPM
-        (*Axis4DAC).dac_watch[73] = OBSV.theta_d * ONE_OVER_2PI * 2; //
+        (*Axis4DAC).dac_watch[73] = OBSV.theta_d * ONE_OVER_2PI ; //
         // (*Axis4DAC).dac_watch[73] = FE.Ortega.theta_d * ONE_OVER_2PI * 2; // unit : degree
-        (*Axis4DAC).dac_watch[74] = FE.HE_EKF.theta_d * ONE_OVER_2PI * 2; // unit : degree
-        (*Axis4DAC).dac_watch[75] = (*CTRL).i->iDQ[1] * 0.1; // unit : degree
-        (*Axis4DAC).dac_watch[76] = FE.HE_EKF.flux[0];// degree
-        (*Axis4DAC).dac_watch[77] = FE.HE_EKF.flux[1]; // unit : degree
-        (*Axis4DAC).dac_watch[78] = FE.HE_pure_integration.flux[0]; // unit : degree
-        (*Axis4DAC).dac_watch[79] = FE.HE_pure_integration.flux[1] ; // unit : degree
-        (*Axis4DAC).dac_watch[80] = FE.HE_EKF_no_sensor_correct.flux[0]; // unit : degree
-        (*Axis4DAC).dac_watch[81] = FE.HE_EKF_no_sensor_correct.flux[1] ; // unit : degree
+        (*Axis4DAC).dac_watch[74] = (*CTRL).i->varTheta* ONE_OVER_2PI ; // unit : degree
+        (*Axis4DAC).dac_watch[75] = (*CTRL).i->varOmega * MECH_RAD_PER_SEC_2_RPM * 0.001; // unit : degree
+        (*Axis4DAC).dac_watch[76] = FE.HE_SE3_EKF.theta_d * ONE_OVER_2PI ;// degree
+        (*Axis4DAC).dac_watch[77] = FE.HE_SE3_EKF.omega_elec* ELEC_RAD_PER_SEC_2_RPM * 0.001; // unit : degree
+        (*Axis4DAC).dac_watch[78] = FE.HE_pure_integration.flux[0]; 
+        (*Axis4DAC).dac_watch[79] = FE.HE_pure_integration.flux[1]; 
+        (*Axis4DAC).dac_watch[71] = FE.HE_SE3_EKF.flux_postrior[0]; 
+        (*Axis4DAC).dac_watch[72] = FE.HE_SE3_EKF.flux_postrior[1];
         // (*Axis4DAC).dac_watch[78] = Axis->adc_voltage[0];
         // (*Axis4DAC).dac_watch[76] = FE.HE_EKF.flux[0] * 0.1; // unit : degree
         // (*Axis4DAC).dac_watch[77] = FE.HE_EKF.current_compensated_dq[1] * 0.1; // unit : degree
@@ -404,14 +404,14 @@ void write_DAC_buffer(){
             // (*Axis4DAC).channels[5] = 75;  // FE.HE_EKF.theta_d * ONE_OVER_60 * ONE_OVER_60 * 10; // unit : degree;
             // (*Axis4DAC).channels[6] = 76; 
             // (*Axis4DAC).channels[7] = 77; 
-            (*Axis4DAC).channels[0] = 76; // HE_EKF.flux[0];// wb
-            (*Axis4DAC).channels[1] = 77; // HE_EKF.flux[1]; // wb
-            (*Axis4DAC).channels[2] = 78; // HE_pure_integration.flux[0]; // wb
-            (*Axis4DAC).channels[3] = 79; // HE_pure_integration.flux[1] ; // wb
-            (*Axis4DAC).channels[4] = 80; // HE_EKF_no_sensor_correct.flux[0]; // wb
-            (*Axis4DAC).channels[5] = 81; // HE_EKF_no_sensor_correct.flux[1] ; // wb
-            (*Axis4DAC).channels[6] = 76; 
-            (*Axis4DAC).channels[7] = 77; 
+            (*Axis4DAC).channels[0] = 74; // HE_EKF.flux[0];// wb
+            (*Axis4DAC).channels[1] = 75; // HE_EKF.flux[1]; // wb
+            (*Axis4DAC).channels[2] = 76; // HE_pure_integration.flux[0]; // wb
+            (*Axis4DAC).channels[3] = 77; // HE_pure_integration.flux[1] ; // wb
+            (*Axis4DAC).channels[4] = 78; // HE_EKF_no_sensor_correct.flux[0]; // wb
+            (*Axis4DAC).channels[5] = 79; // HE_EKF_no_sensor_correct.flux[1] ; // wb
+            (*Axis4DAC).channels[6] = 71; 
+            (*Axis4DAC).channels[7] = 72; 
         }
         // [33] = (*CTRL).o->cmd_uDQ[0] * 0.02;
         // [34] = (*CTRL).o->cmd_uDQ[1] * 0.02;
