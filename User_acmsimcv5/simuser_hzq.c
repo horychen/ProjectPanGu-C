@@ -1336,18 +1336,15 @@ void rk4_init(){
         FE.HE_pure_integration.stator_flux[1]= FE.HE_pure_integration.Flux_norm * sin(FE.HE_pure_integration.initial_angle);
         FE.HE_pure_integration.last_current[0] = 0;
         FE.HE_pure_integration.last_current[1] = 0;  
-        FE.HE_pure_integration.Ibias[0] = 0.1;  
-        FE.HE_pure_integration.Ibias[1] = 0.15;// Initial flux covariance at 0 degree, 0 A in alpha beta direction
+        FE.HE_pure_integration.Ibias[0] = 0.0;  
+        FE.HE_pure_integration.Ibias[1] = 0.0;// Initial flux covariance at 0 degree, 0 A in alpha beta direction
         // filter of current bias
         // Compute filter time constant: tau = 1/(2*pi*cutoff)        
         FE.HE_pure_integration.tau = 1.0/ ONE_OVER_2PI * FE.HE_pure_integration.ONE_OVER_LPF_Hz;
     }
 
     void  step_HE_pure_integration(){
-        if PC_SIMULATION{
-            FE.HE_pure_integration.Ibias[0] += randn(0.0, 10) * CL_TS ;
-            FE.HE_pure_integration.Ibias[1] += randn(0.0, 10) * CL_TS ;
-        }
+
         FE.HE_pure_integration.IS_measured[0] = IS_C(0) + FE.HE_pure_integration.Ibias[0]*1;// + randn(0.0, 0.01);
         FE.HE_pure_integration.IS_measured[1] = IS_C(1) + FE.HE_pure_integration.Ibias[1]*1;// + randn(0.0, 0.01);
         // Cache frequently used values
@@ -1422,10 +1419,10 @@ void rk4_init(){
 
 
     void  step_HE_EKF_no_sensor_correct(){
-        if PC_SIMULATION{
-            FE.HE_EKF_no_sensor_correct.Ibias[0] += randn(0.0, 10) * CL_TS ;
-            FE.HE_EKF_no_sensor_correct.Ibias[1] += randn(0.0, 10) * CL_TS ;
-        }
+        // if PC_SIMULATION{
+        //     FE.HE_EKF_no_sensor_correct.Ibias[0] += randn(0.0, 10) * CL_TS ;
+        //     FE.HE_EKF_no_sensor_correct.Ibias[1] += randn(0.0, 10) * CL_TS ;
+        // }
         FE.HE_EKF_no_sensor_correct.IS_measured[0] = IS_C(0) + FE.HE_EKF_no_sensor_correct.Ibias[0]*1 ;//+ randn(0.0, 0.01);
         FE.HE_EKF_no_sensor_correct.IS_measured[1] = IS_C(1) + FE.HE_EKF_no_sensor_correct.Ibias[1]*1 ;//+ randn(0.0, 0.01);
         // Cache frequently used values
@@ -1610,10 +1607,10 @@ void rk4_init(){
      */
 
     void step_HE_EKF(){
-        if PC_SIMULATION{
-            FE.HE_EKF.Ibias[0] += randn(0.0, 10) * CL_TS ;
-            FE.HE_EKF.Ibias[1] += randn(0.0, 10) * CL_TS ;
-        }
+        // if PC_SIMULATION{
+        //     FE.HE_EKF.Ibias[0] += randn(0.0, 10) * CL_TS ;
+        //     FE.HE_EKF.Ibias[1] += randn(0.0, 10) * CL_TS ;
+        // }
         FE.HE_EKF.IS_measured[0] = IS_C(0) + FE.HE_EKF.Ibias[0]*1 ;//+ randn(0.0, 0.01);
         FE.HE_EKF.IS_measured[1] = IS_C(1) + FE.HE_EKF.Ibias[1]*1 ;//+ randn(0.0, 0.01);
 
@@ -1888,10 +1885,10 @@ void rk4_init(){
 
     void step_HE_SE3() {
 
-        if PC_SIMULATION{
-            FE.HE_SE3.Ibias[0] += randn(0.0, 20) * CL_TS ;
-            FE.HE_SE3.Ibias[1] += randn(0.0, 20) * CL_TS ;
-        }
+        // if PC_SIMULATION{
+        //     FE.HE_SE3.Ibias[0] += randn(0.0, 20) * CL_TS ;
+        //     FE.HE_SE3.Ibias[1] += randn(0.0, 20) * CL_TS ;
+        // }
         FE.HE_SE3.IS_measured[0] = IS_C(0) ;//+ FE.HE_SE3.Ibias[0] ;// + randn(0.0, 0.01);
         FE.HE_SE3.IS_measured[1] = IS_C(1) ;//+ FE.HE_SE3.Ibias[1] ;// + randn(0.0, 0.01);
 
@@ -2195,10 +2192,10 @@ void rk4_init(){
         FE.HE_SE3_EKF.Beta = CL_TS/(FE.HE_SE3_EKF.tau_resistance + CL_TS);
     }
     void step_HE_SE3_EKF() {
-        if PC_SIMULATION{
-            FE.HE_SE3_EKF.Ibias[0] += randn(0.0, 10) * CL_TS ;
-            FE.HE_SE3_EKF.Ibias[1] += randn(0.0, 10) * CL_TS ;
-        }
+        // if PC_SIMULATION{
+        //     FE.HE_SE3_EKF.Ibias[0] += randn(0.0, 10) * CL_TS ;
+        //     FE.HE_SE3_EKF.Ibias[1] += randn(0.0, 10) * CL_TS ;
+        // }
         FE.HE_SE3_EKF.IS_measured[0] = IS_C(0) ;//+ FE.HE_SE3_EKF.Ibias[0] * 1;// +  randn(0.0, 0.02);
         FE.HE_SE3_EKF.IS_measured[1] = IS_C(1) ;//+ FE.HE_SE3_EKF.Ibias[1] * 1;// +  randn(0.0, 0.02);
 
@@ -2506,10 +2503,10 @@ void rk4_init(){
         // AFE_44_ORTEGA_2011
         // main_ortega_2011();
         // AFE_16_HE_EKF_2025
-        // step_HE_pure_integration();
+        step_HE_pure_integration();
         // step_HE_EKF_no_sensor_correct();
-        step_HE_EKF();
-        step_HE_SE3();
+        // step_HE_EKF();
+        // step_HE_SE3();
         step_HE_SE3_EKF();
         
         // MainFE_HUWU_1998();
@@ -2537,11 +2534,11 @@ void rk4_init(){
         // AFE_44_ORTEGA_2011
         // init_ortega();
         // AFE_16_HE_EKF_2025
-        // init_HE_pure_integration();
+        init_HE_pure_integration();
         // init_HE_EKF_no_sensor_correct();
-        init_HE_EKF();
+        // init_HE_EKF();
         // AFE_16_HE_SE3_2025
-        init_HE_SE3();
+        // init_HE_SE3();
         init_HE_SE3_EKF();
 
         // init_FE_huwu();

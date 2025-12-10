@@ -85,8 +85,8 @@ void main(void){
     init_d_sim();      // do this only once here
     init_debug();      // do this only once here
     init_experiment(); // 控制器结构体初始化（同实验）
-    init_HE_EKF_no_sensor_correct(); // 初始无传感器校正的HE_EKF
-    init_HE_EKF();
+    // init_HE_EKF_no_sensor_correct(); // 初始无传感器校正的HE_EKF
+    // init_HE_EKF();
     #if WHO_IS_USER == USER_BEZIER || WHO_IS_USER == USER_WB
         get_bezier_points(); // for testing Cury the leg trajectgory tracking 
     #endif
@@ -1337,9 +1337,9 @@ void measurement_enc(){
 void measurement_current_axisCnt0(){
     // LEM1
     if(Use_three_turns_current_coil == FALSE){
-        Axis->iuvw[PIN_ADCA_U] = ((REAL)(AdcaResultRegs.ADCRESULT1) - Axis->adc_offset[1]) * Axis->adc_scale[1]; //
-        Axis->iuvw[PIN_ADCA_V] = ((REAL)(AdcaResultRegs.ADCRESULT2) - Axis->adc_offset[2]) * Axis->adc_scale[2]; //
-        Axis->iuvw[PIN_ADCA_W] = ((REAL)(AdcaResultRegs.ADCRESULT3) - Axis->adc_offset[3]) * Axis->adc_scale[3]; //
+        Axis->iuvw[PIN_ADCA_U] = ((REAL)(AdcaResultRegs.ADCRESULT1) - Axis->adc_offset[1]) * Axis->adc_scale[1]* 0.33333333333; //
+        Axis->iuvw[PIN_ADCA_V] = ((REAL)(AdcaResultRegs.ADCRESULT2) - Axis->adc_offset[2]) * Axis->adc_scale[2]* 0.33333333333; //
+        Axis->iuvw[PIN_ADCA_W] = ((REAL)(AdcaResultRegs.ADCRESULT3) - Axis->adc_offset[3]) * Axis->adc_scale[3]* 0.33333333333; //
     }
     else{
         Axis->iuvw[PIN_ADCA_U] = ((REAL)(AdcaResultRegs.ADCRESULT1) - Axis->adc_offset[1]) * Axis->adc_scale[1]  * 0.33333333333; //
@@ -1361,9 +1361,9 @@ void measurement_current_axisCnt0(){
 
 void measurement_current_axisCnt1(){
     // LEM2
-    Axis->iuvw[PIN_ADCB_U] = ((REAL)(AdcbResultRegs.ADCRESULT7) - Axis->adc_offset[4]) * Axis->adc_scale[4]; //
-    Axis->iuvw[PIN_ADCB_V] = ((REAL)(AdcbResultRegs.ADCRESULT8) - Axis->adc_offset[5]) * Axis->adc_scale[5]; //
-    Axis->iuvw[PIN_ADCB_W] = ((REAL)(AdcbResultRegs.ADCRESULT9) - Axis->adc_offset[6]) * Axis->adc_scale[6]; //
+    Axis->iuvw[PIN_ADCB_U] = ((REAL)(AdcbResultRegs.ADCRESULT7) - Axis->adc_offset[4]) * Axis->adc_scale[4]* 0.33333333333; //
+    Axis->iuvw[PIN_ADCB_V] = ((REAL)(AdcbResultRegs.ADCRESULT8) - Axis->adc_offset[5]) * Axis->adc_scale[5]* 0.33333333333; //
+    Axis->iuvw[PIN_ADCB_W] = ((REAL)(AdcbResultRegs.ADCRESULT9) - Axis->adc_offset[6]) * Axis->adc_scale[6]* 0.33333333333; //
 
     // 电流接口
     if (USE_3_CURRENT_SENSORS){
