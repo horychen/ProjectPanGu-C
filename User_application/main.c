@@ -612,7 +612,7 @@ Uint32 position_count_CAN_ID0x03_fromCPU2;
 Uint32 position_count_CAN_fromCPU2;
 Uint32 CPU2_commu_error_counter = 0;
 int USE_3_CURRENT_SENSORS = TRUE;
-int Use_three_turns_current_coil = TRUE;
+bool Use_three_turns_current_coil = TRUE;
 REAL legBouncingSpeed = 50;
 REAL hipBouncingFreq = 10;
 REAL legBouncingIq = 2;

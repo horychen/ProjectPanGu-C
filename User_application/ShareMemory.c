@@ -404,7 +404,7 @@ void write_DAC_buffer(){
             // (*Axis4DAC).channels[5] = 75;  // FE.HE_EKF.theta_d * ONE_OVER_60 * ONE_OVER_60 * 10; // unit : degree;
             // (*Axis4DAC).channels[6] = 76; 
             // (*Axis4DAC).channels[7] = 77; 
-            (*Axis4DAC).channels[0] = 74; // HE_EKF.flux[0];// wb
+            (*Axis4DAC).channels[0] = 73; // HE_EKF.flux[0];// wb
             (*Axis4DAC).channels[1] = 75; // HE_EKF.flux[1]; // wb
             (*Axis4DAC).channels[2] = 76; // HE_pure_integration.flux[0]; // wb
             (*Axis4DAC).channels[3] = 77; // HE_pure_integration.flux[1] ; // wb
