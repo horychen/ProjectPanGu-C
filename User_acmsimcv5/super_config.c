@@ -11,7 +11,7 @@ void init_d_sim() {
     d_sim.init.KE = 0.117;
     d_sim.init.Rreq = 0.0;
     d_sim.init.Js = 0.00049836;
-    d_sim.init.Vdc = 36;
+    d_sim.init.Vdc = 24;
 
     d_sim.sim.INVERTER_NONLINEARITY = 0;
     d_sim.sim.CLTS = 0.0001;

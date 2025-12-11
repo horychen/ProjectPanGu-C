@@ -973,9 +973,9 @@ void COMM_PMFluxId(REAL id_fb, REAL iq_fb, REAL omg_mech_fb){
     // put this before _lpf(...)
     PID_iD->Fbk = id_fb;
     PID_iQ->Fbk = iq_fb;
-
+    REAL UQ = AB2T((*CTRL).i->uAB[0], (*CTRL).i->uAB[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
     // put this before PID_iQ->calc(PID_iQ);
-    filtered_voltage     = _lpf(PID_iQ->Out, filtered_voltage, 1);
+    filtered_voltage     = _lpf(UQ, filtered_voltage, 1);
     filtered_current     = _lpf(PID_iQ->Fbk, filtered_current, 1);
     filtered_omg_mech_fb = _lpf(omg_mech_fb, filtered_omg_mech_fb, 1);
 
