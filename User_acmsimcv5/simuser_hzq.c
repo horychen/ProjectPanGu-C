@@ -1343,6 +1343,29 @@ void rk4_init(){
         FE.HE_pure_integration.tau = 1.0/ ONE_OVER_2PI * FE.HE_pure_integration.ONE_OVER_LPF_Hz;
     }
 
+
+    void  sub_init_HE_pure_integration(){
+        FE.HE_pure_integration.initial_angle = 0; // initial zero angle for flux, in radian
+        // FE.HE_pure_integration.initial_Covariance  = 0.02; // initial flux norm, in Wb
+        // FE.HE_pure_integration.Resistance = MOTOR.R*1.0;
+        // FE.HE_pure_integration.Inductance = MOTOR.Ld*1.0;
+        // FE.HE_pure_integration.Flux_norm = MOTOR.KE*1.0; //psi PM flux
+        // FE.HE_pure_integration.ONE_OVER_LPF_Hz =0.003; // tracking the current bias now
+        FE.HE_pure_integration.IS_measured[0] = IS_C(0) + OFFSET_CURRENT_SENSOR_ALPHA;
+        FE.HE_pure_integration.IS_measured[1] = IS_C(1) + OFFSET_CURRENT_SENSOR_BETA;
+        FE.HE_pure_integration.flux[0] = FE.HE_pure_integration.Flux_norm * cos(FE.HE_pure_integration.initial_angle);
+        FE.HE_pure_integration.flux[1] = FE.HE_pure_integration.Flux_norm * sin(FE.HE_pure_integration.initial_angle);
+        FE.HE_pure_integration.stator_flux[0]= FE.HE_pure_integration.Flux_norm * cos(FE.HE_pure_integration.initial_angle);
+        FE.HE_pure_integration.stator_flux[1]= FE.HE_pure_integration.Flux_norm * sin(FE.HE_pure_integration.initial_angle);
+        FE.HE_pure_integration.last_current[0] = 0;
+        FE.HE_pure_integration.last_current[1] = 0;  
+        FE.HE_pure_integration.Ibias[0] = 0.0;  
+        FE.HE_pure_integration.Ibias[1] = 0.0;// Initial flux covariance at 0 degree, 0 A in alpha beta direction
+        // filter of current bias
+        // Compute filter time constant: tau = 1/(2*pi*cutoff)        
+        // FE.HE_pure_integration.tau = 1.0/ ONE_OVER_2PI * FE.HE_pure_integration.ONE_OVER_LPF_Hz;
+    }
+
     void  step_HE_pure_integration(){
 
         FE.HE_pure_integration.IS_measured[0] = IS_C(0) + FE.HE_pure_integration.Ibias[0]*1;// + randn(0.0, 0.01);
@@ -1369,7 +1392,6 @@ void rk4_init(){
         
         FE.HE_pure_integration.last_current[0] = IS_biased_0;
         FE.HE_pure_integration.last_current[1] = IS_biased_1;
-
     }
     
     void  init_HE_EKF_no_sensor_correct(){
@@ -1417,6 +1439,51 @@ void rk4_init(){
         FE.HE_EKF_no_sensor_correct.tau = 1.0/ ONE_OVER_2PI * FE.HE_EKF_no_sensor_correct.ONE_OVER_LPF_Hz;
     }
 
+
+    void  sub_init_HE_EKF_no_sensor_correct(){
+        /* Define EKF parameters */
+        // FE.HE_EKF_no_sensor_correct.B_cova = 10000; // Covariance matrix of curent sensor bias noise, noises being 0.01 A in alpha beta direction
+        // FE.HE_EKF_no_sensor_correct.Q_cova = 0.000001; // Covariance of psudo measurement, noise in alpha beta direction
+        // FE.HE_EKF.inital_angle = 0; // initial zero angle for flux, in radian
+        FE.HE_EKF_no_sensor_correct.initial_angle = 0; // initial zero angle for flux, in radian
+        // FE.HE_EKF_no_sensor_correct.initial_Covariance  = 0.02; // initial flux norm, in Wb
+        // FE.HE_EKF_no_sensor_correct.Resistance = MOTOR.R*1.0;
+        // FE.HE_EKF_no_sensor_correct.Inductance = MOTOR.Ld*1.0;
+        // FE.HE_EKF_no_sensor_correct.Flux_norm = MOTOR.KE*1.0; //psi PM flux
+        // FE.HE_EKF_no_sensor_correct.ONE_OVER_LPF_Hz =0.003; // tracking the current bias now
+        // matrix of bias noise, noises being 0.01 A in alpha beta direction
+        
+        // static REAL B[2][2] = {{B_cova*B_cova,B_cova*B_cova},{B_cova*B_cova,B_cova*B_cova}};
+        FE.HE_EKF_no_sensor_correct.B_p =FE.HE_EKF_no_sensor_correct.B_cova*FE.HE_EKF_no_sensor_correct.B_cova*(FE.HE_EKF_no_sensor_correct.Inductance+ CL_TS *FE.HE_EKF_no_sensor_correct.Resistance)*(FE.HE_EKF_no_sensor_correct.Inductance+ CL_TS *FE.HE_EKF_no_sensor_correct.Resistance)* CL_TS* CL_TS;
+        FE.HE_EKF_no_sensor_correct.B_prime[0][0] = FE.HE_EKF_no_sensor_correct.B_p; 
+        FE.HE_EKF_no_sensor_correct.B_prime[0][1] = 0;
+        FE.HE_EKF_no_sensor_correct.B_prime[1][0] = 0;
+        FE.HE_EKF_no_sensor_correct.B_prime[1][1] = FE.HE_EKF_no_sensor_correct.B_p;
+        // Covariance matrix of flux norm 0.14 Wb 0.002 error in alpha beta direction
+        
+        FE.HE_EKF_no_sensor_correct.IS_measured[0] = IS_C(0) + OFFSET_CURRENT_SENSOR_ALPHA;
+        FE.HE_EKF_no_sensor_correct.IS_measured[1] = IS_C(1) + OFFSET_CURRENT_SENSOR_BETA;
+        // Initial state
+        FE.HE_EKF_no_sensor_correct.flux[0] = FE.HE_EKF_no_sensor_correct.Flux_norm * cos(FE.HE_EKF_no_sensor_correct.initial_angle);
+        FE.HE_EKF_no_sensor_correct.flux[1] = FE.HE_EKF_no_sensor_correct.Flux_norm * sin(FE.HE_EKF_no_sensor_correct.initial_angle);
+        FE.HE_EKF_no_sensor_correct.stator_flux[0]= FE.HE_EKF_no_sensor_correct.Flux_norm * cos(FE.HE_EKF_no_sensor_correct.initial_angle);
+        FE.HE_EKF_no_sensor_correct.stator_flux[1]= FE.HE_EKF_no_sensor_correct.Flux_norm * sin(FE.HE_EKF_no_sensor_correct.initial_angle);
+
+        //state at 0 degree in alpha beta direction
+        FE.HE_EKF_no_sensor_correct.sigmapri[0][0] = FE.HE_EKF_no_sensor_correct.initial_Covariance*FE.HE_EKF_no_sensor_correct.initial_Covariance;
+        FE.HE_EKF_no_sensor_correct.sigmapri[0][1] = 0;
+        FE.HE_EKF_no_sensor_correct.sigmapri[1][0] = 0;
+        FE.HE_EKF_no_sensor_correct.sigmapri[1][1] = FE.HE_EKF_no_sensor_correct.initial_Covariance*FE.HE_EKF_no_sensor_correct.initial_Covariance;
+        // Initial flux covariance at 0 degree, 0.01 Wb in alpha beta direction
+        // FE.HE_EKF_no_sensor_correct.Ibias[0] = 0.1;  
+        // FE.HE_EKF_no_sensor_correct.Ibias[1] = 0.15;// Initial flux covariance at 0 degree, 0 A in alpha beta direction
+
+        FE.HE_EKF_no_sensor_correct.last_current[0] = 0;
+        FE.HE_EKF_no_sensor_correct.last_current[1] = 0;  
+        // filter of current bias
+        // Compute filter time constant: tau = 1/(2*pi*cutoff)        
+        // FE.HE_EKF_no_sensor_correct.tau = 1.0/ ONE_OVER_2PI * FE.HE_EKF_no_sensor_correct.ONE_OVER_LPF_Hz;
+    }
 
     void  step_HE_EKF_no_sensor_correct(){
         // if PC_SIMULATION{
@@ -1550,7 +1617,51 @@ void rk4_init(){
         FE.HE_EKF.tau = 1.0/ ONE_OVER_2PI * FE.HE_EKF.ONE_OVER_LPF_Hz;
     }
 
+    void sub_init_HE_EKF(){
+        /* Define EKF parameters */
+        // FE.HE_EKF.B_cova = 10000; // Covariance matrix of curent sensor bias noise, noises being 0.01 A in alpha beta direction
+        // FE.HE_EKF.Q_cova = 0.000001; // Covariance of psudo measurement, noise in alpha beta direction
+        // FE.HE_EKF.inital_angle = 0; // initial zero angle for flux, in radian
+        FE.HE_EKF.initial_angle = 0; // initial zero angle for flux, in radian
+        // FE.HE_EKF.initial_Covariance  = 0.02; // initial flux norm, in Wb
+        // FE.HE_EKF.Resistance = MOTOR.R*1.0;
+        // FE.HE_EKF.Inductance = MOTOR.Ld*1.0;
+        // FE.HE_EKF.Flux_norm = MOTOR.KE*1.0; //psi PM flux
+        // FE.HE_EKF.ONE_OVER_LPF_Hz =0.003; // tracking the current bias now
+        // matrix of bias noise, noises being 0.01 A in alpha beta direction
+        
+        // static REAL B[2][2] = {{B_cova*B_cova,B_cova*B_cova},{B_cova*B_cova,B_cova*B_cova}};
+        FE.HE_EKF.B_p =FE.HE_EKF.B_cova*FE.HE_EKF.B_cova*(FE.HE_EKF.Inductance+ CL_TS *FE.HE_EKF.Resistance)*(FE.HE_EKF.Inductance+ CL_TS *FE.HE_EKF.Resistance)* CL_TS* CL_TS;
+        FE.HE_EKF.B_prime[0][0] = FE.HE_EKF.B_p; 
+        FE.HE_EKF.B_prime[0][1] = 0;
+        FE.HE_EKF.B_prime[1][0] = 0;
+        FE.HE_EKF.B_prime[1][1] = FE.HE_EKF.B_p;
+        // Covariance matrix of flux norm 0.14 Wb 0.002 error in alpha beta direction
+        
+        FE.HE_EKF.IS_measured[0] = IS_C(0) + OFFSET_CURRENT_SENSOR_ALPHA;
+        FE.HE_EKF.IS_measured[1] = IS_C(1) + OFFSET_CURRENT_SENSOR_BETA;
+        // Initial state
+        FE.HE_EKF.flux[0] = FE.HE_EKF.Flux_norm * cos(FE.HE_EKF.initial_angle);
+        FE.HE_EKF.flux[1] = FE.HE_EKF.Flux_norm * sin(FE.HE_EKF.initial_angle);
+        FE.HE_EKF.stator_flux[0]= FE.HE_EKF.Flux_norm * cos(FE.HE_EKF.initial_angle);
+        FE.HE_EKF.stator_flux[1]= FE.HE_EKF.Flux_norm * sin(FE.HE_EKF.initial_angle);
 
+        //state at 0 degree in alpha beta direction
+        FE.HE_EKF.sigmapri[0][0] = FE.HE_EKF.initial_Covariance*FE.HE_EKF.initial_Covariance;
+        FE.HE_EKF.sigmapri[0][1] = 0;
+        FE.HE_EKF.sigmapri[1][0] = 0;
+        FE.HE_EKF.sigmapri[1][1] = FE.HE_EKF.initial_Covariance*FE.HE_EKF.initial_Covariance;
+        // Initial flux covariance at 0 degree, 0.01 Wb in alpha beta direction
+        // FE.HE_EKF.Ibias[0] = 0;  
+        // FE.HE_EKF.Ibias[1] = 0.15;// Initial flux covariance at 0 degree, 0 A in alpha beta direction
+        FE.HE_EKF.Ibias_est[0] = 0;  
+        FE.HE_EKF.Ibias_est[1] = 0;// Initial flux covariance at 0 degree, 0 A in alpha beta direction
+        FE.HE_EKF.last_current[0] = 0;
+        FE.HE_EKF.last_current[1] = 0;  
+        // filter of current bias
+        // Compute filter time constant: tau = 1/(2*pi*cutoff)        
+        // FE.HE_EKF.tau = 1.0/ ONE_OVER_2PI * FE.HE_EKF.ONE_OVER_LPF_Hz;
+    }
 
     /* ============================================================================
      * TIMING ANALYSIS for step_HE_EKF() on TI TMS320F28377 DSP
@@ -1833,7 +1944,45 @@ void rk4_init(){
         FE.HE_SE3.tau = 1.0/ ONE_OVER_2PI * FE.HE_SE3.ONE_OVER_LPF_Hz;
     }
 
+    void sub_init_HE_SE3() {
+        // FE.HE_SE3.Flux_norm = MOTOR.KE * 1.0; // initial flux norm
+        // FE.HE_SE3.Resistance = MOTOR.R * 1.0; // overestimate resistance for stability
+        // FE.HE_SE3.Inductance = MOTOR.Ld * 1.0; // overestimate inductance for stability
+        // printf("MOTOR.Ld = %f, FE.HE_SE3.Inductance = %f\n", MOTOR.Ld, FE.HE_SE3.Inductance);      
 
+        // FE.HE_SE3.flux_prior[0] = 1.0;
+        // FE.HE_SE3.flux_prior[1] = 0.0;
+
+        FE.HE_SE3.flux_perior[0] = FE.HE_SE3.Flux_norm;
+        FE.HE_SE3.flux_perior[1] = 0.0;
+        FE.HE_SE3.flux_perior_prev[0] = FE.HE_SE3.Flux_norm;
+        FE.HE_SE3.flux_perior_prev[1] = 0.0;        
+        FE.HE_SE3.flux_postrior[0] = FE.HE_SE3.Flux_norm;
+        FE.HE_SE3.flux_postrior[1] = 0.0;
+        FE.HE_SE3.flux_postrior_prev[0] = FE.HE_SE3.Flux_norm;
+        FE.HE_SE3.flux_postrior_prev[1] = 0.0;
+        // screw matrix at first
+        // [1,0;
+        // -0,1]
+        FE.HE_SE3.chi_alpha =1;
+        FE.HE_SE3.chi_beta=0;
+
+        FE.HE_SE3.IS_measured[0] = IS_C(0) + OFFSET_CURRENT_SENSOR_ALPHA;
+        FE.HE_SE3.IS_measured[1] = IS_C(1) + OFFSET_CURRENT_SENSOR_BETA;
+        FE.HE_SE3.IS_measured_prev[0] = IS_C(0) + OFFSET_CURRENT_SENSOR_ALPHA;
+        FE.HE_SE3.IS_measured_prev[1] = IS_C(1) + OFFSET_CURRENT_SENSOR_BETA;
+
+        // FE.HE_SE3.Ibias[0] = 0;
+        // FE.HE_SE3.Ibias[1] = 0;
+        FE.HE_SE3.theta_d = 0.0;
+        FE.HE_SE3.theta_e = 0.0;
+        FE.HE_SE3.omega_elec = 0;
+        FE.HE_SE3.omega_elec_pre=0;
+
+        // FE.HE_SE3.ONE_OVER_LPF_Hz = 0.0002; // cutoff frequency for speed filter
+
+        // FE.HE_SE3.tau = 1.0/ ONE_OVER_2PI * FE.HE_SE3.ONE_OVER_LPF_Hz;
+    }
     /* ============================================================================
      * TIMING ANALYSIS for step_HE_SE3() on TI TMS320F28377 DSP
      * ============================================================================
@@ -2132,7 +2281,7 @@ void rk4_init(){
     void init_HE_SE3_EKF() {
         /* Define EKF parameters */
         FE.HE_SE3_EKF.B_cova = 10000; // Covariance matrix of curent sensor bias noise, noises being 0.01 A in alpha beta direction
-        FE.HE_SE3_EKF.G_cova = 0.0001; // Covariance of psudo measurement, noise in alpha beta direction
+        FE.HE_SE3_EKF.G_cova = 0.000001; // Covariance of psudo measurement, noise in alpha beta direction
         FE.HE_SE3_EKF.initial_angle = 0;
         FE.HE_SE3_EKF.initial_Covariance  = 0.02; // initial flux norm, in Wb
 
@@ -2141,8 +2290,8 @@ void rk4_init(){
         FE.HE_SE3_EKF.Flux_norm = MOTOR.KE*1.0; //psi PM flux
 
         // filter for velocity
-        FE.HE_SE3_EKF.ONE_OVER_LPF_Hz = 0.0001;
-        FE.HE_SE3_EKF.ONE_OVER_LPF_Hz_resistance = 0.001;
+        FE.HE_SE3_EKF.ONE_OVER_LPF_Hz = 0.0002;
+        FE.HE_SE3_EKF.ONE_OVER_LPF_Hz_resistance = 0.005;
         // matrix of bias noise, noises being 0.01 A in alpha beta direction
         
         // static REAL B[2][2] = {{B_cova*B_cova,B_cova*B_cova},{B_cova*B_cova,B_cova*B_cova}};
@@ -2191,6 +2340,71 @@ void rk4_init(){
         FE.HE_SE3_EKF.alpha = CL_TS/(FE.HE_SE3_EKF.tau + CL_TS);
         FE.HE_SE3_EKF.Beta = CL_TS/(FE.HE_SE3_EKF.tau_resistance + CL_TS);
     }
+
+
+    void sub_init_HE_SE3_EKF() {
+        /* Define EKF parameters */
+        // FE.HE_SE3_EKF.B_cova = 10000; // Covariance matrix of curent sensor bias noise, noises being 0.01 A in alpha beta direction
+        // FE.HE_SE3_EKF.G_cova = 0.000001; // Covariance of psudo measurement, noise in alpha beta direction
+        FE.HE_SE3_EKF.initial_angle = 0;
+        // FE.HE_SE3_EKF.initial_Covariance  = 0.02; // initial flux norm, in Wb
+
+        // FE.HE_SE3_EKF.Resistance = MOTOR.R*1.0;
+        // FE.HE_SE3_EKF.Inductance = MOTOR.Ld*1.0;
+        // FE.HE_SE3_EKF.Flux_norm = MOTOR.KE*1.0; //psi PM flux
+
+        // filter for velocity
+        // FE.HE_SE3_EKF.ONE_OVER_LPF_Hz = 0.0002;
+        // FE.HE_SE3_EKF.ONE_OVER_LPF_Hz_resistance = 0.005;
+        // matrix of bias noise, noises being 0.01 A in alpha beta direction
+        
+        // static REAL B[2][2] = {{B_cova*B_cova,B_cova*B_cova},{B_cova*B_cova,B_cova*B_cova}};
+        FE.HE_SE3_EKF.B_p =FE.HE_SE3_EKF.B_cova*FE.HE_SE3_EKF.B_cova*(FE.HE_SE3_EKF.Inductance+ CL_TS *FE.HE_SE3_EKF.Resistance)*(FE.HE_SE3_EKF.Inductance+ CL_TS *FE.HE_SE3_EKF.Resistance)* CL_TS* CL_TS;
+        FE.HE_SE3_EKF.B_prime[0][0] = FE.HE_SE3_EKF.B_p; 
+        FE.HE_SE3_EKF.B_prime[0][1] = 0;
+        FE.HE_SE3_EKF.B_prime[1][0] = 0;
+        FE.HE_SE3_EKF.B_prime[1][1] = FE.HE_SE3_EKF.B_p;
+        // Covariance matrix of flux norm 0.14 Wb 0.002 error in alpha beta direction
+        
+        FE.HE_SE3_EKF.IS_measured[0] = IS_C(0) + OFFSET_CURRENT_SENSOR_ALPHA;
+        FE.HE_SE3_EKF.IS_measured[1] = IS_C(1) + OFFSET_CURRENT_SENSOR_BETA;
+        FE.HE_SE3_EKF.IS_measured_prev[0] = IS_C(0) + OFFSET_CURRENT_SENSOR_ALPHA;
+        FE.HE_SE3_EKF.IS_measured_prev[1] = IS_C(1) + OFFSET_CURRENT_SENSOR_BETA;
+
+        FE.HE_SE3_EKF.Phi[0][0] = 1;
+        FE.HE_SE3_EKF.Phi[0][1] = 0;
+        FE.HE_SE3_EKF.Phi[1][0] = 0;
+        FE.HE_SE3_EKF.Phi[1][1] = 1;
+        // Initial state
+        FE.HE_SE3_EKF.flux_perior[0] = FE.HE_SE3_EKF.Flux_norm;
+        FE.HE_SE3_EKF.flux_perior[1] = 0.0;
+        FE.HE_SE3_EKF.flux_perior_prev[0] = FE.HE_SE3_EKF.Flux_norm;
+        FE.HE_SE3_EKF.flux_perior_prev[1] = 0.0;        
+        FE.HE_SE3_EKF.flux_postrior[0] = FE.HE_SE3_EKF.Flux_norm;
+        FE.HE_SE3_EKF.flux_postrior[1] = 0.0;
+        FE.HE_SE3_EKF.flux_postrior_prev[0] = FE.HE_SE3_EKF.Flux_norm;
+        FE.HE_SE3_EKF.flux_postrior_prev[1] = 0.0;
+
+        //state at 0 degree in alpha beta direction
+        FE.HE_SE3_EKF.sigmapri[0][0] = FE.HE_SE3_EKF.initial_Covariance*FE.HE_SE3_EKF.initial_Covariance;
+        FE.HE_SE3_EKF.sigmapri[0][1] = 0;
+        FE.HE_SE3_EKF.sigmapri[1][0] = 0;
+        FE.HE_SE3_EKF.sigmapri[1][1] = FE.HE_SE3_EKF.initial_Covariance*FE.HE_SE3_EKF.initial_Covariance;
+        // Initial flux covariance at 0 degree, 0.01 Wb in alpha beta direction
+        // FE.HE_SE3_EKF.Ibias[0] = 0;  
+        // FE.HE_SE3_EKF.Ibias[1] = 0;// Initial flux covariance at 0 degree, 0 A in alpha beta direction
+        FE.HE_SE3_EKF.Ibias_est[0] = 0;  
+        FE.HE_SE3_EKF.Ibias_est[1] = 0;// Initial flux covariance at 0 degree, 0 A in alpha beta direction
+        FE.HE_SE3_EKF.last_current[0] = 0;
+        FE.HE_SE3_EKF.last_current[1] = 0;  
+        // filter of current bias
+        // Compute filter time constant: tau = 1/(2*pi*cutoff)        
+        // FE.HE_SE3_EKF.tau = 1.0/ ONE_OVER_2PI * FE.HE_SE3_EKF.ONE_OVER_LPF_Hz;
+        // FE.HE_SE3_EKF.tau_resistance = 1.0/ ONE_OVER_2PI * FE.HE_SE3_EKF.ONE_OVER_LPF_Hz_resistance;
+        // FE.HE_SE3_EKF.alpha = CL_TS/(FE.HE_SE3_EKF.tau + CL_TS);
+        // FE.HE_SE3_EKF.Beta = CL_TS/(FE.HE_SE3_EKF.tau_resistance + CL_TS);
+    }
+
     void step_HE_SE3_EKF() {
         // if PC_SIMULATION{
         //     FE.HE_SE3_EKF.Ibias[0] += randn(0.0, 10) * CL_TS ;
@@ -2531,15 +2745,12 @@ void rk4_init(){
     }
 
     void init_FE(){
-        // AFE_44_ORTEGA_2011
         // init_ortega();
-        // AFE_16_HE_EKF_2025
-        init_HE_pure_integration();
-        // init_HE_EKF_no_sensor_correct();
-        // init_HE_EKF();
-        // AFE_16_HE_SE3_2025
-        // init_HE_SE3();
-        init_HE_SE3_EKF();
+        sub_init_HE_pure_integration();
+        // sub_init_HE_EKF_no_sensor_correct();
+        // sub_init_HE_EKF();
+        // sub_init_HE_SE3();
+        sub_init_HE_SE3_EKF();
 
         // init_FE_huwu();
         #if AFE_38_OUTPUT_ERROR_CLOSED_LOOP

@@ -84,9 +84,16 @@ void main(void){
     /* All this init operation should be same as emy-c WUBO*/
     init_d_sim();      // do this only once here
     init_debug();      // do this only once here
-    init_experiment(); // 控制器结构体初始化（同实验）
-    // init_HE_EKF_no_sensor_correct(); // 初始无传感器校正的HE_EKF
+
+    // init_HE_EKF_no_sensor_correct();
     // init_HE_EKF();
+    // AFE_16_HE_SE3_2025
+    // init_HE_SE3();
+    
+    init_experiment(); // 控制器结构体初始化（同实验）
+    init_HE_SE3_EKF();
+    init_HE_pure_integration();
+    
     #if WHO_IS_USER == USER_BEZIER || WHO_IS_USER == USER_WB
         get_bezier_points(); // for testing Cury the leg trajectgory tracking 
     #endif

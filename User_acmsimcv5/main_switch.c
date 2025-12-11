@@ -713,9 +713,10 @@ void _onlyFOC(REAL theta_d_elec, REAL iAB[2], REAL varOmega){
     //     (*CTRL).o->cmd_uAB[1] = MT2B((*CTRL).o->cmd_uDQ[0], (*CTRL).o->cmd_uDQ[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
     // #endif
 }
+int normal_command =1;
 void _user_commands(){
     /* RPM GIVEN */
-    // (*CTRL).i->cmd_varOmega = (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
+
 
     if (CTRL->motor->Rreq > 0){
         // 感应电机需要励磁
@@ -730,11 +731,34 @@ void _user_commands(){
         // (*CTRL).i->cmd_iDQ[0] = -1.0;
     }
 
-
-
-    (*CTRL).i->cmd_varOmega = 50 * RPM_2_MECH_RAD_PER_SEC;
-
-
+    if(normal_command ==1){
+        (*CTRL).i->cmd_varOmega = (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
+    }else{
+    // (*CTRL).i->cmd_varOmega = 50 * RPM_2_MECH_RAD_PER_SEC;
+        if ((*CTRL).timebase < 4 && (*CTRL).timebase > 2){
+            (*CTRL).i->cmd_varOmega = 50 * RPM_2_MECH_RAD_PER_SEC;
+        }
+        if ((*CTRL).timebase < 7.5 && (*CTRL).timebase > 4){
+            (*CTRL).i->cmd_varOmega = 50 * RPM_2_MECH_RAD_PER_SEC;
+            // FE.HE_EKF.current_offset[0] = 0.05;
+            // FE.HE_EKF.current_offset[1] = 0.1;
+        }
+        if ((*CTRL).timebase < 10 && (*CTRL).timebase > 7.5){
+            (*CTRL).i->cmd_varOmega = -50 * RPM_2_MECH_RAD_PER_SEC;
+        }
+        if ((*CTRL).timebase > 10){
+            (*CTRL).i->cmd_varOmega += 12.50 * RPM_2_MECH_RAD_PER_SEC * CL_TS;
+        }
+        if ((*CTRL).timebase > 18){
+            (*CTRL).i->cmd_varOmega = 50 * RPM_2_MECH_RAD_PER_SEC;
+        }
+        if ((*CTRL).timebase > 20){
+            (*CTRL).i->cmd_varOmega = 0;
+        }
+        if ((*CTRL).timebase > 23){
+            (*CTRL).i->cmd_varOmega = 10 * RPM_2_MECH_RAD_PER_SEC;
+        }    
+    }
     #if FALSE // configured experiument series
         if ((*CTRL).timebase < 4 && (*CTRL).timebase > 2){
             (*CTRL).i->cmd_varOmega = 50 * RPM_2_MECH_RAD_PER_SEC;
