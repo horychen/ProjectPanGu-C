@@ -2290,8 +2290,8 @@ void rk4_init(){
         FE.HE_SE3_EKF.Flux_norm = MOTOR.KE*1.0; //psi PM flux
 
         // filter for velocity
-        FE.HE_SE3_EKF.ONE_OVER_LPF_Hz = 0.0002;
-        FE.HE_SE3_EKF.ONE_OVER_LPF_Hz_resistance = 0.005;
+        FE.HE_SE3_EKF.ONE_OVER_LPF_Hz = 0.001;
+        FE.HE_SE3_EKF.ONE_OVER_LPF_Hz_resistance = 0.05;
         // matrix of bias noise, noises being 0.01 A in alpha beta direction
         
         // static REAL B[2][2] = {{B_cova*B_cova,B_cova*B_cova},{B_cova*B_cova,B_cova*B_cova}};
@@ -2399,10 +2399,10 @@ void rk4_init(){
         FE.HE_SE3_EKF.last_current[1] = 0;  
         // filter of current bias
         // Compute filter time constant: tau = 1/(2*pi*cutoff)        
-        // FE.HE_SE3_EKF.tau = 1.0/ ONE_OVER_2PI * FE.HE_SE3_EKF.ONE_OVER_LPF_Hz;
-        // FE.HE_SE3_EKF.tau_resistance = 1.0/ ONE_OVER_2PI * FE.HE_SE3_EKF.ONE_OVER_LPF_Hz_resistance;
-        // FE.HE_SE3_EKF.alpha = CL_TS/(FE.HE_SE3_EKF.tau + CL_TS);
-        // FE.HE_SE3_EKF.Beta = CL_TS/(FE.HE_SE3_EKF.tau_resistance + CL_TS);
+        FE.HE_SE3_EKF.tau = 1.0/ ONE_OVER_2PI * FE.HE_SE3_EKF.ONE_OVER_LPF_Hz;
+        FE.HE_SE3_EKF.tau_resistance = 1.0/ ONE_OVER_2PI * FE.HE_SE3_EKF.ONE_OVER_LPF_Hz_resistance;
+        FE.HE_SE3_EKF.alpha = CL_TS/(FE.HE_SE3_EKF.tau + CL_TS);
+        FE.HE_SE3_EKF.Beta = CL_TS/(FE.HE_SE3_EKF.tau_resistance + CL_TS);
     }
 
     void step_HE_SE3_EKF() {
