@@ -1234,7 +1234,7 @@ int  main_switch(long mode_select){
             );
             #elif (AFE_16_HE_SE3_EKF_2025)
                 FOC_with_vecocity_control(FE.HE_SE3_EKF.theta_d, 
-                FE.HE_SE3_EKF.omega_elec * MOTOR.npp_inv, 
+                PLLN_EKF.omega_elec * MOTOR.npp_inv, 
                 (*CTRL).i->cmd_varOmega, 
                 (*CTRL).i->cmd_iDQ, 
                 (*CTRL).i->iAB

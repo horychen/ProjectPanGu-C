@@ -4236,7 +4236,7 @@ void Main_parksul2014_FADO(){
         PLLN_EKF.emf_ampl = 0;
         PLLN_EKF.x[0] = 0;
         PLLN_EKF.x[1] = 0;
-        PLLN_EKF.kp = 100;
+        PLLN_EKF.kp = 200;
         PLLN_EKF.ki = 300;
         PLLN_EKF.emf_recon[0] = 0;
         PLLN_EKF.emf_recon[1] = 0;
@@ -4327,7 +4327,7 @@ void pmsm_observers(){
     // if (AFE_44_ORTEGA_2011)
     // Main_PLL_norm_Psi(FE.Ortega.psi_2);
     // if (AFE_16_HE_EKF_2025)
-    // Main_PLL_norm_Psi_EKF(FE.HE_EKF.flux);
+    Main_PLL_norm_Psi_EKF(FE.HE_SE3_EKF.flux_postrior);
     // if (AFE_16_HE_SE3_2025)
     // Main_PLL_norm_Psi(FE.HE_SE3.flux_postrior);
 
