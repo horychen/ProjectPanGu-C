@@ -2290,7 +2290,7 @@ void rk4_init(){
         FE.HE_SE3_EKF.Flux_norm = MOTOR.KE*1.0; //psi PM flux
 
         // filter for velocity
-        FE.HE_SE3_EKF.ONE_OVER_LPF_Hz = 0.0005;
+        FE.HE_SE3_EKF.ONE_OVER_LPF_Hz = 0.001;
         FE.HE_SE3_EKF.ONE_OVER_LPF_Hz_resistance = 0.05;
         // matrix of bias noise, noises being 0.01 A in alpha beta direction
         

@@ -236,7 +236,6 @@ void init_CTRL(){
 
     /* Basic quantities */
     (*CTRL).timebase = 0.0;
-
     /* Machine parameters */
     // elec
     (*CTRL).motor->R  = d_sim.init.R;

@@ -459,8 +459,9 @@ void ENABLE_PWM_OUTPUT(int positionLoopType){
         }
     #endif
     // DSP中控制器的时间
-    (*CTRL).timebase_counter += 1;
-    (*CTRL).timebase = CL_TS * (*CTRL).timebase_counter; //(*CTRL).timebase += CL_TS; // 2048 = float/REAL max
+    // (*CTRL).timebase_counter += 1;
+    // (*CTRL).timebase = CL_TS * (*CTRL).timebase_counter; 
+    (*CTRL).timebase += CL_TS; // 2048 = float/REAL max
 
     #if ALLOW_RUNTIME_PARAM_UPDATE && WHO_IS_USER == USER_WB
     #endif
