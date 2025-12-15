@@ -23,10 +23,10 @@ void init_d_sim() {
     d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation = FALSE;
     d_sim.FOC.VL_EXE_PER_CL_EXE = 1;
 
-    d_sim.CL.SERIES_KP_D_AXIS = 30.084954386379742;
-    d_sim.CL.SERIES_KI_D_AXIS = 514.65625;
-    d_sim.CL.SERIES_KP_Q_AXIS = 30.084954386379742;
-    d_sim.CL.SERIES_KI_Q_AXIS = 514.65625;
+    d_sim.CL.SERIES_KP_D_AXIS = 10.4954386379742;
+    d_sim.CL.SERIES_KI_D_AXIS = 314.65625;
+    d_sim.CL.SERIES_KP_Q_AXIS = 10.084954386379742;
+    d_sim.CL.SERIES_KI_Q_AXIS = 314.65625;
     d_sim.CL.LIMIT_DC_BUS_UTILIZATION = 0.96;
 
     d_sim.VL.SERIES_KP = 0.22058704353118255;
