@@ -160,7 +160,7 @@ void write_DAC_buffer(){
         (*Axis4DAC).dac_watch[76] = FE.HE_SE3_EKF.theta_d * ONE_OVER_2PI ;// degree
         (*Axis4DAC).dac_watch[77] = FE.HE_SE3_EKF.omega_elec* ELEC_RAD_PER_SEC_2_RPM * 0.001; // unit : degree
         (*Axis4DAC).dac_watch[78] = (*CTRL).i->iDQ[1] * 0.1; 
-        (*Axis4DAC).dac_watch[79] = FE.HE_pure_integration.flux[1]; 
+        (*Axis4DAC).dac_watch[79] = (*CTRL).i->cmd_varOmega * MECH_RAD_PER_SEC_2_RPM * 0.001;
         (*Axis4DAC).dac_watch[71] = FE.HE_SE3_EKF.flux_postrior[0]; 
         (*Axis4DAC).dac_watch[72] = FE.HE_SE3_EKF.flux_postrior[1];
         // (*Axis4DAC).dac_watch[78] = Axis->adc_voltage[0];
