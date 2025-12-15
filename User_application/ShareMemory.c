@@ -473,13 +473,13 @@ void write_DAC_buffer(){
 
             if(((*Axis4DAC).dac_time)<3){
                 (*Axis4DAC).dac_offset[0] = 0.0;             // WB tuned in 20250414, before is 0.0045;
-                (*Axis4DAC).dac_offset[1] = 0.004;
+                (*Axis4DAC).dac_offset[1] = 0.0;
                 (*Axis4DAC).dac_offset[2] = 0.0;             // WB tuned in 20250414, before is 0.0055;
-                (*Axis4DAC).dac_offset[3] = -0.00999999978;  // WB tuned in 20250414, before is 0.0035;
+                (*Axis4DAC).dac_offset[3] = 0.0;  // WB tuned in 20250414, before is 0.0035;
                 (*Axis4DAC).dac_offset[4] = 0.0;             // WB tuned in 20250414, before is 0.003;
-                (*Axis4DAC).dac_offset[5] = 0.00100000005;   // -0.0045;
-                (*Axis4DAC).dac_offset[6] = 0.000400000019;  //  0.002;
-                (*Axis4DAC).dac_offset[7] = -0.001;
+                (*Axis4DAC).dac_offset[5] = 0.00;   // -0.0045;
+                (*Axis4DAC).dac_offset[6] = 0.000;  //  0.002;
+                (*Axis4DAC).dac_offset[7] = -0.00;
                 #if Load_Sweeping_DAC
                     (*Axis4DAC).dac_offset[0] = 0.0;
                     (*Axis4DAC).dac_offset[1] = 0.0;

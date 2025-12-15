@@ -127,7 +127,7 @@
     #define AFE_44_ORTEGA_2011 0
     #define AFE_16_HE_EKF_2025 0
     #define AFE_16_HE_SE3_2025 0
-    #define AFE_16_HE_SE3_EKF_2025 1
+    #define AFE_16_HE_SE3_EKF_2025 0
     #define AFE_45_CMwithDynamicCurrent 0
     #define ALG_PLL_norm 1//DSP-based control of sensorless IPMSM drives for wide-speedrange operation
     #define ALG_AKT_SPEED_EST_AND_RS_ID 0
