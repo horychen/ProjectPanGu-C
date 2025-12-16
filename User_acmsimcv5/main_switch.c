@@ -737,27 +737,22 @@ void _user_commands(){
         //     (*CTRL).i->cmd_varOmega = 0;
         // }
     // (*CTRL).i->cmd_varOmega = 50 * RPM_2_MECH_RAD_PER_SEC;
-        if ((*CTRL).timebase < 4 && (*CTRL).timebase > 0){
+        if ((*CTRL).timebase < 5 && (*CTRL).timebase > 0){
             (*CTRL).i->cmd_varOmega = 50 * RPM_2_MECH_RAD_PER_SEC;
         }
-        if ((*CTRL).timebase < 7.5 && (*CTRL).timebase > 4){
-            (*CTRL).i->cmd_varOmega = 50 * RPM_2_MECH_RAD_PER_SEC;
-            // FE.HE_EKF.current_offset[0] = 0.05;
-            // FE.HE_EKF.current_offset[1] = 0.1;
-        }
-        if ((*CTRL).timebase < 10 && (*CTRL).timebase > 7.5){
+        if ((*CTRL).timebase < 7.5 && (*CTRL).timebase > 5){
             (*CTRL).i->cmd_varOmega = -50 * RPM_2_MECH_RAD_PER_SEC;
         }
-        if ((*CTRL).timebase > 10){
+        if ((*CTRL).timebase > 7.5){
             (*CTRL).i->cmd_varOmega += 12.50 * RPM_2_MECH_RAD_PER_SEC * CL_TS;
         }
-        if ((*CTRL).timebase > 18){
+        if ((*CTRL).timebase > 15.5){
             (*CTRL).i->cmd_varOmega = 50 * RPM_2_MECH_RAD_PER_SEC;
         }
-        if ((*CTRL).timebase > 20){
+        if ((*CTRL).timebase > 18){
             (*CTRL).i->cmd_varOmega = 0;
         }
-        if ((*CTRL).timebase > 23){
+        if ((*CTRL).timebase > 20){
             (*CTRL).i->cmd_varOmega = 10 * RPM_2_MECH_RAD_PER_SEC;
         }    
     }else if (normal_command ==3)
@@ -769,7 +764,7 @@ void _user_commands(){
         if ((*CTRL).timebase > 2){
             (*CTRL).i->cmd_varOmega -= 25 * RPM_2_MECH_RAD_PER_SEC * CL_TS;
         }
-        if ((*CTRL).timebase > 6){
+        if ((*CTRL).timebase > 5){
             (*CTRL).i->cmd_varOmega = -50 * RPM_2_MECH_RAD_PER_SEC;
         }
     }

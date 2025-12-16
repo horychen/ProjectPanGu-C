@@ -2290,8 +2290,8 @@ void rk4_init(){
         FE.HE_SE3_EKF.Flux_norm = MOTOR.KE*1.0; //psi PM flux
 
         // filter for velocity
-        FE.HE_SE3_EKF.ONE_OVER_LPF_Hz = 0.002;
-        FE.HE_SE3_EKF.ONE_OVER_LPF_Hz_resistance = 0.05;
+        FE.HE_SE3_EKF.ONE_OVER_LPF_Hz = 0.001;
+        FE.HE_SE3_EKF.ONE_OVER_LPF_Hz_resistance = 0.002;
         // matrix of bias noise, noises being 0.01 A in alpha beta direction
         
         // static REAL B[2][2] = {{B_cova*B_cova,B_cova*B_cova},{B_cova*B_cova,B_cova*B_cova}};
@@ -2384,7 +2384,7 @@ void rk4_init(){
         FE.HE_SE3_EKF.flux_postrior[1] = 0.0;
         FE.HE_SE3_EKF.flux_postrior_prev[0] = FE.HE_SE3_EKF.Flux_norm;
         FE.HE_SE3_EKF.flux_postrior_prev[1] = 0.0;
-
+        FE.HE_SE3_EKF.omega_elec = 0;
         //state at 0 degree in alpha beta direction
         FE.HE_SE3_EKF.sigmapri[0][0] = FE.HE_SE3_EKF.initial_Covariance*FE.HE_SE3_EKF.initial_Covariance;
         FE.HE_SE3_EKF.sigmapri[0][1] = 0;
@@ -2410,8 +2410,8 @@ void rk4_init(){
         //     FE.HE_SE3_EKF.Ibias[0] += randn(0.0, 10) * CL_TS ;
         //     FE.HE_SE3_EKF.Ibias[1] += randn(0.0, 10) * CL_TS ;
         // }
-        FE.HE_SE3_EKF.IS_measured[0] = IS_C(0) ;//+ FE.HE_SE3_EKF.Ibias[0] * 1;// +  randn(0.0, 0.02);
-        FE.HE_SE3_EKF.IS_measured[1] = IS_C(1) ;//+ FE.HE_SE3_EKF.Ibias[1] * 1;// +  randn(0.0, 0.02);
+        FE.HE_SE3_EKF.IS_measured[0] = IS_C(0) + FE.HE_SE3_EKF.Ibias[0] * 1;// +  randn(0.0, 0.02);
+        FE.HE_SE3_EKF.IS_measured[1] = IS_C(1) + FE.HE_SE3_EKF.Ibias[1] * 1;// +  randn(0.0, 0.02);
 
         // Cache frequently used values
         REAL IS_biased_0 = FE.HE_SE3_EKF.IS_measured[0] -FE.HE_SE3_EKF.Ibias_est[0];
