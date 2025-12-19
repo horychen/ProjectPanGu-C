@@ -84,6 +84,7 @@ struct YZK_2025_TIA_CTRL{
     // REAL I_Term_prev_iQ;
     // REAL K_INVERSE_iD;
     // REAL K_INVERSE_iQ;
+    REAL dc_bus_utilization_ratio;
     /* Misc*/
     REAL varTheta;
     REAL OutPrev_alpha;
