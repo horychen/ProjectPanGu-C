@@ -901,9 +901,9 @@ void overwrite_sweeping_frequency(){
                     (*CTRL).i->cmd_iDQ[1] = d_sim.user.CMD_CURRENT_SINE_AMPERE\
                      * sin(2* M_PI *d_sim.user.CMD_SPEED_SINE_HZ*(d_sim.user.timebase_for_Sweeping  - d_sim.user.CMD_SPEED_SINE_LAST_END_TIME));
                 //  Suspension PI freq. SWEEPING
-                if(WHO_IS_USER == USER_YZK)
-                YZK_CTRL.CMD_I_alpha = d_sim.user.CMD_CURRENT_SINE_AMPERE\
-                     * sin(2* M_PI *d_sim.user.CMD_SPEED_SINE_HZ*(d_sim.user.timebase_for_Sweeping  - d_sim.user.CMD_SPEED_SINE_LAST_END_TIME));
+                // if(WHO_IS_USER == USER_YZK)
+                // YZK_CTRL.CMD_I_alpha_1 = d_sim.user.CMD_CURRENT_SINE_AMPERE\
+                //      * sin(2* M_PI *d_sim.user.CMD_SPEED_SINE_HZ*(d_sim.user.timebase_for_Sweeping  - d_sim.user.CMD_SPEED_SINE_LAST_END_TIME));
                 // if(WHO_IS_USER == USER_YZK)
                 }
             }

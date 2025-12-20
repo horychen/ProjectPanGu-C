@@ -1,8 +1,8 @@
 #include "ACMSim.h"
 #include "All_Definition.h"
 
-#define DC_BUS_VOLTAGE_INVERSE (1.732 / Axis->vdc)
-
+#define DC_BUS_VOLTAGE_INVERSE_1 (1.732 / Axis_1.vdc)
+#define DC_BUS_VOLTAGE_INVERSE_2 (1.732 / Axis_2.vdc)
 // YZK_2025_TIA_CTRL *YZK_CTRL;
 // LowPassFilter *YZK_LPF;
 // st_pid_regulator *YZK_PID;
@@ -59,8 +59,10 @@ void init_YZK_ALL(){
     /* XY方向 */
     YZK_CTRL.CMD_X = - 5.0;
     YZK_CTRL.CMD_Y = 10.10;
-    YZK_CTRL.Err_X = 0.0;
-    YZK_CTRL.Err_Y = 0.0;
+    YZK_CTRL.Err_X_1 = 0.0;
+    YZK_CTRL.Err_Y_1 = 0.0;
+    YZK_CTRL.Err_X_2 = 0.0;
+    YZK_CTRL.Err_Y_2 = 0.0;
     YZK_CTRL.KP_X = 20;
     YZK_CTRL.KP_Y = 20;
     YZK_CTRL.KI_X = 0.0;
@@ -82,19 +84,33 @@ void init_YZK_ALL(){
     YZK_CTRL.CMD_F_Y_Kd    = 0.0;
     YZK_CTRL.CMD_F_alpha   = 0.0;
     YZK_CTRL.CMD_F_beta    = 0.0;
-    YZK_CTRL.CMD_I_alpha   = 0.0;
-    YZK_CTRL.CMD_I_beta    = 0.0;
-    YZK_CTRL.CMD_U_alpha   = 0.0;
-    YZK_CTRL.CMD_U_beta    = 0.0;
-    YZK_CTRL.Err_I_alpha   = 0.0;
-    YZK_CTRL.Err_I_beta    = 0.0;
-    YZK_CTRL.OutPrev_alpha = 0.0;
-    YZK_CTRL.OutPrev_beta = 0.0;
-    YZK_CTRL.Out_alpha = 0.0;
-    YZK_CTRL.Out_beta = 0.0;
-    YZK_CTRL.Out_alpha_KI = 0.0;
-    YZK_CTRL.Out_beta_KI = 0.0;
-    YZK_CTRL.KDLimit = 40.0;
+    YZK_CTRL.KDLimit       = 40.0;
+    YZK_CTRL.CMD_I_alpha_1   = 0.0;
+    YZK_CTRL.CMD_I_beta_1    = 0.0;
+    YZK_CTRL.CMD_U_alpha_1   = 0.0;
+    YZK_CTRL.CMD_U_beta_1    = 0.0;
+    YZK_CTRL.Err_I_alpha_1   = 0.0;
+    YZK_CTRL.Err_I_beta_1    = 0.0;
+    YZK_CTRL.OutPrev_alpha_1 = 0.0;
+    YZK_CTRL.OutPrev_beta_1 = 0.0;
+    YZK_CTRL.Out_alpha_1 = 0.0;
+    YZK_CTRL.Out_beta_1 = 0.0;
+    YZK_CTRL.Out_alpha_KI_1 = 0.0;
+    YZK_CTRL.Out_beta_KI_1 = 0.0;
+    
+    YZK_CTRL.CMD_I_alpha_2   = 0.0;
+    YZK_CTRL.CMD_I_beta_2    = 0.0;
+    YZK_CTRL.CMD_U_alpha_2   = 0.0;
+    YZK_CTRL.CMD_U_beta_2    = 0.0;
+    YZK_CTRL.Err_I_alpha_2   = 0.0;
+    YZK_CTRL.Err_I_beta_2    = 0.0;
+    YZK_CTRL.OutPrev_alpha_2 = 0.0;
+    YZK_CTRL.OutPrev_beta_2 = 0.0;
+    YZK_CTRL.Out_alpha_2 = 0.0;
+    YZK_CTRL.Out_beta_2 = 0.0;
+    YZK_CTRL.Out_alpha_KI_2 = 0.0;
+    YZK_CTRL.Out_beta_KI_2 = 0.0;
+    
     // YZK_CTRL.I_Term_prev_iD = 0.0;
     // YZK_CTRL.I_Term_prev_iQ = 0.0;
     // YZK_CTRL.K_INVERSE_iD = 0.0;
@@ -107,19 +123,32 @@ void init_YZK_ALL(){
     YZK_CTRL.disFbk_X = 0.0;
     YZK_CTRL.disFbk_Y = 0.0;
     YZK_CTRL.encFbk   = 0.0;
-    YZK_CTRL.prev_error_X = 0.0;
-    YZK_CTRL.prev_error_Y = 0.0;
-    YZK_CTRL.prev_error_I_alpha = 0.0;
-    YZK_CTRL.prev_error_I_beta = 0.0;
+    YZK_CTRL.prev_error_X_1 = 0.0;
+    YZK_CTRL.prev_error_Y_1 = 0.0;
+    YZK_CTRL.prev_error_X_2 = 0.0;
+    YZK_CTRL.prev_error_Y_2 = 0.0;
+    YZK_CTRL.prev_error_I_alpha_1 = 0.0;
+    YZK_CTRL.prev_error_I_beta_1 = 0.0;
+    YZK_CTRL.prev_error_I_alpha_2 = 0.0;
+    YZK_CTRL.prev_error_I_beta_2 = 0.0;
 
-    YZK_CTRL.pids.Kp_alpha = 15;
-    YZK_CTRL.pids.Kp_beta = 15;
-    YZK_CTRL.pids.Ki_CODE_alpha = 3500e-4;
-    YZK_CTRL.pids.Ki_CODE_beta = 3500e-4;
-    YZK_CTRL.pids.Kd = 0.0;
-    YZK_CTRL.pids.OutLimit = 28;
-    YZK_CTRL.pids.OutLimit_alphaKI = 10;
-    YZK_CTRL.pids.OutLimit_betaKI = 10;
+    YZK_CTRL.pids.Kp_alpha_1 = 15;
+    YZK_CTRL.pids.Kp_beta_1 = 15;
+    YZK_CTRL.pids.Ki_CODE_alpha_1 = 3500e-4;
+    YZK_CTRL.pids.Ki_CODE_beta_1 = 3500e-4;
+    // YZK_CTRL.pids.Kd = 0.0;
+    YZK_CTRL.pids.OutLimit_1 = 28;
+    YZK_CTRL.pids.OutLimit_alphaKI_1 = 10;
+    YZK_CTRL.pids.OutLimit_betaKI_1 = 10;
+
+    YZK_CTRL.pids.Kp_alpha_2 = 15;
+    YZK_CTRL.pids.Kp_beta_2 = 15;
+    YZK_CTRL.pids.Ki_CODE_alpha_2 = 3500e-4;
+    YZK_CTRL.pids.Ki_CODE_beta_2 = 3500e-4;
+    // YZK_CTRL.pids.Kd = 0.0;
+    YZK_CTRL.pids.OutLimit_2 = 28;
+    YZK_CTRL.pids.OutLimit_alphaKI_2 = 10;
+    YZK_CTRL.pids.OutLimit_betaKI_2 = 10;
 
     /* 参数初始化 */
     YZK_CTRL.motor.npp = 5;
@@ -137,7 +166,8 @@ void init_YZK_ALL(){
     // YZK_CTRL.motor.K_Y = 50000;
     YZK_CTRL.motor.K_X = 0.1;  // 1 A / 10 N
     YZK_CTRL.motor.K_Y = 0.1;  // 1 A / 10 N
-    YZK_CTRL.dc_bus_utilization_ratio = 0;
+    YZK_CTRL.dc_bus_utilization_ratio_1 = 0;
+    YZK_CTRL.dc_bus_utilization_ratio_2 = 0;
 }
 
 
@@ -177,15 +207,21 @@ void suspension_p4ps5_PD_doubleaxis(REAL X_Pos, REAL Y_Pos){
         // YZK_CTRL.prev_error_X = YZK_CTRL.Err_X; // 保存上次误差
         // YZK_CTRL.disFbk_X = X_Pos;
         YZK_CTRL.varTheta = (*CTRL).i->theta_d_elec;
-        YZK_CTRL.Err_X = - YZK_CTRL.CMD_X + YZK_CTRL.disFbk_X;
+        YZK_CTRL.Err_X_1 = - YZK_CTRL.CMD_X + YZK_CTRL.disFbk_X;
+        YZK_CTRL.Err_X_2 = - YZK_CTRL.CMD_X + YZK_CTRL.disFbk_X;
         // YZK_CTRL.varTheta = (*CTRL).i->theta_d_elec;
-        YZK_CTRL.Err_Y = - YZK_CTRL.CMD_Y + YZK_CTRL.disFbk_Y;
-        YZK_CTRL.Err_X = _lpf(YZK_CTRL.Err_X, YZK_CTRL.prev_error_X, 2513.27); // 400Hz
-        YZK_CTRL.Err_Y = _lpf(YZK_CTRL.Err_Y, YZK_CTRL.prev_error_Y, 2513.27); // 400Hz
+        YZK_CTRL.Err_Y_1 = - YZK_CTRL.CMD_Y + YZK_CTRL.disFbk_Y;
+        YZK_CTRL.Err_Y_2 = - YZK_CTRL.CMD_Y + YZK_CTRL.disFbk_Y;
+
+        YZK_CTRL.Err_X_1 = _lpf(YZK_CTRL.Err_X_1, YZK_CTRL.prev_error_X_1, 2513.27); // 400Hz
+        YZK_CTRL.Err_Y_1 = _lpf(YZK_CTRL.Err_Y_1, YZK_CTRL.prev_error_Y_1, 2513.27); // 400Hz
+
+        YZK_CTRL.Err_X_2 = _lpf(YZK_CTRL.Err_X_2, YZK_CTRL.prev_error_X_2, 2513.27); // 400Hz
+        YZK_CTRL.Err_Y_2 = _lpf(YZK_CTRL.Err_Y_2, YZK_CTRL.prev_error_Y_2, 2513.27); // 400Hz
 
         // 2. 误差微分 (差分法)
-        YZK_CTRL.LPFs_x.de_raw_X = (YZK_CTRL.Err_X - YZK_CTRL.prev_error_X) * CL_TS_INVERSE;
-        YZK_CTRL.LPFs_y.de_raw_Y = (YZK_CTRL.Err_Y - YZK_CTRL.prev_error_Y) * CL_TS_INVERSE;
+        YZK_CTRL.LPFs_x.de_raw_X = (YZK_CTRL.Err_X_1 - YZK_CTRL.prev_error_X_1) * CL_TS_INVERSE;
+        YZK_CTRL.LPFs_y.de_raw_Y = (YZK_CTRL.Err_Y_1 - YZK_CTRL.prev_error_Y_1) * CL_TS_INVERSE;
 
         // 3. 低通滤波(获得/dot{Err_X})
         // YZK_CTRL.LPFs.de_X = YZK_CTRL.LPFs.de_raw_X;
@@ -211,14 +247,14 @@ void suspension_p4ps5_PD_doubleaxis(REAL X_Pos, REAL Y_Pos){
 
         // YZK_CTRL.CMD_F_X = I_ampa * cos(2 * F_freq_1 * M_PI * CTRL->timebase);
         // YZK_CTRL.CMD_F_Y = I_ampa * sin(2 * F_freq_2 * M_PI * CTRL->timebase);
-        YZK_CTRL.CMD_F_X_Kp = YZK_CTRL.KP_X * YZK_CTRL.Err_X;
-        YZK_CTRL.CMD_F_X_Kd = YZK_CTRL.KD_X * YZK_CTRL.LPFs_x.de_X;
+        YZK_CTRL.CMD_F_X_Kp = YZK_CTRL.KP_X * YZK_CTRL.Err_X_1;
+        YZK_CTRL.CMD_F_X_Kd = YZK_CTRL.KD_X * YZK_CTRL.LPFs_x.de_X; 
         if(YZK_CTRL.CMD_F_X_Kd > YZK_CTRL.KDLimit) YZK_CTRL.CMD_F_X_Kd = YZK_CTRL.KDLimit;
         else if(YZK_CTRL.CMD_F_X_Kd < -YZK_CTRL.KDLimit) YZK_CTRL.CMD_F_X_Kd = -YZK_CTRL.KDLimit;
 
         // YZK_CTRL.CMD_F_X = YZK_CTRL.CMD_F_X_Kp + YZK_CTRL.CMD_F_X_Kd;
 
-        YZK_CTRL.CMD_F_Y_Kp = YZK_CTRL.KP_Y * YZK_CTRL.Err_Y;
+        YZK_CTRL.CMD_F_Y_Kp = YZK_CTRL.KP_Y * YZK_CTRL.Err_Y_1;
         YZK_CTRL.CMD_F_Y_Kd = YZK_CTRL.KD_Y * YZK_CTRL.LPFs_y.de_Y;
         if(YZK_CTRL.CMD_F_Y_Kd > YZK_CTRL.KDLimit) YZK_CTRL.CMD_F_Y_Kd = YZK_CTRL.KDLimit;
         else if(YZK_CTRL.CMD_F_Y_Kd < -YZK_CTRL.KDLimit) YZK_CTRL.CMD_F_Y_Kd = -YZK_CTRL.KDLimit;
@@ -236,22 +272,13 @@ void suspension_p4ps5_PD_doubleaxis(REAL X_Pos, REAL Y_Pos){
         // YZK_CTRL.CMD_I_alpha = YZK_CTRL.motor.K_X * YZK_CTRL.CMD_F_alpha;
         // YZK_CTRL.CMD_I_beta  = YZK_CTRL.motor.K_Y * YZK_CTRL.CMD_F_beta;
 
-        YZK_CTRL.CMD_I_alpha = YZK_CTRL.motor.K_X * (YZK_CTRL.CMD_F_alpha * cos(CTRL->i->theta_d_elec) + YZK_CTRL.CMD_F_beta * sin(CTRL->i->theta_d_elec));
-        YZK_CTRL.CMD_I_beta  = YZK_CTRL.motor.K_Y * ( - YZK_CTRL.CMD_F_alpha * sin(CTRL->i->theta_d_elec) + YZK_CTRL.CMD_F_beta * cos(CTRL->i->theta_d_elec));
+        YZK_CTRL.CMD_I_alpha_1 = YZK_CTRL.motor.K_X * (YZK_CTRL.CMD_F_alpha * cos(CTRL->i->theta_d_elec) + YZK_CTRL.CMD_F_beta * sin(CTRL->i->theta_d_elec));
+        YZK_CTRL.CMD_I_beta_1  = YZK_CTRL.motor.K_Y * ( - YZK_CTRL.CMD_F_alpha * sin(CTRL->i->theta_d_elec) + YZK_CTRL.CMD_F_beta * cos(CTRL->i->theta_d_elec));
+        YZK_CTRL.CMD_I_alpha_2 = YZK_CTRL.motor.K_X * (YZK_CTRL.CMD_F_alpha * cos(CTRL->i->theta_d_elec) + YZK_CTRL.CMD_F_beta * sin(CTRL->i->theta_d_elec));
+        YZK_CTRL.CMD_I_beta_2  = YZK_CTRL.motor.K_Y * ( - YZK_CTRL.CMD_F_alpha * sin(CTRL->i->theta_d_elec) + YZK_CTRL.CMD_F_beta * cos(CTRL->i->theta_d_elec));
         // YZK_CTRL.CMD_I_alpha = I_ampa * cos(YZK_CTRL.varTheta - M_PI/3) * cos(2 * F_freq * M_PI * CTRL->timebase);
         // YZK_CTRL.CMD_I_alpha = cos(YZK_CTRL.varTheta) * YZK_CTRL.motor.K_X * YZK_CTRL.CMD_psi_alpha * 1 / (YZK_CTRL.motor.ge - YZK_CTRL.disFbk_X);
     
-        /* Torque Part */ 
-        CTRL_1.i->cmd_iDQ[0] = - 0.5 * debug_2.set_id_command;
-        CTRL_1.i->cmd_iDQ[1] = - 0.5 * debug_2.set_iq_command;
-        CTRL_2.i->cmd_iDQ[0] = 0.5 * debug_2.set_id_command;
-        CTRL_2.i->cmd_iDQ[1] = 0.5 * debug_2.set_iq_command;
-        // (*CTRL).i->theta_d_elec
-        (*CTRL).s->cosT = cos((*CTRL).i->theta_d_elec);
-        (*CTRL).s->sinT = sin((*CTRL).i->theta_d_elec);
-        (*CTRL).o->cmd_iAB[0] = MT2A((*CTRL).i->cmd_iDQ[0], (*CTRL).i->cmd_iDQ[1], (*CTRL).s->cosT_compensated_1p5omegaTs, (*CTRL).s->sinT_compensated_1p5omegaTs);
-        (*CTRL).o->cmd_iAB[1] = MT2B((*CTRL).i->cmd_iDQ[0], (*CTRL).i->cmd_iDQ[1], (*CTRL).s->cosT_compensated_1p5omegaTs, (*CTRL).s->sinT_compensated_1p5omegaTs);
-
     }
     // /* Torque Part */
     // (*CTRL).s->cosT = cos((*CTRL).i->theta_d_elec);
@@ -280,64 +307,138 @@ void suspension_p4ps5_PD_doubleaxis(REAL X_Pos, REAL Y_Pos){
     // (*CTRL).o->cmd_uAB[0] = MT2A((*CTRL).o->cmd_uDQ[0], (*CTRL).o->cmd_uDQ[1], (*CTRL).s->cosT_compensated_1p5omegaTs, (*CTRL).s->sinT_compensated_1p5omegaTs);
     // (*CTRL).o->cmd_uAB[1] = MT2B((*CTRL).o->cmd_uDQ[0], (*CTRL).o->cmd_uDQ[1], (*CTRL).s->cosT_compensated_1p5omegaTs, (*CTRL).s->sinT_compensated_1p5omegaTs);
 
+    /* Torque Part */ 
+    CTRL_1.i->cmd_iDQ[0] = - 0.5 * debug_2.set_id_command;
+    CTRL_1.i->cmd_iDQ[1] = - 0.5 * debug_2.set_iq_command;
+    CTRL_2.i->cmd_iDQ[0] = 0.5 * debug_2.set_id_command;
+    CTRL_2.i->cmd_iDQ[1] = 0.5 * debug_2.set_iq_command;
+    // (*CTRL).i->theta_d_elec
+    (*CTRL).s->cosT = cos((*CTRL).i->theta_d_elec);
+    (*CTRL).s->sinT = sin((*CTRL).i->theta_d_elec);
+    CTRL_1.o->cmd_iAB[0] = MT2A(CTRL_1.i->cmd_iDQ[0], CTRL_1.i->cmd_iDQ[1], CTRL_1.s->cosT_compensated_1p5omegaTs, CTRL_1.s->sinT_compensated_1p5omegaTs);
+    CTRL_1.o->cmd_iAB[1] = MT2B(CTRL_1.i->cmd_iDQ[0], CTRL_1.i->cmd_iDQ[1], CTRL_1.s->cosT_compensated_1p5omegaTs, CTRL_1.s->sinT_compensated_1p5omegaTs);
+    CTRL_2.o->cmd_iAB[0] = MT2A(CTRL_2.i->cmd_iDQ[0], CTRL_2.i->cmd_iDQ[1], CTRL_2.s->cosT_compensated_1p5omegaTs, CTRL_2.s->sinT_compensated_1p5omegaTs);
+    CTRL_2.o->cmd_iAB[1] = MT2B(CTRL_2.i->cmd_iDQ[0], CTRL_2.i->cmd_iDQ[1], CTRL_2.s->cosT_compensated_1p5omegaTs, CTRL_2.s->sinT_compensated_1p5omegaTs);
+
     // overwrite_sweeping_f_1.quency_1.;
+    if(axisCnt == 0)
+    {
+        YZK_CTRL.Err_I_alpha_1 = CTRL_1.o->cmd_iAB[0] + YZK_CTRL.CMD_I_alpha_1 - CTRL_1.i->iAB[0];
+        YZK_CTRL.Err_I_beta_1  = CTRL_1.o->cmd_iAB[1] + YZK_CTRL.CMD_I_beta_1 - CTRL_1.i->iAB[1];
+        
+        _lpf(YZK_CTRL.Err_I_alpha_1, YZK_CTRL.prev_error_I_alpha_1, 12513.27);
+        _lpf(YZK_CTRL.Err_I_beta_1, YZK_CTRL.prev_error_I_beta_1, 12513.27);
 
-    YZK_CTRL.Err_I_alpha = (*CTRL).o->cmd_iAB[0] + YZK_CTRL.CMD_I_alpha - (*CTRL).i->iAB[0];
-    YZK_CTRL.Err_I_beta  = (*CTRL).o->cmd_iAB[1] + YZK_CTRL.CMD_I_beta - (*CTRL).i->iAB[1];
+        /* 电流环 */
+        YZK_CTRL.Out_alpha_KI_1 = YZK_CTRL.pids.Ki_CODE_alpha_1 * YZK_CTRL.Err_I_alpha_1;
 
-    _lpf(YZK_CTRL.Err_I_alpha, YZK_CTRL.prev_error_I_alpha, 12513.27);
-    _lpf(YZK_CTRL.Err_I_beta, YZK_CTRL.prev_error_I_beta, 12513.27);
+        if(YZK_CTRL.Out_alpha_KI_1 > YZK_CTRL.pids.OutLimit_alphaKI_1)       YZK_CTRL.Out_alpha_KI_1 = YZK_CTRL.pids.OutLimit_alphaKI_1;
+        else if(YZK_CTRL.Out_alpha_KI_1 < - YZK_CTRL.pids.OutLimit_alphaKI_1) YZK_CTRL.Out_alpha_KI_1 = -YZK_CTRL.pids.OutLimit_alphaKI_1;
 
-    /* 电流环 */
-    YZK_CTRL.Out_alpha_KI = YZK_CTRL.pids.Ki_CODE_alpha * YZK_CTRL.Err_I_alpha;
+        YZK_CTRL.Out_alpha_1 = YZK_CTRL.OutPrev_alpha_1 + YZK_CTRL.pids.Kp_alpha_1 * ( YZK_CTRL.Err_I_alpha_1 - YZK_CTRL.prev_error_I_alpha_1 ) \
+        + YZK_CTRL.Out_alpha_KI_1;
 
-    if(YZK_CTRL.Out_alpha_KI > YZK_CTRL.pids.OutLimit_alphaKI)       YZK_CTRL.Out_alpha_KI = YZK_CTRL.pids.OutLimit_alphaKI;
-    else if(YZK_CTRL.Out_alpha_KI < - YZK_CTRL.pids.OutLimit_alphaKI) YZK_CTRL.Out_alpha_KI = -YZK_CTRL.pids.OutLimit_alphaKI;
+        if(YZK_CTRL.Out_alpha_1 > YZK_CTRL.pids.OutLimit_1)       YZK_CTRL.Out_alpha_1 = YZK_CTRL.pids.OutLimit_1;
+        else if(YZK_CTRL.Out_alpha_1 < - YZK_CTRL.pids.OutLimit_1) YZK_CTRL.Out_alpha_1 = -YZK_CTRL.pids.OutLimit_1;
 
-    YZK_CTRL.Out_alpha = YZK_CTRL.OutPrev_alpha + YZK_CTRL.pids.Kp_alpha * ( YZK_CTRL.Err_I_alpha - YZK_CTRL.prev_error_I_alpha ) \
-    + YZK_CTRL.Out_alpha_KI;
-    
-    if(YZK_CTRL.Out_alpha > YZK_CTRL.pids.OutLimit)       YZK_CTRL.Out_alpha = YZK_CTRL.pids.OutLimit;
-    else if(YZK_CTRL.Out_alpha < - YZK_CTRL.pids.OutLimit) YZK_CTRL.Out_alpha = -YZK_CTRL.pids.OutLimit;
+        YZK_CTRL.prev_error_I_alpha_1 = YZK_CTRL.Err_I_alpha_1;
+        YZK_CTRL.OutPrev_alpha_1 = YZK_CTRL.Out_alpha_1;
+        YZK_CTRL.CMD_U_alpha_1 = YZK_CTRL.Out_alpha_1;
+        // incremental_PI_YZK(&YZK_CTRL.pids);
+        // YZK_CTRL.CMD_U_alpha = YZK_CTRL.Out;
 
-    YZK_CTRL.prev_error_I_alpha = YZK_CTRL.Err_I_alpha; 
-    YZK_CTRL.OutPrev_alpha = YZK_CTRL.Out_alpha;
-    YZK_CTRL.CMD_U_alpha = YZK_CTRL.Out_alpha;
-    // incremental_PI_YZK(&YZK_CTRL.pids);
-    // YZK_CTRL.CMD_U_alpha = YZK_CTRL.Out;
-    
-    CTRL_1.o->cmd_uAB_to_inverter[0] = YZK_CTRL.CMD_U_alpha;
-    CTRL_2.o->cmd_uAB_to_inverter[0] = YZK_CTRL.CMD_U_alpha;
-    // 更新状态
-    YZK_CTRL.prev_error_X = YZK_CTRL.Err_X;
+        CTRL_1.o->cmd_uAB_to_inverter[0] = YZK_CTRL.CMD_U_alpha_1;
+        // CTRL_2.o->cmd_uAB_to_inverter[0] = YZK_CTRL.CMD_U_alpha;
+        // 更新状态
+        YZK_CTRL.prev_error_X_1 = YZK_CTRL.Err_X_1;
 
-    // 6. PI
-    YZK_CTRL.Out_beta_KI = YZK_CTRL.pids.Ki_CODE_beta * YZK_CTRL.Err_I_beta;
+        // 6. PI
+        YZK_CTRL.Out_beta_KI_1 = YZK_CTRL.pids.Ki_CODE_beta_1 * YZK_CTRL.Err_I_beta_1;
 
-    if(YZK_CTRL.Out_beta_KI > YZK_CTRL.pids.OutLimit_betaKI)       YZK_CTRL.Out_beta_KI = YZK_CTRL.pids.OutLimit_betaKI;
-    else if(YZK_CTRL.Out_beta_KI < - YZK_CTRL.pids.OutLimit_betaKI) YZK_CTRL.Out_beta_KI = -YZK_CTRL.pids.OutLimit_betaKI;
+        if(YZK_CTRL.Out_beta_KI_1 > YZK_CTRL.pids.OutLimit_betaKI_1)       YZK_CTRL.Out_beta_KI_1 = YZK_CTRL.pids.OutLimit_betaKI_1;
+        else if(YZK_CTRL.Out_beta_KI_1 < - YZK_CTRL.pids.OutLimit_betaKI_1) YZK_CTRL.Out_beta_KI_1 = -YZK_CTRL.pids.OutLimit_betaKI_1;
 
-    YZK_CTRL.Out_beta = YZK_CTRL.OutPrev_beta + YZK_CTRL.pids.Kp_beta * ( YZK_CTRL.Err_I_beta - YZK_CTRL.prev_error_I_beta ) \
-    + YZK_CTRL.Out_beta_KI;
+        YZK_CTRL.Out_beta_1 = YZK_CTRL.OutPrev_beta_1 + YZK_CTRL.pids.Kp_beta_1 * ( YZK_CTRL.Err_I_beta_1 - YZK_CTRL.prev_error_I_beta_1 ) \
+        + YZK_CTRL.Out_beta_KI_1;
 
-    if(YZK_CTRL.Out_beta > YZK_CTRL.pids.OutLimit)       YZK_CTRL.Out_beta = YZK_CTRL.pids.OutLimit;
-    else if(YZK_CTRL.Out_beta < - YZK_CTRL.pids.OutLimit) YZK_CTRL.Out_beta = -YZK_CTRL.pids.OutLimit;
-    
-    YZK_CTRL.prev_error_I_beta = YZK_CTRL.Err_I_beta;
-    YZK_CTRL.OutPrev_beta = YZK_CTRL.Out_beta;
-    YZK_CTRL.CMD_U_beta = YZK_CTRL.Out_beta;
-    // incremental_PI_YZK(&YZK_CTRL.pids);
-    // YZK_CTRL.CMD_U_beta = YZK_CTRL.Out;
+        if(YZK_CTRL.Out_beta_1 > YZK_CTRL.pids.OutLimit_1)       YZK_CTRL.Out_beta_1 = YZK_CTRL.pids.OutLimit_1;
+        else if(YZK_CTRL.Out_beta_1 < - YZK_CTRL.pids.OutLimit_1) YZK_CTRL.Out_beta_1 = -YZK_CTRL.pids.OutLimit_1;
 
-    CTRL_1.o->cmd_uAB_to_inverter[1] = YZK_CTRL.CMD_U_beta;
-    CTRL_2.o->cmd_uAB_to_inverter[1] = YZK_CTRL.CMD_U_beta;
-    // 7.更新状态
-    YZK_CTRL.prev_error_Y = YZK_CTRL.Err_Y;
-    // return psi_cmd;
-    YZK_CTRL.dc_bus_utilization_ratio = DC_BUS_VOLTAGE_INVERSE * sqrtf( YZK_CTRL.CMD_U_alpha
-                                                                        * YZK_CTRL.CMD_U_alpha
-                                                                        + YZK_CTRL.CMD_U_beta
-                                                                        * YZK_CTRL.CMD_U_beta );
+        YZK_CTRL.prev_error_I_beta_1 = YZK_CTRL.Err_I_beta_1;
+        YZK_CTRL.OutPrev_beta_1 = YZK_CTRL.Out_beta_1;
+        YZK_CTRL.CMD_U_beta_1 = YZK_CTRL.Out_beta_1;
+        // incremental_PI_YZK(&YZK_CTRL.pids);
+        // YZK_CTRL.CMD_U_beta = YZK_CTRL.Out;
+
+        // CTRL_1.o->cmd_uAB_to_inverter[1] = YZK_CTRL.CMD_U_beta;
+        CTRL_2.o->cmd_uAB_to_inverter[1] = YZK_CTRL.CMD_U_beta_1;
+        // 7.更新状态
+        YZK_CTRL.prev_error_Y_1 = YZK_CTRL.Err_Y_1;
+        // return psi_cmd;
+        YZK_CTRL.dc_bus_utilization_ratio_1 = DC_BUS_VOLTAGE_INVERSE_1 * sqrtf( YZK_CTRL.CMD_U_alpha_1
+                                                                            * YZK_CTRL.CMD_U_alpha_1
+                                                                            + YZK_CTRL.CMD_U_beta_1
+                                                                            * YZK_CTRL.CMD_U_beta_1 );
+    }
+    if (axisCnt == 1)
+    {
+        YZK_CTRL.Err_I_alpha_2 = CTRL_2.o->cmd_iAB[0] + YZK_CTRL.CMD_I_alpha_2 - CTRL_2.i->iAB[0];
+        YZK_CTRL.Err_I_beta_2  = CTRL_2.o->cmd_iAB[1] + YZK_CTRL.CMD_I_beta_2 - CTRL_2.i->iAB[1];
+
+        _lpf(YZK_CTRL.Err_I_alpha_2, YZK_CTRL.prev_error_I_alpha_2, 12513.27);
+        _lpf(YZK_CTRL.Err_I_beta_2, YZK_CTRL.prev_error_I_beta_2, 12513.27);
+
+        /* 电流环 */
+        YZK_CTRL.Out_alpha_KI_2 = YZK_CTRL.pids.Ki_CODE_alpha_2 * YZK_CTRL.Err_I_alpha_2;
+
+        if(YZK_CTRL.Out_alpha_KI_2 > YZK_CTRL.pids.OutLimit_alphaKI_2)       YZK_CTRL.Out_alpha_KI_2 = YZK_CTRL.pids.OutLimit_alphaKI_2;
+        else if(YZK_CTRL.Out_alpha_KI_2 < - YZK_CTRL.pids.OutLimit_alphaKI_2) YZK_CTRL.Out_alpha_KI_2 = -YZK_CTRL.pids.OutLimit_alphaKI_2;
+
+        YZK_CTRL.Out_alpha_2 = YZK_CTRL.OutPrev_alpha_2 + YZK_CTRL.pids.Kp_alpha_2 * ( YZK_CTRL.Err_I_alpha_2 - YZK_CTRL.prev_error_I_alpha_2 ) \
+        + YZK_CTRL.Out_alpha_KI_2;
+
+        if(YZK_CTRL.Out_alpha_2 > YZK_CTRL.pids.OutLimit_2)       YZK_CTRL.Out_alpha_2 = YZK_CTRL.pids.OutLimit_2;
+        else if(YZK_CTRL.Out_alpha_2 < - YZK_CTRL.pids.OutLimit_2) YZK_CTRL.Out_alpha_2 = -YZK_CTRL.pids.OutLimit_2;
+
+        YZK_CTRL.prev_error_I_alpha_2 = YZK_CTRL.Err_I_alpha_2; 
+        YZK_CTRL.OutPrev_alpha_2 = YZK_CTRL.Out_alpha_2;
+        YZK_CTRL.CMD_U_alpha_2 = YZK_CTRL.Out_alpha_2;
+        // incremental_PI_YZK(&YZK_CTRL.pids);
+        // YZK_CTRL.CMD_U_alpha = YZK_CTRL.Out;
+
+        CTRL_1.o->cmd_uAB_to_inverter[0] = YZK_CTRL.CMD_U_alpha_2;
+        // CTRL_2.o->cmd_uAB_to_inverter[0] = YZK_CTRL.CMD_U_alpha;
+        // 更新状态
+        YZK_CTRL.prev_error_X_2 = YZK_CTRL.Err_X_2;
+
+        // 6. PI
+        YZK_CTRL.Out_beta_KI_2 = YZK_CTRL.pids.Ki_CODE_beta_2 * YZK_CTRL.Err_I_beta_2;
+
+        if(YZK_CTRL.Out_beta_KI_2 > YZK_CTRL.pids.OutLimit_betaKI_2)       YZK_CTRL.Out_beta_KI_2 = YZK_CTRL.pids.OutLimit_betaKI_2;
+        else if(YZK_CTRL.Out_beta_KI_2 < - YZK_CTRL.pids.OutLimit_betaKI_2) YZK_CTRL.Out_beta_KI_2 = -YZK_CTRL.pids.OutLimit_betaKI_2;
+
+        YZK_CTRL.Out_beta_2 = YZK_CTRL.OutPrev_beta_2 + YZK_CTRL.pids.Kp_beta_2 * ( YZK_CTRL.Err_I_beta_2 - YZK_CTRL.prev_error_I_beta_2 ) \
+        + YZK_CTRL.Out_beta_KI_2;
+
+        if(YZK_CTRL.Out_beta_2 > YZK_CTRL.pids.OutLimit_2)       YZK_CTRL.Out_beta_2 = YZK_CTRL.pids.OutLimit_2;
+        else if(YZK_CTRL.Out_beta_2 < - YZK_CTRL.pids.OutLimit_2) YZK_CTRL.Out_beta_2 = -YZK_CTRL.pids.OutLimit_2;
+
+        YZK_CTRL.prev_error_I_beta_2 = YZK_CTRL.Err_I_beta_2;
+        YZK_CTRL.OutPrev_beta_2 = YZK_CTRL.Out_beta_2;
+        YZK_CTRL.CMD_U_beta_2 = YZK_CTRL.Out_beta_2;
+        // incremental_PI_YZK(&YZK_CTRL.pids);
+        // YZK_CTRL.CMD_U_beta = YZK_CTRL.Out;
+
+        // CTRL_1.o->cmd_uAB_to_inverter[1] = YZK_CTRL.CMD_U_beta;
+        CTRL_2.o->cmd_uAB_to_inverter[1] = YZK_CTRL.CMD_U_beta_2;
+        // 7.更新状态
+        YZK_CTRL.prev_error_Y_2 = YZK_CTRL.Err_Y_2;
+        // return psi_cmd;
+        YZK_CTRL.dc_bus_utilization_ratio_2 = DC_BUS_VOLTAGE_INVERSE_2 * sqrtf( YZK_CTRL.CMD_U_alpha_2
+                                                                            * YZK_CTRL.CMD_U_alpha_2
+                                                                            + YZK_CTRL.CMD_U_beta_2
+                                                                            * YZK_CTRL.CMD_U_beta_2 );
+    }
 }
 
 // // IIR
