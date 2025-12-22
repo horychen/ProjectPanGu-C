@@ -519,3 +519,26 @@ void filters_init(void) {
     // }
     // return x;
 // }
+
+// static inline float safe_atan2f(float y, float x, float last_angle) 
+// {
+//     if (isnanf(x) || isnanf(y)) return last_angle;
+//     if (x == 0.0f && y == 0.0f) return last_angle; // 没有信息，返回上一值（或者 0）
+//     return atan2f(y, x); // 返回 (-pi, pi]
+// }
+
+// static inline float wrap_to_pi(float a) {
+
+//     float r = fmodf(a + M_PI, 2*M_PI);
+//     if (r < 0.0f) r += 2*M_PI;
+//     return r - M_PI;
+// }
+
+// /* 计算两个角度之间的最短差值，返回范围 (-pi, pi] */
+// static inline float ang_diff(float to, float from) {
+//     float d = to - from;
+//     // 折叠到 (-pi, pi]
+//     if (d <= -M_PI) d += 2*M_PI;
+//     else if (d > M_PI) d -= 2*M_PI;
+//     return d;
+// }
