@@ -339,6 +339,7 @@ REAL prev_out_x = 0;
 REAL prev_out_y = 0;
 //REAL wubo_debug_flag_PWM = 0;
 REAL debug_motor_enc_direction[2] = {1.0, 1.0};
+REAL BOOL_eccentricity = FALSE;
 void main_adc_measurement(){
     Axis->place_sensor[6] = ((REAL)(Axis->adc_data[0]) - Axis->adc_offset_ex[0]) * Axis->adc_scale_ex[0];
     Axis->place_sensor[7] = ((REAL)(Axis->adc_data[1]) - Axis->adc_offset_ex[1]) * Axis->adc_scale_ex[1];
@@ -375,48 +376,51 @@ void main_adc_measurement(){
     YZK_CTRL.disFbk_X = - Axis->place_sensor[2];
     YZK_CTRL.disFbk_Y = Axis->place_sensor[3];
     // 用椭圆检测相减的距离 记得是45° 给进来给到椭圆角度
-    REAL sensor_1;
-    REAL sensor_2;
-    REAL sensor_3;
-    REAL sensor_4;
-    REAL r_0;
-    REAL r_45;
-    REAL S_0;               // 形参
-    REAL S_45;              // 形参
-    REAL A = 20;            // 半长轴
-    REAL B = 12;            // 半短轴
-    REAL r_0;               // 极径 0
-    REAL r_45;              // 极径 45
-    REAL SQRT_ARCTG_0_num;
-    REAL SQRT_ARCTG_45_num;
-    REAL SQRT_ARCTG_0_den;
-    REAL SQRT_ARCTG_45_den;
-    REAL varTHETA_0;
-    REAL varTHETA_45;
-    
-    r_0 = (sensor_1 - sensor_2) * 0.5;
-    r_45 = (sensor_3 - sensor_4) * 0.5;
-    S_0 = A * B / r_0;
-    S_45 = A * B / r_45;
+    if(BOOL_eccentricity)
+    {
+        REAL sensor_1;
+        REAL sensor_2;
+        REAL sensor_3;
+        REAL sensor_4;
+        // REAL r_0;
+        // REAL r_45;
+        REAL S_0;               // 形参
+        REAL S_45;              // 形参
+        REAL A = 20;            // 半长轴
+        REAL B = 12;            // 半短轴
+        REAL r_0;               // 极径 0
+        REAL r_45;              // 极径 45
+        REAL SQRT_ARCTG_0_num;
+        REAL SQRT_ARCTG_45_num;
+        REAL SQRT_ARCTG_0_den;
+        REAL SQRT_ARCTG_45_den;
+        REAL varTHETA_0;
+        REAL varTHETA_45;
 
-    SQRT_ARCTG_0_num = sqrt(S_0 - B*B);
-    SQRT_ARCTG_45_num = sqrt(S_45 - B*B);
-    SQRT_ARCTG_0_den = sqrt(A*A - S_0);
-    SQRT_ARCTG_45_den = sqrt(A*A - S_45);
-    varTHETA_0 = atan2(SQRT_ARCTG_0_num, SQRT_ARCTG_0_den);
-    varTHETA_45 = atan2(SQRT_ARCTG_45_num, SQRT_ARCTG_45_den);
-    // 3 cases
-    if(varTHETA_0 + varTHETA_45 == M_PI*0.25)
-    {
-        (*CTRL).i->theta_d_elec = varTHETA_0 * MOTOR.npp;
-    }
-    else if(varTHETA_0 - varTHETA_45 == M_PI*0.25)
-    {
-        (*CTRL).i->theta_d_elec = varTHETA_0 * MOTOR.npp;
-    }
-    else if(varTHETA_45 - varTHETA_0 == M_PI*0.25)
-    {
-        (*CTRL).i->theta_d_elec = - varTHETA_0 * MOTOR.npp;
+        r_0 = (sensor_1 - sensor_2) * 0.5;
+        r_45 = (sensor_3 - sensor_4) * 0.5;
+        S_0 = A * B / r_0;
+        S_45 = A * B / r_45;
+
+        SQRT_ARCTG_0_num = sqrt(S_0 - B*B);
+        SQRT_ARCTG_45_num = sqrt(S_45 - B*B);
+        SQRT_ARCTG_0_den = sqrt(A*A - S_0);
+        SQRT_ARCTG_45_den = sqrt(A*A - S_45);
+        varTHETA_0 = atan2(SQRT_ARCTG_0_num, SQRT_ARCTG_0_den);
+        varTHETA_45 = atan2(SQRT_ARCTG_45_num, SQRT_ARCTG_45_den);
+        // 3 cases
+        if(varTHETA_0 + varTHETA_45 == M_PI*0.25)
+        {
+            (*CTRL).i->theta_d_elec = varTHETA_0 * MOTOR.npp;
+        }
+        else if(varTHETA_0 - varTHETA_45 == M_PI*0.25)
+        {
+            (*CTRL).i->theta_d_elec = varTHETA_0 * MOTOR.npp;
+        }
+        else if(varTHETA_45 - varTHETA_0 == M_PI*0.25)
+        {
+            (*CTRL).i->theta_d_elec = - varTHETA_0 * MOTOR.npp;
+        }
     }
     // prev_out_x = Axis->place_sensor[2];
     // prev_out_y = Axis->place_sensor[3];
@@ -708,11 +712,11 @@ __interrupt void EPWM1ISR(void){
     EDIS;
 #endif
 
-        write_RPM_to_cpu02_dsp_cores_2();
-        axisCnt = 0;
-        get_Axis_CTRL_pointers //(axisCnt, Axis, CTRL);
-        PanGuMainISR();
-        // 这段放需要测时间的代码后面，观察CpuTimer_Delta的取值，代表经过了多少个 1/200e6 秒。
+write_RPM_to_cpu02_dsp_cores_2();
+axisCnt = 0;
+get_Axis_CTRL_pointers //(axisCnt, Axis, CTRL);
+PanGuMainISR();
+// 这段放需要测时间的代码后面，观察CpuTimer_Delta的取值，代表经过了多少个 1/200e6 秒。
 #if PC_SIMULATION == FALSE
 CpuTimer_After = CpuTimer1.RegsAddr->TIM.all; // get count
 CpuTimer_Delta = (REAL)CpuTimer_Before - (REAL)CpuTimer_After;

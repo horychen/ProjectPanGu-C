@@ -13,6 +13,8 @@ const REAL I_ampa;
 const REAL I_ampb;
 const REAL F_freq_1;
 const REAL F_freq_2;
+const REAL virtual_angle;
+REAL pseudo_Encoder;
 struct YZK_2025_TIA_CTRL YZK_CTRL;
 
 extern float test_sus = 0.0;
@@ -34,11 +36,11 @@ static const REAL LP0_b2 = 0.003621681514928641;       //0.003621681514928641;  
 static const REAL LP0_a1 = -1.822694925196308;      //-1.822694925196308;                -1.973340329766;
 static const REAL LP0_a2 = 0.8371816512560227;       //0.8371816512560227;    200Hz       0.973690951265;
 
-static const REAL LP1_b0 =0.003621681514928641;                          //0.000087655375;              //0.013359200027856523f;                   //0.020083365564211256f;                          //0.04613180207
-static const REAL LP1_b1 =0.007243363029857282;                          //0.000175310749;              //0.026718400055713045f;                   //0.04016673112842251f;                            //0.09226360415
-static const REAL LP1_b2 =0.003621681514928641;                          //0.000087655375;              //0.013359200027856523f;                   //0.020083365564211256f;                          //0.04613180207
-static const REAL LP1_a1 =-1.822694925196308;                          //-1.973340329766;             //-1.6474599810769766f;                    //-1.561018075800718f;                            //-1.30728502829
-static const REAL LP1_a2 =0.8371816512560227;   //200Hz                       //0.973690951265;    //30Hz          //0.7008967811884026f;     //400Hz            //0.6413515380575631f;    //500Hz        //0.49181223659      //800Hz
+static const REAL LP1_b0 = 0.003621681514928641;                          //0.000087655375;              //0.013359200027856523f;                   //0.020083365564211256f;                          //0.04613180207
+static const REAL LP1_b1 = 0.007243363029857282;                          //0.000175310749;              //0.026718400055713045f;                   //0.04016673112842251f;                            //0.09226360415
+static const REAL LP1_b2 = 0.003621681514928641;                          //0.000087655375;              //0.013359200027856523f;                   //0.020083365564211256f;                          //0.04613180207
+static const REAL LP1_a1 = -1.822694925196308;                          //-1.973340329766;             //-1.6474599810769766f;                    //-1.561018075800718f;                            //-1.30728502829
+static const REAL LP1_a2 = 0.8371816512560227;   //200Hz                       //0.973690951265;    //30Hz          //0.7008967811884026f;     //400Hz            //0.6413515380575631f;    //500Hz        //0.49181223659      //800Hz
 
 static const REAL C3 = -1.29166723e-18;
 static const REAL C2 =  1.36515629e-10;
@@ -132,26 +134,26 @@ void init_YZK_ALL(){
     YZK_CTRL.prev_error_I_alpha_2 = 0.0;
     YZK_CTRL.prev_error_I_beta_2 = 0.0;
 
-    YZK_CTRL.pids.Kp_alpha_1 = 15;
-    YZK_CTRL.pids.Kp_beta_1 = 15;
+    YZK_CTRL.pids.Kp_alpha_1 = 5;
+    YZK_CTRL.pids.Kp_beta_1 = 5;
     YZK_CTRL.pids.Ki_CODE_alpha_1 = 3500e-4;
     YZK_CTRL.pids.Ki_CODE_beta_1 = 3500e-4;
     // YZK_CTRL.pids.Kd = 0.0;
-    YZK_CTRL.pids.OutLimit_1 = 28;
-    YZK_CTRL.pids.OutLimit_alphaKI_1 = 10;
-    YZK_CTRL.pids.OutLimit_betaKI_1 = 10;
+    YZK_CTRL.pids.OutLimit_1 = 14;
+    YZK_CTRL.pids.OutLimit_alphaKI_1 = 5;
+    YZK_CTRL.pids.OutLimit_betaKI_1 = 5;
 
-    YZK_CTRL.pids.Kp_alpha_2 = 15;
-    YZK_CTRL.pids.Kp_beta_2 = 15;
+    YZK_CTRL.pids.Kp_alpha_2 = 5;
+    YZK_CTRL.pids.Kp_beta_2 = 5;
     YZK_CTRL.pids.Ki_CODE_alpha_2 = 3500e-4;
     YZK_CTRL.pids.Ki_CODE_beta_2 = 3500e-4;
     // YZK_CTRL.pids.Kd = 0.0;
-    YZK_CTRL.pids.OutLimit_2 = 28;
-    YZK_CTRL.pids.OutLimit_alphaKI_2 = 10;
-    YZK_CTRL.pids.OutLimit_betaKI_2 = 10;
+    YZK_CTRL.pids.OutLimit_2 = 14;
+    YZK_CTRL.pids.OutLimit_alphaKI_2 = 5;
+    YZK_CTRL.pids.OutLimit_betaKI_2 = 5;
 
     /* 参数初始化 */
-    YZK_CTRL.motor.npp = 5;
+    YZK_CTRL.motor.npp = 4;
     YZK_CTRL.motor.npp_inv = 0.2;
     YZK_CTRL.motor.Js = 1;
     YZK_CTRL.motor.Js_inv = 1;
@@ -196,7 +198,7 @@ REAL lowpass_update_y(LPFs *f_y, REAL input_y) {
 
 // Y_Pos 
 // void suspension_p4ps5_PD_Yaxis(REAL Y_Pos){
-    
+
 // }
 // X_Pos 
 void suspension_p4ps5_PD_doubleaxis(REAL X_Pos, REAL Y_Pos){
@@ -312,17 +314,45 @@ void suspension_p4ps5_PD_doubleaxis(REAL X_Pos, REAL Y_Pos){
     CTRL_1.i->cmd_iDQ[1] = - 0.5 * debug_2.set_iq_command;
     CTRL_2.i->cmd_iDQ[0] = 0.5 * debug_2.set_id_command;
     CTRL_2.i->cmd_iDQ[1] = 0.5 * debug_2.set_iq_command;
+
+    /* pseudo encoder */
+    if (fabsf(debug_2.Overwrite_Current_Frequency) > 0){
+        debug_2.Overwrite_theta_d += CL_TS * debug_2.Overwrite_Current_Frequency * 2 * M_PI;
+        if (debug_2.Overwrite_theta_d > M_PI)  debug_2.Overwrite_theta_d -= 2 * M_PI;
+        if (debug_2.Overwrite_theta_d < -M_PI) debug_2.Overwrite_theta_d += 2 * M_PI;
+    }
+    else{
+        debug_2.Overwrite_theta_d = 0.0;
+    }
+
     // (*CTRL).i->theta_d_elec
-    (*CTRL).s->cosT = cos((*CTRL).i->theta_d_elec);
-    (*CTRL).s->sinT = sin((*CTRL).i->theta_d_elec);
-    CTRL_1.o->cmd_iAB[0] = MT2A(CTRL_1.i->cmd_iDQ[0], CTRL_1.i->cmd_iDQ[1], CTRL_1.s->cosT_compensated_1p5omegaTs, CTRL_1.s->sinT_compensated_1p5omegaTs);
-    CTRL_1.o->cmd_iAB[1] = MT2B(CTRL_1.i->cmd_iDQ[0], CTRL_1.i->cmd_iDQ[1], CTRL_1.s->cosT_compensated_1p5omegaTs, CTRL_1.s->sinT_compensated_1p5omegaTs);
-    CTRL_2.o->cmd_iAB[0] = MT2A(CTRL_2.i->cmd_iDQ[0], CTRL_2.i->cmd_iDQ[1], CTRL_2.s->cosT_compensated_1p5omegaTs, CTRL_2.s->sinT_compensated_1p5omegaTs);
-    CTRL_2.o->cmd_iAB[1] = MT2B(CTRL_2.i->cmd_iDQ[0], CTRL_2.i->cmd_iDQ[1], CTRL_2.s->cosT_compensated_1p5omegaTs, CTRL_2.s->sinT_compensated_1p5omegaTs);
+    if(pseudo_Encoder)
+    {
+        (*CTRL).s->cosT = cos(debug_2.Overwrite_theta_d);
+        (*CTRL).s->sinT = sin(debug_2.Overwrite_theta_d);
+    }
+    else{
+        (*CTRL).s->cosT = cos((*CTRL).i->theta_d_elec);
+        (*CTRL).s->sinT = sin((*CTRL).i->theta_d_elec);
+    }
+    
+    CTRL_1.o->cmd_iAB[0] = MT2A(CTRL_1.i->cmd_iDQ[0], CTRL_1.i->cmd_iDQ[1], CTRL_1.s->cosT, CTRL_1.s->sinT);
+    CTRL_1.o->cmd_iAB[1] = MT2B(CTRL_1.i->cmd_iDQ[0], CTRL_1.i->cmd_iDQ[1], CTRL_1.s->cosT, CTRL_1.s->sinT);
+    CTRL_2.o->cmd_iAB[0] = MT2A(CTRL_2.i->cmd_iDQ[0], CTRL_2.i->cmd_iDQ[1], CTRL_2.s->cosT, CTRL_2.s->sinT);
+    CTRL_2.o->cmd_iAB[1] = MT2B(CTRL_2.i->cmd_iDQ[0], CTRL_2.i->cmd_iDQ[1], CTRL_2.s->cosT, CTRL_2.s->sinT);
 
     // overwrite_sweeping_f_1.quency_1.;
     if(axisCnt == 0)
-    {
+    {   
+        YZK_CTRL.CMD_I_alpha_1 = I_ampa;
+        YZK_CTRL.CMD_I_beta_1 = I_ampb;
+        
+        // YZK_CTRL.CMD_I_alpha_1 = I_ampa * cos(2 * F_freq_1 * M_PI * CTRL->timebase) * cos(virtual_angle * M_PI);
+        // YZK_CTRL.CMD_I_beta_1 = I_ampb * sin(2 * F_freq_2 * M_PI * CTRL->timebase) * sin(virtual_angle * M_PI);
+        
+        // YZK_CTRL.CMD_I_alpha_1 = I_ampa * cos(2 * F_freq_1 * M_PI * CTRL->timebase);
+        // YZK_CTRL.CMD_I_beta_1 = I_ampb * sin(2 * F_freq_2 * M_PI * CTRL->timebase);
+
         YZK_CTRL.Err_I_alpha_1 = CTRL_1.o->cmd_iAB[0] + YZK_CTRL.CMD_I_alpha_1 - CTRL_1.i->iAB[0];
         YZK_CTRL.Err_I_beta_1  = CTRL_1.o->cmd_iAB[1] + YZK_CTRL.CMD_I_beta_1 - CTRL_1.i->iAB[1];
         
@@ -371,7 +401,7 @@ void suspension_p4ps5_PD_doubleaxis(REAL X_Pos, REAL Y_Pos){
         // YZK_CTRL.CMD_U_beta = YZK_CTRL.Out;
 
         // CTRL_1.o->cmd_uAB_to_inverter[1] = YZK_CTRL.CMD_U_beta;
-        CTRL_2.o->cmd_uAB_to_inverter[1] = YZK_CTRL.CMD_U_beta_1;
+        CTRL_1.o->cmd_uAB_to_inverter[1] = YZK_CTRL.CMD_U_beta_1;
         // 7.更新状态
         YZK_CTRL.prev_error_Y_1 = YZK_CTRL.Err_Y_1;
         // return psi_cmd;
@@ -382,6 +412,15 @@ void suspension_p4ps5_PD_doubleaxis(REAL X_Pos, REAL Y_Pos){
     }
     if (axisCnt == 1)
     {
+        YZK_CTRL.CMD_I_alpha_2 = I_ampa;
+        YZK_CTRL.CMD_I_beta_2 = I_ampb;
+
+        // YZK_CTRL.CMD_I_alpha_2 = I_ampa * cos(2 * F_freq_1 * M_PI * CTRL->timebase) * cos(virtual_angle * M_PI);
+        // YZK_CTRL.CMD_I_beta_2 = I_ampb * sin(2 * F_freq_2 * M_PI * CTRL->timebase) * sin(virtual_angle * M_PI);
+
+        // YZK_CTRL.CMD_I_alpha_2 = I_ampa * cos(2 * F_freq_1 * M_PI * CTRL->timebase);
+        // YZK_CTRL.CMD_I_beta_2 = I_ampb * sin(2 * F_freq_2 * M_PI * CTRL->timebase);
+
         YZK_CTRL.Err_I_alpha_2 = CTRL_2.o->cmd_iAB[0] + YZK_CTRL.CMD_I_alpha_2 - CTRL_2.i->iAB[0];
         YZK_CTRL.Err_I_beta_2  = CTRL_2.o->cmd_iAB[1] + YZK_CTRL.CMD_I_beta_2 - CTRL_2.i->iAB[1];
 
@@ -406,7 +445,7 @@ void suspension_p4ps5_PD_doubleaxis(REAL X_Pos, REAL Y_Pos){
         // incremental_PI_YZK(&YZK_CTRL.pids);
         // YZK_CTRL.CMD_U_alpha = YZK_CTRL.Out;
 
-        CTRL_1.o->cmd_uAB_to_inverter[0] = YZK_CTRL.CMD_U_alpha_2;
+        CTRL_2.o->cmd_uAB_to_inverter[0] = YZK_CTRL.CMD_U_alpha_2;
         // CTRL_2.o->cmd_uAB_to_inverter[0] = YZK_CTRL.CMD_U_alpha;
         // 更新状态
         YZK_CTRL.prev_error_X_2 = YZK_CTRL.Err_X_2;
