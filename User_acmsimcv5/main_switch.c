@@ -650,19 +650,25 @@ void _onlyFOC(REAL theta_d_elec, REAL iAB[2], REAL varOmega){
             PID_iQ->calc(PID_iQ);
         #endif
 
-        // 电流环前馈DQ轴解耦
-        REAL decoupled_d_axis_voltage;
-        REAL decoupled_q_axis_voltage;
-        if(d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation == TRUE){
-            decoupled_d_axis_voltage = PID_iD->Out - PID_iQ->Fbk * MOTOR.Lq * varOmega * MOTOR.npp;
-            decoupled_q_axis_voltage = PID_iQ->Out + (MOTOR.KActive + PID_iD->Fbk * MOTOR.Ld) * varOmega * MOTOR.npp;
-        }else{
-            decoupled_d_axis_voltage = PID_iD->Out;
-            decoupled_q_axis_voltage = PID_iQ->Out + MOTOR.KActive * varOmega * MOTOR.npp;
-            // decoupled_d_axis_voltage = PID_iD->Out;
-            // decoupled_q_axis_voltage = PID_iQ->Out;
-        }
-    #endif
+    /* D-Axis Current Loop */
+    PID_iD->Fbk = (*CTRL).i->iDQ[0];
+    PID_iD->Ref = (*CTRL).i->cmd_iDQ[0];
+    PID_iD->calc(PID_iD);
+    PID_iQ->Fbk = (*CTRL).i->iDQ[1];
+    PID_iQ->Ref = (*CTRL).i->cmd_iDQ[1];
+    PID_iQ->calc(PID_iQ);
+
+    // 电流环前馈DQ轴解耦
+    REAL decoupled_d_axis_voltage;
+    REAL decoupled_q_axis_voltage;
+    if(d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation == TRUE){
+        decoupled_d_axis_voltage = PID_iD->Out - PID_iQ->Fbk * MOTOR.Lq * varOmega * MOTOR.npp;
+        decoupled_q_axis_voltage = PID_iQ->Out + (MOTOR.KActive + PID_iD->Fbk * MOTOR.Ld) * varOmega * MOTOR.npp;
+    }else{
+        decoupled_d_axis_voltage = PID_iD->Out;
+        decoupled_q_axis_voltage = PID_iQ->Out;
+        // decoupled_q_axis_voltage = PID_iQ->Out + MOTOR.KActive * varOmega * MOTOR.npp;
+    }
 
     /* 对补偿后的dq轴电压进行限幅度 */
     if (decoupled_d_axis_voltage > PID_iD->OutLimit) decoupled_d_axis_voltage = PID_iD->OutLimit;
