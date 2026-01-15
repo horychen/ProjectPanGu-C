@@ -253,8 +253,8 @@ void main_measurement(){
     // voltage_measurement_based_on_eCAP();
 
     // measure vdc
-     Axis->vdc    = ((REAL)(AdcaResultRegs.ADCRESULT0 ) - Axis->adc_offset[0]) * Axis->adc_scale[0];
-//    Axis->vdc = ((REAL)(AdcbResultRegs.ADCRESULT6) - Axis->adc_offset[0]) * Axis->adc_scale[0];
+//     Axis->vdc    = ((REAL)(AdcaResultRegs.ADCRESULT0 ) - Axis->adc_offset[0]) * Axis->adc_scale[0];
+    Axis->vdc = ((REAL)(AdcbResultRegs.ADCRESULT6) - Axis->adc_offset[0]) * Axis->adc_scale[0];
     if (G.flag_overwite_vdc) Axis->vdc = G.overwrite_vdc;
     {
         // Vdc用于实时更新电流环限幅
