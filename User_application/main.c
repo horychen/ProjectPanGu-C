@@ -250,17 +250,17 @@ int32 cnt_four_bar_map_motor_encoder_angle = 0;
 #ifdef _MMDv1 // mmlab drive version 1
 
 // DC BUS
-    #define OFFSET_VDC_BUS_IPM1 -1.01456189
-    #define SCALE_VDC_BUS_IPM1 0.17604031
+    #define OFFSET_VDC_BUS_IPM1 -5  // -1.01456189
+    #define SCALE_VDC_BUS_IPM1  0.14634146341463414  // 0.17604031
 
 //Lem 1的三个蓝色块块分别是adc b7 b8 b9
-    #define OFFSET_LEM_B7   2027 //2023.89473684 // ADCB7
-    #define OFFSET_LEM_B8   2043 //2042.33333333 // ADCB8
-    #define OFFSET_LEM_B9   2048 //2043.43859649 // ADCB9
+    #define OFFSET_LEM_B7   2018  // 2027 //2023.89473684 // ADCB7
+    #define OFFSET_LEM_B8   2023.8947  // 2042.33333333 // ADCB8
+    #define OFFSET_LEM_B9   2037  // 2048 //2043.43859649 // ADCB9
     // 令逆变器输出端指向电机为正方向，若LEM上的箭头与正方向相同，则SCALE为正数，若LEM上的箭头与正方向相反，则SCALE为负数，
-    #define SCALE_LEM_B7   0.03076297 // ADCB7
-    #define SCALE_LEM_B8   0.03038256 // ADCB8
-    #define SCALE_LEM_B9   0.03039058 // ADCB9
+    #define SCALE_LEM_B7   0.03125  // 0.03076297 // ADCB7
+    #define SCALE_LEM_B8   0.02923  // 0.03038256 // ADCB8
+    #define SCALE_LEM_B9   0.03125  // 0.03039058 // ADCB9
 
 //Lem 2的三个蓝色块块分别是adc a1 a2 a3
     #define OFFSET_LEM_A1   2034 //2029.57894737 // ADCA1
