@@ -146,6 +146,7 @@ typedef struct{
         REAL iabg[6];
         REAL iuvw[6];
         REAL iuvw_offset_online[6];
+        Uint32 SCI_Position_Count_fromCPU2;
     // DAC
         int DAC_MAX5307_FLAG; // for single core case
         REAL dac_offset[NO_OF_DAC_CHANNELS];
@@ -158,12 +159,18 @@ typedef struct{
         REAL place_sensor[8];
         REAL place_offset[8];
         REAL place_scale[8];        
+        REAL adc_voltage[8];
+        REAL adc_offset_ex[8];
+        REAL adc_scale_ex[8];
+        Uint16 adc_data[8];
+        REAL terminal_voltage[3];
+        REAL neutral_voltage;
+        REAL phase_voltage[3];
 } st_axis;
 
 extern st_axis Axis_1;
 extern st_axis Axis_2;
 extern st_axis *Axis;
-extern REAL wubo_debug_tools[10];
 
 /* Tools that main use */
     #include "tools.h"

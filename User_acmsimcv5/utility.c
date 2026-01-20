@@ -9,7 +9,7 @@ extern REAL sig_a3;
 // 符号函数
 // #if PC_SIMULATION == TRUE //* utility的函数定义要小心，由于仿真和emy-c的ACMSim.h的内容不同，可能会导致编译错误
 REAL sign(REAL x){
-   return (x > 0) - (x < 0);
+    return (x > 0) - (x < 0);
 }
 // #endif
 
@@ -27,7 +27,7 @@ int isNumber(REAL x){
 
 // 低通滤波器：测量值，上一步的滤波器输出，时间常数的倒数
 REAL _lpf(REAL x, REAL y, REAL tau_inv){
-    return y + CL_TS * tau_inv * (x - y);
+    return y + tau_inv * (x - y);
 }
 // 高通滤波器：测量值，上一步的低通滤波器输出的地址，时间常数的倒数
 REAL _hpf(REAL x, REAL *lpf_y, REAL tau_inv){
@@ -149,7 +149,7 @@ REAL difference_between_two_angles(REAL first, REAL second)
             if ( (*debug).bool_apply_WC_tunner_for_speed_loop == TRUE ){
                 printf(">>> Wc_Tuner is Applied to the Speed Loop Control <<<\n");
             }else{
-                printf("!!! Other tunner is Applied to the Speed Loop Control !!!\n");
+                printf("!!! TI tunner is Applied to the Speed Loop Control !!!\n");
             }
             if (d_sim.user.bool_enable_Harnefors_back_calculation == TRUE){
                 printf(">>> Harnefors Back Calculation is Applied <<<\n");
@@ -160,6 +160,8 @@ REAL difference_between_two_angles(REAL first, REAL second)
                 printf(">>> Current Loop Ki is 10 times larger <<<\n");
             else
                 printf("!!! Current Loop Ki is NOT 10 times larger !!!\n");
+            printf(">>> Speed Loop is 1/%d of the Current Loop <<<\n", d_sim.FOC.VL_EXE_PER_CL_EXE);
+            printf(">>> InnerLoop Max CLBW is %fHz and Min CLBW is %fHz\n", 2*d_sim.user.zeta*d_sim.user.omega_n/2/M_PI, 4*d_sim.user.zeta*d_sim.user.omega_n/2/M_PI);
         #endif
 
         if(d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation == TRUE){

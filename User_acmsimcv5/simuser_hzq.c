@@ -1,11 +1,11 @@
 #include "ACMSim.h"
 
-#if WHO_IS_USER == USER_YZZ
+#if WHO_IS_USER == USER_HZQ
     #if PC_SIMULATION == FALSE
         #include "All_Definition.h"
         extern st_axis *Axis;
     #endif
-#if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
+#if (WHO_IS_USER == USER_HZQ) || (WHO_IS_USER == USER_CJH)
 void _user_pmsm_observer(void){
 
     /// 3. 调用观测器：估计的电气转子位置和电气转子转速反馈
@@ -43,7 +43,7 @@ void rk4_init(){
 
 
 /* Structs for Algorithm */
-#if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
+#if (WHO_IS_USER == USER_HZQ) || (WHO_IS_USER == USER_CJH)
     struct ObserverForExperiment OBSV;
     struct SharedFluxEstimatorForExperiment FE;
     #if ALG_AKT_SPEED_EST_AND_RS_ID
@@ -54,6 +54,7 @@ void rk4_init(){
     #endif
     #if ALG_PLL_norm
     struct PhaseLockLoop_Norm PLLN;
+    struct PhaseLockLoop_Norm PLLN_EKF;
     #endif
     // struct Marino2005 marino={0};
     // struct Variables_SimulatedVM                         simvm      ={0};
@@ -76,7 +77,7 @@ void rk4_init(){
 #endif
 
     /* from share flux estimator */ 
-    #if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
+    #if (WHO_IS_USER == USER_HZQ) || (WHO_IS_USER == USER_CJH)
     /*****************************/
     /* Shared Solver and typedef */
     #define CJH_STYLE_RK4_OBSERVER_RAW_CODE                                  \
@@ -180,11 +181,11 @@ void rk4_init(){
         #undef NS
     }
     #if PC_SIMULATION == TRUE
-        #define OFFSET_VOLTAGE_ALPHA 0//(1*-0.2) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
-        #define OFFSET_VOLTAGE_BETA  0//(1*+0.2) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
+        #define OFFSET_CURRENT_SENSOR_ALPHA 0.10//(1*-0.2) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
+        #define OFFSET_CURRENT_SENSOR_BETA  -0.05//(1*+0.2) // (0.02*29*1.0) // this is only valid for estimator in AB frame. Use current_offset instead for DQ frame estimator
     #else
-        #define OFFSET_VOLTAGE_ALPHA 0
-        #define OFFSET_VOLTAGE_BETA  0
+        #define OFFSET_CURRENT_SENSOR_ALPHA 0
+        #define OFFSET_CURRENT_SENSOR_BETA  0
     #endif
 
     /***************************/
@@ -410,8 +411,8 @@ void rk4_init(){
 
             /* State: stator emf as the derivative of staotr flux, psi_1 */
             REAL emf[2];
-            emf[0] = US(0) - MOTOR.R*IS(0) + 1*OFFSET_VOLTAGE_ALPHA;
-            emf[1] = US(1) - MOTOR.R*IS(1) + 1*OFFSET_VOLTAGE_BETA ;
+            emf[0] = US(0) - MOTOR.R*IS(0) + 1*OFFSET_CURRENT_SENSOR_ALPHA ;
+            emf[1] = US(1) - MOTOR.R*IS(1) + 1*OFFSET_CURRENT_SENSOR_BETA ;
             fx[0] = emf[0] \
                 /*k_af*/- FE.AFEOE.k_af*(FE.AFEOE.psi_2[0] - FE.AFEOE.psi_2_limited[0]) \
                 /*P*/+ FE.AFEOE.ActiveFlux_KP * FE.AFEOE.output_error[0] \
@@ -562,11 +563,11 @@ void rk4_init(){
         }
         void rhf_Holtz2003_Dynamics(REAL t, REAL *x, REAL *fx){
             #if RS_IDENTIFICATION
-                FE.htz.emf_stator[0] = US(0) - akt.rs_cal * IS(0) - FE.htz.u_offset[0] + OFFSET_VOLTAGE_ALPHA;
+                FE.htz.emf_stator[0] = US(0) - akt.rs_cal * IS(0) - FE.htz.u_offset[0] + ;
                 FE.htz.emf_stator[1] = US(1) - akt.rs_cal * IS(1) - FE.htz.u_offset[1] + OFFSET_VOLTAGE_BETA ;
             #else
-                FE.htz.emf_stator[0] = US(0) - (*CTRL).motor->R * IS(0) - FE.htz.u_offset[0] + OFFSET_VOLTAGE_ALPHA;
-                FE.htz.emf_stator[1] = US(1) - (*CTRL).motor->R * IS(1) - FE.htz.u_offset[1] + OFFSET_VOLTAGE_BETA ;
+                FE.htz.emf_stator[0] = US(0) - (*CTRL).motor->R * IS(0) - FE.htz.u_offset[0] + OFFSET_CURRENT_SENSOR_ALPHA;
+                FE.htz.emf_stator[1] = US(1) - (*CTRL).motor->R * IS(1) - FE.htz.u_offset[1] + OFFSET_CURRENT_SENSOR_BETA ;
             #endif
             fx[0] = (FE.htz.emf_stator[0]);
             fx[1] = (FE.htz.emf_stator[1]);
@@ -977,10 +978,10 @@ void rk4_init(){
             FE.clfe4PMSM.current_error[1] = IS(1) - FE.clfe4PMSM.current_estimate[1];
 
             REAL emf[2] = {0.0, 0.0};
-            emf[0] = US(0) - (*CTRL).motor->R*IS(0) + OFFSET_VOLTAGE_ALPHA \
+            emf[0] = US(0) - (*CTRL).motor->R*IS(0) + OFFSET_CURRENT_SENSOR_ALPHA \
                 /*P*/+ OUTPUT_ERROR_CLEF4PMSM_GAIN_KP * FE.clfe4PMSM.current_error[0] \
                 /*I*/+ x[2];
-            emf[1] = US(1) - (*CTRL).motor->R*IS(1) + OFFSET_VOLTAGE_BETA  \
+            emf[1] = US(1) - (*CTRL).motor->R*IS(1) + OFFSET_CURRENT_SENSOR_BETA  \
                 /*P*/+ OUTPUT_ERROR_CLEF4PMSM_GAIN_KP * FE.clfe4PMSM.current_error[1] \
                 /*I*/+ x[3];
             
@@ -1043,10 +1044,10 @@ void rk4_init(){
         rotor_flux_error[1] = ( (*CTRL).i->cmd_psi - ampl ) * rotor_flux[1] * ampl_inv;
 
         REAL emf[2];
-        emf[0] = US(0) - (*CTRL).motor->R*IS(0) + 1*OFFSET_VOLTAGE_ALPHA \
+        emf[0] = US(0) - (*CTRL).motor->R*IS(0) + 1*OFFSET_CURRENT_SENSOR_ALPHA \
             /*P*/+ 1*VM_PROPOSED_PI_CORRECTION_GAIN_P * rotor_flux_error[0] \
             /*I*/+ 1*x[2];
-        emf[1] = US(1) - (*CTRL).motor->R*IS(1) + 1*OFFSET_VOLTAGE_BETA  \
+        emf[1] = US(1) - (*CTRL).motor->R*IS(1) + 1*OFFSET_CURRENT_SENSOR_BETA  \
             /*P*/+ 1*VM_PROPOSED_PI_CORRECTION_GAIN_P * rotor_flux_error[1] \
             /*I*/+ 1*x[3];
         fx[0] = emf[0];
@@ -1166,15 +1167,19 @@ void rk4_init(){
         FE.STA.theta_e_emf = angle_diff(FE.STA.theta_d_emf, (*CTRL).i->theta_d_elec) * ONE_OVER_2PI * 360;
     }
     #endif
-    #if AFE_44_ORTEGA_2011
+
+    // #if AFE_44_ORTEGA_2011
     void init_ortega(){
-        FE.Ortega.x[0] = d_sim.init.KE*0.7;
+        #if PC_SIMULATION
+            printf("Init Ortega 2011 nonliear flux estimator\n");
+        #endif
+        FE.Ortega.x[0] = d_sim.init.KE;
         FE.Ortega.x[1] = 0;
-        FE.Ortega.psi_1[0] = 0;
+        FE.Ortega.psi_1[0] = d_sim.init.KE;
         FE.Ortega.psi_1[1] = 0;
-        FE.Ortega.psi_2[0] = 0;
+        FE.Ortega.psi_2[0] = d_sim.init.KE;
         FE.Ortega.psi_2[1] = 0;
-        FE.Ortega.kp = 500;
+        FE.Ortega.kp = 1000;
         FE.Ortega.u_offset[0] = 0;
         FE.Ortega.u_offset[1] = 0;
         FE.Ortega.psi_sqr_error = 0;
@@ -1188,11 +1193,11 @@ void rk4_init(){
         psi_A[1] = x[1] - MOTOR.Lq * IS(1);
         FE.Ortega.psi_sqr_error = MOTOR.KE*MOTOR.KE - (psi_A[0]*psi_A[0] + psi_A[1]*psi_A[1]);
         // Dynamics
-        fx[0] = US(0) - MOTOR.R * IS(0) + 0.5 * FE.Ortega.kp * psi_A[0] * FE.Ortega.psi_sqr_error + OFFSET_VOLTAGE_ALPHA;
-        fx[1] = US(1) - MOTOR.R * IS(1) + 0.5 * FE.Ortega.kp * psi_A[1] * FE.Ortega.psi_sqr_error + OFFSET_VOLTAGE_BETA;
+        fx[0] = US(0) - MOTOR.R * IS(0) + 0.5 * FE.Ortega.kp * psi_A[0] * FE.Ortega.psi_sqr_error + MOTOR.R*OFFSET_CURRENT_SENSOR_ALPHA; // OFFSET_CURRENT_SENSOR_ALPHA is the sampling current sensor drifts
+        fx[1] = US(1) - MOTOR.R * IS(1) + 0.5 * FE.Ortega.kp * psi_A[1] * FE.Ortega.psi_sqr_error + MOTOR.R*OFFSET_CURRENT_SENSOR_BETA;
     }
     void main_ortega_2011(){
-
+        // printf("nonliear flux estimator step\n");
         general_2states_rk4_solver(&rhf_orgeta_2011_Dynamics, (*CTRL).timebase, FE.Ortega.x, CL_TS);
         // Unpack x
         FE.Ortega.psi_1[0] = FE.Ortega.x[0];
@@ -1203,8 +1208,155 @@ void rk4_init(){
         FE.Ortega.theta_d = atan2(FE.Ortega.psi_2[1], FE.Ortega.psi_2[0]);
         FE.Ortega.theta_e = angle_diff(FE.Ortega.theta_d, (*CTRL).i->theta_d_elec) * ONE_OVER_2PI * 360;
     }
-    
-    #endif
+    // #endif
+
+    // #if AFE_16_HE_EKF_2025
+    void init_HE_EKF(){
+        /* Define EKF parameters */
+        FE.HE_EKF.B_cova = 10000; // Covariance matrix of curent sensor bias noise, noises being 0.01 A in alpha beta direction
+        FE.HE_EKF.Q_cova = 0.000001; // Covariance of psudo measurement, noise in alpha beta direction
+        // FE.HE_EKF.inital_angle = 0; // initial zero angle for flux, in radian
+        FE.HE_EKF.initial_angle = CTRL->enc->theta_d_elec; // initial angle for flux, in radian
+        FE.HE_EKF.initial_angle = (*CTRL).i->theta_d_elec; // initial angle for flux, in radian
+        FE.HE_EKF.initial_Covariance  = 0.02; // initial flux norm, in Wb
+        FE.HE_EKF.Resistance = MOTOR.R;
+        FE.HE_EKF.Inductance = MOTOR.Ld;
+        FE.HE_EKF.Flux_norm = MOTOR.KE; //psi PM flux
+        FE.HE_EKF.ONE_OVER_LPF_Hz =0.01;
+        // matrix of bias noise, noises being 0.01 A in alpha beta direction
+        
+        // static double B[2][2] = {{B_cova*B_cova,B_cova*B_cova},{B_cova*B_cova,B_cova*B_cova}};
+        FE.HE_EKF.B_p =FE.HE_EKF.B_cova*FE.HE_EKF.B_cova*(FE.HE_EKF.Inductance+ CL_TS *FE.HE_EKF.Resistance)*(FE.HE_EKF.Inductance+ CL_TS *FE.HE_EKF.Resistance)* CL_TS* CL_TS;
+        FE.HE_EKF.B_prime[0][0] = FE.HE_EKF.B_p; 
+        FE.HE_EKF.B_prime[0][1] = 0;
+        FE.HE_EKF.B_prime[1][0] = 0;
+        FE.HE_EKF.B_prime[1][1] = FE.HE_EKF.B_p;
+        // Covariance matrix of flux norm 0.14 Wb 0.002 error in alpha beta direction
+        
+        FE.HE_EKF.IS_measured[0] = IS_C(0) + OFFSET_CURRENT_SENSOR_ALPHA;
+        FE.HE_EKF.IS_measured[1] = IS_C(1) + OFFSET_CURRENT_SENSOR_BETA;
+        // Initial state
+        FE.HE_EKF.flux[0] = FE.HE_EKF.Flux_norm * cos(FE.HE_EKF.initial_angle);
+        FE.HE_EKF.flux[1] = FE.HE_EKF.Flux_norm * sin(FE.HE_EKF.initial_angle);
+        FE.HE_EKF.stator_flux[0]= FE.HE_EKF.Flux_norm * cos(FE.HE_EKF.initial_angle);
+        FE.HE_EKF.stator_flux[1]= FE.HE_EKF.Flux_norm * sin(FE.HE_EKF.initial_angle);
+
+        //state at 0 degree in alpha beta direction
+        FE.HE_EKF.sigmapri[0][0] = FE.HE_EKF.initial_Covariance*FE.HE_EKF.initial_Covariance;
+        FE.HE_EKF.sigmapri[0][1] = 0;
+        FE.HE_EKF.sigmapri[1][0] = 0;
+        FE.HE_EKF.sigmapri[1][1] = FE.HE_EKF.initial_Covariance*FE.HE_EKF.initial_Covariance;
+        // Initial flux covariance at 0 degree, 0.01 Wb in alpha beta direction
+        FE.HE_EKF.Ibias[0] = 0;  
+        FE.HE_EKF.Ibias[1] = 0;// Initial flux covariance at 0 degree, 0 A in alpha beta direction
+        FE.HE_EKF.last_current[0] = 0;
+        FE.HE_EKF.last_current[1] = 0;  
+        FE.HE_EKF.current_offset[0] = 0;
+        FE.HE_EKF.current_offset[1] = 0;
+        FE.HE_EKF.current_compensated[0] = 0;
+        FE.HE_EKF.current_compensated[1] = 0;
+    }
+
+    void multiply_2x2_matrices(const REAL A[2][2], const REAL B[2][2], REAL C[2][2])
+    {
+        C[0][0] = A[0][0] * B[0][0] + A[0][1] * B[1][0];
+        C[0][1] = A[0][0] * B[0][1] + A[0][1] * B[1][1];
+        C[1][0] = A[1][0] * B[0][0] + A[1][1] * B[1][0];
+        C[1][1] = A[1][0] * B[0][1] + A[1][1] * B[1][1];
+    }
+
+    /* Helper function: H * R * H^T for a 1x2 H and 2x2 R, returns scalar */
+    REAL compute_HRH_T(const REAL H[2], const REAL Rmat[2][2])
+    {
+        /* Step 1: 1x2 * 2x2 => 1x2 */
+        REAL HR[2];
+        HR[0] = H[0] * Rmat[0][0] + H[1] * Rmat[1][0];
+        HR[1] = H[0] * Rmat[0][1] + H[1] * Rmat[1][1];
+
+        /* Step 2: 1x2 * 2x1 => scalar */
+        return (HR[0] * H[0] + HR[1] * H[1]);
+    }
+
+    void main_HE_EKF(){
+
+        FE.HE_EKF.IS_measured[0] = IS_C(0) + FE.HE_EKF.current_offset[0];
+        FE.HE_EKF.IS_measured[1] = IS_C(1) + FE.HE_EKF.current_offset[1];
+
+        FE.HE_EKF.stator_flux_d[0] = US_C(0) - MOTOR.R *  (FE.HE_EKF.IS_measured[0] - FE.HE_EKF.Ibias[0]) ;
+        FE.HE_EKF.stator_flux_d[1] = US_C(1) - MOTOR.R *  (FE.HE_EKF.IS_measured[1] - FE.HE_EKF.Ibias[1]) ;
+
+        FE.HE_EKF.stator_flux[0] = FE.HE_EKF.flux[0] + FE.HE_EKF.Inductance * (FE.HE_EKF.IS_measured[0]) + FE.HE_EKF.stator_flux_d[0]*CL_TS; // use the last iteration estimate active flux
+        FE.HE_EKF.stator_flux[1] = FE.HE_EKF.flux[1] + FE.HE_EKF.Inductance * (FE.HE_EKF.IS_measured[1]) + FE.HE_EKF.stator_flux_d[1]*CL_TS; // use the last iteration estimate active flux
+
+        FE.HE_EKF.flux[0] = FE.HE_EKF.stator_flux[0] - FE.HE_EKF.Inductance * (FE.HE_EKF.IS_measured[0]); // PM flux
+        FE.HE_EKF.flux[1] = FE.HE_EKF.stator_flux[1] - FE.HE_EKF.Inductance * (FE.HE_EKF.IS_measured[1]);// PM flux
+        
+        FE.HE_EKF.last_current[0]= FE.HE_EKF.IS_measured[0];
+        FE.HE_EKF.last_current[1]= FE.HE_EKF.IS_measured[1];
+
+        int count_i, count_j;
+        for (count_i = 0; count_i < 2; count_i++) {
+            for (count_j = 0; count_j < 2; count_j++) {
+                FE.HE_EKF.sigmapri[count_i][count_j] = FE.HE_EKF.sigmapost[count_i][count_j] + FE.HE_EKF.B_prime[count_i][count_j];
+            }
+        }
+
+        /* EKF Correction */
+        /* Compute Kalman Gain K = P H^T (H P H^T + R)^-1 */
+        REAL Ht[2] = {2*FE.HE_EKF.flux[0], 2*FE.HE_EKF.flux[1]};
+
+        REAL Q_prime_Htsigma = FE.HE_EKF.Q_cova + compute_HRH_T(Ht, FE.HE_EKF.sigmapri);
+
+
+        REAL K[2] ={ (FE.HE_EKF.sigmapri[0][0]*Ht[0]+FE.HE_EKF.sigmapri[0][1]*Ht[1])/Q_prime_Htsigma, (FE.HE_EKF.sigmapri[1][0]*Ht[0]+FE.HE_EKF.sigmapri[1][1]*Ht[1])/Q_prime_Htsigma};
+
+        FE.HE_EKF.h = FE.HE_EKF.flux[0] * FE.HE_EKF.flux[0] + FE.HE_EKF.flux[1] * FE.HE_EKF.flux[1];
+
+        FE.HE_EKF.flux[0] += K[0] * ((FE.HE_EKF.Flux_norm * FE.HE_EKF.Flux_norm)-FE.HE_EKF.h);
+        FE.HE_EKF.flux[1] += K[1] * ((FE.HE_EKF.Flux_norm * FE.HE_EKF.Flux_norm)-FE.HE_EKF.h);
+
+
+        REAL I_KH[2][2];
+        REAL Identity_matrix[2][2] = {{1, 0}, {0, 1}};
+        for (count_i = 0; count_i < 2; count_i++) {
+            for (count_j = 0; count_j < 2; count_j++) {
+                I_KH[count_i][count_j] = Identity_matrix[count_i][count_j] - K[count_i] * Ht[count_j];
+            }
+        }
+
+        multiply_2x2_matrices(I_KH, FE.HE_EKF.sigmapri, FE.HE_EKF.sigmapost); // sigmapost = (I - K H) sigmapri
+
+        REAL nt[2] = {0, 0};
+        REAL current_sensor_correction= ((FE.HE_EKF.Flux_norm * FE.HE_EKF.Flux_norm-FE.HE_EKF.h))/(FE.HE_EKF.Inductance + CL_TS *FE.HE_EKF.Resistance)/ CL_TS ;
+        nt[0] = K[0] * current_sensor_correction ;
+        nt[1] = K[1] * current_sensor_correction ;
+
+        REAL Ibias_update0 = FE.HE_EKF.Ibias[0]+ nt[0] * CL_TS;
+        REAL Ibias_update1 = FE.HE_EKF.Ibias[1]+ nt[1] * CL_TS;
+
+        // filter of current bias
+        // Compute filter time constant: tau = 1/(2*pi*cutoff)
+        REAL tau = 1.0/ ONE_OVER_2PI * FE.HE_EKF.ONE_OVER_LPF_Hz;
+        // Compute alpha: filter coefficient
+        REAL alpha = CL_TS/(tau + CL_TS);
+        // Apply first order low pass filter on Ibias
+        FE.HE_EKF.Ibias[0] = FE.HE_EKF.Ibias[0] + alpha*(Ibias_update0 - FE.HE_EKF.Ibias[0]);
+        FE.HE_EKF.Ibias[1] = FE.HE_EKF.Ibias[1] + alpha*(Ibias_update1 - FE.HE_EKF.Ibias[1]);
+        
+        FE.HE_EKF.current_compensated[0] = FE.HE_EKF.IS_measured[0] - FE.HE_EKF.Ibias[0];
+        FE.HE_EKF.current_compensated[1] = FE.HE_EKF.IS_measured[1] - FE.HE_EKF.Ibias[1];
+        
+        FE.HE_EKF.theta_d = atan2(FE.HE_EKF.flux[1], FE.HE_EKF.flux[0]);
+        FE.HE_EKF.theta_e = angle_diff(FE.HE_EKF.theta_d, (*CTRL).i->theta_d_elec) * ONE_OVER_2PI * 360;
+        FE.HE_EKF.cosT = cos(FE.HE_EKF.theta_d);
+        FE.HE_EKF.sinT = sin(FE.HE_EKF.theta_d);
+        FE.HE_EKF.current_compensated_dq[0] = AB2M(FE.HE_EKF.current_compensated[0], FE.HE_EKF.current_compensated[1], FE.HE_EKF.cosT, FE.HE_EKF.sinT);
+        FE.HE_EKF.current_compensated_dq[1] = AB2T(FE.HE_EKF.current_compensated[0], FE.HE_EKF.current_compensated[1], FE.HE_EKF.cosT, FE.HE_EKF.sinT);
+        FE.HE_EKF.current_bf_compensated_dq[0] =AB2M(FE.HE_EKF.IS_measured[0], FE.HE_EKF.IS_measured[1], FE.HE_EKF.cosT, FE.HE_EKF.sinT);
+        FE.HE_EKF.current_bf_compensated_dq[1] =AB2T(FE.HE_EKF.IS_measured[0], FE.HE_EKF.IS_measured[1], FE.HE_EKF.cosT, FE.HE_EKF.sinT);
+    }
+    // #endif
+
     #if AFE_45_CMwithDynamicCurrent
     void init_CMwithDynamicCurrent(){
         FE.CMDC.x[0] = 0;
@@ -1298,15 +1450,23 @@ void rk4_init(){
     }
     #endif
     void simulation_test_flux_estimators(){
+        // AFE_44_ORTEGA_2011
+        main_ortega_2011();
+        // AFE_16_HE_EKF_2025
+        main_HE_EKF();
+        
         // MainFE_HUWU_1998();
         #if AFE_43_SuperTwistingA
             Main_SuperTwistingA();
         #endif
-        #if AFE_44_ORTEGA_2011
-            main_ortega_2011();
-        #endif
+        // #if AFE_44_ORTEGA_2011
+        //     main_ortega_2011();
+        // #endif
+        // #if AFE_16_HE_EKF_2025
+        //     main_HE_EKF();
+        // #endif
         #if AFE_35_SATURATION_TIME_DIFFERENCE
-        VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
+        // VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
         #endif
         #if AFE_25_VM_CM_FUSION
         Main_the_active_flux_estimator();
@@ -1323,6 +1483,11 @@ void rk4_init(){
     }
 
     void init_FE(){
+        // AFE_44_ORTEGA_2011
+        init_ortega();
+        // AFE_16_HE_EKF_2025
+        init_HE_EKF();
+
         // init_FE_huwu();
         #if AFE_38_OUTPUT_ERROR_CLOSED_LOOP
         init_ClosedLoopFluxEstimatorForPMSM();
@@ -1333,9 +1498,12 @@ void rk4_init(){
         #if AFE_43_SuperTwistingA
             init_SuperTwistingA();
         #endif
-        #if AFE_44_ORTEGA_2011
-            init_ortega();
-        #endif
+        // #if AFE_44_ORTEGA_2011
+        //     init_ortega();
+        // #endif
+        // #if AFE_16_HE_EKF_2025
+        //     init_HE_EKF();
+        // #endif
         #if AFE_35_SATURATION_TIME_DIFFERENCE
             init_FE_htz();
         #endif
@@ -1354,7 +1522,7 @@ void rk4_init(){
 
 /* from pmsm observer */ 
 
-#if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
+#if (WHO_IS_USER == USER_HZQ) || (WHO_IS_USER == USER_CJH)
 /********************************************/
 /* 4rd-order ESO 
  ********************************************/
@@ -2706,38 +2874,171 @@ void Main_parksul2014_FADO(){
         PLLN.emf_ampl = 0;
         PLLN.x[0] = 0;
         PLLN.x[1] = 0;
-        PLLN.kp = 39;
-        PLLN.ki = 100;
+        PLLN.kp = 100;
+        PLLN.ki = 300;
         PLLN.emf_recon[0] = 0;
         PLLN.emf_recon[1] = 0;
         PLLN.k_p_theta = 1;
+
+        PLLN.psi_ampl = 0;
+        PLLN.psi_norm[0] = 0;
+        PLLN.psi_norm[1] = 0;
+        PLLN.psi_ampl = 0;
+        PLLN.psi_recon[0] = 0;
+        PLLN.psi_recon[1] = 0;
     }
-    void rhf_PLL_norm(REAL t, REAL *x, REAL *fx){
-        REAL emf_recon[2];
-        emf_recon[0] = PLLN.emf_norm[0] * cos(x[1]);
-        emf_recon[1] = PLLN.emf_norm[1] * sin(x[1]);
-        PLLN.epsilon_e = - emf_recon[0] - emf_recon[1];
-        PLLN.omega_elec = x[0] + PLLN.kp * PLLN.epsilon_e;
-        fx[0] = PLLN.ki * PLLN.epsilon_e;
-        fx[1] = PLLN.omega_elec;
-    }
-    void Main_PLL_norm(REAL emf[2]){
-        PLLN.emf_ampl = sqrt(emf[1]*emf[1] + emf[0]*emf[0]);
-        if(PLLN.emf_ampl != 0){
-            PLLN.emf_norm[0] = emf[0]/PLLN.emf_ampl;
-            PLLN.emf_norm[1] = emf[1]/PLLN.emf_ampl;
-        }else{
-            PLLN.emf_norm[0] = emf[0] * 10;
-            PLLN.emf_norm[1] = emf[1] * 10;
+    // void rhf_PLL_norm(REAL t, REAL *x, REAL *fx){
+    //     REAL emf_recon[2];
+    //     emf_recon[0] = PLLN.emf_norm[0] * cos(x[1]);
+    //     emf_recon[1] = PLLN.emf_norm[1] * sin(x[1]);
+    //     PLLN.epsilon_e = - emf_recon[0] - emf_recon[1];
+    //     PLLN.omega_elec = x[0] + PLLN.kp * PLLN.epsilon_e;
+    //     fx[0] = PLLN.ki * PLLN.epsilon_e;
+    //     fx[1] = PLLN.omega_elec;
+    // }
+    // void Main_PLL_norm(REAL emf[2]){
+    //     PLLN.emf_ampl = sqrt(emf[1]*emf[1] + emf[0]*emf[0]);
+    //     if(PLLN.emf_ampl != 0){
+    //         PLLN.emf_norm[0] = emf[0]/PLLN.emf_ampl;
+    //         PLLN.emf_norm[1] = emf[1]/PLLN.emf_ampl;
+    //     }else{
+    //         PLLN.emf_norm[0] = emf[0] * 10;
+    //         PLLN.emf_norm[1] = emf[1] * 10;
+    //     }
+    //     general_2states_rk4_solver(&rhf_PLL_norm, (*CTRL).timebase, PLLN.x, CL_TS);
+    //     PLLN.omega_integral = PLLN.x[0];
+    //     PLLN.omega_elec = PLLN.omega_integral + PLLN.kp * PLLN.epsilon_e;
+    //     PLLN.theta_elec = PLLN.x[1];
+    //     while(PLLN.theta_elec > M_PI) PLLN.theta_elec  -= 2*M_PI;
+    //     while(PLLN.theta_elec < -M_PI) PLLN.theta_elec+= 2*M_PI;
+    // }
+
+    // void rhf_PLL_norm_psi(REAL t, REAL *x, REAL *fx){
+    //     REAL psi_recon[2];
+    //     psi_recon[0] = PLLN.psi_norm[0] * sin(x[1]);
+    //     psi_recon[1] = PLLN.psi_norm[1] * cos(x[1]);
+    //     PLLN.epsilon_e = -psi_recon[0] + psi_recon[1];
+    //     PLLN.omega_elec = x[0] + PLLN.kp * PLLN.epsilon_e;
+    //     fx[0] = PLLN.ki * PLLN.epsilon_e;
+    //     fx[1] = PLLN.omega_elec;
+    // }    
+
+    void Main_PLL_norm_Psi(REAL psi[2]) {
+        // 1) Normalize psi safely
+        PLLN.psi_ampl = sqrt(psi[0]*psi[0] + psi[1]*psi[1]);
+        if (PLLN.psi_ampl > 1e-9) {
+            PLLN.psi_norm[0] = psi[0] / PLLN.psi_ampl;
+            PLLN.psi_norm[1] = psi[1] / PLLN.psi_ampl;
+        } else {
+            // Optional: keep previous normalization or set to zero
+            // PLLN.psi_norm[0] = 0.0;
+            // PLLN.psi_norm[1] = 0.0;
+            // return; // early out if no signal
         }
-        general_2states_rk4_solver(&rhf_PLL_norm, (*CTRL).timebase, PLLN.x, CL_TS);
-        PLLN.omega_integral = PLLN.x[0];
-        PLLN.omega_elec = PLLN.omega_integral + PLLN.kp * PLLN.epsilon_e;
-        PLLN.theta_elec = PLLN.x[1];
-        while(PLLN.theta_elec > M_PI) PLLN.theta_elec  -= 2*M_PI;
-        while(PLLN.theta_elec < -M_PI) PLLN.theta_elec+= 2*M_PI;
+
+        // 2) Phase error from reconstructed normalized flux
+        REAL psi_recon[2];
+        psi_recon[0] = PLLN.psi_norm[0] * sin(PLLN.theta_elec);
+        psi_recon[1] = PLLN.psi_norm[1] * cos(PLLN.theta_elec);
+        PLLN.epsilon_e = -psi_recon[0] + psi_recon[1];
+
+        // 3) Discrete PI on omega: position form
+        // Integrator update
+        PLLN.omega_integral += PLLN.ki * PLLN.epsilon_e * CL_TS;
+
+        // Optional: anti-windup clamp on integrator
+        // const REAL omega_int_min = -1e4, omega_int_max = 1e4;
+        // if (PLLN.omega_integral > omega_int_max) PLLN.omega_integral = omega_int_max;
+        // if (PLLN.omega_integral < omega_int_min) PLLN.omega_integral = omega_int_min;
+
+        // Proportional + integral output
+        PLLN.omega_elec = PLLN.kp * PLLN.epsilon_e + PLLN.omega_integral;
+
+        // Optional: clamp omega
+        // const REAL omega_min = -2e4, omega_max = 2e4;
+        // if (PLLN.omega_elec > omega_max) PLLN.omega_elec = omega_max;
+        // if (PLLN.omega_elec < omega_min) PLLN.omega_elec = omega_min;
+
+        // 4) Integrate theta
+        PLLN.theta_elec += CL_TS * PLLN.omega_elec;
+
+        // 5) Wrap angle to [-pi, pi]
+        while (PLLN.theta_elec > M_PI)  PLLN.theta_elec -= 2*M_PI;
+        while (PLLN.theta_elec < -M_PI) PLLN.theta_elec += 2*M_PI;
     }
+
+    void init_PLL_norm_EKF(){
+        PLLN_EKF.emf_ampl = 0;
+        PLLN_EKF.theta_elec = 0;
+        PLLN_EKF.epsilon_e = 0;
+        PLLN_EKF.omega_elec = 0; 
+        PLLN_EKF.omega_integral = 0;
+        PLLN_EKF.emf_norm[0] = 0;
+        PLLN_EKF.emf_norm[1] = 0;
+        PLLN_EKF.emf_ampl = 0;
+        PLLN_EKF.x[0] = 0;
+        PLLN_EKF.x[1] = 0;
+        PLLN_EKF.kp = 100;
+        PLLN_EKF.ki = 300;
+        PLLN_EKF.emf_recon[0] = 0;
+        PLLN_EKF.emf_recon[1] = 0;
+        PLLN_EKF.k_p_theta = 1;
+
+        PLLN_EKF.psi_ampl = 0;
+        PLLN_EKF.psi_norm[0] = 0;
+        PLLN_EKF.psi_norm[1] = 0;
+        PLLN_EKF.psi_ampl = 0;
+        PLLN_EKF.psi_recon[0] = 0;
+        PLLN_EKF.psi_recon[1] = 0;
+    }
+
+    void Main_PLL_norm_Psi_EKF(REAL psi[2]) {
+        // 1) Normalize psi safely
+        PLLN_EKF.psi_ampl = sqrt(psi[0]*psi[0] + psi[1]*psi[1]);
+        if (PLLN_EKF.psi_ampl > 1e-9) {
+            PLLN_EKF.psi_norm[0] = psi[0] / PLLN_EKF.psi_ampl;
+            PLLN_EKF.psi_norm[1] = psi[1] / PLLN_EKF.psi_ampl;
+        } else {
+            // Optional: keep previous normalization or set to zero
+            // PLLN_EKF.psi_norm[0] = 0.0;
+            // PLLN_EKF.psi_norm[1] = 0.0;
+            // return; // early out if no signal
+        }
+
+        // 2) Phase error from reconstructed normalized flux
+        REAL psi_recon[2];
+        psi_recon[0] = PLLN_EKF.psi_norm[0] * sin(PLLN_EKF.theta_elec);
+        psi_recon[1] = PLLN_EKF.psi_norm[1] * cos(PLLN_EKF.theta_elec);
+        PLLN_EKF.epsilon_e = -psi_recon[0] + psi_recon[1];
+
+        // 3) Discrete PI on omega: position form
+        // Integrator update
+        PLLN_EKF.omega_integral += PLLN_EKF.ki * PLLN_EKF.epsilon_e * CL_TS;
+
+        // Optional: anti-windup clamp on integrator
+        // const REAL omega_int_min = -1e4, omega_int_max = 1e4;
+        // if (PLLN_EKF.omega_integral > omega_int_max) PLLN_EKF.omega_integral = omega_int_max;
+        // if (PLLN_EKF.omega_integral < omega_int_min) PLLN_EKF.omega_integral = omega_int_min;
+
+        // Proportional + integral output
+        PLLN_EKF.omega_elec = PLLN_EKF.kp * PLLN_EKF.epsilon_e + PLLN_EKF.omega_integral;
+
+        // Optional: clamp omega
+        // const REAL omega_min = -2e4, omega_max = 2e4;
+        // if (PLLN_EKF.omega_elec > omega_max) PLLN_EKF.omega_elec = omega_max;
+        // if (PLLN_EKF.omega_elec < omega_min) PLLN_EKF.omega_elec = omega_min;
+
+        // 4) Integrate theta
+        PLLN_EKF.theta_elec += CL_TS * PLLN_EKF.omega_elec;
+
+        // 5) Wrap angle to [-pi, pi]
+        while (PLLN_EKF.theta_elec > M_PI)  PLLN_EKF.theta_elec -= 2*M_PI;
+        while (PLLN_EKF.theta_elec < -M_PI) PLLN_EKF.theta_elec += 2*M_PI;
+    }
+
 #endif
+
+
 /********************************************/
 /* COMMON *
  ********************************************/
@@ -2764,21 +3065,32 @@ void pmsm_observers(){
     // stationary_voltage_DOB();
 
     (*CTRL).motor->KActive = MOTOR.KE + (MOTOR.Ld - MOTOR.Lq) * (*CTRL).i->cmd_iDQ[0];
+    simulation_test_flux_estimators();
+    // if (AFE_44_ORTEGA_2011)
+    Main_PLL_norm_Psi(FE.Ortega.psi_2);
+    // if (AFE_16_HE_EKF_2025)
+    Main_PLL_norm_Psi_EKF(FE.HE_EKF.flux);
 
     #if PC_SIMULATION
         // /* Cascaded Flux Estimator */
-        simulation_test_flux_estimators();
+        
         // OBSV.nsoaf.theta_d = FE.AFEOE.theta_d ;
 
         // /* Speed and Position Estimator */
         // Main_harnefors_scvm();
         // // cjh_eemfao();
         // // cjh_eemfhgo_farza09();
-        Main_nsoaf_chen2020();
+        // Main_nsoaf_chen2020();
         #if ALG_AKT_SPEED_EST_AND_RS_ID
             SpeedEstimationFromtheVMBasedFluxEstimation();
             RS_Identificaiton();
         #endif
+        // #if (AFE_44_ORTEGA_2011)
+        //     Main_PLL_norm_Psi(FE.Ortega.psi_2);
+        // #endif
+        // #if (AFE_16_HE_EKF_2025)
+        //     Main_PLL_norm_Psi(FE.HE_EKF.flux);
+        // #endif
         // Main_esoaf_chen2021();
         // // Main_QiaoXia2013_emfSMO();
         // Main_ChiXu2009_emfSMO();
@@ -2787,11 +3099,11 @@ void pmsm_observers(){
         /* 资源有限 */
         #if SELECT_ALGORITHM == ALG_NSOAF
             // MainFE_HuWu_1998(); // use algorithm 2
-            VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
+            // VM_Saturated_ExactOffsetCompensation_WithAdaptiveLimit();
             #if AFE_38_OUTPUT_ERROR_CLOSED_LOOP
                 Main_VM_ClosedLoopFluxEstimatorForPMSM();
             #endif
-            Main_nsoaf_chen2020();
+            //  Main_nsoaf_chen2020(); // disable the compare function
             #if AFE_25_VM_CM_FUSION
             Main_the_active_flux_estimator();
             #endif
@@ -2845,7 +3157,7 @@ void pmsm_observers(){
 
 void variabel_parameters_sensorless(){
     //for Lq, R, KE
-    #if WHO_IS_USER == USER_YZZ
+    #if WHO_IS_USER == USER_HZQ
     int i;
     i = d_sim.user.Variable_Parameters_time_num/2;
     d_sim.user.Variable_Parameters_timebase += CL_TS;
@@ -2920,6 +3232,7 @@ void init_pmsm_observers(){
     #endif
     #if ALG_PLL_norm
     init_PLL_norm();
+    init_PLL_norm_EKF();
     #endif
 
     #if PC_SIMULATION
@@ -3269,7 +3582,7 @@ void Online_PAA_Based_Compensation(void)
     // (*CTRL).ual, (*CTRL).ube 是补偿前的电压！
     // (*CTRL).ual + INV.ual_comp, (*CTRL).ube + INV.ube_comp 是补偿后的电压！
 }
-void yzz_inverter_Compensation_Online_PAA()
+void HZQ_inverter_Compensation_Online_PAA()
 {
     if(d_sim.user.inverter_nonlinearity_on == 1){
         Online_PAA_Based_Compensation();
@@ -3449,6 +3762,5 @@ void get_distorted_voltage_via_LUT(REAL ual, REAL ube, REAL ial, REAL ibe, REAL 
         ualbe_dist[1] = UV2B_AI(dist_ua, dist_ub); // 0.66666667 * 0.8660254 * ( dist_ub -     dist_uc);
     }
 }
-
 
 #endif

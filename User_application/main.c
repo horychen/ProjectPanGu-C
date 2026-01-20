@@ -15,17 +15,17 @@ extern bool run_enable_from_PC;
         {                          \
             Axis  = &Axis_2;       \
             CTRL  = &CTRL_2;       \
-            debug = &debug_2;      \
         }                           
 #endif
 void main(void){
+            debug = &debug_2;      \
 
     InitSysCtrl();      // 1. Initialize System Control: PLL, WatchDog, enable Peripheral Clocks.
     Gpio_initialize();  // 2. Initialize GPIO and assign GPIO to peripherals.
     DINT;               // 3.1 Clear all interrupts and initialize PIE vector table.
     InitPieCtrl();      // 3.2 Initialize the PIE control registers to their default state. The default state is all PIE interrupts disabled and flags are cleared.
     IER = 0x0000;       // 3.3 Disable CPU __interrupts,
-    IFR = 0x0000;       // 3.4 and clear all CPU __interrupt flags.a
+    IFR = 0x0000;       // 3.4 and clear all CPU __interrupt flags.
     InitPieVectTable(); // 3.5 Initialize the PIE vector table with pointers to the shell Interrupt Service Routines (ISR). At end, ENPIE = 1.
     InitCpuTimers();     // for Slessinv TIE.R1 for measuring the execution time
     ConfigCpuTimer(&CpuTimer1, 200, 1000000); // 200MHz, INTERRUPT_period = 1e6 us
@@ -35,7 +35,7 @@ void main(void){
     #ifdef _STANDALONE
         #ifdef _FLASH
             // use this code when u need to cut off the power and reboot it offline
-            //  Send boot command to allow the CPU02 application to begin execution
+            //  Send boot command to allow the CPU02 application to begin executioz`n
             IPCBootCPU2(C1C2_BROM_BOOTMODE_BOOT_FROM_FLASH);
         #else
             //  Send boot command to allow the CPU02 application to begin execution
@@ -44,7 +44,7 @@ void main(void){
 //             IPCBootCPU2(C1C2_BROM_BOOTMODE_BOOT_FROM_RAM);
         #endif
     #endif
-    
+
     // 4.2 Initialize peripherals
     ePWM_initialize();
     ADC_initialize();
@@ -85,7 +85,9 @@ void main(void){
     init_d_sim();      // do this only once here
     init_debug();      // do this only once here
     init_experiment(); // 控制器结构体初始化（同实验）
-    get_bezier_points(); // for testing Cury the leg trajectgory tracking 
+    #if WHO_IS_USER == USER_BEZIER || WHO_IS_USER == USER_WB
+        get_bezier_points(); // for testing Cury the leg trajectgory tracking 
+    #endif
     for (axisCnt = 0; axisCnt < NUMBER_OF_AXES; axisCnt++){
         get_Axis_CTRL_pointers
         // (*debug).bool_initilized = FALSE;
@@ -128,35 +130,32 @@ void main(void){
 
 void main_loop(){
     while (1){
-        #if PC_SIMULATION == FALSE
-            CpuTimer_After = CpuTimer1.RegsAddr->TIM.all; // get count
-            CpuTimer_Delta = (REAL)CpuTimer_Before - (REAL)CpuTimer_After;
-            // EALLOW;
-            // CpuTimer1.RegsAddr->TCR.bit.TSS = 1; // stop (not needed because of the line TRB=1)
-            // EDIS;
-        #endif
-        // Below should be place at the first
-        // Here is to measurea the whole time of the Bezier Controller
-        #if PC_SIMULATION == FALSE
-            EALLOW;
-            CpuTimer1.RegsAddr->TCR.bit.TRB = 1;           // reset cpu timer to period value
-            CpuTimer1.RegsAddr->TCR.bit.TSS = 0;           // start/restart
-            CpuTimer_Before = CpuTimer1.RegsAddr->TIM.all; // get count
-            EDIS;
-        #endif
         #if WHO_IS_USER == USER_BEZIER
-            //            if(d_sim.user.bezier_NUMBER_OF_STEPS<8000){
-            //                bezier_controller_run_in_main();
-            //            }
-            if(d_sim.user.bezier_NUMBER_OF_STEPS<8000){
+            if( (d_sim.user.bezier_NUMBER_OF_STEPS<8000) && (d_sim.user.BOOL_BEZIER_RUN_IN_MAIN == TRUE) ){
                 // When the button is on, then give a Sweeping Ref
-                if (Axis_1.FLAG_ENABLE_PWM_OUTPUT){
+                if (Axis_1.FLAG_ENABLE_PWM_OUTPUT && d_sim.user.bezier_Give_Sweeping_Ref_in_Interrupt){
                     overwrite_sweeping_frequency();
+                    _user_Check_ThreeDB_Point( (*CTRL).i->varOmega*MECH_RAD_PER_SEC_2_RPM, d_sim.user.CMD_SPEED_SINE_RPM );
+                    // _user_commands();         // 用户指令
                 }
-                // _user_commands();         // 用户指令
                 CTRL = &CTRL_1;
+                
                 PID_Speed->Ref = (*CTRL).i->cmd_varOmega;
-                PID_Speed->Fbk = (*CTRL).i->varOmega;
+
+                // Ref is given in Interrupt
+                if (!d_sim.user.bezier_Give_Sweeping_Ref_in_Interrupt){
+                    overwrite_sweeping_frequency();
+                    /* Mark -3db points */
+                    _user_Check_ThreeDB_Point( (*CTRL).i->varOmega*MECH_RAD_PER_SEC_2_RPM, d_sim.user.CMD_SPEED_SINE_RPM );
+                }
+            
+                if(d_sim.user.bool_apply_ESO_SPEED_for_SPEED_FBK == TRUE){
+                    PID_Speed->Fbk = OBSV.esoaf.xOmg * MOTOR.npp_inv ;
+                }else{
+                    PID_Speed->Fbk = (*CTRL).i->varOmega;
+                }
+                PID_Speed->ErrPrev = PID_Speed->Err;
+                PID_Speed->Err = PID_Speed->Ref - PID_Speed->Err;
                 PID_Speed->OutLimit = BezierVL.points[BezierVL.order].y;
                 control_output(PID_Speed, &BezierVL);
                 if (d_sim.user.BOOL_BEZIER_ADAPTIVE_GAIN == FALSE){
@@ -167,17 +166,17 @@ void main_loop(){
                 (*debug).set_id_command = 0;
             }
         #endif
-//         #if WHO_IS_USER == USER_QIAN
-            // Sensor Coil
-//            I2CA_ReadData_Channel(0);
-//            DELAY_US(30);
-//            I2CA_ReadData_Channel(1);
-//            DELAY_US(30);
-//            I2CA_ReadData_Channel(2);
-//            DELAY_US(300);
-//            I2CA_ReadData_Channel(3);
-//            DELAY_US(300);
-//         #endif
+        #if WHO_IS_USER == USER_QIAN
+           // Sensor Coil  
+           I2CA_ReadData_Channel(0);
+           DELAY_US(30);
+           I2CA_ReadData_Channel(1);
+           DELAY_US(30);
+           I2CA_ReadData_Channel(2);
+           DELAY_US(300);
+           I2CA_ReadData_Channel(3);
+           DELAY_US(300);
+        #endif
         //        mainWhileLoopCounter1++;
         //        mainWhileLoopCounter2=2992;
         //        if (Motor_mode_START==1){
@@ -208,7 +207,7 @@ void main_loop(){
 // extern long long sci_pos;
 
 void main_measurement(){
-
+    main_adc_measurement();
     #if ENCODER_TYPE == INCREMENTAL_ENCODER_QEP
         PostionSpeedMeasurement_MovingAvergage(EQep1Regs.QPOSCNT, CTRL->enc);
     #else
@@ -220,8 +219,12 @@ void main_measurement(){
         // measure d-axis angle and then use a poor algorithm to calculate speed
         measurement_enc();
     #endif
+
+
+    /* CTRL->i接口 */
     CTRL->i->varOmega     = CTRL->enc->varOmega;
     CTRL->i->theta_d_elec = CTRL->enc->theta_d_elec;
+    CTRL->i->varTheta     = CTRL->enc->encoder_abs_cnt * SYSTEM_QEP_REV_PER_PULSE * 2 * M_PI; //* 绝对值编码器读数, 使用弧度制度，机械角度，用这个！！！电角度看电机角度有点麻烦！
 
     // measure place between machine shaft and Sensor Coil
     // if (sensor_coil_enable == 1)
@@ -237,7 +240,7 @@ void main_measurement(){
     (*CTRL).i->iAB[1] = Axis->iabg[1];
 
     // 观测器专用变量（与你无关，别管啦！）
-    # if( WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
+    # if( WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH) //|| (WHO_IS_USER == USER_HZQ)
         IS_C(0) = Axis->iabg[0];
         IS_C(1) = Axis->iabg[1];
         US_C(0) = (*CTRL).o->cmd_uAB[0]; // 后缀_P表示上一步的电压，P = Previous
@@ -250,77 +253,15 @@ void main_measurement(){
     // voltage_measurement_based_on_eCAP();
 
     // measure vdc
-    if (axisCnt == 0){
-        Axis->vdc    =((REAL)(AdcaResultRegs.ADCRESULT0 ) - Axis->adc_offset[0]) * Axis->adc_scale[0];
-    }else{
-        Axis->vdc = ((REAL)(AdcbResultRegs.ADCRESULT6) - Axis->adc_offset[0]) * Axis->adc_scale[0];
-    }
+//     Axis->vdc    = ((REAL)(AdcaResultRegs.ADCRESULT0 ) - Axis->adc_offset[0]) * Axis->adc_scale[0];
+    Axis->vdc = ((REAL)(AdcbResultRegs.ADCRESULT6) - Axis->adc_offset[0]) * Axis->adc_scale[0];
     if (G.flag_overwite_vdc) Axis->vdc = G.overwrite_vdc;
     {
         // Vdc用于实时更新电流环限幅
-        PID_iD->OutLimit = Axis->vdc * 0.5773672 * (*debug).LIMIT_DC_BUS_UTILIZATION;
-        PID_iQ->OutLimit = Axis->vdc * 0.5773672 * (*debug).LIMIT_DC_BUS_UTILIZATION;
-        PID_Speed->OutLimit = (*debug).LIMIT_OVERLOAD_FACTOR * d_sim.init.IN;
-
-
-        // 电流环输出限幅2V
-        // PID_iD->OutLimit = 2;
-        // PID_iQ->OutLimit = 2; 
-        // PID_iX->outLimit = Axis->vdc * 0.5773672;
-        // PID_iY->outLimit = Axis->vdc * 0.5773672;
+        PID_iD->OutLimit = Axis->vdc * 0.5773672 * d_sim.CL.LIMIT_DC_BUS_UTILIZATION;
+        PID_iQ->OutLimit = Axis->vdc * 0.5773672 * d_sim.CL.LIMIT_DC_BUS_UTILIZATION;
+        PID_Speed->OutLimit = d_sim.VL.LIMIT_OVERLOAD_FACTOR * d_sim.init.IN;
     }
-
-    //    这样不能形成保护，必须设置故障状态才行。
-    //    if(fabs(G.Current_W)>8 || fabs(G.Current_V)>8){
-    //        DSP_PWM_DISABLE
-    //        DSP_2PWM_DISABLE
-    //    }
-
-    // 电流采样ADC温飘校准 // TODO 改成用ADC Raw Results校准。
-    //    if(Axis->AD_offset_flag2==FALSE)
-    //    {
-    //        Axis->offset_counter += 1;
-    //        Axis->iuvw_offset_online[0] += (REAL)(AdcaResultRegs.ADCRESULT1 ) ;
-    //        Axis->iuvw_offset_online[1] += (REAL)(AdcaResultRegs.ADCRESULT2 ) ;
-    //        Axis->iuvw_offset_online[2] += (REAL)(AdcaResultRegs.ADCRESULT3 ) ;
-    //        Axis->iuvw_offset_online[3] += (REAL)(AdcaResultRegs.ADCRESULT11 ) ;
-    //        Axis->iuvw_offset_online[4] += (REAL)(AdcaResultRegs.ADCRESULT9 ) ;
-    //        Axis->iuvw_offset_online[5] += (REAL)(AdcaResultRegs.ADCRESULT8 ) ;
-    //        if(Axis->offset_counter>=5000){
-    //            Axis->iuvw_offset_online[0] = Axis->iuvw_offset_online[0] / 5000;
-    //            Axis->iuvw_offset_online[1] = Axis->iuvw_offset_online[1] / 5000;
-    //            Axis->iuvw_offset_online[2] = Axis->iuvw_offset_online[2] / 5000;
-    //            Axis->iuvw_offset_online[3] = Axis->iuvw_offset_online[3] / 5000;
-    //            Axis->iuvw_offset_online[4] = Axis->iuvw_offset_online[4] / 5000;
-    //            Axis->iuvw_offset_online[5] = Axis->iuvw_offset_online[5] / 5000;
-    //            Axis->AD_offset_flag2 = TRUE;
-    //            Axis->offset_counter = 0;
-    //        }
-    //
-    //        // 来不及完成偏置检测（比如刚上电数字开关就是开的），采用默认值
-    //        /* 427-1401：添加开关信号滤波。今天发现在刚上电的时候，XCUBE-II的前两个中断里，数字开关是打开的，然后才变成关闭。*/
-    //        if(Axis->FLAG_ENABLE_PWM_OUTPUT && Axis->offset_counter>100){
-    //            Axis->iuvw_offset_online[0] = 0.0;
-    //            Axis->iuvw_offset_online[1] = 0.0;
-    //            Axis->iuvw_offset_online[2] = 0.0;
-    //            Axis->iuvw_offset_online[3] = 0.0;
-    //            Axis->iuvw_offset_online[4] = 0.0;
-    //            Axis->iuvw_offset_online[5] = 0.0;
-    //            Axis->AD_offset_flag2 = TRUE;
-    //        }
-    //
-    //        // 上电的时候，电机可能在转，此时根据电流判断是否还要额外进行偏置补偿。
-    //        if( fabs(Axis->iuvw[0])>0.05 || fabs(Axis->iuvw[1])>0.05 || fabs(Axis->iuvw[2])>0.05 || \
-    //            fabs(Axis->iuvw[3])>0.05 || fabs(Axis->iuvw[4])>0.05 || fabs(Axis->iuvw[5])>0.05){
-    //            Axis->iuvw_offset_online[0] = 0.0;
-    //            Axis->iuvw_offset_online[1] = 0.0;
-    //            Axis->iuvw_offset_online[2] = 0.0;
-    //            Axis->iuvw_offset_online[3] = 0.0;
-    //            Axis->iuvw_offset_online[4] = 0.0;
-    //            Axis->iuvw_offset_online[5] = 0.0;
-    //            Axis->AD_offset_flag2 = TRUE;
-    //        }
-    //    }
 }
 
 // int down_freq_ecap_counter = 1;
@@ -328,9 +269,29 @@ void main_measurement(){
 extern REAL imife_realtime_gain_off;
 
 //REAL wubo_debug_flag_PWM = 0;
-//REAL wubo_debug_motor_enc_dirc[2] = {1.0, -1.0};
+REAL wubo_debug_motor_enc_dirc[2] = {1.0, -1.0};
 
-
+void main_adc_measurement(){
+    Axis->adc_voltage[0] = ((REAL)(Axis->adc_data[0]) - Axis->adc_offset_ex[0]) * Axis->adc_scale_ex[0];
+    Axis->adc_voltage[1] = ((REAL)(Axis->adc_data[1]) - Axis->adc_offset_ex[1]) * Axis->adc_scale_ex[1];
+    Axis->adc_voltage[2] = ((REAL)(Axis->adc_data[2]) - Axis->adc_offset_ex[2]) * Axis->adc_scale_ex[2];
+    Axis->adc_voltage[3] = ((REAL)(Axis->adc_data[3]) - Axis->adc_offset_ex[3]) * Axis->adc_scale_ex[3];
+    Axis->adc_voltage[4] = ((REAL)(Axis->adc_data[4]) - Axis->adc_offset_ex[4]) * Axis->adc_scale_ex[4];
+    Axis->adc_voltage[5] = ((REAL)(Axis->adc_data[5]) - Axis->adc_offset_ex[5]) * Axis->adc_scale_ex[5];
+    Axis->adc_voltage[6] = ((REAL)(Axis->adc_data[6]) - Axis->adc_offset_ex[6]) * Axis->adc_scale_ex[6];
+    Axis->adc_voltage[7] = ((REAL)(Axis->adc_data[7]) - Axis->adc_offset_ex[7]) * Axis->adc_scale_ex[7];
+    Axis->terminal_voltage[0] = Axis->adc_voltage[0]*10.0; // A phase to GND
+    Axis->terminal_voltage[1] = Axis->adc_voltage[1]*10.0; // B phase to GND
+    Axis->terminal_voltage[2] = Axis->adc_voltage[2]*10.0; // C phase to GND
+    Axis->neutral_voltage = (Axis->terminal_voltage[0] + Axis->terminal_voltage[1] + Axis->terminal_voltage[2]) / 3.0;
+    Axis->phase_voltage[0] = Axis->terminal_voltage[0] - Axis->neutral_voltage;
+    Axis->phase_voltage[1] = Axis->terminal_voltage[1] - Axis->neutral_voltage;
+    Axis->phase_voltage[2] = Axis->terminal_voltage[2] - Axis->neutral_voltage;
+    (*CTRL).i->uAB[0] = UVW2A_AI(Axis->phase_voltage[0], Axis->phase_voltage[1], Axis->phase_voltage[2]);
+    (*CTRL).i->uAB[1] = UVW2B_AI(Axis->phase_voltage[0], Axis->phase_voltage[1], Axis->phase_voltage[2]);
+    (*CTRL).i->uAB_filtered[0] = _lpf((*CTRL).i->uAB[0],(*CTRL).i->uAB_filtered[0],0.2390572236);
+    (*CTRL).i->uAB_filtered[1] = _lpf((*CTRL).i->uAB[1],(*CTRL).i->uAB_filtered[1],0.2390572236);
+}
 
 void DISABLE_PWM_OUTPUT(){
     DSP_PWM_DISABLE
@@ -349,6 +310,14 @@ void DISABLE_PWM_OUTPUT(){
 
         // TODO: use a function for this purpose!
         // 清空积分缓存
+        PID_Position->Ref = 0;
+        PID_Position->Out = 0;
+        PID_Position->OutPrev = 0;
+        PID_Position->Fbk = 0;
+        PID_Position->Err = 0;
+        PID_Position->ErrPrev = 0;
+        PID_Position->I_Term = 0;
+
         PID_Speed->Ref = 0;
         PID_Speed->Out = 0;
         PID_Speed->OutPrev = 0;
@@ -382,12 +351,15 @@ void DISABLE_PWM_OUTPUT(){
         // PID_iX->OutPrev = 0;
         // PID_iy->OutPrev = 0;
 
-        // Sweeping 
-        d_sim.user.timebase_for_Sweeping = 0.0;
-        d_sim.user.CMD_SPEED_SINE_HZ = 0.0;
-        d_sim.user.CMD_SPEED_SINE_END_TIME = CL_TS;
-        d_sim.user.CMD_SPEED_SINE_LAST_END_TIME = 0.0;
-        
+        // Sweeping
+        #if WHO_IS_USER == USER_WB
+            d_sim.user.timebase_for_Sweeping        = 0.0;
+            d_sim.user.CMD_SPEED_SINE_HZ            = 0.0;
+            d_sim.user.CMD_SPEED_SINE_END_TIME      = CL_TS;
+            d_sim.user.CMD_SPEED_SINE_LAST_END_TIME = 0.0;
+            d_sim.user.flag_clear_timebase_once     = FALSE;
+        #endif
+        // d_sim.user.Mark_Counter                 = 0.0; // clear the MARK !!!!! clear ti manually !!
         EPwm1Regs.CMPA.bit.CMPA = 2500;
         EPwm2Regs.CMPA.bit.CMPA = 2500;
         EPwm3Regs.CMPA.bit.CMPA = 2500;
@@ -416,19 +388,28 @@ void DISABLE_PWM_OUTPUT(){
             (*debug).CMD_SPEED_SINE_END_TIME      = d_sim.user.CMD_SPEED_SINE_END_TIME;
             (*debug).CMD_SPEED_SINE_HZ_CEILING    = d_sim.user.CMD_SPEED_SINE_HZ_CEILING;
         #endif
-        /* WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING*/
-        /* WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING*/
-        /* WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING*/
+        #if WHO_IS_USER == USER_YZZ
+            if(!Axis_1.FLAG_ENABLE_PWM_OUTPUT){   
+                (*CTRL).motor->KE = d_sim.init.KE;
+                (*CTRL).motor->R = d_sim.init.R;
+                (*CTRL).motor->Lq = d_sim.init.Lq; 
+                d_sim.user.Variable_Parameters_timebase = 0;
+                d_sim.user.VP_time_num_count = 0;
+            }
+        #endif
         /* WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING*/
     }
 
     /* 在不输出PWM波形的时候，也就是“开关”为OFF的时候，更新SpeedInnerLoop的参数*/
     #if WUBO_ONLINE_TUNING
         #if WHO_IS_USER == USER_WB
+        wubo_debug_tools[9] = 11;
             if ( (*debug).who_is_user == USER_WB && (*debug).bool_apply_WC_tunner_for_speed_loop == TRUE ){
                 _user_wubo_WC_Tuner_Online(); // 和_user_wubo_WC_Tuner函数区别
+                wubo_debug_tools[9] = 12;
             }else{
                 _user_wubo_TI_Tuner_Online();
+                wubo_debug_tools[9] = 13;
             }
         #else
             //TODO: Here needs a online tuning function for public use
@@ -438,6 +419,10 @@ void DISABLE_PWM_OUTPUT(){
     DELAY_US(5);
     GpioDataRegs.GPDCLEAR.bit.GPIO106 = 1; // TODO: What is this doing?
 }
+
+
+
+int global_tmp_pwm_test_mode;
 
 void ENABLE_PWM_OUTPUT(int positionLoopType){
     G.flag_experimental_initialized = FALSE;
@@ -468,51 +453,19 @@ void ENABLE_PWM_OUTPUT(int positionLoopType){
     (*CTRL).timebase_counter += 1;
     (*CTRL).timebase = CL_TS * (*CTRL).timebase_counter; //(*CTRL).timebase += CL_TS; // 2048 = float/REAL max
 
-    #if WHO_IS_USER != USER_XM
-        // 根据指令，产生控制输出（电压）
-                                                                //(*CTRL).s->Motor_or_Gnerator = sign((*CTRL).i->cmd_iDQ[1]) == sign(CTRL->enc->rpm); // sign((*CTRL).i->cmd_iDQ[1]) != sign((*CTRL).i->cmd_speed_rpm))
-        //        runtime_command_and_tuning(Axis->Select_exp_operation);
-        //        // 0x03 is shank
-        //        //    position_count_CAN_fromCPU2 = position_count_CAN_ID0x03_fromCPU2;
-        //        // 0x01 is hip
-        //        // position_count_CAN_fromCPU2 = position_count_CAN_ID0x01_fromCPU2;
-        //
-        //        if (positionLoopType == 0){
-        //            // do nothing
-        //        }
-        //        else{
-        //            // do position loop
-        //            Axis->Set_manual_rpm = call_position_loop_controller(positionLoopType);
-        //        }
-        //
-        //        if (flag_RPM_wave == 1)
-        //        {
-        //            Axis->Set_manual_rpm = (*CTRL).timebase * 20;
-        //            if ( (*CTRL).timebase * 20 > 400)
-        //            {
-        //                Axis->Set_manual_rpm = 400;
-        //            }
-        //        }
-
-        //        if(IPCRtoLFlagBusy(IPC_FLAG8) == 1){
-        //            iq_command_from_PC = Read.current_cmd_from_PC;
-        //            IPCRtoLFlagAcknowledge(IPC_FLAG8);
-        //        }
-        //        if(run_enable_from_PC == false){
-        //            iq_command_from_PC = 0.0;
-        //        }
+    #if ALLOW_RUNTIME_PARAM_UPDATE && WHO_IS_USER == USER_WB
     #endif
 
     /* MAIN SWITCH */
     /* MAIN SWITCH */
     /* MAIN SWITCH */
 
-    int pwm_test_mode = main_switch(debug->mode_select);
-
+//    int pwm_test_mode = main_switch(debug->mode_select);
+    global_tmp_pwm_test_mode = main_switch(debug->mode_select);
     //(*CTRL).o->cmd_uAB_to_inverter[0]
 
     // operation mode为5的时候，执行下面测试逆变器输出电压的代码
-    if (pwm_test_mode == XCUBE_TaTbTc_DEBUG_MODE){
+    if (global_tmp_pwm_test_mode == XCUBE_TaTbTc_DEBUG_MODE){
         if (axisCnt == 0){
             EPwm1Regs.CMPA.bit.CMPA = (*CTRL).svgen1.Ta * 50000000 * CL_TS; // 0-5000，5000表示0%的占空比
             EPwm2Regs.CMPA.bit.CMPA = (*CTRL).svgen1.Tb * 50000000 * CL_TS;
@@ -582,10 +535,27 @@ __interrupt void EPWM1ISR(void){
     #endif
     // read from CPU02
     read_count_from_cpu02_dsp_cores_2();
+
+
+
+
+
+
+
     if(IPCRtoLFlagBusy(IPC_FLAG7) == 1){
-        run_enable_from_PC = Read.run_enable;
+        // run_enable_from_PC = Read.run_enable;
         IPCRtoLFlagAcknowledge(IPC_FLAG7);
     }
+
+    // 这段放需要测时间的代码前面
+    #if PC_SIMULATION == FALSE
+        EALLOW;
+        CpuTimer1.RegsAddr->TCR.bit.TRB = 1;           // reset cpu timer to period value
+        CpuTimer1.RegsAddr->TCR.bit.TSS = 0;           // start/restart
+        CpuTimer_Before = CpuTimer1.RegsAddr->TIM.all; // get count
+        EDIS;
+    #endif
+
     // 对每一个CTRL都需要做一次的代码
     if (use_first_set_three_phase == -1){
         for (axisCnt = 0; axisCnt < NUMBER_OF_AXES; axisCnt++){
@@ -595,26 +565,26 @@ __interrupt void EPWM1ISR(void){
             }
             PanGuMainISR();
         }
-        axisCnt = 1; // 这里将axisCnt有什么用啊？因为axisCnt等于2你就会飞了，内存乱写
+        axisCnt = 1; // 这里将axisCnt=1有什么用啊？因为axisCnt等于2你就会飞了，内存乱写
     }else if (use_first_set_three_phase == 1){
         write_RPM_to_cpu02_dsp_cores_2();
         axisCnt = 0;
         get_Axis_CTRL_pointers //(axisCnt, Axis, CTRL);
-
-
-        // 这段放需要测时间的代码前面
-        
-
         PanGuMainISR();
-
-        // 这段放需要测时间的代码后面，观察CpuTimer_Delta的取值，代表经过了多少个 1/200e6 秒。
-        
-
     }else if (use_first_set_three_phase == 2){
         axisCnt = 1;
         get_Axis_CTRL_pointers //(axisCnt, Axis, CTRL);
         PanGuMainISR();
     }
+
+    // 这段放需要测时间的代码后面，观察CpuTimer_Delta的取值，代表经过了多少个 1/200e6 秒。
+    #if PC_SIMULATION == FALSE
+        CpuTimer_After = CpuTimer1.RegsAddr->TIM.all; // get count
+        CpuTimer_Delta = (REAL)CpuTimer_Before - (REAL)CpuTimer_After;
+        // EALLOW;
+        // CpuTimer1.RegsAddr->TCR.bit.TSS = 1; // stop (not needed because of the line TRB=1)
+        // EDIS;
+    #endif
 
     #if USE_ECAP_CEVT2_INTERRUPT == 1
         /* Step 5. [eCAP] Disable interrupts */
@@ -628,9 +598,8 @@ __interrupt void EPWM1ISR(void){
     /* Step 7. [ePWM] Exit EPWM1 ISR */
     EPwm1Regs.ETCLR.bit.INT = 1;
     PieCtrlRegs.PIEACK.all |= PIEACK_GROUP3;
+
 }
-
-
 
 
 Uint32 position_count_SCI_shank_fromCPU2;
@@ -640,7 +609,6 @@ Uint32 position_count_CAN_ID0x01_fromCPU2;
 Uint32 position_count_CAN_ID0x03_fromCPU2;
 Uint32 position_count_CAN_fromCPU2;
 Uint32 CPU2_commu_error_counter = 0;
-
 int USE_3_CURRENT_SENSORS = TRUE;
 
 REAL legBouncingSpeed = 50;
@@ -803,9 +771,24 @@ void axis_basic_setup(int axisCnt){
     //
     //    Axis->FLAG_ENABLE_PWM_OUTPUT = FALSE;
 
-    Axis->channels_preset = 5; // 9; // 101;
+    Axis->channels_preset = 14; // 9; // 101;
+    // 2  /* iD current and iQ current info */
+    // 9  /* With SPEED ESO */
+    // 10 /* WCtuner Debug */
+    // 11 /* 20240414 Debugging */
+    // 12 /* 20240418 Pos Loop */
+    // 13 /* 20250528 Teleopration */
+    // 14 /* Kalman Filter For Sensorless Control
+
+    
     #if WHO_IS_USER == USER_BEZIER
-        Axis->channels_preset = 5; // 9; // 101;
+        Axis->channels_preset = 9; // 8; // 101;
+    #endif
+    #if WHO_IS_USER == USER_YZZ
+        Axis->channels_preset = 11;
+    #endif
+    #if BOOL_LOAD_SWEEPING_ON //6作为Load Sweeping使用的channel preset
+        Axis->channels_preset = 6; 
     #endif
 
     Axis->pCTRL->enc->sum_qepPosCnt = 0;
@@ -843,6 +826,24 @@ void init_experiment_AD_gain_and_offset()
     Axis->adc_offset[5] = OFFSET_LEM_B8;
     Axis->adc_offset[6] = OFFSET_LEM_B9;
 
+    /* ADC EXTENDED OFFSET */
+    Axis->adc_offset_ex[0] = ADC_OFFSET_0;
+    Axis->adc_offset_ex[1] = ADC_OFFSET_1;
+    Axis->adc_offset_ex[2] = ADC_OFFSET_2;
+    Axis->adc_offset_ex[3] = ADC_OFFSET_3;
+    Axis->adc_offset_ex[4] = ADC_OFFSET_4;
+    Axis->adc_offset_ex[5] = ADC_OFFSET_5;
+    Axis->adc_offset_ex[6] = ADC_OFFSET_6;
+    Axis->adc_offset_ex[7] = ADC_OFFSET_7;
+    /* ADC EXTENDED SCALE */
+    Axis->adc_scale_ex[0] = ADC_SCALE_0;
+    Axis->adc_scale_ex[1] = ADC_SCALE_1;
+    Axis->adc_scale_ex[2] = ADC_SCALE_2;
+    Axis->adc_scale_ex[3] = ADC_SCALE_3;
+    Axis->adc_scale_ex[4] = ADC_SCALE_4;
+    Axis->adc_scale_ex[5] = ADC_SCALE_5;
+    Axis->adc_scale_ex[6] = ADC_SCALE_6;
+    Axis->adc_scale_ex[7] = ADC_SCALE_7;
     /* two motor OFFSET */
     #if NUMBER_OF_AXES == 2
         #if ENCODER_TYPE == INCREMENTAL_ENCODER_QEP                      /* eQEP OFFSET */
@@ -859,6 +860,13 @@ void init_experiment_AD_gain_and_offset()
             if(axisCnt==1){
                 Axis->pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = MOTOR2_OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
             }
+        #elif ENCODER_TYPE == ABSOLUTE_EBCODER_SMK60S
+            if(axisCnt==0){
+                Axis->pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = MOTOR1_OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
+            }
+            if(axisCnt==1){
+                Axis->pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = MOTOR2_OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
+            }
         #elif (ENCODER_TYPE == ABSOLUTE_ENCODER_SCI_SHANK) || (ENCODER_TYPE == ABSOLUTE_ENCODER_SCI_HIP)
             if(axisCnt==0){
                 Axis_1.pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = SHANK__OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
@@ -866,7 +874,15 @@ void init_experiment_AD_gain_and_offset()
             if(axisCnt==1){
                 Axis_2.pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = HIP__OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
             }
+        #elif (ENCODER_TYPE == ABSOLUTE_ENCODER_SCI_A) || (ENCODER_TYPE == ABSOLUTE_ENCODER_SCI_B)
+            if(axisCnt==0){
+                Axis_1.pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = ABS_ENC_SCI_A__OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
+            }
+            if(axisCnt==1){
+                Axis_2.pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = ABS_ENC_SCI_B__OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
+            }
         #endif
+        
     #else
         #if ENCODER_TYPE == INCREMENTAL_ENCODER_QEP                  /* eQEP OFFSET */
             Axis->pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
@@ -1049,18 +1065,9 @@ void voltage_commands_to_pwm()
         (*CTRL).svgen1.CMPA[0] = (*CTRL).svgen1.Ta * SYSTEM_TBPRD;
         (*CTRL).svgen1.CMPA[1] = (*CTRL).svgen1.Tb * SYSTEM_TBPRD;
         (*CTRL).svgen1.CMPA[2] = (*CTRL).svgen1.Tc * SYSTEM_TBPRD;
-        //#if USE_DEATIME_PRECOMP
-        if(wubo_debug_USE_DEATIME_PRECOMP){
-            // DeadtimeCompensation(Axis->iuvw[0], Axis->iuvw[1], Axis->iuvw[2], (*CTRL).svgen1.CMPA, (*CTRL).svgen1.CMPA_DBC);
-            EPwm1Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen1.CMPA_DBC[0];
-            EPwm2Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen1.CMPA_DBC[1];
-            EPwm3Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen1.CMPA_DBC[2];
-        }
-        else{
-            EPwm1Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen1.CMPA[0];
-            EPwm2Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen1.CMPA[1];
-            EPwm3Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen1.CMPA[2];
-        }
+        EPwm1Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen1.CMPA[0];
+        EPwm2Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen1.CMPA[1];
+        EPwm3Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen1.CMPA[2];
     }
 
     if (axisCnt == 1){
@@ -1076,16 +1083,9 @@ void voltage_commands_to_pwm()
         (*CTRL).svgen2.CMPA[0] = (*CTRL).svgen2.Ta * SYSTEM_TBPRD;
         (*CTRL).svgen2.CMPA[1] = (*CTRL).svgen2.Tb * SYSTEM_TBPRD;
         (*CTRL).svgen2.CMPA[2] = (*CTRL).svgen2.Tc * SYSTEM_TBPRD;
-        #if USE_DEATIME_PRECOMP
-            DeadtimeCompensation(Axis->iuvw[3], Axis->iuvw[4], Axis->iuvw[5], (*CTRL).svgen2.CMPA, (*CTRL).svgen2.CMPA_DBC); //There is no definition for this function yet.
-            EPwm4Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen2.CMPA_DBC[0];
-            EPwm5Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen2.CMPA_DBC[1];
-            EPwm6Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen2.CMPA_DBC[2];
-        #else
-            EPwm4Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen2.CMPA[0];
-            EPwm5Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen2.CMPA[1];
-            EPwm6Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen2.CMPA[2];
-        #endif
+        EPwm4Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen2.CMPA[0];
+        EPwm5Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen2.CMPA[1];
+        EPwm6Regs.CMPA.bit.CMPA = (Uint16)(*CTRL).svgen2.CMPA[2];
     }
 
     //    svgen2.Ualpha = svgen1.Ualpha*0.5        + svgen1.Ubeta*0.8660254; // rotate 60 deg
@@ -1205,7 +1205,8 @@ void cla_test_codes(){
 
 
 
-extern REAL wubo_debug_motor_enc_dirc[2];
+// extern REAL wubo_debug_motor_enc_dirc[2];
+//int wubo_debug_tools[10];
 
 #if ENCODER_TYPE != INCREMENTAL_ENCODER_QEP
 
@@ -1217,19 +1218,28 @@ void measurement_position_count_axisCnt0(){
     #endif
 
     #if NUMBER_OF_AXES == 2
-        position_count_SCI_fromCPU2 = position_count_SCI_shank_fromCPU2;
+        // position_count_SCI_fromCPU2 = position_count_SCI_shank_fromCPU2;
+        position_count_SCI_fromCPU2 = Axis->SCI_Position_Count_fromCPU2;
     #endif
         // 正电流导致编码器读数增大：
-        CTRL->enc->encoder_abs_cnt = wubo_debug_motor_enc_dirc[0] * (int32)position_count_SCI_fromCPU2 - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis;
-}
+        CTRL->enc->encoder_abs_cnt = positive_current_QPOSCNT_counting_down * ( (int32)position_count_SCI_fromCPU2 - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis );
+    }
 
 
 void measurement_position_count_axisCnt1(){
     #if NUMBER_OF_AXES == 2
-        position_count_SCI_fromCPU2 = position_count_SCI_hip_fromCPU2;
+        // position_count_SCI_fromCPU2 = position_count_SCI_hip_fromCPU2;
+        position_count_SCI_fromCPU2 = Axis->SCI_Position_Count_fromCPU2;
     #endif
         // 正电流导致编码器读数减小
-        CTRL->enc->encoder_abs_cnt = wubo_debug_motor_enc_dirc[1] * ( (int32)position_count_SCI_fromCPU2 - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis );
+        // CTRL->enc->encoder_abs_cnt = wubo_debug_motor_enc_dirc[1] * ( (int32)position_count_SCI_fromCPU2 - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis );
+
+        // For Coupling(对托)
+        // CTRL->enc->encoder_abs_cnt =  (-1) * ( (int32)position_count_SCI_fromCPU2 - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis );
+        
+        // For Teleoperation
+        CTRL->enc->encoder_abs_cnt =  ( (int32)position_count_SCI_fromCPU2 - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis );
+
         // dq变化中，d轴理论上指向永磁体的北极，
 }
 
@@ -1239,7 +1249,6 @@ void measurement_enc(){
         // 正转电流导致编码器读数减小：
         //CTRL->enc->encoder_abs_cnt = -((int32)cnt_four_bar_map_motor_encoder_angle + CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis);
         // 正转电流导致编码器读数增大：
-
         CTRL->enc->encoder_abs_cnt = (int32)cnt_four_bar_map_motor_encoder_angle - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis;
     }
 
@@ -1327,30 +1336,26 @@ void measurement_current_axisCnt0(){
     Axis->iuvw[PIN_ADCA_W] = ((REAL)(AdcaResultRegs.ADCRESULT3) - Axis->adc_offset[3]) * Axis->adc_scale[3]; //
 
     // 电流接口
-    if (USE_3_CURRENT_SENSORS)
-    {
+    if (USE_3_CURRENT_SENSORS){
         Axis->iabg[0] = UVW2A_AI(Axis->iuvw[0], Axis->iuvw[1], Axis->iuvw[2]);
         Axis->iabg[1] = UVW2B_AI(Axis->iuvw[0], Axis->iuvw[1], Axis->iuvw[2]);
         Axis->iabg[2] = UVW2G_AI(Axis->iuvw[0], Axis->iuvw[1], Axis->iuvw[2]);
     }
-    else
-    {
+    else{
         REAL phase_V_current = -Axis->iuvw[0] - Axis->iuvw[2];
         Axis->iabg[0] = UV2A_AI(Axis->iuvw[0], phase_V_current);
         Axis->iabg[1] = UV2B_AI(Axis->iuvw[0], phase_V_current);
     }
 }
 
-void measurement_current_axisCnt1()
-{
+void measurement_current_axisCnt1(){
     // LEM2
-    Axis->iuvw[3] = ((REAL)(AdcbResultRegs.ADCRESULT7) - Axis->adc_offset[4]) * Axis->adc_scale[4]; //
-    Axis->iuvw[4] = ((REAL)(AdcbResultRegs.ADCRESULT8) - Axis->adc_offset[5]) * Axis->adc_scale[5]; //
-    Axis->iuvw[5] = ((REAL)(AdcbResultRegs.ADCRESULT9) - Axis->adc_offset[6]) * Axis->adc_scale[6]; //
+    Axis->iuvw[PIN_ADCB_U] = ((REAL)(AdcbResultRegs.ADCRESULT7) - Axis->adc_offset[4]) * Axis->adc_scale[4]; //
+    Axis->iuvw[PIN_ADCB_V] = ((REAL)(AdcbResultRegs.ADCRESULT8) - Axis->adc_offset[5]) * Axis->adc_scale[5]; //
+    Axis->iuvw[PIN_ADCB_W] = ((REAL)(AdcbResultRegs.ADCRESULT9) - Axis->adc_offset[6]) * Axis->adc_scale[6]; //
 
     // 电流接口
-    if (USE_3_CURRENT_SENSORS)
-    {
+    if (USE_3_CURRENT_SENSORS){
         // Axis->iabg[0] = UVW2A_AI(Axis->iuvw[3], Axis->iuvw[4], Axis->iuvw[5]);
         // Axis->iabg[1] = UVW2B_AI(Axis->iuvw[3], Axis->iuvw[4], Axis->iuvw[5]);
         // Axis->iabg[2] = UVW2G_AI(Axis->iuvw[3], Axis->iuvw[4], Axis->iuvw[5]);
@@ -1358,10 +1363,9 @@ void measurement_current_axisCnt1()
         Axis->iabg[1] = UVW2B_AI(Axis->iuvw[PIN_ADCB_U], Axis->iuvw[PIN_ADCB_V], Axis->iuvw[PIN_ADCB_W]);
         Axis->iabg[2] = UVW2G_AI(Axis->iuvw[PIN_ADCB_U], Axis->iuvw[PIN_ADCB_V], Axis->iuvw[PIN_ADCB_W]);
     }
-    else
-    {
+    else{
         REAL phase_V_current = -Axis->iuvw[3] - Axis->iuvw[5];
-        Axis->iabg[0] = UV2A_AI(Axis->iuvw[3], phase_V_`current);
+        Axis->iabg[0] = UV2A_AI(Axis->iuvw[3], phase_V_current);
         Axis->iabg[1] = UV2B_AI(Axis->iuvw[3], phase_V_current);
     }
 }
@@ -1380,19 +1384,25 @@ void measurement_sensor_coil(){
 }
 #endif
 
-void read_count_from_cpu02_dsp_cores_2()
-{
+void read_count_from_cpu02_dsp_cores_2(){
 #if NUMBER_OF_DSP_CORES == 2
     /* CPU02 (Remote) to CPU01 (Local)
      * The register to check is IPCSTS.
      * */
     counter_missing_position_measurement += 1;
-    if (IPCRtoLFlagBusy(IPC_FLAG10) == 1) // if flag
-    {
+    if (IPCRtoLFlagBusy(IPC_FLAG10) == 1){ // if flag
         max_counter_missing_position_measurement = counter_missing_position_measurement;
         counter_missing_position_measurement = 0;
         position_count_SCI_shank_fromCPU2 = Read.SCI_shank_position_count;
         position_count_SCI_hip_fromCPU2 = Read.SCI_hip_position_count;
+        Axis->adc_data[0] = Read.adc_raw[0];
+        Axis->adc_data[1] = Read.adc_raw[1];
+        Axis->adc_data[2] = Read.adc_raw[2];
+        Axis->adc_data[3] = Read.adc_raw[3];
+        Axis->adc_data[4] = Read.adc_raw[4];
+        Axis->adc_data[5] = Read.adc_raw[5];
+        Axis->adc_data[6] = Read.adc_raw[6];
+        Axis->adc_data[7] = Read.adc_raw[7];
         //            position_count_CAN_ID0x01_fromCPU2 = Read.CAN_position_count_ID0x01;
         //            position_count_CAN_ID0x03_fromCPU2 = Read.CAN_position_count_ID0x03;
         IPCRtoLFlagAcknowledge(IPC_FLAG10);
@@ -1403,18 +1413,24 @@ void read_count_from_cpu02_dsp_cores_2()
         rad_four_bar_map_motor_encoder_angle = deg_four_bar_map_motor_encoder_angle * 0.017453292519943295;
         cnt_four_bar_map_motor_encoder_angle = deg_four_bar_map_motor_encoder_angle * 23301.68888888889;
     }
-    else
-    {
+    else{
         CPU2_commu_error_counter++;
     }
 
-    if (IPCRtoLFlagBusy(IPC_FLAG11) == 1) // if flag
-    {
+    if (IPCRtoLFlagBusy(IPC_FLAG11) == 1){ // if flag
         max_counter_missing_position_measurement = counter_missing_position_measurement;
         counter_missing_position_measurement = 0;
         position_count_CAN_ID0x01_fromCPU2 = Read.CAN_position_count_ID0x01;
         position_count_CAN_ID0x03_fromCPU2 = Read.CAN_position_count_ID0x03;
         IPCRtoLFlagAcknowledge(IPC_FLAG11);
+    }
+    if (IPCRtoLFlagBusy(IPC_FLAG7) == 0) // if flag
+    {
+        max_counter_missing_position_measurement = counter_missing_position_measurement;
+        counter_missing_position_measurement = 0;
+        position_count_CAN_ID0x01_fromCPU2 = Read.CAN_position_count_ID0x01;
+        position_count_CAN_ID0x03_fromCPU2 = Read.CAN_position_count_ID0x03;
+        IPCRtoLFlagAcknowledge(IPC_FLAG7);
     }
 #endif
 }

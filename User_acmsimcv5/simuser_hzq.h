@@ -1,7 +1,7 @@
-#ifndef SIMUSER_YZZ_H
-#define SIMUSER_YZZ_H
+#ifndef SIMUSER_HZQ_H
+#define SIMUSER_HZQ_H
 
-#if WHO_IS_USER == USER_YZZ
+#if WHO_IS_USER == USER_HZQ
 
 	#define CORRECTION_4_SHARED_FLUX_EST d_sim.init.KE
     #define U_MOTOR_KE                   d_sim.init.KE
@@ -11,7 +11,6 @@
 /* User */
 #include "super_config.h"
 #include "main_switch.h"
-
 
 /* Algorithms */
 
@@ -40,13 +39,13 @@
         /* Holtz 2002 */
         // #define HOLTZ_2002_GAIN_OFFSET 20
 
-    // Marino05 调参 /// default: (17143), (2700.0), (1000), (1), (0)
+    // Marino05 è°ƒå�‚ /// default: (17143), (2700.0), (1000), (1), (0)
     #define GAMMA_INV_xTL 17142.85714285714
     #define LAMBDA_INV_xOmg 10000 // 2700.0 is too large, leading to unstable flux amplitude contorl
     #define DELTA_INV_alpha (0*500) // 1000
     #define xAlpha_LAW_TERM_D 1 // regressor is commanded d-axis rotor current, and error is d-axis flux control error.
     #define xAlpha_LAW_TERM_Q 0 // regressor is commanded q-axis stator current, and error is q-axis flux control error.
-    // 磁链反馈用谁 /// "htz",,ohtani",picorr",lascu",clest",harnefors
+    // ç£�é“¾å��é¦ˆç”¨è°� /// "htz",,ohtani",picorr",lascu",clest",harnefors
     #define IFE FE.picorr
     // #define IFE FE.htz
     #define FLUX_FEEDBACK_ALPHA         IFE.psi_2[0]
@@ -54,15 +53,15 @@
     #define OFFSET_COMPENSATION_ALPHA   IFE.u_offset[0]
     #define OFFSET_COMPENSATION_BETA    IFE.u_offset[1]
 
-    // Ohtani 磁链观测系数配置/// default: 5
-    // Ohtani 建议取值和转子时间常数相等
+    // Ohtani ç£�é“¾è§‚æµ‹ç³»æ•°é…�ç½®/// default: 5
+    // Ohtani å»ºè®®å�–å€¼å’Œè½¬å­�æ—¶é—´å¸¸æ•°ç›¸ç­‰
     #define GAIN_OHTANI (5)
     #define VM_OHTANI_CORRECTION_GAIN_P (5)
     /* B *//// default: P=5, I=2.5
     #define VM_PROPOSED_PI_CORRECTION_GAIN_P 30// 
     #define VM_PROPOSED_PI_CORRECTION_GAIN_I 20//80000//2.5 //2  // (2.5)
     /* No Saturation */
-    #define VM_NOSAT_PI_CORRECTION_GAIN_P 20// 难调
+    #define VM_NOSAT_PI_CORRECTION_GAIN_P 20// éš¾è°ƒ
     #define VM_NOSAT_PI_CORRECTION_GAIN_I 0//50000//10000//1000//80000//2.5 //2  // (2.5)
     /* Saturation_time_Without_Limiting */
     #define STWL_GAIN_KP 
@@ -95,12 +94,12 @@
 /* Macro for External Access Interface */
 #define US(X)   OBSV.rk4.us[X]
 #define IS(X)   OBSV.rk4.is[X]
-#define US_C(X) OBSV.rk4.us_curr[X] // 当前步电压是伪概念，测量的时候，没有电压传感器，所以也测量不到当前电压；就算有电压传感器，由于PWM比较寄存器没有更新，输出电压也是没有变化的。
+#define US_C(X) OBSV.rk4.us_curr[X] // å½“å‰�æ­¥ç”µåŽ‹æ˜¯ä¼ªæ¦‚å¿µï¼Œæµ‹é‡�çš„æ—¶å€™ï¼Œæ²¡æœ‰ç”µåŽ‹ä¼ æ„Ÿå™¨ï¼Œæ‰€ä»¥ä¹Ÿæµ‹é‡�ä¸�åˆ°å½“å‰�ç”µåŽ‹ï¼›å°±ç®—æœ‰ç”µåŽ‹ä¼ æ„Ÿå™¨ï¼Œç”±äºŽPWMæ¯”è¾ƒå¯„å­˜å™¨æ²¡æœ‰æ›´æ–°ï¼Œè¾“å‡ºç”µåŽ‹ä¹Ÿæ˜¯æ²¡æœ‰å�˜åŒ–çš„ã€‚
 #define IS_C(X) OBSV.rk4.is_curr[X]
 #define US_P(X) OBSV.rk4.us_prev[X]
 #define IS_P(X) OBSV.rk4.is_prev[X]
 
-    #if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
+    #if (WHO_IS_USER == USER_HZQ) || (WHO_IS_USER == USER_CJH)
     // void init_rk4();
 
     #define AFE_11_OHTANI_1992 0
@@ -126,7 +125,8 @@
     #define AFE_42_BandP 0
     #define AFE_43_SuperTwistingA 0
     #define AFE_44_ORTEGA_2011 0
-    #define AFE_45_CMwithDynamicCurrent 1
+    #define AFE_16_HE_EKF_2025 1
+    #define AFE_45_CMwithDynamicCurrent 0
     #define ALG_PLL_norm 1//DSP-based control of sensorless IPMSM drives for wide-speedrange operation
     #define ALG_AKT_SPEED_EST_AND_RS_ID 0
     #define ALG_Awaya_InertiaId 0
@@ -342,7 +342,7 @@
         } STA;
         #endif
 
-        #if AFE_44_ORTEGA_2011
+        // #if AFE_44_ORTEGA_2011
         struct Ortega2011{
             REAL x[2];
             REAL psi_1[2];
@@ -353,7 +353,47 @@
             REAL theta_d;
             REAL theta_e;
         } Ortega;
-        #endif
+        // #endif
+
+        // #if AFE_16_HE_EKF_2025
+        struct HE_EKF{
+            /* EKF â€œglobalâ€� parameters that we do not strictly need as states */
+            /* Define EKF parameters */
+            // Covariance            
+            // for intitalizeion
+            REAL B_cova; // Covariance matrix of curent sensor bias noise, noises being 0.01 A in alpha beta direction
+            REAL Q_cova; // Covariance of psudo measurement, noise in alpha beta direction
+            REAL initial_angle; // initial angle for flux, in radian
+            REAL initial_Covariance; // initial flux norm, in Wb
+            REAL Resistance;
+            REAL Inductance;
+            REAL Flux_norm;
+            REAL ONE_OVER_LPF_Hz; // low pass filter for 
+            
+            // State related
+            REAL IS_measured[2]; // measured current, with sensor offset
+            REAL R_cova[2][2]; // Covariance matrix of curent sensor bias noise, noises being 0.01 A in alpha beta direction
+            REAL B_p;
+            REAL B_prime[2][2]; // Covariance matrix of flux norm 0.14 Wb 0.002 error in alpha beta direction
+            REAL flux[2];  // Initial flux state at 0 degree in alpha beta direction
+            REAL sigmapri[2][2];  // Initial flux covariance at 0 degree, 0.01 Wb in alpha beta direction
+            REAL sigmapost[2][2];  // Initial flux covariance at 0 degree, 0.01 Wb in alpha beta direction
+            REAL Ibias[2];  // Initial flux covariance at 0 degree, 0 A in alpha beta direction
+            REAL last_current[2];//= {0, 0}; 
+            REAL f_d[2];//= {0, 0}; // refer to paper
+            REAL stator_flux[2];//= {0, 0};
+            REAL stator_flux_d[2];// ;
+            REAL h; // sudo measurement PM flux
+            REAL theta_d;
+            REAL theta_e;
+            REAL current_offset[2];
+            REAL current_compensated[2];
+            REAL current_compensated_dq[2];
+            REAL current_bf_compensated_dq[2];
+            REAL cosT;
+            REAL sinT;
+        } HE_EKF;
+        // #endif
 
         #if AFE_45_CMwithDynamicCurrent
         struct CMwithDynamicCurrent{
@@ -471,7 +511,7 @@
                 REAL first_time_enter_top[2];
                 REAL first_time_enter_butt[2];
 
-                // 这个没用！
+                // è¿™ä¸ªæ²¡ç”¨ï¼�
                 // REAL top2top_sum[2];
                 REAL top2top_count[2];
                 // REAL psi_2_offset[2];
@@ -578,6 +618,7 @@
         #endif
         #if ALG_PLL_norm
             void Main_PLL_norm(REAL emf[2]);
+            void Main_PLL_norm_Psi(REAL psi[2]);
         #endif
     void init_afe();
     void init_FE();
@@ -597,7 +638,7 @@
     #ifndef ADD_PMSM_OBSERVER_H
     #define ADD_PMSM_OBSERVER_H
 
-    #if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
+    #if (WHO_IS_USER == USER_HZQ) || (WHO_IS_USER == USER_CJH)
         /* Select Algorithm 2*/
             #define ALG_NSOAF 1
             #define ALG_Park_Sul 2
@@ -619,7 +660,7 @@
                 #define PMSM_ELECTRICAL_SPEED_FEEDBACK    OBSV.nsoaf.xOmg // OBSV.harnefors.omg_elec
                 #define PMSM_ELECTRICAL_POSITION_FEEDBACK AFE_USED.theta_d // OBSV.harnefors.theta_d
             #elif SELECT_ALGORITHM == ALG_ESOAF
-                #define PMSM_ELECTRICAL_SPEED_FEEDBACK    (-OFSR.esoaf.xOmg) // 薄片电机实验正iq产生负转速
+                #define PMSM_ELECTRICAL_SPEED_FEEDBACK    (-OFSR.esoaf.xOmg) // è–„ç‰‡ç”µæœºå®žéªŒæ­£iqäº§ç”Ÿè´Ÿè½¬é€Ÿ
                 #define PMSM_ELECTRICAL_POSITION_FEEDBACK AFE_USED.theta_d
             #else
                 // #define PMSM_ELECTRICAL_SPEED_FEEDBACK    G.omg_elec
@@ -653,7 +694,7 @@
 
         /* Chi.Xu 2009 SMO for EMF of SPMSM (Coupled position estimation via MRAS) */
         #define CHI_XU_USE_CONSTANT_SMO_GAIN TRUE
-            #define CHI_XU_SIGMOID_COEFF  500 /*比200大以后，在实验中无感速度稳态误差不会再减小了，但是会影响慢反转*/
+            #define CHI_XU_SIGMOID_COEFF  500 /*æ¯”200å¤§ä»¥å�Žï¼Œåœ¨å®žéªŒä¸­æ— æ„Ÿé€Ÿåº¦ç¨³æ€�è¯¯å·®ä¸�ä¼šå†�å‡�å°�äº†ï¼Œä½†æ˜¯ä¼šå½±å“�æ…¢å��è½¬*/
         #if OPERATION_MODE == LOW_SPEED_OPERATION
             /* note ell4Zeq is -0.5 */
             #define CHI_XU_USE_CONSTANT_LPF_POLE TRUE
@@ -661,8 +702,8 @@
                 #define CHI_XU_SMO_GAIN_SCALE 10.0  //2
                 #define CHI_XU_LPF_4_ZEQ    5.0   //10.0
             #else
-                #define CHI_XU_SMO_GAIN_SCALE 10 /*取2实验无感稳态不稳，取5慢反转勉强成功，取10慢反转成功*/
-                #define CHI_XU_LPF_4_ZEQ    (5.0) /*这项过大（eg=100）会导致角度稳态误差，忘记了你就试试看，取=2，=5，=10，=100分别仿！真！看看。*/
+                #define CHI_XU_SMO_GAIN_SCALE 10 /*å�–2å®žéªŒæ— æ„Ÿç¨³æ€�ä¸�ç¨³ï¼Œå�–5æ…¢å��è½¬å‹‰å¼ºæˆ�åŠŸï¼Œå�–10æ…¢å��è½¬æˆ�åŠŸ*/
+                #define CHI_XU_LPF_4_ZEQ    (5.0) /*è¿™é¡¹è¿‡å¤§ï¼ˆeg=100ï¼‰ä¼šå¯¼è‡´è§’åº¦ç¨³æ€�è¯¯å·®ï¼Œå¿˜è®°äº†ä½ å°±è¯•è¯•çœ‹ï¼Œå�–=2ï¼Œ=5ï¼Œ=10ï¼Œ=100åˆ†åˆ«ä»¿ï¼�çœŸï¼�çœ‹çœ‹ã€‚*/
             #endif
 
             #define CHI_XU_SPEED_PLL_KP (500*2.0) // [rad/s]
@@ -672,8 +713,8 @@
             #define CHI_XU_SMO_GAIN_SCALE  1.5
             #define CHI_XU_LPF_4_ZEQ       10.0
             #define CHI_XU_USE_CONSTANT_LPF_POLE FALSE
-            #define CHI_XU_SPEED_PLL_KP (2*500) // [rad/s] 3000 = 阶跃转速不震荡，8000=阶跃转速很震荡
-            #define CHI_XU_SPEED_PLL_KI (10e4) // 从350000减少为150000，可以减少稳态估计转速的波动
+            #define CHI_XU_SPEED_PLL_KP (2*500) // [rad/s] 3000 = é˜¶è·ƒè½¬é€Ÿä¸�éœ‡è�¡ï¼Œ8000=é˜¶è·ƒè½¬é€Ÿå¾ˆéœ‡è�¡
+            #define CHI_XU_SPEED_PLL_KI (10e4) // ä»Ž350000å‡�å°‘ä¸º150000ï¼Œå�¯ä»¥å‡�å°‘ç¨³æ€�ä¼°è®¡è½¬é€Ÿçš„æ³¢åŠ¨
         #endif
 
         /* Qiao.Xia 2013 SMO for EMF of SPMSM */
@@ -779,7 +820,7 @@
             REAL omega_lpf_4_xZeq_const_part;
             REAL PLL_KP;
             REAL PLL_KI;
-            REAL smo_gain_scale; // 几倍反电势
+            REAL smo_gain_scale; // å‡ å€�å��ç”µåŠ¿
         } chixu;
         // #define OBSV.chixu OBSV.OBSV.chixu
     #endif
@@ -1050,10 +1091,15 @@
         REAL ki;
         REAL emf_recon[2];
         REAL k_p_theta;
+        
+        REAL psi_ampl;
+        REAL psi_norm[2];
+        REAL psi_recon[2];
     };
     extern struct PhaseLockLoop_Norm PLLN;
+    extern struct PhaseLockLoop_Norm PLLN_EKF;
     #endif
-    #if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
+    #if (WHO_IS_USER == USER_HZQ) || (WHO_IS_USER == USER_CJH)
 
         void init_QiaoXia2013();
         void init_ChiXu2009();
@@ -1064,6 +1110,7 @@
         void init_harnefors();
         void init_Bernard2017();
         void init_PLL_norm();
+        void init_PLL_norm_EKF();
         // controller declaration
         void controller_IFOC();
 
@@ -1075,7 +1122,7 @@
         /* Macros for using SVF in Harnefors 2006 */
         // void init_harnefors();
         // void harnefors_scvm();
-        #define SVF_POLE_0_VALUE (2000*2*M_PI) /* 定子电阻在高速不准确，就把SVF极点加大！加到3000反而比20000要差。*/
+        #define SVF_POLE_0_VALUE (2000*2*M_PI) /* å®šå­�ç”µé˜»åœ¨é«˜é€Ÿä¸�å‡†ç¡®ï¼Œå°±æŠŠSVFæž�ç‚¹åŠ å¤§ï¼�åŠ åˆ°3000å��è€Œæ¯”20000è¦�å·®ã€‚*/
         #define SVF_POLE_0 OBSV.harnefors.svf_p0 
         #define SVF_C(X)   OBSV.harnefors.xSVF_curr[X]
         #define SVF_P(X)   OBSV.harnefors.xSVF_prev[X]
@@ -1096,7 +1143,7 @@ void InverterNonlinearity_ExperimentalSigmoid(REAL ual, REAL ube, REAL ial, REAL
 REAL u_comp_per_phase(REAL Vsat, REAL thetaA, REAL theta_trapezoidal, REAL oneOver_theta_trapezoidal);
 REAL lpf1(REAL x, REAL y_tminus1);
 REAL shift2pi(REAL thetaA);
-void yzz_inverter_Compensation_Online_PAA();
+void HZQ_inverter_Compensation_Online_PAA();
 void get_distorted_voltage_via_LUT_indexed(REAL ial, REAL ibe, REAL *ualbe_dist);
 void get_distorted_voltage_via_LUT(REAL ual, REAL ube, REAL ial, REAL ibe, REAL *ualbe_dist, REAL *lut_voltage, REAL *lut_current, int length_of_lut);
 void get_distorted_voltage_via_CurveFitting(REAL ual, REAL ube, REAL ial, REAL ibe, REAL *ualbe_dist);

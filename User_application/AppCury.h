@@ -4,16 +4,16 @@
 
 #define HIP_TYPE 0
 #define SHANK_TYPE 1
+// 吴波debug Cury时注释掉的
+// extern REAL HIP_MIN;
+// extern REAL HIP_MAX; // 娑撹桨绮堟稊鍫ｇ箹娑擃亝妲哥拹鐔烘畱閿涚喕锟藉奔绗朚AX濮ｆ摤IN鐏忓骏绱�
+// extern REAL CAN01_MIN; //43000//96000//89000       //51943 25000&40000 12000 34000
+// extern REAL CAN01_MAX; //33200//10300//101000      //61584
 
-extern REAL HIP_MIN;
-extern REAL HIP_MAX; // 娑撹桨绮堟稊鍫ｇ箹娑擃亝妲哥拹鐔烘畱閿涚喕锟藉奔绗朚AX濮ｆ摤IN鐏忓骏绱�
-extern REAL CAN01_MIN; //43000//96000//89000       //51943 25000&40000 12000 34000
-extern REAL CAN01_MAX; //33200//10300//101000      //61584
-
-extern REAL SHANK_MIN;
-extern REAL SHANK_MAX;
-extern REAL CAN03_MIN; //29180//25000
-extern REAL CAN03_MAX; //12500//40000
+// extern REAL SHANK_MIN;
+// extern REAL SHANK_MAX;
+// extern REAL CAN03_MIN; //29180//25000
+// extern REAL CAN03_MAX; //12500//40000
 
 extern REAL SHANK_POS_CONTROL_IQ;
 extern REAL HIP_POS_CONTROL_POS;
@@ -59,20 +59,21 @@ REAL hip_shank_angle_to_can(REAL angle, int type);
 #define INIT_THETA2 0.0
 extern REAL IECON_HEIGHT;
 
-typedef struct
-{
-    REAL L1;
-    REAL L2;
-    REAL theta1, theta2;  // unit [rad]   theta1: hip ; theta2: knee
-    REAL dot_theta1, dot_theta2;
-    REAL T;               // unit [s]
-    REAL height_limit[2]; // unit [m]
-    REAL C[BEZIER_ORDER][2];
-    int order;
-    REAL bezier_trace[BEZIER_TRACE_SIZE + 1][2];
-} CURYCONTROLLER;
+// 吴波debug Cury时注释掉的
+// typedef struct
+// {
+//     REAL L1;
+//     REAL L2;
+//     REAL theta1, theta2;  // unit [rad]   theta1: hip ; theta2: knee
+//     REAL dot_theta1, dot_theta2;
+//     REAL T;               // unit [s]
+//     REAL height_limit[2]; // unit [m]
+//     REAL C[BEZIER_ORDER][2];
+//     int order;
+//     REAL bezier_trace[BEZIER_TRACE_SIZE + 1][2];
+// } CURYCONTROLLER;
 
-extern CURYCONTROLLER curycontroller;
+// extern CURYCONTROLLER curycontroller;
 
 void calc_theta_from_height(REAL height);
 void reset_position();

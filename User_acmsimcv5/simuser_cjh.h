@@ -45,8 +45,8 @@ void _main_inverter_voltage_command(int bool_use_iab_cmd);
 
 #ifndef IM_CONTROLLER_H
 #define IM_CONTROLLER_H
-#if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
-#if MACHINE_TYPE == 1 || MACHINE_TYPE == 11
+#if WHO_IS_USER == USER_CJH
+
 
 // 这个结构体声明的是基本的IFOC中所没有的变量的集合体。
 struct Marino2005{
@@ -153,8 +153,8 @@ void init_im_controller();
 #define ADD_IM_OBSERVER_H
 
 void rk4_init();
-#if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH)
-#if MACHINE_TYPE == 1 || MACHINE_TYPE == 11
+#if WHO_IS_USER == USER_CJH
+
 
 /* One Big Struct for all PMSM observers */
 // struct ObserverForExperiment{
@@ -279,7 +279,7 @@ void observer_PMSMife();
 
 //     REAL xTem;
 // };
-// extern struct Chen21_ESO_AF OBSV.esoaf;
+// extern struct Chen21_ESO_AF OFSR.esoaf;
 void Main_esoaf_chen2021();
 
 /********************************************
@@ -437,22 +437,9 @@ struct eQEP_Variables{
 extern struct eQEP_Variables qep;
 #endif
 
-#endif
 
 
 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-#endif

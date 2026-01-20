@@ -1,6 +1,6 @@
 // https://stackoverflow.com/questions/1591361/understanding-typedefs-for-function-pointers-in-c
 #include "ACMSim.h"
-#if ENABLE_COMMISSIONING && WHO_IS_USER == USER_WB
+#if ENABLE_COMMISSIONING
 /* The most accurate initial position detection method is actually proposed in my 2017 TDDA paper that make use of the fact that large d-axis current do not any create torque. */
 
 /* Initial Position Detection needs position update rate is at 1/CL_TS. */
@@ -152,9 +152,7 @@ void commissioning(){
     (*CTRL).i->iDQ[0] = AB2M((*CTRL).i->iAB[0], (*CTRL).i->iAB[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
     (*CTRL).i->iDQ[1] = AB2T((*CTRL).i->iAB[0], (*CTRL).i->iAB[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
     // 参数自整定
-    #if WHO_IS_USER == USER_WB
-        StepByStepCommissioning_NEW_WB();
-    #endif
+    StepByStepCommissioning_NEW_WB();
     _user_inverter_voltage_command(0);
 }
 
@@ -212,7 +210,7 @@ void init_COMM(){
     #if WHO_IS_USER == USER_WB
         COMM.bool_comm_status = d_sim.user.COMM_bool_comm_status;
     #else
-        COMM.bool_comm_status = 1;
+        COMM.bool_comm_status = 4;
     #endif
 
     
@@ -667,7 +665,7 @@ void COMM_inductanceId(REAL id_fb, REAL iq_fb){
 }
 #define COMM_FAST_SWITCH_MOD 5 // > 10 does not work
 #define COMM_FAST_SWITCH_VOLTAGE_CHANGE (0.5*COMM.last_voltage_command)
-void COMM_inductanceId_ver2(REAL id_fb, REAL iq_fb){
+void COMM_inductanceId_ver2(REAL id_fb, REAL iq_fb){    
 
     REAL id_avg = 0.0;
     REAL Delta_current = 0.0;
