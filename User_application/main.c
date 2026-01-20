@@ -166,17 +166,17 @@ void main_loop(){
                 (*debug).set_id_command = 0;
             }
         #endif
-//         #if WHO_IS_USER == USER_QIAN
-            // Sensor Coil
-//            I2CA_ReadData_Channel(0);
-//            DELAY_US(30);
-//            I2CA_ReadData_Channel(1);
-//            DELAY_US(30);
-//            I2CA_ReadData_Channel(2);
-//            DELAY_US(300);
-//            I2CA_ReadData_Channel(3);
-//            DELAY_US(300);
-//         #endif
+        #if WHO_IS_USER == USER_QIAN
+           // Sensor Coil  
+           I2CA_ReadData_Channel(0);
+           DELAY_US(30);
+           I2CA_ReadData_Channel(1);
+           DELAY_US(30);
+           I2CA_ReadData_Channel(2);
+           DELAY_US(300);
+           I2CA_ReadData_Channel(3);
+           DELAY_US(300);
+        #endif
         //        mainWhileLoopCounter1++;
         //        mainWhileLoopCounter2=2992;
         //        if (Motor_mode_START==1){
@@ -565,7 +565,7 @@ __interrupt void EPWM1ISR(void){
             }
             PanGuMainISR();
         }
-        axisCnt = 1; // 这里将axisCnt有什么用啊？因为axisCnt等于2你就会飞了，内存乱写
+        axisCnt = 1; // 这里将axisCnt=1有什么用啊？因为axisCnt等于2你就会飞了，内存乱写
     }else if (use_first_set_three_phase == 1){
         write_RPM_to_cpu02_dsp_cores_2();
         axisCnt = 0;

@@ -10,8 +10,8 @@
 #endif
 /* 定义顶级结构体（指针的集合） */
 ST_D_SIM d_sim;
+int use_first_set_three_phase = 2;  // 1 ➡ axisCnt = 0；2 ➡ axisCnt = 1 会影响 axisCnt 的值！
 int axisCnt = 0;
-int use_first_set_three_phase = 1;
 struct ControllerForExperiment CTRL_1;
 struct ControllerForExperiment *CTRL;
 struct DebugExperiment debug_1;
