@@ -1,7 +1,5 @@
 #include <All_Definition.h>
-
 // Note: I2C Macros used in this example can be found in the F2837xD_I2C_defines.h file
-
 // Prototype statements for functions found within this file.
 void   I2CA_Init(void);
 Uint32 I2CA_ReadData_Channel(Uint16 channel);
@@ -33,39 +31,40 @@ __interrupt void i2c_int1a_isr(void);
 void pass(void);
 void fail(void);
 
-#define I2C_SLAVE_ADDR        0x2B // I2C Address selection pin: when ADDR=L, I2C address = 0X2A,
+#define I2C_SLAVE_ADDR       0x2B  // I2C Address selection pin: when ADDR=L, I2C address = 0X2A,
                                                               // when ADDR=H, I2C address = 0x2B.
 #define I2C_NUMBYTES         2     // 16 bits
 
 // After transmitting the address of LDC1612(0X2B), it is needed to be transmitting the address of channel registers
 // the channel registers is composed by 2 parts, that is, high address and low address.
-#define I2C_EEPROM_HIGH_ADDR_CHANNEL0  0x00
-#define I2C_EEPROM_LOW_ADDR_CHANNEL0   0x01
-#define I2C_EEPROM_HIGH_ADDR_CHANNEL1  0x02
-#define I2C_EEPROM_LOW_ADDR_CHANNEL1   0x03
-#define I2C_EEPROM_HIGH_ADDR_CHANNEL2  0x04
-#define I2C_EEPROM_LOW_ADDR_CHANNEL2   0x05
-#define I2C_EEPROM_HIGH_ADDR_CHANNEL3  0x06
-#define I2C_EEPROM_LOW_ADDR_CHANNEL3   0x07
+#define I2C_EEPROM_HIGH_ADDR_CHANNEL0    0x00
+#define I2C_EEPROM_LOW_ADDR_CHANNEL0     0x01
+#define I2C_EEPROM_HIGH_ADDR_CHANNEL1    0x02
+#define I2C_EEPROM_LOW_ADDR_CHANNEL1     0x03
+#define I2C_EEPROM_HIGH_ADDR_CHANNEL2    0x04
+#define I2C_EEPROM_LOW_ADDR_CHANNEL2     0x05
+#define I2C_EEPROM_HIGH_ADDR_CHANNEL3    0x06
+#define I2C_EEPROM_LOW_ADDR_CHANNEL3     0x07
 
 // define the registers which are needed in LDC1612
-#define SET_CONVERSION_TIME_REG_START           0X08
-#define SET_CONVERSION_OFFSET_REG_START         0X0C
-#define SET_LC_STABILIZE_REG_START              0X10
-#define SET_FREQ_REG_START                      0X14
-#define SENSOR_STATUS_REG                       0X18
-#define ERROR_CONFIG_REG                        0X19
-#define SENSOR_CONFIG_REG                       0X1A
-#define MUL_CONFIG_REG                          0X1B
-#define SENSOR_RESET_REG                        0X1C
-#define SET_DRIVER_CURRENT_REG                  0X1E
-#define READ_MANUFACTURER_ID                    0X7E
-#define READ_DEVICE_ID                          0X7F
+#define SET_CONVERSION_TIME_REG_START    0X08
+#define SET_CONVERSION_OFFSET_REG_START  0X0C
+#define SET_LC_STABILIZE_REG_START       0X10
+#define SET_FREQ_REG_START               0X14
+#define SENSOR_STATUS_REG                0X18
+#define ERROR_CONFIG_REG                 0X19
+#define SENSOR_CONFIG_REG                0X1A
+#define MUL_CONFIG_REG                   0X1B
+#define SENSOR_RESET_REG                 0X1C
+#define SET_DRIVER_CURRENT_REG           0X1E
+#define READ_MANUFACTURER_ID             0X7E
+#define READ_DEVICE_ID                   0X7F
 
-
-#define CHANNEL_NUM 2 // we use two channel
+#define CHANNEL_NUM 4 // we use four channel
 #define CHANNEL_0 0
 #define CHANNEL_1 1
+#define CHANNEL_2 2
+#define CHANNEL_3 3
 // Global variables Two bytes will be used for the outgoing address, thus only setup 14 bytes maximum
 Uint16 ERROR;
 
@@ -88,9 +87,11 @@ Uint32 result;
 int choose_channel;
 
 /*定义第几个线圈*/
-int channel_0_number, channel_1_number;
+int channel_0_number, channel_1_number, channel_2_number, channel_3_number;
 #define channel_0_number FALSE
 #define channel_1_number FALSE
+#define channel_2_number FALSE
+#define channel_3_number FALSE
 
 float resistance[CHANNEL_NUM];
 float inductance[CHANNEL_NUM];
@@ -102,9 +103,6 @@ float inductance[CHANNEL_NUM];
 float capacitance[CHANNEL_NUM];
 Uint16 value;
 Uint16 FIN_DIV, FREF_DIV;
-Uint16 config = 0x1601;
-
-
 
 Uint16 DataBuffer;
 
@@ -113,12 +111,10 @@ Uint16 data[2];
 /* Initialize I2C */ 
 void I2CA_Init(void)
 {
-   I2caRegs.I2CSAR.all = I2C_SLAVE_ADDR;      // Slave address - EEPROM control code
-
-   I2caRegs.I2CPSC.all = 8;            // Prescaler - need 7-12 MHz on module clk
-
-   I2caRegs.I2CCLKL = 40;           // NOTE: must be non zero, sets the duration of the I2C clock low
-   I2caRegs.I2CCLKH = 40;           // NOTE: must be non zero, sets the duration of the I2C clock high
+   I2caRegs.I2CSAR.all = I2C_SLAVE_ADDR;  // Slave address - EEPROM control code
+   I2caRegs.I2CPSC.all = 8;               // Prescaler - need 7-12 MHz on module clk
+   I2caRegs.I2CCLKL    = 40;              // NOTE: must be non zero, sets the duration of the I2C clock low
+   I2caRegs.I2CCLKH    = 40;              // NOTE: must be non zero, sets the duration of the I2C clock high
    // Frequency = SYSCLKOUT / (I2CCLKL+I2CCLKH)
    // In this place, the target I2C frequency is 400kHz, the Prescaler is disposed to 12MHz, 12MHz / 400KHz = 30
    // To make the high and low levels 50/50, the I2caRegs.I2CCLKL = 15; I2caRegs.I2CCLKH = 15
@@ -153,30 +149,24 @@ int I2cRead16bitData(Uint16 SlaveRegAddr){
 
     if (I2caRegs.I2CMDR.bit.STP == 1)
     {
-
        return I2C_STP_NOT_READY_ERROR;
     }
 
     // FRAME 1
     I2caRegs.I2CSAR.all = I2C_SLAVE_ADDR;  //  I2cMsgIn1.SlaveAddress;
-
-
      // Check if bus busy
      if (I2caRegs.I2CSTR.bit.BB == 1)
      {
-
          return I2C_BUS_BUSY_ERROR;
      }
 
     // FRAME 2
     I2caRegs.I2CCNT = 0 + 1; // datLen = 0
     I2caRegs.I2CDXR.all = SlaveRegAddr; // Address of Channel 0 MSB Conversion Result of LDC1614
-
     I2caRegs.I2CMDR.all = 0x2620; // TRX=1, no stop
     /* I2C_MSGSTAT_SEND_NOSTOP */
     /* I2C_MSGSTAT_SEND_NOSTOP */
     /* I2C_MSGSTAT_SEND_NOSTOP */
-
 
     // SLAVE ACK
     // Wait Register-access-ready
@@ -189,7 +179,6 @@ int I2cRead16bitData(Uint16 SlaveRegAddr){
     /* I2C_MSGSTAT_RECEIVE_WITHSTOP */
     /* I2C_MSGSTAT_RECEIVE_WITHSTOP */
     /* I2C_MSGSTAT_RECEIVE_WITHSTOP */
-
 
     // Check the status of the receive FIFO
     while(I2caRegs.I2CFFRX.bit.RXFFST == 0);
@@ -207,10 +196,8 @@ int I2cWrite16bitData(Uint16 ConfigRegAddr, Uint16 value){
     data[0] = value >> 8;
     while(I2caRegs.I2CMDR.bit.STP == 1);
 
-
     // FRAME 1
     I2caRegs.I2CSAR.all = I2C_SLAVE_ADDR;  //  I2cMsgIn1.SlaveAddress;
-
 
      // Check if bus busy
      if (I2caRegs.I2CSTR.bit.BB == 1)
@@ -221,7 +208,6 @@ int I2cWrite16bitData(Uint16 ConfigRegAddr, Uint16 value){
      // FRAME 2
      I2caRegs.I2CCNT = 3; // Slave Register Address + Data MSB from Master + Data LSB from Master
      I2caRegs.I2CDXR.all = ConfigRegAddr; // The address of the registers which are needed in LDC1612.
-
 
      I2caRegs.I2CMDR.all = 0x6E20; // TRX=1, with stop
      /* I2C_MSGSTAT_RECEIVE_WITHSTOP */
@@ -239,7 +225,6 @@ int I2cWrite16bitData(Uint16 ConfigRegAddr, Uint16 value){
      // FRAME 3 is SLAVE ADDR
      I2caRegs.I2CSAR.all = I2C_SLAVE_ADDR;  //  I2cMsgIn1.SlaveAddress;
 
-
 //     I2caRegs.I2CCNT = 2; // MSB + LSB of the MSB of the DATA
 
      // Check the status of the receive FIFO
@@ -255,9 +240,7 @@ int I2cWrite16bitData(Uint16 ConfigRegAddr, Uint16 value){
 }
 
 
-
 Uint32 I2CA_ReadData_Channel(Uint16 channel){
-
     if(channel == 0){
         // CHANNEL 0
         // I2cGet16bitData(0x00, DataMSB);
@@ -265,7 +248,7 @@ Uint32 I2CA_ReadData_Channel(Uint16 channel){
         raw_value_rdlu[0] = (Uint32)DataBuffer << 16; //
         I2cRead16bitData(0x01);
         raw_value_rdlu[0] |= (Uint32)DataBuffer;
-//        Parse_result_data(channel, raw_value, result);
+    //    Parse_result_data(channel, raw_value, result);
     }else if(channel == 1){
         // CHANNEL 1
         I2cRead16bitData(0x02);
@@ -288,7 +271,6 @@ Uint32 I2CA_ReadData_Channel(Uint16 channel){
         raw_value_rdlu[3] |= (Uint32)DataBuffer; //
 //       Parse_result_data(channel, raw_value, result);
     }
-
    return 1;
 }
 
@@ -299,35 +281,35 @@ int Single_channel_config(Uint16 channel){
     // The value of Rp, L, C, Q_factor can be set from TI calculator(https://webench.ti.com/wb5/LDC/#/spirals).
     switch (channel_0_number){
         case 0:
-        Set_Rp(CHANNEL_0, 15.76);
-        Set_L(CHANNEL_0, 51.35);
-        Set_C(CHANNEL_0, 1000);
-        Set_Q_factor(CHANNEL_0, 14.32);
+            Set_Rp(CHANNEL_0, 15.76);
+            Set_L(CHANNEL_0, 51.35);
+            Set_C(CHANNEL_0, 1000);
+            Set_Q_factor(CHANNEL_0, 14.32);
         break;
         case 1:
             Set_Rp(CHANNEL_0, 2.21);
             Set_L(CHANNEL_0, 2.84);
             Set_C(CHANNEL_0, 1000);
             Set_Q_factor(CHANNEL_0, 24.07);
-            break;
+        break;
         case 2:
             Set_Rp(CHANNEL_0, 3.49);
             Set_L(CHANNEL_0, 13.26);
             Set_C(CHANNEL_0, 1000);
             Set_Q_factor(CHANNEL_0, 32.88);
-            break;
+        break;
         case 3:
             Set_Rp(CHANNEL_0, 4.21);
             Set_L(CHANNEL_0, 27.54);
             Set_C(CHANNEL_0, 1000);
             Set_Q_factor(CHANNEL_0, 30.64);
-            break;
+        break;
         case 4:
             Set_Rp(CHANNEL_0, 4.6);
             Set_L(CHANNEL_0, 20.95);
             Set_C(CHANNEL_0, 1000);
             Set_Q_factor(CHANNEL_0, 31.34);
-            break;
+        break;
 
 //        default:
 //            Set_Rp(CHANNEL_0, 15.727);
@@ -343,31 +325,31 @@ int Single_channel_config(Uint16 channel){
             Set_L(CHANNEL_0, 51.35);
             Set_C(CHANNEL_0, 1000);
             Set_Q_factor(CHANNEL_0, 14.32);
-            break;
+        break;
         case 1:
-                Set_Rp(CHANNEL_0, 2.21);
-                Set_L(CHANNEL_0, 2.84);
-                Set_C(CHANNEL_0, 1000);
-                Set_Q_factor(CHANNEL_0, 24.07);
-                break;
+            Set_Rp(CHANNEL_0, 2.21);
+            Set_L(CHANNEL_0, 2.84);
+            Set_C(CHANNEL_0, 1000);
+            Set_Q_factor(CHANNEL_0, 24.07);
+        break;
         case 2:
-                Set_Rp(CHANNEL_0, 3.49);
-                Set_L(CHANNEL_0, 13.26);
-                Set_C(CHANNEL_0, 1000);
-                Set_Q_factor(CHANNEL_0, 32.88);
-                break;
+            Set_Rp(CHANNEL_0, 3.49);
+            Set_L(CHANNEL_0, 13.26);
+            Set_C(CHANNEL_0, 1000);
+            Set_Q_factor(CHANNEL_0, 32.88);
+        break;
         case 3:
-                Set_Rp(CHANNEL_0, 4.21);
-                Set_L(CHANNEL_0, 27.54);
-                Set_C(CHANNEL_0, 1000);
-                Set_Q_factor(CHANNEL_0, 30.64);
-                break;
+            Set_Rp(CHANNEL_0, 4.21);
+            Set_L(CHANNEL_0, 27.54);
+            Set_C(CHANNEL_0, 1000);
+            Set_Q_factor(CHANNEL_0, 30.64);
+        break;
         case 4:
-                Set_Rp(CHANNEL_0, 4.6);
-                Set_L(CHANNEL_0, 20.95);
-                Set_C(CHANNEL_0, 1000);
-                Set_Q_factor(CHANNEL_0, 31.34);
-                break;
+            Set_Rp(CHANNEL_0, 4.6);
+            Set_L(CHANNEL_0, 20.95);
+            Set_C(CHANNEL_0, 1000);
+            Set_Q_factor(CHANNEL_0, 31.34);
+        break;
 
 //        default:
 //                Set_Rp(CHANNEL_1, 15.727);
@@ -377,30 +359,43 @@ int Single_channel_config(Uint16 channel){
 //                break;
     }
 
-    if (Set_FIN_FREF_DIV(CHANNEL_0)) {
-            return -1;
-        }
-    Set_FIN_FREF_DIV(CHANNEL_1);
+    // if (Set_FIN_FREF_DIV(CHANNEL_0)) {
+    //         return -1; }
+    // if (Set_FIN_FREF_DIV(CHANNEL_1)) {
+    //         return -1; }
+    // if (Set_FIN_FREF_DIV(CHANNEL_2)) {
+    //         return -1; }
+    // if (Set_FIN_FREF_DIV(CHANNEL_3)) {
+    //         return -1; }
+    // Set_FIN_FREF_DIV(CHANNEL_0);
+    // Set_FIN_FREF_DIV(CHANNEL_1);
+    // Set_FIN_FREF_DIV(CHANNEL_2);
+    // Set_FIN_FREF_DIV(CHANNEL_3);
 
     Set_LC_stabilize_time(CHANNEL_0);
     Set_LC_stabilize_time(CHANNEL_1);
+    Set_LC_stabilize_time(CHANNEL_2);
+    Set_LC_stabilize_time(CHANNEL_3);
 
-        /*Set conversion interval time*/
+    /*Set conversion interval time*/
     Set_conversion_time(CHANNEL_0, 0x0546);
     Set_conversion_time(CHANNEL_1, 0x0546);
-
-        /*Set driver current!*/
+    Set_conversion_time(CHANNEL_2, 0x0546);
+    Set_conversion_time(CHANNEL_3, 0x0546);
+    /*Set driver current!*/
     Set_driver_current(CHANNEL_0, 0xA000);
     Set_driver_current(CHANNEL_1, 0xA000);
+    Set_driver_current(CHANNEL_2, 0xA000);
+    Set_driver_current(CHANNEL_3, 0xA000);
 
-    /*multiple conversion*/
-    Set_mux_config(0x820C);
-        /*single conversion*/
-//    Set_mux_config(0x20C);
-        /*start channel 0*/
-    //Uint16 config = 0x1601; this line is on 98.
-//    Select_channel_to_convert(CHANNEL_0, &config);
-    Set_sensor_config(config);
+    /*single conversion*/
+    Set_mux_config(0x20C);
+    // /*multiple conversion LDC1612*/
+    // Set_mux_config(0x820C);
+    // /* Multiple LDC1614 4 channel config*/
+    // Set_mux_config(0xc20C);
+    /*start channel 0*/
+    Set_sensor_config(0x1601);
     return 0;
 }
 
@@ -497,7 +492,6 @@ void Select_channel_to_convert(Uint16 channel, Uint16* value) {
             break;
     }
 }
-
 
 // not used
 void Read_sensor_infomation() {

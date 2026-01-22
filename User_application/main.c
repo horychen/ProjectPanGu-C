@@ -173,9 +173,9 @@ void main_loop(){
            I2CA_ReadData_Channel(1);
            DELAY_US(30);
            I2CA_ReadData_Channel(2);
-           DELAY_US(300);
+           DELAY_US(30);
            I2CA_ReadData_Channel(3);
-           DELAY_US(300);
+           DELAY_US(30);
         #endif
         //        mainWhileLoopCounter1++;
         //        mainWhileLoopCounter2=2992;
@@ -1048,7 +1048,7 @@ REAL enable_vvvf = FALSE;
 
 REAL wubo_debug_USE_DEATIME_PRECOMP = 0;
 
-/* PWM signal to Inverter Voltage Output SWPWM */
+/* PWM signal to Inverter Voltage Output SVPWM */
 void voltage_commands_to_pwm()
 {
     if (axisCnt == 0){

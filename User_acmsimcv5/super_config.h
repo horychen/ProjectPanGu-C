@@ -3,7 +3,7 @@
 #define SUPER_CONFIG_H
 #include "typedef.h"
 
-#define WHO_IS_USER 1601 
+#define WHO_IS_USER USER_QIAN  // 1601 
 
 typedef struct {
     long npp;

@@ -242,6 +242,24 @@
     #define PIN_ADCB_V 4
     #define PIN_ADCB_W 5
 
+    #define ADC_OFFSET_0 32768
+    #define ADC_OFFSET_1 32768
+    #define ADC_OFFSET_2 32768
+    #define ADC_OFFSET_3 32768
+    #define ADC_OFFSET_4 32768
+    #define ADC_OFFSET_5 32768
+    #define ADC_OFFSET_6 32768
+    #define ADC_OFFSET_7 32768
+
+    #define ADC_SCALE_0 3.125e-4 // 10.24/2^16
+    #define ADC_SCALE_1 3.125e-4
+    #define ADC_SCALE_2 3.125e-4
+    #define ADC_SCALE_3 3.125e-4
+    #define ADC_SCALE_4 3.125e-4
+    #define ADC_SCALE_5 3.125e-4
+    #define ADC_SCALE_6 3.125e-4
+    #define ADC_SCALE_7 3.125e-4
+
     // ADC
     #define OFFSET_VDC_BUS_IPM1 8
     #define OFFSET_LEM_B7 2005 // 2024-09-02
