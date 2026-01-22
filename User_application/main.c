@@ -100,12 +100,15 @@ void main(void){
     /*This part is corresponding to the Seeed's Github, of which address is attached below:
      https://github.com/Seeed-Studio/Seeed_LDC1612/blob/master/Seeed_LDC1612.cpp
      This part is corresponding to sensor.single_channel_config from Seeed-LDC1612 */
+    // LDC161x uses I2C pins
     GPIO_SetupPinMux(0, GPIO_MUX_CPU1, 6);
     GPIO_SetupPinMux(1, GPIO_MUX_CPU1, 6);
-    // GPIO_SetupPinMux(2, GPIO_MUX_CPU1, 6);
-    // GPIO_SetupPinMux(3, GPIO_MUX_CPU1, 6);
+    // LDC1614 uses 4 channels
+    GPIO_SetupPinMux(2, GPIO_MUX_CPU1, 6);
+    GPIO_SetupPinMux(3, GPIO_MUX_CPU1, 6);
     I2CA_Init();
-    Single_channel_config(0); // 0 for CHANNEL_0
+    // Single_channel_config(0); // 0 for CHANNEL_0
+    Multi_channel_config();   // multi-channel config
 
 
     // 5. Handle Interrupts

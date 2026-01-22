@@ -4,6 +4,7 @@
 void I2CA_Init(void);
 Uint32 I2CA_ReadData_Channel(Uint16 channel);
 int Single_channel_config(Uint16 channel);
+int Multi_channel_config();
 
 
 extern uint32_t raw_value_rdlu[4];

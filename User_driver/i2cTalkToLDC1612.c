@@ -276,8 +276,25 @@ Uint32 I2CA_ReadData_Channel(Uint16 channel){
 
 
 // Configuration of single channel
-
 int Single_channel_config(Uint16 channel){
+    if (Set_FIN_FREF_DIV(CHANNEL_0)) {
+        return -1;
+    }
+    Set_LC_stabilize_time(CHANNEL_0);
+    /*Set conversion interval time*/
+    Set_conversion_time(CHANNEL_0, 0x0546);
+    /*Set driver current!*/
+    Set_driver_current(CHANNEL_0, 0xa000);
+    /*single conversion*/
+    Set_mux_config(0x20c);
+    /*start channel 0*/
+    Uint16 config = 0x1601;
+    Select_channel_to_convert(CHANNEL_0, &config);
+    Set_sensor_config(config);
+    return 0;
+}
+
+int Multi_channel_config(){
     // The value of Rp, L, C, Q_factor can be set from TI calculator(https://webench.ti.com/wb5/LDC/#/spirals).
     switch (channel_0_number){
         case 0:
@@ -376,7 +393,6 @@ int Single_channel_config(Uint16 channel){
     Set_LC_stabilize_time(CHANNEL_1);
     Set_LC_stabilize_time(CHANNEL_2);
     Set_LC_stabilize_time(CHANNEL_3);
-
     /*Set conversion interval time*/
     Set_conversion_time(CHANNEL_0, 0x0546);
     Set_conversion_time(CHANNEL_1, 0x0546);
@@ -388,12 +404,10 @@ int Single_channel_config(Uint16 channel){
     Set_driver_current(CHANNEL_2, 0xA000);
     Set_driver_current(CHANNEL_3, 0xA000);
 
-    /*single conversion*/
-    Set_mux_config(0x20C);
     // /*multiple conversion LDC1612*/
     // Set_mux_config(0x820C);
-    // /* Multiple LDC1614 4 channel config*/
-    // Set_mux_config(0xc20C);
+    /* Multiple LDC1614 4 channel config*/
+    Set_mux_config(0xc20C);
     /*start channel 0*/
     Set_sensor_config(0x1601);
     return 0;
