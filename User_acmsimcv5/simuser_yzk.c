@@ -11,6 +11,9 @@
 
 const REAL I_ampa;
 const REAL I_ampb;
+const REAL I_ampc;
+const REAL I_ampd;
+const REAL I_DQ[2];
 const REAL F_freq_1;
 const REAL F_freq_2;
 const REAL virtual_angle;
@@ -459,16 +462,16 @@ void suspension_p4ps5_PD_doubleaxis(REAL X_Pos, REAL Y_Pos){
         
         // CTRL_1.i->cmd_iDQ[0] = - 1.0 * CTRL_1.i->cmd_iDQ[0];
         // CTRL_1.i->cmd_iDQ[1] = - 1.0 * CTRL_1.i->cmd_iDQ[1];
-        CTRL_1.i->cmd_iDQ[0] = 1.0 * CTRL_1.i->cmd_iDQ[0];
-        CTRL_1.i->cmd_iDQ[1] = 1.0 * CTRL_1.i->cmd_iDQ[1];
+        CTRL_1.i->cmd_iDQ[0] = - 1.0 * CTRL_1.i->cmd_iDQ[0];
+        CTRL_1.i->cmd_iDQ[1] = - 1.0 * CTRL_1.i->cmd_iDQ[1];
         CTRL_2.i->cmd_iDQ[0] = 1.0 * CTRL_2.i->cmd_iDQ[0];
         CTRL_2.i->cmd_iDQ[1] = 1.0 * CTRL_2.i->cmd_iDQ[1];
     }
 
-    // CTRL_1.i->cmd_iDQ[0] = I_ampa;
-    CTRL_1.i->cmd_iDQ[1] = I_ampa;
-    // CTRL_2.i->cmd_iDQ[0] = I_ampa;
-    CTRL_2.i->cmd_iDQ[1] = I_ampb;
+    CTRL_1.i->cmd_iDQ[0] = - I_DQ[0];
+    CTRL_1.i->cmd_iDQ[1] = - I_DQ[1];
+    CTRL_2.i->cmd_iDQ[0] = I_DQ[0] * cos( - M_PI * 0.33333333) + I_DQ[1] * sin( - M_PI * 0.33333333);
+    CTRL_2.i->cmd_iDQ[1] = I_DQ[0] * (-sin( - M_PI * 0.33333333)) + I_DQ[1] * cos( - M_PI * 0.33333333);
 
     CTRL_1.o->cmd_iAB[0] = MT2A(CTRL_1.i->cmd_iDQ[0], CTRL_1.i->cmd_iDQ[1], CTRL_1.s->cosT, CTRL_1.s->sinT);
     CTRL_1.o->cmd_iAB[1] = MT2B(CTRL_1.i->cmd_iDQ[0], CTRL_1.i->cmd_iDQ[1], CTRL_1.s->cosT, CTRL_1.s->sinT);
@@ -477,8 +480,8 @@ void suspension_p4ps5_PD_doubleaxis(REAL X_Pos, REAL Y_Pos){
 
     if(axisCnt == 0)
     {   
-        // YZK_CTRL.CMD_I_alpha_1 = I_ampa;
-        // YZK_CTRL.CMD_I_beta_1 = I_ampb;
+        YZK_CTRL.CMD_I_alpha_1 = I_ampc;
+        YZK_CTRL.CMD_I_beta_1 = I_ampd;
 
         // YZK_CTRL.CMD_I_alpha_1 = I_ampa * cos(2 * F_freq_1 * M_PI * CTRL->timebase) * cos(virtual_angle * M_PI);
         // YZK_CTRL.CMD_I_beta_1 = I_ampb * sin(2 * F_freq_2 * M_PI * CTRL->timebase) * sin(virtual_angle * M_PI);
@@ -545,8 +548,8 @@ void suspension_p4ps5_PD_doubleaxis(REAL X_Pos, REAL Y_Pos){
     }
     if (axisCnt == 1)
     {
-        // YZK_CTRL.CMD_I_alpha_2 = I_ampa;
-        // YZK_CTRL.CMD_I_beta_2 = I_ampb;
+        YZK_CTRL.CMD_I_alpha_2 = I_ampc * cos(YZK_CTRL.varTheta - M_PI * 0.33333333);
+        YZK_CTRL.CMD_I_beta_2 = I_ampd * cos(YZK_CTRL.varTheta - M_PI * 0.33333333);
 
         // YZK_CTRL.CMD_I_alpha_2 = I_ampa * cos(2 * F_freq_1 * M_PI * CTRL->timebase) * cos(virtual_angle * M_PI);
         // YZK_CTRL.CMD_I_beta_2 = I_ampb * sin(2 * F_freq_2 * M_PI * CTRL->timebase) * sin(virtual_angle * M_PI);
