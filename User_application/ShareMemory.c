@@ -154,21 +154,21 @@ void write_DAC_buffer(){
         // (*Axis4DAC).dac_watch[75] = CTRL->i->iAB[1] / 10;//YZK_CTRL.CMD_F_Y / 100;
         // (*Axis4DAC).dac_watch[76] = YZK_CTRL.CMD_I_alpha / 10;//YZK_CTRL.CMD_F_X_Kp / 200;
         // (*Axis4DAC).dac_watch[77] = YZK_CTRL.CMD_I_beta / 10;//YZK_CTRL.CMD_F_X_Kd / 200;
-        (*Axis4DAC).dac_watch[74] = YZK_CTRL.disFbk_Y / 15;
-        (*Axis4DAC).dac_watch[75] = YZK_CTRL.CMD_F_Y / 200;
-        (*Axis4DAC).dac_watch[76] = YZK_CTRL.CMD_F_Y_Kp / 200;
-        (*Axis4DAC).dac_watch[77] = YZK_CTRL.CMD_F_Y_Kd / 200;
+        // (*Axis4DAC).dac_watch[74] = YZK_CTRL.disFbk_Y / 15;
+        // (*Axis4DAC).dac_watch[75] = YZK_CTRL.CMD_F_Y / 200;
+        // (*Axis4DAC).dac_watch[76] = YZK_CTRL.CMD_F_Y_Kp / 200;
+        // (*Axis4DAC).dac_watch[77] = YZK_CTRL.CMD_F_Y_Kd / 200;
         // (*Axis4DAC).dac_watch[78] = YZK_CTRL.CMD_I_alpha / 10;
         // (*Axis4DAC).dac_watch[79] = YZK_CTRL.CMD_I_beta / 10;
         /* Two axis test*/
-        (*Axis4DAC).dac_watch[70] = CTRL_1.i->iAB[0] / 10;
-        (*Axis4DAC).dac_watch[71] = CTRL_1.i->iAB[1] / 10;
-        (*Axis4DAC).dac_watch[72] = CTRL_2.i->iAB[0] / 10;
-        (*Axis4DAC).dac_watch[73] = CTRL_2.i->iAB[1] / 10;
-        (*Axis4DAC).dac_watch[74] = (REAL)axisCnt;
-        (*Axis4DAC).dac_watch[75] = CTRL_2.svgen2.Ta;
-        (*Axis4DAC).dac_watch[76] = CTRL_2.i->cmd_iDQ[0];
-        (*Axis4DAC).dac_watch[77] = CTRL_2.i->cmd_iDQ[1];
+        (*Axis4DAC).dac_watch[70] = YZK_CTRL.CMD_I_alpha_2 / 3;
+        (*Axis4DAC).dac_watch[71] = YZK_CTRL.CMD_I_beta_2 / 3;
+        (*Axis4DAC).dac_watch[72] = YZK_CTRL.CMD_I_alpha_1 / 3;
+        (*Axis4DAC).dac_watch[73] = YZK_CTRL.CMD_I_beta_1 / 3;
+        (*Axis4DAC).dac_watch[74] = CTRL_1.i->cmd_iDQ[0] / 3;
+        (*Axis4DAC).dac_watch[75] = CTRL_1.i->cmd_iDQ[1] / 3;
+        (*Axis4DAC).dac_watch[76] = CTRL_1.i->cmd_iDQ[0] / 3;
+        (*Axis4DAC).dac_watch[77] = CTRL_1.i->cmd_iDQ[1] / 3;
         // (*Axis4DAC).dac_watch[84] = Axis->place_sensor[4] / 11;
         // (*Axis4DAC).dac_watch[85] = Axis->place_sensor[5] / 11;
 
@@ -178,7 +178,7 @@ void write_DAC_buffer(){
 
 //        #if WHO_IS_USER == USER_WB
 //            (*Axis4DAC).dac_watch[0] = 0;
-//            (*Axis4DAC).dac_watch[1] = 0;
+//            (*Axis4DAC).dac_watch[1] = vb0;
 //            (*Axis4DAC).dac_watch[2] = 0;
 //            (*Axis4DAC).dac_watch[3] = 0;
 //            (*Axis4DAC).dac_watch[4] = 0;

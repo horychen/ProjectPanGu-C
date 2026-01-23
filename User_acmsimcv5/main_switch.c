@@ -1,7 +1,7 @@
 // This file is used in both simulation and experiment, so editing this file in experiment will result in overwritten.
 
 #include "ACMSim.h"
-int yzkdebug;
+// int yzkdebug;
 #if PC_SIMULATION
     #define DC_BUS_VOLTAGE_INVERSE (1.732 / d_sim.init.Vdc)
 #else
@@ -19,6 +19,7 @@ struct DebugExperiment debug_1;
 struct DebugExperiment *debug = &debug_1;
 struct ObserverForExperiment OBSV;
 REAL one_over_six = 1.0/6.0;
+extern CurrentProfileGenerator my_gen;
 // 定义内存空间（结构体）
 st_motor_parameters     t_motor_1={0};
 st_enc                  t_enc_1={0};
@@ -439,11 +440,22 @@ void init_experiment(){
     //ESO
     init_esoaf();
     
-    
-    
     init_YZK_ALL();
     
-    
+    CurrentProfileGenerator_Init(&my_gen,
+                                  YZK_CTRL.id_iq_amps,   // Id/Iq幅值数组指针   
+                                  3,     // 3个Id/Iq幅值
+                                  YZK_CTRL.ix_amps,        // 3个Ix幅值
+                                  3,        // 3个Ix幅值
+                                  YZK_CTRL.iy_amps,        // 3个Iy幅值
+                                  3,        // 3个Iy幅值
+                                  18,                 // 18个角度段 (每20度)
+                                  2,                  // 每个Id/Iq幅值重复3圈 (可修改此参数增加测量可信度)
+                                  1.0,                // 每个平台停留1秒
+                                  0,                  // 不使用周期数控制 (若>0则覆盖平台时间)
+                                  0.0001,             // 10kHz采样
+                                  20.0,               // 完成后暂停20秒
+                                  0);                 // 不自动重启
     #if WHO_IS_USER == USER_BEZIER
         set_points(&BezierVL);
         set_points(&BezierVL_AdaptVersion);

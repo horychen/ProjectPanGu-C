@@ -15,12 +15,35 @@ const REAL F_freq_1;
 const REAL F_freq_2;
 const REAL virtual_angle;
 REAL pseudo_Encoder;
+REAL BOOL_CurrentProfileGenerator = FALSE;
+CurrentProfileGenerator my_gen;
 struct YZK_2025_TIA_CTRL YZK_CTRL;
 
 extern float test_sus = 0.0;
 extern BOOL BOOL_DIRECT_FIELD_TEST = TRUE;
 REAL ONLY_CURRENT_LOOP_TEST = TRUE;
-
+REAL BOOL_eccentricity = FALSE;
+REAL sensor_1;
+REAL sensor_2;
+REAL sensor_3;
+REAL sensor_4;
+// REAL r_0;
+// REAL r_45;
+REAL S_0;               // 形参
+REAL S_45;              // 形参
+REAL A_r = 20;            // 半长轴
+REAL B_r = 12;            // 半短轴
+REAL r_0;               // 极径 0
+REAL r_45;              // 极径 45
+REAL SQRT_ARCTG_0_num;
+REAL SQRT_ARCTG_45_num;
+REAL SQRT_ARCTG_0_den;
+REAL SQRT_ARCTG_45_den;
+REAL varTHETA_0;
+REAL varTHETA_45;
+REAL V0_V45_N;
+REAL V0_V45_P;
+extern REAL place_sensor[8];
 // K = tan(pi * fc / fs)1
 // norm = 1 + K/Q + K^2
 // b0 = K^2 / norm
@@ -59,8 +82,8 @@ static const REAL L_B = -5.89365901e+00;
 /* Initialising */
 void init_YZK_ALL(){
     /* XY方向 */
-    YZK_CTRL.CMD_X = - 5.0;
-    YZK_CTRL.CMD_Y = 10.10;
+    YZK_CTRL.CMD_X = 1.445;
+    YZK_CTRL.CMD_Y = 0.3;
     YZK_CTRL.Err_X_1 = 0.0;
     YZK_CTRL.Err_Y_1 = 0.0;
     YZK_CTRL.Err_X_2 = 0.0;
@@ -170,6 +193,22 @@ void init_YZK_ALL(){
     YZK_CTRL.motor.K_Y = 0.1;  // 1 A / 10 N
     YZK_CTRL.dc_bus_utilization_ratio_1 = 0;
     YZK_CTRL.dc_bus_utilization_ratio_2 = 0;
+
+    YZK_CTRL.varTheta = 0;
+    YZK_CTRL.varThetaOffset = 0;
+
+    // TEST //
+    YZK_CTRL.id_iq_amps[0] = 2.0f;
+    YZK_CTRL.id_iq_amps[1] = 4.0f;
+    YZK_CTRL.id_iq_amps[2] = 6.0f;
+
+    YZK_CTRL.ix_amps[0] = 0.0f;
+    YZK_CTRL.ix_amps[1] = 0.0f;
+    YZK_CTRL.ix_amps[2] = 0.0f;
+
+    YZK_CTRL.iy_amps[0] = 0.0f;
+    YZK_CTRL.iy_amps[1] = 0.0f;
+    YZK_CTRL.iy_amps[2] = 0.0f;
 }
 
 
@@ -203,12 +242,90 @@ REAL lowpass_update_y(LPFs *f_y, REAL input_y) {
 // X_Pos 
 void suspension_p4ps5_PD_doubleaxis(REAL X_Pos, REAL Y_Pos){
     
+    /* pseudo encoder */
+    if (fabsf(debug_2.Overwrite_Current_Frequency) > 0){
+        debug_2.Overwrite_theta_d += CL_TS * debug_2.Overwrite_Current_Frequency * 2 * M_PI;
+        if (debug_2.Overwrite_theta_d > M_PI)  debug_2.Overwrite_theta_d -= 2 * M_PI;
+        if (debug_2.Overwrite_theta_d < - M_PI) debug_2.Overwrite_theta_d += 2 * M_PI;
+    }
+    else{
+        debug_2.Overwrite_theta_d = 0.0;
+    }
+
+    // 用椭圆检测相减的距离 记得是45° 给进来给到椭圆角度
+        place_sensor[0] = place_sensor[0] * 30 / 4.964 - 15;
+        place_sensor[1] = place_sensor[1] * 30 / 4.964 - 15;
+        // 做一个数据截断 x轴
+        if (place_sensor[0] >= 0)
+        place_sensor[0] = floor(place_sensor[0] * 300.0) / 300;
+        else
+        place_sensor[0] = ceil(place_sensor[0] * 300.0)  / 300;
+        // 做一个数据截断 y轴
+        if (place_sensor[1] >= 0)
+        place_sensor[1] = floor(place_sensor[1] * 300.0) / 300;
+        else
+        place_sensor[1] = ceil(place_sensor[1] * 300.0)  / 300;
+
+        place_sensor[5] = place_sensor[5] * 30 / 5.01 - 15;
+        place_sensor[7] = place_sensor[7] * 30 / 5.01 - 15;
+        // 做一个数据截断 x轴
+        if (place_sensor[5] >= 0)
+        place_sensor[5] = floor(place_sensor[5] * 300.0) / 300;
+        else
+        place_sensor[5] = ceil(place_sensor[5] * 300.0)  / 300;
+        // 做一个数据截断 y轴
+        if (place_sensor[7] >= 0)
+        place_sensor[7] = floor(place_sensor[7] * 300.0) / 300;
+        else
+        place_sensor[7] = ceil(place_sensor[7] * 300.0)  / 300;
+    if(BOOL_eccentricity)
+        {
+        sensor_1 = place_sensor[0];
+        sensor_2 = place_sensor[1];
+        sensor_3 = place_sensor[5];
+        sensor_4 = place_sensor[7];
+        r_0 = (40 + sensor_2 + sensor_3) * 0.5;
+        r_45 = (40 + sensor_1 + sensor_4) * 0.5;
+        S_0 = A_r * B_r / r_0;
+        S_45 = A_r * B_r / r_45;
+
+        SQRT_ARCTG_0_num = sqrt(S_0 * S_0 - B_r * B_r);
+        SQRT_ARCTG_45_num = sqrt(S_45 * S_45 - B_r * B_r);
+        SQRT_ARCTG_0_den = sqrt(A_r * A_r - S_0 * S_0);
+        SQRT_ARCTG_45_den = sqrt(A_r * A_r - S_45 * S_45);
+        varTHETA_0 = atan2(SQRT_ARCTG_0_num, SQRT_ARCTG_0_den);
+        varTHETA_45 = atan2(SQRT_ARCTG_45_num, SQRT_ARCTG_45_den);
+        // 3 cases
+        if(varTHETA_0 + varTHETA_45 == M_PI*0.25)
+        {
+            YZK_CTRL.varTheta = varTHETA_0 * YZK_CTRL.motor.npp;
+        }
+        else if(varTHETA_0 - varTHETA_45 == M_PI*0.25)
+        {
+            YZK_CTRL.varTheta = varTHETA_0 * YZK_CTRL.motor.npp;
+        }
+        else if(varTHETA_45 - varTHETA_0 == M_PI*0.25)
+        {
+            YZK_CTRL.varTheta = - varTHETA_0 * YZK_CTRL.motor.npp;
+        }else
+        {
+            YZK_CTRL.varTheta = varTHETA_0 * YZK_CTRL.motor.npp;
+        }
+        
+        YZK_CTRL.varTheta -= YZK_CTRL.varThetaOffset;
+
+        if (YZK_CTRL.varTheta > M_PI) YZK_CTRL.varTheta -= 2.0*M_PI;
+        if (YZK_CTRL.varTheta < -M_PI) YZK_CTRL.varTheta += 2.0*M_PI;
+
+        V0_V45_N = varTHETA_45 - varTHETA_0;
+        V0_V45_P = varTHETA_45 + varTHETA_0;
+        }
     if(! ONLY_CURRENT_LOOP_TEST){
         /* 位置环 */    
         // 1. 误差
         // YZK_CTRL.prev_error_X = YZK_CTRL.Err_X; // 保存上次误差
         // YZK_CTRL.disFbk_X = X_Pos;
-        YZK_CTRL.varTheta = (*CTRL).i->theta_d_elec;
+        // YZK_CTRL.varTheta = (*CTRL).i->theta_d_elec;
         YZK_CTRL.Err_X_1 = - YZK_CTRL.CMD_X + YZK_CTRL.disFbk_X;
         YZK_CTRL.Err_X_2 = - YZK_CTRL.CMD_X + YZK_CTRL.disFbk_X;
         // YZK_CTRL.varTheta = (*CTRL).i->theta_d_elec;
@@ -274,10 +391,10 @@ void suspension_p4ps5_PD_doubleaxis(REAL X_Pos, REAL Y_Pos){
         // YZK_CTRL.CMD_I_alpha = YZK_CTRL.motor.K_X * YZK_CTRL.CMD_F_alpha;
         // YZK_CTRL.CMD_I_beta  = YZK_CTRL.motor.K_Y * YZK_CTRL.CMD_F_beta;
 
-        YZK_CTRL.CMD_I_alpha_1 = YZK_CTRL.motor.K_X * (YZK_CTRL.CMD_F_alpha * cos(CTRL->i->theta_d_elec) + YZK_CTRL.CMD_F_beta * sin(CTRL->i->theta_d_elec));
-        YZK_CTRL.CMD_I_beta_1  = YZK_CTRL.motor.K_Y * ( - YZK_CTRL.CMD_F_alpha * sin(CTRL->i->theta_d_elec) + YZK_CTRL.CMD_F_beta * cos(CTRL->i->theta_d_elec));
-        YZK_CTRL.CMD_I_alpha_2 = YZK_CTRL.motor.K_X * (YZK_CTRL.CMD_F_alpha * cos(CTRL->i->theta_d_elec) + YZK_CTRL.CMD_F_beta * sin(CTRL->i->theta_d_elec));
-        YZK_CTRL.CMD_I_beta_2  = YZK_CTRL.motor.K_Y * ( - YZK_CTRL.CMD_F_alpha * sin(CTRL->i->theta_d_elec) + YZK_CTRL.CMD_F_beta * cos(CTRL->i->theta_d_elec));
+        YZK_CTRL.CMD_I_alpha_1 = YZK_CTRL.motor.K_X * (YZK_CTRL.CMD_F_alpha * cos(YZK_CTRL.varTheta) + YZK_CTRL.CMD_F_beta * sin(YZK_CTRL.varTheta));
+        YZK_CTRL.CMD_I_beta_1  = YZK_CTRL.motor.K_Y * ( - YZK_CTRL.CMD_F_alpha * sin(YZK_CTRL.varTheta) + YZK_CTRL.CMD_F_beta * cos(YZK_CTRL.varTheta));
+        YZK_CTRL.CMD_I_alpha_2 = YZK_CTRL.motor.K_X * (YZK_CTRL.CMD_F_alpha * cos(YZK_CTRL.varTheta) + YZK_CTRL.CMD_F_beta * sin(YZK_CTRL.varTheta));
+        YZK_CTRL.CMD_I_beta_2  = YZK_CTRL.motor.K_Y * ( - YZK_CTRL.CMD_F_alpha * sin(YZK_CTRL.varTheta) + YZK_CTRL.CMD_F_beta * cos(YZK_CTRL.varTheta));
         // YZK_CTRL.CMD_I_alpha = I_ampa * cos(YZK_CTRL.varTheta - M_PI/3) * cos(2 * F_freq * M_PI * CTRL->timebase);
         // YZK_CTRL.CMD_I_alpha = cos(YZK_CTRL.varTheta) * YZK_CTRL.motor.K_X * YZK_CTRL.CMD_psi_alpha * 1 / (YZK_CTRL.motor.ge - YZK_CTRL.disFbk_X);
     
@@ -315,38 +432,54 @@ void suspension_p4ps5_PD_doubleaxis(REAL X_Pos, REAL Y_Pos){
     CTRL_2.i->cmd_iDQ[0] = 0.5 * debug_2.set_id_command;
     CTRL_2.i->cmd_iDQ[1] = 0.5 * debug_2.set_iq_command;
 
-    /* pseudo encoder */
-    if (fabsf(debug_2.Overwrite_Current_Frequency) > 0){
-        debug_2.Overwrite_theta_d += CL_TS * debug_2.Overwrite_Current_Frequency * 2 * M_PI;
-        if (debug_2.Overwrite_theta_d > M_PI)  debug_2.Overwrite_theta_d -= 2 * M_PI;
-        if (debug_2.Overwrite_theta_d < -M_PI) debug_2.Overwrite_theta_d += 2 * M_PI;
-    }
-    else{
-        debug_2.Overwrite_theta_d = 0.0;
-    }
-
     // (*CTRL).i->theta_d_elec
     if(pseudo_Encoder)
     {
         (*CTRL).s->cosT = cos(debug_2.Overwrite_theta_d);
         (*CTRL).s->sinT = sin(debug_2.Overwrite_theta_d);
     }
-    else{
-        (*CTRL).s->cosT = cos((*CTRL).i->theta_d_elec);
-        (*CTRL).s->sinT = sin((*CTRL).i->theta_d_elec);
+    else if(YZK_CTRL.varTheta < M_PI || YZK_CTRL.varTheta > -M_PI)
+    {
+        (*CTRL).s->cosT = cos(YZK_CTRL.varTheta);
+        (*CTRL).s->sinT = sin(YZK_CTRL.varTheta);
     }
     
+    if(BOOL_CurrentProfileGenerator){
+        CurrentProfileGenerator_Update(&my_gen,
+                                    &YZK_CTRL.CMD_I_alpha_1,
+                                    &YZK_CTRL.CMD_I_beta_1,
+                                    &CTRL_1.i->cmd_iDQ[0],
+                                    &CTRL_1.i->cmd_iDQ[1]);
+        
+        CurrentProfileGenerator_Update(&my_gen,
+                                    &YZK_CTRL.CMD_I_alpha_2,
+                                    &YZK_CTRL.CMD_I_beta_2,
+                                    &CTRL_2.i->cmd_iDQ[0],
+                                    &CTRL_2.i->cmd_iDQ[1]);
+        
+        // CTRL_1.i->cmd_iDQ[0] = - 1.0 * CTRL_1.i->cmd_iDQ[0];
+        // CTRL_1.i->cmd_iDQ[1] = - 1.0 * CTRL_1.i->cmd_iDQ[1];
+        CTRL_1.i->cmd_iDQ[0] = 1.0 * CTRL_1.i->cmd_iDQ[0];
+        CTRL_1.i->cmd_iDQ[1] = 1.0 * CTRL_1.i->cmd_iDQ[1];
+        CTRL_2.i->cmd_iDQ[0] = 1.0 * CTRL_2.i->cmd_iDQ[0];
+        CTRL_2.i->cmd_iDQ[1] = 1.0 * CTRL_2.i->cmd_iDQ[1];
+    }
+
+    // CTRL_1.i->cmd_iDQ[0] = I_ampa;
+    CTRL_1.i->cmd_iDQ[1] = I_ampa;
+    // CTRL_2.i->cmd_iDQ[0] = I_ampa;
+    CTRL_2.i->cmd_iDQ[1] = I_ampb;
+
     CTRL_1.o->cmd_iAB[0] = MT2A(CTRL_1.i->cmd_iDQ[0], CTRL_1.i->cmd_iDQ[1], CTRL_1.s->cosT, CTRL_1.s->sinT);
     CTRL_1.o->cmd_iAB[1] = MT2B(CTRL_1.i->cmd_iDQ[0], CTRL_1.i->cmd_iDQ[1], CTRL_1.s->cosT, CTRL_1.s->sinT);
     CTRL_2.o->cmd_iAB[0] = MT2A(CTRL_2.i->cmd_iDQ[0], CTRL_2.i->cmd_iDQ[1], CTRL_2.s->cosT, CTRL_2.s->sinT);
     CTRL_2.o->cmd_iAB[1] = MT2B(CTRL_2.i->cmd_iDQ[0], CTRL_2.i->cmd_iDQ[1], CTRL_2.s->cosT, CTRL_2.s->sinT);
 
-    // overwrite_sweeping_f_1.quency_1.;
     if(axisCnt == 0)
     {   
-        YZK_CTRL.CMD_I_alpha_1 = I_ampa;
-        YZK_CTRL.CMD_I_beta_1 = I_ampb;
-        
+        // YZK_CTRL.CMD_I_alpha_1 = I_ampa;
+        // YZK_CTRL.CMD_I_beta_1 = I_ampb;
+
         // YZK_CTRL.CMD_I_alpha_1 = I_ampa * cos(2 * F_freq_1 * M_PI * CTRL->timebase) * cos(virtual_angle * M_PI);
         // YZK_CTRL.CMD_I_beta_1 = I_ampb * sin(2 * F_freq_2 * M_PI * CTRL->timebase) * sin(virtual_angle * M_PI);
         
@@ -412,8 +545,8 @@ void suspension_p4ps5_PD_doubleaxis(REAL X_Pos, REAL Y_Pos){
     }
     if (axisCnt == 1)
     {
-        YZK_CTRL.CMD_I_alpha_2 = I_ampa;
-        YZK_CTRL.CMD_I_beta_2 = I_ampb;
+        // YZK_CTRL.CMD_I_alpha_2 = I_ampa;
+        // YZK_CTRL.CMD_I_beta_2 = I_ampb;
 
         // YZK_CTRL.CMD_I_alpha_2 = I_ampa * cos(2 * F_freq_1 * M_PI * CTRL->timebase) * cos(virtual_angle * M_PI);
         // YZK_CTRL.CMD_I_beta_2 = I_ampb * sin(2 * F_freq_2 * M_PI * CTRL->timebase) * sin(virtual_angle * M_PI);
@@ -477,6 +610,10 @@ void suspension_p4ps5_PD_doubleaxis(REAL X_Pos, REAL Y_Pos){
                                                                             * YZK_CTRL.CMD_U_alpha_2
                                                                             + YZK_CTRL.CMD_U_beta_2
                                                                             * YZK_CTRL.CMD_U_beta_2 );
+    }
+    if (CurrentProfileGenerator_IsCompleted(&my_gen)) {
+             // 测试完成，可以停止或重置
+             CurrentProfileGenerator_Reset(&my_gen);  // 重新开始
     }
 }
 
@@ -581,3 +718,322 @@ void filters_init(void) {
 //     else if (d > M_PI) d -= 2*M_PI;
 //     return d;
 // }
+
+
+/* ========================================================================
+ *  电流轮廓生成器实现 (Current Profile Generator Implementation)
+ * ========================================================================
+ *  用途: 生成多层级的Id, Iq电流指令，用于电机测试
+ *  
+ *  工作原理:
+ *  - 三层嵌套循环: Ix幅值 -> Id/Iq幅值 -> 角度
+ *  - 在dq平面上画圆，每个圆由多个角度段组成
+ *  - 每个角度段持续固定时间
+ *  - 适合实时嵌入式系统，无需大数组存储
+ * ======================================================================== */
+
+void CurrentProfileGenerator_Init(CurrentProfileGenerator *gen,
+                                   REAL *id_iq_amps, int num_idiq,
+                                   REAL *ix_amps, int num_ix,
+                                   REAL *iy_amps, int num_iy,
+                                   int num_angles,
+                                   int circles_per_amplitude,
+                                   REAL platform_duration,
+                                   int cycles_per_segment,
+                                   REAL sample_time,
+                                   REAL pause_duration,
+                                   int auto_restart)
+{
+    int i;
+
+    // 参数检查（确保不越界）
+    if (num_idiq > MAX_IDIQ_AMPLITUDES) num_idiq = MAX_IDIQ_AMPLITUDES;
+    if (num_ix   > MAX_IX_AMPLITUDES)   num_ix   = MAX_IX_AMPLITUDES;
+    if (num_iy   > MAX_IX_AMPLITUDES)   num_iy   = MAX_IX_AMPLITUDES; // 可改为单独 MAX_IY_AMPLITUDES
+    if (num_angles > MAX_ANGLE_SEGMENTS) num_angles = MAX_ANGLE_SEGMENTS;
+
+    // 复制配置参数
+    for (i = 0; i < num_idiq; i++) {
+        gen->id_iq_amplitudes[i] = id_iq_amps[i];
+    }
+    for (i = 0; i < num_ix; i++) {
+        gen->ix_amplitudes[i] = ix_amps[i];
+    }
+    for (i = 0; i < num_iy; i++) {
+        gen->iy_amplitudes[i] = iy_amps[i];
+    }
+
+    gen->num_idiq_amplitudes = num_idiq;
+    gen->num_ix_amplitudes   = num_ix;
+    gen->num_iy_amplitudes   = num_iy;
+    gen->num_angle_segments  = num_angles;
+    gen->circles_per_amplitude = (circles_per_amplitude > 0) ? circles_per_amplitude : 1;  // 至少1圈
+    gen->cycles_per_segment  = cycles_per_segment;
+    gen->sample_time = sample_time;
+    
+    // 如果指定了周期数(>0)，则根据周期数计算持续时间；否则使用平台时间参数
+    if (cycles_per_segment > 0) {
+        gen->duration_per_segment = cycles_per_segment * sample_time;
+    } else {
+        gen->duration_per_segment = platform_duration;
+    }
+    
+    gen->pause_duration = pause_duration;
+    gen->auto_restart = auto_restart;
+
+    // 初始化状态
+    gen->ix_index = 0;
+    gen->iy_index = 0;
+    gen->amp_index = 0;
+    gen->circle_index = 0;
+    gen->angle_index = 0;
+    gen->segment_timer = 0.0;
+    gen->pause_timer = 0.0;
+    gen->is_pausing = 0;
+
+    // 计算初始电流值 (第一个角度点: theta = 0)
+    if (num_idiq > 0 && num_ix > 0 && num_iy > 0) {
+        gen->current_id = gen->id_iq_amplitudes[0];  // cos(0) = 1
+        gen->current_iq = 0.0;                        // sin(0) = 0
+        gen->current_ix = gen->ix_amplitudes[0];
+        gen->current_iy = gen->iy_amplitudes[0];
+    } else {
+        gen->current_id = 0.0;
+        gen->current_iq = 0.0;
+        gen->current_ix = 0.0;
+        gen->current_iy = 0.0;
+    }
+
+    // 设置标志
+    gen->is_initialized = 1;
+    gen->is_running = 1;
+    gen->is_completed = 0;
+}
+
+void CurrentProfileGenerator_Reset(CurrentProfileGenerator *gen)
+{
+    gen->ix_index = 0;
+    gen->iy_index = 0;
+    gen->amp_index = 0;
+    gen->circle_index = 0;
+    gen->angle_index = 0;
+    gen->segment_timer = 0.0;
+    gen->pause_timer = 0.0;
+    gen->is_pausing = 0;
+
+    // 重置到初始电流值
+    if (gen->num_idiq_amplitudes > 0 && gen->num_ix_amplitudes > 0 && gen->num_iy_amplitudes > 0) {
+        gen->current_id = gen->id_iq_amplitudes[0];
+        gen->current_iq = 0.0;
+        gen->current_ix = gen->ix_amplitudes[0];
+        gen->current_iy = gen->iy_amplitudes[0];
+    } else {
+        gen->current_id = 0.0;
+        gen->current_iq = 0.0;
+        gen->current_ix = 0.0;
+        gen->current_iy = 0.0;
+    }
+
+    gen->is_running = 1;
+    gen->is_completed = 0;
+}
+
+void CurrentProfileGenerator_Update(CurrentProfileGenerator *gen, 
+                                     REAL *id_out, 
+                                     REAL *iq_out,
+                                     REAL *ix_out,   // 新增输出参数，用于返回当前 ix
+                                     REAL *iy_out)   // 新增输出参数，用于返回当前 iy
+{
+    REAL theta;
+    REAL amplitude;
+
+    // 如果未初始化，返回零电流
+    if (!gen->is_initialized) {
+        if (id_out) *id_out = 0.0;
+        if (iq_out) *iq_out = 0.0;
+        if (ix_out) *ix_out = 0.0;
+        if (iy_out) *iy_out = 0.0;
+        return;
+    }
+
+    // 处理暂停状态
+    if (gen->is_pausing) {
+        if (id_out) *id_out = 0.0;  // 暂停期间输出零电流
+        if (iq_out) *iq_out = 0.0;
+        if (ix_out) *ix_out = 0.0;
+        if (iy_out) *iy_out = 0.0;
+
+        // 更新暂停计时器
+        gen->pause_timer += gen->sample_time;
+
+        // 检查暂停时间是否结束
+        if (gen->pause_timer >= gen->pause_duration) {
+            gen->pause_timer = 0.0;
+            gen->is_pausing = 0;
+
+            // 根据auto_restart决定是否重新开始
+            if (gen->auto_restart) {
+                CurrentProfileGenerator_Reset(gen);  // 自动重启
+            } else {
+                gen->is_completed = 1;  // 标记为完成
+                gen->is_running = 0;
+            }
+        }
+        return;
+    }
+
+    // 如果已完成（非暂停状态），返回零电流
+    if (gen->is_completed) {
+        if (id_out) *id_out = 0.0;
+        if (iq_out) *iq_out = 0.0;
+        if (ix_out) *ix_out = 0.0;
+        if (iy_out) *iy_out = 0.0;
+        return;
+    }
+
+    // 如果手动暂停，返回当前值
+    if (!gen->is_running) {
+        if (id_out) *id_out = gen->current_id;
+        if (iq_out) *iq_out = gen->current_iq;
+        if (ix_out) *ix_out = gen->current_ix;
+        if (iy_out) *iy_out = gen->current_iy;
+        return;
+    }
+
+    // 输出当前电流值
+    if (id_out) *id_out = gen->current_id;
+    if (iq_out) *iq_out = gen->current_iq;
+    if (ix_out) *ix_out = gen->current_ix;
+    if (iy_out) *iy_out = gen->current_iy;
+
+    // 更新时间
+    gen->segment_timer += gen->sample_time;
+
+    // 检查是否需要切换到下一个段
+    if (gen->segment_timer >= gen->duration_per_segment) {
+        gen->segment_timer = 0.0;
+        gen->angle_index++;
+
+        // 检查是否完成一圈
+        if (gen->angle_index >= gen->num_angle_segments) {
+            gen->angle_index = 0;
+            gen->circle_index++;  // 完成一圈，圆周计数器加1
+
+            // 检查是否完成当前幅值的所有圆周
+            if (gen->circle_index >= gen->circles_per_amplitude) {
+                gen->circle_index = 0;  // 重置圆周计数器
+                gen->amp_index++;       // 切换到下一个幅值
+
+                // 检查是否完成所有Id/Iq幅值
+                if (gen->amp_index >= gen->num_idiq_amplitudes) {
+                    gen->amp_index = 0;
+                    gen->iy_index++;   // 先推进 iy（内层于 ix）
+
+                    // 检查是否完成所有Iy幅值
+                    if (gen->iy_index >= gen->num_iy_amplitudes) {
+                        gen->iy_index = 0;
+                        gen->ix_index++; // 然后推进 ix（最外层）
+
+                        // 检查是否完成所有Ix幅值
+                        if (gen->ix_index >= gen->num_ix_amplitudes) {
+                            // 如果设置了暂停时间，进入暂停状态
+                            if (gen->pause_duration > 0.0) {
+                                gen->is_pausing = 1;
+                                gen->pause_timer = 0.0;
+                                gen->current_id = 0.0;
+                                gen->current_iq = 0.0;
+                                gen->current_ix = 0.0;
+                                gen->current_iy = 0.0;
+                            } else {
+                                // 没有暂停时间，直接完成
+                                gen->is_completed = 1;
+                                gen->is_running = 0;
+                                gen->current_id = 0.0;
+                                gen->current_iq = 0.0;
+                                gen->current_ix = 0.0;
+                                gen->current_iy = 0.0;
+                            }
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+
+        // 计算新的电流值
+        // theta = 2*PI * angle_index / num_angle_segments
+        theta = 6.28318530718 * (REAL)gen->angle_index / (REAL)gen->num_angle_segments;
+        amplitude = gen->id_iq_amplitudes[gen->amp_index];
+
+        // 在dq平面上的圆周投影
+        gen->current_id = amplitude * cos(theta);
+        gen->current_iq = amplitude * sin(theta);
+        gen->current_ix = gen->ix_amplitudes[gen->ix_index];
+        gen->current_iy = gen->iy_amplitudes[gen->iy_index];
+    }
+}
+
+/**
+ * @brief 检查生成器是否完成所有序列
+ * 
+ * @param gen 生成器结构指针
+ * @return 1=已完成, 0=未完成
+ */
+int CurrentProfileGenerator_IsCompleted(CurrentProfileGenerator *gen)
+{
+    return gen->is_completed;
+}
+
+/* ======================================================================== 
+ *  使用示例:
+ * ========================================================================
+ *  
+ *  // 1. 定义生成器变量
+ *  CurrentProfileGenerator my_gen;
+ *  
+ *  // 2. 定义测试幅值
+ *  REAL id_iq_amps[] = {1.0, 2.0, 3.0};      // 三个圆的半径
+ *  REAL ix_amps[] = {0.0, 0.0, 0.0};              // 三个Ix层级
+ *  
+ *  // 3. 初始化生成器 (方式一：使用平台时间)
+ *  CurrentProfileGenerator_Init(&my_gen,
+ *                                id_iq_amps, 3,     // 3个Id/Iq幅值
+ *                                ix_amps, 3,        // 3个Ix幅值
+ *                                8,                 // 8个角度段 (每45度)
+ *                                3,                 // 每个幅值重复3圈 (增加测量可信度)
+ *                                1.0,               // 每个平台停留1秒
+ *                                0,                 // 不使用周期数（设为0）
+ *                                0.0001,            // 10kHz采样
+ *                                0.0,               // 无暂停
+ *                                0);                // 不自动重启
+ *  
+ *  // 或方式二：使用周期数 (更精确控制)
+ *  CurrentProfileGenerator_Init(&my_gen,
+ *                                id_iq_amps, 3,     // 3个Id/Iq幅值
+ *                                ix_amps, 3,        // 3个Ix幅值
+ *                                8,                 // 8个角度段
+ *                                3,                 // 每个幅值重复3圈
+ *                                0.0,               // 平台时间（当cycles_per_segment>0时被忽略）
+ *                                10000,             // 每段运行10000个周期
+ *                                0.0001,            // 10kHz采样 (10000*0.0001=1秒)
+ *                                0.0,               // 无暂停
+ *                                0);                // 不自动重启
+ *  
+ *  // 4. 在控制循环中调用
+ *  void ControlLoop_ISR(void) {
+ *      REAL id_ref, iq_ref;
+ *      
+ *      // 更新并获取电流指令
+ *      CurrentProfileGenerator_Update(&my_gen, &id_ref, &iq_ref);
+ *      
+ *      // 使用id_ref和iq_ref进行电流控制
+ *      // ...
+ *      
+ *      // 检查是否完成
+ *      if (CurrentProfileGenerator_IsCompleted(&my_gen)) {
+ *          // 测试完成，可以停止或重置
+ *          CurrentProfileGenerator_Reset(&my_gen);  // 重新开始
+ *      }
+ *  }
+ * 
+ * ======================================================================== */

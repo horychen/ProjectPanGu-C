@@ -40,6 +40,11 @@ typedef struct {
 
 /* 控制器变量，YZK专用 */
 struct YZK_2025_TIA_CTRL{
+    /* TEST*/
+    REAL id_iq_amps[3];
+    REAL ix_amps[3];
+    REAL iy_amps[3];
+
     /* XY方向，位置环 */
     REAL CMD_X;
     REAL CMD_Y;
@@ -100,6 +105,7 @@ struct YZK_2025_TIA_CTRL{
     REAL dc_bus_utilization_ratio_2;
     /* Misc*/
     REAL varTheta;
+    REAL varThetaOffset;
     REAL OutPrev_alpha_1;
     REAL OutPrev_beta_1;
     REAL Out_alpha_1;
@@ -199,4 +205,75 @@ void suspension_p4ps5_PD_doubleaxis(REAL X_Pos, REAL Y_Pos);
 // void biquad_init(biquad_t *f, float b0, float b1, float b2, float a1, float a2);
 // void filters_init(void);
 void init_YZK_ALL();
+
+/* ===== 电流轮廓生成器 (Current Profile Generator) ===== */
+#define MAX_IDIQ_AMPLITUDES 10   // 最大Id/Iq幅值数量
+#define MAX_IX_AMPLITUDES 10     // 最大Ix幅值数量
+#define MAX_IY_AMPLITUDES 10     // 最大Iy幅值数量
+#define MAX_ANGLE_SEGMENTS 36    // 最大角度分段数量
+
+typedef struct {
+    // 配置参数
+    REAL id_iq_amplitudes[MAX_IDIQ_AMPLITUDES];  // Id/Iq矢量幅值数组 (A)
+    REAL ix_amplitudes[MAX_IX_AMPLITUDES];       // Ix轴电流幅值数组 (A)
+    REAL iy_amplitudes[MAX_IY_AMPLITUDES];       // Iy轴电流幅值数组 (A)
+    int num_idiq_amplitudes;                     // Id/Iq幅值数量
+    int num_ix_amplitudes;                       // Ix幅值数量
+    int num_iy_amplitudes;                       // Iy幅值数量
+    int num_angle_segments;                      // 角度分段数量（360度等分）
+    REAL duration_per_segment;                   // 每个角度段持续时间 (s) - 平台时间
+    int cycles_per_segment;                      // 每个角度段的周期数（可选，若>0则覆盖duration_per_segment）
+    int circles_per_amplitude;                   // 每个Id/Iq幅值重复的圆周次数（增加测量可信度）
+    REAL sample_time;                            // 采样时间 (s), 例如 0.0001s for 10kHz
+    
+    // 状态变量
+    int ix_index;                                // 当前Ix幅值索引
+    int iy_index;                                // 当前Iy幅值索引
+    int amp_index;                               // 当前Id/Iq幅值索引
+    int circle_index;                            // 当前圆周索引（0到circles_per_amplitude-1）
+    int angle_index;                             // 当前角度索引
+    REAL segment_timer;                          // 当前段内计时器 (s)
+    
+    // 当前输出值
+    REAL current_id;                             // 当前d轴电流 (A)
+    REAL current_iq;                             // 当前q轴电流 (A)
+    REAL current_ix;                             // 当前x轴电流 (A)
+    REAL current_iy;                             // 当前y轴电流 (A)
+    
+    // 控制标志
+    int is_initialized;                          // 是否已初始化
+    int is_running;                              // 是否正在运行
+    int is_completed;                            // 是否已完成所有序列
+    
+    // 暂停控制
+    REAL pause_duration;                         // 完成后暂停时间 (s), 0表示不暂停
+    REAL pause_timer;                            // 暂停计时器 (s)
+    int is_pausing;                              // 是否处于暂停状态
+    int auto_restart;                            // 暂停后是否自动重启 (1=是, 0=否)
+    
+} CurrentProfileGenerator;
+
+// 函数声明
+void CurrentProfileGenerator_Init(CurrentProfileGenerator *gen,
+                                   REAL *id_iq_amps, int num_idiq,
+                                   REAL *ix_amps, int num_ix,
+                                   REAL *iy_amps, int num_iy,
+                                   int num_angles,
+                                   int circles_per_amplitude,
+                                   REAL platform_duration,
+                                   int cycles_per_segment,
+                                   REAL sample_time,
+                                   REAL pause_duration,
+                                   int auto_restart);
+                                   
+void CurrentProfileGenerator_Reset(CurrentProfileGenerator *gen);
+
+void CurrentProfileGenerator_Update(CurrentProfileGenerator *gen, 
+                                     REAL *id_out, 
+                                     REAL *iq_out,
+                                     REAL *ix_out,
+                                     REAL *iy_out);
+
+int CurrentProfileGenerator_IsCompleted(CurrentProfileGenerator *gen);
+
 #endif

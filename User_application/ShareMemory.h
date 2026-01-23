@@ -7,7 +7,7 @@ struct IPC_MEMORY_WRITE{
     /* read/write (RW) shared memory @ GS1 owned by CPU1 */
     REAL dac_buffer[8];
     REAL test;
-    REAL Read_RPM;
+    // REAL Read_RPM;
 };// ˫�����
 extern struct IPC_MEMORY_WRITE Write;
 
