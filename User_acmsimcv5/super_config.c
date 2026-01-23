@@ -4,33 +4,33 @@
 
 void init_d_sim() {
     d_sim.init.npp = 5;
-    d_sim.init.IN = 2.0;
+    d_sim.init.IN = 1.55;
     d_sim.init.R = 5.35;
     d_sim.init.Ld = 0.010199999999999999;
     d_sim.init.Lq = 0.010199999999999999;
     d_sim.init.KE = 0.0241167703876205;
     d_sim.init.Rreq = 0.0;
     d_sim.init.Js = 1.7000000000000003e-05;
-    d_sim.init.Vdc = 30;
+    d_sim.init.Vdc = 24;
 
     d_sim.sim.INVERTER_NONLINEARITY = 0;
     d_sim.sim.CLTS = 0.0001;
     d_sim.sim.NUMBER_OF_STEPS = 6000;
     d_sim.sim.MACHINE_SIMULATIONs_PER_SAMPLING_PERIOD = 1;
 
-    d_sim.FOC.delta = 20;
-    d_sim.FOC.CLBW_HZ = 483;
+    d_sim.FOC.delta = 15;
+    d_sim.FOC.CLBW_HZ = 800;
     d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation = FALSE;
     d_sim.FOC.VL_EXE_PER_CL_EXE = 1;
 
-    d_sim.CL.SERIES_KP_D_AXIS = 30.954740734350946;
+    d_sim.CL.SERIES_KP_D_AXIS = 51.27079210658542;
     d_sim.CL.SERIES_KI_D_AXIS = 524.5098039215686;
-    d_sim.CL.SERIES_KP_Q_AXIS = 30.954740734350946;
+    d_sim.CL.SERIES_KP_Q_AXIS = 51.27079210658542;
     d_sim.CL.SERIES_KI_Q_AXIS = 524.5098039215686;
     d_sim.CL.LIMIT_DC_BUS_UTILIZATION = 0.96;
 
-    d_sim.VL.SERIES_KP = 0.014261510069008285;
-    d_sim.VL.SERIES_KI = 7.58694625841935;
+    d_sim.VL.SERIES_KP = 0.013317905221091771;
+    d_sim.VL.SERIES_KI = 22.340214425527417;
     d_sim.VL.LIMIT_OVERLOAD_FACTOR = 1.0;
 
     d_sim.user.verbose = FALSE;
@@ -40,8 +40,8 @@ void init_d_sim() {
     d_sim.user.INVERTER_NONLINEARITY_COMPENSATION_METHOD = 0;
     d_sim.user.Select_exp_operation = 0;
     d_sim.user.set_rpm_speed_command = 100;
-    d_sim.user.set_id_command = 0.5;
-    d_sim.user.set_iq_command = 0.5;
+    d_sim.user.set_id_command = 0;
+    d_sim.user.set_iq_command = 0.775;
     d_sim.user.bool_apply_sweeping_frequency_excitation = FALSE;
     d_sim.user.bool_sweeping_frequency_for_speed_loop = FALSE;
     d_sim.user.bool_speed_sweeping_with_Load = FALSE;

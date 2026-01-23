@@ -18,7 +18,8 @@ extern bool run_enable_from_PC;
         }                           
 #endif
 void main(void){
-            debug = &debug_2;      \
+
+    debug = &debug_2;      \
 
     InitSysCtrl();      // 1. Initialize System Control: PLL, WatchDog, enable Peripheral Clocks.
     Gpio_initialize();  // 2. Initialize GPIO and assign GPIO to peripherals.
@@ -681,7 +682,7 @@ REAL legBouncingSpeed = 50;
 REAL hipBouncingFreq = 10;
 REAL legBouncingIq = 2;
 REAL hipBouncingIq = 1.5;
-int bool_use_SCI_encoder = TRUE;
+int bool_use_SCI_encoder = FALSE;
 
 REAL target_position_cnt;
 REAL target_position_cnt_shank = 58000;
@@ -1305,12 +1306,6 @@ void measurement_position_count_axisCnt1(){
 
 /* 编码器位置信息转换为速度信息 */
 void measurement_enc(){
-    if (!bool_use_SCI_encoder){
-        // 正转电流导致编码器读数减小：
-        //CTRL->enc->encoder_abs_cnt = -((int32)cnt_four_bar_map_motor_encoder_angle + CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis);
-        // 正转电流导致编码器读数增大：
-        CTRL->enc->encoder_abs_cnt = (int32)cnt_four_bar_map_motor_encoder_angle - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis;
-    }
 
     // 给CTRL->enc->encoder_abs_cnt_previous赋值的操作在measurement()函数中进行
 
