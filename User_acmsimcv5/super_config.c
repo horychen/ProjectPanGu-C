@@ -11,7 +11,7 @@ void init_d_sim() {
     d_sim.init.KE = 0.0241167703876205;
     d_sim.init.Rreq = 0.0;
     d_sim.init.Js = 1.7000000000000003e-05;
-    d_sim.init.Vdc = 24;
+    d_sim.init.Vdc = 30;
 
     d_sim.sim.INVERTER_NONLINEARITY = 0;
     d_sim.sim.CLTS = 0.0001;
@@ -35,11 +35,11 @@ void init_d_sim() {
 
     d_sim.user.verbose = FALSE;
     d_sim.user.who_is_user = 102209;
-    d_sim.user.mode_select_synchronous_motor = 3;
+    d_sim.user.mode_select_synchronous_motor = 4;
     d_sim.user.mode_select_induction_motor = 32;
     d_sim.user.INVERTER_NONLINEARITY_COMPENSATION_METHOD = 0;
     d_sim.user.Select_exp_operation = 0;
-    d_sim.user.set_rpm_speed_command = 100;
+    d_sim.user.set_rpm_speed_command = 500;
     d_sim.user.set_id_command = 0;
     d_sim.user.set_iq_command = 0.775;
     d_sim.user.bool_apply_sweeping_frequency_excitation = FALSE;
