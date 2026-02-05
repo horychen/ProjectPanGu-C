@@ -292,9 +292,9 @@ void init_CTRL(){
     // speedKi = 2*np.pi * CLBW_Hz / delta**2  # THIS IS INTEGRAL GAIN
     // speedKp = delta * speedKi / KT * Js     # 这里不需要npp
 
+    PID_Position->Kp       = d_sim.user.Position_Loop_Kp;
     #if WHO_IS_USER == USER_WB
         /* WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING*/
-        PID_Position->Kp       = d_sim.user.Position_Loop_Kp;
         PID_Position->Ki_CODE  = 0.0;
         PID_Position->Kd       = 0.0;
         PID_Position->OutLimit = d_sim.user.Position_Loop_Output_Limit * RPM_2_MECH_RAD_PER_SEC;

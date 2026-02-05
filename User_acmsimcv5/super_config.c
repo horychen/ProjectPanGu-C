@@ -39,7 +39,7 @@ void init_d_sim() {
     d_sim.user.mode_select_induction_motor = 32;
     d_sim.user.INVERTER_NONLINEARITY_COMPENSATION_METHOD = 0;
     d_sim.user.Select_exp_operation = 0;
-    d_sim.user.set_rpm_speed_command = 500;
+    d_sim.user.set_rpm_speed_command = 20;
     d_sim.user.set_id_command = 0;
     d_sim.user.set_iq_command = 0.775;
     d_sim.user.bool_apply_sweeping_frequency_excitation = FALSE;

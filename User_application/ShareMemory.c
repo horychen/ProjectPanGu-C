@@ -141,7 +141,7 @@ void write_DAC_buffer(){
         // CTRL->i->varTheta * ONE_OVER_2PI;// CTRL->i->varTheta range from [0,2pi]
         (*Axis4DAC).dac_watch[61] = PID_Position->Fbk * ONE_OVER_2PI * 1; //
         (*Axis4DAC).dac_watch[62] = PID_Position->Err * ONE_OVER_2PI * 1; //
-
+        (*Axis4DAC).dac_watch[63] = (*CTRL).i->varTheta* ONE_OVER_2PI ; // unit : degree
         /* Motor Speed ESO */
         (*Axis4DAC).dac_watch[66] = OBSV.esoaf.xOmg * ELEC_RAD_PER_SEC_2_RPM * 0.002;
         (*Axis4DAC).dac_watch[67] = OBSV.esoaf.xPos * 0.1; // -pi to pi
@@ -335,7 +335,7 @@ void write_DAC_buffer(){
             (*Axis4DAC).channels[2] = 29; // PID_iQ->Ref
             (*Axis4DAC).channels[3] = 30; // PID_iQ->Fbk
             (*Axis4DAC).channels[4] = 44; // DC bus utilization
-            (*Axis4DAC).channels[5] = 33; // (*CTRL).o->cmd_uDQ[0] * 0.02;
+            (*Axis4DAC).channels[5] = 63; // (*CTRL).o->cmd_uDQ[0] * 0.02;
             (*Axis4DAC).channels[6] = 34; // (*CTRL).o->cmd_uDQ[1] * 0.02;
             (*Axis4DAC).channels[7] = 26; // PID_iD->Fbk
         }else if((*Axis4DAC).channels_preset==12){(*Axis4DAC).channels_preset=0;
