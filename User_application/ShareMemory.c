@@ -68,8 +68,8 @@ void write_DAC_buffer(){
         (*Axis4DAC).dac_watch[4] = Axis_2.iuvw[4]*0.2;
         (*Axis4DAC).dac_watch[5] = Axis_2.iuvw[5]*0.2;
 
-        (*Axis4DAC).dac_watch[6] = (*CTRL).i->iAB[0]*0.25;      // +-6A ->0-3V
-        (*Axis4DAC).dac_watch[7] = (*CTRL).i->iAB[1]*0.25;
+        (*Axis4DAC).dac_watch[6] = (*CTRL).i->iAB[0]*0.2;      // +-6A ->0-3V
+        (*Axis4DAC).dac_watch[7] = (*CTRL).i->iAB[1]*0.2;
         (*Axis4DAC).dac_watch[8] = (*CTRL).o->cmd_uAB[0]*0.125; // +-12V -> 0-3V
         (*Axis4DAC).dac_watch[9] = (*CTRL).o->cmd_uAB[1]*0.125;
 
@@ -103,7 +103,7 @@ void write_DAC_buffer(){
         (*Axis4DAC).dac_watch[34] = (*CTRL).o->cmd_uDQ[1] * 0.02;
         (*Axis4DAC).dac_watch[35] = (*CTRL).i->iDQ[0] * 0.5;
         (*Axis4DAC).dac_watch[36] = (*CTRL).i->iDQ[1] * 0.5;
-        (*Axis4DAC).dac_watch[37] = (*CTRL).i->iAB[0] * 0.5;
+        // (*Axis4DAC).dac_watch[37] = (*CTRL).i->iAB[0] * 0.5;
 
         /* Bezier */
         (*Axis4DAC).dac_watch[40] = (*CTRL).i->cmd_varOmega * MECH_RAD_PER_SEC_2_RPM * 0.002;
@@ -142,7 +142,8 @@ void write_DAC_buffer(){
         // CTRL->i->varTheta * ONE_OVER_2PI;// CTRL->i->varTheta range from [0,2pi]
         (*Axis4DAC).dac_watch[61] = PID_Position->Fbk * ONE_OVER_2PI * 1; //
         (*Axis4DAC).dac_watch[62] = PID_Position->Err * ONE_OVER_2PI * 1; //
-
+        (*Axis4DAC).dac_watch[63] = (*CTRL).i->uAB[0] * 0.1;
+        (*Axis4DAC).dac_watch[64] = (*CTRL).i->uAB[1] * 0.1;
         /* Motor Speed ESO */
         // (*Axis4DAC).dac_watch[66] = OBSV.esoaf.xOmg * ELEC_RAD_PER_SEC_2_RPM * 0.002;
         // (*Axis4DAC).dac_watch[67] = OBSV.esoaf.xPos * 0.1; // -pi to pi
@@ -406,10 +407,10 @@ void write_DAC_buffer(){
             // (*Axis4DAC).channels[5] = 75;  // FE.HE_EKF.theta_d * ONE_OVER_60 * ONE_OVER_60 * 10; // unit : degree;
             // (*Axis4DAC).channels[6] = 76; 
             // (*Axis4DAC).channels[7] = 77; 
-            (*Axis4DAC).channels[0] = 73; // HE_EKF.flux[0];// wb
-            (*Axis4DAC).channels[1] = 75; // HE_EKF.flux[1]; // wb
-            (*Axis4DAC).channels[2] = 76; // HE_pure_integration.flux[0]; // wb
-            (*Axis4DAC).channels[3] = 77; // HE_pure_integration.flux[1] ; // wb
+            (*Axis4DAC).channels[0] = 63; //(*CTRL).i->uAB[0] 
+            (*Axis4DAC).channels[1] = 64; //(*CTRL).i->uAB[1]
+            (*Axis4DAC).channels[2] = 6; // (*CTRL).i->iAB[0]*0.2
+            (*Axis4DAC).channels[3] = 7; // (*CTRL).i->iAB[1]*0.2
             (*Axis4DAC).channels[4] = 78; // HE_EKF_no_sensor_correct.flux[0]; // wb
             (*Axis4DAC).channels[5] = 79; // HE_EKF_no_sensor_correct.flux[1] ; // wb
             (*Axis4DAC).channels[6] = 71; 

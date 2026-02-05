@@ -18,6 +18,26 @@ struct DebugExperiment debug_1;
 struct DebugExperiment *debug = &debug_1;
 struct ObserverForSpeedReconstruction OFSR;
 REAL one_over_six = 1.0/6.0;
+/* HFI voltage injection (alpha axis) */
+typedef struct {
+    REAL freq_hz;
+    REAL phase;
+    REAL v_inj;
+    REAL v_inj_percent;
+    REAL ramp_time_s;
+    int enable;
+} st_hfi_voltage_injector;
+
+static st_hfi_voltage_injector hfi_vinj_1 = {0};
+
+static REAL hfi_clamp(REAL x, REAL min_val, REAL max_val);
+static REAL hfi_ramp(REAL current, REAL target, REAL step);
+static REAL hfi_get_vdc(void);
+static void hfi_vinj_init(st_hfi_voltage_injector *hfi);
+static void hfi_vinj_update(st_hfi_voltage_injector *hfi, REAL Ts, REAL vdc, REAL v_ab[2]);
+static void hfi_add_injection_to_cmd_uab(REAL v_inj_ab[2], REAL vdc);
+
+
 // 定义内存空间（结构体）
 st_motor_parameters     t_motor_1={0};
 st_enc                  t_enc_1={0};
@@ -1260,8 +1280,26 @@ int  main_switch(long mode_select){
 
             #endif
         break;
+    case MODE_SELECT_HFI_VOLTAGE_INJECTION : //70
+        if (mode_initialized == FALSE){
+            mode_initialized = TRUE;
+            hfi_vinj_init(&hfi_vinj_1);
+        }
 
+        hfi_vinj_1.enable = 1;
+        /* Keep average torque at zero */
+        (*CTRL).i->cmd_iDQ[0] = 0.0;
+        (*CTRL).i->cmd_iDQ[1] = 0.0;
 
+        {
+            REAL vdc = hfi_get_vdc();
+            REAL v_ab[2];
+
+            _onlyFOC((*CTRL).i->theta_d_elec, (*CTRL).i->iAB, (*CTRL).i->varOmega);
+            hfi_vinj_update(&hfi_vinj_1, CL_TS, vdc, v_ab);
+            hfi_add_injection_to_cmd_uab(v_ab, vdc);
+        }
+        break;
     case MODE_SELECT_NONLINEAR_FLUX_OBSERVER: // 6
         #if (AFE_44_ORTEGA_2011)
             #if (WHO_IS_USER == USER_HZQ)
@@ -1859,4 +1897,74 @@ void init_esoaf(){
 
     OFSR.esoaf.omega_ob = OFSR.esoaf.set_omega_ob;
     eso_one_parameter_tuning(OFSR.esoaf.omega_ob);
+}
+
+static REAL hfi_clamp(REAL x, REAL min_val, REAL max_val){
+    if (x > max_val) return max_val;
+    if (x < min_val) return min_val;
+    return x;
+}
+
+static REAL hfi_ramp(REAL current, REAL target, REAL step){
+    if (current < target){
+        current += step;
+        if (current > target) current = target;
+    }else if (current > target){
+        current -= step;
+        if (current < target) current = target;
+    }
+    return current;
+}
+
+static REAL hfi_get_vdc(void){
+#if PC_SIMULATION
+    return d_sim.init.Vdc;
+#else
+    return Axis->vdc;
+#endif
+}
+
+static void hfi_vinj_init(st_hfi_voltage_injector *hfi){
+    hfi->freq_hz = 1000.0;
+    hfi->phase = 0.0;
+    hfi->v_inj = 0.0;
+    hfi->v_inj_percent = 0.40; /* 5% of Vdc/sqrt(3) */
+    hfi->ramp_time_s = 0.10;
+    hfi->enable = 0;
+}
+
+static void hfi_vinj_update(st_hfi_voltage_injector *hfi, REAL Ts, REAL vdc, REAL v_ab[2]){
+    const REAL v_limit = 0.577350269 * 30;
+    const REAL target = (hfi->enable != 0) ? (hfi->v_inj_percent * v_limit) : 0.0;
+    REAL step = v_limit;
+
+    if (hfi->ramp_time_s > 0.0){
+        step = (v_limit / hfi->ramp_time_s) * Ts;
+    }
+
+    hfi->v_inj = hfi_ramp(hfi->v_inj, target, step);
+    hfi->phase += 2.0 * M_PI * hfi->freq_hz * Ts;
+    if (hfi->phase > M_PI) hfi->phase -= 2.0 * M_PI;
+    if (hfi->phase < -M_PI) hfi->phase += 2.0 * M_PI;
+
+    v_ab[0] = hfi->v_inj * sin(hfi->phase);
+    v_ab[1] = 0.0;
+    v_ab[0] = hfi_clamp(v_ab[0], -v_limit, v_limit);
+}
+
+static void hfi_add_injection_to_cmd_uab(REAL v_inj_ab[2], REAL vdc){
+    REAL v_limit = 0.577350269 * vdc;
+    REAL v0 = (*CTRL).o->cmd_uAB[0] + v_inj_ab[0];
+    REAL v1 = (*CTRL).o->cmd_uAB[1] + v_inj_ab[1];
+    REAL mag = sqrtf(v0 * v0 + v1 * v1);
+
+    if (mag > v_limit && mag > 0.0){
+        REAL scale = v_limit / mag;
+        v0 *= scale;
+        v1 *= scale;
+    }
+
+    (*CTRL).o->cmd_uAB_to_inverter[0] = v0;
+    (*CTRL).o->cmd_uAB_to_inverter[1] = v1;
+    (*CTRL).o->dc_bus_utilization_ratio = DC_BUS_VOLTAGE_INVERSE * mag;
 }

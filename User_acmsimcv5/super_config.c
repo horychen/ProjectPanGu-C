@@ -3,15 +3,15 @@
 #include <stdio.h>
 
 void init_d_sim() {
-    d_sim.init.npp = 4;
+    d_sim.init.npp = 8;
     d_sim.init.IN = 3;
-    d_sim.init.R = 1.65;
-    d_sim.init.Ld = 0.0028000000000000003;
-    d_sim.init.Lq = 0.0028000000000000003;
+    d_sim.init.R = 0.61;
+    d_sim.init.Ld = 0.0032000000000000003;
+    d_sim.init.Lq = 0.0032000000000000003;
     d_sim.init.KE = 0.1;
     d_sim.init.Rreq = 0.0;
     d_sim.init.Js = 0.00049836;
-    d_sim.init.Vdc = 24;
+    d_sim.init.Vdc = 30;
 
     d_sim.sim.INVERTER_NONLINEARITY = 0;
     d_sim.sim.CLTS = 0.0001;
@@ -35,7 +35,7 @@ void init_d_sim() {
 
     d_sim.user.verbose = TRUE;
     d_sim.user.who_is_user = 1601;
-    d_sim.user.mode_select_synchronous_motor = 41;
+    d_sim.user.mode_select_synchronous_motor = 70;
     d_sim.user.mode_select_induction_motor = 32;
     d_sim.user.INVERTER_NONLINEARITY_COMPENSATION_METHOD = 0;
     d_sim.user.Select_exp_operation = 0;
