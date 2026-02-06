@@ -6,9 +6,9 @@ void init_d_sim() {
     d_sim.init.npp = 8;
     d_sim.init.IN = 3;
     d_sim.init.R = 0.61;
-    d_sim.init.Ld = 0.0032000000000000003;
-    d_sim.init.Lq = 0.0032000000000000003;
-    d_sim.init.KE = 0.1;
+    d_sim.init.Ld = 0.00160000;
+    d_sim.init.Lq = 0.00160000;
+    d_sim.init.KE = 0.008213;
     d_sim.init.Rreq = 0.0;
     d_sim.init.Js = 0.00049836;
     d_sim.init.Vdc = 30;
