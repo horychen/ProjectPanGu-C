@@ -732,7 +732,7 @@ void _onlyFOC(REAL theta_d_elec, REAL iAB[2], REAL varOmega){
     //     (*CTRL).o->cmd_uAB[1] = MT2B((*CTRL).o->cmd_uDQ[0], (*CTRL).o->cmd_uDQ[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
     // #endif
 }
-int normal_command =3;
+int normal_command =4;
 void _user_commands(){
     /* RPM GIVEN */
 
@@ -787,6 +787,38 @@ void _user_commands(){
         if ((*CTRL).timebase > 5){
             (*CTRL).i->cmd_varOmega = -50 * RPM_2_MECH_RAD_PER_SEC;
         }
+    }else if (normal_command ==4)
+    {
+            float t = (*CTRL).timebase;
+
+            // cmd in rpm
+            float cmd_rpm = 0.0f;
+
+            if (t <= 0.0f) {
+                cmd_rpm = 0.0f;
+            }
+            else if (t < 2.0f) {
+                // 0~2s: 0 -> 300
+                cmd_rpm = 0.0f + (300.0f - 0.0f) * (t / 2.0f);
+            }
+            else if (t < 4.0f) {
+                // 2~4s: hold 300
+                cmd_rpm = 300.0f;
+            }
+            else if (t < 8.0f) {
+                // 4~8s: 300 -> -300 (4s)
+                cmd_rpm = 300.0f + (-300.0f - 300.0f) * ((t - 4.0f) / 4.0f);
+            }
+            else if (t < 10.0f) {
+                // 8~10s: hold -300
+                cmd_rpm = -300.0f;
+            }
+            else {
+                // >=10s: STEP to 600 and hold
+                cmd_rpm = 600.0f;
+            }
+
+            (*CTRL).i->cmd_varOmega = cmd_rpm * RPM_2_MECH_RAD_PER_SEC;
     }
     
     #if FALSE // configured experiument series

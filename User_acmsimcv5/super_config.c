@@ -8,9 +8,9 @@ void init_d_sim() {
     d_sim.init.R = 0.61;
     d_sim.init.Ld = 0.00160000;
     d_sim.init.Lq = 0.00160000;
-    d_sim.init.KE = 0.008213;
+    d_sim.init.KE = 0.0041065;
     d_sim.init.Rreq = 0.0;
-    d_sim.init.Js = 0.00049836;
+    d_sim.init.Js = 2.4e-05;
     d_sim.init.Vdc = 30;
 
     d_sim.sim.INVERTER_NONLINEARITY = 0;
@@ -23,19 +23,19 @@ void init_d_sim() {
     d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation = FALSE;
     d_sim.FOC.VL_EXE_PER_CL_EXE = 1;
 
-    d_sim.CL.SERIES_KP_D_AXIS = 10.4954386379742;
-    d_sim.CL.SERIES_KI_D_AXIS = 314.65625;
-    d_sim.CL.SERIES_KP_Q_AXIS = 10.084954386379742;
-    d_sim.CL.SERIES_KI_Q_AXIS = 314.65625;
+    d_sim.CL.SERIES_KP_D_AXIS = 8.042477193189871;
+    d_sim.CL.SERIES_KI_D_AXIS = 766.25;
+    d_sim.CL.SERIES_KP_Q_AXIS = 8.042477193189871;
+    d_sim.CL.SERIES_KI_Q_AXIS = 766.25;
     d_sim.CL.LIMIT_DC_BUS_UTILIZATION = 0.96;
 
-    d_sim.VL.SERIES_KP = 0.22058704353118255;
+    d_sim.VL.SERIES_KP = 0.16320624199825218;
     d_sim.VL.SERIES_KI = 22.340214425527417;
     d_sim.VL.LIMIT_OVERLOAD_FACTOR = 1.0;
 
     d_sim.user.verbose = TRUE;
     d_sim.user.who_is_user = 1601;
-    d_sim.user.mode_select_synchronous_motor = 70;
+    d_sim.user.mode_select_synchronous_motor = 41;
     d_sim.user.mode_select_induction_motor = 32;
     d_sim.user.INVERTER_NONLINEARITY_COMPENSATION_METHOD = 0;
     d_sim.user.Select_exp_operation = 0;
