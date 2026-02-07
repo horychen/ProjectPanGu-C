@@ -4236,7 +4236,7 @@ void Main_parksul2014_FADO(){
         PLLN_EKF.emf_ampl = 0;
         PLLN_EKF.x[0] = 0;
         PLLN_EKF.x[1] = 0;
-        PLLN_EKF.kp = 600;
+        PLLN_EKF.kp = 100;
         PLLN_EKF.ki = 300;
         PLLN_EKF.emf_recon[0] = 0;
         PLLN_EKF.emf_recon[1] = 0;
@@ -4280,7 +4280,7 @@ void Main_parksul2014_FADO(){
 
         // Proportional + integral output
         REAL OMEGA = PLLN_EKF.kp * PLLN_EKF.epsilon_e + PLLN_EKF.omega_integral;
-        PLLN_EKF.omega_elec = _lpf(OMEGA, PLLN_EKF.omega_elec, 0.00313); // TAU_OFF = 5ms from experiment
+        PLLN_EKF.omega_elec = _lpf(OMEGA, PLLN_EKF.omega_elec, 0.03046); // TAU_OFF = 5ms from experiment
         // PLLN_EKF.omega_elec = PLLN_EKF.kp * PLLN_EKF.epsilon_e + PLLN_EKF.omega_integral;
         // Optional: clamp omega
         // const REAL omega_min = -2e4, omega_max = 2e4;

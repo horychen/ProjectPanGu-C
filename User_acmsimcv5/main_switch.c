@@ -732,7 +732,7 @@ void _onlyFOC(REAL theta_d_elec, REAL iAB[2], REAL varOmega){
     //     (*CTRL).o->cmd_uAB[1] = MT2B((*CTRL).o->cmd_uDQ[0], (*CTRL).o->cmd_uDQ[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
     // #endif
 }
-int normal_command =4;
+int normal_command =1;
 void _user_commands(){
     /* RPM GIVEN */
 
@@ -1272,42 +1272,54 @@ int  main_switch(long mode_select){
             OBSV.theta_d = (*CTRL).i->theta_d_elec;
             while(OBSV.theta_d > M_PI) OBSV.theta_d  -= 2*M_PI;
             while(OBSV.theta_d < -M_PI) OBSV.theta_d += 2*M_PI;
-            
-            #if (AFE_44_ORTEGA_2011)
-            //     FOC_with_vecocity_control(FE.Ortega.theta_d, 
-            //         PLLN.omega_elec * MOTOR.npp_inv, 
-            //         (*CTRL).i->cmd_varOmega, 
-            //         (*CTRL).i->cmd_iDQ, 
-            //         (*CTRL).i->iAB
-            //     );
-            #elif (AFE_16_HE_EKF_2025)
-                FOC_with_vecocity_control(FE.HE_EKF.theta_d, 
-                PLLN_EKF.omega_elec * MOTOR.npp_inv, 
-                (*CTRL).i->cmd_varOmega, 
-                (*CTRL).i->cmd_iDQ, 
-                (*CTRL).i->iAB
-            );
-            #elif (AFE_16_HE_SE3_2025)
-                FOC_with_vecocity_control(FE.HE_SE3.theta_d, 
-                FE.HE_SE3.omega_elec * MOTOR.npp_inv, 
-                (*CTRL).i->cmd_varOmega, 
-                (*CTRL).i->cmd_iDQ, 
-                (*CTRL).i->iAB
-            );
-            #elif (AFE_16_HE_SE3_EKF_2025)
-                FOC_with_vecocity_control(FE.HE_SE3_EKF.theta_d, 
-                FE.HE_SE3_EKF.omega_elec * MOTOR.npp_inv, 
-                (*CTRL).i->cmd_varOmega, 
-                (*CTRL).i->cmd_iDQ, 
-                (*CTRL).i->iAB
-            );
-            #else         
+            if ((*CTRL).timebase < 5.0f){
                 FOC_with_vecocity_control((*CTRL).i->theta_d_elec,
-                (*CTRL).i->varOmega,
-                (*CTRL).i->cmd_varOmega,
-                (*CTRL).i->cmd_iDQ,
-                (*CTRL).i->iAB);
-            #endif
+                    (*CTRL).i->varOmega,
+                    (*CTRL).i->cmd_varOmega,
+                    (*CTRL).i->cmd_iDQ,
+                    (*CTRL).i->iAB);
+            }else{
+                FOC_with_vecocity_control(FE.HE_EKF.theta_d, 
+                    PLLN_EKF.omega_elec * MOTOR.npp_inv, 
+                    (*CTRL).i->cmd_varOmega, 
+                    (*CTRL).i->cmd_iDQ, 
+                    (*CTRL).i->iAB);
+            }
+            // #if (AFE_44_ORTEGA_2011)
+            // //     FOC_with_vecocity_control(FE.Ortega.theta_d, 
+            // //         PLLN.omega_elec * MOTOR.npp_inv, 
+            // //         (*CTRL).i->cmd_varOmega, 
+            // //         (*CTRL).i->cmd_iDQ, 
+            // //         (*CTRL).i->iAB
+            // //     );
+            // #elif (AFE_16_HE_EKF_2025)
+            //     FOC_with_vecocity_control(FE.HE_EKF.theta_d, 
+            //     PLLN_EKF.omega_elec * MOTOR.npp_inv, 
+            //     (*CTRL).i->cmd_varOmega, 
+            //     (*CTRL).i->cmd_iDQ, 
+            //     (*CTRL).i->iAB
+            // );
+            // #elif (AFE_16_HE_SE3_2025)
+            //     FOC_with_vecocity_control(FE.HE_SE3.theta_d, 
+            //     FE.HE_SE3.omega_elec * MOTOR.npp_inv, 
+            //     (*CTRL).i->cmd_varOmega, 
+            //     (*CTRL).i->cmd_iDQ, 
+            //     (*CTRL).i->iAB
+            // );
+            // #elif (AFE_16_HE_SE3_EKF_2025)
+            //     FOC_with_vecocity_control(FE.HE_SE3_EKF.theta_d, 
+            //     FE.HE_SE3_EKF.omega_elec * MOTOR.npp_inv, 
+            //     (*CTRL).i->cmd_varOmega, 
+            //     (*CTRL).i->cmd_iDQ, 
+            //     (*CTRL).i->iAB
+            // );
+            // #else         
+            //     FOC_with_vecocity_control((*CTRL).i->theta_d_elec,
+            //     (*CTRL).i->varOmega,
+            //     (*CTRL).i->cmd_varOmega,
+            //     (*CTRL).i->cmd_iDQ,
+            //     (*CTRL).i->iAB);
+            // #endif
 
             #endif
         break;
