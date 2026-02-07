@@ -1396,8 +1396,8 @@ void rk4_init(){
     
     void  init_HE_EKF_no_sensor_correct(){
         /* Define EKF parameters */
-        FE.HE_EKF_no_sensor_correct.B_cova = 10000; // Covariance matrix of curent sensor bias noise, noises being 0.01 A in alpha beta direction
-        FE.HE_EKF_no_sensor_correct.Q_cova = 0.000001; // Covariance of psudo measurement, noise in alpha beta direction
+        FE.HE_EKF_no_sensor_correct.B_cova = 1000.0; // Covariance matrix of curent sensor bias noise, noises being 0.01 A in alpha beta direction
+        FE.HE_EKF_no_sensor_correct.Q_cova = 9.99999996e-12; // Covariance of psudo measurement, noise in alpha beta direction
         // FE.HE_EKF.inital_angle = 0; // initial zero angle for flux, in radian
         FE.HE_EKF_no_sensor_correct.initial_angle = 0; // initial zero angle for flux, in radian
         FE.HE_EKF_no_sensor_correct.initial_Covariance  = 0.02; // initial flux norm, in Wb
@@ -4236,7 +4236,7 @@ void Main_parksul2014_FADO(){
         PLLN_EKF.emf_ampl = 0;
         PLLN_EKF.x[0] = 0;
         PLLN_EKF.x[1] = 0;
-        PLLN_EKF.kp = 100;
+        PLLN_EKF.kp = 600;
         PLLN_EKF.ki = 300;
         PLLN_EKF.emf_recon[0] = 0;
         PLLN_EKF.emf_recon[1] = 0;
@@ -4279,8 +4279,9 @@ void Main_parksul2014_FADO(){
         // if (PLLN_EKF.omega_integral < omega_int_min) PLLN_EKF.omega_integral = omega_int_min;
 
         // Proportional + integral output
-        PLLN_EKF.omega_elec = PLLN_EKF.kp * PLLN_EKF.epsilon_e + PLLN_EKF.omega_integral;
-
+        REAL OMEGA = PLLN_EKF.kp * PLLN_EKF.epsilon_e + PLLN_EKF.omega_integral;
+        PLLN_EKF.omega_elec = _lpf(OMEGA, PLLN_EKF.omega_elec, 0.00313); // TAU_OFF = 5ms from experiment
+        // PLLN_EKF.omega_elec = PLLN_EKF.kp * PLLN_EKF.epsilon_e + PLLN_EKF.omega_integral;
         // Optional: clamp omega
         // const REAL omega_min = -2e4, omega_max = 2e4;
         // if (PLLN_EKF.omega_elec > omega_max) PLLN_EKF.omega_elec = omega_max;

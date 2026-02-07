@@ -292,7 +292,7 @@ void main_adc_measurement(){
     Axis->terminal_voltage[0] = Axis->adc_voltage[0]*10.0; // A phase to GND
     Axis->terminal_voltage[1] = Axis->adc_voltage[1]*10.0; // B phase to GND
     Axis->terminal_voltage[2] = Axis->adc_voltage[2]*10.0; // C phase to GND
-    Axis->neutral_voltage = (Axis->terminal_voltage[0] + Axis->terminal_voltage[1] + Axis->terminal_voltage[2]) / 3.0;
+    Axis->neutral_voltage = (Axis->terminal_voltage[0] + Axis->terminal_voltage[1] + Axis->terminal_voltage[2]) * 0.3333333333;
     Axis->phase_voltage[0] = Axis->terminal_voltage[0] - Axis->neutral_voltage;
     Axis->phase_voltage[1] = Axis->terminal_voltage[1] - Axis->neutral_voltage;
     Axis->phase_voltage[2] = Axis->terminal_voltage[2] - Axis->neutral_voltage;
@@ -1227,7 +1227,7 @@ void cla_test_codes(){
 
 // extern REAL wubo_debug_motor_enc_dirc[2];
 //int wubo_debug_tools[10];
-int yzztest = 1;
+int yzztest = -1;
 #if ENCODER_TYPE != INCREMENTAL_ENCODER_QEP
 
 void measurement_position_count_axisCnt0(){

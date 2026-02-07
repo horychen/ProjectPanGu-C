@@ -1272,6 +1272,7 @@ int  main_switch(long mode_select){
             OBSV.theta_d = (*CTRL).i->theta_d_elec;
             while(OBSV.theta_d > M_PI) OBSV.theta_d  -= 2*M_PI;
             while(OBSV.theta_d < -M_PI) OBSV.theta_d += 2*M_PI;
+            
             #if (AFE_44_ORTEGA_2011)
             //     FOC_with_vecocity_control(FE.Ortega.theta_d, 
             //         PLLN.omega_elec * MOTOR.npp_inv, 
