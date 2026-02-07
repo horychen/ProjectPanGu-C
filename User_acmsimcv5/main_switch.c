@@ -789,36 +789,34 @@ void _user_commands(){
         }
     }else if (normal_command ==4)
     {
-            float t = (*CTRL).timebase;
+        float t = (*CTRL).timebase;
 
-            // cmd in rpm
-            float cmd_rpm = 0.0f;
+        // cmd in rpm
+        float cmd_rpm = 0.0f;
 
-            if (t <= 0.0f) {
-                cmd_rpm = 0.0f;
-            }
-            else if (t < 2.0f) {
-                // 0~2s: 0 -> 300
-                cmd_rpm = 0.0f + (300.0f - 0.0f) * (t / 2.0f);
-            }
-            else if (t < 4.0f) {
-                // 2~4s: hold 300
-                cmd_rpm = 300.0f;
-            }
-            else if (t < 8.0f) {
-                // 4~8s: 300 -> -300 (4s)
-                cmd_rpm = 300.0f + (-300.0f - 300.0f) * ((t - 4.0f) / 4.0f);
-            }
-            else if (t < 10.0f) {
-                // 8~10s: hold -300
-                cmd_rpm = -300.0f;
-            }
-            else {
-                // >=10s: STEP to 600 and hold
-                cmd_rpm = 600.0f;
-            }
+        if (t < 0.0f) {
+            cmd_rpm = 0.0f;
+        }
+        else if (t < 2.0f) {
+            // STEP to 300 rpm, hold 2s
+            cmd_rpm = 200.0f;
+        }
+        else if (t < 4.0f) {
+            // 2~4s: 300 -> -300 (2s linear)
+            cmd_rpm = 200.0f + (-200.0f - 200.0f) * ((t - 2.0f) / 2.0f);
+        }
+        else if (t < 6.0f) {
+            // 4~6s: hold -300 rpm
+            cmd_rpm = -200.0f;
+        }
+        else {
+            // >=6s: STEP to 400 rpm and hold
+            cmd_rpm = 200.0f;
+        }
 
-            (*CTRL).i->cmd_varOmega = cmd_rpm * RPM_2_MECH_RAD_PER_SEC;
+        (*CTRL).i->cmd_varOmega = cmd_rpm * RPM_2_MECH_RAD_PER_SEC;
+
+
     }
     
     #if FALSE // configured experiument series

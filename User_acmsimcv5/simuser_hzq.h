@@ -125,7 +125,7 @@
     #define AFE_42_BandP 0
     #define AFE_43_SuperTwistingA 0
     #define AFE_44_ORTEGA_2011 0
-    #define AFE_16_HE_EKF_2025 1
+    #define AFE_16_HE_EKF_2025 0
     #define AFE_16_HE_SE3_2025 0
     #define AFE_16_HE_SE3_EKF_2025 0
     #define AFE_45_CMwithDynamicCurrent 0

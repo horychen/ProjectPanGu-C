@@ -86,13 +86,13 @@ void main(void){
     init_debug();      // do this only once here
 
     // init_HE_EKF_no_sensor_correct();
-    // init_HE_EKF();
     // AFE_16_HE_SE3_2025
     // init_HE_SE3();
     
     init_experiment(); // 控制器结构体初始化（同实验）
-    init_HE_SE3_EKF();
-    init_HE_pure_integration();
+    init_HE_EKF();
+    // init_HE_SE3_EKF();
+    // init_HE_pure_integration();
     
     #if WHO_IS_USER == USER_BEZIER || WHO_IS_USER == USER_WB
         get_bezier_points(); // for testing Cury the leg trajectgory tracking 
@@ -873,7 +873,14 @@ void init_experiment_AD_gain_and_offset()
             if(axisCnt==1){
                 Axis->pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = MOTOR2_OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
             }
-        #elif ENCODER_TYPE == ABSOLUTE_EBCODER_SMK60S
+        #elif ENCODER_TYPE == ABSOLUTE_ENCODER_SMK60S
+            if(axisCnt==0){
+                Axis->pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = MOTOR1_OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
+            }
+            if(axisCnt==1){
+                Axis->pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = MOTOR2_OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
+            }
+        #elif ENCODER_TYPE == ABSOLUTE_ENCODER_SLICE_MOTOR
             if(axisCnt==0){
                 Axis->pCTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis = MOTOR1_OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS;
             }
@@ -1220,7 +1227,7 @@ void cla_test_codes(){
 
 // extern REAL wubo_debug_motor_enc_dirc[2];
 //int wubo_debug_tools[10];
-
+int yzztest = 1;
 #if ENCODER_TYPE != INCREMENTAL_ENCODER_QEP
 
 void measurement_position_count_axisCnt0(){
@@ -1228,14 +1235,16 @@ void measurement_position_count_axisCnt0(){
             position_count_SCI_fromCPU2 = position_count_SCI_shank_fromCPU2;
     #elif (ENCODER_TYPE == ABSOLUTE_ENCODER_SCI_HIP)
             position_count_SCI_fromCPU2 = position_count_SCI_hip_fromCPU2;
+    #elif (ENCODER_TYPE == ABSOLUTE_ENCODER_SLICE_MOTOR)
+            position_count_SCI_fromCPU2 = position_count_SCI_hip_fromCPU2;
     #endif
 
     #if NUMBER_OF_AXES == 2
-        // position_count_SCI_fromCPU2 = position_count_SCI_shank_fromCPU2;
-        position_count_SCI_fromCPU2 = Axis->SCI_Position_Count_fromCPU2;
+        position_count_SCI_fromCPU2 = position_count_SCI_hip_fromCPU2;
+        // position_count_SCI_fromCPU2 = Axis->SCI_Position_Count_fromCPU2;
     #endif
         // 正电流导致编码器读数增大：
-        CTRL->enc->encoder_abs_cnt = positive_current_QPOSCNT_counting_down * ( (int32)position_count_SCI_fromCPU2 - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis );
+        CTRL->enc->encoder_abs_cnt = yzztest * ( (int32)position_count_SCI_fromCPU2 - CTRL->enc->OffsetCountBetweenIndexAndUPhaseAxis );
     }
 
 

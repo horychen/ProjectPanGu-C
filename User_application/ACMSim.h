@@ -112,8 +112,8 @@ REAL difference_between_two_angles(REAL first, REAL second);
 #define RESOLVER_2 6
 #define ABSOLUTE_ENCODER_MD1 7
 #define INCREMENTAL_ENCODER_QEP 8
-#define ABSOLUTE_EBCODER_SMK60S 9
-
+#define ABSOLUTE_ENCODER_SMK60S 9
+#define ABSOLUTE_ENCODER_SLICE_MOTOR 10
 
 //#define ENCODER_TYPE INCREMENTAL_ENCODER_QEP
 //#define ENCODER_TYPE ABSOLUTE_ENCODER_MD1 // ABSOLUTE_ENCODER_SCI_SHANK
@@ -121,7 +121,7 @@ REAL difference_between_two_angles(REAL first, REAL second);
 #ifdef _MOTOR_GROUP
     // #define ENCODER_TYPE ABSOLUTE_EBCODER_SMK60S
     // #define ENCODER_TYPE ABSOLUTE_ENCODER_MD1
-    #define ENCODER_TYPE INCREMENTAL_ENCODER_QEP
+    #define ENCODER_TYPE ABSOLUTE_ENCODER_SLICE_MOTOR
     // #define ENCODER_TYPE ABSOLUTE_ENCODER_SCI_A // sci-A HIP
     // #define ENCODER_TYPE ABSOLUTE_ENCODER_SCI_B // sci-B SHANK
 #endif
@@ -166,7 +166,7 @@ REAL difference_between_two_angles(REAL first, REAL second);
 #define SYSTEM_QEP_QPOSMAX_PLUS_1 (SYSTEM_QEP_PULSES_PER_REV)
 #define ABS_ENC_SCI_A__OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS   4106211 // WB tunned with id_cmd = 3A in 20250418
 #define ABS_ENC_SCI_B__OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS   340755  // wait for a value     
-#define positive_current_QPOSCNT_counting_down 1 // æ­£å�‘æ—‹è½¬çš„ç”µæµ�å¯¼è‡´å¢žé‡�å¼�ç¼–ç �å™¨QEPè¯»æ•°å‡�å°‘ åˆ™å¡« -1ï¼Œå�¦åˆ™é»˜è®¤ä¸º 1ã€‚
+#define positive_current_QPOSCNT_counting_down -1 // æ­£å�‘æ—‹è½¬çš„ç”µæµ�å¯¼è‡´å¢žé‡�å¼�ç¼–ç �å™¨QEPè¯»æ•°å‡�å°‘ åˆ™å¡« -1ï¼Œå�¦åˆ™é»˜è®¤ä¸º 1ã€‚
 
 #elif (ENCODER_TYPE == ABSOLUTE_ENCODER_SCI_SHANK) || (ENCODER_TYPE == ABSOLUTE_ENCODER_SCI_HIP)
 // F130-16-KV20
@@ -224,7 +224,7 @@ REAL difference_between_two_angles(REAL first, REAL second);
 
     // MOTOR1 110228 wb tuned with id_cmd = 3A, 20240902
     // MOTOR2 5151 wb tuned with id_cmd = 3A, 20240902
-#elif ENCODER_TYPE == ABSOLUTE_EBCODER_SMK60S
+#elif ENCODER_TYPE == ABSOLUTE_ENCODER_SMK60S
     #define SYSTEM_QEP_PULSES_PER_REV (131072) // 2^17
     #define SYSTEM_QEP_REV_PER_PULSE (7.6293945e-6) // 1 / 2^17
     #define CNT_2_ELEC_RAD (SYSTEM_QEP_REV_PER_PULSE * 2 * M_PI * INIT_NPP)
@@ -232,6 +232,21 @@ REAL difference_between_two_angles(REAL first, REAL second);
     #define SYSTEM_QEP_QPOSMAX_PLUS_1 (SYSTEM_QEP_PULSES_PER_REV)
     #define MOTOR1_OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS 13074
     #define MOTOR2_OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS 13074
+    #define positive_current_QPOSCNT_counting_down (-1) // æ­£å�‘æ—‹è½¬çš„ç”µæµ�å¯¼è‡´å¢žé‡�å¼�ç¼–ç �å™¨QEPè¯»æ•°å‡�å°‘ åˆ™å¡« -1ï¼Œå�¦åˆ™é»˜è®¤ä¸º 1ã€‚
+    // 30144 wb tuned with id_cmd = 2A, 20240715
+    // MOTOR1 30190 wb tuned with id_cmd = 3A, 20240719
+    // MOTOR2 41668 wb tuned with id_cmd = 3A, 20240719
+
+    // MOTOR1 110228 wb tuned with id_cmd = 3A, 20240902
+    // MOTOR2 5151 wb tuned with id_cmd = 3A, 20240902
+#elif ENCODER_TYPE == ABSOLUTE_ENCODER_SLICE_MOTOR
+    #define SYSTEM_QEP_PULSES_PER_REV (524288) // 2^19
+    #define SYSTEM_QEP_REV_PER_PULSE (1.9073486328125e-6) // 1 / 2^19
+    #define CNT_2_ELEC_RAD (SYSTEM_QEP_REV_PER_PULSE * 2 * M_PI * INIT_NPP)
+    #define SYSTEM_QEP_QPOSMAX (SYSTEM_QEP_PULSES_PER_REV - 1)
+    #define SYSTEM_QEP_QPOSMAX_PLUS_1 (SYSTEM_QEP_PULSES_PER_REV)
+    #define MOTOR1_OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS 307774
+    #define MOTOR2_OFFSET_COUNT_BETWEEN_ENCODER_INDEX_AND_U_PHASE_AXIS 307774
     #define positive_current_QPOSCNT_counting_down (-1) // æ­£å�‘æ—‹è½¬çš„ç”µæµ�å¯¼è‡´å¢žé‡�å¼�ç¼–ç �å™¨QEPè¯»æ•°å‡�å°‘ åˆ™å¡« -1ï¼Œå�¦åˆ™é»˜è®¤ä¸º 1ã€‚
     // 30144 wb tuned with id_cmd = 2A, 20240715
     // MOTOR1 30190 wb tuned with id_cmd = 3A, 20240719

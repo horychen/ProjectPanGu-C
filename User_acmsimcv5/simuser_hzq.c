@@ -2717,11 +2717,11 @@ void rk4_init(){
         // AFE_44_ORTEGA_2011
         // main_ortega_2011();
         // AFE_16_HE_EKF_2025
-        step_HE_pure_integration();
+        // step_HE_pure_integration();
         // step_HE_EKF_no_sensor_correct();
-        // step_HE_EKF();
+        step_HE_EKF();
         // step_HE_SE3();
-        step_HE_SE3_EKF();
+        // step_HE_SE3_EKF();
         
         // MainFE_HUWU_1998();
         #if AFE_43_SuperTwistingA
@@ -2746,11 +2746,11 @@ void rk4_init(){
 
     void init_FE(){
         // init_ortega();
-        sub_init_HE_pure_integration();
+        // sub_init_HE_pure_integration();
         // sub_init_HE_EKF_no_sensor_correct();
-        // sub_init_HE_EKF();
+        sub_init_HE_EKF();
         // sub_init_HE_SE3();
-        sub_init_HE_SE3_EKF();
+        // sub_init_HE_SE3_EKF();
 
         // init_FE_huwu();
         #if AFE_38_OUTPUT_ERROR_CLOSED_LOOP
@@ -4327,7 +4327,7 @@ void pmsm_observers(){
     // if (AFE_44_ORTEGA_2011)
     // Main_PLL_norm_Psi(FE.Ortega.psi_2);
     // if (AFE_16_HE_EKF_2025)
-    // Main_PLL_norm_Psi_EKF(FE.HE_EKF.flux);
+    Main_PLL_norm_Psi_EKF(FE.HE_EKF.flux);
     // if (AFE_16_HE_SE3_2025)
     // Main_PLL_norm_Psi(FE.HE_SE3.flux_postrior);
 

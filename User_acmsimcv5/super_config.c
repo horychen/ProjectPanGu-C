@@ -29,7 +29,7 @@ void init_d_sim() {
     d_sim.CL.SERIES_KI_Q_AXIS = 766.25;
     d_sim.CL.LIMIT_DC_BUS_UTILIZATION = 0.96;
 
-    d_sim.VL.SERIES_KP = 0.16320624199825218;
+    d_sim.VL.SERIES_KP = 0.1;
     d_sim.VL.SERIES_KI = 22.340214425527417;
     d_sim.VL.LIMIT_OVERLOAD_FACTOR = 1.0;
 
