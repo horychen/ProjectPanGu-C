@@ -198,7 +198,7 @@ void init_debug(){
         /* Commission  */
         // (*debug).mode_select = MODE_SELECT_COMMISSIONING;                         //  9
 
-    (*debug).Overwrite_Current_Frequency = 50.0;
+    (*debug).Overwrite_Current_Frequency = 26.6782;
     (*debug).Overwrite_theta_d           = 0.0;
 
     
@@ -732,7 +732,7 @@ void _onlyFOC(REAL theta_d_elec, REAL iAB[2], REAL varOmega){
     //     (*CTRL).o->cmd_uAB[1] = MT2B((*CTRL).o->cmd_uDQ[0], (*CTRL).o->cmd_uDQ[1], (*CTRL).s->cosT, (*CTRL).s->sinT);
     // #endif
 }
-int normal_command =1;
+int normal_command =4;
 void _user_commands(){
     /* RPM GIVEN */
 
@@ -797,26 +797,20 @@ void _user_commands(){
         if (t < 0.0f) {
             cmd_rpm = 0.0f;
         }
-        else if (t < 2.0f) {
-            // STEP to 300 rpm, hold 2s
+        else if (t < 6.0f) {
+            // STEP to 200 rpm, hold 6s
             cmd_rpm = 200.0f;
         }
-        else if (t < 4.0f) {
-            // 2~4s: 300 -> -300 (2s linear)
-            cmd_rpm = 200.0f + (-200.0f - 200.0f) * ((t - 2.0f) / 2.0f);
-        }
-        else if (t < 6.0f) {
-            // 4~6s: hold -300 rpm
-            cmd_rpm = -200.0f;
+        else if (t < 8.0f) {
+            // 6~8s: 200 -> 300 (2s linear)
+            cmd_rpm = 200.0f + (400.0f - 200.0f) * ((t - 6.0f) / 2.0f);
         }
         else {
-            // >=6s: STEP to 400 rpm and hold
-            cmd_rpm = 200.0f;
+            // >=8s: hold 300 rpm
+            cmd_rpm = 400.0f;
         }
 
         (*CTRL).i->cmd_varOmega = cmd_rpm * RPM_2_MECH_RAD_PER_SEC;
-
-
     }
     
     #if FALSE // configured experiument series
@@ -1272,12 +1266,8 @@ int  main_switch(long mode_select){
             OBSV.theta_d = (*CTRL).i->theta_d_elec;
             while(OBSV.theta_d > M_PI) OBSV.theta_d  -= 2*M_PI;
             while(OBSV.theta_d < -M_PI) OBSV.theta_d += 2*M_PI;
-            if ((*CTRL).timebase < 5.0f){
-                FOC_with_vecocity_control((*CTRL).i->theta_d_elec,
-                    (*CTRL).i->varOmega,
-                    (*CTRL).i->cmd_varOmega,
-                    (*CTRL).i->cmd_iDQ,
-                    (*CTRL).i->iAB);
+            if ((*CTRL).timebase < 4.0f){
+                _pseudoEncoder();
             }else{
                 FOC_with_vecocity_control(FE.HE_EKF.theta_d, 
                     PLLN_EKF.omega_elec * MOTOR.npp_inv, 
