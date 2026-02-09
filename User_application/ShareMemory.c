@@ -184,21 +184,6 @@ void write_DAC_buffer(){
 //        #endif
 
 
-        #if WHO_IS_USER == USER_WB // for Teleoperation
-            (*Axis4DAC).dac_watch[71] = (CTRL_1.i->varTheta - M_PI) * ONE_OVER_2PI * 2; // position
-            (*Axis4DAC).dac_watch[72] = (CTRL_2.i->varTheta - M_PI) * ONE_OVER_2PI * 2; // position
-            (*Axis4DAC).dac_watch[73] = CTRL_1.enc->varOmega * MECH_RAD_PER_SEC_2_RPM * 0.002;     // Speed
-            (*Axis4DAC).dac_watch[74] = CTRL_2.enc->varOmega * MECH_RAD_PER_SEC_2_RPM * 0.002;     // Speed
-            (*Axis4DAC).dac_watch[75] = CTRL_1.i->iDQ[1] * 0.1;         // iQ
-            (*Axis4DAC).dac_watch[76] = CTRL_2.i->iDQ[1] * 0.1;         // iQ
-            (*Axis4DAC).dac_watch[77] = CTRL_1.i->cmd_iDQ[1] * 0.1;     // CMD_iQ
-            (*Axis4DAC).dac_watch[78] = CTRL_2.i->cmd_iDQ[1] * 0.1;     // CMD_iQ
-            // (*Axis4DAC).dac_watch[71] = CTRL_1.i->cmd_varOmega * MECH_RAD_PER_SEC_2_RPM * 0.002;
-            // (*Axis4DAC).dac_watch[72] = CTRL_2.i->cmd_varOmega * MECH_RAD_PER_SEC_2_RPM * 0.002;
-            // (*Axis4DAC).dac_watch[73] = CTRL_1.enc->varOmega * MECH_RAD_PER_SEC_2_RPM * 0.002;
-            // (*Axis4DAC).dac_watch[74] = CTRL_2.enc->varOmega * MECH_RAD_PER_SEC_2_RPM * 0.002;
-        #endif
-
         # if ENABLE_COMMISSIONING == TRUE
             (*Axis4DAC).dac_watch[66] = COMM.Js * 1e3;
             (*Axis4DAC).dac_watch[67] = COMM.current_command*0.2;
@@ -217,29 +202,28 @@ void write_DAC_buffer(){
             (*Axis4DAC).dac_watch[16] = FE.htz.u_offset[1]*2;
             (*Axis4DAC).dac_watch[34] = FE.htz.sat_min_time[0]*100;
             (*Axis4DAC).dac_watch[35] = FE.htz.sat_min_time[1]*100;
-            (*Axis4DAC).dac_watch[51] = AFE_USED.theta_d *0.1;
-            (*Axis4DAC).dac_watch[58] = (*CTRL).motor->KE;
-            (*Axis4DAC).dac_watch[59] = (*CTRL).motor->Lq * 100;
-            (*Axis4DAC).dac_watch[61] = (*CTRL).motor->R *0.1;
-            (*Axis4DAC).dac_watch[62] = FE.htz.theta_d*0.1;
-//            (*Axis4DAC).dac_watch[63] = FE.clfe4PMSM.theta_d*0.1;
-            // (*Axis4DAC).dac_watch[64] = FE.AFEOE.psi_2[0]*0.25;
-            // (*Axis4DAC).dac_watch[65] = FE.AFEOE.psi_2[1]*0.25;
-            (*Axis4DAC).dac_watch[66] = (*CTRL).motor->Lq;
-            (*Axis4DAC).dac_watch[67] = (*CTRL).motor->R;
-            (*Axis4DAC).dac_watch[68] = OBSV.theta_d*0.1;
-//            (*Axis4DAC).dac_watch[69] = FE.Bernard.theta_d*0.1;
-//            (*Axis4DAC).dac_watch[70] = FE.clfe4PMSM.psi_2[0] *0.25;
-//            (*Axis4DAC).dac_watch[71] = FE.clfe4PMSM.psi_2[1] *0.25;
-//            (*Axis4DAC).dac_watch[72] = FE.clfe4PMSM.theta_d * 0.1;
-//            (*Axis4DAC).dac_watch[73] = FE.clfe4PMSM.theta_e * 0.1;
-            (*Axis4DAC).dac_watch[74] = (*CTRL).i->theta_d_elec * 0.1;
-//            (*Axis4DAC).dac_watch[75] = FE.Bernard.psi_2[0]*0.25;
-//            (*Axis4DAC).dac_watch[76] = FE.Bernard.psi_2[1]*0.25;
-//            (*Axis4DAC).dac_watch[77] = FE.Bernard.theta_e * 0.1;
-            (*Axis4DAC).dac_watch[77] = OBSV.nsoaf.xOmg * ELEC_RAD_PER_SEC_2_RPM * 0.002;;
-            // (*Axis4DAC).dac_watch[78] = FE.AFEOE.theta_e * 0.1;
-            // (*Axis4DAC).dac_watch[79] = FE.AFEOE.theta_d*0.1;
+            (*Axis4DAC).dac_watch[51] = AFE_USED.theta_d * 0.1;
+            (*Axis4DAC).dac_watch[58] = CTRL->sc->iAB[0] * 0.05;
+            (*Axis4DAC).dac_watch[59] = CTRL->sc->iAB[1] * 0.05;
+            (*Axis4DAC).dac_watch[61] = CTRL->sc->P_disX;
+            (*Axis4DAC).dac_watch[62] = CTRL->sc->I_disX;
+            (*Axis4DAC).dac_watch[63] = CTRL->sc->D_disX;
+            (*Axis4DAC).dac_watch[64] = CTRL->sc->cmd_FX;
+            (*Axis4DAC).dac_watch[65] = CTRL->sc->P_disY;
+            (*Axis4DAC).dac_watch[66] = CTRL->sc->I_disY;
+            (*Axis4DAC).dac_watch[67] = CTRL->sc->D_disY;
+            (*Axis4DAC).dac_watch[68] = CTRL->sc->cmd_FY;
+            (*Axis4DAC).dac_watch[69] = CTRL->sc->cmd_disX;
+            (*Axis4DAC).dac_watch[70] = CTRL->sc->X_disp_measured;
+            (*Axis4DAC).dac_watch[71] = CTRL->sc->cmd_disY;
+            (*Axis4DAC).dac_watch[76] = CTRL->sc->Y_disp_measured;
+            (*Axis4DAC).dac_watch[72] = CTRL->sc->cmd_iAB[0] * 0.05; 
+            (*Axis4DAC).dac_watch[73] = CTRL->sc->cmd_iAB[1] * 0.05; 
+            (*Axis4DAC).dac_watch[74] = CTRL->sc->X_disp_measured * 0.1;
+            (*Axis4DAC).dac_watch[75] = CTRL->sc->Y_disp_measured * 0.1;
+            (*Axis4DAC).dac_watch[77] = Axis->adc_voltage[3] * 0.1;
+            (*Axis4DAC).dac_watch[78] = Axis->adc_voltage[4] * 0.1;
+            (*Axis4DAC).dac_watch[79] = Axis->adc_voltage[5] * 0.1; 
 
         #endif
 
@@ -404,6 +388,36 @@ void write_DAC_buffer(){
             (*Axis4DAC).channels[5] = 75;  // FE.HE_EKF.theta_d * ONE_OVER_60 * ONE_OVER_60 * 10; // unit : degree;
             (*Axis4DAC).channels[6] = 76; 
             (*Axis4DAC).channels[7] = 77; 
+        }else if((*Axis4DAC).channels_preset==15){(*Axis4DAC).channels_preset=0;//suspension test
+            /* Kalman Filter For Sensorless Control */
+            (*Axis4DAC).channels[0] = 77; // PID_Speed->Ref
+            (*Axis4DAC).channels[1] = 78; // (*CTRL).enc->varOmega * MECH_RAD_PER_SEC_2_RPM
+            (*Axis4DAC).channels[2] = 79; // PLLN.omega_elec * ELEC_RAD_PER_SEC_2_RPM * 001; // -100RPM ~ 100RPM; 
+            (*Axis4DAC).channels[3] = 74; // CTRL->i->theta_d_elec * 0.25 * ONE_OVER_2PI; //; 
+            (*Axis4DAC).channels[4] = 75; // FE.Ortega.theta_d * ONE_OVER_60 * ONE_OVER_60 * 10; // unit : degree; 
+            (*Axis4DAC).channels[5] = 72;  // FE.HE_EKF.theta_d * ONE_OVER_60 * ONE_OVER_60 * 10; // unit : degree;
+            (*Axis4DAC).channels[6] = 73; 
+            (*Axis4DAC).channels[7] = 77; 
+        }else if((*Axis4DAC).channels_preset==16){(*Axis4DAC).channels_preset=0;//suspension test
+            /* Kalman Filter For Sensorless Control */
+            (*Axis4DAC).channels[0] = 72; // PID_Speed->Ref
+            (*Axis4DAC).channels[1] = 70; // (*CTRL).enc->varOmega * MECH_RAD_PER_SEC_2_RPM
+            (*Axis4DAC).channels[2] = 63; // PLLN.omega_elec * ELEC_RAD_PER_SEC_2_RPM * 001; // -100RPM ~ 100RPM; 
+            (*Axis4DAC).channels[3] = 76; // CTRL->i->theta_d_elec * 0.25 * ONE_OVER_2PI; //; 
+            (*Axis4DAC).channels[4] = 65; // FE.Ortega.theta_d * ONE_OVER_60 * ONE_OVER_60 * 10; // unit : degree; 
+            (*Axis4DAC).channels[5] = 67;  // FE.HE_EKF.theta_d * ONE_OVER_60 * ONE_OVER_60 * 10; // unit : degree;
+            (*Axis4DAC).channels[6] = 58; 
+            (*Axis4DAC).channels[7] = 59; 
+        }else if((*Axis4DAC).channels_preset==17){(*Axis4DAC).channels_preset=0;//suspension test
+            /* Kalman Filter For Sensorless Control */
+            (*Axis4DAC).channels[0] = 61; // PID_Speed->Ref
+            (*Axis4DAC).channels[1] = 62; // (*CTRL).enc->varOmega * MECH_RAD_PER_SEC_2_RPM
+            (*Axis4DAC).channels[2] = 63; // PLLN.omega_elec * ELEC_RAD_PER_SEC_2_RPM * 001; // -100RPM ~ 100RPM; 
+            (*Axis4DAC).channels[3] = 64; // CTRL->i->theta_d_elec * 0.25 * ONE_OVER_2PI; //; 
+            (*Axis4DAC).channels[4] = 65; // FE.Ortega.theta_d * ONE_OVER_60 * ONE_OVER_60 * 10; // unit : degree; 
+            (*Axis4DAC).channels[5] = 66;  // FE.HE_EKF.theta_d * ONE_OVER_60 * ONE_OVER_60 * 10; // unit : degree;
+            (*Axis4DAC).channels[6] = 67; 
+            (*Axis4DAC).channels[7] = 68; 
         }
         // [33] = (*CTRL).o->cmd_uDQ[0] * 0.02;
         // [34] = (*CTRL).o->cmd_uDQ[1] * 0.02;

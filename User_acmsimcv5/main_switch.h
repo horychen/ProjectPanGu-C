@@ -46,6 +46,7 @@
 #define MODE_SELECT_GENERATOR                8
 #define MODE_SELECT_NB_MODE                  99
 #define MODE_SELECT_SUSPENSION_CONTROL       100
+#define MODE_SELECT_SUSPENSION_DIS_CONTROL   101
 
 
 typedef struct {
@@ -356,8 +357,15 @@ typedef struct {
     REAL KD;
     REAL cmd_disX;
     REAL cmd_disY;
-    REAL disX;
-    REAL disY;
+    REAL X_disp_form_sensor;
+    REAL Y_disp_form_sensor;
+    REAL G_disp_form_sensor;
+    REAL X_disp_scale;
+    REAL Y_disp_scale;
+    REAL X_disp_offset;
+    REAL Y_disp_offset;
+    REAL X_disp_measured;
+    REAL Y_disp_measured;
     REAL cmd_FX;    
     REAL cmd_FY;
     REAL FX;
@@ -368,8 +376,15 @@ typedef struct {
     REAL I_disY;
     REAL P_disY;
     REAL D_disY;
-    REAL P_disX_Prev;
-    REAL P_disY_Prev;
+    REAL vel_X_filtered;  // Filtered velocity state for X-axis (mm/s)
+    REAL vel_Y_filtered;  // Filtered velocity state for Y-axis (mm/s)
+    // 2.5kHz notch filter states for velocity derivative
+    REAL vel_X_notch_x1, vel_X_notch_x2;  // Input history for X velocity notch
+    REAL vel_X_notch_y1, vel_X_notch_y2;  // Output history for X velocity notch
+    REAL vel_Y_notch_x1, vel_Y_notch_x2;  // Input history for Y velocity notch
+    REAL vel_Y_notch_y1, vel_Y_notch_y2;  // Output history for Y velocity notch
+    REAL disX_Prev_Measured;  // Previous measured position for X-axis derivative (derivative-on-measurement)
+    REAL disY_Prev_Measured;  // Previous measured position for Y-axis derivative (derivative-on-measurement)
     REAL I_curr[2];
     REAL P_curr[2];
     REAL tau;

@@ -11,7 +11,7 @@ void init_d_sim() {
     d_sim.init.KE = 0.114;
     d_sim.init.Rreq = 0.0;
     d_sim.init.Js = 0.00049836;
-    d_sim.init.Vdc = 48;
+    d_sim.init.Vdc =60;
 
     d_sim.sim.INVERTER_NONLINEARITY = 0;
     d_sim.sim.CLTS = 0.0001;
@@ -35,7 +35,7 @@ void init_d_sim() {
 
     d_sim.user.verbose = TRUE;
     d_sim.user.who_is_user = 1601;
-    d_sim.user.mode_select_synchronous_motor = 100;
+    d_sim.user.mode_select_synchronous_motor = 101;
     d_sim.user.mode_select_induction_motor = 32;
     d_sim.user.INVERTER_NONLINEARITY_COMPENSATION_METHOD = 0;
     d_sim.user.Select_exp_operation = 0;

@@ -85,6 +85,7 @@ void main(void){
     init_d_sim();      // do this only once here
     init_debug();      // do this only once here
     init_experiment(); // 控制器结构体初始化（同实验）
+    init_suspension_online();
     #if WHO_IS_USER == USER_BEZIER || WHO_IS_USER == USER_WB
         get_bezier_points(); // for testing Cury the leg trajectgory tracking 
     #endif
@@ -208,6 +209,7 @@ void main_loop(){
 
 void main_measurement(){
     main_adc_measurement();
+    measurement_displacement();
     #if ENCODER_TYPE == INCREMENTAL_ENCODER_QEP
         PostionSpeedMeasurement_MovingAvergage(EQep1Regs.QPOSCNT, CTRL->enc);
     #else
@@ -291,6 +293,63 @@ void main_adc_measurement(){
     (*CTRL).i->uAB[1] = UVW2B_AI(Axis->phase_voltage[0], Axis->phase_voltage[1], Axis->phase_voltage[2]);
     (*CTRL).i->uAB_filtered[0] = _lpf((*CTRL).i->uAB[0],(*CTRL).i->uAB_filtered[0],0.2390572236);
     (*CTRL).i->uAB_filtered[1] = _lpf((*CTRL).i->uAB[1],(*CTRL).i->uAB_filtered[1],0.2390572236);
+    CTRL->sc->X_disp_form_sensor = Axis->adc_voltage[3];
+    CTRL->sc->Y_disp_form_sensor = Axis->adc_voltage[4];
+    CTRL->sc->G_disp_form_sensor = Axis->adc_voltage[5];
+}
+
+void measurement_displacement(){
+    // 1st order low-pass filter at 400 Hz to suppress measurement noise
+    // fc = 400 Hz → τ = 1/(2π*400) ≈ 0.000398 s
+    static REAL X_disp_filtered = 0.0;
+    static REAL Y_disp_filtered = 0.0;
+    const REAL tau_lpf = 0.000398;  // Time constant for 400 Hz cutoff
+    const REAL tau_ts_ratio = tau_lpf / (tau_lpf + CL_TS);  // τ/(τ+Ts)
+    const REAL ts_tau_ratio = CL_TS / (tau_lpf + CL_TS);    // Ts/(τ+Ts)
+    
+    // Notch filter at 1 kHz to remove harmonic noise
+    // H(z) = (1 - 2cos(ω₀)z⁻¹ + z⁻²) / (1 - 2r·cos(ω₀)z⁻¹ + r²z⁻²)
+    // fs = 10 kHz, f₀ = 1 kHz, ω₀ = 2π·f₀·Ts = 0.628 rad, r = 0.95
+    static REAL X_notch_x1 = 0.0, X_notch_x2 = 0.0;  // Input history for X
+    static REAL X_notch_y1 = 0.0, X_notch_y2 = 0.0;  // Output history for X
+    static REAL Y_notch_x1 = 0.0, Y_notch_x2 = 0.0;  // Input history for Y
+    static REAL Y_notch_y1 = 0.0, Y_notch_y2 = 0.0;  // Output history for Y
+    const REAL cos_w0 = 0.809017;   // cos(0.628)
+    const REAL r = 0.95;            // Notch bandwidth parameter
+    const REAL b0 = 1.0;
+    const REAL b1 = -2.0 * cos_w0;  // -1.618
+    const REAL b2 = 1.0;
+    const REAL a1 = -2.0 * r * cos_w0;  // -1.537
+    const REAL a2 = r * r;              // 0.9025
+    
+    // Raw measurement
+    REAL X_disp_raw = ( -CTRL->sc->X_disp_form_sensor + CTRL->sc->G_disp_form_sensor + CTRL->sc->X_disp_offset ) * CTRL->sc->X_disp_scale;
+    REAL Y_disp_raw = ( -CTRL->sc->Y_disp_form_sensor + CTRL->sc->G_disp_form_sensor + CTRL->sc->Y_disp_offset ) * CTRL->sc->Y_disp_scale;
+    
+    // Apply low-pass filter: y[k] = (τ/(τ+Ts)) * y[k-1] + (Ts/(τ+Ts)) * x[k]
+    X_disp_filtered = tau_ts_ratio * X_disp_filtered + ts_tau_ratio * X_disp_raw;
+    Y_disp_filtered = tau_ts_ratio * Y_disp_filtered + ts_tau_ratio * Y_disp_raw;
+    
+    // Apply notch filter to remove 1 kHz harmonic
+    // y[k] = b0·x[k] + b1·x[k-1] + b2·x[k-2] - a1·y[k-1] - a2·y[k-2]
+    REAL X_notch = b0 * X_disp_filtered + b1 * X_notch_x1 + b2 * X_notch_x2 
+                 - a1 * X_notch_y1 - a2 * X_notch_y2;
+    REAL Y_notch = b0 * Y_disp_filtered + b1 * Y_notch_x1 + b2 * Y_notch_x2 
+                 - a1 * Y_notch_y1 - a2 * Y_notch_y2;
+    
+    // Update filter states
+    X_notch_x2 = X_notch_x1;
+    X_notch_x1 = X_disp_filtered;
+    X_notch_y2 = X_notch_y1;
+    X_notch_y1 = X_notch;
+    
+    Y_notch_x2 = Y_notch_x1;
+    Y_notch_x1 = Y_disp_filtered;
+    Y_notch_y2 = Y_notch_y1;
+    Y_notch_y1 = Y_notch;
+    
+    CTRL->sc->X_disp_measured = X_notch;
+    CTRL->sc->Y_disp_measured = Y_notch;
 }
 
 void DISABLE_PWM_OUTPUT(){
@@ -480,8 +539,7 @@ void ENABLE_PWM_OUTPUT(int positionLoopType){
         EPwm1Regs.CMPA.bit.CMPA = CTRL->sc->Duty[0] * 50000000 * CL_TS; // 0-5000，5000表示0%的占空比
         EPwm2Regs.CMPA.bit.CMPA = CTRL->sc->Duty[1] * 50000000 * CL_TS;
         EPwm3Regs.CMPA.bit.CMPA = CTRL->sc->Duty[2] * 50000000 * CL_TS;
-    }
-    else{ // 否则根据上面的控制率controller()由voltage_commands_to_pwm()计算出的电压，输出到逆变器
+    }else{ // 否则根据上面的控制率controller()由voltage_commands_to_pwm()计算出的电压，输出到逆变器
         voltage_commands_to_pwm();
     }
 }
@@ -775,7 +833,7 @@ void axis_basic_setup(int axisCnt){
     //
     //    Axis->FLAG_ENABLE_PWM_OUTPUT = FALSE;
 
-    Axis->channels_preset = 14; // 9; // 101;
+    Axis->channels_preset = 16; // 9; // 101;
     // 2  /* iD current and iQ current info */
     // 9  /* With SPEED ESO */
     // 10 /* WCtuner Debug */
@@ -789,10 +847,7 @@ void axis_basic_setup(int axisCnt){
         Axis->channels_preset = 9; // 8; // 101;
     #endif
     #if WHO_IS_USER == USER_YZZ
-        Axis->channels_preset = 11;
-    #endif
-    #if BOOL_LOAD_SWEEPING_ON //6作为Load Sweeping使用的channel preset
-        Axis->channels_preset = 6; 
+        Axis->channels_preset = 16;
     #endif
 
     Axis->pCTRL->enc->sum_qepPosCnt = 0;

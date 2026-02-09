@@ -1483,6 +1483,13 @@ int  main_switch(long mode_select){
         #endif
         return 100; 
         break;
+    case MODE_SELECT_SUSPENSION_DIS_CONTROL: // 101
+        #if WHO_IS_USER == USER_YZZ
+            SuspensionDisplacementControl();
+            SuspensionCurrentControl();
+        #endif
+        return 100; 
+        break;
     default:
         // 鐢靛帇鎸囦护(*CTRL).o->cmd_uAB[0/1]閫氳繃閫嗗彉鍣紝浜х敓瀹為檯鐢靛帇ACM.ual, ACM.ube锛堝彉鎹㈠埌dq绯讳笅寰楀埌ACM.ud锛孉CM.uq锛�
         // voltage_commands_to_pwm(); // this function only exists in DSP codes
