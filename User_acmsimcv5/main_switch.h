@@ -387,6 +387,9 @@ typedef struct {
     REAL disY_Prev_Measured;  // Previous measured position for Y-axis derivative (derivative-on-measurement)
     REAL I_curr[2];
     REAL P_curr[2];
+    REAL iAB_filtered_prev[2];  // Previous filtered current for 1500Hz LPF
+    REAL tau_curr;              // Time constant for current LPF: fc=1500Hz
+    REAL tau_curr_ts_inv;       // 1/(tau_curr + Ts)
     REAL tau;
     REAL tau_ts_inv;
     REAL delta_d;

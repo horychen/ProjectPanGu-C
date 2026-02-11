@@ -299,28 +299,13 @@ void main_adc_measurement(){
 }
 
 void measurement_displacement(){
-    // 1st order low-pass filter at 400 Hz to suppress measurement noise
-    // fc = 400 Hz → τ = 1/(2π*400) ≈ 0.000398 s
+    // 1st order low-pass filter at 500 Hz to suppress measurement noise
+    // fc = 500 Hz → τ = 1/(2π*500) ≈ 0.0003183 s
     static REAL X_disp_filtered = 0.0;
     static REAL Y_disp_filtered = 0.0;
-    const REAL tau_lpf = 0.000398;  // Time constant for 400 Hz cutoff
+    const REAL tau_lpf = 0.0003183;  // Time constant for 500 Hz cutoff
     const REAL tau_ts_ratio = tau_lpf / (tau_lpf + CL_TS);  // τ/(τ+Ts)
     const REAL ts_tau_ratio = CL_TS / (tau_lpf + CL_TS);    // Ts/(τ+Ts)
-    
-    // Notch filter at 1 kHz to remove harmonic noise
-    // H(z) = (1 - 2cos(ω₀)z⁻¹ + z⁻²) / (1 - 2r·cos(ω₀)z⁻¹ + r²z⁻²)
-    // fs = 10 kHz, f₀ = 1 kHz, ω₀ = 2π·f₀·Ts = 0.628 rad, r = 0.95
-    static REAL X_notch_x1 = 0.0, X_notch_x2 = 0.0;  // Input history for X
-    static REAL X_notch_y1 = 0.0, X_notch_y2 = 0.0;  // Output history for X
-    static REAL Y_notch_x1 = 0.0, Y_notch_x2 = 0.0;  // Input history for Y
-    static REAL Y_notch_y1 = 0.0, Y_notch_y2 = 0.0;  // Output history for Y
-    const REAL cos_w0 = 0.809017;   // cos(0.628)
-    const REAL r = 0.95;            // Notch bandwidth parameter
-    const REAL b0 = 1.0;
-    const REAL b1 = -2.0 * cos_w0;  // -1.618
-    const REAL b2 = 1.0;
-    const REAL a1 = -2.0 * r * cos_w0;  // -1.537
-    const REAL a2 = r * r;              // 0.9025
     
     // Raw measurement
     REAL X_disp_raw = ( -CTRL->sc->X_disp_form_sensor + CTRL->sc->G_disp_form_sensor + CTRL->sc->X_disp_offset ) * CTRL->sc->X_disp_scale;
@@ -330,26 +315,8 @@ void measurement_displacement(){
     X_disp_filtered = tau_ts_ratio * X_disp_filtered + ts_tau_ratio * X_disp_raw;
     Y_disp_filtered = tau_ts_ratio * Y_disp_filtered + ts_tau_ratio * Y_disp_raw;
     
-    // Apply notch filter to remove 1 kHz harmonic
-    // y[k] = b0·x[k] + b1·x[k-1] + b2·x[k-2] - a1·y[k-1] - a2·y[k-2]
-    REAL X_notch = b0 * X_disp_filtered + b1 * X_notch_x1 + b2 * X_notch_x2 
-                 - a1 * X_notch_y1 - a2 * X_notch_y2;
-    REAL Y_notch = b0 * Y_disp_filtered + b1 * Y_notch_x1 + b2 * Y_notch_x2 
-                 - a1 * Y_notch_y1 - a2 * Y_notch_y2;
-    
-    // Update filter states
-    X_notch_x2 = X_notch_x1;
-    X_notch_x1 = X_disp_filtered;
-    X_notch_y2 = X_notch_y1;
-    X_notch_y1 = X_notch;
-    
-    Y_notch_x2 = Y_notch_x1;
-    Y_notch_x1 = Y_disp_filtered;
-    Y_notch_y2 = Y_notch_y1;
-    Y_notch_y1 = Y_notch;
-    
-    CTRL->sc->X_disp_measured = X_notch;
-    CTRL->sc->Y_disp_measured = Y_notch;
+    CTRL->sc->X_disp_measured = X_disp_filtered;
+    CTRL->sc->Y_disp_measured = Y_disp_filtered;
 }
 
 void DISABLE_PWM_OUTPUT(){
@@ -1390,9 +1357,9 @@ void measurement_enc(){
 
 void measurement_current_axisCnt0(){
     // LEM1
-    Axis->iuvw[PIN_ADCA_U] = ((REAL)(AdcaResultRegs.ADCRESULT1) - Axis->adc_offset[1]) * Axis->adc_scale[1]; //
-    Axis->iuvw[PIN_ADCA_V] = ((REAL)(AdcaResultRegs.ADCRESULT2) - Axis->adc_offset[2]) * Axis->adc_scale[2]; //
-    Axis->iuvw[PIN_ADCA_W] = ((REAL)(AdcaResultRegs.ADCRESULT3) - Axis->adc_offset[3]) * Axis->adc_scale[3]; //
+    Axis->iuvw[PIN_ADCA_U] = ((REAL)(AdcaResultRegs.ADCRESULT1) - Axis->adc_offset[1]) * Axis->adc_scale[1] * 0.3333333; //
+    Axis->iuvw[PIN_ADCA_V] = ((REAL)(AdcaResultRegs.ADCRESULT2) - Axis->adc_offset[2]) * Axis->adc_scale[2] * 0.3333333; //
+    Axis->iuvw[PIN_ADCA_W] = ((REAL)(AdcaResultRegs.ADCRESULT3) - Axis->adc_offset[3]) * Axis->adc_scale[3] * 0.3333333; //
 
     // 电流接口
     if (USE_3_CURRENT_SENSORS){

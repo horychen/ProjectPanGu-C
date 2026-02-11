@@ -3457,8 +3457,21 @@ void SuspensionCurrentControl(){
     // 1. 计算悬浮电流控制器的输出电压
     // 2. 将输出电压转换为PWM占空比re
     // === 0) 直流母线保护 ===
-    CTRL->sc->iAB[0] = Axis->iuvw[0];
-    CTRL->sc->iAB[1] = Axis->iuvw[1];
+    // Apply 1500Hz low-pass filter to current measurement
+    // iAB_filtered[k] = τ/(τ+Ts) * iAB_filtered[k-1] + Ts/(τ+Ts) * iAB_raw[k]
+    REAL iAB_raw[2];
+    iAB_raw[0] = Axis->iuvw[0];
+    iAB_raw[1] = Axis->iuvw[1];
+    
+    CTRL->sc->iAB[0] = CTRL->sc->tau_curr * CTRL->sc->tau_curr_ts_inv * CTRL->sc->iAB_filtered_prev[0]
+                      + CL_TS * CTRL->sc->tau_curr_ts_inv * iAB_raw[0];
+    CTRL->sc->iAB[1] = CTRL->sc->tau_curr * CTRL->sc->tau_curr_ts_inv * CTRL->sc->iAB_filtered_prev[1]
+                      + CL_TS * CTRL->sc->tau_curr_ts_inv * iAB_raw[1];
+    
+    // Update filter state
+    CTRL->sc->iAB_filtered_prev[0] = CTRL->sc->iAB[0];
+    CTRL->sc->iAB_filtered_prev[1] = CTRL->sc->iAB[1];
+    
     REAL Vdc = 60;
     if (Vdc < CTRL->sc->vdc_min) {
     // 低压：输出居中，占空比 0.5，冻结积分避免乱冲
@@ -3502,7 +3515,7 @@ void SuspensionCurrentControl(){
         if (step_counter <= x_positive_end)
         {
             // Phase 1: X-axis positive step
-            CTRL->sc->cmd_iAB[0] = step_amplitude;
+            CTRL->sc->cmd_iAB[0] = 5.0;
             CTRL->sc->cmd_iAB[1] = 0.0f;
         }
         else if (step_counter <= reset1_end)
@@ -3514,7 +3527,7 @@ void SuspensionCurrentControl(){
         else if (step_counter <= x_negative_end)
         {
             // Phase 2: X-axis negative step
-            CTRL->sc->cmd_iAB[0] = -step_amplitude;
+            CTRL->sc->cmd_iAB[0] = -5.0;
             CTRL->sc->cmd_iAB[1] = 0.0f;
         }
         else if (step_counter <= reset2_end)
@@ -3527,7 +3540,7 @@ void SuspensionCurrentControl(){
         {
             // Phase 3: Y-axis positive step
             CTRL->sc->cmd_iAB[0] = 0.0f;
-            CTRL->sc->cmd_iAB[1] = step_amplitude;
+            CTRL->sc->cmd_iAB[1] = 5.0;
         }
         else if (step_counter <= reset3_end)
         {
@@ -3539,7 +3552,7 @@ void SuspensionCurrentControl(){
         {
             // Phase 4: Y-axis negative step
             CTRL->sc->cmd_iAB[0] = 0.0f;
-            CTRL->sc->cmd_iAB[1] = -step_amplitude;
+            CTRL->sc->cmd_iAB[1] = -5.0;
         }
         else if (step_counter <= reset4_end)
         {
@@ -3561,8 +3574,8 @@ void SuspensionCurrentControl(){
     // In debug mode 3, cmd_iAB is set directly above, skip force-to-current conversion
     if (yzk_Debug != 3)
     {
-        CTRL->sc->cmd_iAB[0] = CTRL->sc->KIC_inv * (CTRL->sc->cmd_FX );
-        CTRL->sc->cmd_iAB[1] = CTRL->sc->KIC_inv * (CTRL->sc->cmd_FY);
+        CTRL->sc->cmd_iAB[0] = CTRL->sc->cmd_FX;
+        CTRL->sc->cmd_iAB[1] = CTRL->sc->cmd_FY;
     }
     // === 2) 电流误差 ===
     REAL x_current_error = CTRL->sc->cmd_iAB[0] - CTRL->sc->iAB[0];
@@ -3627,29 +3640,11 @@ void SuspensionDisplacementControl(){
     
     // Step 1: Calculate filtered derivative (velocity estimate in mm/s)
     // vel_filtered[k] = τ/(τ+Ts) * vel_filtered[k-1] - 1/(τ+Ts) * (y[k] - y[k-1]) / Ts
-    REAL vel_X_raw = CTRL->sc->tau * CTRL->sc->tau_ts_inv * CTRL->sc->vel_X_filtered
+    // 300 Hz low-pass filter for velocity estimation
+    CTRL->sc->vel_X_filtered = CTRL->sc->tau * CTRL->sc->tau_ts_inv * CTRL->sc->vel_X_filtered
         - CTRL->sc->tau_ts_inv * (CTRL->sc->X_disp_measured - CTRL->sc->disX_Prev_Measured) * CL_TS_INVERSE;
-    REAL vel_Y_raw = CTRL->sc->tau * CTRL->sc->tau_ts_inv * CTRL->sc->vel_Y_filtered
+    CTRL->sc->vel_Y_filtered = CTRL->sc->tau * CTRL->sc->tau_ts_inv * CTRL->sc->vel_Y_filtered
         - CTRL->sc->tau_ts_inv * (CTRL->sc->Y_disp_measured - CTRL->sc->disY_Prev_Measured) * CL_TS_INVERSE;
-    
-    // Step 1.5: Apply 2.5kHz notch filter to velocity (removes 2.5kHz noise)
-    // For f0=2.5kHz @ fs=10kHz: ω0=π/2, cos(ω0)=0, r=0.95
-    // H(z) = (1 + z^-2) / (1 + r^2*z^-2)
-    // y[k] = x[k] + x[k-2] - r^2*y[k-2]
-    #define NOTCH_R2 0.9025  // r^2 where r=0.95
-    CTRL->sc->vel_X_filtered = vel_X_raw + CTRL->sc->vel_X_notch_x2 - NOTCH_R2 * CTRL->sc->vel_X_notch_y2;
-    CTRL->sc->vel_Y_filtered = vel_Y_raw + CTRL->sc->vel_Y_notch_x2 - NOTCH_R2 * CTRL->sc->vel_Y_notch_y2;
-    
-    // Update notch filter states
-    CTRL->sc->vel_X_notch_x2 = CTRL->sc->vel_X_notch_x1;
-    CTRL->sc->vel_X_notch_x1 = vel_X_raw;
-    CTRL->sc->vel_X_notch_y2 = CTRL->sc->vel_X_notch_y1;
-    CTRL->sc->vel_X_notch_y1 = CTRL->sc->vel_X_filtered;
-    
-    CTRL->sc->vel_Y_notch_x2 = CTRL->sc->vel_Y_notch_x1;
-    CTRL->sc->vel_Y_notch_x1 = vel_Y_raw;
-    CTRL->sc->vel_Y_notch_y2 = CTRL->sc->vel_Y_notch_y1;
-    CTRL->sc->vel_Y_notch_y1 = CTRL->sc->vel_Y_filtered;
     
     // Step 2: Apply derivative gain to get damping force (in N)
     // D[k] = KD * vel_filtered[k]
@@ -3657,8 +3652,8 @@ void SuspensionDisplacementControl(){
     CTRL->sc->D_disY = CTRL->sc->KD * CTRL->sc->vel_Y_filtered;
     
     // 微分项限幅（防止噪声放大导致输出过大）
-    CTRL->sc->D_disX = clampf(CTRL->sc->D_disX, -3.0, 3.0);
-    CTRL->sc->D_disY = clampf(CTRL->sc->D_disY, -3.0, 3.0);
+    CTRL->sc->D_disX = clampf(CTRL->sc->D_disX, -6.0, 6.0);
+    CTRL->sc->D_disY = clampf(CTRL->sc->D_disY, -6.0, 6.0);
     // ===== 未饱和输出（把 P/I/D 都加上）=====
     REAL cmd_FX_unsat = CTRL->sc->P_disX + CTRL->sc->I_disX + CTRL->sc->D_disX;
     REAL cmd_FY_unsat = CTRL->sc->P_disY + CTRL->sc->I_disY + CTRL->sc->D_disY;
@@ -3684,20 +3679,20 @@ REAL min(REAL a, REAL b) {
 }
 void init_suspension_online(){
     // Current loop PI (tuned for R=4Ω, L=26mH, BW=1kHz)
-    CTRL->sc->kp = 26;   // Was 100 - reduced to prevent saturation
-    CTRL->sc->ki = 10;   // Was 40 - tuned for proper damping
+    CTRL->sc->kp = 50;   // Was 100 - reduced to prevent saturation
+    CTRL->sc->ki = 100;   // Was 40 - tuned for proper damping
     CTRL->sc->KIC_inv = 1;
     
     // Position loop PID (adjusted for 48V/11.5A max capability)
     CTRL->sc->KI = 0; // Was 1000 - reduced to prevent integral windup
-    CTRL->sc->KP =25.0;  // Was 65 - reduced since max force limited
-    CTRL->sc->KD = 0.02;  // Reduced from 0.1 to prevent D-term saturation from measurement noise
+    CTRL->sc->KP =20.0;  // Was 65 - reduced since max force limited
+    CTRL->sc->KD = 1e-5;  // Reduced from 0.1 to prevent D-term saturation from measurement noise
     CTRL->sc->cmd_disX = 0;
     CTRL->sc->cmd_disY = 0;
-    CTRL->sc->X_disp_offset = 1.355f;
-    CTRL->sc->Y_disp_offset = 1.4f;
-    CTRL->sc->X_disp_scale = 0.46f;
-    CTRL->sc->Y_disp_scale = 0.392156f;
+    CTRL->sc->X_disp_offset = 1.3999999f;
+    CTRL->sc->Y_disp_offset = 2.f;
+    CTRL->sc->X_disp_scale = 0.50999999f;
+    CTRL->sc->Y_disp_scale = 0.5f;
     CTRL->sc->P_disX = 0;
     CTRL->sc->D_disX = 0;
     CTRL->sc->P_disY = 0;
@@ -3715,6 +3710,11 @@ void init_suspension_online(){
     CTRL->sc->vel_Y_notch_y2 = 0;
     CTRL->sc->disX_Prev_Measured = 0;
     CTRL->sc->disY_Prev_Measured = 0;
+    CTRL->sc->iAB_filtered_prev[0] = 0;
+    CTRL->sc->iAB_filtered_prev[1] = 0;
+    CTRL->sc->X_disp_form_sensor = 0;
+    CTRL->sc->Y_disp_form_sensor = 0;
+    CTRL->sc->G_disp_form_sensor = 0;
 }
 void init_suspension(){
     // 初始化悬浮控制器参数
@@ -3729,15 +3729,16 @@ void init_suspension(){
     CTRL->sc->Duty[0] = 0.5;
     CTRL->sc->Duty[1] = 0.5;
     CTRL->sc->Duty[2] = 0.5;
-    CTRL->sc->X_disp_form_sensor = 0;
-    CTRL->sc->Y_disp_form_sensor = 0;
-    CTRL->sc->G_disp_form_sensor = 0;
     CTRL->sc->X_disp_measured = 0;
     CTRL->sc->Y_disp_measured = 0;
     CTRL->sc->I_curr[0] = 0;
     CTRL->sc->I_curr[1] = 0;
     CTRL->sc->P_curr[0] = 0;
     CTRL->sc->P_curr[1] = 0;
+    CTRL->sc->iAB_filtered_prev[0] = 0;
+    CTRL->sc->iAB_filtered_prev[1] = 0;
+    CTRL->sc->tau_curr = 0.00006366; // Low-pass filter for current measurement: fc = 1/(2*π*τ) ≈ 2500 Hz
+    CTRL->sc->tau_curr_ts_inv = 1.0/(CL_TS + CTRL->sc->tau_curr);
     CTRL->sc->tau = 0.000531; // Low-pass filter cutoff frequency for D-term: fc = 1/(2*π*τ) ≈ 300 Hz
     CTRL->sc->tau_ts_inv = 1.0/(CL_TS + CTRL->sc->tau);
     CTRL->sc->Fmax = 11;  // Max force @ 11.5A (limited by 48V and R=4Ω)

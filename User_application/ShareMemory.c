@@ -148,21 +148,6 @@ void write_DAC_buffer(){
         // (*Axis4DAC).dac_watch[67] = OBSV.esoaf.xPos * 0.1; // -pi to pi
 
         /* From Sensor */
-        #if WHO_IS_USER == USER_HZQ
-            (*Axis4DAC).dac_watch[68] = position_count_SCI_hip_fromCPU2 * SYSTEM_QEP_REV_PER_PULSE * 0.001; // -3000 to 3000
-            (*Axis4DAC).dac_watch[69] = position_count_SCI_shank_fromCPU2 * SYSTEM_QEP_REV_PER_PULSE * 0.001; // -3000 to 3000
-        (*Axis4DAC).dac_watch[70] = (*CTRL).enc->varOmega * MECH_RAD_PER_SEC_2_RPM * 0.001;
-        (*Axis4DAC).dac_watch[71] = PLLN_EKF.omega_elec *  ELEC_RAD_PER_SEC_2_RPM  * 0.001;
-        (*Axis4DAC).dac_watch[72] = (*CTRL).i->cmd_varOmega * MECH_RAD_PER_SEC_2_RPM * 0.001;
-        /* Kalman Filter For Sensorless Control */
-        // (*Axis4DAC).dac_watch[71] = PLLN.omega_elec * ELEC_RAD_PER_SEC_2_RPM * 0.001; // -1000RPM ~ 1000RPM
-        (*Axis4DAC).dac_watch[73] = OBSV.theta_d * ONE_OVER_2PI * 2; //
-        // (*Axis4DAC).dac_watch[73] = FE.Ortega.theta_d * ONE_OVER_2PI * 2; // unit : degree
-        (*Axis4DAC).dac_watch[74] = FE.HE_EKF.theta_d * ONE_OVER_2PI * 2; // unit : degree
-        (*Axis4DAC).dac_watch[75] = (*CTRL).i->iDQ[1] * 0.1; // unit : degree
-        (*Axis4DAC).dac_watch[76] = FE.HE_EKF.current_bf_compensated_dq[1] * 0.1; // unit : degree
-        (*Axis4DAC).dac_watch[77] = FE.HE_EKF.current_compensated_dq[1] * 0.1; // unit : degree
-        #endif
         // (*Axis4DAC).dac_watch[78] = Axis->adc_voltage[0];
         // (*Axis4DAC).dac_watch[76] = FE.HE_EKF.flux[0] * 0.1; // unit : degree
         // (*Axis4DAC).dac_watch[77] = FE.HE_EKF.current_compensated_dq[1] * 0.1; // unit : degree
@@ -207,18 +192,18 @@ void write_DAC_buffer(){
             (*Axis4DAC).dac_watch[59] = CTRL->sc->iAB[1] * 0.05;
             (*Axis4DAC).dac_watch[61] = CTRL->sc->P_disX;
             (*Axis4DAC).dac_watch[62] = CTRL->sc->I_disX;
-            (*Axis4DAC).dac_watch[63] = CTRL->sc->D_disX;
+            (*Axis4DAC).dac_watch[63] = CTRL->sc->D_disX * 0.05;
             (*Axis4DAC).dac_watch[64] = CTRL->sc->cmd_FX;
             (*Axis4DAC).dac_watch[65] = CTRL->sc->P_disY;
             (*Axis4DAC).dac_watch[66] = CTRL->sc->I_disY;
-            (*Axis4DAC).dac_watch[67] = CTRL->sc->D_disY;
+            (*Axis4DAC).dac_watch[67] = CTRL->sc->D_disY * 0.05;
             (*Axis4DAC).dac_watch[68] = CTRL->sc->cmd_FY;
             (*Axis4DAC).dac_watch[69] = CTRL->sc->cmd_disX;
             (*Axis4DAC).dac_watch[70] = CTRL->sc->X_disp_measured;
             (*Axis4DAC).dac_watch[71] = CTRL->sc->cmd_disY;
             (*Axis4DAC).dac_watch[76] = CTRL->sc->Y_disp_measured;
-            (*Axis4DAC).dac_watch[72] = CTRL->sc->cmd_iAB[0] * 0.05; 
-            (*Axis4DAC).dac_watch[73] = CTRL->sc->cmd_iAB[1] * 0.05; 
+            (*Axis4DAC).dac_watch[72] = CTRL->sc->cmd_iAB[0] * 0.1; 
+            (*Axis4DAC).dac_watch[73] = CTRL->sc->cmd_iAB[1] * 0.1; 
             (*Axis4DAC).dac_watch[74] = CTRL->sc->X_disp_measured * 0.1;
             (*Axis4DAC).dac_watch[75] = CTRL->sc->Y_disp_measured * 0.1;
             (*Axis4DAC).dac_watch[77] = Axis->adc_voltage[3] * 0.1;
