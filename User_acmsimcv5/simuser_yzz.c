@@ -3451,8 +3451,15 @@ void get_distorted_voltage_via_LUT(REAL ual, REAL ube, REAL ial, REAL ibe, REAL 
 }
 //小写的kpki是给电流环用的，大写的KPKIKD是给位置环用的
 int yzk_Debug = 0;
-REAL overwrite_suspension_frequency = 0.1;
-REAL overwrite_suspension_amplitude = 8.0;
+REAL overwrite_suspension_frequency = 100;
+REAL overwrite_suspension_amplitude = 5.0;
+// 在线调试变量（可在外部修改）
+REAL yzk_sweep_start_freq = 1.0;
+REAL yzk_sweep_end_freq = 100.0;
+REAL yzk_sweep_time = 30.0;
+int yzk_sweep_channel = 0; // 0: X, 1: Y, 2: XY
+int yzk_sweep_done = 0; // 0: 未完成, 1: 完成后暂停
+
 void SuspensionCurrentControl(){
     // 1. 计算悬浮电流控制器的输出电压
     // 2. 将输出电压转换为PWM占空比re
@@ -3463,16 +3470,19 @@ void SuspensionCurrentControl(){
     iAB_raw[0] = Axis->iuvw[0];
     iAB_raw[1] = Axis->iuvw[1];
     
-    CTRL->sc->iAB[0] = CTRL->sc->tau_curr * CTRL->sc->tau_curr_ts_inv * CTRL->sc->iAB_filtered_prev[0]
-                      + CL_TS * CTRL->sc->tau_curr_ts_inv * iAB_raw[0];
-    CTRL->sc->iAB[1] = CTRL->sc->tau_curr * CTRL->sc->tau_curr_ts_inv * CTRL->sc->iAB_filtered_prev[1]
-                      + CL_TS * CTRL->sc->tau_curr_ts_inv * iAB_raw[1];
+    // 电流滤波代码已注释（使用原始电流值）
+    // CTRL->sc->iAB[0] = CTRL->sc->tau_curr * CTRL->sc->tau_curr_ts_inv * CTRL->sc->iAB_filtered_prev[0]
+    //                   + CL_TS * CTRL->sc->tau_curr_ts_inv * iAB_raw[0];
+    // CTRL->sc->iAB[1] = CTRL->sc->tau_curr * CTRL->sc->tau_curr_ts_inv * CTRL->sc->iAB_filtered_prev[1]
+    //                   + CL_TS * CTRL->sc->tau_curr_ts_inv * iAB_raw[1];
+    CTRL->sc->iAB[0] = iAB_raw[0];
+    CTRL->sc->iAB[1] = iAB_raw[1];
     
-    // Update filter state
-    CTRL->sc->iAB_filtered_prev[0] = CTRL->sc->iAB[0];
-    CTRL->sc->iAB_filtered_prev[1] = CTRL->sc->iAB[1];
+    // Update filter state (disabled for raw current measurement)
+    // CTRL->sc->iAB_filtered_prev[0] = CTRL->sc->iAB[0];
+    // CTRL->sc->iAB_filtered_prev[1] = CTRL->sc->iAB[1];
     
-    REAL Vdc = 60;
+    REAL Vdc = Axis->vdc;
     if (Vdc < CTRL->sc->vdc_min) {
     // 低压：输出居中，占空比 0.5，冻结积分避免乱冲
         CTRL->sc->Duty[0] = 0.5f;
@@ -3483,13 +3493,16 @@ void SuspensionCurrentControl(){
         return; 
     }
     REAL VDC_inverse = 1.0 / Axis->vdc;
+    if (yzk_Debug != 6) {
+        yzk_sweep_done = 0;
+    }
     //let debug to be zero for displacement control
     if(yzk_Debug == 1){
-        CTRL->sc->cmd_FX = overwrite_suspension_amplitude * cos(CTRL->timebase*overwrite_suspension_frequency);
-        CTRL->sc->cmd_FY = overwrite_suspension_amplitude * sin(CTRL->timebase*overwrite_suspension_frequency);
+        CTRL->sc->cmd_FX = overwrite_suspension_amplitude * cos(2.0 * M_PI * CTRL->timebase*overwrite_suspension_frequency);
+        CTRL->sc->cmd_FY = overwrite_suspension_amplitude * sin(2.0 * M_PI * CTRL->timebase*overwrite_suspension_frequency);
     }else if (yzk_Debug == 2)
     {
-        CTRL->sc->cmd_FX = overwrite_suspension_amplitude * cos(CTRL->timebase*overwrite_suspension_frequency);
+        CTRL->sc->cmd_FX = overwrite_suspension_amplitude * cos(2.0 * M_PI * CTRL->timebase*overwrite_suspension_frequency);
     }else if (yzk_Debug == 3)
     {
         // XY displacement sensor calibration - Step current injection sequence
@@ -3567,15 +3580,63 @@ void SuspensionCurrentControl(){
             CTRL->sc->cmd_iAB[1] = 0.0f;
             step_counter = 0;  // Comment this line to run sequence only once
         }
+    } else if (yzk_Debug == 4) {
+        // Square wave command
+        REAL time = CTRL->timebase;
+        REAL freq = overwrite_suspension_frequency;
+        REAL amp = overwrite_suspension_amplitude;
+        REAL signal = (sin(2 * M_PI * freq * time) > 0) ? amp : -amp;
+        CTRL->sc->cmd_FX = signal;
+        CTRL->sc->cmd_FY = 0.0;
+    } else if (yzk_Debug == 5) {
+        // Triangle wave command
+        REAL time = CTRL->timebase;
+        REAL freq = overwrite_suspension_frequency;
+        REAL amp = overwrite_suspension_amplitude;
+        REAL phase = fmod(time * freq, 1.0);
+        REAL signal = amp * (phase < 0.5 ? 4 * phase - 1 : 3 - 4 * phase);
+        CTRL->sc->cmd_FX = signal;
+        CTRL->sc->cmd_FY = 0.0;
+    } else if (yzk_Debug == 6) {
+        // Current loop frequency sweep (direct current command)
+        if (!yzk_sweep_done) {
+            REAL time = CTRL->timebase;
+            if (time < yzk_sweep_time) {
+                REAL current_freq = yzk_sweep_start_freq + (time / yzk_sweep_time) * (yzk_sweep_end_freq - yzk_sweep_start_freq);
+                REAL amp = overwrite_suspension_amplitude;
+
+                if (yzk_sweep_channel == 0) {
+                    CTRL->sc->cmd_iAB[0] = amp * sin(2.0 * M_PI * current_freq * time);
+                    CTRL->sc->cmd_iAB[1] = 0.0;
+                } else if (yzk_sweep_channel == 1) {
+                    CTRL->sc->cmd_iAB[0] = 0.0;
+                    CTRL->sc->cmd_iAB[1] = amp * sin(2.0 * M_PI * current_freq * time);
+                } else {
+                    CTRL->sc->cmd_iAB[0] = amp * sin(2.0 * M_PI * current_freq * time);
+                    CTRL->sc->cmd_iAB[1] = amp * sin(2.0 * M_PI * current_freq * time);
+                }
+            } else {
+                // 完成一次扫频，停止输出
+                yzk_sweep_done = 1;
+                CTRL->sc->cmd_iAB[0] = 0.0;
+                CTRL->sc->cmd_iAB[1] = 0.0;
+            }
+        } else {
+            // 扫频已完成，保持输出 0
+            CTRL->sc->cmd_iAB[0] = 0.0;
+            CTRL->sc->cmd_iAB[1] = 0.0;
+        }
     }
     // CTRL->sc->cmd_iAB[0] = 0.5 * CTRL->sc->KIC_inv * (CTRL->sc->cmd_FX - CTRL->sc->cmd_FY);
     // CTRL->sc->cmd_iAB[1] = 0.5 * CTRL->sc->KIC_inv * (CTRL->sc->cmd_FX + CTRL->sc->cmd_FY);
 
-    // In debug mode 3, cmd_iAB is set directly above, skip force-to-current conversion
-    if (yzk_Debug != 3)
+    // In debug mode 3 or 6, cmd_iAB is set directly above, skip force-to-current conversion
+    if (yzk_Debug != 3 && yzk_Debug != 6)
     {
-        CTRL->sc->cmd_iAB[0] = CTRL->sc->cmd_FX;
-        CTRL->sc->cmd_iAB[1] = CTRL->sc->cmd_FY;
+        // CTRL->sc->cmd_iAB[0] = CTRL->sc->cmd_FX;//十字结构
+        // CTRL->sc->cmd_iAB[1] = CTRL->sc->cmd_FY;
+        CTRL->sc->cmd_iAB[0] = - CTRL->sc->cmd_FX + CTRL->sc->cmd_FY;//环形结构
+        CTRL->sc->cmd_iAB[1] =   CTRL->sc->cmd_FX + CTRL->sc->cmd_FY;
     }
     // === 2) 电流误差 ===
     REAL x_current_error = CTRL->sc->cmd_iAB[0] - CTRL->sc->iAB[0];
@@ -3640,7 +3701,7 @@ void SuspensionDisplacementControl(){
     
     // Step 1: Calculate filtered derivative (velocity estimate in mm/s)
     // vel_filtered[k] = τ/(τ+Ts) * vel_filtered[k-1] - 1/(τ+Ts) * (y[k] - y[k-1]) / Ts
-    // 300 Hz low-pass filter for velocity estimation
+    // 150 Hz low-pass filter for velocity estimation
     CTRL->sc->vel_X_filtered = CTRL->sc->tau * CTRL->sc->tau_ts_inv * CTRL->sc->vel_X_filtered
         - CTRL->sc->tau_ts_inv * (CTRL->sc->X_disp_measured - CTRL->sc->disX_Prev_Measured) * CL_TS_INVERSE;
     CTRL->sc->vel_Y_filtered = CTRL->sc->tau * CTRL->sc->tau_ts_inv * CTRL->sc->vel_Y_filtered
@@ -3679,20 +3740,20 @@ REAL min(REAL a, REAL b) {
 }
 void init_suspension_online(){
     // Current loop PI (tuned for R=4Ω, L=26mH, BW=1kHz)
-    CTRL->sc->kp = 50;   // Was 100 - reduced to prevent saturation
+    CTRL->sc->kp = 20;   // Was 100 - reduced to prevent saturation
     CTRL->sc->ki = 100;   // Was 40 - tuned for proper damping
     CTRL->sc->KIC_inv = 1;
     
     // Position loop PID (adjusted for 48V/11.5A max capability)
     CTRL->sc->KI = 0; // Was 1000 - reduced to prevent integral windup
-    CTRL->sc->KP =20.0;  // Was 65 - reduced since max force limited
-    CTRL->sc->KD = 1e-5;  // Reduced from 0.1 to prevent D-term saturation from measurement noise
+    CTRL->sc->KP =23.0;  // Was 65 - reduced since max force limited
+    CTRL->sc->KD = 2.1e-5;  // Reduced from 0.1 to prevent D-term saturation from measurement noise
     CTRL->sc->cmd_disX = 0;
     CTRL->sc->cmd_disY = 0;
-    CTRL->sc->X_disp_offset = 1.3999999f;
-    CTRL->sc->Y_disp_offset = 2.f;
-    CTRL->sc->X_disp_scale = 0.50999999f;
-    CTRL->sc->Y_disp_scale = 0.5f;
+    CTRL->sc->X_disp_offset = 1.43;
+    CTRL->sc->Y_disp_offset = 1.63f;
+    CTRL->sc->X_disp_scale = 0.256f;
+    CTRL->sc->Y_disp_scale = 0.22f;
     CTRL->sc->P_disX = 0;
     CTRL->sc->D_disX = 0;
     CTRL->sc->P_disY = 0;
@@ -3737,9 +3798,9 @@ void init_suspension(){
     CTRL->sc->P_curr[1] = 0;
     CTRL->sc->iAB_filtered_prev[0] = 0;
     CTRL->sc->iAB_filtered_prev[1] = 0;
-    CTRL->sc->tau_curr = 0.00006366; // Low-pass filter for current measurement: fc = 1/(2*π*τ) ≈ 2500 Hz
+    CTRL->sc->tau_curr = 0.00003979; // Low-pass filter for current measurement: fc = 1/(2*π*τ) ≈ 4000 Hz
     CTRL->sc->tau_curr_ts_inv = 1.0/(CL_TS + CTRL->sc->tau_curr);
-    CTRL->sc->tau = 0.000531; // Low-pass filter cutoff frequency for D-term: fc = 1/(2*π*τ) ≈ 300 Hz
+    CTRL->sc->tau = 0.00106103; // Low-pass filter cutoff frequency for D-term: fc = 1/(2*π*τ) ≈ 150 Hz
     CTRL->sc->tau_ts_inv = 1.0/(CL_TS + CTRL->sc->tau);
     CTRL->sc->Fmax = 11;  // Max force @ 11.5A (limited by 48V and R=4Ω)
     CTRL->sc->Fmin = -11;

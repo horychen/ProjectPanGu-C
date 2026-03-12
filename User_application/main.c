@@ -299,11 +299,11 @@ void main_adc_measurement(){
 }
 
 void measurement_displacement(){
-    // 1st order low-pass filter at 500 Hz to suppress measurement noise
-    // fc = 500 Hz → τ = 1/(2π*500) ≈ 0.0003183 s
+    // 1st order low-pass filter at 1 kHz to suppress measurement noise
+    // fc = 1000 Hz → τ = 1/(2π*1000) ≈ 0.000159155 s
     static REAL X_disp_filtered = 0.0;
     static REAL Y_disp_filtered = 0.0;
-    const REAL tau_lpf = 0.0003183;  // Time constant for 500 Hz cutoff
+    const REAL tau_lpf = 0.000159155;  // Time constant for 1 kHz cutoff
     const REAL tau_ts_ratio = tau_lpf / (tau_lpf + CL_TS);  // τ/(τ+Ts)
     const REAL ts_tau_ratio = CL_TS / (tau_lpf + CL_TS);    // Ts/(τ+Ts)
     
