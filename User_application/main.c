@@ -280,9 +280,9 @@ void main_adc_measurement(){
     Axis->adc_voltage[5] = ((REAL)(Axis->adc_data[5]) - Axis->adc_offset_ex[5]) * Axis->adc_scale_ex[5];
     Axis->adc_voltage[6] = ((REAL)(Axis->adc_data[6]) - Axis->adc_offset_ex[6]) * Axis->adc_scale_ex[6];
     Axis->adc_voltage[7] = ((REAL)(Axis->adc_data[7]) - Axis->adc_offset_ex[7]) * Axis->adc_scale_ex[7];
-    Axis->terminal_voltage[0] = Axis->adc_voltage[0]*10.0; // A phase to GND
-    Axis->terminal_voltage[1] = Axis->adc_voltage[1]*10.0; // B phase to GND
-    Axis->terminal_voltage[2] = Axis->adc_voltage[2]*10.0; // C phase to GND
+    Axis->terminal_voltage[0] = Axis->adc_voltage[3]*10.0; // A phase to GND
+    Axis->terminal_voltage[1] = Axis->adc_voltage[4]*10.0; // B phase to GND
+    Axis->terminal_voltage[2] = Axis->adc_voltage[5]*10.0; // C phase to GND
     Axis->neutral_voltage = (Axis->terminal_voltage[0] + Axis->terminal_voltage[1] + Axis->terminal_voltage[2]) / 3.0;
     Axis->phase_voltage[0] = Axis->terminal_voltage[0] - Axis->neutral_voltage;
     Axis->phase_voltage[1] = Axis->terminal_voltage[1] - Axis->neutral_voltage;
@@ -1331,9 +1331,9 @@ void measurement_enc(){
 
 void measurement_current_axisCnt0(){
     // LEM1
-    Axis->iuvw[PIN_ADCA_U] = ((REAL)(AdcaResultRegs.ADCRESULT1) - Axis->adc_offset[1]) * Axis->adc_scale[1]; //
-    Axis->iuvw[PIN_ADCA_V] = ((REAL)(AdcaResultRegs.ADCRESULT2) - Axis->adc_offset[2]) * Axis->adc_scale[2]; //
-    Axis->iuvw[PIN_ADCA_W] = ((REAL)(AdcaResultRegs.ADCRESULT3) - Axis->adc_offset[3]) * Axis->adc_scale[3]; //
+    Axis->iuvw[PIN_ADCA_U] = ((REAL)(AdcaResultRegs.ADCRESULT1) - Axis->adc_offset[1]) * Axis->adc_scale[1] * 0.3333333; //
+    Axis->iuvw[PIN_ADCA_V] = ((REAL)(AdcaResultRegs.ADCRESULT2) - Axis->adc_offset[2]) * Axis->adc_scale[2] * 0.3333333; //
+    Axis->iuvw[PIN_ADCA_W] = ((REAL)(AdcaResultRegs.ADCRESULT3) - Axis->adc_offset[3]) * Axis->adc_scale[3] * 0.3333333; //
 
     // 电流接口
     if (USE_3_CURRENT_SENSORS){

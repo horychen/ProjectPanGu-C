@@ -362,6 +362,9 @@ void init_experiment(){
     #endif
 
     #if (WHO_IS_USER == USER_YZZ) || (WHO_IS_USER == USER_CJH) || (WHO_IS_USER == USER_HZQ)
+        #if WHO_IS_USER == USER_HZQ
+            init_HE_EKF_motor_parameters_on_startup();
+        #endif
         init_FE();  // flux estimator
         rk4_init(); // 
         // observer_init();
@@ -684,7 +687,7 @@ void _user_commands(){
         // (*CTRL).i->cmd_iDQ[0] = -1.0;
     }
     if ((*CTRL).timebase < 2 && (*CTRL).timebase > 0){
-        (*CTRL).i->cmd_varOmega = 50 * RPM_2_MECH_RAD_PER_SEC;
+        (*CTRL).i->cmd_varOmega = 0;
     }
     if ((*CTRL).timebase < 3.5 && (*CTRL).timebase > 2){
         (*CTRL).i->cmd_varOmega = 50 * RPM_2_MECH_RAD_PER_SEC;
@@ -700,12 +703,12 @@ void _user_commands(){
     if ((*CTRL).timebase > 16){
         (*CTRL).i->cmd_varOmega = 50 * RPM_2_MECH_RAD_PER_SEC;
     }
-    if ((*CTRL).timebase > 18){
-        (*CTRL).i->cmd_varOmega = 0;
-    }
-    if ((*CTRL).timebase > 22){
-        (*CTRL).i->cmd_varOmega = 10 * RPM_2_MECH_RAD_PER_SEC;
-    }
+    // if ((*CTRL).timebase > 18){
+    //     (*CTRL).i->cmd_varOmega = 0;
+    // }
+    // if ((*CTRL).timebase > 22){
+    //     (*CTRL).i->cmd_varOmega = 10 * RPM_2_MECH_RAD_PER_SEC;
+    // }
     #if PC_SIMULATION == TRUE
         #if WHO_IS_USER == USER_WB
             ACM.TLoad = 0;

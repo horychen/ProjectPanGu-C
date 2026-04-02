@@ -1211,6 +1211,20 @@ void rk4_init(){
     // #endif
 
     // #if AFE_16_HE_EKF_2025
+    void init_HE_EKF_motor_parameters_on_startup(){
+        static BOOL he_ekf_motor_parameters_initialized = FALSE;
+
+        if (he_ekf_motor_parameters_initialized){
+            return;
+        }
+
+        FE.HE_EKF.Resistance = MOTOR.R;
+        FE.HE_EKF.Inductance = MOTOR.Ld;
+        FE.HE_EKF.Flux_norm = MOTOR.KE; //psi PM flux
+
+        he_ekf_motor_parameters_initialized = TRUE;
+    }
+
     void init_HE_EKF(){
         /* Define EKF parameters */
         FE.HE_EKF.B_cova = 10000; // Covariance matrix of curent sensor bias noise, noises being 0.01 A in alpha beta direction
@@ -1219,9 +1233,6 @@ void rk4_init(){
         FE.HE_EKF.initial_angle = CTRL->enc->theta_d_elec; // initial angle for flux, in radian
         FE.HE_EKF.initial_angle = (*CTRL).i->theta_d_elec; // initial angle for flux, in radian
         FE.HE_EKF.initial_Covariance  = 0.02; // initial flux norm, in Wb
-        FE.HE_EKF.Resistance = MOTOR.R;
-        FE.HE_EKF.Inductance = MOTOR.Ld;
-        FE.HE_EKF.Flux_norm = MOTOR.KE; //psi PM flux
         FE.HE_EKF.ONE_OVER_LPF_Hz =0.01;
         // matrix of bias noise, noises being 0.01 A in alpha beta direction
         

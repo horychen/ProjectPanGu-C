@@ -622,6 +622,7 @@
         #endif
     void init_afe();
     void init_FE();
+    void init_HE_EKF_motor_parameters_on_startup();
     void init_FE_htz(); // Holtz 2003
     void init_No_Saturation_Based(); // No Saturation Based
     void init_ClosedLoopFluxEstimatorForPMSM(); // Closed Loop Flux Estimator For PMSM
