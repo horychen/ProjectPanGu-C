@@ -1,5 +1,6 @@
 #include "ACMSim.h"
 #include "All_Definition.h"
+#include <string.h>
 
 #define DC_BUS_VOLTAGE_INVERSE_1 (1.732 / Axis_1.vdc)
 #define DC_BUS_VOLTAGE_INVERSE_2 (1.732 / Axis_2.vdc)
@@ -13,13 +14,40 @@ const REAL I_ampa;
 const REAL I_ampb;
 const REAL I_ampc;
 const REAL I_ampd;
-const REAL I_DQ[2];
 const REAL F_freq_1;
 const REAL F_freq_2;
 const REAL virtual_angle;
+REAL I_DQ[2];
+REAL I_x;
+REAL I_y;
+REAL CMD_I_x_1;
+REAL CMD_I_y_1;
+REAL CMD_I_x_2;
+REAL CMD_I_y_2;
+REAL A1_id = 0;
+REAL A1_iq = 0;
+REAL A1_ix = 0;
+REAL A1_iy = 0;
+REAL A2_id = 0;
+REAL A2_iq = 0;
+REAL A2_ix = 0;
+REAL A2_iy = 0;
+REAL B1_id = 0;
+REAL B1_iq = 0;
+REAL B1_ix = 0;
+REAL B1_iy = 0;
+REAL B2_id = 0;
+REAL B2_iq = 0;
+REAL B2_ix = 0;
+REAL B2_iy = 0;
+REAL rot = 0.0;
 REAL pseudo_Encoder;
 REAL BOOL_CurrentProfileGenerator = FALSE;
 CurrentProfileGenerator my_gen;
+int rotation_direction = 1; // 1=正向, -1=反向; change at runtime before calling Update
+// REAL I_wgtrsgfbjhgx[4]={0,0,0,0};
+// REAL asdhkjfg;
+REAL I_temp[8]={0,0,0,0,0,0,0,0};
 struct YZK_2025_TIA_CTRL YZK_CTRL;
 
 extern float test_sus = 0.0;
@@ -85,14 +113,14 @@ static const REAL L_B = -5.89365901e+00;
 /* Initialising */
 void init_YZK_ALL(){
     /* XY方向 */
-    YZK_CTRL.CMD_X = 1.445;
-    YZK_CTRL.CMD_Y = 0.3;
+    YZK_CTRL.CMD_X = 1.68;
+    YZK_CTRL.CMD_Y = 1.10;
     YZK_CTRL.Err_X_1 = 0.0;
     YZK_CTRL.Err_Y_1 = 0.0;
     YZK_CTRL.Err_X_2 = 0.0;
     YZK_CTRL.Err_Y_2 = 0.0;
-    YZK_CTRL.KP_X = 20;
-    YZK_CTRL.KP_Y = 20;
+    YZK_CTRL.KP_X = 100;
+    YZK_CTRL.KP_Y = 250;
     YZK_CTRL.KI_X = 0.0;
     YZK_CTRL.KI_Y = 0.0;
     YZK_CTRL.KD_X = 0.1;
@@ -198,20 +226,26 @@ void init_YZK_ALL(){
     YZK_CTRL.dc_bus_utilization_ratio_2 = 0;
 
     YZK_CTRL.varTheta = 0;
-    YZK_CTRL.varThetaOffset = 0;
+    YZK_CTRL.varThetaOffset = -2.96;
 
     // TEST //
-    YZK_CTRL.id_iq_amps[0] = 2.0f;
-    YZK_CTRL.id_iq_amps[1] = 4.0f;
-    YZK_CTRL.id_iq_amps[2] = 6.0f;
+    YZK_CTRL.id_iq_amps[0] = 1.0f;
+    YZK_CTRL.id_iq_amps[1] = 2.0f;
+    YZK_CTRL.id_iq_amps[2] = 3.0f;
+    // YZK_CTRL.id_iq_amps[3] = 1.5f;
+    // YZK_CTRL.id_iq_amps[4] = 3.0f;
 
-    YZK_CTRL.ix_amps[0] = 0.0f;
-    YZK_CTRL.ix_amps[1] = 0.0f;
+    YZK_CTRL.ix_amps[0] = - 3.0f;
+    YZK_CTRL.ix_amps[1] = - 1.5f;
     YZK_CTRL.ix_amps[2] = 0.0f;
+    YZK_CTRL.ix_amps[3] = 1.5f;
+    YZK_CTRL.ix_amps[4] = 3.0f;
 
-    YZK_CTRL.iy_amps[0] = 0.0f;
-    YZK_CTRL.iy_amps[1] = 0.0f;
-    YZK_CTRL.iy_amps[2] = 0.0f;
+    // YZK_CTRL.iy_amps[0] = - 3.0f;
+    // YZK_CTRL.iy_amps[1] = - 1.5f;
+    // YZK_CTRL.iy_amps[2] = 0.0f;
+    // YZK_CTRL.iy_amps[3] = 1.5f;
+    // YZK_CTRL.iy_amps[4] = 3.0f;
 }
 
 
@@ -329,11 +363,11 @@ void suspension_p4ps5_PD_doubleaxis(REAL X_Pos, REAL Y_Pos){
         // YZK_CTRL.prev_error_X = YZK_CTRL.Err_X; // 保存上次误差
         // YZK_CTRL.disFbk_X = X_Pos;
         // YZK_CTRL.varTheta = (*CTRL).i->theta_d_elec;
-        YZK_CTRL.Err_X_1 = - YZK_CTRL.CMD_X + YZK_CTRL.disFbk_X;
-        YZK_CTRL.Err_X_2 = - YZK_CTRL.CMD_X + YZK_CTRL.disFbk_X;
+        YZK_CTRL.Err_X_1 = YZK_CTRL.CMD_X - YZK_CTRL.disFbk_X;
+        YZK_CTRL.Err_X_2 = YZK_CTRL.CMD_X - YZK_CTRL.disFbk_X;
         // YZK_CTRL.varTheta = (*CTRL).i->theta_d_elec;
-        YZK_CTRL.Err_Y_1 = - YZK_CTRL.CMD_Y + YZK_CTRL.disFbk_Y;
-        YZK_CTRL.Err_Y_2 = - YZK_CTRL.CMD_Y + YZK_CTRL.disFbk_Y;
+        YZK_CTRL.Err_Y_1 = YZK_CTRL.CMD_Y - YZK_CTRL.disFbk_Y;
+        YZK_CTRL.Err_Y_2 = YZK_CTRL.CMD_Y - YZK_CTRL.disFbk_Y;
 
         YZK_CTRL.Err_X_1 = _lpf(YZK_CTRL.Err_X_1, YZK_CTRL.prev_error_X_1, 2513.27); // 400Hz
         YZK_CTRL.Err_Y_1 = _lpf(YZK_CTRL.Err_Y_1, YZK_CTRL.prev_error_Y_1, 2513.27); // 400Hz
@@ -373,14 +407,14 @@ void suspension_p4ps5_PD_doubleaxis(REAL X_Pos, REAL Y_Pos){
         YZK_CTRL.CMD_F_X_Kd = YZK_CTRL.KD_X * YZK_CTRL.LPFs_x.de_X; 
         if(YZK_CTRL.CMD_F_X_Kd > YZK_CTRL.KDLimit) YZK_CTRL.CMD_F_X_Kd = YZK_CTRL.KDLimit;
         else if(YZK_CTRL.CMD_F_X_Kd < -YZK_CTRL.KDLimit) YZK_CTRL.CMD_F_X_Kd = -YZK_CTRL.KDLimit;
-
+        /* Combine P and D terms into position force command */
         // YZK_CTRL.CMD_F_X = YZK_CTRL.CMD_F_X_Kp + YZK_CTRL.CMD_F_X_Kd;
 
         YZK_CTRL.CMD_F_Y_Kp = YZK_CTRL.KP_Y * YZK_CTRL.Err_Y_1;
         YZK_CTRL.CMD_F_Y_Kd = YZK_CTRL.KD_Y * YZK_CTRL.LPFs_y.de_Y;
         if(YZK_CTRL.CMD_F_Y_Kd > YZK_CTRL.KDLimit) YZK_CTRL.CMD_F_Y_Kd = YZK_CTRL.KDLimit;
         else if(YZK_CTRL.CMD_F_Y_Kd < -YZK_CTRL.KDLimit) YZK_CTRL.CMD_F_Y_Kd = -YZK_CTRL.KDLimit;
-
+        /* Combine P and D terms into position force command */
         // YZK_CTRL.CMD_F_Y = YZK_CTRL.CMD_F_Y_Kp + YZK_CTRL.CMD_F_Y_Kd;
         // K = 0;
         // YZK_CTRL.CMD_F_X_prime = YZK_CTRL.CMD_F_X * cos(5 * M_PI / 12) - YZK_CTRL.CMD_F_Y * sin(5 * M_PI / 12);
@@ -448,40 +482,109 @@ void suspension_p4ps5_PD_doubleaxis(REAL X_Pos, REAL Y_Pos){
     }
     
     if(BOOL_CurrentProfileGenerator){
-        CurrentProfileGenerator_Update(&my_gen,
-                                    &YZK_CTRL.CMD_I_alpha_1,
-                                    &YZK_CTRL.CMD_I_beta_1,
-                                    &CTRL_1.i->cmd_iDQ[0],
-                                    &CTRL_1.i->cmd_iDQ[1]);
-        
-        CurrentProfileGenerator_Update(&my_gen,
-                                    &YZK_CTRL.CMD_I_alpha_2,
-                                    &YZK_CTRL.CMD_I_beta_2,
-                                    &CTRL_2.i->cmd_iDQ[0],
-                                    &CTRL_2.i->cmd_iDQ[1]);
-        
-        // CTRL_1.i->cmd_iDQ[0] = - 1.0 * CTRL_1.i->cmd_iDQ[0];
-        // CTRL_1.i->cmd_iDQ[1] = - 1.0 * CTRL_1.i->cmd_iDQ[1];
-        CTRL_1.i->cmd_iDQ[0] = - 1.0 * CTRL_1.i->cmd_iDQ[0];
-        CTRL_1.i->cmd_iDQ[1] = - 1.0 * CTRL_1.i->cmd_iDQ[1];
-        CTRL_2.i->cmd_iDQ[0] = 1.0 * CTRL_2.i->cmd_iDQ[0];
-        CTRL_2.i->cmd_iDQ[1] = 1.0 * CTRL_2.i->cmd_iDQ[1];
-    }
+        // 执行四次 Update 并保存中间结果：
+        // A1,A2 = iab 平面 (rotation=1) 对应 axis1, axis2
+        // B1,B2 = idq 平面 (rotation=-1) 对应 axis1, axis2
+        {
 
-    CTRL_1.i->cmd_iDQ[0] = - I_DQ[0];
-    CTRL_1.i->cmd_iDQ[1] = - I_DQ[1];
-    CTRL_2.i->cmd_iDQ[0] = I_DQ[0] * cos( - M_PI * 0.33333333) + I_DQ[1] * sin( - M_PI * 0.33333333);
-    CTRL_2.i->cmd_iDQ[1] = I_DQ[0] * (-sin( - M_PI * 0.33333333)) + I_DQ[1] * cos( - M_PI * 0.33333333);
+            CurrentProfileGenerator_SetLoopEnable(&my_gen, 1, 0);
+            // iab plane for axis1, axis2 (advances generator each call)
+            CurrentProfileGenerator_Update(&my_gen, &A1_id, &A1_iq, &A1_ix, &A1_iy,
+                                           my_gen.id_iq_amplitudes, my_gen.num_idiq_amplitudes,
+                                           my_gen.ix_amplitudes, my_gen.num_ix_amplitudes,
+                                           my_gen.iy_amplitudes, my_gen.num_iy_amplitudes,
+                                           "iab", 1);
+            CurrentProfileGenerator_Update(&my_gen, &A2_id, &A2_iq, &A2_ix, &A2_iy,
+                                           my_gen.id_iq_amplitudes, my_gen.num_idiq_amplitudes,
+                                           my_gen.ix_amplitudes, my_gen.num_ix_amplitudes,
+                                           my_gen.iy_amplitudes, my_gen.num_iy_amplitudes,
+                                           "iab", 1);
+
+            // idq plane for axis1, axis2 (advances generator each call)
+            // CurrentProfileGenerator_Update(&my_gen, &B1_id, &B1_iq, &B1_ix, &B1_iy,
+            //                                my_gen.id_iq_amplitudes, my_gen.num_idiq_amplitudes,
+            //                                my_gen.ix_amplitudes, my_gen.num_ix_amplitudes,
+            //                                my_gen.iy_amplitudes, my_gen.num_iy_amplitudes,
+            //                                "idq", 1);
+            // CurrentProfileGenerator_Update(&my_gen, &B2_id, &B2_iq, &B2_ix, &B2_iy,
+            //                                my_gen.id_iq_amplitudes, my_gen.num_idiq_amplitudes,
+            //                                my_gen.ix_amplitudes, my_gen.num_ix_amplitudes,
+            //                                my_gen.iy_amplitudes, my_gen.num_iy_amplitudes,
+            //                                "idq", 1);
+
+            // 合并输出并写回目标（映射按原有注释）
+            // axis1
+            CTRL_1.i->cmd_iDQ[0] = A1_ix + B1_id;
+            CTRL_1.i->cmd_iDQ[1] = A1_iy + B1_iq;
+            YZK_CTRL.CMD_I_alpha_1 = A1_id + B1_ix;
+            YZK_CTRL.CMD_I_beta_1 = A1_iq + B1_iy;
+
+            // axis2
+            CTRL_2.i->cmd_iDQ[0] = A2_ix + B2_id;
+            CTRL_2.i->cmd_iDQ[1] = A2_iy + B2_iq;
+            YZK_CTRL.CMD_I_alpha_2 = A2_id + B2_ix;
+            YZK_CTRL.CMD_I_beta_2 = A2_iq + B2_iy;
+        }
+    }
+    // 出图代码 不用于控制 //
+    // YZK_CTRL.CMD_I_alpha_1 = (CMD_I_x_1 * cos(YZK_CTRL.varTheta) + CMD_I_y_1 * sin(YZK_CTRL.varTheta));
+    // YZK_CTRL.CMD_I_beta_1  = ( - CMD_I_x_1 * sin(YZK_CTRL.varTheta) + CMD_I_y_1 * cos(YZK_CTRL.varTheta));
+    // YZK_CTRL.CMD_I_alpha_2 = (CMD_I_x_2 * cos(YZK_CTRL.varTheta) + CMD_I_y_2 * sin(YZK_CTRL.varTheta));
+    // YZK_CTRL.CMD_I_beta_2  = ( - CMD_I_x_2 * sin(YZK_CTRL.varTheta) + CMD_I_y_2 * cos(YZK_CTRL.varTheta));
+    // 出图代码 不用于控制 //
+
+    CTRL_1.i->cmd_iDQ[0] = - CTRL_1.i->cmd_iDQ[0];
+    CTRL_1.i->cmd_iDQ[1] = - CTRL_1.i->cmd_iDQ[1];
+    CTRL_2.i->cmd_iDQ[0] = CTRL_2.i->cmd_iDQ[0];
+    CTRL_2.i->cmd_iDQ[1] = CTRL_2.i->cmd_iDQ[1];
+    // CTRL_1.i->cmd_iDQ[0] = I_DQ[0];
+    // CTRL_1.i->cmd_iDQ[1] = I_DQ[1];
+    // if( asdhkjfg <-10){
+    //     if(asdhkjfg >-20){
+    //         CTRL->timebase_counter=0;
+    //         asdhkjfg = -100;
+    //     }
+    //     CTRL_2.i->cmd_iDQ[0] = I_DQ[0] * cos(  CTRL->timebase*0.2*2*M_PI) + I_DQ[1] * sin( CTRL->timebase*0.2*2*M_PI);
+    //     CTRL_2.i->cmd_iDQ[1] = I_DQ[0] * (-sin( CTRL->timebase*0.2*2*M_PI)) + I_DQ[1] * cos( CTRL->timebase*0.2*2*M_PI);
+    // }else{
+    //     CTRL_2.i->cmd_iDQ[0] = I_DQ[0] * cos(  asdhkjfg * M_PI / 180) + I_DQ[1] * sin( asdhkjfg * M_PI / 180);
+    //     CTRL_2.i->cmd_iDQ[1] = I_DQ[0] * (-sin( asdhkjfg * M_PI / 180)) + I_DQ[1] * cos( asdhkjfg * M_PI / 180);
+    // }
+
+    // CTRL_1.i->cmd_iDQ[0] = I_wgtrsgfbjhgx[0];
+    // CTRL_1.i->cmd_iDQ[1] = I_wgtrsgfbjhgx[1];
+    // CTRL_2.i->cmd_iDQ[0] = I_wgtrsgfbjhgx[2];
+    // CTRL_2.i->cmd_iDQ[1] = I_wgtrsgfbjhgx[3];
 
     CTRL_1.o->cmd_iAB[0] = MT2A(CTRL_1.i->cmd_iDQ[0], CTRL_1.i->cmd_iDQ[1], CTRL_1.s->cosT, CTRL_1.s->sinT);
     CTRL_1.o->cmd_iAB[1] = MT2B(CTRL_1.i->cmd_iDQ[0], CTRL_1.i->cmd_iDQ[1], CTRL_1.s->cosT, CTRL_1.s->sinT);
     CTRL_2.o->cmd_iAB[0] = MT2A(CTRL_2.i->cmd_iDQ[0], CTRL_2.i->cmd_iDQ[1], CTRL_2.s->cosT, CTRL_2.s->sinT);
     CTRL_2.o->cmd_iAB[1] = MT2B(CTRL_2.i->cmd_iDQ[0], CTRL_2.i->cmd_iDQ[1], CTRL_2.s->cosT, CTRL_2.s->sinT);
 
+    CTRL_1.i->iDQ[0] = AB2M(CTRL_1.i->iAB[0], CTRL_1.i->iAB[1], CTRL_1.s->cosT, CTRL_1.s->sinT);
+    CTRL_1.i->iDQ[1] = AB2T(CTRL_1.i->iAB[0], CTRL_1.i->iAB[1], CTRL_1.s->cosT, CTRL_1.s->sinT);
+    CTRL_2.i->iDQ[0] = AB2M(CTRL_2.i->iAB[0], CTRL_2.i->iAB[1], CTRL_2.s->cosT, CTRL_2.s->sinT);
+    CTRL_2.i->iDQ[1] = AB2T(CTRL_2.i->iAB[0], CTRL_2.i->iAB[1], CTRL_2.s->cosT, CTRL_2.s->sinT);
+    
+    I_DQ[0] = - 0.5 * (CTRL_2.i->iDQ[0] - CTRL_1.i->iDQ[0]);
+    I_DQ[1] = - 0.5 * (CTRL_2.i->iDQ[1] - CTRL_1.i->iDQ[1]);
+    // YZK_CTRL.CMD_I_alpha_1 = I_ampa;
+    // YZK_CTRL.CMD_I_beta_1 = I_ampb;
+    // YZK_CTRL.CMD_I_alpha_2 = I_ampc;
+    // YZK_CTRL.CMD_I_beta_2 = I_ampd;
+    
+    CMD_I_x_1 = cos(YZK_CTRL.varTheta) * YZK_CTRL.CMD_I_alpha_1 - sin(YZK_CTRL.varTheta) * YZK_CTRL.CMD_I_beta_1;
+    CMD_I_y_1 = sin(YZK_CTRL.varTheta) * YZK_CTRL.CMD_I_alpha_1 + cos(YZK_CTRL.varTheta) * YZK_CTRL.CMD_I_beta_1;
+
+    I_x = CMD_I_x_1;
+    I_y = CMD_I_y_1;
+    // I_x = cos(YZK_CTRL.varTheta) * 0.5 * (CTRL_1.i->iAB[0] - CTRL_2.i->iAB[0]) - sin(YZK_CTRL.varTheta) * 0.5* (CTRL_1.i->iAB[1] + CTRL_2.i->iAB[1]);
+    // I_y = sin(YZK_CTRL.varTheta) * 0.5 * (CTRL_1.i->iAB[0] + CTRL_2.i->iAB[0]) + cos(YZK_CTRL.varTheta) * 0.5* (CTRL_1.i->iAB[1] + CTRL_2.i->iAB[1]);
+    
     if(axisCnt == 0)
     {   
-        YZK_CTRL.CMD_I_alpha_1 = I_ampc;
-        YZK_CTRL.CMD_I_beta_1 = I_ampd;
+        YZK_CTRL.CMD_I_alpha_1 = YZK_CTRL.CMD_I_alpha_1;
+        YZK_CTRL.CMD_I_beta_1 = YZK_CTRL.CMD_I_beta_1;
 
         // YZK_CTRL.CMD_I_alpha_1 = I_ampa * cos(2 * F_freq_1 * M_PI * CTRL->timebase) * cos(virtual_angle * M_PI);
         // YZK_CTRL.CMD_I_beta_1 = I_ampb * sin(2 * F_freq_2 * M_PI * CTRL->timebase) * sin(virtual_angle * M_PI);
@@ -548,8 +651,11 @@ void suspension_p4ps5_PD_doubleaxis(REAL X_Pos, REAL Y_Pos){
     }
     if (axisCnt == 1)
     {
-        YZK_CTRL.CMD_I_alpha_2 = I_ampc * cos(YZK_CTRL.varTheta - M_PI * 0.33333333);
-        YZK_CTRL.CMD_I_beta_2 = I_ampd * cos(YZK_CTRL.varTheta - M_PI * 0.33333333);
+        YZK_CTRL.CMD_I_alpha_2 = YZK_CTRL.CMD_I_alpha_2;
+        YZK_CTRL.CMD_I_beta_2 = YZK_CTRL.CMD_I_beta_2;
+
+        // YZK_CTRL.CMD_I_alpha_2 = YZK_CTRL.CMD_I_alpha_2 * cos(  -0.3333333 * M_PI) + YZK_CTRL.CMD_I_beta_2 * sin( -0.3333333 * M_PI);
+        // YZK_CTRL.CMD_I_beta_2 = YZK_CTRL.CMD_I_alpha_2 * (-sin( -0.3333333 * M_PI)) + YZK_CTRL.CMD_I_beta_2 * cos( -0.3333333 * M_PI);
 
         // YZK_CTRL.CMD_I_alpha_2 = I_ampa * cos(2 * F_freq_1 * M_PI * CTRL->timebase) * cos(virtual_angle * M_PI);
         // YZK_CTRL.CMD_I_beta_2 = I_ampb * sin(2 * F_freq_2 * M_PI * CTRL->timebase) * sin(virtual_angle * M_PI);
@@ -784,12 +890,19 @@ void CurrentProfileGenerator_Init(CurrentProfileGenerator *gen,
     gen->pause_duration = pause_duration;
     gen->auto_restart = auto_restart;
 
+    // 初始化接入序列名称为空
+    gen->sequence_name[0] = '\0';
+
     // 初始化状态
     gen->ix_index = 0;
     gen->iy_index = 0;
     gen->amp_index = 0;
     gen->circle_index = 0;
     gen->angle_index = 0;
+
+    // 默认启用所有外层循环
+    gen->enable_ix_loop = 1;
+    gen->enable_iy_loop = 1;
     gen->segment_timer = 0.0;
     gen->pause_timer = 0.0;
     gen->is_pausing = 0;
@@ -839,16 +952,35 @@ void CurrentProfileGenerator_Reset(CurrentProfileGenerator *gen)
 
     gen->is_running = 1;
     gen->is_completed = 0;
+
+    // 保持循环使能不变（不重置为默认，便于运行时切换后保持设置）
+}
+
+void CurrentProfileGenerator_SetLoopEnable(CurrentProfileGenerator *gen, int enable_ix, int enable_iy)
+{
+    gen->enable_ix_loop = enable_ix ? 1 : 0;
+    gen->enable_iy_loop = enable_iy ? 1 : 0;
 }
 
 void CurrentProfileGenerator_Update(CurrentProfileGenerator *gen, 
                                      REAL *id_out, 
                                      REAL *iq_out,
                                      REAL *ix_out,   // 新增输出参数，用于返回当前 ix
-                                     REAL *iy_out)   // 新增输出参数，用于返回当前 iy
+                                     REAL *iy_out,   // 新增输出参数，用于返回当前 iy
+                                     REAL *id_iq_amps, int num_idiq,
+                                     REAL *ix_amps, int num_ix,
+                                     REAL *iy_amps, int num_iy,
+                                     const char *sequence_name,
+                                     int rotation_direction)
 {
     REAL theta;
     REAL amplitude;
+    REAL *use_idiq = NULL;
+    REAL *use_ix = NULL;
+    REAL *use_iy = NULL;
+    int use_num_idiq = 0;
+    int use_num_ix = 0;
+    int use_num_iy = 0;
 
     // 如果未初始化，返回零电流
     if (!gen->is_initialized) {
@@ -857,6 +989,37 @@ void CurrentProfileGenerator_Update(CurrentProfileGenerator *gen,
         if (ix_out) *ix_out = 0.0;
         if (iy_out) *iy_out = 0.0;
         return;
+    }
+
+    // 记录传入的序列名称（如果有提供）
+    if (sequence_name && sequence_name[0]) {
+        strncpy(gen->sequence_name, sequence_name, sizeof(gen->sequence_name)-1);
+        gen->sequence_name[sizeof(gen->sequence_name)-1] = '\0';
+    } else {
+        gen->sequence_name[0] = '\0';
+    }
+
+    // 选择使用的幅值数组：优先使用传入的参数，否则使用生成器中存储的默认数组
+    if (id_iq_amps != NULL && num_idiq > 0) {
+        use_idiq = id_iq_amps;
+        use_num_idiq = num_idiq;
+    } else {
+        use_idiq = gen->id_iq_amplitudes;
+        use_num_idiq = gen->num_idiq_amplitudes;
+    }
+    if (ix_amps != NULL && num_ix > 0) {
+        use_ix = ix_amps;
+        use_num_ix = num_ix;
+    } else {
+        use_ix = gen->ix_amplitudes;
+        use_num_ix = gen->num_ix_amplitudes;
+    }
+    if (iy_amps != NULL && num_iy > 0) {
+        use_iy = iy_amps;
+        use_num_iy = num_iy;
+    } else {
+        use_iy = gen->iy_amplitudes;
+        use_num_iy = gen->num_iy_amplitudes;
     }
 
     // 处理暂停状态
@@ -923,23 +1086,91 @@ void CurrentProfileGenerator_Update(CurrentProfileGenerator *gen,
             gen->circle_index++;  // 完成一圈，圆周计数器加1
 
             // 检查是否完成当前幅值的所有圆周
-            if (gen->circle_index >= gen->circles_per_amplitude) {
+                if (gen->circle_index >= gen->circles_per_amplitude) {
                 gen->circle_index = 0;  // 重置圆周计数器
                 gen->amp_index++;       // 切换到下一个幅值
 
                 // 检查是否完成所有Id/Iq幅值
-                if (gen->amp_index >= gen->num_idiq_amplitudes) {
+                if (gen->amp_index >= use_num_idiq) {
                     gen->amp_index = 0;
-                    gen->iy_index++;   // 先推进 iy（内层于 ix）
 
-                    // 检查是否完成所有Iy幅值
-                    if (gen->iy_index >= gen->num_iy_amplitudes) {
-                        gen->iy_index = 0;
-                        gen->ix_index++; // 然后推进 ix（最外层）
+                    // 如果启用iy外层循环，先推进iy，否则直接作为下一层推动ix
+                        if (gen->enable_iy_loop) {
+                        gen->iy_index++;   // 先推进 iy（内层于 ix）
 
-                        // 检查是否完成所有Ix幅值
-                        if (gen->ix_index >= gen->num_ix_amplitudes) {
-                            // 如果设置了暂停时间，进入暂停状态
+                        // 检查是否完成所有Iy幅值
+                        if (gen->iy_index >= use_num_iy) {
+                            gen->iy_index = 0;
+
+                            // 如果启用ix外层循环，则推进ix；否则当iy完成且ix被禁用时视为序列完成
+                            if (gen->enable_ix_loop) {
+                                gen->ix_index++; // 然后推进 ix（最外层）
+
+                                // 检查是否完成所有Ix幅值
+                                if (gen->ix_index >= use_num_ix) {
+                                    // 如果设置了暂停时间，进入暂停状态
+                                    if (gen->pause_duration > 0.0) {
+                                        gen->is_pausing = 1;
+                                        gen->pause_timer = 0.0;
+                                        gen->current_id = 0.0;
+                                        gen->current_iq = 0.0;
+                                        gen->current_ix = 0.0;
+                                        gen->current_iy = 0.0;
+                                    } else {
+                                        // 没有暂停时间，直接完成
+                                        gen->is_completed = 1;
+                                        gen->is_running = 0;
+                                        gen->current_id = 0.0;
+                                        gen->current_iq = 0.0;
+                                        gen->current_ix = 0.0;
+                                        gen->current_iy = 0.0;
+                                    }
+                                    return;
+                                }
+                            } else {
+                                // ix被禁用，视为完成整个序列
+                                if (gen->pause_duration > 0.0) {
+                                    gen->is_pausing = 1;
+                                    gen->pause_timer = 0.0;
+                                    gen->current_id = 0.0;
+                                    gen->current_iq = 0.0;
+                                    gen->current_ix = 0.0;
+                                    gen->current_iy = 0.0;
+                                } else {
+                                    gen->is_completed = 1;
+                                    gen->is_running = 0;
+                                    gen->current_id = 0.0;
+                                    gen->current_iq = 0.0;
+                                    gen->current_ix = 0.0;
+                                    gen->current_iy = 0.0;
+                                }
+                                return;
+                            }
+                        }
+                    } else {
+                        // iy被禁用，直接推进ix（如果启用），否则序列完成
+                        if (gen->enable_ix_loop) {
+                            gen->ix_index++; // 然后推进 ix（最外层）
+                            if (gen->ix_index >= use_num_ix) {
+                                if (gen->pause_duration > 0.0) {
+                                    gen->is_pausing = 1;
+                                    gen->pause_timer = 0.0;
+                                    gen->current_id = 0.0;
+                                    gen->current_iq = 0.0;
+                                    gen->current_ix = 0.0;
+                                    gen->current_iy = 0.0;
+                                } else {
+                                    gen->is_completed = 1;
+                                    gen->is_running = 0;
+                                    gen->current_id = 0.0;
+                                    gen->current_iq = 0.0;
+                                    gen->current_ix = 0.0;
+                                    gen->current_iy = 0.0;
+                                }
+                                return;
+                            }
+                        } else {
+                            // ix和iy都被禁用，序列完成
                             if (gen->pause_duration > 0.0) {
                                 gen->is_pausing = 1;
                                 gen->pause_timer = 0.0;
@@ -948,7 +1179,6 @@ void CurrentProfileGenerator_Update(CurrentProfileGenerator *gen,
                                 gen->current_ix = 0.0;
                                 gen->current_iy = 0.0;
                             } else {
-                                // 没有暂停时间，直接完成
                                 gen->is_completed = 1;
                                 gen->is_running = 0;
                                 gen->current_id = 0.0;
@@ -965,14 +1195,19 @@ void CurrentProfileGenerator_Update(CurrentProfileGenerator *gen,
 
         // 计算新的电流值
         // theta = 2*PI * angle_index / num_angle_segments
-        theta = 6.28318530718 * (REAL)gen->angle_index / (REAL)gen->num_angle_segments;
-        amplitude = gen->id_iq_amplitudes[gen->amp_index];
+        theta = 6.28318530718 * (REAL)gen->angle_index / (REAL)gen->num_angle_segments * (REAL)((rotation_direction >= 0) ? 1 : -1);
+        // 使用选定的幅值数组
+        if (use_num_idiq > 0) {
+            amplitude = use_idiq[gen->amp_index % use_num_idiq];
+        } else {
+            amplitude = 0.0;
+        }
 
         // 在dq平面上的圆周投影
         gen->current_id = amplitude * cos(theta);
         gen->current_iq = amplitude * sin(theta);
-        gen->current_ix = gen->ix_amplitudes[gen->ix_index];
-        gen->current_iy = gen->iy_amplitudes[gen->iy_index];
+        gen->current_ix = (use_num_ix > 0) ? use_ix[gen->ix_index % use_num_ix] : 0.0;
+        gen->current_iy = (use_num_iy > 0) ? use_iy[gen->iy_index % use_num_iy] : 0.0;
     }
 }
 
@@ -1027,7 +1262,12 @@ int CurrentProfileGenerator_IsCompleted(CurrentProfileGenerator *gen)
  *      REAL id_ref, iq_ref;
  *      
  *      // 更新并获取电流指令
- *      CurrentProfileGenerator_Update(&my_gen, &id_ref, &iq_ref);
+ *      // 新签名: id_out, iq_out, ix_out, iy_out, id_iq_amps, num_idiq, ix_amps, num_ix, iy_amps, num_iy, sequence_name, rotation_direction
+ *      CurrentProfileGenerator_Update(&my_gen, &id_ref, &iq_ref, NULL, NULL,
+     *                                    my_gen.id_iq_amplitudes, my_gen.num_idiq_amplitudes,
+     *                                    my_gen.ix_amplitudes, my_gen.num_ix_amplitudes,
+     *                                    my_gen.iy_amplitudes, my_gen.num_iy_amplitudes,
+     *                                    "idq", 1);
  *      
  *      // 使用id_ref和iq_ref进行电流控制
  *      // ...

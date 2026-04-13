@@ -123,8 +123,8 @@
     // B is the second inverter in MOTOR_GROUP
     
     #define OFFSET_LEM_B7  2007 // 2020 // 2023.89473684 // ADCB7
-    #define OFFSET_LEM_B8  2023 // 2029 // 2042.33333333 // ADCB8
-    #define OFFSET_LEM_B9  2036 // 2038 // 2043.43859649 // ADCB9
+    #define OFFSET_LEM_B8  2016 // 2029 // 2042.33333333 // ADCB8
+    #define OFFSET_LEM_B9  2023 // 2038 // 2043.43859649 // ADCB9
     #define SCALE_LEM_B7 0.03076297 // ADCB7
     #define SCALE_LEM_B8 0.03038256 // ADCB8
     #define SCALE_LEM_B9 0.03039058 // ADCB9

@@ -129,6 +129,10 @@ void main(void){
     // 7. CLA
     // cla_test_codes();
 
+    debug_1.mode_select = 7;
+    debug_2.mode_select = 7;
+    use_first_set_three_phase = -1;
+
     // 8. Main loop
     main_loop();
 }

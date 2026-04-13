@@ -233,6 +233,9 @@ typedef struct {
     int circle_index;                            // 当前圆周索引（0到circles_per_amplitude-1）
     int angle_index;                             // 当前角度索引
     REAL segment_timer;                          // 当前段内计时器 (s)
+    int enable_ix_loop;                          // 是否启用 ix 外层循环 (1=启用,0=禁用)
+    int enable_iy_loop;                          // 是否启用 iy 外层循环 (1=启用,0=禁用)
+    char sequence_name[32];                      // 当前接入序列名称（可选，用于runtime识别）
     
     // 当前输出值
     REAL current_id;                             // 当前d轴电流 (A)
@@ -272,7 +275,27 @@ void CurrentProfileGenerator_Update(CurrentProfileGenerator *gen,
                                      REAL *id_out, 
                                      REAL *iq_out,
                                      REAL *ix_out,
-                                     REAL *iy_out);
+                                     REAL *iy_out,
+                                     REAL *id_iq_amps, int num_idiq,
+                                     REAL *ix_amps, int num_ix,
+                                     REAL *iy_amps, int num_iy,
+                                     const char *sequence_name,
+                                     int rotation_direction);
+
+// Compute outputs for the current generator state without advancing timers
+void CurrentProfileGenerator_Peek(CurrentProfileGenerator *gen,
+                                  REAL *id_out,
+                                  REAL *iq_out,
+                                  REAL *ix_out,
+                                  REAL *iy_out,
+                                  REAL *id_iq_amps, int num_idiq,
+                                  REAL *ix_amps, int num_ix,
+                                  REAL *iy_amps, int num_iy,
+                                  const char *sequence_name,
+                                  int rotation_direction);
+
+// Enable/disable outer loops for ix/iy. Pass 1 to enable, 0 to disable.
+void CurrentProfileGenerator_SetLoopEnable(CurrentProfileGenerator *gen, int enable_ix, int enable_iy);
 
 int CurrentProfileGenerator_IsCompleted(CurrentProfileGenerator *gen);
 

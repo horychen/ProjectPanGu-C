@@ -13,6 +13,11 @@ extern Uint32 position_count_CAN_ID0x01_fromCPU2;
 extern Uint32 position_count_CAN_ID0x03_fromCPU2;
 extern Uint32 position_count_SCI_hip_fromCPU2;
 extern Uint32 position_count_SCI_shank_fromCPU2;
+extern REAL CMD_I_x_1;
+extern REAL I_x;
+extern REAL CMD_I_y_1;
+extern REAL I_y;
+extern REAL I_DQ[2];
 
 st_axis *Axis4DAC;
 #if NUMBER_OF_DSP_CORES == 2
@@ -161,14 +166,14 @@ void write_DAC_buffer(){
         // (*Axis4DAC).dac_watch[78] = YZK_CTRL.CMD_I_alpha / 10;
         // (*Axis4DAC).dac_watch[79] = YZK_CTRL.CMD_I_beta / 10;
         /* Two axis test*/
-        (*Axis4DAC).dac_watch[70] = YZK_CTRL.CMD_I_alpha_2 / 3;
-        (*Axis4DAC).dac_watch[71] = YZK_CTRL.CMD_I_beta_2 / 3;
-        (*Axis4DAC).dac_watch[72] = YZK_CTRL.CMD_I_alpha_1 / 3;
-        (*Axis4DAC).dac_watch[73] = YZK_CTRL.CMD_I_beta_1 / 3;
-        (*Axis4DAC).dac_watch[74] = CTRL_1.i->cmd_iDQ[0] / 3;
-        (*Axis4DAC).dac_watch[75] = CTRL_1.i->cmd_iDQ[1] / 3;
-        (*Axis4DAC).dac_watch[76] = CTRL_1.i->cmd_iDQ[0] / 3;
-        (*Axis4DAC).dac_watch[77] = CTRL_1.i->cmd_iDQ[1] / 3;
+        (*Axis4DAC).dac_watch[70] = CTRL_1.i->cmd_iDQ[0] / 6;
+        (*Axis4DAC).dac_watch[71] = I_DQ[0] / 6;
+        (*Axis4DAC).dac_watch[72] = CTRL_1.i->cmd_iDQ[1] / 6;
+        (*Axis4DAC).dac_watch[73] = I_DQ[1]  / 6;
+        (*Axis4DAC).dac_watch[74] = CMD_I_x_1 / 6;
+        (*Axis4DAC).dac_watch[75] = I_x / 6;
+        (*Axis4DAC).dac_watch[76] = CMD_I_y_1 / 6;
+        (*Axis4DAC).dac_watch[77] = I_y / 6;
         // (*Axis4DAC).dac_watch[84] = Axis->place_sensor[4] / 11;
         // (*Axis4DAC).dac_watch[85] = Axis->place_sensor[5] / 11;
 
