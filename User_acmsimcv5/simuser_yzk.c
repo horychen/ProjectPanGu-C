@@ -75,6 +75,22 @@ REAL varTHETA_45;
 REAL V0_V45_N;
 REAL V0_V45_P;
 extern REAL place_sensor[8];
+
+/* Ellipse-angle estimator states (mechanical angle continuity) */
+static REAL g_theta_mech_prev = 0.0;
+static int g_theta_mech_initialized = 0;
+
+static REAL yzk_wrap_pm_pi(REAL x)
+{
+    while (x > M_PI)  x -= 2.0 * M_PI;
+    while (x < -M_PI) x += 2.0 * M_PI;
+    return x;
+}
+
+static REAL yzk_round_nearest(REAL x)
+{
+    return (x >= 0.0) ? floor(x + 0.5) : ceil(x - 0.5);
+}
 // K = tan(pi * fc / fs)1
 // norm = 1 + K/Q + K^2
 // b0 = K^2 / norm
@@ -317,46 +333,94 @@ void suspension_p4ps5_PD_doubleaxis(REAL X_Pos, REAL Y_Pos){
         place_sensor[7] = ceil(place_sensor[7] * 300.0)  / 300;
     if(BOOL_eccentricity)
         {
+        const REAL SENSOR_RADIUS = 20.0;
+        const REAL R_MIN = 1e-3;
+        const REAL EPS = 1e-12;
+        REAL r0_single, r45_single, r180_single, r225_single;
+        REAL q0, q45, q180, q225;
+        REAL c_term, d_term;
+        REAL z0, z45, z180, z225;
+        REAL u, v, uv_norm;
+        REAL theta_base, theta_mech, k_pi;
+
         sensor_1 = place_sensor[0];
         sensor_2 = place_sensor[1];
         sensor_3 = place_sensor[5];
         sensor_4 = place_sensor[7];
-        r_0 = (40 + sensor_2 + sensor_3) * 0.5;
-        r_45 = (40 + sensor_1 + sensor_4) * 0.5;
+
+        /* Sensor angles: [0, 45, 180, 225] deg.
+         * Use each sensor directly (not pair-reduced) and solve:
+         *   q_i = 1/r_i^2 = c + d*cos(2*(alpha_i - theta)).
+         */
+        r0_single   = SENSOR_RADIUS - sensor_1;  /* 0 deg channel */
+        r45_single  = SENSOR_RADIUS - sensor_2;  /* 45 deg channel */
+        r180_single = SENSOR_RADIUS - sensor_3;  /* 180 deg channel */
+        r225_single = SENSOR_RADIUS - sensor_4;  /* 225 deg channel */
+
+        if (r0_single < R_MIN)   r0_single = R_MIN;
+        if (r45_single < R_MIN)  r45_single = R_MIN;
+        if (r180_single < R_MIN) r180_single = R_MIN;
+        if (r225_single < R_MIN) r225_single = R_MIN;
+
+        /* Keep these debug variables meaningful. */
+        r_0 = 0.5 * (r0_single + r180_single);
+        r_45 = 0.5 * (r45_single + r225_single);
         S_0 = A_r * B_r / r_0;
         S_45 = A_r * B_r / r_45;
 
-        SQRT_ARCTG_0_num = sqrt(S_0 * S_0 - B_r * B_r);
-        SQRT_ARCTG_45_num = sqrt(S_45 * S_45 - B_r * B_r);
-        SQRT_ARCTG_0_den = sqrt(A_r * A_r - S_0 * S_0);
-        SQRT_ARCTG_45_den = sqrt(A_r * A_r - S_45 * S_45);
-        varTHETA_0 = atan2(SQRT_ARCTG_0_num, SQRT_ARCTG_0_den);
-        varTHETA_45 = atan2(SQRT_ARCTG_45_num, SQRT_ARCTG_45_den);
-        // 3 cases
-        if(varTHETA_0 + varTHETA_45 == M_PI*0.25)
-        {
-            YZK_CTRL.varTheta = varTHETA_0 * YZK_CTRL.motor.npp;
-        }
-        else if(varTHETA_0 - varTHETA_45 == M_PI*0.25)
-        {
-            YZK_CTRL.varTheta = varTHETA_0 * YZK_CTRL.motor.npp;
-        }
-        else if(varTHETA_45 - varTHETA_0 == M_PI*0.25)
-        {
-            YZK_CTRL.varTheta = - varTHETA_0 * YZK_CTRL.motor.npp;
-        }else
-        {
-            YZK_CTRL.varTheta = varTHETA_0 * YZK_CTRL.motor.npp;
-        }
-        
-        YZK_CTRL.varTheta -= YZK_CTRL.varThetaOffset;
+        q0   = 1.0 / (r0_single * r0_single);
+        q45  = 1.0 / (r45_single * r45_single);
+        q180 = 1.0 / (r180_single * r180_single);
+        q225 = 1.0 / (r225_single * r225_single);
 
-        if (YZK_CTRL.varTheta > M_PI) YZK_CTRL.varTheta -= 2.0*M_PI;
-        if (YZK_CTRL.varTheta < -M_PI) YZK_CTRL.varTheta += 2.0*M_PI;
+        c_term = 0.5 * (1.0 / (A_r * A_r) + 1.0 / (B_r * B_r));
+        d_term = 0.5 * (1.0 / (A_r * A_r) - 1.0 / (B_r * B_r));
+
+        if (fabs(d_term) < EPS) {
+            theta_mech = g_theta_mech_initialized ? g_theta_mech_prev : 0.0;
+            theta_base = theta_mech;
+        } else {
+            z0   = (q0   - c_term) / d_term;
+            z45  = (q45  - c_term) / d_term;
+            z180 = (q180 - c_term) / d_term;
+            z225 = (q225 - c_term) / d_term;
+
+            /* For alpha=[0,45,180,225]:
+             * u ~ cos(2*theta), v ~ sin(2*theta) from pair average.
+             */
+            u = 0.5 * (z0 + z180);
+            v = 0.5 * (z45 + z225);
+            uv_norm = sqrt(u * u + v * v);
+
+            if (uv_norm > EPS) {
+                u /= uv_norm;
+                v /= uv_norm;
+            }
+
+            theta_base = 0.5 * atan2(v, u); /* in [-pi/2, pi/2] */
+
+            if (!g_theta_mech_initialized) {
+                theta_mech = theta_base;
+                g_theta_mech_initialized = 1;
+            } else {
+                /* Ellipse symmetry gives pi ambiguity; resolve by continuity. */
+                k_pi = yzk_round_nearest((g_theta_mech_prev - theta_base) / M_PI);
+                theta_mech = theta_base + k_pi * M_PI;
+            }
+        }
+
+        g_theta_mech_prev = theta_mech;
+        varTHETA_0 = theta_mech;
+        varTHETA_45 = theta_base;
+
+        YZK_CTRL.varTheta = theta_mech * YZK_CTRL.motor.npp;
+        YZK_CTRL.varTheta -= YZK_CTRL.varThetaOffset;
+        YZK_CTRL.varTheta = yzk_wrap_pm_pi(YZK_CTRL.varTheta);
 
         V0_V45_N = varTHETA_45 - varTHETA_0;
         V0_V45_P = varTHETA_45 + varTHETA_0;
         }
+        
     if(! ONLY_CURRENT_LOOP_TEST){
         /* 位置环 */    
         // 1. 误差
