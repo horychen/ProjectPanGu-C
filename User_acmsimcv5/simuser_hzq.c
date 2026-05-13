@@ -1221,19 +1221,19 @@ void rk4_init(){
         FE.HE_EKF.Resistance = MOTOR.R;
         FE.HE_EKF.Inductance = MOTOR.Ld;
         FE.HE_EKF.Flux_norm = MOTOR.KE; //psi PM flux
+        FE.HE_EKF.ONE_OVER_LPF_Hz =0.003;
+        FE.HE_EKF.B_cova = 10000; // Covariance matrix of curent sensor bias noise, noises being 0.01 A in alpha beta direction
+        FE.HE_EKF.Q_cova = 0.000001; // Covariance of psudo measurement, noise in alpha beta direction
 
         he_ekf_motor_parameters_initialized = TRUE;
     }
 
     void init_HE_EKF(){
         /* Define EKF parameters */
-        FE.HE_EKF.B_cova = 10000; // Covariance matrix of curent sensor bias noise, noises being 0.01 A in alpha beta direction
-        FE.HE_EKF.Q_cova = 0.000001; // Covariance of psudo measurement, noise in alpha beta direction
         // FE.HE_EKF.inital_angle = 0; // initial zero angle for flux, in radian
         FE.HE_EKF.initial_angle = CTRL->enc->theta_d_elec; // initial angle for flux, in radian
         FE.HE_EKF.initial_angle = (*CTRL).i->theta_d_elec; // initial angle for flux, in radian
         FE.HE_EKF.initial_Covariance  = 0.02; // initial flux norm, in Wb
-        FE.HE_EKF.ONE_OVER_LPF_Hz =0.01;
         // matrix of bias noise, noises being 0.01 A in alpha beta direction
         
         // static double B[2][2] = {{B_cova*B_cova,B_cova*B_cova},{B_cova*B_cova,B_cova*B_cova}};
@@ -2874,6 +2874,32 @@ void Main_parksul2014_FADO(){
 #endif
 
 #if ALG_PLL_norm
+    void init_PLL_norm_parameters_on_startup(){
+        static BOOL plln_parameters_initialized = FALSE;
+
+        if (plln_parameters_initialized){
+            return;
+        }
+
+        PLLN.kp = 150;
+        PLLN.ki = 300;
+
+        plln_parameters_initialized = TRUE;
+    }
+
+    void init_PLL_norm_EKF_parameters_on_startup(){
+        static BOOL plln_ekf_parameters_initialized = FALSE;
+
+        if (plln_ekf_parameters_initialized){
+            return;
+        }
+
+        PLLN_EKF.kp = 100;
+        PLLN_EKF.ki = 300;
+
+        plln_ekf_parameters_initialized = TRUE;
+    }
+
     void init_PLL_norm(){
         PLLN.emf_ampl = 0;
         PLLN.theta_elec = 0;
@@ -2885,8 +2911,6 @@ void Main_parksul2014_FADO(){
         PLLN.emf_ampl = 0;
         PLLN.x[0] = 0;
         PLLN.x[1] = 0;
-        PLLN.kp = 100;
-        PLLN.ki = 300;
         PLLN.emf_recon[0] = 0;
         PLLN.emf_recon[1] = 0;
         PLLN.k_p_theta = 1;
@@ -2989,8 +3013,6 @@ void Main_parksul2014_FADO(){
         PLLN_EKF.emf_ampl = 0;
         PLLN_EKF.x[0] = 0;
         PLLN_EKF.x[1] = 0;
-        PLLN_EKF.kp = 100;
-        PLLN_EKF.ki = 300;
         PLLN_EKF.emf_recon[0] = 0;
         PLLN_EKF.emf_recon[1] = 0;
         PLLN_EKF.k_p_theta = 1;
@@ -3242,7 +3264,9 @@ void init_pmsm_observers(){
     init_InertiaId();
     #endif
     #if ALG_PLL_norm
+    init_PLL_norm_parameters_on_startup();
     init_PLL_norm();
+    init_PLL_norm_EKF_parameters_on_startup();
     init_PLL_norm_EKF();
     #endif
 

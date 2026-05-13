@@ -138,9 +138,9 @@
         #define SCALE_LEM_A3 0.031633  // ADCA3
     #else // Default Setup for XXXX (Waiting for a name as a gift for Little Black Board)
     //LEM1-100(盲潞搂氓鈥滐拷盲禄拢氓锟铰�)
-        #define OFFSET_LEM_A1 2015 // 2035.0 // WuBo tuned in 20241027 //2010  // 2034  // 2029.57894737 // ADCA1
-        #define OFFSET_LEM_A2 2042 // 2047.0 // WuBo tuned in 20241027 //2038   // 2049  // 2043.08771930 // ADCA2
-        #define OFFSET_LEM_A3 2033 // 2057.0 // WuBo tuned in 20241027 //2029   // 2050  // 2042.98245614 // ADCA3
+        #define OFFSET_LEM_A1 2013 // 2035.0 // WuBo tuned in 20241027 //2010  // 2034  // 2029.57894737 // ADCA1
+        #define OFFSET_LEM_A2 2039 // 2047.0 // WuBo tuned in 20241027 //2038   // 2049  // 2043.08771930 // ADCA2
+        #define OFFSET_LEM_A3 2032 // 2057.0 // WuBo tuned in 20241027 //2029   // 2050  // 2042.98245614 // ADCA3
         #define SCALE_LEM_A1 0.0305   // 0.03080704 // ADCA1
         #define SCALE_LEM_A2 0.030334 // 0.03060669 // ADCA2
         #define SCALE_LEM_A3 0.031633  // 0.03045988 // ADCA3
@@ -201,9 +201,9 @@
         #define SCALE_LEM_B9 0.03039058 // ADCB9
     #else
     // LEM2-101(盲潞搂氓鈥滐拷盲禄拢氓锟铰�)
-        #define OFFSET_LEM_B7 2012 //2020 // 2023.89473684 // ADCB7
-        #define OFFSET_LEM_B8 2042 // 2029 // 2042.33333333 // ADCB8
-        #define OFFSET_LEM_B9 2033 // 2038 // 2043.43859649 // ADCB9
+        #define OFFSET_LEM_B7 2013 //2020 // 2023.89473684 // ADCB7
+        #define OFFSET_LEM_B8 2039 // 2029 // 2042.33333333 // ADCB8
+        #define OFFSET_LEM_B9 2032 // 2038 // 2043.43859649 // ADCB9
         #define SCALE_LEM_B7 0.03076297 // ADCB7
         #define SCALE_LEM_B8 0.03038256 // ADCB8
         #define SCALE_LEM_B9 0.03039058 // ADCB9

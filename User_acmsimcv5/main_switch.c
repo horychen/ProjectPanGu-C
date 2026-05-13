@@ -686,21 +686,21 @@ void _user_commands(){
         // 凸极永磁采用 iD<0 获得更大的 有功磁链（aka 转矩系数）
         // (*CTRL).i->cmd_iDQ[0] = -1.0;
     }
-    if ((*CTRL).timebase < 2 && (*CTRL).timebase > 0){
-        (*CTRL).i->cmd_varOmega = 0;
+    if ((*CTRL).timebase < 1 && (*CTRL).timebase > 0){
+        (*CTRL).i->cmd_varOmega = 50 * RPM_2_MECH_RAD_PER_SEC;
     }
-    if ((*CTRL).timebase < 3.5 && (*CTRL).timebase > 2){
+    if ((*CTRL).timebase < 3 && (*CTRL).timebase > 1){
         (*CTRL).i->cmd_varOmega = 50 * RPM_2_MECH_RAD_PER_SEC;
         // FE.HE_EKF.current_offset[0] = 0.05;
         // FE.HE_EKF.current_offset[1] = 0.1;
     }
-    if ((*CTRL).timebase < 8 && (*CTRL).timebase > 3.5){
+    if ((*CTRL).timebase < 7 && (*CTRL).timebase > 3){
         (*CTRL).i->cmd_varOmega = -50 * RPM_2_MECH_RAD_PER_SEC;
     }
-    if ((*CTRL).timebase > 8){
-        (*CTRL).i->cmd_varOmega += 12.50 * RPM_2_MECH_RAD_PER_SEC * CL_TS;
+    if ((*CTRL).timebase > 7){
+        (*CTRL).i->cmd_varOmega += 25 * RPM_2_MECH_RAD_PER_SEC * CL_TS;
     }
-    if ((*CTRL).timebase > 16){
+    if ((*CTRL).timebase > 11){
         (*CTRL).i->cmd_varOmega = 50 * RPM_2_MECH_RAD_PER_SEC;
     }
     // if ((*CTRL).timebase > 18){

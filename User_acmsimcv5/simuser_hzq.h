@@ -1110,6 +1110,8 @@
         void init_cjheemf();
         void init_harnefors();
         void init_Bernard2017();
+        void init_PLL_norm_parameters_on_startup();
+        void init_PLL_norm_EKF_parameters_on_startup();
         void init_PLL_norm();
         void init_PLL_norm_EKF();
         // controller declaration

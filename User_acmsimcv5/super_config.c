@@ -5,13 +5,13 @@
 void init_d_sim() {
     d_sim.init.npp = 4;
     d_sim.init.IN = 3;
-    d_sim.init.R = 1.67;
-    d_sim.init.Ld = 0.0026;
-    d_sim.init.Lq = 0.0026;
-    d_sim.init.KE = 0.114;
+    d_sim.init.R = 1.65;
+    d_sim.init.Ld = 0.0028;
+    d_sim.init.Lq = 0.0028;
+    d_sim.init.KE = 0.1;
     d_sim.init.Rreq = 0.0;
     d_sim.init.Js = 0.00049836;
-    d_sim.init.Vdc = 36;
+    d_sim.init.Vdc = 24;
 
     d_sim.sim.INVERTER_NONLINEARITY = 0;
     d_sim.sim.CLTS = 0.0001;
@@ -23,10 +23,10 @@ void init_d_sim() {
     d_sim.FOC.bool_apply_decoupling_voltages_to_current_regulation = FALSE;
     d_sim.FOC.VL_EXE_PER_CL_EXE = 1;
 
-    d_sim.CL.SERIES_KP_D_AXIS = 16.084954386379742;
-    d_sim.CL.SERIES_KI_D_AXIS = 514.65625;
-    d_sim.CL.SERIES_KP_Q_AXIS = 16.084954386379742;
-    d_sim.CL.SERIES_KI_Q_AXIS = 514.65625;
+    d_sim.CL.SERIES_KP_D_AXIS = 10.084954386379742;
+    d_sim.CL.SERIES_KI_D_AXIS = 314.65625;
+    d_sim.CL.SERIES_KP_Q_AXIS = 10.084954386379742;
+    d_sim.CL.SERIES_KI_Q_AXIS = 314.65625;
     d_sim.CL.LIMIT_DC_BUS_UTILIZATION = 0.96;
 
     d_sim.VL.SERIES_KP = 0.22058704353118255;
