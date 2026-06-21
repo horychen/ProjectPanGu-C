@@ -731,103 +731,103 @@ void _user_commands(){
     }
     
 
-    #if PC_SIMULATION == TRUE
-        #if WHO_IS_USER == USER_WB
-            ACM.TLoad = 0;
-            if ( (*CTRL).timebase > 0.04 ){
-                ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.5);
-            }
-            if( (*CTRL).timebase >  0.10 ){
-                ACM.TLoad = 0;
-                (*CTRL).i->cmd_varOmega = 400 * RPM_2_MECH_RAD_PER_SEC;
-            }
-        #elif WHO_IS_USER == USER_BEZIER
-            if ((*CTRL).timebase > 0){
-                (*CTRL).i->cmd_varOmega =  400 * RPM_2_MECH_RAD_PER_SEC;
-            }
-            if ((*CTRL).timebase > 0.02){
-                (*CTRL).i->cmd_varOmega = -400 * RPM_2_MECH_RAD_PER_SEC;
-            }
-            if ((*CTRL).timebase > 0.04){
-                ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * 3.0 *0.5);
-                // ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * 3.0 * 0.95) * sin(50*2*M_PI*CTRL->timebase);
-            }
-            if ((*CTRL).timebase > 0.07){
-                ACM.TLoad = 0.0;
-            }
-        #elif WHO_IS_USER == USER_CJH || WHO_IS_USER == USER_XM
-            (*CTRL).i->cmd_varOmega = 0.0;
+    // #if PC_SIMULATION == TRUE
+    //     #if WHO_IS_USER == USER_WB
+    //         ACM.TLoad = 0;
+    //         if ( (*CTRL).timebase > 0.04 ){
+    //             ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.5);
+    //         }
+    //         if( (*CTRL).timebase >  0.10 ){
+    //             ACM.TLoad = 0;
+    //             (*CTRL).i->cmd_varOmega = 400 * RPM_2_MECH_RAD_PER_SEC;
+    //         }
+    //     #elif WHO_IS_USER == USER_BEZIER
+    //         if ((*CTRL).timebase > 0){
+    //             (*CTRL).i->cmd_varOmega =  400 * RPM_2_MECH_RAD_PER_SEC;
+    //         }
+    //         if ((*CTRL).timebase > 0.02){
+    //             (*CTRL).i->cmd_varOmega = -400 * RPM_2_MECH_RAD_PER_SEC;
+    //         }
+    //         if ((*CTRL).timebase > 0.04){
+    //             ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * 3.0 *0.5);
+    //             // ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * 3.0 * 0.95) * sin(50*2*M_PI*CTRL->timebase);
+    //         }
+    //         if ((*CTRL).timebase > 0.07){
+    //             ACM.TLoad = 0.0;
+    //         }
+    //     #elif WHO_IS_USER == USER_CJH || WHO_IS_USER == USER_XM
+    //         (*CTRL).i->cmd_varOmega = 0.0;
 
-            if ((*CTRL).timebase > CL_TS){
-                (*CTRL).i->cmd_varOmega =  400 * RPM_2_MECH_RAD_PER_SEC;
-            }
-            if ((*CTRL).timebase > 0.04){
-                (*CTRL).i->cmd_varOmega = -400 * RPM_2_MECH_RAD_PER_SEC;
-            }
-            if ((*CTRL).timebase > 0.07){
-                ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * 3.0 * 0.95);
-                // ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * 3.0 * 0.95) * sin(50*2*M_PI*CTRL->timebase);
-            }
-            if ((*CTRL).timebase > 0.10){
-                ACM.TLoad = 0.0;
-            }
-            // (*CTRL).i->cmd_varOmega = 0.0;
-            // if ((*CTRL).timebase > CL_TS){
-            //     (*CTRL).i->cmd_varOmega = (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
-            // }
-            // if ((*CTRL).timebase > 0.2){
-            //     (*CTRL).i->cmd_varOmega =  (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
-            // }
-            // if ((*CTRL).timebase > 0.4){
-            //     #if PC_SIMULATION
-            //         ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.8);
-            //     #endif
-            // }
-            // if ((*CTRL).timebase > 10){
-            //     (*CTRL).i->cmd_varOmega = 0.0;
-            // }
-            // if ((*CTRL).timebase > 15){
-            //     (*CTRL).i->cmd_varOmega = (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
-            // }
+    //         if ((*CTRL).timebase > CL_TS){
+    //             (*CTRL).i->cmd_varOmega =  400 * RPM_2_MECH_RAD_PER_SEC;
+    //         }
+    //         if ((*CTRL).timebase > 0.04){
+    //             (*CTRL).i->cmd_varOmega = -400 * RPM_2_MECH_RAD_PER_SEC;
+    //         }
+    //         if ((*CTRL).timebase > 0.07){
+    //             ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * 3.0 * 0.95);
+    //             // ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * 3.0 * 0.95) * sin(50*2*M_PI*CTRL->timebase);
+    //         }
+    //         if ((*CTRL).timebase > 0.10){
+    //             ACM.TLoad = 0.0;
+    //         }
+    //         // (*CTRL).i->cmd_varOmega = 0.0;
+    //         // if ((*CTRL).timebase > CL_TS){
+    //         //     (*CTRL).i->cmd_varOmega = (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
+    //         // }
+    //         // if ((*CTRL).timebase > 0.2){
+    //         //     (*CTRL).i->cmd_varOmega =  (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
+    //         // }
+    //         // if ((*CTRL).timebase > 0.4){
+    //         //     #if PC_SIMULATION
+    //         //         ACM.TLoad = (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.8);
+    //         //     #endif
+    //         // }
+    //         // if ((*CTRL).timebase > 10){
+    //         //     (*CTRL).i->cmd_varOmega = 0.0;
+    //         // }
+    //         // if ((*CTRL).timebase > 15){
+    //         //     (*CTRL).i->cmd_varOmega = (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
+    //         // }
 
-        #elif WHO_IS_USER == USER_YZZ
-            (*CTRL).i->cmd_varOmega = 0.0;
-            if ((*CTRL).timebase > CL_TS){
-                (*CTRL).i->cmd_varOmega = (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
-                #if PC_SIMULATION
-                    ACM.TLoad = 0.0 * (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);
-                #endif
-            }
-            if ((*CTRL).timebase > 1.5){
-                #if PC_SIMULATION
-                    ACM.TLoad = 0.3 * (0.5 * 1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);
-                    printf("TLoad is %f\n", ACM.TLoad);
-                #endif
-            }
+    //     #elif WHO_IS_USER == USER_YZZ
+    //         (*CTRL).i->cmd_varOmega = 0.0;
+    //         if ((*CTRL).timebase > CL_TS){
+    //             (*CTRL).i->cmd_varOmega = (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
+    //             #if PC_SIMULATION
+    //                 ACM.TLoad = 0.0 * (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);
+    //             #endif
+    //         }
+    //         if ((*CTRL).timebase > 1.5){
+    //             #if PC_SIMULATION
+    //                 ACM.TLoad = 0.3 * (0.5 * 1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);
+    //                 printf("TLoad is %f\n", ACM.TLoad);
+    //             #endif
+    //         }
 
-            // if ((*CTRL).timebase > 5){
-            //     (*CTRL).i->cmd_varOmega = 0.5 * (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
-            // }
-        #elif WHO_IS_USER == USER_HZQ
-            (*CTRL).i->cmd_varOmega = 0.0;
-            if ((*CTRL).timebase > CL_TS){
-                (*CTRL).i->cmd_varOmega = (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
-                #if PC_SIMULATION
-                    ACM.TLoad = 1 * (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);
-                #endif
-            }
-            if ((*CTRL).timebase > 0.2){
-                #if PC_SIMULATION
-                    ACM.TLoad = d_sim.user.Breaking_Torque;
-                    // printf("TLoad is %f\n", ACM.TLoad);
-                #endif
-            }
+    //         // if ((*CTRL).timebase > 5){
+    //         //     (*CTRL).i->cmd_varOmega = 0.5 * (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
+    //         // }
+    //     #elif WHO_IS_USER == USER_HZQ
+    //         (*CTRL).i->cmd_varOmega = 0.0;
+    //         if ((*CTRL).timebase > CL_TS){
+    //             (*CTRL).i->cmd_varOmega = (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
+    //             #if PC_SIMULATION
+    //                 ACM.TLoad = 1 * (1.5 * d_sim.init.npp * d_sim.init.KE * d_sim.init.IN*0.95);
+    //             #endif
+    //         }
+    //         if ((*CTRL).timebase > 0.2){
+    //             #if PC_SIMULATION
+    //                 ACM.TLoad = d_sim.user.Breaking_Torque;
+    //                 // printf("TLoad is %f\n", ACM.TLoad);
+    //             #endif
+    //         }
 
-            // if ((*CTRL).timebase > 5){
-            //     (*CTRL).i->cmd_varOmega = 0.5 * (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
-            // }
-        #endif
-    #endif
+    //         // if ((*CTRL).timebase > 5){
+    //         //     (*CTRL).i->cmd_varOmega = 0.5 * (*debug).set_rpm_speed_command * RPM_2_MECH_RAD_PER_SEC;
+    //         // }
+    //     #endif
+    // #endif
 
     /* 扫频覆盖 */
     overwrite_sweeping_frequency();
